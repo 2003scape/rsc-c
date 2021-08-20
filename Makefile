@@ -1,5 +1,6 @@
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
+CFLAGS = -fPIE
 LFLAGS = -lSDL
 
 mudclient: $(OBJ)

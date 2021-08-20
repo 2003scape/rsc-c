@@ -35,7 +35,7 @@ int get_data_file_offset(char *file_name, int8_t *buffer);
 int get_data_file_length(char *file_name, int8_t *buffer);
 int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
                     int8_t *file_data);
-int8_t load_data(char *file_name, int extra_size, int8_t archive_data);
+int8_t *load_data(char *file_name, int extra_size, int8_t *archive_data);
 void format_confirm_amount(int amount, char *formatted);
 
 #endif

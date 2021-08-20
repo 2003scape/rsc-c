@@ -64,6 +64,8 @@ typedef struct {
     jmp_buf jmpbuf;
 } bunzip_data;
 
+static const char BZIP_HEADER[] = {'B', 'Z', 'h', '1'};
+
 static char *const bunzip_errors[] = {
     NULL,
     "Bad file checksum",

@@ -100,7 +100,7 @@ void format_auth_string(char *raw, int max_length, char *formatted) {
         } else if ((char_code >= 'a' && char_code <= 'z') ||
                    (char_code >= 'A' && char_code <= 'Z') ||
                    (char_code >= '0' && char_code <= '9')) {
-            formatted[i] = raw[i];
+            formatted[i] = char_code;
         } else {
             formatted[i] = '_';
         }
@@ -115,7 +115,7 @@ void ip_to_string(int32_t ip, char *ip_string) {
 }
 
 int64_t encode_username(char *username) {
-    char cleaned[MAX_USER_LENGTH + 1];
+    char cleaned[MAX_USER_LENGTH + 2];
 
     int username_length = strlen(username);
 
@@ -201,26 +201,26 @@ static int32_t hash_file_name(char *file_name) {
     int32_t hash = 0;
 
     for (int i = 0; i < file_name_length; i++) {
-        hash = hash * 61 + fileName[i] - 32;
+        hash = hash * 61 + file_name[i] - 32;
     }
 
     return hash;
 }
 
-static int32_t get_file_hash(int32_t *buffer, int entry) {
+static int8_t get_file_hash(int8_t *buffer, int entry) {
     return (buffer[entry * 10 + 2] & 0xff) * 0x1000000 +
            (buffer[entry * 10 + 3] & 0xff) * 0x10000 +
            (buffer[entry * 10 + 4] & 0xff) * 0x100 +
            (buffer[entry * 10 + 5] & 0xff);
 }
 
-static int32_t get_file_size(int32_t *buffer, int entry) {
+static int8_t get_file_size(int8_t *buffer, int entry) {
     return (buffer[entry * 10 + 6] & 0xff) * 0x10000 +
            (buffer[entry * 10 + 7] & 0xff) * 0x100 +
            (buffer[entry * 10 + 8] & 0xff);
 }
 
-static int32_t get_archive_size(int32_t *buffer, int entry) {
+static int8_t get_archive_size(int8_t *buffer, int entry) {
     return (buffer[entry * 10 + 9] & 0xff) * 0x10000 +
            (buffer[entry * 10 + 10] & 0xff) * 0x100 +
            (buffer[entry * 10 + 11] & 0xff);
@@ -263,14 +263,14 @@ int get_data_file_length(char *file_name, int8_t *buffer) {
 
 int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
                     int8_t *file_data) {
-    int num_entries = get_unsigned_short(buffer, 0);
+    int num_entries = get_unsigned_short(archive_data, 0);
     int32_t wanted_hash = hash_file_name(file_name);
     int offset = 2 + num_entries * 10;
 
     for (int entry = 0; entry < num_entries; entry++) {
-        int32_t file_hash = get_file_hash(buffer, entry);
-        int file_size = get_file_size(buffer, entry);
-        int archive_size = get_archive_size(buffer, entry);
+        int32_t file_hash = get_file_hash(archive_data, entry);
+        int file_size = get_file_size(archive_data, entry);
+        int archive_size = get_archive_size(archive_data, entry);
 
         if (file_hash == wanted_hash) {
             if (file_data == NULL) {
@@ -282,7 +282,7 @@ int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
                                 archive_size, offset);
             } else {
                 for (int i = 0; i < file_size; i++) {
-                    fileData[i] = archiveData[offset + i];
+                    file_data[i] = archive_data[offset + i];
                 }
             }
 
@@ -290,5 +290,64 @@ int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
         }
 
         offset += archive_size;
+    }
+
+    return NULL;
+}
+
+int8_t *load_data(char *file_name, int extra_size, int8_t *archive_data) {
+    if (archive_data == NULL) {
+        return NULL;
+    }
+
+    return unpack_data(file_name, extra_size, archive_data, NULL);
+}
+
+/* formatted max_length is 40 bytes */
+void format_confirm_amount(int amount, char *formatted) {
+    sprintf(formatted, "%d", amount);
+
+    int formatted_length = strlen(formatted);
+
+    for (int i = formatted_length - 3; i > 0; i -= 3) {
+        int begin_length = i;
+        char begin[begin_length + 1];
+        begin[begin_length] = '\0';
+
+        int end_length = formatted_length - i;
+        char end[end_length + 1];
+        end[end_length] = '\0';
+
+        strncpy(begin, formatted, begin_length);
+        strncpy(end, formatted + i, end_length);
+
+        sprintf(formatted, "%s,%s", begin, end);
+
+        formatted_length = strlen(formatted);
+    }
+
+    if (formatted_length > 8) {
+        int short_length = formatted_length - 8;
+        char short_num[short_length + 1];
+        short_num[short_length] = '\0';
+
+        strncpy(short_num, formatted, short_length);
+
+        char formatted_copy[formatted_length];
+        strcpy(formatted_copy, formatted);
+
+        sprintf(formatted, "@gre@%s million @whi@(%s)", short_num,
+                formatted_copy);
+    } else if (formatted_length > 4) {
+        int short_length = formatted_length - 4;
+        char short_num[short_length + 1];
+        short_num[short_length] = '\0';
+
+        strncpy(short_num, formatted, short_length);
+
+        char formatted_copy[formatted_length];
+        strcpy(formatted_copy, formatted);
+
+        sprintf(formatted, "@cya@%s K @whi@(%s)", short_num, formatted_copy);
     }
 }

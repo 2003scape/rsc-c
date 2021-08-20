@@ -662,11 +662,17 @@ static void bzip_fatal(int retval) {
 
 void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
                      int archive_size, int offset) {
+
+    int8_t *headered = malloc(archive_size + 4);
+    memcpy(headered, BZIP_HEADER, 4);
+    memcpy(headered + 4, archive_data, archive_size);
+
     bunzip_data *bd;
     int retval;
 
-    if ((retval = start_bunzip(&bd, -1, archive_data + offset, archive_size)) <
+    if ((retval = start_bunzip(&bd, -1, headered + offset, archive_size)) <
         0) {
+        free(headered);
         bzip_fatal(retval);
     }
 
@@ -677,11 +683,13 @@ void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
 
         /* finished */
         if (retval == -1) {
+            free(headered);
             return;
         }
 
         /* error */
         if (retval < 0) {
+            free(headered);
             bzip_fatal(retval);
             return;
         }

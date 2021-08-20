@@ -13,8 +13,13 @@ int main(int argc, char **argv) {
     strtrim(hi);
     printf("|%s|\n", hi);*/
 
+    /*
     int64_t encoded = encode_username("Farts");
     char decoded[20];
     decode_username(encoded, decoded);
-    printf("%s\n", decoded);
+    printf("%s\n", decoded);*/
+
+    char formatted[255];
+    format_confirm_amount(2147483544, formatted);
+    printf("%s\n", formatted);
 }
