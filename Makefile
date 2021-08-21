@@ -1,7 +1,7 @@
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -fPIE
-LFLAGS = -lSDL
+CFLAGS = -fPIE -Wall
+LFLAGS = -lm -lSDL
 
 mudclient: $(OBJ)
 	cc -o $@ $^ $(LFLAGS)

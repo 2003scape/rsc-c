@@ -62,7 +62,7 @@ int get_stack_int(int8_t *buffer, int offset) {
         return buffer[offset];
     }
 
-    return ((buffer[offset] & 0xff) - 128 << 24) +
+    return (((buffer[offset] & 0xff) - 128) << 24) +
            ((buffer[offset + 1] & 0xff) << 16) +
            ((buffer[offset + 2] & 0xff) << 8) + (buffer[offset + 3] & 0xff);
 }

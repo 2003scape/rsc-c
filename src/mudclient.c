@@ -1,7 +1,7 @@
 #include "mudclient.h"
 
 int main(int argc, char **argv) {
-    printf("hi\n");
+    init_game_model_global();
 
     /*
     char formatted[21];

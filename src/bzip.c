@@ -1,14 +1,13 @@
 /* micro-bunzip: http://www.landley.net/code/ */
 
-/*	Small bzip2 deflate implementation, by Rob Landley (rob@landley.net).
-
+/*  Small bzip2 deflate implementation, by Rob Landley (rob@landley.net).
     Based on bzip2 decompression code by Julian R Seward (jseward@acm.org),
     which also acknowledges contributions by Mike Burrows, David Wheeler,
     Peter Fenwick, Alistair Moffat, Radford Neal, Ian H. Witten,
     Robert Sedgewick, and Jon L. Bentley.
 
     This code is licensed under the LGPLv2:
-        LGPL (http://www.gnu.org/copyleft/lgpl.html
+    LGPL (http://www.gnu.org/copyleft/lgpl.html
 */
 
 /*
@@ -662,16 +661,14 @@ static void bzip_fatal(int retval) {
 
 void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
                      int archive_size, int offset) {
-
     int8_t *headered = malloc(archive_size + 4);
     memcpy(headered, BZIP_HEADER, 4);
-    memcpy(headered + 4, archive_data, archive_size);
+    memcpy(headered + 4, archive_data + offset, archive_size);
 
     bunzip_data *bd;
     int retval;
 
-    if ((retval = start_bunzip(&bd, -1, headered + offset, archive_size)) <
-        0) {
+    if ((retval = start_bunzip(&bd, -1, headered, archive_size)) < 0) {
         free(headered);
         bzip_fatal(retval);
     }

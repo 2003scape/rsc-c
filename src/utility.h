@@ -8,6 +8,7 @@
 #include "bzip.h"
 
 #define MAX_USER_LENGTH 12
+#define MAX_CONFIRM_LENGTH 40
 
 static const int BITMASK[] = {
     0,          1,          3,         7,         15,        31,
