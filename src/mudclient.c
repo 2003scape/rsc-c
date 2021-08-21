@@ -2,6 +2,7 @@
 
 int main(int argc, char **argv) {
     init_game_model_global();
+    init_scene_global();
 
     /*
     char formatted[21];

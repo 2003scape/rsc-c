@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "game-model.h"
+#include "scene.h"
 #include "utility.h"
 
 int main(int argc, char **argv);

@@ -7,11 +7,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "scene.h"
 #include "utility.h"
 
 static int sine9[512];
 static int sine11[2048];
-static int base64_alphabet[256];
 
 void init_game_model_global();
 
@@ -105,6 +105,7 @@ void game_model_from7(GameModel *game_model, int num_vertices, int num_faces,
                       int autocommit, int isolated, int unlit, int unpickable,
                       int projected);
 void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset);
+void game_model_reset(GameModel *game_model);
 void game_model_allocate(GameModel *game_model, int num_vertices,
                          int num_faces);
 void game_model_projection_prepare(GameModel *game_model);
@@ -136,6 +137,23 @@ void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll);
 void game_model_translate(GameModel *game_model, int x, int y, int z);
 void game_model_place(GameModel *game_model, int x, int y, int z);
 void game_model_determine_transform_kind(GameModel *game_model);
+void game_model_apply_translate(GameModel *game_model, int dx, int dy, int dz);
+void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
+                               int pitch);
+void game_model_apply_shear(GameModel *game_model, int xy, int xz, int yx,
+                            int yz, int zx, int zy);
+void game_model_apply_scale(GameModel *game_model, int fx, int fy, int fz);
+void game_model_compute_bounds(GameModel *game_model);
+void game_model_light(GameModel *game_model);
+void game_model_relight(GameModel *game_model);
+void game_model_apply(GameModel *game_model);
+void game_model_project(GameModel *game_model, int camera_x, int camera_y,
+                        int camera_z, int camera_pitch, int camera_roll,
+                        int camera_yaw, int view_dist, int clip_near);
 void game_model_commit(GameModel *game_model);
+GameModel *game_model_copy(GameModel *game_model);
+GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
+                                 int isolated, int unlit, int pickable);
+void game_model_copy_position(GameModel *game_model, GameModel *model);
 
 #endif
