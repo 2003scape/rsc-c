@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mudclient.h"
 #include "utility.h"
@@ -23,6 +24,7 @@ extern int an_int_347;
 extern int an_int_348;
 static int8_t **game_fonts;
 static int character_width[256];
+static int sin_cos_cache[512];
 
 typedef struct Surface {
     int limit;
@@ -44,13 +46,13 @@ typedef struct Surface {
     int *sprite_translate;
     int interlace;
     int logged_in;
-    int *landscape_colours;
-    int *an_int_array340;
-    int *an_int_array341;
-    int *an_int_array342;
-    int *an_int_array343;
-    int *an_int_array344;
-    int *an_int_array345;
+    int *an_int_array_340;
+    int *an_int_array_341;
+    int *an_int_array_342;
+    int *an_int_array_343;
+    int *an_int_array_344;
+    int *an_int_array_345;
+    int an_int_array_340_length;
     int bounds_top_y;
     int bounds_bottom_y;
     int bounds_top_x;
@@ -131,5 +133,51 @@ void surface_transparent_scale(uint32_t *dest, uint32_t *src, int i, int j,
 void surface_plot_scale_from14(uint32_t *dest, uint32_t *src, int i, int j,
                                int k, int l, int i1, int width, int height,
                                int l1, int i2, int j2, int y_inc, int colour);
+void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
+                                 int rotation, int scale);
+void surface_draw_minimap(uint32_t *dest, uint32_t *src, int i, int j, int k,
+                          int l, int i1, int j1, int k1, int l1);
+void surface_draw_minimap_translate(uint32_t *dest, uint32_t *src, int i, int j,
+                                    int k, int l, int i1, int j1, int k1,
+                                    int l1);
+void surface_transparent_sprite_plot_from15(Surface *surface, uint32_t *dest,
+                                            uint32_t *src, int i, int j, int k,
+                                            int dest_pos, int i1, int j1,
+                                            int k1, int l1, int i2, int j2,
+                                            int k2, int l2, int i3);
+void surface_transparent_sprite_plot_from16(Surface *surface, uint32_t *dest,
+                                            uint32_t *src, int i, int j, int k,
+                                            int dest_pos, int i1, int j1,
+                                            int k1, int l1, int i2, int j2,
+                                            int k2, int l2, int i3, int j3);
+void surface_transparent_sprite_plot_from16a(Surface *surface, uint32_t *dest,
+                                             int8_t *colour_idx,
+                                             uint32_t *colours, int i, int j,
+                                             int k, int l, int i1, int j1,
+                                             int k1, int l1, int i2, int j2,
+                                             int k2, int l2, int i3);
+void surface_transparent_sprite_plot_from17(Surface *surface, uint32_t *dest,
+                                            int8_t *colour_idx,
+                                            uint32_t *colours, int i, int j,
+                                            int k, int l, int i1, int j1,
+                                            int k1, int l1, int i2, int j2,
+                                            int k2, int l2, int i3, int j3);
+void surface_draw_string_right(Surface *surface, char *text, int x, int y,
+                               int font, int colour);
+void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
+                                int font, int colour);
+void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
+                            int font, int colour, int max);
+void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
+                         int colour);
+void surface_draw_character(Surface *surface, int width, int x, int y,
+                            int colour, int8_t *font);
+void surface_plot_letter(uint32_t *dest, int8_t *font, int i, int j, int k,
+                         int l, int i1, int j1, int k1);
+int surface_text_height(int font_id);
+int surface_text_height_font(int font_id);
+int surface_text_width(char *text, int font_id);
+void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
+                       char **tabs, int tabs_length, int selected);
 
 #endif

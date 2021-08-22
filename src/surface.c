@@ -1,6 +1,17 @@
 #include "surface.h"
 
-void init_surface_global() { game_fonts = malloc(50 * sizeof(int8_t *)); }
+int an_int_346;
+int an_int_347;
+int an_int_348;
+
+void init_surface_global() {
+    game_fonts = malloc(50 * sizeof(int8_t *));
+
+    for (int i = 0; i < 256; i++) {
+        sin_cos_cache[i] = (int)(sin((double)i * 0.02454369)) * 32768;
+        sin_cos_cache[i + 256] = (int)(cos((double)i * 0.02454369)) * 32768;
+    }
+}
 
 int rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
 
@@ -844,14 +855,14 @@ void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id, int tx, int ty) {
     if (sprite_id >= 50000) {
         mudclient_draw_teleport_bubble(surface->mud, x, y, width, height,
-                                       sprite_id - 50000, tx, ty);
+                                       sprite_id - 50000);
 
         return;
     }
 
     if (sprite_id >= 40000) {
         mudclient_draw_item(surface->mud, x, y, width, height,
-                            sprite_id - 40000, tx, ty);
+                            sprite_id - 40000);
         return;
     }
 
@@ -1385,4 +1396,1084 @@ void surface_plot_scale_from14(uint32_t *dest, uint32_t *src, int i, int j,
         j = a;
         l += i1;
     }
+}
+
+void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
+                                 int rotation, int scale) {
+    int j1 = surface->width2;
+    int k1 = surface->height2;
+    int i2 = -(surface->sprite_width_full[sprite_id] / 2);
+    int j2 = -(surface->sprite_height_full[sprite_id] / 2);
+
+    if (surface->sprite_translate[sprite_id]) {
+        i2 += surface->sprite_translate_x[sprite_id];
+        j2 += surface->sprite_translate_y[sprite_id];
+    }
+
+    int k2 = i2 + surface->sprite_width[sprite_id];
+    int l2 = j2 + surface->sprite_height[sprite_id];
+    int i3 = k2;
+    int j3 = j2;
+    int k3 = i2;
+    int l3 = l2;
+
+    rotation &= 0xff;
+
+    int i4 = sin_cos_cache[rotation] * scale;
+    int j4 = sin_cos_cache[rotation + 256] * scale;
+    int k4 = x + ((j2 * i4 + i2 * j4) >> 22);
+    int l4 = y + ((j2 * j4 - i2 * i4) >> 22);
+    int i5 = x + ((j3 * i4 + i3 * j4) >> 22);
+    int j5 = y + ((j3 * j4 - i3 * i4) >> 22);
+    int k5 = x + ((l2 * i4 + k2 * j4) >> 22);
+    int l5 = y + ((l2 * j4 - k2 * i4) >> 22);
+    int i6 = x + ((l3 * i4 + k3 * j4) >> 22);
+    int j6 = y + ((l3 * j4 - k3 * i4) >> 22);
+
+    if (scale == 192 && (rotation & 0x3f) == (an_int_348 & 0x3f)) {
+        an_int_346++;
+    } else if (scale == 128) {
+        an_int_348 = rotation;
+    } else {
+        an_int_347++;
+    }
+
+    int k6 = l4;
+    int l6 = l4;
+
+    if (j5 < k6) {
+        k6 = j5;
+    } else if (j5 > l6) {
+        l6 = j5;
+    }
+
+    if (l5 < k6) {
+        k6 = l5;
+    } else if (l5 > l6) {
+        l6 = l5;
+    }
+
+    if (j6 < k6) {
+        k6 = j6;
+    } else if (j6 > l6) {
+        l6 = j6;
+    }
+
+    if (k6 < surface->bounds_top_y) {
+        k6 = surface->bounds_top_y;
+    }
+
+    if (l6 > surface->bounds_bottom_y) {
+        l6 = surface->bounds_bottom_y;
+    }
+
+    if (surface->an_int_array_340 == NULL ||
+        surface->an_int_array_340_length != k1 + 1) {
+        free(surface->an_int_array_340);
+        free(surface->an_int_array_341);
+        free(surface->an_int_array_342);
+        free(surface->an_int_array_343);
+        free(surface->an_int_array_344);
+        free(surface->an_int_array_345);
+
+        surface->an_int_array_340 = malloc((k1 + 1) * sizeof(int));
+        surface->an_int_array_341 = malloc((k1 + 1) * sizeof(int));
+        surface->an_int_array_342 = malloc((k1 + 1) * sizeof(int));
+        surface->an_int_array_343 = malloc((k1 + 1) * sizeof(int));
+        surface->an_int_array_344 = malloc((k1 + 1) * sizeof(int));
+        surface->an_int_array_345 = malloc((k1 + 1) * sizeof(int));
+
+        surface->an_int_array_340_length = k1 + 1;
+    }
+
+    for (int i7 = k6; i7 <= l6; i7++) {
+        surface->an_int_array_340[i7] = 99999999;
+        surface->an_int_array_341[i7] = -99999999;
+    }
+
+    int i8 = 0;
+    int k8 = 0;
+    int i9 = 0;
+    int j9 = surface->sprite_width[sprite_id];
+    int k9 = surface->sprite_height[sprite_id];
+
+    i2 = 0;
+    j2 = 0;
+    i3 = j9 - 1;
+    j3 = 0;
+    k2 = j9 - 1;
+    l2 = k9 - 1;
+    k3 = 0;
+    l3 = k9 - 1;
+
+    if (j6 != l4) {
+        i8 = ((i6 - k4) << 8) / (j6 - l4);
+        i9 = ((l3 - j2) << 8) / (j6 - l4);
+    }
+
+    int j7 = 0;
+    int k7 = 0;
+    int l7 = 0;
+    int l8 = 0;
+
+    if (l4 > j6) {
+        l7 = i6 << 8;
+        l8 = l3 << 8;
+        j7 = j6;
+        k7 = l4;
+    } else {
+        l7 = k4 << 8;
+        l8 = j2 << 8;
+        j7 = l4;
+        k7 = j6;
+    }
+
+    if (j7 < 0) {
+        l7 -= i8 * j7;
+        l8 -= i9 * j7;
+        j7 = 0;
+    }
+
+    if (k7 > k1 - 1) {
+        k7 = k1 - 1;
+    }
+
+    for (int i = j7; i <= k7; i++) {
+        surface->an_int_array_340[i] = l7;
+        surface->an_int_array_341[i] = l7;
+
+        l7 += i8;
+
+        surface->an_int_array_342[i] = 0;
+        surface->an_int_array_343[i] = 0;
+        surface->an_int_array_344[i] = l8;
+        surface->an_int_array_345[i] = l8;
+
+        l8 += i9;
+    }
+
+    if (j5 != l4) {
+        i8 = ((i5 - k4) << 8) / (j5 - l4);
+        k8 = ((i3 - i2) << 8) / (j5 - l4);
+    }
+
+    int j8 = 0;
+
+    if (l4 > j5) {
+        l7 = i5 << 8;
+        j8 = i3 << 8;
+        j7 = j5;
+        k7 = l4;
+    } else {
+        l7 = k4 << 8;
+        j8 = i2 << 8;
+        j7 = l4;
+        k7 = j5;
+    }
+
+    if (j7 < 0) {
+        l7 -= i8 * j7;
+        j8 -= k8 * j7;
+        j7 = 0;
+    }
+
+    if (k7 > k1 - 1) {
+        k7 = k1 - 1;
+    }
+
+    for (int i = j7; i <= k7; i++) {
+        if (l7 < surface->an_int_array_340[i]) {
+            surface->an_int_array_340[i] = l7;
+            surface->an_int_array_342[i] = j8;
+            surface->an_int_array_344[i] = 0;
+        }
+
+        if (l7 > surface->an_int_array_341[i]) {
+            surface->an_int_array_341[i] = l7;
+            surface->an_int_array_343[i] = j8;
+            surface->an_int_array_345[i] = 0;
+        }
+
+        l7 += i8;
+        j8 += k8;
+    }
+
+    if (l5 != j5) {
+        i8 = ((k5 - i5) << 8) / (l5 - j5);
+        i9 = ((l2 - j3) << 8) / (l5 - j5);
+    }
+
+    if (j5 > l5) {
+        l7 = k5 << 8;
+        j8 = k2 << 8;
+        l8 = l2 << 8;
+        j7 = l5;
+        k7 = j5;
+    } else {
+        l7 = i5 << 8;
+        j8 = i3 << 8;
+        l8 = j3 << 8;
+        j7 = j5;
+        k7 = l5;
+    }
+
+    if (j7 < 0) {
+        l7 -= i8 * j7;
+        l8 -= i9 * j7;
+        j7 = 0;
+    }
+
+    if (k7 > k1 - 1) {
+        k7 = k1 - 1;
+    }
+
+    for (int i = j7; i <= k7; i++) {
+        if (l7 < surface->an_int_array_340[i]) {
+            surface->an_int_array_340[i] = l7;
+            surface->an_int_array_342[i] = j8;
+            surface->an_int_array_344[i] = l8;
+        }
+
+        if (l7 > surface->an_int_array_341[i]) {
+            surface->an_int_array_341[i] = l7;
+            surface->an_int_array_343[i] = j8;
+            surface->an_int_array_345[i] = l8;
+        }
+
+        l7 += i8;
+        l8 += i9;
+    }
+
+    if (j6 != l5) {
+        i8 = ((i6 - k5) << 8) / (j6 - l5);
+        k8 = ((k3 - k2) << 8) / (j6 - l5);
+    }
+
+    if (l5 > j6) {
+        l7 = i6 << 8;
+        j8 = k3 << 8;
+        l8 = l3 << 8;
+        j7 = j6;
+        k7 = l5;
+    } else {
+        l7 = k5 << 8;
+        j8 = k2 << 8;
+        l8 = l2 << 8;
+        j7 = l5;
+        k7 = j6;
+    }
+
+    if (j7 < 0) {
+        l7 -= i8 * j7;
+        j8 -= k8 * j7;
+        j7 = 0;
+    }
+
+    if (k7 > k1 - 1) {
+        k7 = k1 - 1;
+    }
+
+    for (int i = j7; i <= k7; i++) {
+        if (l7 < surface->an_int_array_340[i]) {
+            surface->an_int_array_340[i] = l7;
+            surface->an_int_array_342[i] = j8;
+            surface->an_int_array_344[i] = l8;
+        }
+
+        if (l7 > surface->an_int_array_341[i]) {
+            surface->an_int_array_341[i] = l7;
+            surface->an_int_array_343[i] = j8;
+            surface->an_int_array_345[i] = l8;
+        }
+
+        l7 += i8;
+        j8 += k8;
+    }
+
+    int l10 = k6 * j1;
+    uint32_t *ai = surface->surface_pixels[sprite_id];
+
+    for (int i = k6; i < l6; i++) {
+        int j11 = surface->an_int_array_340[i] >> 8;
+        int k11 = surface->an_int_array_341[i] >> 8;
+
+        if (k11 - j11 <= 0) {
+            l10 += j1;
+        } else {
+            int l11 = surface->an_int_array_342[i] << 9;
+            int i12 = ((surface->an_int_array_343[i] << 9) - l11) / (k11 - j11);
+            int j12 = surface->an_int_array_344[i] << 9;
+            int k12 = ((surface->an_int_array_345[i] << 9) - j12) / (k11 - j11);
+
+            if (j11 < surface->bounds_top_x) {
+                l11 += (surface->bounds_top_x - j11) * i12;
+                j12 += (surface->bounds_top_x - j11) * k12;
+                j11 = surface->bounds_top_x;
+            }
+
+            if (k11 > surface->bounds_bottom_x) {
+                k11 = surface->bounds_bottom_x;
+            }
+
+            if (!surface->interlace || (i & 1) == 0) {
+                if (!surface->sprite_translate[sprite_id]) {
+                    surface_draw_minimap(surface->pixels, ai, 0, l10 + j11, l11,
+                                         j12, i12, k12, j11 - k11, j9);
+                } else {
+                    surface_draw_minimap_translate(surface->pixels, ai, 0,
+                                                   l10 + j11, l11, j12, i12,
+                                                   k12, j11 - k11, j9);
+                }
+            }
+
+            l10 += j1;
+        }
+    }
+}
+
+void surface_draw_minimap(uint32_t *dest, uint32_t *src, int i, int j, int k,
+                          int l, int i1, int j1, int k1, int l1) {
+    for (i = k1; i < 0; i++) {
+        dest[j++] = src[(k >> 17) + (l >> 17) * l1];
+        k += i1;
+        l += j1;
+    }
+}
+
+void surface_draw_minimap_translate(uint32_t *dest, uint32_t *src, int i, int j,
+                                    int k, int l, int i1, int j1, int k1,
+                                    int l1) {
+    for (int i2 = k1; i2 < 0; i2++) {
+        i = src[(k >> 17) + (l >> 17) * l1];
+
+        if (i != 0) {
+            dest[j++] = i;
+        } else {
+            j++;
+        }
+
+        k += i1;
+        l += j1;
+    }
+}
+
+void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
+                                   int sprite_id, int colour1, int colour2,
+                                   int l1, int flag) {
+    if (colour1 == 0) {
+        colour1 = 0xffffff;
+    }
+
+    if (colour2 == 0) {
+        colour2 = 0xffffff;
+    }
+
+    int width = surface->sprite_width[sprite_id];
+    int height = surface->sprite_height[sprite_id];
+    int k2 = 0;
+    int l2 = 0;
+    int i3 = l1 << 16;
+    int j3 = (width << 16) / w;
+    int k3 = (height << 16) / h;
+    int l3 = -((l1 << 16) / h);
+
+    if (surface->sprite_translate[sprite_id]) {
+        int full_width = surface->sprite_width_full[sprite_id];
+        int full_height = surface->sprite_height_full[sprite_id];
+
+        j3 = (full_width << 16) / w;
+        k3 = (full_height << 16) / h;
+
+        int j5 = surface->sprite_translate_x[sprite_id];
+        int k5 = surface->sprite_translate_y[sprite_id];
+
+        if (flag) {
+            j5 = full_width - surface->sprite_width[sprite_id] - j5;
+        }
+
+        x += (j5 * w + full_width - 1) / full_width;
+
+        int l5 = (k5 * h + full_height - 1) / full_height;
+
+        y += l5;
+        i3 += l5 * l3;
+
+        if ((j5 * w) % full_width != 0) {
+            k2 = ((full_width - ((j5 * w) % full_width)) << 16) / w;
+        }
+
+        if ((k5 * h) % full_height != 0) {
+            l2 = ((full_height - ((k5 * h) % full_height)) << 16) / h;
+        }
+
+        w = ((surface->sprite_width[sprite_id] << 16) - k2 + j3 - 1) / j3;
+        h = ((surface->sprite_height[sprite_id] << 16) - l2 + k3 - 1) / k3;
+    }
+
+    int j4 = y * surface->width2;
+    i3 += x << 16;
+
+    if (y < surface->bounds_top_y) {
+        int l4 = surface->bounds_top_y - y;
+        h -= l4;
+        y = surface->bounds_top_y;
+        j4 += l4 * surface->width2;
+        l2 += k3 * l4;
+        i3 += l3 * l4;
+    }
+
+    if (y + h >= surface->bounds_bottom_y) {
+        h -= y + h - surface->bounds_bottom_y + 1;
+    }
+
+    int i5 = (j4 / surface->width2) & 1;
+
+    if (!surface->interlace) {
+        i5 = 2;
+    }
+
+    if (colour2 == 0xffffff) {
+        if (surface->surface_pixels[sprite_id] != NULL) {
+            if (!flag) {
+                surface_transparent_sprite_plot_from15(
+                    surface, surface->pixels,
+                    surface->surface_pixels[sprite_id], 0, k2, l2, j4, w, h, j3,
+                    k3, width, colour1, i3, l3, i5);
+
+                return;
+            } else {
+                surface_transparent_sprite_plot_from15(
+                    surface, surface->pixels,
+                    surface->surface_pixels[sprite_id], 0,
+                    (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
+                    w, h, -j3, k3, width, colour1, i3, l3, i5);
+
+                return;
+            }
+        }
+
+        if (!flag) {
+            surface_transparent_sprite_plot_from16a(
+                surface, surface->pixels,
+                surface->sprite_colours_used[sprite_id],
+                surface->sprite_colour_list[sprite_id], 0, k2, l2, j4, w, h, j3,
+                k3, width, colour1, i3, l3, i5);
+
+            return;
+        } else {
+            surface_transparent_sprite_plot_from16a(
+                surface, surface->pixels,
+                surface->sprite_colours_used[sprite_id],
+                surface->sprite_colour_list[sprite_id], 0,
+                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4, w, h,
+                -j3, k3, width, colour1, i3, l3, i5);
+
+            return;
+        }
+    }
+
+    if (surface->surface_pixels[sprite_id] != NULL) {
+        if (!flag) {
+            surface_transparent_sprite_plot_from16(
+                surface, surface->pixels, surface->surface_pixels[sprite_id], 0,
+                k2, l2, j4, w, h, j3, k3, width, colour1, colour2, i3, l3, i5);
+
+            return;
+        } else {
+            surface_transparent_sprite_plot_from16(
+                surface, surface->pixels, surface->surface_pixels[sprite_id], 0,
+                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4, w, h,
+                -j3, k3, width, colour1, colour2, i3, l3, i5);
+
+            return;
+        }
+    }
+
+    if (!flag) {
+        surface_transparent_sprite_plot_from17(
+            surface, surface->pixels, surface->sprite_colours_used[sprite_id],
+            surface->sprite_colour_list[sprite_id], 0, k2, l2, j4, w, h, j3, k3,
+            width, colour1, colour2, i3, l3, i5);
+    } else {
+        surface_transparent_sprite_plot_from17(
+            surface, surface->pixels, surface->sprite_colours_used[sprite_id],
+            surface->sprite_colour_list[sprite_id], 0,
+            (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4, w, h,
+            -j3, k3, width, colour1, colour2, i3, l3, i5);
+    }
+}
+
+void surface_transparent_sprite_plot_from15(Surface *surface, uint32_t *dest,
+                                            uint32_t *src, int i, int j, int k,
+                                            int dest_pos, int i1, int j1,
+                                            int k1, int l1, int i2, int j2,
+                                            int k2, int l2, int i3) {
+    int i4 = (j2 >> 16) & 0xff;
+    int j4 = (j2 >> 8) & 0xff;
+    int k4 = j2 & 0xff;
+    int l4 = j;
+
+    for (int i5 = -j1; i5 < 0; i5++) {
+        int j5 = (k >> 16) * i2;
+        int k5 = k2 >> 16;
+        int l5 = i1;
+
+        if (k5 < surface->bounds_top_x) {
+            int i6 = surface->bounds_top_x - k5;
+
+            l5 -= i6;
+            k5 = surface->bounds_top_x;
+            j += k1 * i6;
+        }
+
+        if (k5 + l5 >= surface->bounds_bottom_x) {
+            int j6 = k5 + l5 - surface->bounds_bottom_x;
+
+            l5 -= j6;
+        }
+
+        i3 = 1 - i3;
+
+        if (i3 != 0) {
+            for (int k6 = k5; k6 < k5 + l5; k6++) {
+                i = src[(j >> 16) + j5];
+
+                if (i != 0) {
+                    int j3 = (i >> 16) & 0xff;
+                    int k3 = (i >> 8) & 0xff;
+                    int l3 = i & 0xff;
+
+                    if (j3 == k3 && k3 == l3) {
+                        dest[k6 + dest_pos] = (((j3 * i4) >> 8) << 16) +
+                                              (((k3 * j4) >> 8) << 8) +
+                                              ((l3 * k4) >> 8);
+                    } else {
+                        dest[k6 + dest_pos] = i;
+                    }
+                }
+
+                j += k1;
+            }
+        }
+
+        k += l1;
+        j = l4;
+        dest_pos += surface->width2;
+        k2 += l2;
+    }
+}
+
+void surface_transparent_sprite_plot_from16(Surface *surface, uint32_t *dest,
+                                            uint32_t *src, int i, int j, int k,
+                                            int dest_pos, int i1, int j1,
+                                            int k1, int l1, int i2, int j2,
+                                            int k2, int l2, int i3, int j3) {
+    int j4 = (j2 >> 16) & 0xff;
+    int k4 = (j2 >> 8) & 0xff;
+    int l4 = j2 & 0xff;
+    int i5 = (k2 >> 16) & 0xff;
+    int j5 = (k2 >> 8) & 0xff;
+    int k5 = k2 & 0xff;
+    int l5 = j;
+
+    for (int i6 = -j1; i6 < 0; i6++) {
+        int j6 = (k >> 16) * i2;
+        int k6 = l2 >> 16;
+        int l6 = i1;
+
+        if (k6 < surface->bounds_top_x) {
+            int i7 = surface->bounds_top_x - k6;
+            l6 -= i7;
+            k6 = surface->bounds_top_x;
+            j += k1 * i7;
+        }
+
+        if (k6 + l6 >= surface->bounds_bottom_x) {
+            int j7 = k6 + l6 - surface->bounds_bottom_x;
+            l6 -= j7;
+        }
+
+        j3 = 1 - j3;
+
+        if (j3 != 0) {
+            for (int k7 = k6; k7 < k6 + l6; k7++) {
+                i = src[(j >> 16) + j6];
+
+                if (i != 0) {
+                    int k3 = (i >> 16) & 0xff;
+                    int l3 = (i >> 8) & 0xff;
+                    int i4 = i & 0xff;
+
+                    if (k3 == l3 && l3 == i4) {
+                        dest[k7 + dest_pos] = (((k3 * j4) >> 8) << 16) +
+                                              (((l3 * k4) >> 8) << 8) +
+                                              ((i4 * l4) >> 8);
+                    } else if (k3 == 255 && l3 == i4) {
+                        dest[k7 + dest_pos] = (((k3 * i5) >> 8) << 16) +
+                                              (((l3 * j5) >> 8) << 8) +
+                                              ((i4 * k5) >> 8);
+                    } else {
+                        dest[k7 + dest_pos] = i;
+                    }
+                }
+
+                j += k1;
+            }
+        }
+
+        k += l1;
+        j = l5;
+        dest_pos += surface->width2;
+        l2 += i3;
+    }
+}
+
+void surface_transparent_sprite_plot_from16a(Surface *surface, uint32_t *dest,
+                                             int8_t *colour_idx,
+                                             uint32_t *colours, int i, int j,
+                                             int k, int l, int i1, int j1,
+                                             int k1, int l1, int i2, int j2,
+                                             int k2, int l2, int i3) {
+    int i4 = (j2 >> 16) & 0xff;
+    int j4 = (j2 >> 8) & 0xff;
+    int k4 = j2 & 0xff;
+    int l4 = j;
+
+    for (int i5 = -j1; i5 < 0; i5++) {
+        int j5 = (k >> 16) * i2;
+        int k5 = k2 >> 16;
+        int l5 = i1;
+
+        if (k5 < surface->bounds_top_x) {
+            int i6 = surface->bounds_top_x - k5;
+            l5 -= i6;
+            k5 = surface->bounds_top_x;
+            j += k1 * i6;
+        }
+
+        if (k5 + l5 >= surface->bounds_bottom_x) {
+            int j6 = k5 + l5 - surface->bounds_bottom_x;
+            l5 -= j6;
+        }
+
+        i3 = 1 - i3;
+
+        if (i3 != 0) {
+            for (int k6 = k5; k6 < k5 + l5; k6++) {
+                i = colour_idx[(j >> 16) + j5] & 0xff;
+
+                if (i != 0) {
+                    i = colours[i];
+
+                    int j3 = (i >> 16) & 0xff;
+                    int k3 = (i >> 8) & 0xff;
+                    int l3 = i & 0xff;
+
+                    if (j3 == k3 && k3 == l3) {
+                        dest[k6 + l] = (((j3 * i4) >> 8) << 16) +
+                                       (((k3 * j4) >> 8) << 8) +
+                                       ((l3 * k4) >> 8);
+                    } else {
+                        dest[k6 + l] = i;
+                    }
+                }
+
+                j += k1;
+            }
+        }
+
+        k += l1;
+        j = l4;
+        l += surface->width2;
+        k2 += l2;
+    }
+}
+
+void surface_transparent_sprite_plot_from17(Surface *surface, uint32_t *dest,
+                                            int8_t *colour_idx,
+                                            uint32_t *colours, int i, int j,
+                                            int k, int l, int i1, int j1,
+                                            int k1, int l1, int i2, int j2,
+                                            int k2, int l2, int i3, int j3) {
+    int j4 = (j2 >> 16) & 0xff;
+    int k4 = (j2 >> 8) & 0xff;
+    int l4 = j2 & 0xff;
+    int i5 = (k2 >> 16) & 0xff;
+    int j5 = (k2 >> 8) & 0xff;
+    int k5 = k2 & 0xff;
+    int l5 = j;
+
+    for (int i6 = -j1; i6 < 0; i6++) {
+        int j6 = (k >> 16) * i2;
+        int k6 = l2 >> 16;
+        int l6 = i1;
+
+        if (k6 < surface->bounds_top_x) {
+            int i7 = surface->bounds_top_x - k6;
+            l6 -= i7;
+            k6 = surface->bounds_top_x;
+            j += k1 * i7;
+        }
+
+        if (k6 + l6 >= surface->bounds_bottom_x) {
+            int j7 = k6 + l6 - surface->bounds_bottom_x;
+            l6 -= j7;
+        }
+
+        j3 = 1 - j3;
+
+        if (j3 != 0) {
+            for (int k7 = k6; k7 < k6 + l6; k7++) {
+                i = colours[(j >> 16) + j6] & 0xff;
+
+                if (i != 0) {
+                    i = colour_idx[i];
+                    int k3 = (i >> 16) & 0xff;
+                    int l3 = (i >> 8) & 0xff;
+                    int i4 = i & 0xff;
+
+                    if (k3 == l3 && l3 == i4) {
+                        dest[k7 + l] = (((k3 * j4) >> 8) << 16) +
+                                       (((l3 * k4) >> 8) << 8) +
+                                       ((i4 * l4) >> 8);
+                    } else if (k3 == 255 && l3 == i4) {
+                        dest[k7 + l] = (((k3 * i5) >> 8) << 16) +
+                                       (((l3 * j5) >> 8) << 8) +
+                                       ((i4 * k5) >> 8);
+                    } else {
+                        dest[k7 + l] = i;
+                    }
+                }
+
+                j += k1;
+            }
+        }
+
+        k += l1;
+        j = l5;
+        l += surface->width2;
+        l2 += i3;
+    }
+}
+
+void surface_draw_string_right(Surface *surface, char *text, int x, int y,
+                               int font, int colour) {
+    surface_draw_string(surface, text, x - surface_text_width(text, font), y,
+                        font, colour);
+}
+
+void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
+                                int font, int colour) {
+    surface_draw_string(surface, text,
+                        x - (int)(surface_text_width(text, font) / 2), y, font,
+                        colour);
+}
+
+void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
+                            int font, int colour, int max) {
+    int width = 0;
+    int8_t *font_data = game_fonts[font];
+    int start = 0;
+    int end = 0;
+    int text_length = strlen(text);
+
+    for (int i = 0; i < text_length; i++) {
+        if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
+            i += 4;
+        } else if (text[i] == '~' && i + 4 < text_length &&
+                   text[i + 4] == '~') {
+            i += 4;
+        } else {
+            width += font_data[character_width[(unsigned)text[i]] + 7];
+        }
+
+        if (text[i] == ' ') {
+            end = i;
+        }
+
+        if (text[i] == '%') {
+            end = i;
+            width = 1000;
+        }
+
+        if (width > max) {
+            if (end <= start) {
+                end = i;
+            }
+
+            char sliced[(end - start) + 1];
+            sliced[end - start] = '\0';
+            strncpy(sliced, text + start, end - start);
+            surface_draw_string_centre(surface, sliced, x, y, font, colour);
+
+            width = 0;
+            start = i = end + 1;
+
+            y += surface_text_height(font);
+        }
+    }
+
+    if (width > 0) {
+        char sliced[(text_length - start) + 1];
+        strncpy(sliced, text + start, text_length - start);
+        surface_draw_string_centre(surface, sliced, x, y, font, colour);
+    }
+}
+
+void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
+                         int colour) {
+    int8_t *font_data = game_fonts[font];
+    int text_length = strlen(text);
+
+    for (int i = 0; i < text_length; i++) {
+        if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
+            int start = i + 1;
+            int end = i + 4;
+            char sliced[(end - start) + 1];
+            strncpy(sliced, text + start, end - start);
+
+            int j = 0;
+
+            while (sliced[j]) {
+                sliced[j] = tolower(sliced[j]);
+                j++;
+            }
+
+            if (strcmp(sliced, "red") == 0) {
+                colour = 0xff0000;
+            } else if (strcmp(sliced, "lre") == 0) {
+                colour = 0xff9040;
+            } else if (strcmp(sliced, "yel") == 0) {
+                colour = 0xffff00;
+            } else if (strcmp(sliced, "gre") == 0) {
+                colour = 0x00ff00;
+            } else if (strcmp(sliced, "blu") == 0) {
+                colour = 0x0000ff;
+            } else if (strcmp(sliced, "cya") == 0) {
+                colour = 0x00ffff;
+            } else if (strcmp(sliced, "mag") == 0) {
+                colour = 0xff00ff;
+            } else if (strcmp(sliced, "whi") == 0) {
+                colour = 0xffffff;
+            } else if (strcmp(sliced, "bla") == 0) {
+                colour = 0;
+            } else if (strcmp(sliced, "dre") == 0) {
+                colour = 0xc00000;
+            } else if (strcmp(sliced, "ora") == 0) {
+                colour = 0xff9040;
+            } else if (strcmp(sliced, "ran") == 0) {
+                float r = (float)rand() / (float)RAND_MAX;
+                colour = (int)(r * (float)0xffffff);
+            } else if (strcmp(sliced, "or1") == 0) {
+                colour = 0xffb000;
+            } else if (strcmp(sliced, "or2") == 0) {
+                colour = 0xff7000;
+            } else if (strcmp(sliced, "or3") == 0) {
+                colour = 0xff3000;
+            } else if (strcmp(sliced, "gr1") == 0) {
+                colour = 0xc0ff00;
+            } else if (strcmp(sliced, "gr2") == 0) {
+                colour = 0x80ff00;
+            } else if (strcmp(sliced, "gr3") == 0) {
+                colour = 0x40ff00;
+            }
+
+            i += 4;
+        } else if (text[i] == '~' && i + 4 < text_length &&
+                   text[i + 4] == '~') {
+            char c = text[i + 1];
+            char c1 = text[i + 2];
+            char c2 = text[i + 3];
+
+            if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' &&
+                c2 <= '9') {
+                int start = i + 1;
+                int end = i + 4;
+                char sliced[(end - start) + 1];
+                sliced[end - start] = '\0';
+                strncpy(sliced, text + start, end - start);
+                x = atoi(sliced);
+            }
+
+            i += 4;
+        } else {
+            int width = character_width[(unsigned)text[i]];
+
+            if (surface->logged_in && colour != 0) {
+                surface_draw_character(surface, width, x + 1, y, 0, font_data);
+                surface_draw_character(surface, width, x, y + 1, 0, font_data);
+            }
+
+            surface_draw_character(surface, width, x, y, colour, font_data);
+
+            x += font_data[width + 7];
+        }
+    }
+}
+
+void surface_draw_character(Surface *surface, int width, int x, int y,
+                            int colour, int8_t *font) {
+    int i1 = x + font[width + 5];
+    int j1 = y - font[width + 6];
+    int k1 = font[width + 3];
+    int l1 = font[width + 4];
+    int i2 = font[width] * 16384 + font[width + 1] * 128 + font[width + 2];
+    int j2 = i1 + j1 * surface->width2;
+    int k2 = surface->width2 - k1;
+    int l2 = 0;
+
+    if (j1 < surface->bounds_top_y) {
+        int i3 = surface->bounds_top_y - j1;
+        l1 -= i3;
+        j1 = surface->bounds_top_y;
+        i2 += i3 * k1;
+        j2 += i3 * surface->width2;
+    }
+
+    if (j1 + l1 >= surface->bounds_bottom_y) {
+        l1 -= j1 + l1 - surface->bounds_bottom_y + 1;
+    }
+
+    if (i1 < surface->bounds_top_x) {
+        int j3 = surface->bounds_top_x - i1;
+        k1 -= j3;
+        i1 = surface->bounds_top_x;
+        i2 += j3;
+        j2 += j3;
+        l2 += j3;
+        k2 += j3;
+    }
+
+    if (i1 + k1 >= surface->bounds_bottom_x) {
+        int k3 = i1 + k1 - surface->bounds_bottom_x + 1;
+        k1 -= k3;
+        l2 += k3;
+        k2 += k3;
+    }
+
+    if (k1 > 0 && l1 > 0) {
+        surface_plot_letter(surface->pixels, font, colour, i2, j2, k1, l1, k2,
+                            l2);
+    }
+}
+
+void surface_plot_letter(uint32_t *dest, int8_t *font, int i, int j, int k,
+                         int l, int i1, int j1, int k1) {
+    int l1 = -(l >> 2);
+
+    l = -(l & 3);
+
+    for (int i2 = -i1; i2 < 0; i2++) {
+        for (int j2 = l1; j2 < 0; j2++) {
+            if (font[j++] != 0) {
+                dest[k++] = i;
+            } else {
+                k++;
+            }
+
+            if (font[j++] != 0) {
+                dest[k++] = i;
+            } else {
+                k++;
+            }
+
+            if (font[j++] != 0) {
+                dest[k++] = i;
+            } else {
+                k++;
+            }
+
+            if (font[j++] != 0) {
+                dest[k++] = i;
+            } else {
+                k++;
+            }
+        }
+
+        for (int k2 = l; k2 < 0; k2++) {
+            if (font[j++] != 0) {
+                dest[k++] = i;
+            } else {
+                k++;
+            }
+        }
+
+        k += j1;
+        j += k1;
+    }
+}
+
+int surface_text_height(int font_id) {
+    switch (font_id) {
+    case 0:
+        return 12;
+    case 1:
+        return 14;
+    case 2:
+        return 14;
+    case 3:
+        return 15;
+    case 4:
+        return 15;
+    case 5:
+        return 19;
+    case 6:
+        return 24;
+    case 7:
+        return 29;
+    default:
+        return surface_text_height_font(font_id);
+    }
+}
+
+int surface_text_height_font(int font_id) {
+    if (font_id == 0) {
+        return game_fonts[font_id][8] - 2;
+    }
+
+    return game_fonts[font_id][8] - 1;
+}
+
+int surface_text_width(char *text, int font_id) {
+    int total = 0;
+    int8_t *font = game_fonts[font_id];
+    int text_length = strlen(text);
+
+    for (int i = 0; i < text_length; i++) {
+        if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
+            i += 4;
+        } else if (text[i] == '~' && i + 4 < text_length &&
+                   text[i + 4] == '~') {
+            i += 4;
+        } else {
+            total += font[character_width[(unsigned)text[i]] + 7];
+        }
+    }
+
+    return total;
+}
+
+void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
+                       char **tabs, int tabs_length, int selected) {
+    int tab_width = width / tabs_length;
+    int offset_x = 0;
+
+    for (int i = 0; i < tabs_length; i += 1) {
+        int tab_colour = selected == i ? LIGHT_GREY : DARK_GREY;
+
+        surface_draw_box_alpha(surface, x + offset_x, y, tab_width, height,
+                               tab_colour, 128);
+
+        surface_draw_string_centre(surface, tabs[i],
+                                   x + offset_x + (tab_width / 2), y + 16,
+                                   4, BLACK);
+
+        if (i > 0) {
+            surface_draw_line_vert(surface, x + offset_x, y, height, BLACK);
+        }
+
+        offset_x += tab_width;
+    }
+
+    surface_draw_line_horiz(surface, x, y + height, width, BLACK);
 }
