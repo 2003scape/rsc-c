@@ -29,11 +29,9 @@ void game_model_new(GameModel *game_model) {
 void game_model_from2(GameModel *game_model, int num_vertices, int num_faces) {
     game_model_new(game_model);
     game_model_allocate(game_model, num_vertices, num_faces);
-    game_model->face_trans_state_thing = malloc(num_faces * sizeof(int *));
 
-    for (int i = 0; i < num_faces; i++) {
-        game_model->face_trans_state_thing[i] = malloc(sizeof(int));
-    }
+    game_model->face_trans_state_thing =
+        malloc(num_faces * sizeof(*game_model->face_trans_state_thing));
 }
 
 void game_model_from2a(GameModel *game_model, GameModel **pieces, int count) {
@@ -77,11 +75,9 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
     offset += 2;
 
     game_model_allocate(game_model, num_vertices, num_faces);
-    game_model->face_trans_state_thing = malloc(num_faces * sizeof(int *));
 
-    for (int i = 0; i < num_faces; i++) {
-        game_model->face_trans_state_thing[i] = malloc(sizeof(int));
-    }
+    game_model->face_trans_state_thing =
+        malloc(num_faces * sizeof(*game_model->face_trans_state_thing));
 
     for (int i = 0; i < num_vertices; i++) {
         game_model->vertex_x[i] = get_signed_short(data, offset);
@@ -275,7 +271,8 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
 
     if (trans_state) {
         /* TODO check for existing one and free? */
-        game_model->face_trans_state_thing = malloc(num_faces * sizeof(int *));
+        game_model->face_trans_state_thing =
+            malloc(num_faces * sizeof(*game_model->face_trans_state_thing));
     }
 
     for (int i = 0; i < count; i++) {
@@ -313,34 +310,9 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
             game_model->normal_magnitude[dst_f] =
                 source->normal_magnitude[src_f];
 
-            if (trans_state) {
-                if (count > 1) {
-                    int source_trans_length =
-                        sizeof(source->face_trans_state_thing[src_f]) /
-                        sizeof(int *);
-
-                    game_model->face_trans_state_thing[dst_f] =
-                        malloc((source_trans_length + 1) * sizeof(int));
-
-                    game_model->face_trans_state_thing[dst_f][0] = i;
-
-                    for (int j = 0; j < source_trans_length; j++) {
-                        game_model->face_trans_state_thing[dst_f][j + 1] =
-                            source->face_trans_state_thing[src_f][j];
-                    }
-                } else {
-                    int source_trans_length =
-                        sizeof(source->face_trans_state_thing[src_f]) /
-                        sizeof(int *);
-
-                    game_model->face_trans_state_thing[dst_f] =
-                        malloc(source_trans_length * sizeof(int));
-
-                    for (int j = 0; j < source_trans_length; j++) {
-                        game_model->face_trans_state_thing[dst_f][j] =
-                            source->face_trans_state_thing[src_f][j];
-                    }
-                }
+            if (trans_state && count <= 1) {
+                game_model->face_trans_state_thing[dst_f][0] =
+                    source->face_trans_state_thing[src_f][0];
             }
         }
     }

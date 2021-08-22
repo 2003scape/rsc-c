@@ -3,6 +3,7 @@
 int main(int argc, char **argv) {
     init_game_model_global();
     init_scene_global();
+    init_surface_global();
 
     /*
     char formatted[21];
@@ -23,4 +24,6 @@ int main(int argc, char **argv) {
     char formatted[255];
     format_confirm_amount(2147483544, formatted);
     printf("%s\n", formatted);
+
+    printf("%s\n", CHAR_SET);
 }

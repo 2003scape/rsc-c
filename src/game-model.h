@@ -65,7 +65,7 @@ typedef struct GameModel {
     int autocommit;
     int magic;
     int max_faces;
-    int **face_trans_state_thing;
+    int (*face_trans_state_thing)[1];
     int *face_bound_left;
     int *face_bound_right;
     int *face_bound_bottom;

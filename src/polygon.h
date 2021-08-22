@@ -1,6 +1,8 @@
 #ifndef _H_POLYGON
 #define _H_POLYGON
 
+#include "game-model.h"
+
 typedef struct Polygon {
     int min_plane_x;
     int min_plane_y;
@@ -8,7 +10,7 @@ typedef struct Polygon {
     int max_plane_y;
     int min_z;
     int max_z;
-    // GameModel model;
+    GameModel *model;
     int face;
     int depth;
     int normal_x;
