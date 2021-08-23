@@ -4,10 +4,6 @@ int an_int_346;
 int an_int_347;
 int an_int_348;
 
-void init_surface_global() {
-    game_fonts = malloc(50 * sizeof(int8_t *));
-}
-
 int rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
 
 void create_font(int8_t *buffer, int id) { game_fonts[id] = buffer; }

@@ -9,6 +9,10 @@
 #include "surface.h"
 #include "utility.h"
 
+#define VERTEX_COUNT 40
+#define RAMP_COUNT 50
+#define MOUSE_PICKED_MAX 100
+
 #define COLOUR_TRANSPARENT 12345678
 
 extern int scene_frustum_max_x;
@@ -33,9 +37,8 @@ typedef struct Scene {
     GameModel *models;
     GameModel *view;
     uint32_t *raster;
-    int ramp_count;
-    int *gradient_base;
-    int **gradient_ramps;
+    int gradient_base[RAMP_COUNT];
+    int gradient_ramps[RAMP_COUNT][256];
     int *an_int_array_377;
     int texture_count;
     int8_t **texture_colours_used;
@@ -50,12 +53,12 @@ typedef struct Scene {
     Scanline *scanlines;
     int min_y;
     int max_y;
-    int *planeX;
-    int *planeY;
-    int *vertexShade;
-    int *vertexX;
-    int *vertexY;
-    int *vertexZ;
+    int plane_x[VERTEX_COUNT];
+    int plane_y[VERTEX_COUNT];
+    int vertex_shade[VERTEX_COUNT];
+    int vertex_x[VERTEX_COUNT];
+    int vertex_y[VERTEX_COUNT];
+    int vertex_z[VERTEX_COUNT];
     int interlace;
     int new_start;
     int new_end;
@@ -63,9 +66,8 @@ typedef struct Scene {
     int mouse_x;
     int mouse_y;
     int mouse_picked_count;
-    int mouse_picked_max;
-    GameModel **mouse_picked_models;
-    int *mouse_picked_faces;
+    GameModel *mouse_picked_models[MOUSE_PICKED_MAX];
+    int mouse_picked_faces[MOUSE_PICKED_MAX];
     int width;
     int clip_x;
     int clip_y;
@@ -91,7 +93,36 @@ typedef struct Scene {
     int *sprite_translate_x;
 } Scene;
 
-void scene_new(Scene *scene, Surface *surface, int max_model_count,
+void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int sprite_count);
+void scene_texture_scanline(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
+                            int l, int i1, int j1, int k1, int l1, int i2,
+                            int j2, int k2, int l2);
+void scene_texture_translucent_scanline(uint32_t *ai, uint32_t *ai1, int i,
+                                        int j, int k, int l, int i1, int j1,
+                                        int k1, int l1, int i2, int j2, int k2,
+                                        int l2);
+void scene_texture_back_translucent_scanline(uint32_t *ai, int i, int j, int k,
+                                             uint32_t *ai1, int l, int i1,
+                                             int j1, int k1, int l1, int i2,
+                                             int j2, int k2, int l2, int i3);
+void scene_texture_scanline2(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
+                             int l, int i1, int j1, int k1, int l1, int i2,
+                             int j2, int k2, int l2);
+void scene_texture_translucent_scanline2(uint32_t *ai, uint32_t *ai1, int i,
+                                         int j, int k, int l, int i1, int j1,
+                                         int k1, int l1, int i2, int j2, int k2,
+                                         int l2);
+void scene_texture_back_translucent_scanline2(uint32_t *ai, int i, int j, int k,
+                                              uint32_t *ai1, int l, int i1,
+                                              int j1, int k1, int l1, int i2,
+                                              int j2, int k2, int l2, int i3);
+void scene_gradient_scanline(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
+                             int l, int i1);
+void scene_texture_gradient_scanline(uint32_t *ai, int i, int j, int k,
+                                     uint32_t *ai1, int l, int i1);
+void scene_gradient_scanline2(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
+                              int l, int j1);
+int rgb(int i, int j, int k);
 
 #endif

@@ -25,7 +25,7 @@ typedef struct Surface Surface;
 extern int an_int_346;
 extern int an_int_347;
 extern int an_int_348;
-static int8_t **game_fonts;
+static int8_t *game_fonts[50];
 static int character_width[256];
 
 typedef struct Surface {
@@ -62,7 +62,6 @@ typedef struct Surface {
     mudclient *mud;
 } Surface;
 
-void init_surface_global();
 int rgb_to_int(int r, int g, int b);
 void create_font(int8_t *buffer, int id);
 

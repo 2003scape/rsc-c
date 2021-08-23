@@ -15,7 +15,6 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 int main(int argc, char **argv) {
     srand(0);
 
-    init_surface_global();
     init_utility_global();
 
     /*
