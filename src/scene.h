@@ -1,7 +1,10 @@
 #ifndef _H_SCENE
 #define _H_SCENE
 
+#include <math.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "game-model.h"
 #include "polygon.h"
@@ -22,7 +25,7 @@ extern int scene_frustum_min_y;
 extern int scene_frustum_far_z;
 extern int scene_frustum_near_z;
 
-static uint64_t texture_count_loaded;
+static int64_t texture_count_loaded;
 
 typedef struct Scene {
     int last_visible_polygons_count;
@@ -34,12 +37,12 @@ typedef struct Scene {
     int wide_band;
     int model_count;
     int max_model_count;
-    GameModel *models;
+    GameModel **models;
     GameModel *view;
     uint32_t *raster;
     int gradient_base[RAMP_COUNT];
     int gradient_ramps[RAMP_COUNT][256];
-    int *an_int_array_377;
+    int32_t *an_int_array_377;
     int texture_count;
     int8_t **texture_colours_used;
     uint32_t **texture_colour_list;
@@ -50,7 +53,7 @@ typedef struct Scene {
     uint32_t **texture_colours_64;
     uint32_t **texture_colours_128;
     Surface *surface;
-    Scanline *scanlines;
+    Scanline **scanlines;
     int min_y;
     int max_y;
     int plane_x[VERTEX_COUNT];
@@ -124,5 +127,34 @@ void scene_texture_gradient_scanline(uint32_t *ai, int i, int j, int k,
 void scene_gradient_scanline2(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
                               int l, int j1);
 int rgb(int i, int j, int k);
+void scene_add_model(Scene *scene, GameModel *model);
+void scene_remove_model(Scene *scene, GameModel *model);
+void scene_dispose(Scene *scene);
+void scene_clear(Scene *scene);
+void scene_reduce_sprites(Scene *scene, int i);
+int scene_add_sprite(Scene *scene, int n, int x, int z, int y, int w, int h,
+                     int tag);
+void scene_set_local_player(Scene *scene, int i);
+void scene_set_sprite_translate_x(Scene *scene, int i, int n);
+void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
+                      int clip_y, int width, int view_distance);
+void scene_polygons_q_sort(Scene *scene, Polygon **polygons, int low,
+                           int high);
+void scene_polygons_intersect_sort(Scene *scene, int step, Polygon **polygons,
+                                   int count);
+int scene_polygons_order(Scene *scene, Polygon **polygons, int start, int end);
+void scene_set_frustum(Scene *scene, int i, int j, int k);
+void scene_render(Scene *scene);
+void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
+                              uint32_t *ai, uint32_t *ai1, uint32_t *ai2,
+                              GameModel *game_model, int pid);
+void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
+                     uint32_t *ai1, uint32_t *ai2, int l,
+                     GameModel *game_model);
+void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
+                      int roll, int distance);
+void scene_initialise_polygon_3d(Scene *scene, int i);
+void scene_initialise_polygon_2d(Scene *scene, int i);
+int scene_heuristic_polygon(Polygon *polygon, Polygon *polygon_1);
 
 #endif
