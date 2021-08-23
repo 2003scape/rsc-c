@@ -5,12 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Surface Surface;
+
 #include "mudclient.h"
 #include "utility.h"
 
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
+/* TODO colours.h */
 #define BLACK 0
 #define DARK_GREY 0xa0a0a0
 #define LIGHT_GREY 0xdcdcdc
@@ -24,7 +27,6 @@ extern int an_int_347;
 extern int an_int_348;
 static int8_t **game_fonts;
 static int character_width[256];
-static int sin_cos_cache[512];
 
 typedef struct Surface {
     int limit;

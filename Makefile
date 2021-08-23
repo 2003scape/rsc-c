@@ -1,10 +1,10 @@
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
 CFLAGS = -fPIE -Wall
-LFLAGS = -lm -lSDL
+LDFLAGS = -lm -lSDL
 
 mudclient: $(OBJ)
-	cc -o $@ $^ $(LFLAGS)
+	cc -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f src/*.o

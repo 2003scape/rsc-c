@@ -1,5 +1,20 @@
 #include "utility.h"
 
+int sin_cos_512[512];
+int sin_cos_2048[2048];
+
+void init_utility_global() {
+    for (int i = 0; i < 256; i++) {
+        sin_cos_512[i] = (int)(sin((double)i * 0.02454369) * 32768);
+        sin_cos_512[i + 256] = (int)(cos((double)i * 0.02454369) * 32768);
+    }
+
+    for (int i = 0; i < 1024; i++) {
+        sin_cos_2048[i] = (int)(sin((double)i * 0.00613592315) * 32768);
+        sin_cos_2048[i + 1024] = (int)(cos((double)i * 0.00613592315) * 32768);
+    }
+}
+
 void charrev(char *s, int l) {
     int end = l - 1;
 

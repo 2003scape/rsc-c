@@ -1,17 +1,5 @@
 #include "game-model.h"
 
-void init_game_model_global() {
-    for (int i = 0; i < 256; i++) {
-        sine9[i] = (int)(sin((double)i * 0.02454369) * 32768);
-        sine9[i + 256] = (int)(cos((double)i * 0.02454369) * 32768);
-    }
-
-    for (int i = 0; i < 1024; i++) {
-        sine11[i] = (int)(sin((double)i * 0.00613592315) * 32768);
-        sine11[i + 1024] = (int)(cos((double)i * 0.00613592315) * 32768);
-    }
-}
-
 void game_model_new(GameModel *game_model) {
     game_model->transform_state = 1;
     game_model->visible = 1;
@@ -568,8 +556,8 @@ void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
                                int pitch) {
     for (int i = 0; i < game_model->num_vertices; i++) {
         if (pitch != 0) {
-            int sin = sine9[pitch];
-            int cos = sine9[pitch + 256];
+            int sin = sin_cos_512[pitch];
+            int cos = sin_cos_512[pitch + 256];
 
             int x = (game_model->vertex_transformed_y[i] * sin +
                      game_model->vertex_transformed_x[i] * cos) >>
@@ -584,8 +572,8 @@ void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
         }
 
         if (yaw != 0) {
-            int sin = sine9[yaw];
-            int cos = sine9[yaw + 256];
+            int sin = sin_cos_512[yaw];
+            int cos = sin_cos_512[yaw + 256];
 
             int y = (game_model->vertex_transformed_y[i] * cos -
                      game_model->vertex_transformed_z[i] * sin) >>
@@ -600,8 +588,8 @@ void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
         }
 
         if (roll != 0) {
-            int sin = sine9[roll];
-            int cos = sine9[roll + 256];
+            int sin = sin_cos_512[roll];
+            int cos = sin_cos_512[roll + 256];
 
             int x = (game_model->vertex_transformed_z[i] * sin +
                      game_model->vertex_transformed_x[i] * cos) >>
@@ -952,18 +940,18 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
     int roll_cos = 0;
 
     if (camera_yaw != 0) {
-        yaw_sin = sine11[camera_yaw];
-        yaw_cos = sine11[camera_yaw + 1024];
+        yaw_sin = sin_cos_2048[camera_yaw];
+        yaw_cos = sin_cos_2048[camera_yaw + 1024];
     }
 
     if (camera_roll != 0) {
-        roll_sin = sine11[camera_roll];
-        roll_cos = sine11[camera_roll + 1024];
+        roll_sin = sin_cos_2048[camera_roll];
+        roll_cos = sin_cos_2048[camera_roll + 1024];
     }
 
     if (camera_pitch != 0) {
-        pitch_sin = sine11[camera_pitch];
-        pitch_cos = sine11[camera_pitch + 1024];
+        pitch_sin = sin_cos_2048[camera_pitch];
+        pitch_cos = sin_cos_2048[camera_pitch + 1024];
     }
 
     for (int i = 0; i < game_model->num_vertices; i++) {

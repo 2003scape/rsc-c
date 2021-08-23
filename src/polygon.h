@@ -1,6 +1,8 @@
 #ifndef _H_POLYGON
 #define _H_POLYGON
 
+typedef struct Polygon Polygon;
+
 #include "game-model.h"
 
 typedef struct Polygon {

@@ -2,6 +2,7 @@
 #define _H_UTILITY
 
 #include <ctype.h>
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -10,7 +11,10 @@
 #define MAX_USER_LENGTH 12
 #define MAX_CONFIRM_LENGTH 40
 
-static const int BITMASK[] = {
+extern int sin_cos_512[512];
+extern int sin_cos_2048[2048];
+
+static int BITMASK[] = {
     0,          1,          3,         7,         15,        31,
     63,         127,        255,       511,       1023,      2047,
     4095,       8191,       16383,     32767,     65535,     0x1ffff,
@@ -18,6 +22,7 @@ static const int BITMASK[] = {
     0xffffff,   0x1ffffff,  0x3ffffff, 0x7ffffff, 0xfffffff, 0x1fffffff,
     0x3fffffff, 0x7fffffff, -1};
 
+void init_utility_global();
 void charrev(char *s, int l);
 void strtrim(char *s);
 

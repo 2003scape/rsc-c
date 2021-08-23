@@ -6,11 +6,6 @@ int an_int_348;
 
 void init_surface_global() {
     game_fonts = malloc(50 * sizeof(int8_t *));
-
-    for (int i = 0; i < 256; i++) {
-        sin_cos_cache[i] = (int)(sin((double)i * 0.02454369)) * 32768;
-        sin_cos_cache[i + 256] = (int)(cos((double)i * 0.02454369)) * 32768;
-    }
 }
 
 int rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
@@ -1419,8 +1414,8 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
 
     rotation &= 0xff;
 
-    int i4 = sin_cos_cache[rotation] * scale;
-    int j4 = sin_cos_cache[rotation + 256] * scale;
+    int i4 = sin_cos_512[rotation] * scale;
+    int j4 = sin_cos_512[rotation + 256] * scale;
     int k4 = x + ((j2 * i4 + i2 * j4) >> 22);
     int l4 = y + ((j2 * j4 - i2 * i4) >> 22);
     int i5 = x + ((j3 * i4 + i3 * j4) >> 22);

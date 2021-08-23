@@ -3,17 +3,13 @@
 
 #define COLOUR_TRANSPARENT 12345678
 
-#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef struct GameModel GameModel;
+
 #include "scene.h"
 #include "utility.h"
-
-static int sine9[512];
-static int sine11[2048];
-
-void init_game_model_global();
 
 typedef struct GameModel {
     int num_vertices;
