@@ -25,7 +25,7 @@ extern int scene_frustum_min_y;
 extern int scene_frustum_far_z;
 extern int scene_frustum_near_z;
 
-static int64_t texture_count_loaded;
+static int64_t scene_texture_count_loaded;
 
 typedef struct Scene {
     int last_visible_polygons_count;
@@ -51,7 +51,9 @@ typedef struct Scene {
     uint32_t **texture_pixels;
     int8_t *texture_back_transparent;
     uint32_t **texture_colours_64;
+    int length_64;
     uint32_t **texture_colours_128;
+    int length_128;
     Surface *surface;
     Scanline **scanlines;
     int min_y;
@@ -156,5 +158,21 @@ void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
 void scene_initialise_polygon_3d(Scene *scene, int i);
 void scene_initialise_polygon_2d(Scene *scene, int i);
 int scene_heuristic_polygon(Polygon *polygon, Polygon *polygon_1);
+void scene_allocate_textures(Scene *scene, int count, int length_64,
+                             int length_128);
+void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
+                          uint32_t *colours, int wide128);
+void scene_prepare_texture(Scene *scene, int id);
+void scene_set_texture_pixels(Scene *scene, int id);
+void scene_scroll_texture(Scene *scene, int id);
+int scene_method302(Scene *scene, int i);
+void scene_set_light_from3(Scene *scene, int x, int y, int z);
+void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
+                           int y, int z);
+int scene_method306(int i, int j, int k, int l, int i1);
+int scene_method307(int i, int j, int k, int l, int flag);
+int scene_method308(int i, int j, int k, int flag);
+int scene_intersect(int *ai, int *ai1, int *ai2, int *ai3, int ai_length,
+                    int ai2_length);
 
 #endif

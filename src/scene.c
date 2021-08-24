@@ -3403,10 +3403,8 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     scene->texture_count = count;
     scene->texture_colours_used = malloc(count * sizeof(int8_t *));
     scene->texture_colour_list = malloc(count * sizeof(uint32_t *));
-    scene->texture_dimension = new int32Array(count);
-    scene->texture_loaded_number = [];
-    scene->texture_loaded_number.length = count;
-    scene->texture_loaded_number.fill(null);
+    scene->texture_dimension = malloc(count * sizeof(int));
+    scene->texture_loaded_number = malloc(count * sizeof(int64_t));
     scene->texture_back_transparent = malloc(count);
     scene->texture_pixels = malloc(count * sizeof(uint32_t *));
     scene_texture_count_loaded = 0;
@@ -3416,12 +3414,741 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     }
 
     // 64x64 rgba
-    scene->texture_colours64 = [];
-    scene->texture_colours64.length = something7;
-    scene->texture_colours64.fill(null);
+    scene->texture_colours_64 = malloc(length_64 * sizeof(uint32_t *));
+    scene->length_64 = length_64;
 
     // 128x128 rgba
-    scene->texture_colours128 = [];
-    scene->texture_colours128.length = something11;
-    scene->texture_colours128.fill(null);
+    scene->texture_colours_128 = malloc(length_128 * sizeof(uint32_t *));
+    scene->length_128 = length_128;
+}
+
+void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
+                          uint32_t *colours, int wide128) {
+    scene->texture_colours_used[id] = colour_idx;
+    scene->texture_colour_list[id] = colours;
+
+    // is 1 if the scene->texture is 128+ pixels wide, 0 if <128
+    scene->texture_dimension[id] = wide128;
+
+    scene->texture_loaded_number[id] = 0;
+    scene->texture_back_transparent[id] = 0;
+    scene->texture_pixels[id] = NULL;
+
+    scene_prepare_texture(scene, id);
+}
+
+void scene_prepare_texture(Scene *scene, int id) {
+    if (id < 0) {
+        return;
+    }
+
+    scene_texture_count_loaded++;
+    scene->texture_loaded_number[id] = scene_texture_count_loaded;
+
+    if (scene->texture_pixels[id] != NULL) {
+        return;
+    }
+
+    if (scene->texture_dimension[id] == 0) {
+        // is 64 pixels wide
+        for (int j = 0; j < scene->length_64; j++) {
+            if (scene->texture_colours_64[j] == NULL) {
+                scene->texture_colours_64[j] =
+                    malloc(128 * 128 * sizeof(uint32_t));
+                scene->texture_pixels[id] = scene->texture_colours_64[j];
+                scene_set_texture_pixels(scene, id);
+                return;
+            }
+        }
+
+        // almost as large as exemplar's nas storage
+        int64_t GIGALONG = 1 << 30;
+        int wut = 0;
+
+        for (int k1 = 0; k1 < scene->texture_count; k1++) {
+            if (k1 != id && scene->texture_dimension[k1] == 0 &&
+                scene->texture_pixels[k1] != NULL &&
+                scene->texture_loaded_number[k1] < GIGALONG) {
+                GIGALONG = scene->texture_loaded_number[k1];
+                wut = k1;
+            }
+        }
+
+        scene->texture_pixels[id] = scene->texture_pixels[wut];
+        scene->texture_pixels[wut] = NULL;
+        scene_set_texture_pixels(scene, id);
+        return;
+    }
+
+    // is 128 wide
+    for (int k = 0; k < scene->length_128; k++) {
+        if (scene->texture_colours_128[k] == NULL) {
+            scene->texture_colours_128[k] =
+                malloc(256 * 256 * sizeof(uint32_t));
+            scene->texture_pixels[id] = scene->texture_colours_128[k];
+            scene_set_texture_pixels(scene, id);
+            return;
+        }
+    }
+
+    // 1G 2G 3G... 4G?
+    int64_t GIGALONG = 1 << 30;
+    int wat = 0;
+
+    for (int i2 = 0; i2 < scene->texture_count; i2++) {
+        if (i2 != id && scene->texture_dimension[i2] == 1 &&
+            scene->texture_pixels[i2] != NULL &&
+            scene->texture_loaded_number[i2] < GIGALONG) {
+            GIGALONG = scene->texture_loaded_number[i2];
+            wat = i2;
+        }
+    }
+
+    scene->texture_pixels[id] = scene->texture_pixels[wat];
+    scene->texture_pixels[wat] = NULL;
+    scene_set_texture_pixels(scene, id);
+}
+
+void scene_set_texture_pixels(Scene *scene, int id) {
+    int texture_width = 0;
+
+    if (scene->texture_dimension[id] == 0) {
+        texture_width = 64;
+    } else {
+        texture_width = 128;
+    }
+
+    uint32_t *colours = scene->texture_pixels[id];
+    int colour_count = 0;
+
+    for (int x = 0; x < texture_width; x++) {
+        for (int y = 0; y < texture_width; y++) {
+            int colour =
+                scene->texture_colour_list[id][scene->texture_colours_used
+                                                   [id][y + x * texture_width] &
+                                               0xff];
+
+            colour &= 0xf8f8ff;
+
+            if (colour == 0) {
+                colour = 1;
+            } else if (colour == 0xf800ff) {
+                colour = 0;
+                scene->texture_back_transparent[id] = 1;
+            }
+
+            colours[colour_count++] = colour;
+        }
+    }
+
+    for (int i1 = 0; i1 < colour_count; i1++) {
+        uint32_t colour = colours[i1];
+
+        colours[colour_count + i1] = (colour - (colour >> 3)) & 0xf8f8ff;
+        colours[colour_count * 2 + i1] = (colour - (colour >> 2)) & 0xf8f8ff;
+
+        colours[colour_count * 3 + i1] =
+            (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
+    }
+}
+
+void scene_scroll_texture(Scene *scene, int id) {
+    if (scene->texture_pixels[id] == NULL) {
+        return;
+    }
+
+    uint32_t *colours = scene->texture_pixels[id];
+
+    for (int i = 0; i < 64; i++) {
+        int k = i + 4032;
+        int l = colours[k];
+
+        for (int j1 = 0; j1 < 63; j1++) {
+            colours[k] = colours[k - 64];
+            k -= 64;
+        }
+
+        scene->texture_pixels[id][k] = l;
+    }
+
+    int c = 4096;
+
+    for (int i1 = 0; i1 < c; i1++) {
+        int k1 = colours[i1];
+        colours[c + i1] = (k1 - (k1 >> 3)) & 0xf8f8ff;
+        colours[c * 2 + i1] = (k1 - (k1 >> 2)) & 0xf8f8ff;
+        colours[c * 3 + i1] = (k1 - (k1 >> 2) - (k1 >> 3)) & 0xf8f8ff;
+    }
+}
+
+int scene_method302(Scene *scene, int i) {
+    if (i == COLOUR_TRANSPARENT) {
+        return 0;
+    }
+
+    scene_prepare_texture(scene, i);
+
+    if (i >= 0) {
+        return scene->texture_pixels[i][0];
+    }
+
+    if (i < 0) {
+        i = -(i + 1);
+
+        int j = (i >> 10) & 0x1f;
+        int k = (i >> 5) & 0x1f;
+        int l = i & 0x1f;
+
+        return (j << 19) + (k << 11) + (l << 3);
+    }
+
+    return 0;
+}
+
+void scene_set_light_from3(Scene *scene, int x, int y, int z) {
+    if (x == 0 && y == 0 && z == 0) {
+        x = 32;
+    }
+
+    for (int i = 0; i < scene->model_count; i++) {
+        game_model_set_light_from3(scene->models[i], x, y, z);
+    }
+}
+
+void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
+                           int y, int z) {
+    if (x == 0 && y == 0 && z == 0) {
+        x = 32;
+    }
+
+    for (int i = 0; i < scene->model_count; i++) {
+        game_model_set_light_from5(scene->models[i], ambience, diffuse, x, y,
+                                   z);
+    }
+}
+
+int scene_method306(int i, int j, int k, int l, int i1) {
+    if (l == j) {
+        return i;
+    }
+
+    return i + (((k - i) * (i1 - j)) / (l - j));
+}
+
+int scene_method307(int i, int j, int k, int l, int flag) {
+    if ((flag && i <= k) || i < k) {
+        if (i > l) {
+            return 1;
+        }
+
+        if (j > k) {
+            return 1;
+        }
+
+        if (j > l) {
+            return 1;
+        }
+
+        return !flag;
+    }
+
+    if (i < l) {
+        return 1;
+    }
+
+    if (j < k) {
+        return 1;
+    }
+
+    if (j < l) {
+        return 1;
+    }
+
+    return flag;
+}
+
+int scene_method308(int i, int j, int k, int flag) {
+    if ((flag && i <= k) || i < k) {
+        if (j > k) {
+            return 1;
+        }
+
+        return !flag;
+    }
+
+    if (j < k) {
+        return 1;
+    }
+
+    return flag;
+}
+
+int scene_intersect(int *ai, int *ai1, int *ai2, int *ai3, int ai_length,
+                    int ai2_length) {
+    int i = ai_length;
+    int j = ai2_length;
+    int8_t byte0 = 0;
+    int i20;
+    int k20 = (i20 = ai1[0]);
+    int k = 0;
+    int j20;
+    int l20 = (j20 = ai3[0]);
+    int i1 = 0;
+
+    for (int i21 = 1; i21 < i; i21++) {
+        if (ai1[i21] < i20) {
+            i20 = ai1[i21];
+            k = i21;
+        } else if (ai1[i21] > k20) {
+            k20 = ai1[i21];
+        }
+    }
+
+    for (int j21 = 1; j21 < j; j21++) {
+        if (ai3[j21] < j20) {
+            j20 = ai3[j21];
+            i1 = j21;
+        } else if (ai3[j21] > l20) {
+            l20 = ai3[j21];
+        }
+    }
+
+    if (j20 >= k20) {
+        return 0;
+    }
+
+    if (i20 >= l20) {
+        return 0;
+    }
+
+    int l = 0;
+    int j1 = 0;
+    int flag = 0;
+
+    if (ai1[k] < ai3[i1]) {
+        for (l = k; ai1[l] < ai3[i1]; l = (l + 1) % i)
+            ;
+        for (; ai1[k] < ai3[i1]; k = (k - 1 + i) % i)
+            ;
+
+        int k1 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                 ai1[k], ai3[i1]);
+
+        int k6 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                 ai[l], ai1[l], ai3[i1]);
+
+        int l10 = ai2[i1];
+        flag = (k1 < l10) | (k6 < l10);
+
+        if (scene_method308(k1, k6, l10, flag)) {
+            return 1;
+        }
+
+        j1 = (i1 + 1) % j;
+        i1 = (i1 - 1 + j) % j;
+
+        if (k == l) {
+            byte0 = 1;
+        }
+    } else {
+        for (j1 = i1; ai3[j1] < ai1[k]; j1 = (j1 + 1) % j)
+            ;
+        for (; ai3[i1] < ai1[k]; i1 = (i1 - 1 + j) % j)
+            ;
+
+        int l1 = ai[k];
+
+        int i11 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j], ai2[i1],
+                                  ai3[i1], ai1[k]);
+
+        int l15 = scene_method306(ai2[(j1 - 1 + j) % j], ai3[(j1 - 1 + j) % j],
+                                  ai2[j1], ai3[j1], ai1[k]);
+
+        flag = (l1 < i11) | (l1 < l15);
+
+        if (scene_method308(i11, l15, l1, !flag)) {
+            return 1;
+        }
+
+        l = (k + 1) % i;
+        k = (k - 1 + i) % i;
+
+        if (i1 == j1) {
+            byte0 = 2;
+        }
+    }
+
+    while (byte0 == 0) {
+        if (ai1[k] < ai1[l]) {
+            if (ai1[k] < ai3[i1]) {
+                if (ai1[k] < ai3[j1]) {
+                    int i2 = ai[k];
+
+                    int l6 = scene_method306(ai[(l - 1 + i) % i],
+                                             ai1[(l - 1 + i) % i], ai[l],
+                                             ai1[l], ai1[k]);
+
+                    int j11 =
+                        scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                        ai2[i1], ai3[i1], ai1[k]);
+
+                    int i16 = scene_method306(ai2[(j1 - 1 + j) % j],
+                                              ai3[(j1 - 1 + j) % j], ai2[j1],
+                                              ai3[j1], ai1[k]);
+
+                    if (scene_method307(i2, l6, j11, i16, flag)) {
+                        return 1;
+                    }
+
+                    k = (k - 1 + i) % i;
+
+                    if (k == l) {
+                        byte0 = 1;
+                    }
+                } else {
+                    int j2 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i],
+                                             ai[k], ai1[k], ai3[j1]);
+
+                    int i7 = scene_method306(ai[(l - 1 + i) % i],
+                                             ai1[(l - 1 + i) % i], ai[l],
+                                             ai1[l], ai3[j1]);
+
+                    int k11 =
+                        scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                        ai2[i1], ai3[i1], ai3[j1]);
+
+                    int j16 = ai2[j1];
+
+                    if (scene_method307(j2, i7, k11, j16, flag)) {
+                        return 1;
+                    }
+
+                    j1 = (j1 + 1) % j;
+
+                    if (i1 == j1) {
+                        byte0 = 2;
+                    }
+                }
+            } else if (ai3[i1] < ai3[j1]) {
+                int k2 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i],
+                                         ai[k], ai1[k], ai3[i1]);
+
+                int j7 =
+                    scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                    ai[l], ai1[l], ai3[i1]);
+
+                int l11 = ai2[i1];
+
+                int k16 = scene_method306(ai2[(j1 - 1 + j) % j],
+                                          ai3[(j1 - 1 + j) % j], ai2[j1],
+                                          ai3[j1], ai3[i1]);
+
+                if (scene_method307(k2, j7, l11, k16, flag)) {
+                    return 1;
+                }
+
+                i1 = (i1 - 1 + j) % j;
+
+                if (i1 == j1) {
+                    byte0 = 2;
+                }
+            } else {
+                int l2 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i],
+                                         ai[k], ai1[k], ai3[j1]);
+
+                int k7 =
+                    scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                    ai[l], ai1[l], ai3[j1]);
+
+                int i12 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                          ai2[i1], ai3[i1], ai3[j1]);
+
+                int l16 = ai2[j1];
+
+                if (scene_method307(l2, k7, i12, l16, flag)) {
+                    return 1;
+                }
+
+                j1 = (j1 + 1) % j;
+
+                if (i1 == j1) {
+                    byte0 = 2;
+                }
+            }
+        } else if (ai1[l] < ai3[i1]) {
+            if (ai1[l] < ai3[j1]) {
+                int i3 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i],
+                                         ai[k], ai1[k], ai1[l]);
+
+                int l7 = ai[l];
+
+                int j12 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                          ai2[i1], ai3[i1], ai1[l]);
+
+                int i17 = scene_method306(ai2[(j1 - 1 + j) % j],
+                                          ai3[(j1 - 1 + j) % j], ai2[j1],
+                                          ai3[j1], ai1[l]);
+
+                if (scene_method307(i3, l7, j12, i17, flag)) {
+                    return 1;
+                }
+
+                l = (l + 1) % i;
+
+                if (k == l) {
+                    byte0 = 1;
+                }
+            } else {
+                int j3 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i],
+                                         ai[k], ai1[k], ai3[j1]);
+
+                int i8 =
+                    scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                    ai[l], ai1[l], ai3[j1]);
+
+                int k12 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                          ai2[i1], ai3[i1], ai3[j1]);
+
+                int j17 = ai2[j1];
+
+                if (scene_method307(j3, i8, k12, j17, flag)) {
+                    return 1;
+                }
+
+                j1 = (j1 + 1) % j;
+
+                if (i1 == j1) {
+                    byte0 = 2;
+                }
+            }
+        } else if (ai3[i1] < ai3[j1]) {
+            int k3 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                     ai1[k], ai3[i1]);
+
+            int j8 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                     ai[l], ai1[l], ai3[i1]);
+
+            int l12 = ai2[i1];
+
+            int k17 =
+                scene_method306(ai2[(j1 - 1 + j) % j], ai3[(j1 - 1 + j) % j],
+                                ai2[j1], ai3[j1], ai3[i1]);
+
+            if (scene_method307(k3, j8, l12, k17, flag)) {
+                return 1;
+            }
+
+            i1 = (i1 - 1 + j) % j;
+
+            if (i1 == j1) {
+                byte0 = 2;
+            }
+        } else {
+            int l3 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                     ai1[k], ai3[j1]);
+
+            int k8 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                     ai[l], ai1[l], ai3[j1]);
+
+            int i13 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                      ai2[i1], ai3[i1], ai3[j1]);
+
+            int l17 = ai2[j1];
+
+            if (scene_method307(l3, k8, i13, l17, flag)) {
+                return 1;
+            }
+
+            j1 = (j1 + 1) % j;
+
+            if (i1 == j1) {
+                byte0 = 2;
+            }
+        }
+    }
+
+    while (byte0 == 1) {
+        if (ai1[k] < ai3[i1]) {
+            if (ai1[k] < ai3[j1]) {
+                int i4 = ai[k];
+                int j13 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                          ai2[i1], ai3[i1], ai1[k]);
+
+                int i18 = scene_method306(ai2[(j1 - 1 + j) % j],
+                                          ai3[(j1 - 1 + j) % j], ai2[j1],
+                                          ai3[j1], ai1[k]);
+
+                return scene_method308(j13, i18, i4, !flag);
+            }
+
+            int j4 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                     ai1[k], ai3[j1]);
+
+            int l8 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                     ai[l], ai1[l], ai3[j1]);
+
+            int k13 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                      ai2[i1], ai3[i1], ai3[j1]);
+
+            int j18 = ai2[j1];
+
+            if (scene_method307(j4, l8, k13, j18, flag)) {
+                return 1;
+            }
+
+            j1 = (j1 + 1) % j;
+
+            if (i1 == j1) {
+                byte0 = 0;
+            }
+        } else if (ai3[i1] < ai3[j1]) {
+            int k4 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                     ai1[k], ai3[i1]);
+
+            int i9 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                     ai[l], ai1[l], ai3[i1]);
+
+            int l13 = ai2[i1];
+
+            int k18 =
+                scene_method306(ai2[(j1 - 1 + j) % j], ai3[(j1 - 1 + j) % j],
+                                ai2[j1], ai3[j1], ai3[i1]);
+
+            if (scene_method307(k4, i9, l13, k18, flag)) {
+                return 1;
+            }
+
+            i1 = (i1 - 1 + j) % j;
+
+            if (i1 == j1) {
+                byte0 = 0;
+            }
+        } else {
+            int l4 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                     ai1[k], ai3[j1]);
+
+            int j9 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                     ai[l], ai1[l], ai3[j1]);
+
+            int i14 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                      ai2[i1], ai3[i1], ai3[j1]);
+
+            int l18 = ai2[j1];
+
+            if (scene_method307(l4, j9, i14, l18, flag)) {
+                return 1;
+            }
+
+            j1 = (j1 + 1) % j;
+
+            if (i1 == j1) {
+                byte0 = 0;
+            }
+        }
+    }
+
+    while (byte0 == 2) {
+        if (ai3[i1] < ai1[k]) {
+            if (ai3[i1] < ai1[l]) {
+                int i5 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i],
+                                         ai[k], ai1[k], ai3[i1]);
+
+                int k9 =
+                    scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                    ai[l], ai1[l], ai3[i1]);
+
+                int j14 = ai2[i1];
+
+                return scene_method308(i5, k9, j14, flag);
+            }
+
+            int j5 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                     ai1[k], ai1[l]);
+
+            int l9 = ai[l];
+
+            int k14 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                      ai2[i1], ai3[i1], ai1[l]);
+
+            int i19 =
+                scene_method306(ai2[(j1 - 1 + j) % j], ai3[(j1 - 1 + j) % j],
+                                ai2[j1], ai3[j1], ai1[l]);
+
+            if (scene_method307(j5, l9, k14, i19, flag)) {
+                return 1;
+            }
+
+            l = (l + 1) % i;
+
+            if (k == l) {
+                byte0 = 0;
+            }
+        } else if (ai1[k] < ai1[l]) {
+            int k5 = ai[k];
+
+            int i10 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i],
+                                      ai[l], ai1[l], ai1[k]);
+
+            int l14 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                      ai2[i1], ai3[i1], ai1[k]);
+
+            int j19 =
+                scene_method306(ai2[(j1 - 1 + j) % j], ai3[(j1 - 1 + j) % j],
+                                ai2[j1], ai3[j1], ai1[k]);
+
+            if (scene_method307(k5, i10, l14, j19, flag)) {
+                return 1;
+            }
+
+            k = (k - 1 + i) % i;
+
+            if (k == l) {
+                byte0 = 0;
+            }
+        } else {
+            int l5 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k],
+                                     ai1[k], ai1[l]);
+
+            int j10 = ai[l];
+
+            int i15 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
+                                      ai2[i1], ai3[i1], ai1[l]);
+
+            int k19 =
+                scene_method306(ai2[(j1 - 1 + j) % j], ai3[(j1 - 1 + j) % j],
+                                ai2[j1], ai3[j1], ai1[l]);
+
+            if (scene_method307(l5, j10, i15, k19, flag)) {
+                return 1;
+            }
+
+            l = (l + 1) % i;
+
+            if (k == l) {
+                byte0 = 0;
+            }
+        }
+    }
+
+    if (ai1[k] < ai3[i1]) {
+        int i6 = ai[k];
+
+        int j15 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j], ai2[i1],
+                                  ai3[i1], ai1[k]);
+
+        int l19 = scene_method306(ai2[(j1 - 1 + j) % j], ai3[(j1 - 1 + j) % j],
+                                  ai2[j1], ai3[j1], ai1[k]);
+
+        return scene_method308(j15, l19, i6, !flag);
+    }
+
+    int j6 = scene_method306(ai[(k + 1) % i], ai1[(k + 1) % i], ai[k], ai1[k],
+                             ai3[i1]);
+
+    int k10 = scene_method306(ai[(l - 1 + i) % i], ai1[(l - 1 + i) % i], ai[l],
+                              ai1[l], ai3[i1]);
+
+    int k15 = ai2[i1];
+
+    return scene_method308(j6, k10, k15, flag);
 }
