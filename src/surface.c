@@ -4,7 +4,7 @@ int an_int_346;
 int an_int_347;
 int an_int_348;
 
-int rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
+int surface_rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
 
 void create_font(int8_t *buffer, int id) { game_fonts[id] = buffer; }
 
@@ -2455,9 +2455,8 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
         surface_draw_box_alpha(surface, x + offset_x, y, tab_width, height,
                                tab_colour, 128);
 
-        surface_draw_string_centre(surface, tabs[i],
-                                   x + offset_x + (tab_width / 2), y + 16,
-                                   4, BLACK);
+        surface_draw_string_centre(
+            surface, tabs[i], x + offset_x + (tab_width / 2), y + 16, 4, BLACK);
 
         if (i > 0) {
             surface_draw_line_vert(surface, x + offset_x, y, height, BLACK);

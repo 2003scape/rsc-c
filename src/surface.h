@@ -18,10 +18,6 @@ typedef struct Surface Surface;
 #define DARK_GREY 0xa0a0a0
 #define LIGHT_GREY 0xdcdcdc
 
-#define CHAR_SET                                                               \
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567\
-89!\"£$%^&*()-_=+[{]};:'@#~,<.>/?\\| "
-
 extern int an_int_346;
 extern int an_int_347;
 extern int an_int_348;
@@ -62,7 +58,7 @@ typedef struct Surface {
     mudclient *mud;
 } Surface;
 
-int rgb_to_int(int r, int g, int b);
+int surface_rgb_to_int(int r, int g, int b);
 void create_font(int8_t *buffer, int id);
 
 void surface_new(Surface *surface, int width, int height, int limit,

@@ -11,6 +11,12 @@
 #define MAX_USER_LENGTH 12
 #define MAX_CONFIRM_LENGTH 40
 
+#define CHAR_SET                                                               \
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567\
+89!\"£$%^&*()-_=+[{]};:'@#~,<.>/?\\| "
+
+#define CHAR_SET_LENGTH 95
+
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
 

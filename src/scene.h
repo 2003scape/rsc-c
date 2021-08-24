@@ -157,6 +157,7 @@ void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
                       int roll, int distance);
 void scene_initialise_polygon_3d(Scene *scene, int i);
 void scene_initialise_polygon_2d(Scene *scene, int i);
+int scene_separate_polygon(Polygon *polygon, Polygon *polygon_1);
 int scene_heuristic_polygon(Polygon *polygon, Polygon *polygon_1);
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128);
