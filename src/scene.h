@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct Scene Scene;
+
 #include "game-model.h"
 #include "polygon.h"
 #include "scanline.h"

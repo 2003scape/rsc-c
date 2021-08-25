@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
     srand(0);
 
     init_utility_global();
+    init_world_global();
 
     /*
     char formatted[21];

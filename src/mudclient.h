@@ -9,6 +9,7 @@ typedef struct mudclient mudclient;
 #include "scene.h"
 #include "surface.h"
 #include "utility.h"
+#include "world.h"
 
 typedef struct mudclient {
 } mudclient;

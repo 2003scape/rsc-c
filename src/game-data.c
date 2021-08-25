@@ -155,6 +155,7 @@ char *game_data_get_string() {
     int end = game_data_string_offset;
 
     char *string = malloc(((start - end) + 1) * sizeof(char));
+    memset(string, '\0', end - start); /* TODO may be able to remove */
     strncpy(string, game_data_data_string + start, end - start);
 
     return string;
@@ -170,9 +171,9 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     game_data_item_count = game_data_get_unsigned_short();
 
-    game_data_item_name = malloc(game_data_item_count * sizeof(char *));
-    game_data_item_description = malloc(game_data_item_count * sizeof(char *));
-    game_data_item_command = malloc(game_data_item_count * sizeof(char *));
+    game_data_item_name = malloc(game_data_item_count * sizeof(char **));
+    game_data_item_description = malloc(game_data_item_count * sizeof(char **));
+    game_data_item_command = malloc(game_data_item_count * sizeof(char **));
     game_data_item_picture = malloc(game_data_item_count * sizeof(int));
     game_data_item_base_price = malloc(game_data_item_count * sizeof(int));
     game_data_item_stackable = malloc(game_data_item_count * sizeof(int));
@@ -246,9 +247,9 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     game_data_npc_count = game_data_get_unsigned_short();
-    game_data_npc_name = malloc(game_data_npc_count * sizeof(char *));
-    game_data_npc_description = malloc(game_data_npc_count * sizeof(char *));
-    game_data_npc_command = malloc(game_data_npc_count * sizeof(char *));
+    game_data_npc_name = malloc(game_data_npc_count * sizeof(char **));
+    game_data_npc_description = malloc(game_data_npc_count * sizeof(char **));
+    game_data_npc_command = malloc(game_data_npc_count * sizeof(char **));
     game_data_npc_attack = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_strength = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_hits = malloc(game_data_npc_count * sizeof(int));
@@ -349,10 +350,10 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     game_data_texture_count = game_data_get_unsigned_short();
-    game_data_texture_name = malloc(game_data_texture_count * sizeof(char *));
+    game_data_texture_name = malloc(game_data_texture_count * sizeof(char **));
 
     game_data_texture_subtype_name =
-        malloc(game_data_texture_count * sizeof(char *));
+        malloc(game_data_texture_count * sizeof(char **));
 
     for (i = 0; i < game_data_texture_count; i++) {
         game_data_texture_name[i] = game_data_get_string();
@@ -365,7 +366,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data_animation_count = game_data_get_unsigned_short();
 
     game_data_animation_name =
-        malloc(game_data_animation_count * sizeof(char *));
+        malloc(game_data_animation_count * sizeof(char **));
 
     game_data_animation_character_colour =
         malloc(game_data_animation_count * sizeof(int));
@@ -380,13 +381,13 @@ void game_data_load_data(int8_t *buffer, int is_members) {
         malloc(game_data_animation_count * sizeof(int));
 
     game_data_object_count = game_data_get_unsigned_short();
-    game_data_object_name = malloc(game_data_object_count * sizeof(char *));
+    game_data_object_name = malloc(game_data_object_count * sizeof(char **));
 
     game_data_object_description =
-        malloc(game_data_object_count * sizeof(char *));
+        malloc(game_data_object_count * sizeof(char **));
 
-    game_data_object_command1 = malloc(game_data_object_count * sizeof(char *));
-    game_data_object_command2 = malloc(game_data_object_count * sizeof(char *));
+    game_data_object_command1 = malloc(game_data_object_count * sizeof(char **));
+    game_data_object_command2 = malloc(game_data_object_count * sizeof(char **));
     game_data_object_model_index = malloc(game_data_object_count * sizeof(int));
     game_data_object_width = malloc(game_data_object_count * sizeof(int));
     game_data_object_height = malloc(game_data_object_count * sizeof(int));
@@ -433,16 +434,16 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data_wall_object_count = game_data_get_unsigned_short();
 
     game_data_wall_object_name =
-        malloc(game_data_wall_object_count * sizeof(char *));
+        malloc(game_data_wall_object_count * sizeof(char **));
 
     game_data_wall_object_description =
-        malloc(game_data_wall_object_count * sizeof(char *));
+        malloc(game_data_wall_object_count * sizeof(char **));
 
     game_data_wall_object_command1 =
-        malloc(game_data_wall_object_count * sizeof(char *));
+        malloc(game_data_wall_object_count * sizeof(char **));
 
     game_data_wall_object_command2 =
-        malloc(game_data_wall_object_count * sizeof(char *));
+        malloc(game_data_wall_object_count * sizeof(char **));
 
     game_data_wall_object_height =
         malloc(game_data_wall_object_count * sizeof(int));
@@ -526,10 +527,10 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     game_data_projectile_sprite = game_data_get_unsigned_short();
     game_data_spell_count = game_data_get_unsigned_short();
-    game_data_spell_name = malloc(game_data_spell_count * sizeof(char *));
+    game_data_spell_name = malloc(game_data_spell_count * sizeof(char **));
 
     game_data_spell_description =
-        malloc(game_data_spell_count * sizeof(char *));
+        malloc(game_data_spell_count * sizeof(char **));
 
     game_data_spell_level = malloc(game_data_spell_count * sizeof(int));
 
@@ -581,10 +582,10 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     game_data_prayer_count = game_data_get_unsigned_short();
-    game_data_prayer_name = malloc(game_data_prayer_count * sizeof(char *));
+    game_data_prayer_name = malloc(game_data_prayer_count * sizeof(char **));
 
     game_data_prayer_description =
-        malloc(game_data_prayer_count * sizeof(char *));
+        malloc(game_data_prayer_count * sizeof(char **));
 
     game_data_prayer_level = malloc(game_data_prayer_count * sizeof(int));
     game_data_prayer_drain = malloc(game_data_prayer_count * sizeof(int));
