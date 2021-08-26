@@ -20,13 +20,7 @@
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
 
-static int BITMASK[] = {
-    0,          1,          3,         7,         15,        31,
-    63,         127,        255,       511,       1023,      2047,
-    4095,       8191,       16383,     32767,     65535,     0x1ffff,
-    0x3ffff,    0x7ffff,    0xfffff,   0x1fffff,  0x3fffff,  0x7fffff,
-    0xffffff,   0x1ffffff,  0x3ffffff, 0x7ffffff, 0xfffffff, 0x1fffffff,
-    0x3fffffff, 0x7fffffff, -1};
+extern int BITMASK[];
 
 void init_utility_global();
 void charrev(char *s, int l);

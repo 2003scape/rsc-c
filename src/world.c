@@ -1,5 +1,7 @@
 #include "world.h"
 
+int terrain_colours[TERRAIN_COLOUR_COUNT];
+
 void init_world_global() {
     for (int i = 0; i < 64; i++) {
         terrain_colours[i] =
@@ -28,7 +30,8 @@ void world_new(World *world, Scene *scene, Surface *surface) {
     world->base_media_sprite = 750;
 }
 
-static int get_byte_plane_coord(int8_t **plane_array, int x, int y) {
+int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
+                         int y) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return 0;
     }
@@ -50,7 +53,8 @@ static int get_byte_plane_coord(int8_t **plane_array, int x, int y) {
     return plane_array[height][x * REGION_SIZE + y] & 0xff;
 }
 
-static int get_int_plane_coord(int **plane_array, int x, int y) {
+int get_int_plane_coord(int plane_array[PLANE_COUNT][TILE_COUNT], int x,
+                        int y) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return 0;
     }
@@ -536,7 +540,7 @@ int world_get_tile_decoration(World *world, int x, int y) {
 
 void world_set_tile_decoration(World *world, int x, int y, int decoration) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
-        return 0;
+        return;
     }
 
     int8_t height = 0;
@@ -1251,10 +1255,8 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
 
         game_model_set_light_from6(game_model, 1, 40, 48, -50, -10, -50);
 
-        free(world->terrain_models);
-
-        *world->terrain_models = game_model_split(world->parent_model, 0, 0,
-                                                  1536, 1536, 8, 64, 233, 0);
+        game_model_split(world->parent_model, world->terrain_models, 0, 0, 1536,
+                         1536, 8, 64, 233, 0);
 
         for (int j6 = 0; j6 < TERRAIN_COUNT; j6++) {
             scene_add_model(world->scene, world->terrain_models[j6]);
@@ -1306,8 +1308,7 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
                     world->object_adjacency[i2][k2] |= 2;
 
                     if (i2 > 0) {
-                        world_set_object_adjacency_from3(world->surface, i2 - 1,
-                                                         k2, 8);
+                        world_set_object_adjacency_from3(world, i2 - 1, k2, 8);
                     }
                 }
 
@@ -1365,7 +1366,10 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
 
     game_model_set_light_from6(world->parent_model, 0, 60, 24, -50, -10, -50);
 
-    for (int l2 = 0; l2 < 64; l2++) {
+    game_model_split(world->parent_model, world->wall_models[plane], 0, 0, 1536,
+                     1536, 8, 64, 338, 1);
+
+    for (int l2 = 0; l2 < TERRAIN_COUNT; l2++) {
         scene_add_model(world->scene, world->wall_models[plane][l2]);
     }
 
@@ -1744,8 +1748,8 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
 
     game_model_set_light_from6(world->parent_model, 1, 50, 50, -50, -10, -50);
 
-    *world->roof_models[plane] =
-        game_model_split(world->parent_model, 0, 0, 1536, 1536, 8, 64, 169, 1);
+    game_model_split(world->parent_model, world->roof_models[plane], 0, 0, 1536,
+                     1536, 8, 64, 169, 1);
 
     for (int l9 = 0; l9 < TERRAIN_COUNT; l9++) {
         scene_add_model(world->scene, world->roof_models[plane][l9]);
@@ -1888,7 +1892,7 @@ void world_method422(World *world, GameModel *game_model, int i, int j, int k,
 }
 
 int world_get_terrain_height(World *world, int x, int y) {
-    return (get_int_plane_coord(world->terrain_height, x, y) & 0xff) * 3;
+    return (get_byte_plane_coord(world->terrain_height, x, y) & 0xff) * 3;
 }
 
 void world_load_section_from3(World *world, int x, int y, int plane) {

@@ -6,6 +6,7 @@ int scene_frustum_max_y;
 int scene_frustum_min_y;
 int scene_frustum_far_z;
 int scene_frustum_near_z;
+int64_t scene_texture_count_loaded;
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int sprite_count) {

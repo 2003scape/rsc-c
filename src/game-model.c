@@ -344,9 +344,9 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     return game_model->num_faces++;
 }
 
-GameModel **game_model_split(GameModel *game_model, int unused1, int unused2,
-                             int piece_dx, int piece_dz, int rows, int count,
-                             int piece_max_vertices, int pickable) {
+void game_model_split(GameModel *game_model, GameModel **pieces, int unused1,
+                      int unused2, int piece_dx, int piece_dz, int rows,
+                      int count, int piece_max_vertices, int pickable) {
     game_model_commit(game_model);
 
     /* TODO these can be VLAs i think */
@@ -377,7 +377,7 @@ GameModel **game_model_split(GameModel *game_model, int unused1, int unused2,
     }
 
     /* TODO maybe pieces should be a function argument instead */
-    GameModel **pieces = malloc(sizeof(GameModel *) * count);
+    // GameModel **pieces = malloc(sizeof(GameModel *) * count);
 
     for (int i = 0; i < count; i++) {
         if (piece_nV[i] > piece_max_vertices) {
@@ -413,8 +413,6 @@ GameModel **game_model_split(GameModel *game_model, int unused1, int unused2,
     for (int p = 0; p < count; p++) {
         game_model_projection_prepare(pieces[p]);
     }
-
-    return pieces;
 }
 
 void game_model_copy_lighting(GameModel *game_model, GameModel *model,

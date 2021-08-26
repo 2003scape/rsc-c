@@ -850,7 +850,7 @@ void panel_add_list_entry(Panel *panel, int control, int index, char *text) {
     }
 }
 
-void panel_remove_list_entry(Panel *panel, int control, int text, int flag) {
+void panel_remove_list_entry(Panel *panel, int control, char *text, int flag) {
     int j = panel->control_list_entry_count[control]++;
 
     if (j >= panel->control_input_max_len[control]) {
@@ -871,8 +871,8 @@ void panel_remove_list_entry(Panel *panel, int control, int text, int flag) {
     }
 }
 
-void update_text(Panel *panel, int control, char *s) {
-    panel->control_text[control] = s;
+void update_text(Panel *panel, int control, char *text) {
+    panel->control_text[control] = text;
 }
 
 char *panel_get_text(Panel *panel, int control) {

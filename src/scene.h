@@ -27,7 +27,7 @@ extern int scene_frustum_min_y;
 extern int scene_frustum_far_z;
 extern int scene_frustum_near_z;
 
-static int64_t scene_texture_count_loaded;
+extern int64_t scene_texture_count_loaded;
 
 typedef struct Scene {
     int last_visible_polygons_count;

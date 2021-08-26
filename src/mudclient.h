@@ -1,15 +1,26 @@
 #ifndef _H_MUDCLIENT
 #define _H_MUDCLIENT
 
+#include <math.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef struct mudclient mudclient;
 
+#include "colours.h"
 #include "game-model.h"
 #include "scene.h"
 #include "surface.h"
 #include "utility.h"
 #include "world.h"
+
+extern char *short_skill_names[];
+extern char *skill_names[];
+extern char *equipment_stat_names[];
+extern int experience_array[100];
+
+void init_mudclient_global();
 
 typedef struct mudclient {
 } mudclient;
