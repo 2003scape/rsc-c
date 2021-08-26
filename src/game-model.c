@@ -344,11 +344,12 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     return game_model->num_faces++;
 }
 
-GameModel **split(GameModel *game_model, int unused1, int unused2, int piece_dx,
-                  int piece_dz, int rows, int count, int piece_max_vertices,
-                  int pickable) {
+GameModel **game_model_split(GameModel *game_model, int unused1, int unused2,
+                             int piece_dx, int piece_dz, int rows, int count,
+                             int piece_max_vertices, int pickable) {
     game_model_commit(game_model);
 
+    /* TODO these can be VLAs i think */
     int *piece_nV = malloc(count * sizeof(int));
     int *piece_nF = malloc(count * sizeof(int));
 

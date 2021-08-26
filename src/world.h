@@ -2,6 +2,7 @@
 #define _H_WORLD
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "game-data.h"
@@ -57,6 +58,7 @@ typedef struct World {
 
 void world_new(World *world, Scene *scene, Surface *surface);
 static int get_byte_plane_coord(int8_t **wall_array, int x, int y);
+static int get_int_plane_coord(int **plane_array, int x, int y);
 int world_get_wall_east_west(World *world, int x, int y);
 void world_set_terrain_ambience(World *world, int x, int y, int x2, int y2,
                                 int ambience);
@@ -80,6 +82,7 @@ int world_get_tile_direction(World *world, int x, int y);
 int world_get_tile_decoration(World *world, int x, int y);
 int world_get_tile_decoration_from4(World *world, int x, int y, int unused,
                                     int def);
+int world_get_tile_decoration(World *world, int x, int y);
 void world_set_tile_decoration(World *world, int x, int y, int decoration);
 int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
                 int end_x2, int end_y2, int *route_x, int *route_y, int objects,
@@ -87,5 +90,16 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
 void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
                                       int id);
 void world_load_section_from4(World *world, int x, int y, int plane, int flag);
+void world_set_object_adjacency_from3(World *world, int i, int j, int k);
+int world_get_tile_type(World *world, int i, int j, int k);
+void world_add_models(World *world, GameModel **models);
+void world_method422(World *world, GameModel *game_model, int i, int j, int k,
+                     int l, int i1);
+int world_get_terrain_height(World *world, int x, int y);
+void world_load_section_from3(World *world, int x, int y, int plane);
+void world_method425(World *world, int i, int j, int k);
+void world_remove_object(World *world, int x, int y, int id);
+int world_method427(World *world, int i, int j);
+void world_method428(World *world, int i, int j, int k, int l, int i1);
 
 #endif
