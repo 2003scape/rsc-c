@@ -6,22 +6,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <SDL2/SDL.h>
+
 #define K_LEFT -1
 #define K_RIGHT -1
 #define K_F1 -1
 #define K_ENTER -1
 #define K_BACKSPACE -1
 
+#define FONT_COUNT 8
+#define MAX_SOCIAL_LIST_COUNT 100
+#define INPUT_TEXT_LENGTH 20
+#define INPUT_PM_LENGTH 80
+
 typedef struct mudclient mudclient;
 
+#include "bzip.h"
 #include "colours.h"
 #include "game-model.h"
 #include "options.h"
+#include "packet-stream.h"
 #include "scene.h"
 #include "surface.h"
 #include "utility.h"
+#include "version.h"
 #include "world.h"
 
+extern char *font_files[];
 extern char *short_skill_names[];
 extern char *skill_names[];
 extern char *equipment_stat_names[];
@@ -30,6 +41,9 @@ extern int experience_array[100];
 void init_mudclient_global();
 
 typedef struct mudclient {
+    SDL_Window *window;
+    SDL_Surface *screen;
+    SDL_Surface *pixel_surface;
     Options options;
     int middle_button_down;
     int mouse_scroll_delta;
@@ -38,6 +52,7 @@ typedef struct mudclient {
     int mouse_y;
     int mouse_button_down;
     int last_mouse_button_down;
+    uint32_t timings[10];
     int stop_timeout;
     int interlace_timer;
     int loading_progress_percent;
@@ -52,18 +67,40 @@ typedef struct mudclient {
     int key_right;
     int thread_sleep;
     int interlace;
-    char input_text_current[21];
-    char input_pm_current[81];
-    char input_text_final[21];
-    char input_pm_final[81];
+    char input_text_current[INPUT_TEXT_LENGTH + 1];
+    char input_pm_current[INPUT_PM_LENGTH + 1];
+    char input_text_final[INPUT_TEXT_LENGTH + 1];
+    char input_pm_final[INPUT_PM_LENGTH + 1];
     int origin_mouse_x;
     int origin_rotation;
     int camera_rotation;
-    int mobile_input_caret;
     int fps;
+    int client_version;
+    int max_read_tries;
+    int world_full_timeout;
+    int moderator_level;
+    int auto_login_timeout;
+    int message_index;
+    int settings_block_chat;
+    int settings_block_private;
+    int settings_block_trade;
+    int settings_block_duel;
+    int64_t session_id;
+    int friend_list_count;
+    int friend_list_online[MAX_SOCIAL_LIST_COUNT * 2];
+    int64_t friend_list_hashes[MAX_SOCIAL_LIST_COUNT * 2];
+    int ignore_list_count;
+    int64_t ignore_list[MAX_SOCIAL_LIST_COUNT * 2];
+    int message_tokens[MAX_SOCIAL_LIST_COUNT];
+    char *server;
+    int port;
+    int8_t incoming_packet[5000];
+    PacketStream *packet_stream;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
+void mudclient_start_application(mudclient *mud, int width, int height,
+                                 char *title);
 void mudclient_key_pressed(mudclient *mud, int code, char char_code);
 void mudclient_key_released(mudclient *mud, int code);
 void mudclient_mouse_moved(mudclient *mud, int x, int y);
@@ -72,6 +109,16 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button);
 void mudclient_set_target_fps(mudclient *mud, int fps);
 void mudclient_start(mudclient *mud);
 void mudclient_stop(mudclient *mud);
+void mudclient_run(mudclient *mud);
+void mudclient_load_jagex(mudclient *mud);
+void mudclient_draw_loading_screen(mudclient *mud, int percent, char *text);
+void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
+void mudclient_draw_string(mudclient *mud, char *string, int font, int x,
+                           int y);
+void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer);
+int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
+                                 int percent);
+void mudclient_sort_friends(mudclient *mud);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id);
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
@@ -80,7 +127,6 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int tx, int ty);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int tx, int ty);
-
 int main(int argc, char **argv);
 
 #endif

@@ -31,6 +31,18 @@
 
 #include "bzip.h"
 
+char BZIP_HEADER[] = {'B', 'Z', 'h', '1'};
+
+char *bunzip_errors[] = {
+    NULL,
+    "Bad file checksum",
+    "Not bzip data",
+    "Unexpected input EOF",
+    "Unexpected output EOF",
+    "Data error",
+    "Out of memory",
+    "Obsolete (pre 0.9.5) bzip format not supported."};
+
 /* Return the next nnn bits of input.  All reads from the compressed input
    are done through this function.  All reads are big endian */
 static unsigned int get_bits(bunzip_data *bd, char bits_wanted) {
@@ -668,7 +680,7 @@ void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
     bunzip_data *bd;
     int retval;
 
-    if ((retval = start_bunzip(&bd, -1, headered, archive_size)) < 0) {
+    if ((retval = start_bunzip(&bd, -1, headered, archive_size + 4)) < 0) {
         free(headered);
         bzip_fatal(retval);
     }

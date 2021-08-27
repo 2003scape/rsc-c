@@ -64,17 +64,8 @@ typedef struct {
     jmp_buf jmpbuf;
 } bunzip_data;
 
-static const char BZIP_HEADER[] = {'B', 'Z', 'h', '1'};
-
-static char *const bunzip_errors[] = {
-    NULL,
-    "Bad file checksum",
-    "Not bzip data",
-    "Unexpected input EOF",
-    "Unexpected output EOF",
-    "Data error",
-    "Out of memory",
-    "Obsolete (pre 0.9.5) bzip format not supported."};
+extern char BZIP_HEADER[];
+extern char *bunzip_errors[];
 
 void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
                      int archive_size, int offset);

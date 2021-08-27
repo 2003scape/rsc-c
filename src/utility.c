@@ -215,10 +215,14 @@ void decode_username(int64_t encoded, char *decoded) {
 static int32_t hash_file_name(char *file_name) {
     int i = 0;
 
+    char upper_file_name[strlen(file_name) + 1];
+
     while (file_name[i]) {
-        file_name[i] = toupper(file_name[i]);
+        upper_file_name[i] = toupper(file_name[i]);
         i++;
     }
+
+    file_name = upper_file_name;
 
     int file_name_length = i;
     int32_t hash = 0;
