@@ -6,6 +6,8 @@
 
 #include "utility.h"
 
+#define NPC_SPRITE_COUNT 12
+
 extern char *game_data_model_name[5000];
 
 extern int game_data_texture_count;
@@ -40,7 +42,7 @@ extern char **game_data_npc_description;
 extern char **game_data_npc_command;
 extern int *game_data_npc_width;
 extern int *game_data_npc_height;
-extern int *game_data_npc_sprite[12];
+extern int **game_data_npc_sprite;
 extern int *game_data_npc_colour_hair;
 extern int *game_data_npc_colour_top;
 extern int *game_data_npc_color_bottom;
@@ -104,7 +106,7 @@ extern int *game_data_roof_num_vertices;
 extern int game_data_model_count;
 extern int game_data_projectile_sprite;
 
-extern char *game_data_data_string;
+extern int8_t *game_data_data_string;
 extern int8_t *game_data_data_integer;
 extern int game_data_string_offset;
 extern int game_data_offset;

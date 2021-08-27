@@ -34,7 +34,7 @@ char **game_data_npc_description;
 char **game_data_npc_command;
 int *game_data_npc_width;
 int *game_data_npc_height;
-int *game_data_npc_sprite[12];
+int **game_data_npc_sprite;
 int *game_data_npc_colour_hair;
 int *game_data_npc_colour_top;
 int *game_data_npc_color_bottom;
@@ -97,7 +97,7 @@ int *game_data_roof_num_vertices;
 int game_data_model_count;
 int game_data_projectile_sprite;
 
-char *game_data_data_string;
+int8_t *game_data_data_string;
 int8_t *game_data_data_integer; /* TODO use uint8_t */
 int game_data_string_offset;
 int game_data_offset;
@@ -154,17 +154,19 @@ char *game_data_get_string() {
 
     int end = game_data_string_offset;
 
-    char *string = malloc(((start - end) + 1) * sizeof(char));
-    memset(string, '\0', end - start); /* TODO may be able to remove */
-    strncpy(string, game_data_data_string + start, end - start);
+    char *string = malloc(((end - start) + 1) * sizeof(char));
+    memset(string, '\0', end - start);
+    memcpy(string, game_data_data_string + start, end - start);
+
+    game_data_string_offset++;
 
     return string;
 }
 
 void game_data_load_data(int8_t *buffer, int is_members) {
-    game_data_data_string = load_data("string_dat", 0, buffer);
+    game_data_data_string = load_data("string.dat", 0, buffer);
     game_data_string_offset = 0;
-    game_data_data_integer = load_data("integer_dat", 0, buffer);
+    game_data_data_integer = load_data("integer.dat", 0, buffer);
     game_data_offset = 0;
 
     int i = 0;
@@ -255,10 +257,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data_npc_hits = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_defense = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_attackable = malloc(game_data_npc_count * sizeof(int));
-
-    *game_data_npc_sprite =
-        malloc(game_data_npc_count * sizeof(game_data_npc_sprite[0]));
-
+    game_data_npc_sprite = malloc(game_data_npc_count * sizeof(int *));
     game_data_npc_colour_hair = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_colour_top = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_color_bottom = malloc(game_data_npc_count * sizeof(int));
@@ -298,13 +297,13 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data_npc_count; i++) {
-        game_data_npc_sprite[i] = malloc(12 * sizeof(int));
+        game_data_npc_sprite[i] = malloc(NPC_SPRITE_COUNT * sizeof(int));
 
-        for (int i5 = 0; i5 < 12; i5++) {
-            game_data_npc_sprite[i][i5] = game_data_get_unsigned_byte();
+        for (int j = 0; j < NPC_SPRITE_COUNT; j++) {
+            game_data_npc_sprite[i][j] = game_data_get_unsigned_byte();
 
-            if (game_data_npc_sprite[i][i5] == 255) {
-                game_data_npc_sprite[i][i5] = -1;
+            if (game_data_npc_sprite[i][j] == 255) {
+                game_data_npc_sprite[i][j] = -1;
             }
         }
     }

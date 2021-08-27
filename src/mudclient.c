@@ -201,66 +201,18 @@ void mudclient_stop(mudclient *mud) {
     }
 }
 
-void mudclient_run(mudclient *mud) {
-    if (mud->loading_step == 1) {
-        mud->loading_step = 2;
-        mudclient_load_jagex(mud);
-        mudclient_draw_loading_screen(mud, 0, "Loading...");
-        // mudclient_start_game();
-        mud->loading_step = 0;
-    }
-
-    int i = 0;
-    int j = 256;
-    int delay = 1;
-    int i1 = 0;
-
-    for (int j1 = 0; j1 < 10; j1++) {
-        mud->timings[j1] = SDL_GetTicks();
-    }
-}
-
-void mudclient_load_jagex(mudclient *mud) {
-    // fill black rect
-    int8_t *jagex_jag =
-        mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
-
-    if (jagex_jag != NULL) {
-        int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag);
-        free(jagex_jag);
-        // mud->image_logo = mudclient_parse_tga(logo_tga);
-    }
-
-    char font_file[13];
-    sprintf(font_file, "fonts%d.jag", FONTS);
-
-    int8_t *fonts_jag =
-        mudclient_read_data_file(mud, font_file, "Game fonts", 5);
-
-    if (fonts_jag != NULL) {
-        for (int i = 0; i < FONT_COUNT; i++) {
-            create_font(load_data(font_files[i], 0, fonts_jag), i);
-        }
-
-        free(fonts_jag);
-    }
-}
+void mudclient_draw_string(mudclient *mud, char *string, int font, int x,
+                           int y) {}
 
 void mudclient_draw_loading_screen(mudclient *mud, int percent, char *text) {}
 
 void mudclient_show_loading_progress(mudclient *mud, int percent, char *text) {}
 
-void mudclient_draw_string(mudclient *mud, char *string, int font, int x,
-                           int y) {}
-
-/* used for the jagex logo in the loading screen */
-void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer) {}
-
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent) {
     char loading_text[35]; /* max description is 19 */
 
-    sprintf(loading_text, "Loading %s - 0%", description);
+    sprintf(loading_text, "Loading %s - 0%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
 
     int file_length = strlen(file);
@@ -285,7 +237,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                   ((header[4] & 0xff) << 8) +
                                   (header[5] & 0xff);
 
-    sprintf(loading_text, "Loading %s - 5%", description);
+    sprintf(loading_text, "Loading %s - 5%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
 
     int read = 0;
@@ -322,6 +274,85 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     }
 
     return archive_data;
+}
+
+/* used for the jagex logo in the loading screen */
+void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer) {}
+
+void mudclient_load_jagex(mudclient *mud) {
+    // fill black rect
+    int8_t *jagex_jag =
+        mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
+
+    if (jagex_jag != NULL) {
+        int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag);
+        free(jagex_jag);
+        // mud->image_logo = mudclient_parse_tga(logo_tga);
+    }
+
+    char file_name[13];
+    sprintf(file_name, "fonts%d.jag", FONTS);
+
+    int8_t *fonts_jag =
+        mudclient_read_data_file(mud, file_name, "Game fonts", 5);
+
+    if (fonts_jag != NULL) {
+        for (int i = 0; i < FONT_COUNT; i++) {
+            create_font(load_data(font_files[i], 0, fonts_jag), i);
+        }
+
+        free(fonts_jag);
+    }
+}
+
+void mudclient_load_game_config(mudclient *mud) {
+    char file_name[14];
+    sprintf(file_name, "config%d.jag", CONFIG);
+
+    int8_t *config_jag =
+        mudclient_read_data_file(mud, file_name, "Configuration", 10);
+
+    if (config_jag == NULL) {
+        mud->error_loading_data = 1;
+        return;
+    }
+
+    game_data_load_data(config_jag, mud->members);
+
+    //free(config_jag);
+
+    sprintf(file_name, "filter%d.jag", FILTER);
+
+    int8_t *filter_jag =
+        mudclient_read_data_file(mud, file_name, "Chat system", 15);
+
+    if (filter_jag == NULL) {
+        mud->error_loading_data = 1;
+        return;
+    }
+}
+
+void mudclient_start_game(mudclient *mud) {
+    mudclient_load_game_config(mud);
+}
+
+void mudclient_run(mudclient *mud) {
+    if (mud->loading_step == 1) {
+        mud->loading_step = 2;
+        mudclient_load_jagex(mud);
+        mudclient_draw_loading_screen(mud, 0, "Loading...");
+        mudclient_start_game(mud);
+        mud->loading_step = 0;
+    }
+
+    int i = 0;
+    int j = 256;
+    int delay = 1;
+    int i1 = 0;
+
+    for (int j1 = 0; j1 < 10; j1++) {
+        mud->timings[j1] = SDL_GetTicks();
+    }
 }
 
 void mudclient_sort_friends(mudclient *mud) {

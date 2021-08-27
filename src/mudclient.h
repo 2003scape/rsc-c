@@ -75,7 +75,6 @@ typedef struct mudclient {
     int origin_rotation;
     int camera_rotation;
     int fps;
-    int client_version;
     int max_read_tries;
     int world_full_timeout;
     int moderator_level;
@@ -96,6 +95,8 @@ typedef struct mudclient {
     int port;
     int8_t incoming_packet[5000];
     PacketStream *packet_stream;
+    int error_loading_data;
+    int members;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -109,15 +110,17 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button);
 void mudclient_set_target_fps(mudclient *mud, int fps);
 void mudclient_start(mudclient *mud);
 void mudclient_stop(mudclient *mud);
-void mudclient_run(mudclient *mud);
-void mudclient_load_jagex(mudclient *mud);
-void mudclient_draw_loading_screen(mudclient *mud, int percent, char *text);
-void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
 void mudclient_draw_string(mudclient *mud, char *string, int font, int x,
                            int y);
-void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer);
+void mudclient_draw_loading_screen(mudclient *mud, int percent, char *text);
+void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent);
+void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer);
+void mudclient_load_jagex(mudclient *mud);
+void mudclient_load_game_config(mudclient *mud);
+void mudclient_start_game(mudclient *mud);
+void mudclient_run(mudclient *mud);
 void mudclient_sort_friends(mudclient *mud);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id);

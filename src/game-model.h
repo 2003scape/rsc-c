@@ -1,8 +1,6 @@
 #ifndef _H_GAME_MODEL
 #define _H_GAME_MODEL
 
-#define COLOUR_TRANSPARENT 12345678
-
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -10,6 +8,8 @@ typedef struct GameModel GameModel;
 
 #include "scene.h"
 #include "utility.h"
+
+#define COLOUR_TRANSPARENT 12345678
 
 typedef struct GameModel {
     int num_vertices;

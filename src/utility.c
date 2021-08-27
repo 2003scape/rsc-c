@@ -234,20 +234,20 @@ static int32_t hash_file_name(char *file_name) {
     return hash;
 }
 
-static int8_t get_file_hash(int8_t *buffer, int entry) {
+static int32_t get_file_hash(int8_t *buffer, int entry) {
     return (buffer[entry * 10 + 2] & 0xff) * 0x1000000 +
            (buffer[entry * 10 + 3] & 0xff) * 0x10000 +
            (buffer[entry * 10 + 4] & 0xff) * 0x100 +
            (buffer[entry * 10 + 5] & 0xff);
 }
 
-static int8_t get_file_size(int8_t *buffer, int entry) {
+static int get_file_size(int8_t *buffer, int entry) {
     return (buffer[entry * 10 + 6] & 0xff) * 0x10000 +
            (buffer[entry * 10 + 7] & 0xff) * 0x100 +
            (buffer[entry * 10 + 8] & 0xff);
 }
 
-static int8_t get_archive_size(int8_t *buffer, int entry) {
+static int get_archive_size(int8_t *buffer, int entry) {
     return (buffer[entry * 10 + 9] & 0xff) * 0x10000 +
            (buffer[entry * 10 + 10] & 0xff) * 0x100 +
            (buffer[entry * 10 + 11] & 0xff);
@@ -330,7 +330,6 @@ int8_t *load_data(char *file_name, int extra_size, int8_t *archive_data) {
     return unpack_data(file_name, extra_size, archive_data, NULL);
 }
 
-/* formatted max_length is 40 bytes */
 void format_confirm_amount(int amount, char *formatted) {
     sprintf(formatted, "%d", amount);
 
