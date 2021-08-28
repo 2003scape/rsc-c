@@ -26,6 +26,7 @@ typedef struct mudclient mudclient;
 #include "game-model.h"
 #include "options.h"
 #include "packet-stream.h"
+#include "panel.h"
 #include "scene.h"
 #include "surface.h"
 #include "utility.h"
@@ -97,6 +98,24 @@ typedef struct mudclient {
     PacketStream *packet_stream;
     int error_loading_data;
     int members;
+    int sprite_media;
+    int sprite_util;
+    int sprite_item;
+    int sprite_logo;
+    int sprite_projectile;
+    int sprite_texture;
+    int sprite_texture_world;
+    int game_width;
+    int game_height;
+    Surface *surface;
+    Panel *panel_quest_list;
+    Panel *panel_magic;
+    Panel *panel_social_list;
+    int control_list_quest;
+    int control_list_magic;
+    int control_list_social;
+    Scene *scene;
+    World *world;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -119,6 +138,9 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer);
 void mudclient_load_jagex(mudclient *mud);
 void mudclient_load_game_config(mudclient *mud);
+void mudclient_load_media(mudclient *mud);
+void mudclient_load_entities(mudclient *mud);
+void mudclient_load_textures(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_run(mudclient *mud);
 void mudclient_sort_friends(mudclient *mud);

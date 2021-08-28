@@ -3,6 +3,8 @@
 
 #include <string.h>
 
+typedef struct Panel Panel;
+
 #include "surface.h"
 #include "utility.h"
 

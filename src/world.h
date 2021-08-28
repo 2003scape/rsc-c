@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct World World;
+
 #include "game-data.h"
 #include "game-model.h"
 #include "scene.h"

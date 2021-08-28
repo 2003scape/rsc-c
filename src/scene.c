@@ -13,11 +13,14 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->surface = surface;
     scene->max_model_count = model_count;
 
+    scene->model_count = 0;
     scene->clip_near = 5;
     scene->clip_far_3d = 1000;
     scene->clip_far_2d = 1000;
     scene->fog_z_falloff = 20;
     scene->fog_z_distance = 10;
+    scene->wide_band = 0;
+    scene->mouse_picking_active = 0;
     scene->width = 512;
     scene->clip_x = 256;
     scene->clip_y = 192;
@@ -28,10 +31,14 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->raster = surface->pixels;
 
-    scene->models = malloc(model_count * sizeof(GameModel));
-    scene->visible_polygons = malloc(polygon_count * sizeof(Polygon));
+    scene->models = malloc(model_count * sizeof(GameModel *));
+    memset(scene->models, 0, model_count * sizeof(GameModel *));
+
+    scene->visible_polygons_count = 0;
+    scene->visible_polygons = malloc(polygon_count * sizeof(Polygon *));
 
     for (int i = 0; i < polygon_count; i++) {
+        scene->visible_polygons[i] = malloc(sizeof(Polygon));
         polygon_new(scene->visible_polygons[i]);
     }
 
@@ -39,6 +46,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     game_model_from2(view, sprite_count * 2, sprite_count);
     scene->view = view;
 
+    scene->sprite_count = 0;
     scene->sprite_id = malloc(sprite_count * sizeof(int));
     scene->sprite_width = malloc(sprite_count * sizeof(int));
     scene->sprite_height = malloc(sprite_count * sizeof(int));
@@ -3408,6 +3416,8 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     scene->texture_loaded_number = malloc(count * sizeof(int64_t));
     scene->texture_back_transparent = malloc(count);
     scene->texture_pixels = malloc(count * sizeof(uint32_t *));
+    memset(scene->texture_pixels, 0, count * sizeof(uint32_t *));
+
     scene_texture_count_loaded = 0;
 
     for (int i = 0; i < count; i++) {
@@ -3416,10 +3426,12 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
 
     // 64x64 rgba
     scene->texture_colours_64 = malloc(length_64 * sizeof(uint32_t *));
+    memset(scene->texture_colours_64, 0, length_64 * sizeof(uint32_t *));
     scene->length_64 = length_64;
 
     // 128x128 rgba
     scene->texture_colours_128 = malloc(length_128 * sizeof(uint32_t *));
+    memset(scene->texture_colours_128, 0, length_128 * sizeof(uint32_t *));
     scene->length_128 = length_128;
 }
 

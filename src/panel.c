@@ -10,6 +10,8 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->a_boolean219 = 1;
     panel->focus_control_index = -1;
 
+    panel->control_count = 0;
+
     panel->control_shown = malloc(max);
     panel->control_list_scrollbar_handle_dragged = malloc(max);
     panel->control_mask_text = malloc(max);

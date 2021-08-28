@@ -22,13 +22,19 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->height2 = height;
     surface->area = width * height;
     surface->pixels = malloc(width * height * sizeof(uint32_t));
+
     surface->surface_pixels = malloc(limit * sizeof(uint32_t *));
+    memset(surface->surface_pixels, 0, limit * sizeof(uint32_t *));
 
     surface->sprite_translate = malloc(limit);
     memset(surface->sprite_translate, 0, limit);
 
     surface->sprite_colours_used = malloc(limit * sizeof(int8_t *));
-    surface->sprite_colour_list = malloc(limit * sizeof(int *));
+    memset(surface->sprite_colours_used, 0, limit * sizeof(int8_t *));
+
+    surface->sprite_colour_list = malloc(limit * sizeof(uint32_t *));
+    memset(surface->sprite_colour_list, 0, limit * sizeof(int32_t *));
+
     surface->sprite_width = malloc(limit * sizeof(int));
     surface->sprite_height = malloc(limit * sizeof(int));
     surface->sprite_width_full = malloc(limit * sizeof(int));
@@ -415,10 +421,11 @@ void surface_draw_line_alpha(Surface *surface, int i, int j, int x, int y,
 void surface_clear(Surface *surface) {
     for (int i = 0; i < surface->limit; i++) {
         free(surface->surface_pixels[i]);
+        surface->surface_pixels[i] = NULL;
         surface->sprite_width[i] = 0;
         surface->sprite_height[i] = 0;
-        free(surface->sprite_colours_used[i]);
-        free(surface->sprite_colour_list[i]);
+        //free(surface->sprite_colours_used[i]);
+        //free(surface->sprite_colour_list[i]);
     }
 }
 
@@ -456,6 +463,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
         surface->sprite_height[i] =
             get_unsigned_short(index_data, index_offset);
+
         index_offset += 2;
 
         int unknown = index_data[index_offset++] & 0xff;
@@ -499,6 +507,8 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
             }
         }
     }
+
+    free(sprite_data);
 }
 
 void surface_read_sleep_word(Surface *surface, int sprite_id,
@@ -638,14 +648,15 @@ void surface_draw_world(Surface *surface, int sprite_id) {
 }
 
 void surface_load_sprite(Surface *surface, int sprite_id) {
-    if (surface->sprite_colours_used[sprite_id] == NULL) {
+    int8_t *idx = surface->sprite_colours_used[sprite_id];
+
+    if (idx == NULL) {
         return;
     }
 
     int area =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
-    int8_t *idx = surface->sprite_colours_used[sprite_id];
     uint32_t *cols = surface->sprite_colour_list[sprite_id];
     uint32_t *pixels = malloc(area * sizeof(uint32_t));
 
@@ -662,8 +673,10 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
     }
 
     surface->surface_pixels[sprite_id] = pixels;
+
     free(surface->sprite_colours_used[sprite_id]);
-    free(surface->sprite_colour_list[sprite_id]);
+    surface->sprite_colours_used[sprite_id] = NULL;
+    //free(surface->sprite_colour_list[sprite_id]);
 }
 
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
@@ -1306,7 +1319,7 @@ void surface_draw_sprite_alpha_from11a(uint32_t *dest, int8_t *colour_idx,
 
                 dest[size++] =
                     ((((l2 & 0xff00ff) * alpha + (i3 & 0xff00ff) * i2) &
-                      -16711936) +
+                      -0xff0100) +
                      (((l2 & 0xff00) * alpha + (i3 & 0xff00) * i2) &
                       0xff0000)) >>
                     8;
@@ -2469,4 +2482,37 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     }
 
     surface_draw_line_horiz(surface, x, y + height, width, BLACK);
+}
+
+void surface_free_colours(Surface *surface) {
+    int freed_length = 0;
+    void *freed[surface->limit];
+
+    for (int i = 0; i < surface->limit; i++) {
+        uint32_t *colours = surface->sprite_colour_list[i];
+        int found = 0;
+
+        if (colours) {
+            for (int j = 0; j < freed_length; j++) {
+                if (freed[j] == colours) {
+                    found = 1;
+                    break;
+                }
+            }
+        } else {
+            found = 1;
+        }
+
+        if (!found) {
+            free(colours);
+            freed[freed_length++] = colours;
+            surface->sprite_colour_list[i] = NULL;
+        }
+    }
+
+    free(surface->sprite_colours_used);
+    free(surface->sprite_colour_list);
+
+    surface->sprite_colours_used = NULL;
+    surface->sprite_colour_list = NULL;
 }

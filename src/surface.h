@@ -172,5 +172,6 @@ int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
+void surface_free_colours(Surface *surface);
 
 #endif

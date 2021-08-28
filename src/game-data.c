@@ -107,6 +107,7 @@ int game_data_get_model_index(char *name) {
 
     while (name[i]) {
         name[i] = tolower(name[i]);
+        i++;
     }
 
     if (name[0] == 'n' && name[1] == 'a') {
@@ -378,6 +379,38 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     game_data_animation_number =
         malloc(game_data_animation_count * sizeof(int));
+
+    for (i = 0; i < game_data_animation_count; i++) {
+        char *name = game_data_get_string();
+        int j = 0;
+
+        while (name[j]) {
+            name[j] = tolower(name[j]);
+            j++;
+        }
+
+        game_data_animation_name[i] = name;
+    }
+
+    for (i = 0; i < game_data_animation_count; i++) {
+        game_data_animation_character_colour[i] = game_data_get_unsigned_int();
+    }
+
+    for (i = 0; i < game_data_animation_count; i++) {
+        game_data_animation_gender[i] = game_data_get_unsigned_byte();
+    }
+
+    for (i = 0; i < game_data_animation_count; i++) {
+        game_data_animation_has_a[i] = game_data_get_unsigned_byte();
+    }
+
+    for (i = 0; i < game_data_animation_count; i++) {
+        game_data_animation_has_f[i] = game_data_get_unsigned_byte();
+    }
+
+    for (i = 0; i < game_data_animation_count; i++) {
+        game_data_animation_number[i] = game_data_get_unsigned_byte();
+    }
 
     game_data_object_count = game_data_get_unsigned_short();
     game_data_object_name = malloc(game_data_object_count * sizeof(char **));
