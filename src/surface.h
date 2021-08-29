@@ -20,6 +20,8 @@ extern int an_int_348;
 extern int8_t *game_fonts[50];
 extern int character_width[256];
 
+void init_surface_global();
+
 typedef struct Surface {
     int limit;
     int width2;
@@ -33,11 +35,11 @@ typedef struct Surface {
     uint32_t **sprite_colour_list;
     int *sprite_width;
     int *sprite_height;
-    int *sprite_translate_x;
-    int *sprite_translate_y;
     int *sprite_width_full;
     int *sprite_height_full;
     int8_t *sprite_translate;
+    int *sprite_translate_x;
+    int *sprite_translate_y;
     int interlace;
     int logged_in;
     int *an_int_array_340;

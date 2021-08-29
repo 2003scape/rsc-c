@@ -7,6 +7,29 @@ int an_int_348;
 int8_t *game_fonts[50];
 int character_width[256];
 
+void init_surface_global() {
+    character_width[0] = 666;
+
+    for (int i = 1; i < 256; i++) {
+        char *found = strchr(CHAR_SET, (char) i);
+
+        int index;
+
+        if (found == NULL) {
+            index = 74;
+        } else {
+            index = (int)(found - CHAR_SET);
+        }
+
+        if (index == 95) {
+            index -= 1;
+        }
+
+        character_width[i] = index * 9;
+        //printf("%d, %c %d\n", i, (char) i, index);
+    }
+}
+
 int surface_rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
 
 void create_font(int8_t *buffer, int id) { game_fonts[id] = buffer; }
@@ -21,26 +44,21 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->height1 = height;
     surface->height2 = height;
     surface->area = width * height;
-    surface->pixels = malloc(width * height * sizeof(uint32_t));
+    surface->pixels = calloc(width * height, sizeof(uint32_t));
+    surface->surface_pixels = calloc(limit, sizeof(uint32_t *));
+    surface->sprite_colours_used = calloc(limit, sizeof(int8_t *));
+    surface->sprite_colour_list = calloc(limit, sizeof(uint32_t *));
+    surface->sprite_width = calloc(limit, sizeof(int));
+    surface->sprite_height = calloc(limit, sizeof(int));
+    surface->sprite_width_full = calloc(limit, sizeof(int));
+    surface->sprite_height_full = calloc(limit, sizeof(int));
+    surface->sprite_translate = calloc(limit, sizeof(int8_t));
+    surface->sprite_translate_x = calloc(limit, sizeof(int));
+    surface->sprite_translate_y = calloc(limit, sizeof(int));
 
-    surface->surface_pixels = malloc(limit * sizeof(uint32_t *));
-    memset(surface->surface_pixels, 0, limit * sizeof(uint32_t *));
+    surface->logged_in = 0;
+    surface->interlace = 0;
 
-    surface->sprite_translate = malloc(limit);
-    memset(surface->sprite_translate, 0, limit);
-
-    surface->sprite_colours_used = malloc(limit * sizeof(int8_t *));
-    memset(surface->sprite_colours_used, 0, limit * sizeof(int8_t *));
-
-    surface->sprite_colour_list = malloc(limit * sizeof(uint32_t *));
-    memset(surface->sprite_colour_list, 0, limit * sizeof(int32_t *));
-
-    surface->sprite_width = malloc(limit * sizeof(int));
-    surface->sprite_height = malloc(limit * sizeof(int));
-    surface->sprite_width_full = malloc(limit * sizeof(int));
-    surface->sprite_height_full = malloc(limit * sizeof(int));
-    surface->sprite_translate_x = malloc(limit * sizeof(int));
-    surface->sprite_translate_y = malloc(limit * sizeof(int));
     surface->mud = mud;
 }
 
@@ -79,10 +97,12 @@ void surface_draw(Surface *surface) {
         return;
     }
 
-    int area = surface->width1 * surface->height1;
+    memcpy(surface->mud->pixel_surface->pixels, surface->pixels,
+           surface->area * sizeof(uint32_t));
 
-    memcpy(surface->mud->pixel_surface->pixels, surface->pixels, area * sizeof(uint32_t));
-    SDL_BlitSurface(surface->mud->pixel_surface, NULL, surface->mud->screen, NULL);
+    SDL_BlitSurface(surface->mud->pixel_surface, NULL, surface->mud->screen,
+                    NULL);
+
     SDL_UpdateWindowSurface(surface->mud->window);
 }
 
@@ -127,7 +147,7 @@ void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
         bottom = surface->height2 - 1;
     }
 
-    int vert_inc = 1;
+    int8_t vert_inc = 1;
 
     if (surface->interlace) {
         vert_inc = 2;
@@ -195,7 +215,7 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
     int blue = (colour & 0xff) * alpha;
 
     int j3 = surface->width2 - width;
-    int vert_inc = 1;
+    int8_t vert_inc = 1;
 
     if (surface->interlace) {
         vert_inc = 2;
@@ -245,7 +265,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
     int top_green = (colour_top >> 8) & 0xff;
     int top_blue = colour_top & 0xff;
     int i3 = surface->width2 - width;
-    int vert_inc = 1;
+    int8_t vert_inc = 1;
 
     if (surface->interlace) {
         vert_inc = 2;
@@ -300,7 +320,7 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
     }
 
     int j1 = surface->width2 - width;
-    int vert_inc = 1;
+    int8_t vert_inc = 1;
 
     if (surface->interlace) {
         vert_inc = 2;
@@ -433,8 +453,8 @@ void surface_clear(Surface *surface) {
         surface->surface_pixels[i] = NULL;
         surface->sprite_width[i] = 0;
         surface->sprite_height[i] = 0;
-        //free(surface->sprite_colours_used[i]);
-        //free(surface->sprite_colour_list[i]);
+        // free(surface->sprite_colours_used[i]);
+        // free(surface->sprite_colour_list[i]);
     }
 }
 
@@ -450,7 +470,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
     int colour_count = index_data[index_offset++] & 0xff;
 
-    uint32_t *colours = malloc(colour_count * sizeof(uint32_t));
+    uint32_t *colours = calloc(colour_count, sizeof(uint32_t));
     colours[0] = 0xff00ff;
 
     for (int i = 0; i < colour_count - 1; i++) {
@@ -479,7 +499,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
-        surface->sprite_colours_used[i] = malloc(area);
+        surface->sprite_colours_used[i] = calloc(area, sizeof(int8_t));
         surface->sprite_colour_list[i] = colours;
         surface->sprite_width_full[i] = full_width;
         surface->sprite_height_full[i] = full_height;
@@ -588,6 +608,7 @@ void surface_draw_world(Surface *surface, int sprite_id) {
     colour_list[0] = 0xff00ff;
 
     uint32_t ai3[256];
+    memset(ai3, 0, 256 * sizeof(uint32_t));
 
     for (int i1 = 0; i1 < 32768; i1++) {
         uint32_t pixel = pixels[i1];
@@ -687,7 +708,7 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
 
     free(surface->sprite_colours_used[sprite_id]);
     surface->sprite_colours_used[sprite_id] = NULL;
-    //free(surface->sprite_colour_list[sprite_id]);
+    // free(surface->sprite_colour_list[sprite_id]);
 }
 
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
@@ -726,6 +747,11 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
     int w2 = surface->width2 - width;
     int h2 = 0;
 
+    //printf("%d %d\n", sprite_id, surface->width2);
+    //exit(0);
+
+    //printf("%d\n", surface->bounds_top_y);
+
     if (y < surface->bounds_top_y) {
         int j2 = surface->bounds_top_y - y;
         height -= j2;
@@ -759,7 +785,7 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
         return;
     }
 
-    int inc = 1;
+    int8_t inc = 1;
 
     if (surface->interlace) {
         inc = 2;
@@ -771,6 +797,9 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
             height--;
         }
     }
+
+    printf("%d %d %d %d %d\n", sprite_id, width,height,w2,h2);
+    //exit(0);
 
     if (surface->surface_pixels[sprite_id] == NULL) {
         surface_draw_sprite_from10a(surface->pixels,
@@ -851,7 +880,7 @@ void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
         k3 += j4;
     }
 
-    int y_inc = 1;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
         y_inc = 2;
@@ -946,7 +975,7 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
         return;
     }
 
-    int y_inc = 1;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
         y_inc = 2;
@@ -1040,7 +1069,7 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
         l3 += k4;
     }
 
-    int y_inc = 1;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
         y_inc = 2;
@@ -1126,7 +1155,7 @@ void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
         l3 += k4;
     }
 
-    int y_inc = 1;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
         y_inc = 2;
@@ -1204,6 +1233,10 @@ void surface_draw_sprite_from10a(uint32_t *dest, int8_t *colour_idx,
                                  uint32_t *colours, int src_pos, int dest_pos,
                                  int width, int height, int w2, int h2,
                                  int y_inc) {
+    /*
+    printf("%d %d %d %d\n", width,height,w2,h2);
+    exit(0);
+    */
     int l1 = -(width >> 2);
     width = -(width & 3);
 
@@ -2316,6 +2349,10 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
             i += 4;
         } else {
             int width = character_width[(unsigned)text[i]];
+
+            if (text[i] == ' ') {
+                //printf("width %d\n", width);
+            }
 
             if (surface->logged_in && colour != 0) {
                 surface_draw_character(surface, width, x + 1, y, 0, font_data);

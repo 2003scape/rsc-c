@@ -31,8 +31,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->raster = surface->pixels;
 
-    scene->models = malloc(model_count * sizeof(GameModel *));
-    memset(scene->models, 0, model_count * sizeof(GameModel *));
+    scene->models = calloc(model_count, sizeof(GameModel *));
 
     scene->visible_polygons_count = 0;
     scene->visible_polygons = malloc(polygon_count * sizeof(Polygon *));
@@ -47,13 +46,13 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->view = view;
 
     scene->sprite_count = 0;
-    scene->sprite_id = malloc(sprite_count * sizeof(int));
-    scene->sprite_width = malloc(sprite_count * sizeof(int));
-    scene->sprite_height = malloc(sprite_count * sizeof(int));
-    scene->sprite_x = malloc(sprite_count * sizeof(int));
-    scene->sprite_z = malloc(sprite_count * sizeof(int));
-    scene->sprite_y = malloc(sprite_count * sizeof(int));
-    scene->sprite_translate_x = malloc(sprite_count * sizeof(int));
+    scene->sprite_id = calloc(sprite_count, sizeof(int));
+    scene->sprite_width = calloc(sprite_count, sizeof(int));
+    scene->sprite_height = calloc(sprite_count, sizeof(int));
+    scene->sprite_x = calloc(sprite_count, sizeof(int));
+    scene->sprite_z = calloc(sprite_count, sizeof(int));
+    scene->sprite_y = calloc(sprite_count, sizeof(int));
+    scene->sprite_translate_x = calloc(sprite_count, sizeof(int));
 }
 
 void scene_texture_scanline(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
@@ -3464,7 +3463,7 @@ void scene_prepare_texture(Scene *scene, int id) {
         for (int j = 0; j < scene->length_64; j++) {
             if (scene->texture_colours_64[j] == NULL) {
                 scene->texture_colours_64[j] =
-                    malloc(128 * 128 * sizeof(uint32_t));
+                    calloc(128 * 128, sizeof(uint32_t));
 
                 scene->texture_pixels[id] = scene->texture_colours_64[j];
                 scene_set_texture_pixels(scene, id);
@@ -3495,7 +3494,7 @@ void scene_prepare_texture(Scene *scene, int id) {
     for (int k = 0; k < scene->length_128; k++) {
         if (scene->texture_colours_128[k] == NULL) {
             scene->texture_colours_128[k] =
-                malloc(256 * 256 * sizeof(uint32_t));
+                calloc(256 * 256, sizeof(uint32_t));
 
             scene->texture_pixels[id] = scene->texture_colours_128[k];
             scene_set_texture_pixels(scene, id);

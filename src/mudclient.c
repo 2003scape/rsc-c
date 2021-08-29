@@ -49,6 +49,7 @@ void mudclient_new(mudclient *mud) {
     mud->members = 0;
     mud->game_width = mud->applet_width;
     mud->game_height = mud->applet_height - 12;
+    mud->login_timer = 0;
     mud->camera_rotation_time = 0;
     mud->camera_rotation_x = 0;
     mud->camera_rotation_y = 0;
@@ -100,8 +101,6 @@ void mudclient_start_application(mudclient *mud, int width, int height,
                          width, height, SDL_WINDOW_SHOWN);
 
     mud->screen = SDL_GetWindowSurface(mud->window);
-
-    printf("hi %d %d\n", width, height);
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
                                               0x00ff00, 0x0000ff, 0);
@@ -980,6 +979,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
                               mud->game_width, 200);
+
     surface_draw_world(mud->surface, mud->sprite_logo);
 
     x = 9216;
@@ -1488,6 +1488,7 @@ int main(int argc, char **argv) {
     srand(0);
 
     init_utility_global();
+    init_surface_global();
     init_world_global();
     init_mudclient_global();
 
