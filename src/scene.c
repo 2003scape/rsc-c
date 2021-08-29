@@ -3410,13 +3410,12 @@ int scene_heuristic_polygon(Polygon *polygon, Polygon *polygon_1) {
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128) {
     scene->texture_count = count;
-    scene->texture_colours_used = malloc(count * sizeof(int8_t *));
-    scene->texture_colour_list = malloc(count * sizeof(uint32_t *));
-    scene->texture_dimension = malloc(count * sizeof(int));
-    scene->texture_loaded_number = malloc(count * sizeof(int64_t));
-    scene->texture_back_transparent = malloc(count);
-    scene->texture_pixels = malloc(count * sizeof(uint32_t *));
-    memset(scene->texture_pixels, 0, count * sizeof(uint32_t *));
+    scene->texture_colours_used = calloc(count, sizeof(int8_t *));
+    scene->texture_colour_list = calloc(count, sizeof(uint32_t *));
+    scene->texture_dimension = calloc(count, sizeof(int));
+    scene->texture_loaded_number = calloc(count, sizeof(int64_t));
+    scene->texture_back_transparent = calloc(count, sizeof(int8_t));
+    scene->texture_pixels = calloc(count, sizeof(uint32_t *));
 
     scene_texture_count_loaded = 0;
 
@@ -3425,13 +3424,11 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     }
 
     // 64x64 rgba
-    scene->texture_colours_64 = malloc(length_64 * sizeof(uint32_t *));
-    memset(scene->texture_colours_64, 0, length_64 * sizeof(uint32_t *));
+    scene->texture_colours_64 = calloc(length_64, sizeof(uint32_t *));
     scene->length_64 = length_64;
 
     // 128x128 rgba
-    scene->texture_colours_128 = malloc(length_128 * sizeof(uint32_t *));
-    memset(scene->texture_colours_128, 0, length_128 * sizeof(uint32_t *));
+    scene->texture_colours_128 = calloc(length_128, sizeof(uint32_t *));
     scene->length_128 = length_128;
 }
 
@@ -3468,6 +3465,7 @@ void scene_prepare_texture(Scene *scene, int id) {
             if (scene->texture_colours_64[j] == NULL) {
                 scene->texture_colours_64[j] =
                     malloc(128 * 128 * sizeof(uint32_t));
+
                 scene->texture_pixels[id] = scene->texture_colours_64[j];
                 scene_set_texture_pixels(scene, id);
                 return;
@@ -3498,6 +3496,7 @@ void scene_prepare_texture(Scene *scene, int id) {
         if (scene->texture_colours_128[k] == NULL) {
             scene->texture_colours_128[k] =
                 malloc(256 * 256 * sizeof(uint32_t));
+
             scene->texture_pixels[id] = scene->texture_colours_128[k];
             scene_set_texture_pixels(scene, id);
             return;
@@ -3537,9 +3536,8 @@ void scene_set_texture_pixels(Scene *scene, int id) {
     for (int x = 0; x < texture_width; x++) {
         for (int y = 0; y < texture_width; y++) {
             int colour =
-                scene->texture_colour_list[id][scene->texture_colours_used
-                                                   [id][y + x * texture_width] &
-                                               0xff];
+                scene->texture_colour_list[id]
+                [scene->texture_colours_used[id][y + x * texture_width] & 0xff];
 
             colour &= 0xf8f8ff;
 
@@ -3766,6 +3764,7 @@ int scene_intersect(int *ai, int *ai1, int *ai2, int *ai3, int ai_length,
     } else {
         for (j1 = i1; ai3[j1] < ai1[k]; j1 = (j1 + 1) % j)
             ;
+
         for (; ai3[i1] < ai1[k]; i1 = (i1 - 1 + j) % j)
             ;
 
@@ -3984,6 +3983,7 @@ int scene_intersect(int *ai, int *ai1, int *ai2, int *ai3, int ai_length,
         if (ai1[k] < ai3[i1]) {
             if (ai1[k] < ai3[j1]) {
                 int i4 = ai[k];
+
                 int j13 = scene_method306(ai2[(i1 + 1) % j], ai3[(i1 + 1) % j],
                                           ai2[i1], ai3[i1], ai1[k]);
 

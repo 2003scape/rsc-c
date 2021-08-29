@@ -37,7 +37,7 @@ typedef struct Surface {
     int *sprite_translate_y;
     int *sprite_width_full;
     int *sprite_height_full;
-    int *sprite_translate;
+    int8_t *sprite_translate;
     int interlace;
     int logged_in;
     int *an_int_array_340;

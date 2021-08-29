@@ -3,6 +3,12 @@
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
+char *animated_models[] = {
+    "torcha2",      "torcha3",    "torcha4",    "skulltorcha2", "skulltorcha3",
+    "skulltorcha4", "firea2",     "firea3",     "fireplacea2",  "fireplacea3",
+    "firespell2",   "firespell3", "lightning2", "lightning3",   "clawspell2",
+    "clawspell3",   "clawspell4", "clawspell5", "spellcharge2", "spellcharge3"};
+
 char *short_skill_names[] = {
     "Attack",   "Defense",  "Strength", "Hits",      "Ranged",  "Prayer",
     "Magic",    "Cooking",  "Woodcut",  "Fletching", "Fishing", "Firemaking",
@@ -43,6 +49,9 @@ void mudclient_new(mudclient *mud) {
     mud->members = 0;
     mud->game_width = mud->applet_width;
     mud->game_height = mud->applet_height - 12;
+
+    mud->options = malloc(sizeof(Options));
+    options_new(mud->options);
 
     memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
     memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
@@ -170,7 +179,7 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
     mud->mouse_x = x;
     mud->mouse_y = y;
 
-    if (mud->options.middle_click_camera && button == 1) {
+    if (mud->options->middle_click_camera && button == 1) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
         mud->origin_mouse_x = mud->mouse_x;
@@ -225,7 +234,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     FILE *archive_stream = fopen(prefixed_file, "rb");
 
     if (archive_stream == NULL) {
-        fprintf(stderr, "unable to read file: %s\n", prefixed_file);
+        fprintf(stderr, "Unable to read file: %s\n", prefixed_file);
         exit(1);
     }
 
@@ -467,6 +476,7 @@ void mudclient_load_entities(mudclient *mud) {
         }
 
         char file_name[255];
+        memset(file_name, 0, 255);
         sprintf(file_name, "%s.dat", animation_name);
 
         int8_t *animation_dat = load_data(file_name, 0, entity_jag);
@@ -603,6 +613,320 @@ void mudclient_load_textures(mudclient *mud) {
     free(index_dat);
 }
 
+void mudclient_load_maps(mudclient *mud) {
+    mud->world->map_pack =
+        mudclient_read_data_file(mud, "maps" MAPS ".jag", "map", 70);
+
+    if (mud->members) {
+        mud->world->member_map_pack = mudclient_read_data_file(
+            mud, "maps" MAPS ".mem", "members map", 75);
+    }
+
+    mud->world->landscape_pack =
+        mudclient_read_data_file(mud, "land" MAPS ".jag", "landscape", 80);
+
+    if (mud->members) {
+        mud->world->member_landscape_pack = mudclient_read_data_file(
+            mud, "land" MAPS ".mem", "members landscape", 85);
+    }
+}
+
+void mudclient_load_models(mudclient *mud) {
+    for (int i = 0; i < ANIMATED_MODELS_COUNT; i++) {
+        char name_length = strlen(animated_models[i]);
+        char name[name_length + 1];
+        strcpy(name, animated_models[i]);
+        game_data_get_model_index(name);
+    }
+
+    int8_t *models_jag =
+        mudclient_read_data_file(mud, "models" MODELS ".jag", "3d models", 60);
+
+    if (models_jag == NULL) {
+        mud->error_loading_data = 1;
+        return;
+    }
+
+    for (int i = 0; i < game_data_model_count; i++) {
+        char file_name[255];
+        sprintf(file_name, "%s.ob3", game_data_model_name[i]);
+
+        int offset = get_data_file_offset(file_name, models_jag);
+
+        GameModel *game_model = malloc(sizeof(GameModel));
+        // memset(game_model, 0, sizeof(GameModel));
+
+        if (offset != 0) {
+            game_model_from_bytes(game_model, models_jag, offset);
+        } else {
+            game_model_from2(game_model, 1, 1);
+        }
+
+        mud->game_models[i] = game_model;
+
+        if (strcmp(game_data_model_name[i], "giantcrystal") == 0) {
+            mud->game_models[i]->transparent = 1;
+        }
+    }
+
+    free(models_jag);
+}
+
+void mudclient_create_login_panels(mudclient *mud) {
+    mud->panel_login_welcome = malloc(sizeof(Panel));
+    panel_new(mud->panel_login_welcome, mud->surface, 50);
+
+    int x = mud->game_width / 2;
+    int y = 40;
+
+    if (!mud->members) {
+        panel_add_text_centre(mud->panel_login_welcome, x, 200 + y,
+                              "Click on an option", 5, 1);
+
+        panel_add_button_background(mud->panel_login_welcome, x - 100, 240 + y,
+                                    120, 35);
+
+        panel_add_text_centre(mud->panel_login_welcome, x - 100, 240 + y,
+                              "New User", 5, 0);
+
+        mud->control_welcome_new_user = panel_add_button(
+            mud->panel_login_welcome, x - 100, 240 + y, 120, 35);
+
+        panel_add_button_background(mud->panel_login_welcome, x + 100, 240 + y,
+                                    120, 35);
+
+        panel_add_text_centre(mud->panel_login_welcome, x + 100, 240 + y,
+                              "Existing User", 5, 0);
+
+        mud->control_welcome_existing_user = panel_add_button(
+            mud->panel_login_welcome, x + 100, 240 + y, 120, 35);
+    } else {
+        panel_add_text_centre(mud->panel_login_welcome, x, 200 + y,
+                              "Welcome to RuneScape", 4, 1);
+
+        panel_add_text_centre(mud->panel_login_welcome, x, 215 + y,
+                              "You need a members account to use this server",
+                              4, 1);
+
+        panel_add_button_background(mud->panel_login_welcome, x, 250 + y, 200,
+                                    35);
+
+        panel_add_text_centre(mud->panel_login_welcome, x, 250 + y,
+                              "Click here to login", 5, 0);
+
+        mud->control_welcome_existing_user =
+            panel_add_button(mud->panel_login_welcome, x, 250 + y, 200, 35);
+    }
+
+    mud->panel_login_new_user = malloc(sizeof(Panel));
+    panel_new(mud->panel_login_new_user, mud->surface, 50);
+
+    if (!mud->options->account_management) {
+        y = 230;
+
+        if (mud->refer_id == 0) {
+            panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
+                                  "to create an account please go back to the",
+                                  4, 1);
+
+            y += 20;
+
+            panel_add_text_centre(
+                mud->panel_login_new_user, x, y + 8,
+                "www.runescape.com front page, and choose 'create account'", 4,
+                1);
+        } else if (mud->refer_id == 1) {
+            panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
+                                  "to create an account please click on the", 4,
+                                  1);
+
+            y += 20;
+
+            panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
+                                  "'create account' link below the game window",
+                                  4, 1);
+        } else {
+            panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
+                                  "To create an account please go back to the",
+                                  4, 1);
+
+            y += 20;
+
+            panel_add_text_centre(
+                mud->panel_login_new_user, x, y + 8,
+                "runescape front webpage and choose 'create account'", 4, 1);
+        }
+
+        y += 30;
+
+        panel_add_button_background(mud->panel_login_new_user, x, y + 17, 150,
+                                    34);
+        panel_add_text_centre(mud->panel_login_new_user, x, y + 17, "Ok", 5, 0);
+
+        mud->control_login_new_ok =
+            panel_add_button(mud->panel_login_new_user, x, y + 17, 150, 34);
+    } else {
+        y = 70;
+
+        mud->control_register_status = panel_add_text_centre(
+            mud->panel_login_new_user, x, y + 8,
+            "to create an account please enter all the requested details", 4,
+            1);
+
+        int offset_y = y + 25;
+
+        panel_add_button_background(mud->panel_login_new_user, x, offset_y + 17,
+                                    250, 34);
+
+        panel_add_text_centre(mud->panel_login_new_user, x, offset_y + 8,
+                              "Choose a username", 4, 0);
+
+        mud->control_register_user = panel_add_text_input(
+            mud->panel_login_new_user, x, offset_y + 25, 200, 40, 4, 12, 0, 0);
+
+        offset_y += 40;
+
+        panel_add_button_background(mud->panel_login_new_user, x - 115,
+                                    offset_y + 17, 220, 34);
+
+        panel_add_text_centre(mud->panel_login_new_user, x - 115, offset_y + 8,
+                              "Choose a Password", 4, 0);
+
+        mud->control_register_password =
+            panel_add_text_input(mud->panel_login_new_user, x - 115,
+                                 offset_y + 25, 220, 40, 4, 20, 1, 0);
+
+        panel_add_button_background(mud->panel_login_new_user, x + 115,
+                                    offset_y + 17, 220, 34);
+
+        panel_add_text_centre(mud->panel_login_new_user, x + 115, offset_y + 8,
+                              "Confirm Password", 4, 0);
+
+        mud->control_register_confirm_password =
+            panel_add_text_input(mud->panel_login_new_user, x + 115,
+                                 offset_y + 25, 220, 40, 4, 20, 1, 0);
+
+        offset_y += 60;
+
+        mud->control_register_checkbox = panel_add_checkbox(
+            mud->panel_login_new_user, x - 196 - 7, offset_y - 7, 14, 14);
+
+        panel_add_text(mud->panel_login_new_user, x - 181, offset_y,
+                       "I have read and agreed to the terms and conditions", 4,
+                       1);
+
+        offset_y += 15;
+
+        panel_add_text_centre(
+            mud->panel_login_new_user, x, offset_y,
+            "(to view these click the relevant link below this game window)", 4,
+            1);
+
+        offset_y += 20;
+
+        panel_add_button_background(mud->panel_login_new_user, x - 100,
+                                    offset_y + 17, 150, 34);
+
+        panel_add_text_centre(mud->panel_login_new_user, x - 100, offset_y + 17,
+                              "Submit", 5, 0);
+
+        mud->control_register_submit = panel_add_button(
+            mud->panel_login_new_user, x - 100, offset_y + 17, 150, 34);
+
+        panel_add_button_background(mud->panel_login_new_user, x + 100,
+                                    offset_y + 17, 150, 34);
+
+        panel_add_text_centre(mud->panel_login_new_user, x + 100, offset_y + 17,
+                              "Cancel", 5, 0);
+
+        mud->control_register_cancel = panel_add_button(
+            mud->panel_login_new_user, x + 100, offset_y + 17, 150, 34);
+    }
+
+    mud->panel_login_existing_user = malloc(sizeof(Panel));
+    panel_new(mud->panel_login_existing_user, mud->surface, 50);
+
+    y = 230;
+
+    mud->control_login_status =
+        panel_add_text_centre(mud->panel_login_existing_user, x, y - 10,
+                              "Please enter your username and password", 4, 1);
+
+    y += 28;
+
+    panel_add_button_background(mud->panel_login_existing_user, x - 116, y, 200,
+                                40);
+
+    panel_add_text_centre(mud->panel_login_existing_user, x - 116, y - 10,
+                          "Username:", 4, 0);
+
+    mud->control_login_user = panel_add_text_input(
+        mud->panel_login_existing_user, x - 116, y + 10, 200, 40, 4, 12, 0, 0);
+
+    y += 47;
+
+    panel_add_button_background(mud->panel_login_existing_user, x - 66, y, 200,
+                                40);
+
+    panel_add_text_centre(mud->panel_login_existing_user, x - 66, y - 10,
+                          "Password:", 4, 0);
+
+    mud->control_login_password = panel_add_text_input(
+        mud->panel_login_existing_user, x - 66, y + 10, 200, 40, 4, 20, 1, 0);
+
+    y -= 55;
+
+    panel_add_button_background(mud->panel_login_existing_user, x + 154, y, 120,
+                                25);
+    panel_add_text_centre(mud->panel_login_existing_user, x + 154, y, "Ok", 4,
+                          0);
+
+    mud->control_login_ok =
+        panel_add_button(mud->panel_login_existing_user, x + 154, y, 120, 25);
+
+    y += 30;
+
+    panel_add_button_background(mud->panel_login_existing_user, x + 154, y, 120,
+                                25);
+    panel_add_text_centre(mud->panel_login_existing_user, x + 154, y, "Cancel",
+                          4, 0);
+
+    mud->control_login_cancel =
+        panel_add_button(mud->panel_login_existing_user, x + 154, y, 120, 25);
+
+    if (mud->options->account_management) {
+        y += 30;
+
+        panel_add_button_background(mud->panel_login_existing_user, x + 154, y,
+                                    160, 25);
+
+        panel_add_text_centre(mud->panel_login_existing_user, x + 154, y,
+                              "I've lost my password", 4, 0);
+
+        mud->control_login_recover = panel_add_button(
+            mud->panel_login_existing_user, x + 154, y, 160, 25);
+    }
+}
+
+void mudclient_reset_login_screen_variables(mudclient *mud) {
+    mud->logged_in = 0;
+    mud->login_screen = 0;
+    mud->login_user[0] = '\0';
+    mud->login_pass[0] = '\0';
+    mud->login_user_desc = "Please enter a username:";
+    sprintf(mud->login_user_disp, "*%s*", mud->login_user);
+    mud->player_count = 0;
+    mud->npc_count = 0;
+}
+
+void mudclient_render_login_screen_viewports(mudclient *mud) {
+    int plane = 0;
+    int region_x = 50; //49;
+    int region_y = 50; //47;
+
+    world_load_section_from3(mud->world, region_x * 48 + 23, region_y * 48 + 23, plane);
+}
+
 void mudclient_start_game(mudclient *mud) {
     mudclient_load_game_config(mud);
 
@@ -680,16 +1004,44 @@ void mudclient_start_game(mudclient *mud) {
     // scene_set_light_from3(mud->scene, -50, -10, -50);
 
     mud->world = malloc(sizeof(World));
+    memset(mud->world, 0, sizeof(World));
     world_new(mud->world, mud->scene, mud->surface);
     mud->world->base_media_sprite = mud->sprite_media;
 
     mudclient_load_textures(mud);
 
-    surface_free_colours(mud->surface);
+    //surface_free_colours(mud->surface);
 
     if (mud->error_loading_data) {
         return;
     }
+
+    mudclient_load_models(mud);
+
+    if (mud->error_loading_data) {
+        return;
+    }
+
+    mudclient_load_maps(mud);
+
+    if (mud->error_loading_data) {
+        return;
+    }
+
+    if (mud->members) {
+        // mudclient_load_sounds(mud);
+    }
+
+    if (mud->error_loading_data) {
+        return;
+    }
+
+    mudclient_show_loading_progress(mud, 100, "Starting game...");
+    // this.create_message_tab_panel();
+    mudclient_create_login_panels(mud);
+    // this.create_appearance_panel();
+    mudclient_reset_login_screen_variables(mud);
+    mudclient_render_login_screen_viewports(mud);
 }
 
 void mudclient_run(mudclient *mud) {
@@ -758,6 +1110,7 @@ int main(int argc, char **argv) {
     init_mudclient_global();
 
     mudclient *mud = malloc(sizeof(mudclient));
+    memset(mud, 0, sizeof(mudclient));
     mudclient_new(mud);
     mudclient_start_application(mud, 512, 346, "Runescape by Andrew Gower");
     mudclient_run(mud);

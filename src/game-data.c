@@ -165,6 +165,8 @@ char *game_data_get_string() {
 }
 
 void game_data_load_data(int8_t *buffer, int is_members) {
+    memset(game_data_model_name, 0, 5000 * sizeof(char *));
+
     game_data_data_string = load_data("string.dat", 0, buffer);
     game_data_string_offset = 0;
     game_data_data_integer = load_data("integer.dat", 0, buffer);
@@ -541,9 +543,9 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     game_data_tile_count = game_data_get_unsigned_short();
-    game_data_tile_decoration = malloc(game_data_tile_count * sizeof(int));
-    game_data_tile_type = malloc(game_data_tile_count * sizeof(int));
-    game_data_tile_adjacent = malloc(game_data_tile_count * sizeof(int));
+    game_data_tile_decoration = calloc(game_data_tile_count, sizeof(int));
+    game_data_tile_type = calloc(game_data_tile_count, sizeof(int));
+    game_data_tile_adjacent = calloc(game_data_tile_count, sizeof(int));
 
     for (i = 0; i < game_data_tile_count; i++) {
         game_data_tile_decoration[i] = game_data_get_unsigned_int();
@@ -561,8 +563,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data_spell_count = game_data_get_unsigned_short();
     game_data_spell_name = malloc(game_data_spell_count * sizeof(char **));
 
-    game_data_spell_description =
-        malloc(game_data_spell_count * sizeof(char **));
+    game_data_spell_description = malloc(game_data_spell_count * sizeof(char **));
 
     game_data_spell_level = malloc(game_data_spell_count * sizeof(int));
 

@@ -1,6 +1,8 @@
 #include "game-model.h"
 
 void game_model_new(GameModel *game_model) {
+    memset(game_model, 0, sizeof(GameModel));
+
     game_model->transform_state = 1;
     game_model->visible = 1;
     game_model->key = -1;
@@ -151,30 +153,30 @@ void game_model_reset(GameModel *game_model) {
 
 void game_model_allocate(GameModel *game_model, int num_vertices,
                          int num_faces) {
-    game_model->vertex_x = malloc(num_vertices * sizeof(int));
-    game_model->vertex_y = malloc(num_vertices * sizeof(int));
-    game_model->vertex_z = malloc(num_vertices * sizeof(int));
-    game_model->vertex_intensity = malloc(num_vertices * sizeof(int));
-    game_model->vertex_ambience = malloc(num_vertices);
-    game_model->face_num_vertices = malloc(num_faces * sizeof(int));
-    game_model->face_vertices = malloc(num_faces * sizeof(int *));
-    game_model->face_fill_front = malloc(num_faces * sizeof(int));
-    game_model->face_fill_back = malloc(num_faces * sizeof(int));
-    game_model->face_intensity = malloc(num_faces * sizeof(int));
-    game_model->normal_scale = malloc(num_faces * sizeof(int));
-    game_model->normal_magnitude = malloc(num_faces * sizeof(int));
+    game_model->vertex_x = calloc(num_vertices, sizeof(int));
+    game_model->vertex_y = calloc(num_vertices, sizeof(int));
+    game_model->vertex_z = calloc(num_vertices, sizeof(int));
+    game_model->vertex_intensity = calloc(num_vertices, sizeof(int));
+    game_model->vertex_ambience = calloc(num_vertices, sizeof(int8_t));
+    game_model->face_num_vertices = calloc(num_faces, sizeof(int));
+    game_model->face_vertices = calloc(num_faces, sizeof(int *));
+    game_model->face_fill_front = calloc(num_faces, sizeof(int));
+    game_model->face_fill_back = calloc(num_faces, sizeof(int));
+    game_model->face_intensity = calloc(num_faces, sizeof(int));
+    game_model->normal_scale = calloc(num_faces, sizeof(int));
+    game_model->normal_magnitude = calloc(num_faces, sizeof(int));
 
     if (!game_model->projected) {
-        game_model->project_vertex_x = malloc(num_vertices * sizeof(int));
-        game_model->project_vertex_y = malloc(num_vertices * sizeof(int));
-        game_model->project_vertex_z = malloc(num_vertices * sizeof(int));
-        game_model->vertex_view_x = malloc(num_vertices * sizeof(int));
-        game_model->vertex_view_y = malloc(num_vertices * sizeof(int));
+        game_model->project_vertex_x = calloc(num_vertices, sizeof(int));
+        game_model->project_vertex_y = calloc(num_vertices, sizeof(int));
+        game_model->project_vertex_z = calloc(num_vertices, sizeof(int));
+        game_model->vertex_view_x = calloc(num_vertices, sizeof(int));
+        game_model->vertex_view_y = calloc(num_vertices, sizeof(int));
     }
 
     if (!game_model->unpickable) {
-        game_model->is_local_player = malloc(num_faces);
-        game_model->face_tag = malloc(num_faces * sizeof(int));
+        game_model->is_local_player = calloc(num_faces, sizeof(int8_t));
+        game_model->face_tag = calloc(num_faces, sizeof(int));
     }
 
     if (game_model->autocommit) {
@@ -182,24 +184,24 @@ void game_model_allocate(GameModel *game_model, int num_vertices,
         game_model->vertex_transformed_y = game_model->vertex_y;
         game_model->vertex_transformed_z = game_model->vertex_z;
     } else {
-        game_model->vertex_transformed_x = malloc(num_vertices * sizeof(int));
-        game_model->vertex_transformed_y = malloc(num_vertices * sizeof(int));
-        game_model->vertex_transformed_z = malloc(num_vertices * sizeof(int));
+        game_model->vertex_transformed_x = calloc(num_vertices, sizeof(int));
+        game_model->vertex_transformed_y = calloc(num_vertices, sizeof(int));
+        game_model->vertex_transformed_z = calloc(num_vertices, sizeof(int));
     }
 
     if (!game_model->unlit || !game_model->isolated) {
-        game_model->face_normal_x = malloc(num_faces * sizeof(int));
-        game_model->face_normal_y = malloc(num_faces * sizeof(int));
-        game_model->face_normal_z = malloc(num_faces * sizeof(int));
+        game_model->face_normal_x = calloc(num_faces, sizeof(int));
+        game_model->face_normal_y = calloc(num_faces, sizeof(int));
+        game_model->face_normal_z = calloc(num_faces, sizeof(int));
     }
 
     if (!game_model->isolated) {
-        game_model->face_bound_left = malloc(num_faces * sizeof(int));
-        game_model->face_bound_right = malloc(num_faces * sizeof(int));
-        game_model->face_bound_bottom = malloc(num_faces * sizeof(int));
-        game_model->face_bound_top = malloc(num_faces * sizeof(int));
-        game_model->face_bound_near = malloc(num_faces * sizeof(int));
-        game_model->face_bound_far = malloc(num_faces * sizeof(int));
+        game_model->face_bound_left = calloc(num_faces, sizeof(int));
+        game_model->face_bound_right = calloc(num_faces, sizeof(int));
+        game_model->face_bound_bottom = calloc(num_faces, sizeof(int));
+        game_model->face_bound_top = calloc(num_faces, sizeof(int));
+        game_model->face_bound_near = calloc(num_faces, sizeof(int));
+        game_model->face_bound_far = calloc(num_faces, sizeof(int));
     }
 
     game_model->num_faces = 0;

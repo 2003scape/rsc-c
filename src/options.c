@@ -1,6 +1,8 @@
 #include "options.h"
 
 void options_new(Options *options) {
+    memset(options, 0, sizeof(Options));
+
     options->show_roofs = 1;
     options->word_filter = 1;
     options->account_management = 1;

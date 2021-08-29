@@ -1,6 +1,8 @@
 #ifndef _H_OPTIONS
 #define _H_OPTIONS
 
+#include <string.h>
+
 typedef struct Options {
     int middle_click_camera;
     int mouse_wheel;

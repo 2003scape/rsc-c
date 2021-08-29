@@ -566,7 +566,7 @@ void surface_draw_world(Surface *surface, int sprite_id) {
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
     uint32_t *sprite_pixels = surface->surface_pixels[sprite_id];
-    uint32_t *pixels = malloc(32768 * sizeof(uint32_t));
+    uint32_t *pixels = calloc(32768, sizeof(uint32_t));
 
     for (int k = 0; k < sprite_size; k++) {
         int l = sprite_pixels[k];
@@ -575,7 +575,7 @@ void surface_draw_world(Surface *surface, int sprite_id) {
                ((l & 0xf8) >> 3)]++;
     }
 
-    uint32_t *colour_list = malloc(256 * sizeof(uint32_t));
+    uint32_t *colour_list = calloc(256, sizeof(uint32_t));
     colour_list[0] = 0xff00ff;
 
     uint32_t ai3[256];
@@ -605,7 +605,7 @@ void surface_draw_world(Surface *surface, int sprite_id) {
         pixels[i1] = -1;
     }
 
-    int8_t *colours_used = malloc(sprite_size);
+    int8_t *colours_used = calloc(sprite_size, sizeof(int8_t));
 
     for (int l1 = 0; l1 < sprite_size; l1++) {
         int j2 = sprite_pixels[l1];
@@ -644,7 +644,9 @@ void surface_draw_world(Surface *surface, int sprite_id) {
 
     surface->sprite_colours_used[sprite_id] = colours_used;
     surface->sprite_colour_list[sprite_id] = colour_list;
+
     free(surface->surface_pixels[sprite_id]);
+    surface->surface_pixels[sprite_id] = NULL;
 }
 
 void surface_load_sprite(Surface *surface, int sprite_id) {

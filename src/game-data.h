@@ -111,4 +111,11 @@ extern int8_t *game_data_data_integer;
 extern int game_data_string_offset;
 extern int game_data_offset;
 
+int game_data_get_model_index(char *name);
+int game_data_get_unsigned_byte();
+int game_data_get_unsigned_short();
+int game_data_get_unsigned_int();
+char *game_data_get_string();
+void game_data_load_data(int8_t *buffer, int is_members);
+
 #endif

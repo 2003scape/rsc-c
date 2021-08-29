@@ -15,9 +15,11 @@
 #define K_BACKSPACE -1
 
 #define FONT_COUNT 8
+#define ANIMATED_MODELS_COUNT 20
 #define MAX_SOCIAL_LIST_COUNT 100
 #define INPUT_TEXT_LENGTH 20
 #define INPUT_PM_LENGTH 80
+#define GAME_OBJECTS_MAX 1000
 
 typedef struct mudclient mudclient;
 
@@ -34,6 +36,7 @@ typedef struct mudclient mudclient;
 #include "world.h"
 
 extern char *font_files[];
+extern char *animated_models[];
 extern char *short_skill_names[];
 extern char *skill_names[];
 extern char *equipment_stat_names[];
@@ -45,7 +48,7 @@ typedef struct mudclient {
     SDL_Window *window;
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
-    Options options;
+    Options *options;
     int middle_button_down;
     int mouse_scroll_delta;
     int mouse_action_timeout;
@@ -116,6 +119,37 @@ typedef struct mudclient {
     int control_list_social;
     Scene *scene;
     World *world;
+    GameModel *game_models[GAME_OBJECTS_MAX];
+
+    Panel *panel_login_welcome;
+    Panel *panel_login_new_user;
+    Panel *panel_login_existing_user;
+    int control_welcome_new_user;
+    int control_welcome_existing_user;
+    int refer_id;
+    int control_login_new_ok;
+    int control_register_status;
+    int control_register_user;
+    int control_register_password;
+    int control_register_confirm_password;
+    int control_register_checkbox;
+    int control_register_submit;
+    int control_register_cancel;
+    int control_login_status;
+    int control_login_user;
+    int control_login_password;
+    int control_login_ok;
+    int control_login_cancel;
+    int control_login_recover;
+
+    int logged_in;
+    int login_screen;
+    char login_user[21];
+    char login_pass[21];
+    char *login_user_desc;
+    char login_user_disp[22];
+    int player_count;
+    int npc_count;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -141,6 +175,11 @@ void mudclient_load_game_config(mudclient *mud);
 void mudclient_load_media(mudclient *mud);
 void mudclient_load_entities(mudclient *mud);
 void mudclient_load_textures(mudclient *mud);
+void mudclient_load_models(mudclient *mud);
+void mudclient_load_maps(mudclient *mud);
+void mudclient_create_login_panels(mudclient *mud);
+void mudclient_reset_login_screen_variables(mudclient *mud);
+void mudclient_render_login_screen_viewports(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_run(mudclient *mud);
 void mudclient_sort_friends(mudclient *mud);
