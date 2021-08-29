@@ -150,6 +150,17 @@ typedef struct mudclient {
     char login_user_disp[22];
     int player_count;
     int npc_count;
+    int login_timer;
+    int camera_rotation_time;
+    int camera_rotation_x;
+    int camera_rotation_y;
+    int camera_rotation_x_increment;
+    int camera_rotation_y_increment;
+    int message_tab_flash_all;
+    int message_tab_flash_history;
+    int message_tab_flash_quest;
+    int message_tab_flash_private;
+    int welcome_screen_already_shown;
 } mudclient;
 
 void mudclient_new(mudclient *mud);

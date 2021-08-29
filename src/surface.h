@@ -62,6 +62,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);
 void surface_reset_bounds(Surface *surface);
 void surface_reset_draw(Surface *surface);
+void surface_draw(Surface *surface);
 void surface_black_screen(Surface *surface);
 void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
                          int alpha);

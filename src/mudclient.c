@@ -49,6 +49,15 @@ void mudclient_new(mudclient *mud) {
     mud->members = 0;
     mud->game_width = mud->applet_width;
     mud->game_height = mud->applet_height - 12;
+    mud->camera_rotation_time = 0;
+    mud->camera_rotation_x = 0;
+    mud->camera_rotation_y = 0;
+    mud->camera_rotation_x_increment = 2;
+    mud->camera_rotation_y_increment = 2;
+    mud->message_tab_flash_all = 0;
+    mud->message_tab_flash_history = 0;
+    mud->message_tab_flash_quest = 0;
+    mud->message_tab_flash_private = 0;
 
     mud->options = malloc(sizeof(Options));
     options_new(mud->options);
@@ -921,10 +930,207 @@ void mudclient_reset_login_screen_variables(mudclient *mud) {
 
 void mudclient_render_login_screen_viewports(mudclient *mud) {
     int plane = 0;
-    int region_x = 50; //49;
-    int region_y = 50; //47;
+    int region_x = 50; // 49;
+    int region_y = 50; // 47;
 
-    world_load_section_from3(mud->world, region_x * 48 + 23, region_y * 48 + 23, plane);
+    world_load_section_from3(mud->world, region_x * 48 + 23, region_y * 48 + 23,
+                             plane);
+
+    world_add_models(mud->world, mud->game_models);
+
+    int x = 9728;
+    int y = 6400;
+    int zoom = 1100;
+    int rotation = 888;
+
+    mud->scene->clip_far_3d = 4100;
+    mud->scene->clip_far_2d = 4100;
+    mud->scene->fog_z_falloff = 1;
+    mud->scene->fog_z_distance = 4000;
+
+    surface_black_screen(mud->surface);
+
+    scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
+                     912, rotation, 0, zoom * 2);
+
+    scene_render(mud->scene);
+
+    surface_fade_to_black(mud->surface);
+    surface_fade_to_black(mud->surface);
+    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, 0);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(mud->surface, 0, i, 0, i, mud->game_width, 8);
+    }
+
+    surface_draw_box(mud->surface, 0, 194, 512, 20, 0);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(mud->surface, 0, i, 0, 194 - i, mud->game_width,
+                                8);
+    }
+
+    surface_draw_sprite_from3(
+        mud->surface,
+        (mud->game_width / 2) -
+            (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
+        15, mud->sprite_media + 10);
+
+    surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
+                              mud->game_width, 200);
+    surface_draw_world(mud->surface, mud->sprite_logo);
+
+    x = 9216;
+    y = 9216;
+    zoom = 1100;
+    rotation = 888;
+
+    /* TODO see if we need these - they're the same */
+    mud->scene->clip_far_3d = 4100;
+    mud->scene->clip_far_2d = 4100;
+    mud->scene->fog_z_falloff = 1;
+    mud->scene->fog_z_distance = 4000;
+
+    surface_black_screen(mud->surface);
+
+    scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
+                     912, rotation, 0, zoom * 2);
+
+    scene_render(mud->scene);
+
+    surface_fade_to_black(mud->surface);
+    surface_fade_to_black(mud->surface);
+    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, 0);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(mud->surface, 0, i, 0, i, mud->game_width, 8);
+    }
+
+    surface_draw_box(mud->surface, 0, 194, mud->game_width, 20, 0);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(mud->surface, 0, i, 0, 194 - i, mud->game_width,
+                                8);
+    }
+
+    surface_draw_sprite_from3(
+        mud->surface,
+        (mud->game_width / 2) -
+            (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
+        15, mud->sprite_media + 10);
+
+    surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
+                              mud->game_width, 200);
+
+    surface_draw_world(mud->surface, mud->sprite_logo + 1);
+
+    for (int i = 0; i < TERRAIN_COUNT; i++) {
+        scene_remove_model(mud->scene, mud->world->roof_models[0][i]);
+        scene_remove_model(mud->scene, mud->world->wall_models[1][i]);
+        scene_remove_model(mud->scene, mud->world->roof_models[1][i]);
+        scene_remove_model(mud->scene, mud->world->wall_models[2][i]);
+        scene_remove_model(mud->scene, mud->world->roof_models[2][i]);
+    }
+
+    x = 11136;
+    y = 10368;
+    zoom = 500;
+    rotation = 376;
+
+    mud->scene->clip_far_3d = 4100;
+    mud->scene->clip_far_2d = 4100;
+    mud->scene->fog_z_falloff = 1;
+    mud->scene->fog_z_distance = 4000;
+
+    surface_black_screen(mud->surface);
+
+    scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
+                     912, rotation, 0, zoom * 2);
+
+    scene_render(mud->scene);
+
+    surface_fade_to_black(mud->surface);
+    surface_fade_to_black(mud->surface);
+    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, 0);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(mud->surface, 0, i, 0, i, mud->game_width, 8);
+    }
+
+    surface_draw_box(mud->surface, 0, 194, mud->game_width, 20, 0);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(mud->surface, 0, i, 0, 194, mud->game_width, 8);
+    }
+
+    surface_draw_sprite_from3(
+        mud->surface,
+        (mud->game_width / 2) -
+            (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
+        15, mud->sprite_media + 10);
+
+    surface_draw_sprite_from5(mud->surface, mud->sprite_media + 10, 0, 0,
+                              mud->game_width, 200);
+
+    surface_draw_world(mud->surface, mud->sprite_media + 10);
+}
+
+void mudclient_draw_login_screens(mudclient *mud) {
+    mud->welcome_screen_already_shown = 0;
+    mud->surface->interlace = 0;
+
+    surface_black_screen(mud->surface);
+
+    int show_background = 0;
+
+    if (mud->options->account_management) {
+        show_background = mud->login_screen == 0 || mud->login_screen == 2;
+    } else {
+        show_background = mud->login_screen >= 0 && mud->login_screen <= 3;
+    }
+
+    if (show_background) {
+        int cycle = (mud->login_timer * 2) % 3072;
+
+        if (cycle < 1024) {
+            surface_draw_sprite_from3(mud->surface, 0, 10, mud->sprite_logo);
+
+            if (cycle > 768) {
+                surface_draw_sprite_alpha_from4(
+                    mud->surface, 0, 10, mud->sprite_logo + 1, cycle - 768);
+            }
+        } else if (cycle < 2048) {
+            surface_draw_sprite_from3(mud->surface, 0, 10,
+                                      mud->sprite_logo + 1);
+
+            if (cycle > 1792) {
+                surface_draw_sprite_alpha_from4(
+                    mud->surface, 0, 10, mud->sprite_media + 10, cycle - 1792);
+            }
+        } else {
+            surface_draw_sprite_from3(mud->surface, 0, 10,
+                                      mud->sprite_media + 10);
+
+            if (cycle > 2816) {
+                surface_draw_sprite_alpha_from4(mud->surface, 0, 10,
+                                                mud->sprite_logo, cycle - 2816);
+            }
+        }
+    }
+
+    if (mud->login_screen == 0) {
+        panel_draw_panel(mud->panel_login_welcome);
+    } else if (mud->login_screen == 1) {
+        panel_draw_panel(mud->panel_login_new_user);
+    } else if (mud->login_screen == 2) {
+        panel_draw_panel(mud->panel_login_existing_user);
+    }
+
+    // blue bar
+    surface_draw_sprite_from3(mud->surface, 0, mud->game_height - 4,
+                              mud->sprite_media + 22);
+
+    surface_draw(mud->surface);
 }
 
 void mudclient_start_game(mudclient *mud) {
@@ -1010,7 +1216,7 @@ void mudclient_start_game(mudclient *mud) {
 
     mudclient_load_textures(mud);
 
-    //surface_free_colours(mud->surface);
+    // surface_free_colours(mud->surface);
 
     if (mud->error_loading_data) {
         return;
@@ -1044,6 +1250,84 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_render_login_screen_viewports(mud);
 }
 
+void mudclient_handle_inputs(mudclient *mud) {
+    if (mud->error_loading_data) {
+        return;
+    }
+
+    mud->login_timer++;
+
+    if (mud->logged_in == 0) {
+        mud->mouse_action_timeout = 0;
+        // mudclient_handle_login_screen_input(mud);
+    } else if (mud->logged_in == 1) {
+        mud->mouse_action_timeout++;
+        // mudclient_handle_game_input(mud);
+    }
+
+    mud->last_mouse_button_down = 0;
+    mud->camera_rotation_time++;
+
+    if (mud->camera_rotation_time > 500) {
+        mud->camera_rotation_time = 0;
+
+        float r = (float)rand() / (float)RAND_MAX;
+        int roll = (int)(r * 4);
+
+        if ((roll & 1) == 1) {
+            mud->camera_rotation_x += mud->camera_rotation_x_increment;
+        }
+
+        if ((roll & 2) == 2) {
+            mud->camera_rotation_y += mud->camera_rotation_y_increment;
+        }
+    }
+
+    if (mud->camera_rotation_x < -50) {
+        mud->camera_rotation_x_increment = 2;
+    } else if (mud->camera_rotation_x > 50) {
+        mud->camera_rotation_x_increment = -2;
+    }
+
+    if (mud->camera_rotation_y < -50) {
+        mud->camera_rotation_y_increment = 2;
+    } else if (mud->camera_rotation_y > 50) {
+        mud->camera_rotation_y_increment = -2;
+    }
+
+    if (mud->message_tab_flash_all > 0) {
+        mud->message_tab_flash_all--;
+    }
+
+    if (mud->message_tab_flash_history > 0) {
+        mud->message_tab_flash_history--;
+    }
+
+    if (mud->message_tab_flash_quest > 0) {
+        mud->message_tab_flash_quest--;
+    }
+
+    if (mud->message_tab_flash_private > 0) {
+        mud->message_tab_flash_private--;
+    }
+}
+
+void mudclient_draw(mudclient *mud) {
+    if (mud->error_loading_data) {
+        /* TODO draw error */
+        printf("ERROR LOADING DATA\n");
+        return;
+    }
+
+    if (mud->logged_in == 0) {
+        mud->surface->logged_in = 0;
+        mudclient_draw_login_screens(mud);
+    } else if (mud->logged_in == 1) {
+        mud->surface->logged_in = 1;
+        // mudclient_draw_game(mud);
+    }
+}
+
 void mudclient_run(mudclient *mud) {
     if (mud->loading_step == 1) {
         mud->loading_step = 2;
@@ -1060,6 +1344,89 @@ void mudclient_run(mudclient *mud) {
 
     for (int j1 = 0; j1 < 10; j1++) {
         mud->timings[j1] = SDL_GetTicks();
+    }
+
+    while (mud->stop_timeout >= 0) {
+        if (mud->stop_timeout > 0) {
+            mud->stop_timeout--;
+
+            if (mud->stop_timeout == 0) {
+                // mudclient_on_closing(mud);
+                return;
+            }
+        }
+
+        int k1 = j;
+        int last_delay = delay;
+
+        j = 300;
+        delay = 1;
+
+        int time = SDL_GetTicks();
+
+        if (mud->timings[i] == 0) {
+            j = k1;
+            delay = last_delay;
+        } else if (time > mud->timings[i]) {
+            j = (2560 * mud->target_fps) / (time - mud->timings[i]);
+        }
+
+        if (j < 25) {
+            j = 25;
+        }
+
+        if (j > 256) {
+            j = 256;
+            delay = mud->target_fps - (time - mud->timings[i] / 10);
+
+            if (delay < mud->thread_sleep) {
+                delay = mud->thread_sleep;
+            }
+        }
+
+        SDL_Delay(delay);
+
+        mud->timings[i] = time;
+        i = (i + 1) % 10;
+
+        if (delay > 1) {
+            for (int j2 = 0; j2 < 10; j2++) {
+                if (mud->timings[j2] != 0) {
+                    mud->timings[j2] += delay;
+                }
+            }
+        }
+
+        int k2 = 0;
+
+        while (i1 < 256) {
+            mudclient_handle_inputs(mud);
+
+            i1 += j;
+
+            if (++k2 > mud->max_draw_time) {
+                i1 = 0;
+
+                mud->interlace_timer += 6;
+
+                if (mud->interlace_timer > 25) {
+                    mud->interlace_timer = 0;
+                    mud->interlace = 1;
+                }
+
+                break;
+            }
+        }
+
+        mud->interlace_timer--;
+        i1 &= 0xff;
+
+        mudclient_draw(mud);
+
+        // calculate fps
+        mud->fps = (1000 * j) / (mud->target_fps * 256);
+
+        mud->mouse_scroll_delta = 0;
     }
 }
 

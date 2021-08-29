@@ -2,6 +2,7 @@
 
 void game_model_new(GameModel *game_model) {
     memset(game_model, 0, sizeof(GameModel));
+    game_model->face_trans_state_thing = NULL;
 
     game_model->transform_state = 1;
     game_model->visible = 1;
@@ -16,12 +17,18 @@ void game_model_new(GameModel *game_model) {
     game_model->light_direction_magnitude = 256;
 }
 
+void game_model_allocate_face_trans(GameModel *game_model, int num_faces) {
+    game_model->face_trans_state_thing = malloc(num_faces * sizeof(int *));
+
+    for (int i = 0; i < num_faces; i++) {
+        game_model->face_trans_state_thing[i] = calloc(1, sizeof(int));
+    }
+}
+
 void game_model_from2(GameModel *game_model, int num_vertices, int num_faces) {
     game_model_new(game_model);
     game_model_allocate(game_model, num_vertices, num_faces);
-
-    game_model->face_trans_state_thing =
-        malloc(num_faces * sizeof(*game_model->face_trans_state_thing));
+    game_model_allocate_face_trans(game_model, num_faces);
 }
 
 void game_model_from2a(GameModel *game_model, GameModel **pieces, int count) {
@@ -65,9 +72,7 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
     offset += 2;
 
     game_model_allocate(game_model, num_vertices, num_faces);
-
-    game_model->face_trans_state_thing =
-        malloc(num_faces * sizeof(*game_model->face_trans_state_thing));
+    game_model_allocate_face_trans(game_model, num_faces);
 
     for (int i = 0; i < num_vertices; i++) {
         game_model->vertex_x[i] = get_signed_short(data, offset);
@@ -261,8 +266,11 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
 
     if (trans_state) {
         /* TODO check for existing one and free? */
-        game_model->face_trans_state_thing =
-            malloc(num_faces * sizeof(*game_model->face_trans_state_thing));
+        /*game_model->face_trans_state_thing =
+            malloc(num_faces * sizeof(*game_model->face_trans_state_thing));*/
+
+        free(game_model->face_trans_state_thing);
+        game_model_allocate_face_trans(game_model, num_faces);
     }
 
     for (int i = 0; i < count; i++) {

@@ -93,6 +93,7 @@ typedef struct GameModel {
 } GameModel;
 
 void game_model_new(GameModel *game_model);
+void game_model_allocate_face_trans(GameModel *game_model, int num_faces);
 void game_model_from2(GameModel *game_model, int num_vertices, int num_faces);
 void game_model_from2a(GameModel *game_model, GameModel **pieces, int count);
 void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
