@@ -101,6 +101,8 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
     mud->screen = SDL_GetWindowSurface(mud->window);
 
+    printf("hi %d %d\n", width, height);
+
     mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
                                               0x00ff00, 0x0000ff, 0);
 
@@ -1328,6 +1330,18 @@ void mudclient_draw(mudclient *mud) {
     }
 }
 
+void mudclient_poll_sdl_events(mudclient *mud) {
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_QUIT:
+            exit(0);
+            break;
+        }
+    }
+}
+
 void mudclient_run(mudclient *mud) {
     if (mud->loading_step == 1) {
         mud->loading_step = 2;
@@ -1400,6 +1414,7 @@ void mudclient_run(mudclient *mud) {
         int k2 = 0;
 
         while (i1 < 256) {
+            mudclient_poll_sdl_events(mud);
             mudclient_handle_inputs(mud);
 
             i1 += j;

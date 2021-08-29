@@ -191,7 +191,10 @@ void mudclient_load_maps(mudclient *mud);
 void mudclient_create_login_panels(mudclient *mud);
 void mudclient_reset_login_screen_variables(mudclient *mud);
 void mudclient_render_login_screen_viewports(mudclient *mud);
+void mudclient_handle_inputs(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
+void mudclient_draw(mudclient *mud);
+void mudclient_poll_sdl_events(mudclient *mud);
 void mudclient_run(mudclient *mud);
 void mudclient_sort_friends(mudclient *mud);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,

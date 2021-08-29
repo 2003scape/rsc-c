@@ -74,7 +74,16 @@ void surface_reset_bounds(Surface *surface) {
     surface->bounds_bottom_y = surface->height2;
 }
 
-void surface_draw(Surface *surface) { /* TODO */
+void surface_draw(Surface *surface) {
+    if (surface->mud->window == NULL) {
+        return;
+    }
+
+    int area = surface->width1 * surface->height1;
+
+    memcpy(surface->mud->pixel_surface->pixels, surface->pixels, area * sizeof(uint32_t));
+    SDL_BlitSurface(surface->mud->pixel_surface, NULL, surface->mud->screen, NULL);
+    SDL_UpdateWindowSurface(surface->mud->window);
 }
 
 void surface_black_screen(Surface *surface) {
