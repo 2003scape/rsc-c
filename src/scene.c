@@ -1,17 +1,22 @@
 #include "scene.h"
 
-int scene_frustum_max_x;
-int scene_frustum_min_x;
-int scene_frustum_max_y;
-int scene_frustum_min_y;
-int scene_frustum_far_z;
-int scene_frustum_near_z;
-int64_t scene_texture_count_loaded;
+int scene_frustum_max_x = 0;
+int scene_frustum_min_x = 0;
+int scene_frustum_max_y = 0;
+int scene_frustum_min_y = 0;
+int scene_frustum_far_z = 0;
+int scene_frustum_near_z = 0;
+int64_t scene_texture_count_loaded = 0;
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int sprite_count) {
+    memset(scene, 0, sizeof(Scene));
+
     scene->surface = surface;
     scene->max_model_count = model_count;
+
+    memset(scene->gradient_base, 0, RAMP_COUNT* sizeof(int));
+    memset(scene->gradient_ramps, 0, RAMP_COUNT * 256 * sizeof(int));
 
     scene->model_count = 0;
     scene->clip_near = 5;
@@ -21,6 +26,16 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->fog_z_distance = 10;
     scene->wide_band = 0;
     scene->mouse_picking_active = 0;
+
+    /*
+    memset(scene->plane_x, 0, VERTEX_COUNT * sizeof(int));
+    memset(scene->plane_y, 0, VERTEX_COUNT * sizeof(int));
+    memset(scene->vertex_shade, 0, VERTEX_COUNT * sizeof(int));
+    memset(scene->vertex_x, 0, VERTEX_COUNT * sizeof(int));
+    memset(scene->vertex_y, 0, VERTEX_COUNT * sizeof(int));
+    memset(scene->vertex_z, 0, VERTEX_COUNT * sizeof(int));*/
+
+    scene->interlace = 0;
     scene->width = 512;
     scene->clip_x = 256;
     scene->clip_y = 192;
@@ -58,6 +73,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 void scene_texture_scanline(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
                             int l, int i1, int j1, int k1, int l1, int i2,
                             int j2, int k2, int l2) {
+    return;
     if (i2 <= 0) {
         return;
     }
@@ -192,6 +208,7 @@ void scene_texture_translucent_scanline(uint32_t *ai, uint32_t *ai1, int i,
                                         int j, int k, int l, int i1, int j1,
                                         int k1, int l1, int i2, int j2, int k2,
                                         int l2) {
+    return;
     if (i2 <= 0) {
         return;
     }
@@ -376,6 +393,7 @@ void scene_texture_back_translucent_scanline(uint32_t *ai, int i, int j, int k,
                                              uint32_t *ai1, int l, int i1,
                                              int j1, int k1, int l1, int i2,
                                              int j2, int k2, int l2, int i3) {
+    return;
     if (j2 <= 0) {
         return;
     }
@@ -578,6 +596,7 @@ void scene_texture_back_translucent_scanline(uint32_t *ai, int i, int j, int k,
 void scene_texture_scanline2(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
                              int l, int i1, int j1, int k1, int l1, int i2,
                              int j2, int k2, int l2) {
+    return;
     if (i2 <= 0) {
         return;
     }
@@ -697,6 +716,7 @@ void scene_texture_translucent_scanline2(uint32_t *ai, uint32_t *ai1, int i,
                                          int j, int k, int l, int i1, int j1,
                                          int k1, int l1, int i2, int j2, int k2,
                                          int l2) {
+    return;
     if (i2 <= 0) {
         return;
     }
@@ -864,6 +884,7 @@ void scene_texture_back_translucent_scanline2(uint32_t *ai, int i, int j, int k,
                                               uint32_t *ai1, int l, int i1,
                                               int j1, int k1, int l1, int i2,
                                               int j2, int k2, int l2, int i3) {
+    return;
     if (j2 <= 0) {
         return;
     }
@@ -1064,6 +1085,7 @@ void scene_texture_back_translucent_scanline2(uint32_t *ai, int i, int j, int k,
 
 void scene_gradient_scanline(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
                              int l, int i1) {
+    return;
     if (i >= 0) {
         return;
     }
@@ -1106,6 +1128,7 @@ void scene_gradient_scanline(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
 
 void scene_texture_gradient_scanline(uint32_t *ai, int i, int j, int k,
                                      uint32_t *ai1, int l, int i1) {
+    return;
     if (i >= 0) {
         return;
     }
@@ -1157,6 +1180,8 @@ void scene_texture_gradient_scanline(uint32_t *ai, int i, int j, int k,
 
 void scene_gradient_scanline2(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
                               int l, int i1) {
+    //printf("%d %d %d %d %d\n", i, j, k, l, i1);
+
     if (i >= 0) {
         return;
     }
@@ -1302,11 +1327,12 @@ void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
     scene->width = width;
     scene->view_distance = view_distance;
 
+    /* TODO free old scanlines? */
     int scanlines_length = clip_y + base_y;
     scene->scanlines = malloc(scanlines_length * sizeof(Scanline *));
 
     for (int i = 0; i < scanlines_length; i++) {
-        Scanline *scanline = malloc(sizeof(Scanline));
+        Scanline *scanline = calloc(1, sizeof(Scanline));
         scene->scanlines[i] = scanline;
     }
 }
@@ -1539,7 +1565,6 @@ void scene_render(Scene *scene) {
     scene->models[scene->model_count] = scene->view;
     scene->view->transform_state = 2;
 
-    /* TODO make sure this is working */
     for (int i = 0; i <= scene->model_count; i++) {
         game_model_project(scene->models[i], scene->camera_x, scene->camera_y,
                            scene->camera_z, scene->camera_yaw,
@@ -1723,6 +1748,7 @@ void scene_render(Scene *scene) {
 
             if (scene->mouse_picking_active &&
                 scene->mouse_picked_count < MOUSE_PICKED_MAX) {
+
                 x +=
                     (scene->sprite_translate_x[l] << scene->view_distance) / vz;
 
@@ -2505,6 +2531,7 @@ void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
 void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
                      uint32_t *ai1, uint32_t *ai2, int l,
                      GameModel *game_model) {
+    //printf("%d %d %d %d\n", i, j, k, l);
     if (l == -2) {
         return;
     }
@@ -2527,6 +2554,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
         int j7 = ai1[k] - k1;
         int k8 = ai2[k] - j2;
 
+        /*
         if (scene->texture_dimension[l] == 1) {
             int l9 = (i6 * k1 - j7 * i1) << 12;
             int k10 = (j7 * j2 - k8 * k1) << (5 - scene->view_distance + 7 + 4);
@@ -2687,7 +2715,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
             }
 
             return;
-        }
+        }*/
 
         int i10 = (i6 * k1 - j7 * i1) << 11;
         int l10 = (j7 * j2 - k8 * k1) << (5 - scene->view_distance + 6 + 4);
@@ -2710,6 +2738,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
         l11 += l12 * j16;
         j13 += j14 * j16;
 
+        /*
         if (scene->interlace) {
             if ((scene->min_y & 1) == 1) {
                 scene->min_y++;
@@ -2807,7 +2836,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
             }
 
             return;
-        }
+        }*/
 
         for (i = scene->min_y; i < scene->max_y; i += byte2) {
             Scanline *scanline = scene->scanlines[i];
@@ -2857,7 +2886,8 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
         }
 
         if (j1 == RAMP_COUNT - 1) {
-            float r = (float)rand() / (float)RAND_MAX;
+            //float r = (float)rand() / (float)RAND_MAX;
+            float r = 0.1;
             int l1 = r * RAMP_COUNT;
             scene->gradient_base[l1] = l;
 
@@ -2884,6 +2914,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
     int l2 = scene->base_x + scene->min_y * i2;
     int8_t byte0 = 1;
 
+    /*
     if (scene->interlace) {
         if ((scene->min_y & 1) == 1) {
             scene->min_y++;
@@ -2961,7 +2992,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
         }
 
         return;
-    }
+    }*/
 
     for (i = scene->min_y; i < scene->max_y; i += byte0) {
         Scanline *scanline_2 = scene->scanlines[i];

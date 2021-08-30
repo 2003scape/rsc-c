@@ -586,17 +586,21 @@ void mudclient_load_textures(mudclient *mud) {
 
         int wh = mud->surface->sprite_width_full[mud->sprite_texture];
         char *name_sub = game_data_texture_subtype_name[i];
-        int sub_length = strlen(name_sub);
 
-        if (name_sub && sub_length > 0) {
-            sprintf(file_name, "%s.dat", name_sub);
+        if (name_sub) {
+            int sub_length = strlen(name_sub);
 
-            int8_t *texture_sub_dat = load_data(file_name, 0, textures_jag);
+            if (sub_length) {
+                sprintf(file_name, "%s.dat", name_sub);
 
-            surface_parse_sprite(mud->surface, mud->sprite_texture,
-                                 texture_sub_dat, index_dat, 1);
+                int8_t *texture_sub_dat = load_data(file_name, 0, textures_jag);
 
-            surface_draw_sprite_from3(mud->surface, 0, 0, mud->sprite_texture);
+                surface_parse_sprite(mud->surface, mud->sprite_texture,
+                                     texture_sub_dat, index_dat, 1);
+
+                surface_draw_sprite_from3(mud->surface, 0, 0,
+                                          mud->sprite_texture);
+            }
         }
 
         surface_draw_sprite_from5(mud->surface, mud->sprite_texture_world + i,
@@ -618,6 +622,8 @@ void mudclient_load_textures(mudclient *mud) {
             mud->surface->sprite_colour_list[mud->sprite_texture_world + i],
             (wh / 64) - 1);
     }
+
+    printf("done loading\n");
 
     free(textures_jag);
     free(index_dat);
@@ -937,7 +943,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     world_load_section_from3(mud->world, region_x * 48 + 23, region_y * 48 + 23,
                              plane);
 
-    world_add_models(mud->world, mud->game_models);
+    //world_add_models(mud->world, mud->game_models);
 
     int x = 9728;
     int y = 6400;
@@ -971,16 +977,17 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                                 8);
     }
 
+    /*
     surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);
+        15, mud->sprite_media + 10);*/
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
                               mud->game_width, 200);
 
-    surface_draw_world(mud->surface, mud->sprite_logo);
+    //surface_draw_world(mud->surface, mud->sprite_logo);
 
     x = 9216;
     y = 9216;
@@ -1015,16 +1022,17 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                                 8);
     }
 
+    /*
     surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);
+        15, mud->sprite_media + 10);*/
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
                               mud->game_width, 200);
 
-    surface_draw_world(mud->surface, mud->sprite_logo + 1);
+    //surface_draw_world(mud->surface, mud->sprite_logo + 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene, mud->world->roof_models[0][i]);
@@ -1065,16 +1073,17 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
         surface_draw_line_alpha(mud->surface, 0, i, 0, 194, mud->game_width, 8);
     }
 
+    /*
     surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);
+        15, mud->sprite_media + 10);*/
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_media + 10, 0, 0,
                               mud->game_width, 200);
 
-    surface_draw_world(mud->surface, mud->sprite_media + 10);
+    //surface_draw_world(mud->surface, mud->sprite_media + 10);
 }
 
 void mudclient_draw_login_screens(mudclient *mud) {
@@ -1157,7 +1166,7 @@ void mudclient_start_game(mudclient *mud) {
     surface_new(mud->surface, mud->game_width, mud->game_height + 12, 4000,
                 mud);
 
-    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);
+    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height + 12);
 
     panel_base_sprite_start = mud->sprite_util;
 
@@ -1218,7 +1227,7 @@ void mudclient_start_game(mudclient *mud) {
 
     mudclient_load_textures(mud);
 
-    // surface_free_colours(mud->surface);
+    //surface_free_colours(mud->surface);
 
     if (mud->error_loading_data) {
         return;

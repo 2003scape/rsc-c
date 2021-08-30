@@ -26,7 +26,6 @@ void init_surface_global() {
         }
 
         character_width[i] = index * 9;
-        //printf("%d, %c %d\n", i, (char) i, index);
     }
 }
 
@@ -36,6 +35,8 @@ void create_font(int8_t *buffer, int id) { game_fonts[id] = buffer; }
 
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud) {
+    memset(surface, 0, sizeof(Surface));
+
     surface->limit = limit;
     surface->bounds_bottom_y = height;
     surface->bounds_bottom_x = width;
@@ -726,8 +727,8 @@ void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
 
     int pixel = 0;
 
-    for (int xx = x; xx < x + width; xx++) {
-        for (int yy = y; yy < y + height; yy++) {
+    for (int yy = y; yy < y + height; yy++) {
+        for (int xx = x; xx < x + width; xx++) {
             surface->surface_pixels[sprite_id][pixel++] =
                 surface->pixels[xx + yy * surface->width2];
         }
@@ -746,11 +747,6 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
     int width = surface->sprite_width[sprite_id];
     int w2 = surface->width2 - width;
     int h2 = 0;
-
-    //printf("%d %d\n", sprite_id, surface->width2);
-    //exit(0);
-
-    //printf("%d\n", surface->bounds_top_y);
 
     if (y < surface->bounds_top_y) {
         int j2 = surface->bounds_top_y - y;
@@ -797,9 +793,6 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
             height--;
         }
     }
-
-    printf("%d %d %d %d %d\n", sprite_id, width,height,w2,h2);
-    //exit(0);
 
     if (surface->surface_pixels[sprite_id] == NULL) {
         surface_draw_sprite_from10a(surface->pixels,
@@ -930,6 +923,7 @@ void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
 
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha) {
+    return;
     if (surface->sprite_translate[sprite_id]) {
         x += surface->sprite_translate_x[sprite_id];
         y += surface->sprite_translate_y[sprite_id];
@@ -1233,10 +1227,6 @@ void surface_draw_sprite_from10a(uint32_t *dest, int8_t *colour_idx,
                                  uint32_t *colours, int src_pos, int dest_pos,
                                  int width, int height, int w2, int h2,
                                  int y_inc) {
-    /*
-    printf("%d %d %d %d\n", width,height,w2,h2);
-    exit(0);
-    */
     int l1 = -(width >> 2);
     width = -(width & 3);
 
@@ -2350,10 +2340,6 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
         } else {
             int width = character_width[(unsigned)text[i]];
 
-            if (text[i] == ' ') {
-                //printf("width %d\n", width);
-            }
-
             if (surface->logged_in && colour != 0) {
                 surface_draw_character(surface, width, x + 1, y, 0, font_data);
                 surface_draw_character(surface, width, x, y + 1, 0, font_data);
@@ -2558,9 +2544,10 @@ void surface_free_colours(Surface *surface) {
         }
     }
 
+    /*
     free(surface->sprite_colours_used);
     free(surface->sprite_colour_list);
 
     surface->sprite_colours_used = NULL;
-    surface->sprite_colour_list = NULL;
+    surface->sprite_colour_list = NULL;*/
 }
