@@ -42,7 +42,7 @@ void mudclient_new(mudclient *mud) {
     mud->max_draw_time = 100;
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
-    mud->thread_sleep = 1;
+    mud->thread_sleep = 10;
     mud->camera_rotation = 128;
     mud->server = "127.0.0.1";
     mud->port = 43594;
@@ -943,7 +943,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     world_load_section_from3(mud->world, region_x * 48 + 23, region_y * 48 + 23,
                              plane);
 
-    //world_add_models(mud->world, mud->game_models);
+    world_add_models(mud->world, mud->game_models);
 
     int x = 9728;
     int y = 6400;
@@ -977,17 +977,16 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                                 8);
     }
 
-    /*
     surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);*/
+        15, mud->sprite_media + 10);
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
                               mud->game_width, 200);
 
-    //surface_draw_world(mud->surface, mud->sprite_logo);
+    surface_draw_world(mud->surface, mud->sprite_logo);
 
     x = 9216;
     y = 9216;
@@ -1022,17 +1021,16 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                                 8);
     }
 
-    /*
     surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);*/
+        15, mud->sprite_media + 10);
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
                               mud->game_width, 200);
 
-    //surface_draw_world(mud->surface, mud->sprite_logo + 1);
+    surface_draw_world(mud->surface, mud->sprite_logo + 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene, mud->world->roof_models[0][i]);
@@ -1073,17 +1071,16 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
         surface_draw_line_alpha(mud->surface, 0, i, 0, 194, mud->game_width, 8);
     }
 
-    /*
     surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);*/
+        15, mud->sprite_media + 10);
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_media + 10, 0, 0,
                               mud->game_width, 200);
 
-    //surface_draw_world(mud->surface, mud->sprite_media + 10);
+    surface_draw_world(mud->surface, mud->sprite_media + 10);
 }
 
 void mudclient_draw_login_screens(mudclient *mud) {

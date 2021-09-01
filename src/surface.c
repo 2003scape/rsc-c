@@ -45,10 +45,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->height1 = height;
     surface->height2 = height;
     surface->area = width * height;
-    surface->pixels = calloc(width * height, sizeof(uint32_t));
-    surface->surface_pixels = calloc(limit, sizeof(uint32_t *));
+    surface->pixels = calloc(width * height, sizeof(int32_t));
+    surface->surface_pixels = calloc(limit, sizeof(int32_t *));
     surface->sprite_colours_used = calloc(limit, sizeof(int8_t *));
-    surface->sprite_colour_list = calloc(limit, sizeof(uint32_t *));
+    surface->sprite_colour_list = calloc(limit, sizeof(int32_t *));
     surface->sprite_width = calloc(limit, sizeof(int));
     surface->sprite_height = calloc(limit, sizeof(int));
     surface->sprite_width_full = calloc(limit, sizeof(int));
@@ -99,7 +99,7 @@ void surface_draw(Surface *surface) {
     }
 
     memcpy(surface->mud->pixel_surface->pixels, surface->pixels,
-           surface->area * sizeof(uint32_t));
+           surface->area * sizeof(int32_t));
 
     SDL_BlitSurface(surface->mud->pixel_surface, NULL, surface->mud->screen,
                     NULL);
@@ -409,7 +409,7 @@ void surface_fade_to_black(Surface *surface) {
     int area = surface->width2 * surface->height2;
 
     for (int i = 0; i < area; i++) {
-        uint32_t pixel = surface->pixels[i] & 0xffffff;
+        int32_t pixel = surface->pixels[i] & 0xffffff;
 
         surface->pixels[i] =
             ((pixel >> 1) & 0x7f7f7f) + ((pixel >> 2) & 0x3f3f3f) +
@@ -430,7 +430,7 @@ void surface_draw_line_alpha(Surface *surface, int i, int j, int x, int y,
                 if (i2 >= 0 && i2 < surface->width2) {
                     for (int j2 = yy - j; j2 <= yy + j; j2++) {
                         if (j2 >= 0 && j2 < surface->height2) {
-                            uint32_t pixel =
+                            int32_t pixel =
                                 surface->pixels[i2 + surface->width2 * j2];
 
                             r += (pixel >> 16) & 0xff;
@@ -471,7 +471,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
     int colour_count = index_data[index_offset++] & 0xff;
 
-    uint32_t *colours = calloc(colour_count, sizeof(uint32_t));
+    int32_t *colours = calloc(colour_count, sizeof(int32_t));
     colours[0] = 0xff00ff;
 
     for (int i = 0; i < colour_count - 1; i++) {
@@ -543,7 +543,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
 void surface_read_sleep_word(Surface *surface, int sprite_id,
                              int8_t *sprite_data) {
-    uint32_t *pixels = malloc(SLEEP_WIDTH * SLEEP_HEIGHT * sizeof(uint32_t));
+    int32_t *pixels = malloc(SLEEP_WIDTH * SLEEP_HEIGHT * sizeof(int32_t));
     surface->surface_pixels[sprite_id] = pixels;
     surface->sprite_width[sprite_id] = SLEEP_WIDTH;
     surface->sprite_height[sprite_id] = SLEEP_HEIGHT;
@@ -595,8 +595,8 @@ void surface_draw_world(Surface *surface, int sprite_id) {
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
-    uint32_t *sprite_pixels = surface->surface_pixels[sprite_id];
-    uint32_t *pixels = calloc(32768, sizeof(uint32_t));
+    int32_t *sprite_pixels = surface->surface_pixels[sprite_id];
+    int32_t *pixels = calloc(32768, sizeof(int32_t));
 
     for (int k = 0; k < sprite_size; k++) {
         int l = sprite_pixels[k];
@@ -605,14 +605,14 @@ void surface_draw_world(Surface *surface, int sprite_id) {
                ((l & 0xf8) >> 3)]++;
     }
 
-    uint32_t *colour_list = calloc(256, sizeof(uint32_t));
+    int32_t *colour_list = calloc(256, sizeof(int32_t));
     colour_list[0] = 0xff00ff;
 
-    uint32_t ai3[256];
-    memset(ai3, 0, 256 * sizeof(uint32_t));
+    int32_t ai3[256];
+    memset(ai3, 0, 256 * sizeof(int32_t));
 
     for (int i1 = 0; i1 < 32768; i1++) {
-        uint32_t pixel = pixels[i1];
+        int32_t pixel = pixels[i1];
 
         if (pixel > ai3[255]) {
             for (int k1 = 1; k1 < 256; k1++) {
@@ -690,11 +690,11 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
     int area =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
-    uint32_t *cols = surface->sprite_colour_list[sprite_id];
-    uint32_t *pixels = malloc(area * sizeof(uint32_t));
+    int32_t *cols = surface->sprite_colour_list[sprite_id];
+    int32_t *pixels = malloc(area * sizeof(int32_t));
 
     for (int i = 0; i < area; i++) {
-        uint32_t colour = cols[idx[i] & 0xff];
+        int32_t colour = cols[idx[i] & 0xff];
 
         if (colour == 0) {
             colour = 1;
@@ -723,7 +723,7 @@ void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
     surface->sprite_height_full[sprite_id] = height;
 
     surface->surface_pixels[sprite_id] =
-        malloc(width * height * sizeof(uint32_t));
+        malloc(width * height * sizeof(int32_t));
 
     int pixel = 0;
 
@@ -923,7 +923,6 @@ void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
 
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha) {
-    return;
     if (surface->sprite_translate[sprite_id]) {
         x += surface->sprite_translate_x[sprite_id];
         y += surface->sprite_translate_y[sprite_id];
@@ -1167,7 +1166,7 @@ void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                               l3, width, height, k2, l2, k1, y_inc, colour);
 }
 
-void surface_draw_sprite_from10(uint32_t *dest, uint32_t *src, int i,
+void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int i,
                                 int src_pos, int dest_pos, int width,
                                 int height, int j1, int k1, int y_inc) {
     int i2 = -(width >> 2);
@@ -1223,8 +1222,8 @@ void surface_draw_sprite_from10(uint32_t *dest, uint32_t *src, int i,
     }
 }
 
-void surface_draw_sprite_from10a(uint32_t *dest, int8_t *colour_idx,
-                                 uint32_t *colours, int src_pos, int dest_pos,
+void surface_draw_sprite_from10a(int32_t *dest, int8_t *colour_idx,
+                                 int32_t *colours, int src_pos, int dest_pos,
                                  int width, int height, int w2, int h2,
                                  int y_inc) {
     int l1 = -(width >> 2);
@@ -1280,7 +1279,7 @@ void surface_draw_sprite_from10a(uint32_t *dest, int8_t *colour_idx,
     }
 }
 
-void surface_plot_scale_from13(uint32_t *dest, uint32_t *src, int i, int j,
+void surface_plot_scale_from13(int32_t *dest, int32_t *src, int i, int j,
                                int k, int dest_pos, int i1, int j1, int k1,
                                int l1, int i2, int j2, int k2) {
     int l2 = j;
@@ -1306,7 +1305,7 @@ void surface_plot_scale_from13(uint32_t *dest, uint32_t *src, int i, int j,
     }
 }
 
-void surface_draw_sprite_alpha_from11(uint32_t *dest, uint32_t *src, int i,
+void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int i,
                                       int src_pos, int size, int width,
                                       int height, int extra_x_space, int k1,
                                       int y_inc, int alpha) {
@@ -1335,8 +1334,8 @@ void surface_draw_sprite_alpha_from11(uint32_t *dest, uint32_t *src, int i,
     }
 }
 
-void surface_draw_sprite_alpha_from11a(uint32_t *dest, int8_t *colour_idx,
-                                       uint32_t *colours, int list_pos,
+void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colour_idx,
+                                       int32_t *colours, int list_pos,
                                        int size, int width, int height,
                                        int extra_x_space, int j1, int y_inc,
                                        int alpha) {
@@ -1367,7 +1366,7 @@ void surface_draw_sprite_alpha_from11a(uint32_t *dest, int8_t *colour_idx,
     }
 }
 
-void surface_transparent_scale(uint32_t *dest, uint32_t *src, int i, int j,
+void surface_transparent_scale(int32_t *dest, int32_t *src, int i, int j,
                                int k, int dest_pos, int i1, int j1, int k1,
                                int l1, int i2, int j2, int y_inc, int alpha) {
     int i3 = 256 - alpha;
@@ -1401,7 +1400,7 @@ void surface_transparent_scale(uint32_t *dest, uint32_t *src, int i, int j,
     }
 }
 
-void surface_plot_scale_from14(uint32_t *dest, uint32_t *src, int i, int j,
+void surface_plot_scale_from14(int32_t *dest, int32_t *src, int i, int j,
                                int k, int l, int i1, int width, int height,
                                int l1, int i2, int j2, int y_inc, int colour) {
     int r = (colour >> 16) & 0xff;
@@ -1732,7 +1731,7 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     }
 
     int l10 = k6 * j1;
-    uint32_t *ai = surface->surface_pixels[sprite_id];
+    int32_t *ai = surface->surface_pixels[sprite_id];
 
     for (int i = k6; i < l6; i++) {
         int j11 = surface->an_int_array_340[i] >> 8;
@@ -1772,7 +1771,7 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     }
 }
 
-void surface_draw_minimap(uint32_t *dest, uint32_t *src, int i, int j, int k,
+void surface_draw_minimap(int32_t *dest, int32_t *src, int i, int j, int k,
                           int l, int i1, int j1, int k1, int l1) {
     for (i = k1; i < 0; i++) {
         dest[j++] = src[(k >> 17) + (l >> 17) * l1];
@@ -1781,7 +1780,7 @@ void surface_draw_minimap(uint32_t *dest, uint32_t *src, int i, int j, int k,
     }
 }
 
-void surface_draw_minimap_translate(uint32_t *dest, uint32_t *src, int i, int j,
+void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int i, int j,
                                     int k, int l, int i1, int j1, int k1,
                                     int l1) {
     for (int i2 = k1; i2 < 0; i2++) {
@@ -1944,8 +1943,8 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
     }
 }
 
-void surface_transparent_sprite_plot_from15(Surface *surface, uint32_t *dest,
-                                            uint32_t *src, int i, int j, int k,
+void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
+                                            int32_t *src, int i, int j, int k,
                                             int dest_pos, int i1, int j1,
                                             int k1, int l1, int i2, int j2,
                                             int k2, int l2, int i3) {
@@ -2004,8 +2003,8 @@ void surface_transparent_sprite_plot_from15(Surface *surface, uint32_t *dest,
     }
 }
 
-void surface_transparent_sprite_plot_from16(Surface *surface, uint32_t *dest,
-                                            uint32_t *src, int i, int j, int k,
+void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
+                                            int32_t *src, int i, int j, int k,
                                             int dest_pos, int i1, int j1,
                                             int k1, int l1, int i2, int j2,
                                             int k2, int l2, int i3, int j3) {
@@ -2069,9 +2068,9 @@ void surface_transparent_sprite_plot_from16(Surface *surface, uint32_t *dest,
     }
 }
 
-void surface_transparent_sprite_plot_from16a(Surface *surface, uint32_t *dest,
+void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
                                              int8_t *colour_idx,
-                                             uint32_t *colours, int i, int j,
+                                             int32_t *colours, int i, int j,
                                              int k, int l, int i1, int j1,
                                              int k1, int l1, int i2, int j2,
                                              int k2, int l2, int i3) {
@@ -2130,9 +2129,9 @@ void surface_transparent_sprite_plot_from16a(Surface *surface, uint32_t *dest,
     }
 }
 
-void surface_transparent_sprite_plot_from17(Surface *surface, uint32_t *dest,
+void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
                                             int8_t *colour_idx,
-                                            uint32_t *colours, int i, int j,
+                                            int32_t *colours, int i, int j,
                                             int k, int l, int i1, int j1,
                                             int k1, int l1, int i2, int j2,
                                             int k2, int l2, int i3, int j3) {
@@ -2398,7 +2397,7 @@ void surface_draw_character(Surface *surface, int width, int x, int y,
     }
 }
 
-void surface_plot_letter(uint32_t *dest, int8_t *font, int i, int j, int k,
+void surface_plot_letter(int32_t *dest, int8_t *font, int i, int j, int k,
                          int l, int i1, int j1, int k1) {
     int l1 = -(l >> 2);
 
@@ -2523,7 +2522,7 @@ void surface_free_colours(Surface *surface) {
     void *freed[surface->limit];
 
     for (int i = 0; i < surface->limit; i++) {
-        uint32_t *colours = surface->sprite_colour_list[i];
+        int32_t *colours = surface->sprite_colour_list[i];
         int found = 0;
 
         if (colours) {

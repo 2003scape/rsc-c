@@ -70,10 +70,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(sprite_count, sizeof(int));
 }
 
-void scene_texture_scanline(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
+void scene_texture_scanline(int32_t *ai, int32_t *ai1, int i, int j, int k,
                             int l, int i1, int j1, int k1, int l1, int i2,
                             int j2, int k2, int l2) {
-    return;
     if (i2 <= 0) {
         return;
     }
@@ -204,11 +203,10 @@ void scene_texture_scanline(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
     }
 }
 
-void scene_texture_translucent_scanline(uint32_t *ai, uint32_t *ai1, int i,
+void scene_texture_translucent_scanline(int32_t *ai, int32_t *ai1, int i,
                                         int j, int k, int l, int i1, int j1,
                                         int k1, int l1, int i2, int j2, int k2,
                                         int l2) {
-    return;
     if (i2 <= 0) {
         return;
     }
@@ -389,11 +387,10 @@ void scene_texture_translucent_scanline(uint32_t *ai, uint32_t *ai1, int i,
     }
 }
 
-void scene_texture_back_translucent_scanline(uint32_t *ai, int i, int j, int k,
-                                             uint32_t *ai1, int l, int i1,
+void scene_texture_back_translucent_scanline(int32_t *ai, int i, int j, int k,
+                                             int32_t *ai1, int l, int i1,
                                              int j1, int k1, int l1, int i2,
                                              int j2, int k2, int l2, int i3) {
-    return;
     if (j2 <= 0) {
         return;
     }
@@ -593,10 +590,9 @@ void scene_texture_back_translucent_scanline(uint32_t *ai, int i, int j, int k,
     }
 }
 
-void scene_texture_scanline2(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
+void scene_texture_scanline2(int32_t *ai, int32_t *ai1, int i, int j, int k,
                              int l, int i1, int j1, int k1, int l1, int i2,
                              int j2, int k2, int l2) {
-    return;
     if (i2 <= 0) {
         return;
     }
@@ -636,7 +632,7 @@ void scene_texture_scanline2(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
 
         int k3 = (i3 - i) >> 4;
         int l3 = (j3 - j) >> 4;
-        int j4 = k2 >> 20;
+        int32_t j4 = k2 >> 20;
         i += k2 & 0xc0000;
         k2 += l2;
 
@@ -712,11 +708,10 @@ void scene_texture_scanline2(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
     }
 }
 
-void scene_texture_translucent_scanline2(uint32_t *ai, uint32_t *ai1, int i,
+void scene_texture_translucent_scanline2(int32_t *ai, int32_t *ai1, int i,
                                          int j, int k, int l, int i1, int j1,
                                          int k1, int l1, int i2, int j2, int k2,
                                          int l2) {
-    return;
     if (i2 <= 0) {
         return;
     }
@@ -880,11 +875,10 @@ void scene_texture_translucent_scanline2(uint32_t *ai, uint32_t *ai1, int i,
     }
 }
 
-void scene_texture_back_translucent_scanline2(uint32_t *ai, int i, int j, int k,
-                                              uint32_t *ai1, int l, int i1,
+void scene_texture_back_translucent_scanline2(int32_t *ai, int i, int j, int k,
+                                              int32_t *ai1, int l, int i1,
                                               int j1, int k1, int l1, int i2,
                                               int j2, int k2, int l2, int i3) {
-    return;
     if (j2 <= 0) {
         return;
     }
@@ -1083,9 +1077,8 @@ void scene_texture_back_translucent_scanline2(uint32_t *ai, int i, int j, int k,
     }
 }
 
-void scene_gradient_scanline(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
+void scene_gradient_scanline(int32_t *ai, int i, int j, int k, int32_t *ai1,
                              int l, int i1) {
-    return;
     if (i >= 0) {
         return;
     }
@@ -1126,9 +1119,8 @@ void scene_gradient_scanline(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
     }
 }
 
-void scene_texture_gradient_scanline(uint32_t *ai, int i, int j, int k,
-                                     uint32_t *ai1, int l, int i1) {
-    return;
+void scene_texture_gradient_scanline(int32_t *ai, int i, int j, int k,
+                                     int32_t *ai1, int l, int i1) {
     if (i >= 0) {
         return;
     }
@@ -1178,10 +1170,8 @@ void scene_texture_gradient_scanline(uint32_t *ai, int i, int j, int k,
     }
 }
 
-void scene_gradient_scanline2(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
+void scene_gradient_scanline2(int32_t *ai, int i, int j, int k, int32_t *ai1,
                               int l, int i1) {
-    //printf("%d %d %d %d %d\n", i, j, k, l, i1);
-
     if (i >= 0) {
         return;
     }
@@ -1247,6 +1237,9 @@ void scene_add_model(Scene *scene, GameModel *model) {
 void scene_remove_model(Scene *scene, GameModel *model) {
     for (int i = 0; i < scene->model_count; i++) {
         if (scene->models[i] == model) {
+            free(model);
+            scene->models[i] = NULL;
+
             scene->model_count--;
 
             for (int j = i; j < scene->model_count; j++) {
@@ -1918,7 +1911,7 @@ void scene_render(Scene *scene) {
 }
 
 void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
-                              uint32_t *ai, uint32_t *ai1, uint32_t *ai2,
+                              int32_t *ai, int32_t *ai1, int32_t *ai2,
                               GameModel *game_model, int pid) {
     if (i1 == 3) {
         int k1 = ai1[0] + scene->base_y;
@@ -2428,8 +2421,10 @@ void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
 
             for (k = i4; k <= i3; k++) {
                 Scanline *scanline_3 = scene->scanlines[k];
-                scanline_3->start_x = scanline_3->end_x = j5;
-                scanline_3->start_s = scanline_3->end_s = i8;
+                scanline_3->start_x = j5;
+                scanline_3->end_x = j5;
+                scanline_3->start_s = i8;
+                scanline_3->end_s = i8;
                 j5 += k6;
                 i8 += k9;
             }
@@ -2528,10 +2523,9 @@ void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
     }
 }
 
-void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
-                     uint32_t *ai1, uint32_t *ai2, int l,
+void scene_rasterize(Scene *scene, int i, int j, int k, int32_t *ai,
+                     int32_t *ai1, int32_t *ai2, int l,
                      GameModel *game_model) {
-    //printf("%d %d %d %d\n", i, j, k, l);
     if (l == -2) {
         return;
     }
@@ -2554,7 +2548,6 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
         int j7 = ai1[k] - k1;
         int k8 = ai2[k] - j2;
 
-        /*
         if (scene->texture_dimension[l] == 1) {
             int l9 = (i6 * k1 - j7 * i1) << 12;
             int k10 = (j7 * j2 - k8 * k1) << (5 - scene->view_distance + 7 + 4);
@@ -2715,7 +2708,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
             }
 
             return;
-        }*/
+        }
 
         int i10 = (i6 * k1 - j7 * i1) << 11;
         int l10 = (j7 * j2 - k8 * k1) << (5 - scene->view_distance + 6 + 4);
@@ -2738,7 +2731,6 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
         l11 += l12 * j16;
         j13 += j14 * j16;
 
-        /*
         if (scene->interlace) {
             if ((scene->min_y & 1) == 1) {
                 scene->min_y++;
@@ -2836,7 +2828,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
             }
 
             return;
-        }*/
+        }
 
         for (i = scene->min_y; i < scene->max_y; i += byte2) {
             Scanline *scanline = scene->scanlines[i];
@@ -2914,7 +2906,6 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
     int l2 = scene->base_x + scene->min_y * i2;
     int8_t byte0 = 1;
 
-    /*
     if (scene->interlace) {
         if ((scene->min_y & 1) == 1) {
             scene->min_y++;
@@ -2992,7 +2983,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
         }
 
         return;
-    }*/
+    }
 
     for (i = scene->min_y; i < scene->max_y; i += byte0) {
         Scanline *scanline_2 = scene->scanlines[i];
@@ -3441,11 +3432,11 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128) {
     scene->texture_count = count;
     scene->texture_colours_used = calloc(count, sizeof(int8_t *));
-    scene->texture_colour_list = calloc(count, sizeof(uint32_t *));
+    scene->texture_colour_list = calloc(count, sizeof(int32_t *));
     scene->texture_dimension = calloc(count, sizeof(int));
     scene->texture_loaded_number = calloc(count, sizeof(int64_t));
     scene->texture_back_transparent = calloc(count, sizeof(int8_t));
-    scene->texture_pixels = calloc(count, sizeof(uint32_t *));
+    scene->texture_pixels = calloc(count, sizeof(int32_t *));
 
     scene_texture_count_loaded = 0;
 
@@ -3454,16 +3445,16 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     }
 
     // 64x64 rgba
-    scene->texture_colours_64 = calloc(length_64, sizeof(uint32_t *));
+    scene->texture_colours_64 = calloc(length_64, sizeof(int32_t *));
     scene->length_64 = length_64;
 
     // 128x128 rgba
-    scene->texture_colours_128 = calloc(length_128, sizeof(uint32_t *));
+    scene->texture_colours_128 = calloc(length_128, sizeof(int32_t *));
     scene->length_128 = length_128;
 }
 
 void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
-                          uint32_t *colours, int wide128) {
+                          int32_t *colours, int wide128) {
     scene->texture_colours_used[id] = colour_idx;
     scene->texture_colour_list[id] = colours;
 
@@ -3494,7 +3485,7 @@ void scene_prepare_texture(Scene *scene, int id) {
         for (int j = 0; j < scene->length_64; j++) {
             if (scene->texture_colours_64[j] == NULL) {
                 scene->texture_colours_64[j] =
-                    calloc(128 * 128, sizeof(uint32_t));
+                    calloc(128 * 128, sizeof(int32_t));
 
                 scene->texture_pixels[id] = scene->texture_colours_64[j];
                 scene_set_texture_pixels(scene, id);
@@ -3525,7 +3516,7 @@ void scene_prepare_texture(Scene *scene, int id) {
     for (int k = 0; k < scene->length_128; k++) {
         if (scene->texture_colours_128[k] == NULL) {
             scene->texture_colours_128[k] =
-                calloc(256 * 256, sizeof(uint32_t));
+                calloc(256 * 256, sizeof(int32_t));
 
             scene->texture_pixels[id] = scene->texture_colours_128[k];
             scene_set_texture_pixels(scene, id);
@@ -3560,7 +3551,7 @@ void scene_set_texture_pixels(Scene *scene, int id) {
         texture_width = 128;
     }
 
-    uint32_t *colours = scene->texture_pixels[id];
+    int32_t *colours = scene->texture_pixels[id];
     int colour_count = 0;
 
     for (int x = 0; x < texture_width; x++) {
@@ -3583,7 +3574,7 @@ void scene_set_texture_pixels(Scene *scene, int id) {
     }
 
     for (int i1 = 0; i1 < colour_count; i1++) {
-        uint32_t colour = colours[i1];
+        int32_t colour = colours[i1];
 
         colours[colour_count + i1] = (colour - (colour >> 3)) & 0xf8f8ff;
         colours[colour_count * 2 + i1] = (colour - (colour >> 2)) & 0xf8f8ff;
@@ -3598,7 +3589,7 @@ void scene_scroll_texture(Scene *scene, int id) {
         return;
     }
 
-    uint32_t *colours = scene->texture_pixels[id];
+    int32_t *colours = scene->texture_pixels[id];
 
     for (int i = 0; i < 64; i++) {
         int k = i + 4032;

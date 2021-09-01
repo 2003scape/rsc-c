@@ -41,20 +41,20 @@ typedef struct Scene {
     int max_model_count;
     GameModel **models;
     GameModel *view;
-    uint32_t *raster;
+    int32_t *raster;
     int gradient_base[RAMP_COUNT];
     int gradient_ramps[RAMP_COUNT][256];
     int32_t *an_int_array_377;
     int texture_count;
     int8_t **texture_colours_used;
-    uint32_t **texture_colour_list;
+    int32_t **texture_colour_list;
     int *texture_dimension;
     int64_t *texture_loaded_number;
-    uint32_t **texture_pixels;
+    int32_t **texture_pixels;
     int8_t *texture_back_transparent;
-    uint32_t **texture_colours_64;
+    int32_t **texture_colours_64;
     int length_64;
-    uint32_t **texture_colours_128;
+    int32_t **texture_colours_128;
     int length_128;
     Surface *surface;
     Scanline **scanlines;
@@ -102,33 +102,33 @@ typedef struct Scene {
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int sprite_count);
-void scene_texture_scanline(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
+void scene_texture_scanline(int32_t *ai, int32_t *ai1, int i, int j, int k,
                             int l, int i1, int j1, int k1, int l1, int i2,
                             int j2, int k2, int l2);
-void scene_texture_translucent_scanline(uint32_t *ai, uint32_t *ai1, int i,
+void scene_texture_translucent_scanline(int32_t *ai, int32_t *ai1, int i,
                                         int j, int k, int l, int i1, int j1,
                                         int k1, int l1, int i2, int j2, int k2,
                                         int l2);
-void scene_texture_back_translucent_scanline(uint32_t *ai, int i, int j, int k,
-                                             uint32_t *ai1, int l, int i1,
+void scene_texture_back_translucent_scanline(int32_t *ai, int i, int j, int k,
+                                             int32_t *ai1, int l, int i1,
                                              int j1, int k1, int l1, int i2,
                                              int j2, int k2, int l2, int i3);
-void scene_texture_scanline2(uint32_t *ai, uint32_t *ai1, int i, int j, int k,
+void scene_texture_scanline2(int32_t *ai, int32_t *ai1, int i, int j, int k,
                              int l, int i1, int j1, int k1, int l1, int i2,
                              int j2, int k2, int l2);
-void scene_texture_translucent_scanline2(uint32_t *ai, uint32_t *ai1, int i,
+void scene_texture_translucent_scanline2(int32_t *ai, int32_t *ai1, int i,
                                          int j, int k, int l, int i1, int j1,
                                          int k1, int l1, int i2, int j2, int k2,
                                          int l2);
-void scene_texture_back_translucent_scanline2(uint32_t *ai, int i, int j, int k,
-                                              uint32_t *ai1, int l, int i1,
+void scene_texture_back_translucent_scanline2(int32_t *ai, int i, int j, int k,
+                                              int32_t *ai1, int l, int i1,
                                               int j1, int k1, int l1, int i2,
                                               int j2, int k2, int l2, int i3);
-void scene_gradient_scanline(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
+void scene_gradient_scanline(int32_t *ai, int i, int j, int k, int32_t *ai1,
                              int l, int i1);
-void scene_texture_gradient_scanline(uint32_t *ai, int i, int j, int k,
-                                     uint32_t *ai1, int l, int i1);
-void scene_gradient_scanline2(uint32_t *ai, int i, int j, int k, uint32_t *ai1,
+void scene_texture_gradient_scanline(int32_t *ai, int i, int j, int k,
+                                     int32_t *ai1, int l, int i1);
+void scene_gradient_scanline2(int32_t *ai, int i, int j, int k, int32_t *ai1,
                               int l, int j1);
 int rgb(int i, int j, int k);
 void scene_add_model(Scene *scene, GameModel *model);
@@ -150,10 +150,10 @@ int scene_polygons_order(Scene *scene, Polygon **polygons, int start, int end);
 void scene_set_frustum(Scene *scene, int i, int j, int k);
 void scene_render(Scene *scene);
 void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
-                              uint32_t *ai, uint32_t *ai1, uint32_t *ai2,
+                              int32_t *ai, int32_t *ai1, int32_t *ai2,
                               GameModel *game_model, int pid);
-void scene_rasterize(Scene *scene, int i, int j, int k, uint32_t *ai,
-                     uint32_t *ai1, uint32_t *ai2, int l,
+void scene_rasterize(Scene *scene, int i, int j, int k, int32_t *ai,
+                     int32_t *ai1, int32_t *ai2, int l,
                      GameModel *game_model);
 void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
                       int roll, int distance);
@@ -164,7 +164,7 @@ int scene_heuristic_polygon(Polygon *polygon, Polygon *polygon_1);
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128);
 void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
-                          uint32_t *colours, int wide128);
+                          int32_t *colours, int wide128);
 void scene_prepare_texture(Scene *scene, int id);
 void scene_set_texture_pixels(Scene *scene, int id);
 void scene_scroll_texture(Scene *scene, int id);
