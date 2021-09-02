@@ -21,6 +21,9 @@
 #define INPUT_PM_LENGTH 80
 #define GAME_OBJECTS_MAX 1000
 
+#define MUD_WIDTH 512
+#define MUD_HEIGHT 346
+
 typedef struct mudclient mudclient;
 
 #include "bzip.h"

@@ -328,6 +328,8 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
         }
     }
 
+    free(map_data);
+
     strcpy(map_name + map_name_length, ".dat");
 
     map_data = load_data(map_name, 0, world->map_pack);
@@ -398,6 +400,8 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
             }
         }
 
+        free(map_data);
+
         strcpy(map_name + map_name_length, ".loc");
 
         map_data = load_data(map_name, 0, world->map_pack);
@@ -414,6 +418,8 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
                     tile += val - 128;
                 }
             }
+
+            free(map_data);
         }
     } else {
         for (int tile = 0; tile < TILE_COUNT; tile++) {

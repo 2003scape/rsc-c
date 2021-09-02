@@ -36,8 +36,8 @@ void init_mudclient_global() {
 }
 
 void mudclient_new(mudclient *mud) {
-    mud->applet_width = 512;
-    mud->applet_height = 346;
+    mud->applet_width = MUD_WIDTH;
+    mud->applet_height = MUD_HEIGHT;
     mud->target_fps = 20;
     mud->max_draw_time = 100;
     mud->loading_step = 1;
@@ -622,8 +622,6 @@ void mudclient_load_textures(mudclient *mud) {
             mud->surface->sprite_colour_list[mud->sprite_texture_world + i],
             (wh / 64) - 1);
     }
-
-    printf("done loading\n");
 
     free(textures_jag);
     free(index_dat);
@@ -1382,7 +1380,7 @@ void mudclient_run(mudclient *mud) {
         j = 300;
         delay = 1;
 
-        int time = SDL_GetTicks();
+        uint32_t time = SDL_GetTicks();
 
         if (mud->timings[i] == 0) {
             j = k1;
@@ -1501,6 +1499,6 @@ int main(int argc, char **argv) {
     mudclient *mud = malloc(sizeof(mudclient));
     memset(mud, 0, sizeof(mudclient));
     mudclient_new(mud);
-    mudclient_start_application(mud, 512, 346, "Runescape by Andrew Gower");
+    mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT, "Runescape by Andrew Gower");
     mudclient_run(mud);
 }

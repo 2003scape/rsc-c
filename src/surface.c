@@ -45,7 +45,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->height1 = height;
     surface->height2 = height;
     surface->area = width * height;
-    surface->pixels = calloc(width * height, sizeof(int32_t));
+    surface->pixels = mud->pixel_surface->pixels;
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
     surface->sprite_colours_used = calloc(limit, sizeof(int8_t *));
     surface->sprite_colour_list = calloc(limit, sizeof(int32_t *));
@@ -97,9 +97,6 @@ void surface_draw(Surface *surface) {
     if (surface->mud->window == NULL) {
         return;
     }
-
-    memcpy(surface->mud->pixel_surface->pixels, surface->pixels,
-           surface->area * sizeof(int32_t));
 
     SDL_BlitSurface(surface->mud->pixel_surface, NULL, surface->mud->screen,
                     NULL);
@@ -505,6 +502,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         surface->sprite_width_full[i] = full_width;
         surface->sprite_height_full[i] = full_height;
         free(surface->surface_pixels[i]);
+        surface->surface_pixels[i] = NULL;
         surface->sprite_translate[i] = 0;
 
         if (surface->sprite_translate_x[i] != 0 ||
@@ -709,7 +707,8 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
 
     free(surface->sprite_colours_used[sprite_id]);
     surface->sprite_colours_used[sprite_id] = NULL;
-    // free(surface->sprite_colour_list[sprite_id]);
+    surface->sprite_colour_list[sprite_id] = NULL;
+    //free(surface->sprite_colour_list[sprite_id]);
 }
 
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
