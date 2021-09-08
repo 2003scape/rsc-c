@@ -233,6 +233,8 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent) {
     char loading_text[35]; /* max description is 19 */
 
+    printf("loading %s\n", file);
+
     sprintf(loading_text, "Loading %s - 0%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
 
@@ -254,9 +256,13 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     int archive_size = ((header[0] & 0xff) << 16) + ((header[1] & 0xff) << 8) +
                        (header[2] & 0xff);
 
+    printf("as=%d\n", archive_size);
+
     int archive_size_compressed = ((header[3] & 0xff) << 16) +
                                   ((header[4] & 0xff) << 8) +
                                   (header[5] & 0xff);
+
+    printf("asc=%d\n", archive_size_compressed);
 
     sprintf(loading_text, "Loading %s - 5%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
@@ -280,6 +286,8 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         mudclient_show_loading_progress(mud, percent, loading_text);
     }
 
+    fclose(archive_stream);
+
     sprintf(loading_text, "Unpacking %s", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
 
@@ -290,6 +298,12 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                         archive_size_compressed, 0);
 
         free(archive_data);
+
+        char newname[255];
+        sprintf(newname, "%s.uncompressed", file);
+        FILE *fart = fopen(newname, "wb");
+        fwrite(decompressed, archive_size, 1, fart);
+        fclose(fart);
 
         return decompressed;
     }
@@ -425,8 +439,9 @@ void mudclient_load_media(mudclient *mud) {
 
     free(index_dat);
 
-    surface_load_sprite(mud->surface, mud->sprite_media);
-    surface_load_sprite(mud->surface, mud->sprite_media + 9);
+    //surface_load_sprite(mud->surface, mud->sprite_media);
+    //surface_load_sprite(mud->surface, mud->sprite_media + 9);
+    surface_load_sprite(mud->surface, mud->sprite_media + 10);
 
     for (int i = 11; i <= 26; i++) {
         surface_load_sprite(mud->surface, mud->sprite_media + i);
@@ -621,6 +636,11 @@ void mudclient_load_textures(mudclient *mud) {
             mud->surface->sprite_colours_used[mud->sprite_texture_world + i],
             mud->surface->sprite_colour_list[mud->sprite_texture_world + i],
             (wh / 64) - 1);
+
+        //mud->surface->sprite_colours_used[mud->sprite_texture_world + i],
+
+        free(mud->surface->sprite_colour_list[mud->sprite_texture]);
+        free(mud->surface->sprite_colours_used[mud->sprite_texture]);
     }
 
     free(textures_jag);
@@ -1200,10 +1220,6 @@ void mudclient_start_game(mudclient *mud) {
 
     mud->scene = malloc(sizeof(Scene));
     scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
-
-    mud->scene->view = malloc(sizeof(GameModel));
-    game_model_from2(mud->scene->view, 1000 * 1000, 1000);
-
     scene_set_bounds(mud->scene, mud->game_width / 2, mud->game_height / 2,
                      mud->game_width / 2, mud->game_height / 2, mud->game_width,
                      9);

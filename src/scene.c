@@ -57,6 +57,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     }
 
     GameModel *view = malloc(sizeof(GameModel));
+    printf("%d\n", sprite_count);
     game_model_from2(view, sprite_count * 2, sprite_count);
     scene->view = view;
 
@@ -3582,6 +3583,9 @@ void scene_set_texture_pixels(Scene *scene, int id) {
         colours[colour_count * 3 + i1] =
             (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
     }
+
+    //scene->texture_colours_used[id] = NULL;
+    //scene->texture_colours_used[id] = NULL;
 }
 
 void scene_scroll_texture(Scene *scene, int id) {

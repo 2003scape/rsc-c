@@ -155,7 +155,7 @@ char *game_data_get_string() {
         game_data_string_offset++;
     }
 
-    int end = game_data_string_offset;
+    int end = game_data_string_offset + 1;
 
     char *string = malloc(((end - start) + 1) * sizeof(char));
     memset(string, '\0', end - start);
