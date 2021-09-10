@@ -48,8 +48,8 @@ typedef struct Scene {
     int texture_count;
     int8_t **texture_colours_used;
     int32_t **texture_colour_list;
-    int *texture_dimension;
-    int64_t *texture_loaded_number;
+    int8_t *texture_dimension;
+    int32_t *texture_loaded_number;
     int32_t **texture_pixels;
     int8_t *texture_back_transparent;
     int32_t **texture_colours_64;

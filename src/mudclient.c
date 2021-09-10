@@ -599,6 +599,12 @@ void mudclient_load_textures(mudclient *mud) {
         surface_draw_box(mud->surface, 0, 0, 128, 128, 0xff00ff);
         surface_draw_sprite_from3(mud->surface, 0, 0, mud->sprite_texture);
 
+        free(mud->surface->sprite_colour_list[mud->sprite_texture]);
+        mud->surface->sprite_colour_list[mud->sprite_texture] = NULL;
+
+        free(mud->surface->sprite_colours_used[mud->sprite_texture]);
+        mud->surface->sprite_colours_used[mud->sprite_texture] = NULL;
+
         int wh = mud->surface->sprite_width_full[mud->sprite_texture];
         char *name_sub = game_data_texture_subtype_name[i];
 
@@ -615,6 +621,12 @@ void mudclient_load_textures(mudclient *mud) {
 
                 surface_draw_sprite_from3(mud->surface, 0, 0,
                                           mud->sprite_texture);
+
+                free(mud->surface->sprite_colour_list[mud->sprite_texture]);
+                mud->surface->sprite_colour_list[mud->sprite_texture] = NULL;
+
+                free(mud->surface->sprite_colours_used[mud->sprite_texture]);
+                mud->surface->sprite_colours_used[mud->sprite_texture] = NULL;
             }
         }
 
@@ -637,10 +649,16 @@ void mudclient_load_textures(mudclient *mud) {
             mud->surface->sprite_colour_list[mud->sprite_texture_world + i],
             (wh / 64) - 1);
 
-        //mud->surface->sprite_colours_used[mud->sprite_texture_world + i],
+        //free(mud->sprite_texture
 
-        free(mud->surface->sprite_colour_list[mud->sprite_texture]);
-        free(mud->surface->sprite_colours_used[mud->sprite_texture]);
+        free(mud->surface->sprite_colour_list[mud->sprite_texture_world + i]);
+        mud->surface->sprite_colour_list[mud->sprite_texture_world + i] = NULL;
+
+        free(mud->surface->sprite_colours_used[mud->sprite_texture_world + i]);
+        mud->surface->sprite_colours_used[mud->sprite_texture_world + i] = NULL;
+
+        free(mud->surface->surface_pixels[mud->sprite_texture_world + i]);
+        mud->surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
     }
 
     free(textures_jag);
@@ -1517,4 +1535,6 @@ int main(int argc, char **argv) {
     mudclient_new(mud);
     mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT, "Runescape by Andrew Gower");
     mudclient_run(mud);
+
+    exit(0);
 }

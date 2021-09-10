@@ -682,6 +682,8 @@ void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
 
     if ((retval = start_bunzip(&bd, -1, headered, archive_size + 4)) < 0) {
         free(headered);
+        free(bd->dbuf);
+        free(bd);
         bzip_fatal(retval);
     }
 
@@ -692,6 +694,8 @@ void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
 
         /* finished */
         if (retval == -1) {
+            free(bd->dbuf);
+            free(bd);
             free(headered);
             return;
         }
@@ -699,6 +703,8 @@ void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
         /* error */
         if (retval < 0) {
             free(headered);
+            free(bd->dbuf);
+            free(bd);
             bzip_fatal(retval);
             return;
         }

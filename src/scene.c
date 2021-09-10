@@ -6,7 +6,6 @@ int scene_frustum_max_y = 0;
 int scene_frustum_min_y = 0;
 int scene_frustum_far_z = 0;
 int scene_frustum_near_z = 0;
-int64_t scene_texture_count_loaded = 0;
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int sprite_count) {
@@ -15,7 +14,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->surface = surface;
     scene->max_model_count = model_count;
 
-    memset(scene->gradient_base, 0, RAMP_COUNT* sizeof(int));
+    memset(scene->gradient_base, 0, RAMP_COUNT * sizeof(int));
     memset(scene->gradient_ramps, 0, RAMP_COUNT * 256 * sizeof(int));
 
     scene->model_count = 0;
@@ -57,7 +56,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     }
 
     GameModel *view = malloc(sizeof(GameModel));
-    printf("%d\n", sprite_count);
     game_model_from2(view, sprite_count * 2, sprite_count);
     scene->view = view;
 
@@ -204,9 +202,9 @@ void scene_texture_scanline(int32_t *ai, int32_t *ai1, int i, int j, int k,
     }
 }
 
-void scene_texture_translucent_scanline(int32_t *ai, int32_t *ai1, int i,
-                                        int j, int k, int l, int i1, int j1,
-                                        int k1, int l1, int i2, int j2, int k2,
+void scene_texture_translucent_scanline(int32_t *ai, int32_t *ai1, int i, int j,
+                                        int k, int l, int i1, int j1, int k1,
+                                        int l1, int i2, int j2, int k2,
                                         int l2) {
     if (i2 <= 0) {
         return;
@@ -2525,8 +2523,7 @@ void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
 }
 
 void scene_rasterize(Scene *scene, int i, int j, int k, int32_t *ai,
-                     int32_t *ai1, int32_t *ai2, int l,
-                     GameModel *game_model) {
+                     int32_t *ai1, int32_t *ai2, int l, GameModel *game_model) {
     if (l == -2) {
         return;
     }
@@ -2879,7 +2876,7 @@ void scene_rasterize(Scene *scene, int i, int j, int k, int32_t *ai,
         }
 
         if (j1 == RAMP_COUNT - 1) {
-            //float r = (float)rand() / (float)RAND_MAX;
+            // float r = (float)rand() / (float)RAND_MAX;
             float r = 0.1;
             int l1 = r * RAMP_COUNT;
             scene->gradient_base[l1] = l;
@@ -3434,16 +3431,9 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     scene->texture_count = count;
     scene->texture_colours_used = calloc(count, sizeof(int8_t *));
     scene->texture_colour_list = calloc(count, sizeof(int32_t *));
-    scene->texture_dimension = calloc(count, sizeof(int));
-    scene->texture_loaded_number = calloc(count, sizeof(int64_t));
+    scene->texture_dimension = calloc(count, sizeof(int8_t));
     scene->texture_back_transparent = calloc(count, sizeof(int8_t));
     scene->texture_pixels = calloc(count, sizeof(int32_t *));
-
-    scene_texture_count_loaded = 0;
-
-    for (int i = 0; i < count; i++) {
-        scene->texture_loaded_number[i] = 0;
-    }
 
     // 64x64 rgba
     scene->texture_colours_64 = calloc(length_64, sizeof(int32_t *));
@@ -3462,7 +3452,6 @@ void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
     // is 1 if the scene->texture is 128+ pixels wide, 0 if <128
     scene->texture_dimension[id] = wide128;
 
-    scene->texture_loaded_number[id] = 0;
     scene->texture_back_transparent[id] = 0;
     scene->texture_pixels[id] = NULL;
 
@@ -3474,72 +3463,60 @@ void scene_prepare_texture(Scene *scene, int id) {
         return;
     }
 
-    scene_texture_count_loaded++;
-    scene->texture_loaded_number[id] = scene_texture_count_loaded;
-
     if (scene->texture_pixels[id] != NULL) {
         return;
     }
 
     if (scene->texture_dimension[id] == 0) {
         // is 64 pixels wide
-        for (int j = 0; j < scene->length_64; j++) {
-            if (scene->texture_colours_64[j] == NULL) {
-                scene->texture_colours_64[j] =
+        for (int i = 0; i < scene->length_64; i++) {
+            if (scene->texture_colours_64[i] == NULL) {
+                scene->texture_colours_64[i] =
                     calloc(128 * 128, sizeof(int32_t));
 
-                scene->texture_pixels[id] = scene->texture_colours_64[j];
+                scene->texture_pixels[id] = scene->texture_colours_64[i];
                 scene_set_texture_pixels(scene, id);
                 return;
             }
         }
 
-        // almost as large as exemplar's nas storage
-        int64_t GIGALONG = 1 << 30;
         int wut = 0;
 
-        for (int k1 = 0; k1 < scene->texture_count; k1++) {
-            if (k1 != id && scene->texture_dimension[k1] == 0 &&
-                scene->texture_pixels[k1] != NULL &&
-                scene->texture_loaded_number[k1] < GIGALONG) {
-                GIGALONG = scene->texture_loaded_number[k1];
-                wut = k1;
+        for (int i = 0; i < scene->texture_count; i++) {
+            if (i != id && scene->texture_dimension[i] == 0 &&
+                scene->texture_pixels[i] != NULL) {
+                wut = i;
             }
         }
 
         scene->texture_pixels[id] = scene->texture_pixels[wut];
-        scene->texture_pixels[wut] = NULL;
+        // scene->texture_pixels[wut] = NULL;
         scene_set_texture_pixels(scene, id);
         return;
     }
 
     // is 128 wide
-    for (int k = 0; k < scene->length_128; k++) {
-        if (scene->texture_colours_128[k] == NULL) {
-            scene->texture_colours_128[k] =
-                calloc(256 * 256, sizeof(int32_t));
+    for (int i = 0; i < scene->length_128; i++) {
+        if (scene->texture_colours_128[i] == NULL) {
+            scene->texture_colours_128[i] = calloc(256 * 256, sizeof(int32_t));
 
-            scene->texture_pixels[id] = scene->texture_colours_128[k];
+            scene->texture_pixels[id] = scene->texture_colours_128[i];
             scene_set_texture_pixels(scene, id);
             return;
         }
     }
 
-    // 1G 2G 3G... 4G?
-    int64_t GIGALONG = 1 << 30;
     int wat = 0;
 
-    for (int i2 = 0; i2 < scene->texture_count; i2++) {
-        if (i2 != id && scene->texture_dimension[i2] == 1 &&
-            scene->texture_pixels[i2] != NULL &&
-            scene->texture_loaded_number[i2] < GIGALONG) {
-            GIGALONG = scene->texture_loaded_number[i2];
-            wat = i2;
+    for (int i = 0; i < scene->texture_count; i++) {
+        if (i != id && scene->texture_dimension[i] == 1 &&
+            scene->texture_pixels[i] != NULL) {
+            wat = i;
         }
     }
 
     scene->texture_pixels[id] = scene->texture_pixels[wat];
-    scene->texture_pixels[wat] = NULL;
+    // scene->texture_pixels[wat] = NULL;
     scene_set_texture_pixels(scene, id);
 }
 
@@ -3558,8 +3535,9 @@ void scene_set_texture_pixels(Scene *scene, int id) {
     for (int x = 0; x < texture_width; x++) {
         for (int y = 0; y < texture_width; y++) {
             int colour =
-                scene->texture_colour_list[id]
-                [scene->texture_colours_used[id][y + x * texture_width] & 0xff];
+                scene->texture_colour_list[id][scene->texture_colours_used
+                                                   [id][y + x * texture_width] &
+                                               0xff];
 
             colour &= 0xf8f8ff;
 
@@ -3583,9 +3561,6 @@ void scene_set_texture_pixels(Scene *scene, int id) {
         colours[colour_count * 3 + i1] =
             (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
     }
-
-    //scene->texture_colours_used[id] = NULL;
-    //scene->texture_colours_used[id] = NULL;
 }
 
 void scene_scroll_texture(Scene *scene, int id) {

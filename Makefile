@@ -1,5 +1,5 @@
 #CC = clang
-#DEBUG = 1
+DEBUG = 1
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
 CFLAGS = -fPIE
