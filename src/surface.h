@@ -19,6 +19,7 @@ extern int an_int_347;
 extern int an_int_348;
 extern int8_t *game_fonts[50];
 extern int character_width[256];
+extern int32_t *surface_texture_pixels;
 
 void init_surface_global();
 

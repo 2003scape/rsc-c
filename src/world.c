@@ -1267,8 +1267,6 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
 
         game_model_set_light_from6(game_model, 1, 40, 48, -50, -10, -50);
 
-        // world->terrain_models = calloc(64, sizeof(GameModel *));
-        // memset(world->terrain_models, 0, 64 * sizeof(GameModel *));
         game_model_split(world->parent_model, world->terrain_models, 0, 0, 1536,
                          1536, 8, 64, 233, 0);
 
@@ -1894,10 +1892,8 @@ void world_method422(World *world, GameModel *game_model, int i, int j, int k,
 
     if (game_data_wall_object_invisible[i] == 5) {
         game_model->face_tag[i4] = 30000 + i;
-        return;
     } else {
         game_model->face_tag[i4] = 0;
-        return;
     }
 }
 

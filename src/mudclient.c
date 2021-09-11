@@ -233,8 +233,6 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent) {
     char loading_text[35]; /* max description is 19 */
 
-    printf("loading %s\n", file);
-
     sprintf(loading_text, "Loading %s - 0%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
 
@@ -256,13 +254,9 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     int archive_size = ((header[0] & 0xff) << 16) + ((header[1] & 0xff) << 8) +
                        (header[2] & 0xff);
 
-    printf("as=%d\n", archive_size);
-
     int archive_size_compressed = ((header[3] & 0xff) << 16) +
                                   ((header[4] & 0xff) << 8) +
                                   (header[5] & 0xff);
-
-    printf("asc=%d\n", archive_size_compressed);
 
     sprintf(loading_text, "Loading %s - 5%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
@@ -298,12 +292,6 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                         archive_size_compressed, 0);
 
         free(archive_data);
-
-        char newname[255];
-        sprintf(newname, "%s.uncompressed", file);
-        FILE *fart = fopen(newname, "wb");
-        fwrite(decompressed, archive_size, 1, fart);
-        fclose(fart);
 
         return decompressed;
     }
@@ -438,10 +426,10 @@ void mudclient_load_media(mudclient *mud) {
     }
 
     free(index_dat);
+    free(media_jag);
 
-    //surface_load_sprite(mud->surface, mud->sprite_media);
-    //surface_load_sprite(mud->surface, mud->sprite_media + 9);
-    surface_load_sprite(mud->surface, mud->sprite_media + 10);
+    surface_load_sprite(mud->surface, mud->sprite_media);
+    surface_load_sprite(mud->surface, mud->sprite_media + 9);
 
     for (int i = 11; i <= 26; i++) {
         surface_load_sprite(mud->surface, mud->sprite_media + i);
@@ -698,14 +686,13 @@ void mudclient_load_models(mudclient *mud) {
         return;
     }
 
-    for (int i = 0; i < game_data_model_count; i++) {
+    for (int i = 0; i < game_data_model_count - 1; i++) {
         char file_name[255];
         sprintf(file_name, "%s.ob3", game_data_model_name[i]);
 
         int offset = get_data_file_offset(file_name, models_jag);
 
         GameModel *game_model = malloc(sizeof(GameModel));
-        // memset(game_model, 0, sizeof(GameModel));
 
         if (offset != 0) {
             game_model_from_bytes(game_model, models_jag, offset);
@@ -1287,6 +1274,8 @@ void mudclient_start_game(mudclient *mud) {
     // this.create_appearance_panel();
     mudclient_reset_login_screen_variables(mud);
     mudclient_render_login_screen_viewports(mud);
+
+    free(surface_texture_pixels);
 }
 
 void mudclient_handle_inputs(mudclient *mud) {

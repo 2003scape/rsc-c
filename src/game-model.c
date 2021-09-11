@@ -265,10 +265,6 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
     game_model_allocate(game_model, num_vertices, num_faces);
 
     if (trans_state) {
-        /* TODO check for existing one and free? */
-        /*game_model->face_trans_state_thing =
-            malloc(num_faces * sizeof(*game_model->face_trans_state_thing));*/
-
         free(game_model->face_trans_state_thing);
         game_model_allocate_face_trans(game_model, num_faces);
     }
@@ -359,13 +355,12 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int unused1,
                       int count, int piece_max_vertices, int pickable) {
     game_model_commit(game_model);
 
-    /* TODO these can be VLAs i think */
-    int *piece_nV = malloc(count * sizeof(int));
-    int *piece_nF = malloc(count * sizeof(int));
+    int *piece_nv = malloc(count * sizeof(int));
+    int *piece_nf = malloc(count * sizeof(int));
 
     for (int i = 0; i < count; i++) {
-        piece_nV[i] = 0;
-        piece_nF[i] = 0;
+        piece_nv[i] = 0;
+        piece_nf[i] = 0;
     }
 
     for (int f = 0; f < game_model->num_faces; f++) {
@@ -382,26 +377,26 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int unused1,
         int p = ((int)(sum_x / (n * piece_dx))) +
                 ((int)(sum_z / (n * piece_dz))) * rows;
 
-        piece_nV[p] += n;
-        piece_nF[p]++;
+        piece_nv[p] += n;
+        piece_nf[p]++;
     }
 
-    /* TODO maybe pieces should be a function argument instead */
-    // GameModel **pieces = malloc(sizeof(GameModel *) * count);
-
     for (int i = 0; i < count; i++) {
-        if (piece_nV[i] > piece_max_vertices) {
-            piece_nV[i] = piece_max_vertices;
+        if (piece_nv[i] > piece_max_vertices) {
+            piece_nv[i] = piece_max_vertices;
         }
 
         pieces[i] = malloc(sizeof(GameModel));
 
-        game_model_from7(pieces[i], piece_nV[i], piece_nF[i], 1, 1, 1, pickable,
+        game_model_from7(pieces[i], piece_nv[i], piece_nf[i], 1, 1, 1, pickable,
                          1);
 
         pieces[i]->light_diffuse = game_model->light_diffuse;
         pieces[i]->light_ambience = game_model->light_ambience;
     }
+
+    free(piece_nv);
+    free(piece_nf);
 
     for (int f = 0; f < game_model->num_faces; f++) {
         int sum_x = 0;
@@ -774,14 +769,14 @@ void game_model_light(GameModel *game_model) {
         }
     }
 
-    /*int *normal_x = malloc(game_model->num_vertices * sizeof(int));
+    int *normal_x = malloc(game_model->num_vertices * sizeof(int));
     int *normal_y = malloc(game_model->num_vertices * sizeof(int));
     int *normal_z = malloc(game_model->num_vertices * sizeof(int));
-    int *normal_magnitude = malloc(game_model->num_vertices * sizeof(int));*/
-    int normal_x[game_model->num_vertices];
+    int *normal_magnitude = malloc(game_model->num_vertices * sizeof(int));
+    /*int normal_x[game_model->num_vertices];
     int normal_y[game_model->num_vertices];
     int normal_z[game_model->num_vertices];
-    int normal_magnitude[game_model->num_vertices];
+    int normal_magnitude[game_model->num_vertices];*/
 
     for (int i = 0; i < game_model->num_vertices; i++) {
         normal_x[i] = 0;
@@ -814,10 +809,10 @@ void game_model_light(GameModel *game_model) {
         }
     }
 
-    /*free(normal_x);
+    free(normal_x);
     free(normal_y);
     free(normal_z);
-    free(normal_magnitude);*/
+    free(normal_magnitude);
 }
 
 void game_model_relight(GameModel *game_model) {
