@@ -6,6 +6,7 @@ int scene_frustum_max_y = 0;
 int scene_frustum_min_y = 0;
 int scene_frustum_far_z = 0;
 int scene_frustum_near_z = 0;
+int64_t scene_texture_count_loaded = 0;
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int sprite_count) {
@@ -3431,9 +3432,16 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     scene->texture_count = count;
     scene->texture_colours_used = calloc(count, sizeof(int8_t *));
     scene->texture_colour_list = calloc(count, sizeof(int32_t *));
+    scene->texture_loaded_number = calloc(count, sizeof(int64_t));
     scene->texture_dimension = calloc(count, sizeof(int8_t));
     scene->texture_back_transparent = calloc(count, sizeof(int8_t));
     scene->texture_pixels = calloc(count, sizeof(int32_t *));
+
+    scene_texture_count_loaded = 0;
+
+    for (int i = 0; i < count; i++) {
+        scene->texture_loaded_number[i] = 0;
+    }
 
     // 64x64 rgba
     scene->texture_colours_64 = calloc(length_64, sizeof(int32_t *));
@@ -3452,6 +3460,7 @@ void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
     // is 1 if the scene->texture is 128+ pixels wide, 0 if <128
     scene->texture_dimension[id] = wide128;
 
+    scene->texture_loaded_number[id] = 0;
     scene->texture_back_transparent[id] = 0;
     scene->texture_pixels[id] = NULL;
 
@@ -3462,6 +3471,9 @@ void scene_prepare_texture(Scene *scene, int id) {
     if (id < 0) {
         return;
     }
+
+    scene_texture_count_loaded++;
+    scene->texture_loaded_number[id] = scene_texture_count_loaded;
 
     if (scene->texture_pixels[id] != NULL) {
         return;
@@ -3480,17 +3492,22 @@ void scene_prepare_texture(Scene *scene, int id) {
             }
         }
 
+        int GIGALONG = 1 << 30;
         int wut = 0;
 
         for (int i = 0; i < scene->texture_count; i++) {
             if (i != id && scene->texture_dimension[i] == 0 &&
-                scene->texture_pixels[i] != NULL) {
+                scene->texture_pixels[i] != NULL &&
+                scene->texture_loaded_number[i] < GIGALONG) {
+                GIGALONG = scene->texture_loaded_number[i];
                 wut = i;
             }
         }
 
+        free(scene->texture_pixels[id]);
         scene->texture_pixels[id] = scene->texture_pixels[wut];
-        // scene->texture_pixels[wut] = NULL;
+        scene->texture_pixels[wut] = NULL;
+
         scene_set_texture_pixels(scene, id);
         return;
     }
@@ -3506,17 +3523,21 @@ void scene_prepare_texture(Scene *scene, int id) {
         }
     }
 
-    int wat = 0;
+    int GIGALONG = 1 << 30;
+    int wut = 0;
 
     for (int i = 0; i < scene->texture_count; i++) {
         if (i != id && scene->texture_dimension[i] == 1 &&
-            scene->texture_pixels[i] != NULL) {
-            wat = i;
+            scene->texture_pixels[i] != NULL &&
+            scene->texture_loaded_number[i] < GIGALONG) {
+            GIGALONG = scene->texture_loaded_number[i];
+            wut = i;
         }
     }
 
-    scene->texture_pixels[id] = scene->texture_pixels[wat];
-    // scene->texture_pixels[wat] = NULL;
+    free(scene->texture_pixels[id]);
+    scene->texture_pixels[id] = scene->texture_pixels[wut];
+    scene->texture_pixels[wut] = NULL;
     scene_set_texture_pixels(scene, id);
 }
 

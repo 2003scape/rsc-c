@@ -649,13 +649,12 @@ void mudclient_load_textures(mudclient *mud) {
             mud->surface->sprite_colour_list[mud->sprite_texture_world + i],
             (wh / 64) - 1);
 
-        //free(mud->sprite_texture
-
+        /*
         free(mud->surface->sprite_colour_list[mud->sprite_texture_world + i]);
         mud->surface->sprite_colour_list[mud->sprite_texture_world + i] = NULL;
 
         free(mud->surface->sprite_colours_used[mud->sprite_texture_world + i]);
-        mud->surface->sprite_colours_used[mud->sprite_texture_world + i] = NULL;
+        mud->surface->sprite_colours_used[mud->sprite_texture_world + i] = NULL;*/
 
         free(mud->surface->surface_pixels[mud->sprite_texture_world + i]);
         mud->surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
