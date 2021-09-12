@@ -121,7 +121,7 @@ void panel_clear_list(Panel* panel, int control);
 void panel_reset_list_props(Panel* panel, int control);
 void panel_add_list_entry(Panel* panel, int control, int index, char *text);
 void panel_remove_list_entry(Panel *panel, int control, char *text, int flag);
-void update_text(Panel *panel, int control, char *text);
+void panel_update_text(Panel *panel, int control, char *text);
 char *panel_get_text(Panel *panel, int control);
 void panel_show(Panel *panel, int control);
 void panel_hide(Panel *panel, int control);

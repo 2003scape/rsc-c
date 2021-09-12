@@ -873,7 +873,7 @@ void panel_remove_list_entry(Panel *panel, int control, char *text, int flag) {
     }
 }
 
-void update_text(Panel *panel, int control, char *text) {
+void panel_update_text(Panel *panel, int control, char *text) {
     panel->control_text[control] = text;
 }
 

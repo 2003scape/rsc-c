@@ -2877,8 +2877,8 @@ void scene_rasterize(Scene *scene, int i, int j, int k, int32_t *ai,
         }
 
         if (j1 == RAMP_COUNT - 1) {
-            // float r = (float)rand() / (float)RAND_MAX;
-            float r = 0.1;
+            float r = (float)rand() / (float)RAND_MAX;
+            //float r = 0.1;
             int l1 = r * RAMP_COUNT;
             scene->gradient_base[l1] = l;
 

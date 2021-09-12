@@ -5,31 +5,30 @@ int an_int_347;
 int an_int_348;
 
 int8_t *game_fonts[50];
-int character_width[256];
+
+int character_width[] = {
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 846, 558, 567, 756, 585, 594, 612, 738, 630, 639, 621, 675, 774,
+    648, 792, 810, 468, 477, 486, 495, 504, 513, 522, 531, 540, 549, 729, 720,
+    783, 666, 801, 819, 747, 0,   9,   18,  27,  36,  45,  54,  63,  72,  81,
+    90,  99,  108, 117, 126, 135, 144, 153, 162, 171, 180, 189, 198, 207, 216,
+    225, 684, 828, 702, 603, 657, 666, 234, 243, 252, 261, 270, 279, 288, 297,
+    306, 315, 324, 333, 342, 351, 360, 369, 378, 387, 396, 405, 414, 423, 432,
+    441, 450, 459, 693, 837, 711, 765, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 576, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
+    666};
 
 int32_t *surface_texture_pixels;
 
 void init_surface_global() {
-    character_width[0] = 666;
-
-    for (int i = 1; i < 256; i++) {
-        char *found = strchr(CHAR_SET, (char) i);
-
-        int index;
-
-        if (found == NULL) {
-            index = 74;
-        } else {
-            index = (int)(found - CHAR_SET);
-        }
-
-        if (index == 95) {
-            index -= 1;
-        }
-
-        character_width[i] = index * 9;
-    }
-
     surface_texture_pixels = calloc(32768, sizeof(int32_t));
 }
 
@@ -603,7 +602,7 @@ void surface_draw_world(Surface *surface, int sprite_id) {
         int l = sprite_pixels[k];
 
         surface_texture_pixels[((l & 0xf80000) >> 9) + ((l & 0xf800) >> 6) +
-               ((l & 0xf8) >> 3)]++;
+                               ((l & 0xf8) >> 3)]++;
     }
 
     int32_t *colour_list = calloc(256, sizeof(int32_t));
@@ -710,8 +709,8 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
 
     free(surface->sprite_colours_used[sprite_id]);
     surface->sprite_colours_used[sprite_id] = NULL;
-    //surface->sprite_colour_list[sprite_id] = NULL;
-    //free(surface->sprite_colour_list[sprite_id]);
+    // surface->sprite_colour_list[sprite_id] = NULL;
+    // free(surface->sprite_colour_list[sprite_id]);
 }
 
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
@@ -1174,9 +1173,9 @@ void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                               l3, width, height, k2, l2, k1, y_inc, colour);
 }
 
-void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int i,
-                                int src_pos, int dest_pos, int width,
-                                int height, int j1, int k1, int y_inc) {
+void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int i, int src_pos,
+                                int dest_pos, int width, int height, int j1,
+                                int k1, int y_inc) {
     int i2 = -(width >> 2);
     width = -(width & 3);
 
@@ -1287,9 +1286,9 @@ void surface_draw_sprite_from10a(int32_t *dest, int8_t *colour_idx,
     }
 }
 
-void surface_plot_scale_from13(int32_t *dest, int32_t *src, int i, int j,
-                               int k, int dest_pos, int i1, int j1, int k1,
-                               int l1, int i2, int j2, int k2) {
+void surface_plot_scale_from13(int32_t *dest, int32_t *src, int i, int j, int k,
+                               int dest_pos, int i1, int j1, int k1, int l1,
+                               int i2, int j2, int k2) {
     int l2 = j;
 
     for (int i3 = -k1; i3 < 0; i3 += k2) {
@@ -1343,10 +1342,9 @@ void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int i,
 }
 
 void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colour_idx,
-                                       int32_t *colours, int list_pos,
-                                       int size, int width, int height,
-                                       int extra_x_space, int j1, int y_inc,
-                                       int alpha) {
+                                       int32_t *colours, int list_pos, int size,
+                                       int width, int height, int extra_x_space,
+                                       int j1, int y_inc, int alpha) {
     int i2 = 256 - alpha;
 
     for (int j2 = -height; j2 < 0; j2 += y_inc) {
@@ -1374,9 +1372,9 @@ void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colour_idx,
     }
 }
 
-void surface_transparent_scale(int32_t *dest, int32_t *src, int i, int j,
-                               int k, int dest_pos, int i1, int j1, int k1,
-                               int l1, int i2, int j2, int y_inc, int alpha) {
+void surface_transparent_scale(int32_t *dest, int32_t *src, int i, int j, int k,
+                               int dest_pos, int i1, int j1, int k1, int l1,
+                               int i2, int j2, int y_inc, int alpha) {
     int i3 = 256 - alpha;
     int j3 = j;
 
@@ -1408,9 +1406,9 @@ void surface_transparent_scale(int32_t *dest, int32_t *src, int i, int j,
     }
 }
 
-void surface_plot_scale_from14(int32_t *dest, int32_t *src, int i, int j,
-                               int k, int l, int i1, int width, int height,
-                               int l1, int i2, int j2, int y_inc, int colour) {
+void surface_plot_scale_from14(int32_t *dest, int32_t *src, int i, int j, int k,
+                               int l, int i1, int width, int height, int l1,
+                               int i2, int j2, int y_inc, int colour) {
     int r = (colour >> 16) & 0xff;
     int g = (colour >> 8) & 0xff;
     int b = colour & 0xff;

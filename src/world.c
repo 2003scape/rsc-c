@@ -828,8 +828,8 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
                 int j5 = game_model_vertex_at(game_model, j2 * AN_INT_585, i4,
                                               i3 * AN_INT_585);
 
-                //float r = (float)rand() / (float)RAND_MAX;
-                float r = 0.1;
+                float r = (float)rand() / (float)RAND_MAX;
+                //float r = 0.1;
                 int j7 = (int)(r * 10) - 5;
                 game_model_set_vertex_ambience(game_model, j5, j7);
             }

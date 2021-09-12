@@ -24,6 +24,90 @@ char *equipment_stat_names[] = {"Armour", "WeaponAim", "WeaponPower", "Magic",
 
 int experience_array[100];
 
+char login_screen_status[255];
+
+void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
+    *char_code = 65535;
+
+    switch (keysym->scancode) {
+    case SDL_SCANCODE_LEFT:
+        *code = 37;
+        break;
+    case SDL_SCANCODE_RIGHT:
+        *code = 39;
+        break;
+    case SDL_SCANCODE_UP:
+        *code = 38;
+        break;
+    case SDL_SCANCODE_DOWN:
+        *code = 40;
+        break;
+    default:
+        *char_code = keysym->sym;
+        const char *key_name = SDL_GetKeyName(char_code);
+
+        if (strlen(key_name) == 1) {
+            *code = key_name[0];
+        } else {
+            *code = *char_code;
+        }
+
+        // absolutely dumb hack but i don't want to use SDL's textinput
+        if (keysym->mod & KMOD_SHIFT) {
+            if (*char_code >= 'a' && *char_code <= 'z') {
+                *char_code -= 32;
+            } else {
+                switch (*char_code) {
+                case ';':
+                    *char_code = ':';
+                    break;
+                case '`':
+                    *char_code = '~';
+                    break;
+                case '1':
+                    *char_code = '!';
+                    break;
+                case '2':
+                    *char_code = '@';
+                    break;
+                case '3':
+                    *char_code = '#';
+                    break;
+                case '4':
+                    *char_code = '$';
+                    break;
+                case '5':
+                    *char_code = '%';
+                    break;
+                case '6':
+                    *char_code = '^';
+                    break;
+                case '7':
+                    *char_code = '&';
+                    break;
+                case '8':
+                    *char_code = '*';
+                    break;
+                case '9':
+                    *char_code = '(';
+                    break;
+                case '0':
+                    *char_code = ')';
+                    break;
+                case '-':
+                    *char_code = '_';
+                    break;
+                case '=':
+                    *char_code = '+';
+                    break;
+                }
+            }
+        }
+
+        break;
+    }
+}
+
 void init_mudclient_global() {
     int total_exp = 0;
 
@@ -208,6 +292,32 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
 
 void mudclient_set_target_fps(mudclient *mud, int fps) {
     mud->target_fps = 1000 / fps;
+}
+
+void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1) {
+
+    if (mud->login_screen == 1) {
+        sprintf(login_screen_status, "%s %s", s, s1);
+
+        panel_update_text(mud->panel_login_new_user,
+                          mud->control_register_status, login_screen_status);
+    } else if (mud->login_screen == 2) {
+        sprintf(login_screen_status, "%s %s", s, s1);
+
+        panel_update_text(mud->panel_login_existing_user,
+                          mud->control_login_status, login_screen_status);
+    }
+
+    //mud->login_user_disp = s1;
+
+    mudclient_draw_login_screens(mud);
+    mudclient_reset_timings(mud);
+}
+
+void mudclient_reset_timings(mudclient *mud) {
+    for (int i = 0; i < 10; i++) {
+        mud->timings[i] = 0;
+    }
 }
 
 void mudclient_start(mudclient *mud) {
@@ -642,7 +752,8 @@ void mudclient_load_textures(mudclient *mud) {
         mud->surface->sprite_colour_list[mud->sprite_texture_world + i] = NULL;
 
         free(mud->surface->sprite_colours_used[mud->sprite_texture_world + i]);
-        mud->surface->sprite_colours_used[mud->sprite_texture_world + i] = NULL;*/
+        mud->surface->sprite_colours_used[mud->sprite_texture_world + i] =
+        NULL;*/
 
         free(mud->surface->surface_pixels[mud->sprite_texture_world + i]);
         mud->surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
@@ -951,7 +1062,7 @@ void mudclient_reset_login_screen_variables(mudclient *mud) {
     mud->login_screen = 0;
     mud->login_user[0] = '\0';
     mud->login_pass[0] = '\0';
-    mud->login_user_desc = "Please enter a username:";
+    mud->login_prompt = "Please enter a username:";
     sprintf(mud->login_user_disp, "*%s*", mud->login_user);
     mud->player_count = 0;
     mud->npc_count = 0;
@@ -1163,6 +1274,200 @@ void mudclient_draw_login_screens(mudclient *mud) {
     surface_draw(mud->surface);
 }
 
+void mudclient_handle_login_screen_input(mudclient *mud) {
+    if (mud->world_full_timeout > 0) {
+        mud->world_full_timeout--;
+    }
+
+    if (mud->login_screen == 0) {
+        panel_handle_mouse(mud->panel_login_welcome, mud->mouse_x, mud->mouse_y,
+                           mud->last_mouse_button_down, mud->mouse_button_down);
+
+        if (panel_is_clicked(mud->panel_login_welcome,
+                             mud->control_welcome_new_user)) {
+            mud->login_screen = 1;
+
+            if (mud->options->account_management) {
+                panel_update_text(mud->panel_login_new_user,
+                                  mud->control_register_user, "");
+
+                panel_update_text(mud->panel_login_new_user,
+                                  mud->control_register_password, "");
+
+                panel_update_text(mud->panel_login_new_user,
+                                  mud->control_register_confirm_password, "");
+
+                panel_set_focus(mud->panel_login_new_user,
+                                mud->control_register_user);
+
+                panel_toggle_checkbox(mud->panel_login_new_user,
+                                      mud->control_register_checkbox, 0);
+
+                panel_update_text(
+                    mud->panel_login_new_user, mud->control_register_status,
+                    "To create an account please enter all the requested "
+                    "details");
+            }
+        }
+
+        if (panel_is_clicked(mud->panel_login_welcome,
+                             mud->control_welcome_existing_user)) {
+            mud->login_screen = 2;
+
+            panel_update_text(mud->panel_login_existing_user,
+                              mud->control_login_status,
+                              "Please enter your username and password");
+
+            panel_update_text(mud->panel_login_existing_user,
+                              mud->control_login_user, "");
+
+            panel_update_text(mud->panel_login_existing_user,
+                              mud->control_login_password, "");
+
+            panel_set_focus(mud->panel_login_existing_user,
+                            mud->control_login_user);
+
+            return;
+        }
+    } else if (mud->login_screen == 1) {
+        panel_handle_mouse(mud->panel_login_new_user, mud->mouse_x,
+                           mud->mouse_y, mud->last_mouse_button_down,
+                           mud->mouse_button_down);
+
+        if (mud->options->account_management) {
+            if (panel_is_clicked(mud->panel_login_new_user,
+                                 mud->control_register_cancel)) {
+                mud->login_screen = 0;
+                return;
+            }
+
+            if (panel_is_clicked(mud->panel_login_new_user,
+                                 mud->control_register_user)) {
+                panel_set_focus(mud->panel_login_new_user,
+                                mud->control_register_password);
+                return;
+            }
+
+            if (panel_is_clicked(mud->panel_login_new_user,
+                                 mud->control_register_password)) {
+                panel_set_focus(mud->panel_login_new_user,
+                                mud->control_register_confirm_password);
+
+                return;
+            }
+
+            if (panel_is_clicked(mud->panel_login_new_user,
+                                 mud->control_register_confirm_password) ||
+                panel_is_clicked(mud->panel_login_new_user,
+                                 mud->control_register_submit)) {
+                char *username = panel_get_text(mud->panel_login_new_user,
+                                                mud->control_register_user);
+
+                char *password = panel_get_text(mud->panel_login_new_user,
+                                                mud->control_register_password);
+
+                char *confirm_password =
+                    panel_get_text(mud->panel_login_new_user,
+                                   mud->control_register_confirm_password);
+
+                int password_length = strlen(password);
+
+                if (strlen(username) == 0 || password_length == 0 ||
+                    strlen(confirm_password) == 0) {
+                    panel_update_text(
+                        mud->panel_login_new_user, mud->control_register_status,
+                        "@yel@Please fill in ALL requested information to "
+                        "continue!");
+
+                    return;
+                }
+
+                if (strcmp(password, confirm_password) != 0) {
+                    panel_update_text(
+                        mud->panel_login_new_user, mud->control_register_status,
+                        "@yel@The two passwords entered are not the same as "
+                        "each other!");
+
+                    return;
+                }
+
+                if (password_length < 5) {
+                    panel_update_text(
+                        mud->panel_login_new_user, mud->control_register_status,
+                        "@yel@Your password must be at least 5 letters long");
+
+                    return;
+                }
+
+                if (!panel_is_activated(mud->panel_login_new_user,
+                                        mud->control_register_checkbox)) {
+                    panel_update_text(
+                        mud->panel_login_new_user, mud->control_register_status,
+                        "@yel@You must agree to the terms+conditions to "
+                        "continue");
+
+                    return;
+                }
+
+                panel_update_text(mud->panel_login_new_user,
+                                  mud->control_register_status,
+                                  "Please wait... creating new account");
+
+                mudclient_draw_login_screens(mud);
+                mudclient_reset_timings(mud);
+
+                // mudclient_register(mud, username, password);
+            }
+        } else {
+            if (panel_is_clicked(mud->panel_login_new_user,
+                                 mud->control_login_new_ok)) {
+                mud->login_screen = 0;
+            }
+        }
+    } else if (mud->login_screen == 2) {
+        panel_handle_mouse(mud->panel_login_existing_user, mud->mouse_x,
+                           mud->mouse_y, mud->last_mouse_button_down,
+                           mud->mouse_button_down);
+
+        if (panel_is_clicked(mud->panel_login_existing_user,
+                             mud->control_login_cancel)) {
+            mud->login_screen = 0;
+        } else if (panel_is_clicked(mud->panel_login_existing_user,
+                                    mud->control_login_user)) {
+            panel_set_focus(mud->panel_login_existing_user,
+                            mud->control_login_password);
+        } else if (panel_is_clicked(mud->panel_login_existing_user,
+                                    mud->control_login_password) ||
+                   panel_is_clicked(mud->panel_login_existing_user,
+                                    mud->control_login_ok)) {
+            strcpy(mud->login_user,
+                   panel_get_text(mud->panel_login_existing_user,
+                                  mud->control_login_user));
+            strcpy(mud->login_pass,
+                   panel_get_text(mud->panel_login_existing_user,
+                                  mud->control_login_password));
+
+            // mudclient_login(mud, mud->login_user, mud->login_pass, 0);
+        } else if (panel_is_clicked(mud->panel_login_existing_user,
+                                    mud->control_login_recover)) {
+            strcpy(mud->login_user,
+                   panel_get_text(mud->panel_login_existing_user,
+                                  mud->control_login_user));
+
+            if (strlen(mud->login_user) == 0) {
+                mudclient_show_login_screen_status(
+                    mud,
+                    "You must enter your username to recover your password",
+                    "");
+
+                return;
+            }
+
+            // mudclient_recover_attempt(mud, mud->login_user);
+        }
+    }
+}
+
 void mudclient_start_game(mudclient *mud) {
     mudclient_load_game_config(mud);
 
@@ -1185,7 +1490,8 @@ void mudclient_start_game(mudclient *mud) {
     surface_new(mud->surface, mud->game_width, mud->game_height + 12, 4000,
                 mud);
 
-    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height + 12);
+    surface_set_bounds(mud->surface, 0, 0, mud->game_width,
+                       mud->game_height + 12);
 
     panel_base_sprite_start = mud->sprite_util;
 
@@ -1242,7 +1548,7 @@ void mudclient_start_game(mudclient *mud) {
 
     mudclient_load_textures(mud);
 
-    //surface_free_colours(mud->surface);
+    // surface_free_colours(mud->surface);
 
     if (mud->error_loading_data) {
         return;
@@ -1287,7 +1593,7 @@ void mudclient_handle_inputs(mudclient *mud) {
 
     if (mud->logged_in == 0) {
         mud->mouse_action_timeout = 0;
-        // mudclient_handle_login_screen_input(mud);
+        mudclient_handle_login_screen_input(mud);
     } else if (mud->logged_in == 1) {
         mud->mouse_action_timeout++;
         // mudclient_handle_game_input(mud);
@@ -1363,6 +1669,31 @@ void mudclient_poll_sdl_events(mudclient *mud) {
         switch (event.type) {
         case SDL_QUIT:
             exit(0);
+            break;
+        case SDL_KEYDOWN: {
+            char char_code;
+            int code;
+            get_sdl_keycodes(&event.key.keysym, &char_code, &code);
+            mudclient_key_pressed(mud, code, char_code);
+            break;
+        }
+        case SDL_KEYUP: {
+            char char_code;
+            int code;
+            get_sdl_keycodes(&event.key.keysym, &char_code, &code);
+            mudclient_key_released(mud, code);
+            break;
+        }
+        case SDL_MOUSEMOTION:
+            mudclient_mouse_moved(mud, event.motion.x, event.motion.y);
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            mudclient_mouse_pressed(mud, event.button.x, event.button.y,
+                                    event.button.button);
+            break;
+        case SDL_MOUSEBUTTONUP:
+            mudclient_mouse_released(mud, event.button.x, event.button.y,
+                                     event.button.button);
             break;
         }
     }
@@ -1521,7 +1852,8 @@ int main(int argc, char **argv) {
     mudclient *mud = malloc(sizeof(mudclient));
     memset(mud, 0, sizeof(mudclient));
     mudclient_new(mud);
-    mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT, "Runescape by Andrew Gower");
+    mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT,
+                                "Runescape by Andrew Gower");
     mudclient_run(mud);
 
     exit(0);

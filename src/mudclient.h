@@ -44,6 +44,9 @@ extern char *short_skill_names[];
 extern char *skill_names[];
 extern char *equipment_stat_names[];
 extern int experience_array[100];
+extern char login_screen_status[255];
+
+void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
 
 void init_mudclient_global();
 
@@ -149,7 +152,7 @@ typedef struct mudclient {
     int login_screen;
     char login_user[21];
     char login_pass[21];
-    char *login_user_desc;
+    char *login_prompt;
     char login_user_disp[22];
     int player_count;
     int npc_count;
@@ -175,6 +178,8 @@ void mudclient_mouse_moved(mudclient *mud, int x, int y);
 void mudclient_mouse_released(mudclient *mud, int x, int y, int button);
 void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button);
 void mudclient_set_target_fps(mudclient *mud, int fps);
+void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1);
+void mudclient_reset_timings(mudclient *mud);
 void mudclient_start(mudclient *mud);
 void mudclient_stop(mudclient *mud);
 void mudclient_draw_string(mudclient *mud, char *string, int font, int x,
@@ -194,6 +199,7 @@ void mudclient_load_maps(mudclient *mud);
 void mudclient_create_login_panels(mudclient *mud);
 void mudclient_reset_login_screen_variables(mudclient *mud);
 void mudclient_render_login_screen_viewports(mudclient *mud);
+void mudclient_draw_login_screens(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
