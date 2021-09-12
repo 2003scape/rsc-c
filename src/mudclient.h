@@ -172,6 +172,7 @@ typedef struct mudclient {
 void mudclient_new(mudclient *mud);
 void mudclient_start_application(mudclient *mud, int width, int height,
                                  char *title);
+void mudclient_handle_key_press(mudclient *mud, int key_code);
 void mudclient_key_pressed(mudclient *mud, int code, char char_code);
 void mudclient_key_released(mudclient *mud, int code);
 void mudclient_mouse_moved(mudclient *mud, int x, int y);

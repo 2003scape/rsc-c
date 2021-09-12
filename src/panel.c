@@ -7,9 +7,10 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->surface = surface;
     panel->max_controls = max;
 
-    panel->a_boolean219 = 1;
-    panel->focus_control_index = -1;
+    panel->mouse_last_button_down = 0;
 
+    panel->focus_control_index = -1;
+    panel->a_boolean219 = 1;
     panel->control_count = 0;
 
     panel->control_shown = malloc(max);
@@ -125,10 +126,9 @@ void panel_key_press(Panel *panel, int key) {
             panel->control_input_max_len[panel->focus_control_index]) {
             for (int k = 0; k < CHAR_SET_LENGTH; k++) {
                 if (key == CHAR_SET[k]) {
-                    panel->control_text[panel->focus_control_index][input_len] =
-                        (char)key;
 
-                    input_len++;
+                    panel->control_text[panel->focus_control_index]
+                                       [input_len++] = (char)key;
 
                     panel->control_text[panel->focus_control_index][input_len] =
                         '\0';
@@ -775,7 +775,9 @@ int panel_add_text_input(Panel *panel, int x, int y, int width, int height,
     panel->control_height[panel->control_count] = height;
     panel->control_input_max_len[panel->control_count] = max_length;
     panel->control_text[panel->control_count] =
-        malloc((max_length + 1) * sizeof(char));
+        calloc((max_length + 1), sizeof(char));
+
+    printf("text input id created %d\n", panel->control_count);
 
     return panel->control_count++;
 }
@@ -874,7 +876,12 @@ void panel_remove_list_entry(Panel *panel, int control, char *text, int flag) {
 }
 
 void panel_update_text(Panel *panel, int control, char *text) {
-    panel->control_text[control] = text;
+    printf("updating text of control %d\n", control);
+    /*if (panel->control_type[control] == TEXT_INPUT) {
+        strcpy(panel->control_text[control],  text);
+    } else {
+        panel->control_text[control] = text;
+    }*/
 }
 
 char *panel_get_text(Panel *panel, int control) {

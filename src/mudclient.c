@@ -192,13 +192,58 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     mudclient_run(mud);
 }
 
+void mudclient_handle_key_press(mudclient *mud, int key_code) {
+    if (mud->logged_in == 0) {
+        if (mud->login_screen == 0 && mud->panel_login_welcome) {
+            panel_key_press(mud->panel_login_welcome, key_code);
+        }
+
+        if (mud->login_screen == 1 && mud->panel_login_new_user) {
+            panel_key_press(mud->panel_login_new_user, key_code);
+        }
+
+        if (mud->login_screen == 2 && mud->panel_login_existing_user) {
+            panel_key_press(mud->panel_login_existing_user, key_code);
+        }
+
+        /*
+        if (mud->login_screen == 3 && mud->panel_recover_user) {
+            panel_key_press(mud->panel_recover_user, key_code);
+        }*/
+    }
+
+    /*
+    if (mud->logged_in == 1) {
+        if (mud->show_appearance_change && mud->panel_appearance) {
+            panel_key_press(mud->panel_appearance, key_code);
+            return;
+        }
+
+        if (
+            mud->show_change_password_step == 0 &&
+            mud->show_dialog_social_input == 0 &&
+            mud->show_dialog_report_abuse_step == 0 &&
+            !mud->is_sleeping &&
+            mud->panel_message_tabs
+        ) {
+            panel_key_press(mud->panel_message_tabs, key_code);
+        }
+
+        if (
+            mud->show_change_password_step == 3 ||
+            mud->show_change_password_step == 4
+        ) {
+            mud->show_change_password_step = 0;
+        }
+    }*/
+}
 void mudclient_key_pressed(mudclient *mud, int code, char char_code) {
     if (code == K_LEFT) {
         mud->key_left = 1;
     } else if (code == K_RIGHT) {
         mud->key_right = 1;
     } else {
-        // mud_handle_key_press(mud, code);
+        mudclient_handle_key_press(mud, code);
     }
 
     int found_text = 0;
@@ -1127,10 +1172,10 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     rotation = 888;
 
     /* TODO see if we need these - they're the same */
-    mud->scene->clip_far_3d = 4100;
+    /*mud->scene->clip_far_3d = 4100;
     mud->scene->clip_far_2d = 4100;
     mud->scene->fog_z_falloff = 1;
-    mud->scene->fog_z_distance = 4000;
+    mud->scene->fog_z_distance = 4000;*/
 
     surface_black_screen(mud->surface);
 
@@ -1178,10 +1223,11 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     zoom = 500;
     rotation = 376;
 
+    /*
     mud->scene->clip_far_3d = 4100;
     mud->scene->clip_far_2d = 4100;
     mud->scene->fog_z_falloff = 1;
-    mud->scene->fog_z_distance = 4000;
+    mud->scene->fog_z_distance = 4000;*/
 
     surface_black_screen(mud->surface);
 
