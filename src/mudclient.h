@@ -14,6 +14,8 @@
 #define K_ENTER -1
 #define K_BACKSPACE -1
 
+#define VERSION 204
+
 #define FONT_COUNT 8
 #define ANIMATED_MODELS_COUNT 20
 #define MAX_SOCIAL_LIST_COUNT 100
@@ -27,6 +29,7 @@
 typedef struct mudclient mudclient;
 
 #include "bzip.h"
+#include "client-opcodes.h"
 #include "colours.h"
 #include "game-model.h"
 #include "options.h"
@@ -201,6 +204,9 @@ void mudclient_create_login_panels(mudclient *mud);
 void mudclient_reset_login_screen_variables(mudclient *mud);
 void mudclient_render_login_screen_viewports(mudclient *mud);
 void mudclient_draw_login_screens(mudclient *mud);
+void mudclient_login(mudclient *mud, char *username, char *password,
+                     int reconnecting);
+void mudclient_handle_login_screen_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);

@@ -36,23 +36,17 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     case SDL_SCANCODE_RIGHT:
         *code = 39;
         break;
+    /*
     case SDL_SCANCODE_UP:
         *code = 38;
         break;
     case SDL_SCANCODE_DOWN:
         *code = 40;
-        break;
+        break;*/
     default:
         *char_code = keysym->sym;
-        const char *key_name = SDL_GetKeyName(char_code);
+        *code = *char_code;
 
-        if (strlen(key_name) == 1) {
-            *code = key_name[0];
-        } else {
-            *code = *char_code;
-        }
-
-        // absolutely dumb hack but i don't want to use SDL's textinput
         if (keysym->mod & KMOD_SHIFT) {
             if (*char_code >= 'a' && *char_code <= 'z') {
                 *char_code -= 32;
@@ -353,7 +347,7 @@ void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1) {
                           mud->control_login_status, login_screen_status);
     }
 
-    //mud->login_user_disp = s1;
+    // mud->login_user_disp = s1;
 
     mudclient_draw_login_screens(mud);
     mudclient_reset_timings(mud);
@@ -1320,6 +1314,83 @@ void mudclient_draw_login_screens(mudclient *mud) {
     surface_draw(mud->surface);
 }
 
+void mudclient_login(mudclient *mud, char *username, char *password,
+                     int reconnecting) {
+    if (mud->world_full_timeout > 0) {
+        mudclient_show_login_screen_status(mud, "Please wait...",
+                                           "Connecting to server");
+
+        sleep(2);
+
+        mudclient_show_login_screen_status(
+            mud, "Sorry! the server is currently full.",
+            "Please try again later");
+
+        return;
+    }
+
+    char formatted_username[22];
+    format_auth_string(username, 20, formatted_username);
+
+    char formatted_password[21];
+    format_auth_string(password, 20, formatted_password);
+
+    if (reconnecting) {
+        /*mudclient_draw_text_box(
+            mud,
+            "Connection lost! Please wait...",
+            "Attempting to re-establish"
+        );*/
+    } else {
+        mudclient_show_login_screen_status(mud, "Please wait...",
+                                           "Connecting to server");
+    }
+
+    mud->packet_stream = malloc(sizeof(PacketStream));
+    packet_stream_new(mud->packet_stream, mud);
+    packet_stream_new_packet(mud->packet_stream, CLIENT_SESSION);
+
+    int64_t encoded_username = encode_username(formatted_username);
+    packet_stream_put_byte(mud->packet_stream,
+                           (int)((encoded_username >> 16) & 31));
+    packet_stream_flush_packet(mud->packet_stream);
+
+    int64_t session_id = packet_stream_get_long(mud->packet_stream);
+    mud->session_id = session_id;
+
+    if (mud->session_id == 0) {
+        mudclient_show_login_screen_status(mud, "Login server offline.",
+                                           "Please try again in a few mins");
+        return;
+    }
+
+    printf("Verb: Session id: %ld\n", session_id);
+
+    int32_t keys[4];
+    keys[0] = (((float)rand() / (float)RAND_MAX) * 99999999);
+    keys[1] = (((float)rand() / (float)RAND_MAX) * 99999999);
+    keys[2] = (int32_t)(session_id >> 32);
+    keys[3] = (int32_t)(session_id);
+
+    packet_stream_new_packet(mud->packet_stream, CLIENT_LOGIN);
+    packet_stream_put_byte(mud->packet_stream, reconnecting);
+    packet_stream_put_short(mud->packet_stream, VERSION);
+    packet_stream_put_byte(mud->packet_stream, 0);
+    packet_stream_put_byte(mud->packet_stream, 10);
+    packet_stream_put_int(mud->packet_stream, keys[0]);
+    packet_stream_put_int(mud->packet_stream, keys[1]);
+    packet_stream_put_int(mud->packet_stream, keys[2]);
+    packet_stream_put_int(mud->packet_stream, keys[3]);
+    packet_stream_put_int(mud->packet_stream, 0); // uuid
+    packet_stream_put_string(mud->packet_stream, formatted_username);
+    packet_stream_put_string(mud->packet_stream, formatted_password);
+
+    packet_stream_flush_packet(mud->packet_stream);
+
+    int response = packet_stream_get_byte(mud->packet_stream);
+    printf("login response:%d\n", response);
+}
+
 void mudclient_handle_login_screen_input(mudclient *mud) {
     if (mud->world_full_timeout > 0) {
         mud->world_full_timeout--;
@@ -1493,7 +1564,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                    panel_get_text(mud->panel_login_existing_user,
                                   mud->control_login_password));
 
-            // mudclient_login(mud, mud->login_user, mud->login_pass, 0);
+            mudclient_login(mud, mud->login_user, mud->login_pass, 0);
         } else if (panel_is_clicked(mud->panel_login_existing_user,
                                     mud->control_login_recover)) {
             strcpy(mud->login_user,
@@ -1623,7 +1694,7 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_show_loading_progress(mud, 100, "Starting game...");
     // this.create_message_tab_panel();
     mudclient_create_login_panels(mud);
-    // this.create_appearance_panel();
+    // mudclient_create_appearance_panel(mud);
     mudclient_reset_login_screen_variables(mud);
     mudclient_render_login_screen_viewports(mud);
 
@@ -1720,7 +1791,7 @@ void mudclient_poll_sdl_events(mudclient *mud) {
             char char_code;
             int code;
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
-            mudclient_key_pressed(mud, code, char_code);
+            mudclient_key_pressed(mud, char_code, code);
             break;
         }
         case SDL_KEYUP: {

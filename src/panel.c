@@ -256,7 +256,7 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
 
     if (panel->control_mask_text[control]) {
         for (int i = 0; i < text_length; i++) {
-            display_text[i] = 'x';
+            display_text[i] = 'X';
         }
     } else {
         strcpy(display_text, text);
@@ -777,8 +777,6 @@ int panel_add_text_input(Panel *panel, int x, int y, int width, int height,
     panel->control_text[panel->control_count] =
         calloc((max_length + 1), sizeof(char));
 
-    printf("text input id created %d\n", panel->control_count);
-
     return panel->control_count++;
 }
 
@@ -876,12 +874,11 @@ void panel_remove_list_entry(Panel *panel, int control, char *text, int flag) {
 }
 
 void panel_update_text(Panel *panel, int control, char *text) {
-    printf("updating text of control %d\n", control);
-    /*if (panel->control_type[control] == TEXT_INPUT) {
+    if (panel->control_type[control] == TEXT_INPUT) {
         strcpy(panel->control_text[control],  text);
     } else {
         panel->control_text[control] = text;
-    }*/
+    }
 }
 
 char *panel_get_text(Panel *panel, int control) {
