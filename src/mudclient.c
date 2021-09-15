@@ -114,6 +114,8 @@ void init_mudclient_global() {
 }
 
 void mudclient_new(mudclient *mud) {
+    memset(mud, 0, sizeof(mudclient));
+
     mud->applet_width = MUD_WIDTH;
     mud->applet_height = MUD_HEIGHT;
     mud->target_fps = 20;
@@ -127,16 +129,18 @@ void mudclient_new(mudclient *mud) {
     mud->members = 0;
     mud->game_width = mud->applet_width;
     mud->game_height = mud->applet_height - 12;
-    mud->login_timer = 0;
+    /*mud->login_timer = 0;
     mud->camera_rotation_time = 0;
     mud->camera_rotation_x = 0;
-    mud->camera_rotation_y = 0;
+    mud->camera_rotation_y = 0;*/
     mud->camera_rotation_x_increment = 2;
     mud->camera_rotation_y_increment = 2;
-    mud->message_tab_flash_all = 0;
+    /*mud->message_tab_flash_all = 0;
     mud->message_tab_flash_history = 0;
     mud->message_tab_flash_quest = 0;
-    mud->message_tab_flash_private = 0;
+    mud->message_tab_flash_private = 0;*/
+    // mud->object_count = 0;
+    mud->last_height_offset = -1;
 
     mud->options = malloc(sizeof(Options));
     options_new(mud->options);
@@ -145,6 +149,8 @@ void mudclient_new(mudclient *mud) {
     memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
     memset(mud->input_text_final, '\0', INPUT_TEXT_LENGTH + 1);
     memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
+
+    game_character_new(&mud->local_player);
 }
 
 void mudclient_start_application(mudclient *mud, int width, int height,
@@ -1314,6 +1320,71 @@ void mudclient_draw_login_screens(mudclient *mud) {
     surface_draw(mud->surface);
 }
 
+void mudclient_reset_game(mudclient *mud) {
+    mud->system_update = 0;
+    mud->combat_style = 0;
+    mud->logout_timeout = 0;
+    mud->login_screen = 0;
+    mud->logged_in = 1;
+    mud->input_pm_current[0] = '\0';
+    mud->input_pm_final[0] = '\0';
+
+    surface_black_screen(mud->surface);
+    surface_draw(mud->surface);
+
+    for (int i = 0; i < mud->object_count; i++) {
+        scene_remove_model(mud->scene, mud->object_model[i]);
+        world_remove_object(mud->world, mud->object_x[i], mud->object_y[i],
+                            mud->object_id[i]);
+    }
+
+    for (int i = 0; i < mud->wall_object_count; i++) {
+        scene_remove_model(mud->scene, mud->wall_object_model[i]);
+        world_remove_wall_object(
+            mud->world, mud->wall_object_x[i], mud->wall_object_y[i],
+            mud->wall_object_direction[i], mud->wall_object_id[i]);
+    }
+
+    mud->object_count = 0;
+    mud->wall_object_count = 0;
+    mud->ground_item_count = 0;
+    mud->player_count = 0;
+
+    for (int i = 0; i < PLAYERS_SERVER_MAX; i++) {
+        free(mud->player_server[i]);
+        mud->player_server[i] = NULL;
+    }
+
+    for (int i = 0; i < PLAYERS_MAX; i++) {
+        free(mud->players[i]);
+        mud->players[i] = NULL;
+    }
+
+    mud->npc_count = 0;
+
+    for (int i = 0; i < NPCS_SERVER_MAX; i++) {
+        free(mud->npcs_server[i]);
+        mud->npcs_server[i] = NULL;
+    }
+
+    for (int i = 0; i < NPCS_MAX; i++) {
+        free(mud->npcs[i]);
+        mud->npcs[i] = NULL;
+    }
+
+    for (int i = 0; i < PRAYER_COUNT; i++) {
+        mud->prayer_on[i] = 0;
+    }
+
+    mud->mouse_button_click = 0;
+    mud->last_mouse_button_down = 0;
+    mud->mouse_button_down = 0;
+    // mud->show_dialog_shop = 0;
+    // mud->show_dialog_bank = 0;
+    mud->is_sleeping = 0;
+    mud->friend_list_count = 0;
+}
+
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting) {
     if (mud->world_full_timeout > 0) {
@@ -1329,7 +1400,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    char formatted_username[22];
+    char formatted_username[21];
     format_auth_string(username, 20, formatted_username);
 
     char formatted_password[21];
@@ -1348,11 +1419,21 @@ void mudclient_login(mudclient *mud, char *username, char *password,
 
     mud->packet_stream = malloc(sizeof(PacketStream));
     packet_stream_new(mud->packet_stream, mud);
+
+    if (mud->packet_stream->closed) {
+        mudclient_show_login_screen_status(
+            mud, "Sorry! Unable to connect.",
+            "Check internet settings or try another world");
+        return;
+    }
+
     packet_stream_new_packet(mud->packet_stream, CLIENT_SESSION);
 
     int64_t encoded_username = encode_username(formatted_username);
+
     packet_stream_put_byte(mud->packet_stream,
                            (int)((encoded_username >> 16) & 31));
+
     packet_stream_flush_packet(mud->packet_stream);
 
     int64_t session_id = packet_stream_get_long(mud->packet_stream);
@@ -1389,6 +1470,126 @@ void mudclient_login(mudclient *mud, char *username, char *password,
 
     int response = packet_stream_get_byte(mud->packet_stream);
     printf("login response:%d\n", response);
+
+    if (response == 0 || response == 25) {
+        mud->moderator_level = response == 25;
+        mud->auto_login_timeout = 0;
+        mudclient_reset_game(mud);
+        return;
+    }
+
+    if (response == 1) {
+        mud->auto_login_timeout = 0;
+        return;
+    }
+
+    if (reconnecting) {
+        //username[0] = '\0';
+        //password[0] = '\0';
+        mudclient_reset_login_screen_variables(mud);
+        return;
+    }
+
+    switch (response) {
+    case -1:
+        mudclient_show_login_screen_status(mud, "Error unable to login.",
+                                           "Server timed out");
+        return;
+    case 3:
+        mudclient_show_login_screen_status(
+            mud, "Invalid username or password.",
+            "Try again, or create a new account");
+        return;
+    case 4:
+        mudclient_show_login_screen_status(
+            mud, "That username is already logged in.",
+            "Wait 60 seconds then retry");
+        return;
+    case 5:
+        mudclient_show_login_screen_status(mud, "The client has been updated.",
+                                           "Please reload this page");
+        return;
+    case 6:
+        mudclient_show_login_screen_status(
+            mud, "You may only use 1 character at once.",
+            "Your ip-address is already in use");
+        return;
+    case 7:
+        mudclient_show_login_screen_status(mud, "Login attempts exceeded!",
+                                           "Please try again in 5 minutes");
+        return;
+    case 8:
+        mudclient_show_login_screen_status(mud, "Error unable to login.",
+                                           "Server rejected session");
+        return;
+    case 9:
+        mudclient_show_login_screen_status(mud, "Error unable to login.",
+                                           "Loginserver rejected session");
+        return;
+    case 10:
+        mudclient_show_login_screen_status(mud,
+                                           "That username is already in use.",
+                                           "Wait 60 seconds then retry");
+        return;
+    case 11:
+        mudclient_show_login_screen_status(
+            mud, "Account temporarily disabled.",
+            "Check your message inbox for details");
+        return;
+    case 12:
+        mudclient_show_login_screen_status(
+            mud, "Account permanently disabled.",
+            "Check your message inbox for details");
+        return;
+    case 14:
+        mudclient_show_login_screen_status(
+            mud, "Sorry! This world is currently full.",
+            "Please try a different world");
+        mud->world_full_timeout = 1500;
+        return;
+    case 15:
+        mudclient_show_login_screen_status(mud, "You need a members account",
+                                           "to login to this world");
+        return;
+    case 16:
+        mudclient_show_login_screen_status(
+            mud, "Error - no reply from loginserver.", "Please try again");
+        return;
+    case 17:
+        mudclient_show_login_screen_status(mud,
+                                           "Error - failed to decode profile.",
+                                           "Contact customer support");
+        return;
+    case 18:
+        mudclient_show_login_screen_status(
+            mud, "Account suspected stolen.",
+            "Press \"recover a locked account\" on front page.");
+        return;
+    case 20:
+        mudclient_show_login_screen_status(mud, "Error - loginserver mismatch",
+                                           "Please try a different world");
+        return;
+    case 21:
+        mudclient_show_login_screen_status(mud, "Unable to login.",
+                                           "That is not an RS-Classic account");
+        return;
+    case 22:
+        mudclient_show_login_screen_status(
+            mud, "Password suspected stolen.",
+            "Press \"change your password\" on front page.");
+        return;
+    default:
+        mudclient_show_login_screen_status(mud, "Error unable to login.",
+                                           "Unrecognised response code");
+        return;
+    }
+
+    /*
+    if (mud->auto_login_timeout > 0) {
+        sleep(5);
+        mud->auto_login_timeout--;
+        mudclient_login(mud, username, password, reconnecting);
+    }*/
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {
@@ -1763,6 +1964,289 @@ void mudclient_handle_inputs(mudclient *mud) {
     }
 }
 
+void mudclient_update_object_animation(mudclient *mud, int object_index,
+                                       char *model_name) {
+    int object_x = mud->object_x[object_index];
+    int object_y = mud->object_y[object_index];
+    int distance_x = object_x - (mud->local_player.current_x / 128);
+    int distance_y = object_y - (mud->local_player.current_y / 128);
+    int max_distance = 7;
+
+    if (object_x >= 0 && object_y >= 0 && object_x < 96 && object_y < 96 &&
+        distance_x > -max_distance && distance_x < max_distance &&
+        distance_y > -max_distance && distance_y < max_distance) {
+        scene_remove_model(mud->scene, mud->object_model[object_index]);
+
+        int model_index = game_data_get_model_index(model_name);
+        GameModel *game_model = game_model_copy(mud->game_models[model_index]);
+
+        scene_add_model(mud->scene, game_model);
+        game_model_set_light_from6(game_model, 1, 48, 48, -50, -10, -50);
+        game_model_copy_position(game_model, mud->object_model[object_index]);
+        game_model->key = object_index;
+        mud->object_model[object_index] = game_model;
+    }
+}
+
+void mudclient_draw_game(mudclient *mud) {
+    /*
+    if (mud->death_screen_timeout != 0) {
+        surface_fade_to_black(mud->surface);
+        surface_draw_string_center(mud->surface, "Oh dear! You are dead...",
+                                   mud->game_width / 2, mud->game_height / 2, 7,
+                                   0xff0000);
+        mudclient_draw_chat_message_tabs(mud);
+        surface_draw(mud->surface);
+
+        return;
+    }
+
+    if (mud->show_appearance_change) {
+        mudclient_draw_appearance_panel_character_sprites(mud);
+        return;
+    }
+
+    if (mud->is_sleeping) {
+        mudclient_draw_sleep(mud);
+        return;
+    }*/
+
+    if (!mud->world->player_alive) {
+        return;
+    }
+
+    for (int i = 0; i < 64; i++) {
+        scene_remove_model(mud->scene,
+                           mud->world->roof_models[mud->last_height_offset][i]);
+
+        if (mud->last_height_offset == 0) {
+            scene_remove_model(mud->scene, mud->world->wall_models[1][i]);
+            scene_remove_model(mud->scene, mud->world->roof_models[1][i]);
+            scene_remove_model(mud->scene, mud->world->wall_models[2][i]);
+            scene_remove_model(mud->scene, mud->world->roof_models[2][i]);
+        }
+
+        if (mud->options->show_roofs) {
+            mud->fog_of_war = 1;
+
+            if (mud->last_height_offset == 0 &&
+                (mud->world
+                     ->object_adjacency[mud->local_player.current_x / 128]
+                                       [mud->local_player.current_y / 128] &
+                 128) == 0) {
+                scene_add_model(
+                    mud->scene,
+                    mud->world->roof_models[mud->last_height_offset][i]);
+
+                if (mud->last_height_offset == 0) {
+                    scene_add_model(mud->scene, mud->world->wall_models[1][i]);
+                    scene_add_model(mud->scene, mud->world->roof_models[1][i]);
+                    scene_add_model(mud->scene, mud->world->wall_models[2][i]);
+                    scene_add_model(mud->scene, mud->world->roof_models[2][i]);
+                }
+
+                mud->fog_of_war = 0;
+            }
+        }
+    }
+
+    if (mud->object_animation_cycle != mud->last_object_animation_cycle) {
+        mud->last_object_animation_cycle = mud->object_animation_cycle;
+
+        for (int i = 0; i < mud->object_count; i++) {
+            if (mud->object_id[i] == 97) {
+                char name[7];
+                sprintf(name, "firea%d", (mud->object_animation_cycle + 1));
+                mudclient_update_object_animation(mud, i, name);
+            } else if (mud->object_id[i] == 274) {
+                char name[12];
+                sprintf(name, "fireplacea%d",
+                        (mud->object_animation_cycle + 1));
+                mudclient_update_object_animation(mud, i, name);
+            } else if (mud->object_id[i] == 1031) {
+                char name[11];
+                sprintf(name, "lightning%d", (mud->object_animation_cycle + 1));
+                mudclient_update_object_animation(mud, i, name);
+            } else if (mud->object_id[i] == 1036) {
+                char name[11];
+                sprintf(name, "firespell%d", (mud->object_animation_cycle + 1));
+                mudclient_update_object_animation(mud, i, name);
+            } else if (mud->object_id[i] == 1147) {
+                char name[13];
+                sprintf(name, "spellcharge%d",
+                        (mud->object_animation_cycle + 1));
+                mudclient_update_object_animation(mud, i, name);
+            }
+        }
+    }
+
+    if (mud->torch_animation_cycle != mud->last_torch_animation_cycle) {
+        mud->last_torch_animation_cycle = mud->torch_animation_cycle;
+
+        for (int i = 0; i < mud->object_count; i++) {
+            if (mud->object_id[i] == 51) {
+                char name[8];
+                sprintf(name, "torcha%d", mud->torch_animation_cycle + 1);
+                mudclient_update_object_animation(mud, i, name);
+            } else if (mud->object_id[i] == 143) {
+                char name[13];
+                sprintf(name, "skulltorcha%d", mud->torch_animation_cycle + 1);
+                mudclient_update_object_animation(mud, i, name);
+            }
+        }
+    }
+
+    if (mud->claw_animation_cycle != mud->last_claw_animation_cycle) {
+        mud->last_claw_animation_cycle = mud->claw_animation_cycle;
+
+        for (int i = 0; i < mud->object_count; i++) {
+            if (mud->object_id[i] == 1142) {
+                char name[11];
+                sprintf(name, "clawspell%d", mud->claw_animation_cycle + 1);
+                mudclient_update_object_animation(mud, i, name);
+            }
+        }
+    }
+
+    scene_reduce_sprites(mud->scene, mud->sprite_count);
+    mud->sprite_count = 0;
+
+    /* TODO entity + bubble drawing */
+
+    mud->surface->interlace = 0;
+    surface_black_screen(mud->surface);
+    mud->surface->interlace = mud->interlace;
+
+    if (mud->last_height_offset == 3) {
+        int ambience = 40 + ((float)rand() / (float)RAND_MAX) * 3;
+        int diffuse = 40 + ((float)rand() / (float)RAND_MAX) * 7;
+
+        scene_set_light_from5(mud->scene, ambience, diffuse, -50, -10, -50);
+    }
+
+    mud->items_above_head_count = 0;
+    mud->received_messages_count = 0;
+    mud->health_bar_count = 0;
+
+    if (mud->option_camera_mode_auto && !mud->fog_of_war) {
+        // mudclient_auto_rotate_camera(mud);
+    }
+
+    if (!mud->interlace) {
+        mud->scene->clip_far_3d = 2400;
+        mud->scene->clip_far_2d = 2400;
+        mud->scene->fog_z_falloff = 1;
+        mud->scene->fog_z_distance = 2300;
+    } else {
+        mud->scene->clip_far_3d = 2200;
+        mud->scene->clip_far_2d = 2200;
+        mud->scene->fog_z_falloff = 1;
+        mud->scene->fog_z_distance = 2100;
+    }
+
+    if (mud->camera_zoom > ZOOM_OUTDOORS) {
+        mud->scene->clip_far_3d += 1400;
+        mud->scene->clip_far_2d += 1400;
+        mud->scene->fog_z_distance += 1400;
+    }
+
+    int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
+    int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
+
+    scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
+                     912, mud->camera_rotation * 4, 0, mud->camera_zoom * 2);
+
+    scene_render(mud->scene);
+
+    // mudclient_draw_overhead_sprites(mud);
+
+    /* draw the animated X sprite when clicking */
+    if (mud->mouse_click_x_step > 0) {
+        surface_draw_sprite_from3(
+            mud->surface, mud->mouse_click_x_x - 8, mud->mouse_click_x_y - 8,
+            mud->sprite_media + 14 + ((24 - mud->mouse_click_x_step) / 6));
+    } else if (mud->mouse_click_x_step < 0) {
+        surface_draw_sprite_from3(
+            mud->surface, mud->mouse_click_x_x - 8, mud->mouse_click_x_y - 8,
+            mud->sprite_media + 18 + ((24 + mud->mouse_click_x_step) / 6));
+    }
+
+    if (mud->options->fps_counter) {
+        int offset_x = mud->is_in_wild ? 70 : 0;
+
+        char fps[10];
+        sprintf(fps, "Fps: %d", mud->fps);
+
+        surface_draw_string(mud->surface, fps, mud->game_width - 62 - offset_x,
+                            mud->game_height - 10, 1, 0xffff00);
+    }
+
+    /*
+    if (this.systemUpdate !== 0) {
+        let seconds = ((this.systemUpdate / 50) | 0);
+        const minutes = (seconds / 60) | 0;
+
+        seconds %= 60;
+
+        if (seconds < 10) {
+            this.surface.drawStringCenter('System update in: ' + minutes + ':0'
+    + seconds, 256, this.gameHeight - 7, 1, 0xffff00); } else {
+            this.surface.drawStringCenter('System update in: ' + minutes + ':' +
+    seconds, 256, this.gameHeight - 7, 1, 0xffff00);
+        }
+    }*/
+
+    if (!mud->loading_area) {
+        int j6 =
+            2203 - (mud->local_region_y + mud->plane_height + mud->region_y);
+
+        if (mud->local_region_x + mud->plane_width + mud->region_x >= 2640) {
+            j6 = -50;
+        }
+
+        mud->is_in_wild = j6 > 0;
+
+        if (mud->is_in_wild) {
+            surface_draw_sprite_from3(mud->surface, mud->game_width - 59,
+                                      mud->game_height - 56,
+                                      mud->sprite_media + 13);
+
+            surface_draw_string_centre(mud->surface, "Wilderness",
+                                       mud->game_width - 47,
+                                       mud->game_height - 20, 1, 0xffff00);
+
+            int wilderness_level = 1 + (j6 / 6);
+            char wilderness_label[255];
+            sprintf(wilderness_label, "Level: %d", wilderness_level);
+
+            surface_draw_string_centre(mud->surface, wilderness_label,
+                                            mud->game_width - 47,
+                                            mud->game_height - 7, 1, 0xffff00);
+
+            if (mud->show_ui_wild_warn == 0) {
+                mud->show_ui_wild_warn = 2;
+            }
+        }
+
+        if (mud->show_ui_wild_warn == 0 && j6 > -10 && j6 <= 0) {
+            mud->show_ui_wild_warn = 1;
+        }
+    }
+
+    //mudclient_draw_chat_message_tabs_panel(mud);
+
+    surface_draw_sprite_alpha_from4(
+        mud->surface,
+        mud->surface->width2 - 3 - 197, 3,
+        mud->sprite_media,
+        128
+    );
+
+    //mudclient_draw_ui(mud);
+    mud->surface->logged_in = 0;
+    surface_draw(mud->surface);
+}
+
 void mudclient_draw(mudclient *mud) {
     if (mud->error_loading_data) {
         /* TODO draw error */
@@ -1774,8 +2258,8 @@ void mudclient_draw(mudclient *mud) {
         mud->surface->logged_in = 0;
         mudclient_draw_login_screens(mud);
     } else if (mud->logged_in == 1) {
-        mud->surface->logged_in = 1;
-        // mudclient_draw_game(mud);
+        //mud->surface->logged_in = 1;
+        //mudclient_draw_game(mud);
     }
 }
 
@@ -1967,7 +2451,7 @@ int main(int argc, char **argv) {
     init_mudclient_global();
 
     mudclient *mud = malloc(sizeof(mudclient));
-    memset(mud, 0, sizeof(mudclient));
+    //memset(mud, 0, sizeof(mudclient));
     mudclient_new(mud);
     mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT,
                                 "Runescape by Andrew Gower");

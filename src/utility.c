@@ -138,9 +138,8 @@ void ip_to_string(int32_t ip, char *ip_string) {
 }
 
 int64_t encode_username(char *username) {
-    char cleaned[MAX_USER_LENGTH + 2];
-
     int username_length = strlen(username);
+    char cleaned[username_length + 1];
 
     for (int i = 0; i < username_length; i++) {
         char char_code = username[i];

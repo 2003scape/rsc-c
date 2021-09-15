@@ -1237,9 +1237,10 @@ void scene_add_model(Scene *scene, GameModel *model) {
 void scene_remove_model(Scene *scene, GameModel *model) {
     for (int i = 0; i < scene->model_count; i++) {
         if (scene->models[i] == model) {
+            game_model_destroy(model);
             free(model);
-            scene->models[i] = NULL;
 
+            scene->models[i] = NULL;
             scene->model_count--;
 
             for (int j = i; j < scene->model_count; j++) {
@@ -1253,7 +1254,10 @@ void scene_dispose(Scene *scene) {
     scene_clear(scene);
 
     for (int i = 0; i < scene->model_count; i++) {
+        game_model_destroy(scene->models[i]);
         free(scene->models[i]);
+
+        scene->models[i] = NULL;
     }
 
     scene->model_count = 0;

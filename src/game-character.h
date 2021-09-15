@@ -2,6 +2,7 @@
 #define _H_GAME_CHARACTER
 
 #include <stdint.h>
+#include <string.h>
 
 #define WAYPOINT_COUNT 10
 #define EQUIP_COUNT 12

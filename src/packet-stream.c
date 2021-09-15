@@ -74,6 +74,10 @@ int packet_stream_available_bytes(PacketStream *packet_stream, int length) {
 
 void packet_stream_read_bytes(PacketStream *packet_stream, int length,
                               int8_t *buffer) {
+    if (packet_stream->closed) {
+        return;
+    }
+
     if (packet_stream->available_length > 0) {
         int copy_length;
 
@@ -104,10 +108,16 @@ void packet_stream_read_bytes(PacketStream *packet_stream, int length,
 
 void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
                                int offset, int length) {
-    write(packet_stream->socket, buffer + offset, length);
+    if (!packet_stream->closed) {
+        write(packet_stream->socket, buffer + offset, length);
+    }
 }
 
 int packet_stream_read_byte(PacketStream *packet_stream) {
+    if (packet_stream->closed) {
+        return -1;
+    }
+
     int8_t byte;
     packet_stream_read_bytes(packet_stream, 1, &byte);
     return (uint8_t)byte & 0xff;

@@ -16,12 +16,24 @@
 
 #define VERSION 204
 
+#define ZOOM_MIN 450
+#define ZOOM_MAX 1250
+#define ZOOM_INDOORS 550
+#define ZOOM_OUTDOORS 750
+
 #define FONT_COUNT 8
 #define ANIMATED_MODELS_COUNT 20
 #define MAX_SOCIAL_LIST_COUNT 100
 #define INPUT_TEXT_LENGTH 20
 #define INPUT_PM_LENGTH 80
 #define GAME_OBJECTS_MAX 1000
+#define WALL_OBJECTS_MAX 500
+#define OBJECTS_MAX 1500
+#define PLAYERS_SERVER_MAX 4000
+#define PLAYERS_MAX 500
+#define NPCS_SERVER_MAX 5000
+#define NPCS_MAX 500
+#define PRAYER_COUNT 50
 
 #define MUD_WIDTH 512
 #define MUD_HEIGHT 346
@@ -31,6 +43,7 @@ typedef struct mudclient mudclient;
 #include "bzip.h"
 #include "client-opcodes.h"
 #include "colours.h"
+#include "game-character.h"
 #include "game-model.h"
 #include "options.h"
 #include "packet-stream.h"
@@ -58,13 +71,14 @@ typedef struct mudclient {
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
     Options *options;
-    int middle_button_down;
+    int8_t middle_button_down;
     int mouse_scroll_delta;
     int mouse_action_timeout;
     int mouse_x;
     int mouse_y;
     int mouse_button_down;
     int last_mouse_button_down;
+    int mouse_button_click;
     uint32_t timings[10];
     int stop_timeout;
     int interlace_timer;
@@ -84,9 +98,6 @@ typedef struct mudclient {
     char input_pm_current[INPUT_PM_LENGTH + 1];
     char input_text_final[INPUT_TEXT_LENGTH + 1];
     char input_pm_final[INPUT_PM_LENGTH + 1];
-    int origin_mouse_x;
-    int origin_rotation;
-    int camera_rotation;
     int fps;
     int max_read_tries;
     int world_full_timeout;
@@ -161,15 +172,82 @@ typedef struct mudclient {
     int npc_count;
     int login_timer;
     int camera_rotation_time;
-    int camera_rotation_x;
-    int camera_rotation_y;
-    int camera_rotation_x_increment;
-    int camera_rotation_y_increment;
     int message_tab_flash_all;
     int message_tab_flash_history;
     int message_tab_flash_quest;
     int message_tab_flash_private;
     int welcome_screen_already_shown;
+    int system_update;
+    int combat_style;
+    int logout_timeout;
+
+    int object_count;
+    GameModel *object_model[OBJECTS_MAX];
+    int object_x[OBJECTS_MAX];
+    int object_y[OBJECTS_MAX];
+    int object_id[OBJECTS_MAX];
+    int object_direction[OBJECTS_MAX];
+    int wall_object_count;
+    GameModel *wall_object_model[WALL_OBJECTS_MAX];
+    int wall_object_x[WALL_OBJECTS_MAX];
+    int wall_object_y[WALL_OBJECTS_MAX];
+    int wall_object_id[WALL_OBJECTS_MAX];
+    int wall_object_direction[WALL_OBJECTS_MAX];
+    GameCharacter *player_server[PLAYERS_SERVER_MAX];
+    GameCharacter *players[PLAYERS_MAX];
+    GameCharacter *npcs_server[NPCS_SERVER_MAX];
+    GameCharacter *npcs[NPCS_MAX];
+    int ground_item_count;
+
+    int8_t prayer_on[PRAYER_COUNT];
+    int is_sleeping;
+    int last_height_offset;
+    int fog_of_war;
+    GameCharacter local_player;
+
+    int object_animation_cycle;
+    int last_object_animation_cycle;
+    int torch_animation_cycle;
+    int last_torch_animation_cycle;
+    int claw_animation_cycle;
+    int last_claw_animation_cycle;
+
+    int sprite_count;
+    int items_above_head_count;
+    int received_messages_count;
+    int health_bar_count;
+
+    int option_camera_mode_auto;
+
+    /* stores absolute mouse position and initial rotation for middle click
+     * camera */
+    int origin_mouse_x;
+    int origin_rotation;
+
+    int camera_rotation;
+    int camera_zoom;
+    int camera_rotation_x;
+    int camera_rotation_y;
+    int camera_rotation_x_increment;
+    int camera_rotation_y_increment;
+    int camera_auto_rotate_player_x;
+    int camera_auto_rotate_player_y;
+
+    /* yellow/red X sprite location and sprite cycle */
+    int mouse_click_x_step;
+    int mouse_click_x_x;
+    int mouse_click_x_y;
+
+    int is_in_wild;
+    int loading_area;
+    int plane_height;
+    int plane_width;
+    int local_region_y;
+    int region_y;
+    int local_region_x;
+    int region_x;
+
+    int show_ui_wild_warn;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -204,10 +282,14 @@ void mudclient_create_login_panels(mudclient *mud);
 void mudclient_reset_login_screen_variables(mudclient *mud);
 void mudclient_render_login_screen_viewports(mudclient *mud);
 void mudclient_draw_login_screens(mudclient *mud);
+void mudclient_reset_game(mudclient *mud);
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting);
 void mudclient_handle_login_screen_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
+void mudclient_update_object_animation(mudclient *mud, int object_index,
+                                       char *model_name);
+void mudclient_draw_game(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
 void mudclient_poll_sdl_events(mudclient *mud);

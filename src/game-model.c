@@ -1045,3 +1045,152 @@ void game_model_copy_position(GameModel *game_model, GameModel *model) {
     game_model_determine_transform_kind(game_model);
     game_model->transform_state = 1;
 }
+
+void game_model_destroy(GameModel *game_model) {
+    for (int i = 0; i < game_model->num_faces; i++) {
+        if (game_model->face_trans_state_thing) {
+            free(game_model->face_trans_state_thing[i]);
+            game_model->face_trans_state_thing[i] = NULL;
+        }
+
+        free(game_model->face_vertices[i]);
+        game_model->face_vertices[i] = NULL;
+    }
+
+    //game_model->num_faces = 0;
+
+    free(game_model->face_trans_state_thing);
+    game_model->face_trans_state_thing = NULL;
+
+    free(game_model->face_vertices);
+    game_model->face_vertices = NULL;
+
+    if (game_model->vertex_x != game_model->vertex_transformed_x) {
+        free(game_model->vertex_transformed_x);
+    }
+
+    free(game_model->vertex_x);
+    game_model->vertex_x = NULL;
+    game_model->vertex_transformed_x = NULL;
+
+    if (game_model->vertex_y != game_model->vertex_transformed_y) {
+        free(game_model->vertex_transformed_y);
+    }
+
+    free(game_model->vertex_y);
+    game_model->vertex_y = NULL;
+    game_model->vertex_transformed_y = NULL;
+
+    if (game_model->vertex_z != game_model->vertex_transformed_z) {
+        free(game_model->vertex_transformed_z);
+    }
+
+    free(game_model->vertex_z);
+    game_model->vertex_z = NULL;
+    game_model->vertex_transformed_z = NULL;
+
+    free(game_model->vertex_intensity);
+    game_model->vertex_intensity = NULL;
+
+    free(game_model->vertex_ambience);
+    game_model->vertex_ambience = NULL;
+
+    free(game_model->face_num_vertices);
+    game_model->face_num_vertices = NULL;
+
+    free(game_model->face_vertices);
+    game_model->face_vertices = NULL;
+
+    free(game_model->face_fill_front);
+    game_model->face_fill_front = NULL;
+
+    free(game_model->face_fill_back);
+    game_model->face_fill_back = NULL;
+
+    free(game_model->face_intensity);
+    game_model->face_intensity = NULL;
+
+    free(game_model->normal_scale);
+    game_model->normal_scale = NULL;
+
+    free(game_model->normal_magnitude);
+    game_model->normal_magnitude = NULL;
+
+    free(game_model->project_vertex_x);
+    game_model->project_vertex_x = NULL;
+
+    free(game_model->project_vertex_y);
+    game_model->project_vertex_y = NULL;
+
+    free(game_model->project_vertex_z);
+    game_model->project_vertex_z = NULL;
+
+    free(game_model->vertex_view_x);
+    game_model->vertex_view_x = NULL;
+
+    free(game_model->vertex_view_y);
+    game_model->vertex_view_y = NULL;
+
+    free(game_model->is_local_player);
+    game_model->is_local_player = NULL;
+
+    free(game_model->face_tag);
+    game_model->face_tag = NULL;
+
+    free(game_model->vertex_transformed_y);
+    game_model->vertex_transformed_y = NULL;
+
+    free(game_model->vertex_transformed_z);
+    game_model->vertex_transformed_z = NULL;
+
+    free(game_model->vertex_transformed_x);
+    game_model->vertex_transformed_x = NULL;
+
+    free(game_model->vertex_transformed_y);
+    game_model->vertex_transformed_y = NULL;
+
+    free(game_model->vertex_transformed_z);
+    game_model->vertex_transformed_z = NULL;
+
+    free(game_model->face_normal_x);
+    game_model->face_normal_x = NULL;
+
+    free(game_model->face_normal_y);
+    game_model->face_normal_y = NULL;
+
+    free(game_model->face_normal_z);
+    game_model->face_normal_z = NULL;
+
+    free(game_model->face_bound_left);
+    game_model->face_bound_left = NULL;
+
+    free(game_model->face_bound_right);
+    game_model->face_bound_right = NULL;
+
+    free(game_model->face_bound_bottom);
+    game_model->face_bound_bottom = NULL;
+
+    free(game_model->face_bound_top);
+    game_model->face_bound_top = NULL;
+
+    free(game_model->face_bound_near);
+    game_model->face_bound_near = NULL;
+
+    free(game_model->face_bound_far);
+    game_model->face_bound_far = NULL;
+
+    free(game_model->project_vertex_x);
+    game_model->project_vertex_x = NULL;
+
+    free(game_model->project_vertex_y);
+    game_model->project_vertex_y = NULL;
+
+    free(game_model->project_vertex_z);
+    game_model->project_vertex_z = NULL;
+
+    free(game_model->vertex_view_x);
+    game_model->vertex_view_x = NULL;
+
+    free(game_model->vertex_view_y);
+    game_model->vertex_view_y = NULL;
+}

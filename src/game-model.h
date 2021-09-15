@@ -149,5 +149,6 @@ GameModel *game_model_copy(GameModel *game_model);
 GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
                                  int isolated, int unlit, int pickable);
 void game_model_copy_position(GameModel *game_model, GameModel *model);
+void game_model_destroy(GameModel *game_model);
 
 #endif
