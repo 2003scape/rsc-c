@@ -29,6 +29,7 @@ typedef struct PacketStream {
     char *socket_exception_message;
     int8_t available_buffer[5000];
     int available_length;
+    int available_offset;
 } PacketStream;
 
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud);

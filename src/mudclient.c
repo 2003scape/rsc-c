@@ -1900,6 +1900,45 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_render_login_screen_viewports(mud);
 
     free(surface_texture_pixels);
+    surface_texture_pixels = NULL;
+}
+
+void mudclient_check_connection(mudclient *mud) {
+    // packet_tick
+    // TODO maybe just use SDL_GetTicks
+    //int64_t timestamp = time(NULL) * 1000;
+    int timestamp = SDL_GetTicks();
+
+    if (packet_stream_has_packet(mud->packet_stream)) {
+        mud->packet_last_read = timestamp;
+    }
+
+    if (timestamp - mud->packet_last_read > 5000) {
+        mud->packet_last_read = timestamp;
+        packet_stream_new_packet(mud->packet_stream, CLIENT_PING);
+        packet_stream_send_packet(mud->packet_stream);
+    }
+
+    packet_stream_write_packet(mud->packet_stream, 20);
+
+    int length = packet_stream_read_packet(mud->packet_stream, mud->incoming_packet);
+
+    if (length > 0) {
+        int opcode = mud->incoming_packet[0] & 0xff; // TODO isaac
+        printf("got opcode: %d\n", opcode);
+    }
+}
+
+void mudclient_handle_game_input(mudclient *mud) {
+    if (mud->system_update > 1) {
+        mud->system_update--;
+    }
+
+    mudclient_check_connection(mud);
+
+    if (mud->logout_timeout > 0) {
+        mud->logout_timeout--;
+    }
 }
 
 void mudclient_handle_inputs(mudclient *mud) {
@@ -1914,7 +1953,7 @@ void mudclient_handle_inputs(mudclient *mud) {
         mudclient_handle_login_screen_input(mud);
     } else if (mud->logged_in == 1) {
         mud->mouse_action_timeout++;
-        // mudclient_handle_game_input(mud);
+        mudclient_handle_game_input(mud);
     }
 
     mud->last_mouse_button_down = 0;
@@ -2258,8 +2297,8 @@ void mudclient_draw(mudclient *mud) {
         mud->surface->logged_in = 0;
         mudclient_draw_login_screens(mud);
     } else if (mud->logged_in == 1) {
-        //mud->surface->logged_in = 1;
-        //mudclient_draw_game(mud);
+        mud->surface->logged_in = 1;
+        mudclient_draw_game(mud);
     }
 }
 

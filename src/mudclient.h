@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <SDL2/SDL.h>
 
@@ -248,6 +249,8 @@ typedef struct mudclient {
     int region_x;
 
     int show_ui_wild_warn;
+
+    int packet_last_read;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -286,6 +289,8 @@ void mudclient_reset_game(mudclient *mud);
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting);
 void mudclient_handle_login_screen_input(mudclient *mud);
+void mudclient_check_connection(mudclient *mud);
+void mudclient_handle_game_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
 void mudclient_update_object_animation(mudclient *mud, int object_index,
                                        char *model_name);
