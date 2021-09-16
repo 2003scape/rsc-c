@@ -78,8 +78,6 @@ void packet_stream_read_bytes(PacketStream *packet_stream, int length,
         return;
     }
 
-    //printf("reading %d bytes\n", length);
-
     if (packet_stream->available_length > 0) {
         int copy_length;
 
@@ -152,14 +150,10 @@ int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer) {
         packet_stream_available_bytes(packet_stream, 2)) {
         packet_stream->length = packet_stream_read_byte(packet_stream);
 
-        //printf("packet length [1] %d\n", packet_stream->length);
-
         if (packet_stream->length >= 160) {
             packet_stream->length = (packet_stream->length - 160) * 256 +
                                     (packet_stream_read_byte(packet_stream));
         }
-
-        //printf("packet length [2] %d\n", packet_stream->length);
     }
 
     if (packet_stream->length > 0 &&

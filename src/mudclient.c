@@ -1484,8 +1484,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     }
 
     if (reconnecting) {
-        //username[0] = '\0';
-        //password[0] = '\0';
+        // TODO make sure this is ok
+        username[0] = '\0';
+        password[0] = '\0';
         mudclient_reset_login_screen_variables(mud);
         return;
     }
@@ -1903,10 +1904,203 @@ void mudclient_start_game(mudclient *mud) {
     surface_texture_pixels = NULL;
 }
 
+GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
+                                  int id, int count) {
+    int x1 = x;
+    int y1 = y;
+    int x2 = x;
+    int y2 = y;
+
+    int front_texture = game_data_wall_object_texture_front[id];
+    int back_texture = game_data_wall_object_texture_back[id];
+    int height = game_data_wall_object_height[id];
+
+    GameModel *game_model = malloc(sizeof(GameModel));
+    game_model_from2(game_model, 4, 1);
+
+    if (direction == 0) {
+        x2 = x + 1;
+    } else if (direction == 1) {
+        y2 = y + 1;
+    } else if (direction == 2) {
+        x1 = x + 1;
+        y2 = y + 1;
+    } else if (direction == 3) {
+        x2 = x + 1;
+        y2 = y + 1;
+    }
+
+    x1 *= MAGIC_LOC;
+    y1 *= MAGIC_LOC;
+    x2 *= MAGIC_LOC;
+    y2 *= MAGIC_LOC;
+
+    int *vertices = malloc(4);
+
+    vertices[0] = game_model_vertex_at(
+        game_model, x1, -world_get_elevation(mud->world, x1, y1), y1);
+
+    vertices[1] = game_model_vertex_at(
+        game_model, x1, -world_get_elevation(mud->world, x1, y1) - height, y1);
+
+    vertices[2] = game_model_vertex_at(
+        game_model, x2, -world_get_elevation(mud->world, x2, y2) - height, y2);
+
+    vertices[3] = game_model_vertex_at(
+        game_model, x2, -world_get_elevation(mud->world, x2, y2), y2);
+
+    game_model_create_face(game_model, 4, vertices, front_texture,
+                           back_texture);
+
+    game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
+
+    if (x >= 0 && y >= 0 && x < 96 && y < 96) {
+        scene_add_model(mud->scene, game_model);
+    }
+
+    game_model->key = count + 10000;
+
+    return game_model;
+}
+
+int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
+    if (mud->death_screen_timeout != 0) {
+        mud->world->player_alive = 0;
+        return 0;
+    }
+
+    mud->loading_area = 0;
+    lx += mud->plane_width;
+    ly += mud->plane_height;
+
+    if (mud->last_height_offset == mud->plane_index &&
+        lx > mud->local_lower_x && lx < mud->local_upper_x &&
+        ly > mud->local_lower_y && ly < mud->local_upper_y) {
+        mud->world->player_alive = 1;
+        return 0;
+    }
+
+    surface_draw_string_centre(mud->surface, "Loading... Please wait", 256, 192, 1,
+                               0xffffff);
+    // mudclient_draw_chat_message_tabs(mud);
+    surface_draw(mud->surface);
+
+    int ax = mud->region_x;
+    int ay = mud->region_y;
+    int section_x = (lx + 24) / 48;
+    int section_y = (ly + 24) / 48;
+
+    mud->last_height_offset = mud->plane_index;
+    mud->region_x = section_x * 48 - 48;
+    mud->region_y = section_y * 48 - 48;
+    mud->local_lower_x = section_x * 48 - 32;
+    mud->local_lower_y = section_y * 48 - 32;
+    mud->local_upper_x = section_x * 48 + 32;
+    mud->local_upper_y = section_y * 48 + 32;
+
+    world_load_section_from3(mud->world, lx, ly, mud->last_height_offset);
+
+    mud->region_x -= mud->plane_width;
+    mud->region_y -= mud->plane_height;
+
+    int offset_x = mud->region_x - ax;
+    int offset_y = mud->region_y - ay;
+
+    for (int i = 0; i < mud->object_count; i++) {
+        mud->object_x[i] -= offset_x;
+        mud->object_y[i] -= offset_y;
+
+        int obj_x = mud->object_x[i];
+        int obj_y = mud->object_y[i];
+        int obj_id = mud->object_id[i];
+
+        GameModel *game_model = mud->object_model[i];
+
+        int obj_type = mud->object_direction[i];
+        int obj_w = 0;
+        int obj_h = 0;
+
+        if (obj_type == 0 || obj_type == 4) {
+            obj_w = game_data_object_width[obj_id];
+            obj_h = game_data_object_height[obj_id];
+        } else {
+            obj_h = game_data_object_width[obj_id];
+            obj_w = game_data_object_height[obj_id];
+        }
+
+        int j6 = ((obj_x + obj_x + obj_w) * MAGIC_LOC) / 2;
+        int k6 = ((obj_y + obj_y + obj_h) * MAGIC_LOC) / 2;
+
+        if (obj_x >= 0 && obj_y >= 0 && obj_x < 96 && obj_y < 96) {
+            scene_add_model(mud->scene, game_model);
+
+            game_model_place(game_model, j6,
+                             -world_get_elevation(mud->world, j6, k6), k6);
+
+            world_remove_object2(mud->world, obj_x, obj_y, obj_id);
+
+            if (obj_id == 74) {
+                game_model_translate(game_model, 0, -480, 0);
+            }
+        }
+    }
+
+    for (int i = 0; i < mud->wall_object_count; i++) {
+        mud->wall_object_x[i] -= offset_x;
+        mud->wall_object_y[i] -= offset_y;
+
+        int wall_obj_x = mud->wall_object_x[i];
+        int wall_obj_y = mud->wall_object_y[i];
+        int wall_obj_id = mud->wall_object_id[i];
+        int wall_obj_dir = mud->wall_object_direction[i];
+
+        world_set_object_adjacency_from4(mud->world, wall_obj_x, wall_obj_y,
+                                         wall_obj_dir, wall_obj_id);
+
+        GameModel *wall_object_model = mudclient_create_model(
+            mud, wall_obj_x, wall_obj_y, wall_obj_dir, wall_obj_id, i);
+
+        mud->wall_object_model[i] = wall_object_model;
+    }
+
+    for (int i = 0; i < mud->ground_item_count; i++) {
+        mud->ground_item_x[i] -= offset_x;
+        mud->ground_item_y[i] -= offset_y;
+    }
+
+    for (int i = 0; i < mud->player_count; i++) {
+        GameCharacter *player = mud->players[i];
+
+        player->current_x -= offset_x * MAGIC_LOC;
+        player->current_y -= offset_y * MAGIC_LOC;
+
+        for (int j = 0; j <= player->waypoint_current; j++) {
+            player->waypoints_x[j] -= offset_x * MAGIC_LOC;
+            player->waypoints_y[j] -= offset_y * MAGIC_LOC;
+        }
+    }
+
+    for (int i = 0; i < mud->npc_count; i++) {
+        GameCharacter *npc = mud->npcs[i];
+
+        npc->current_x -= offset_x * MAGIC_LOC;
+        npc->current_y -= offset_y * MAGIC_LOC;
+
+        for (int j = 0; j <= npc->waypoint_current; j++) {
+            npc->waypoints_x[j] -= offset_x * MAGIC_LOC;
+            npc->waypoints_y[j] -= offset_y * MAGIC_LOC;
+        }
+    }
+
+    mud->world->player_alive = 1;
+
+    return 1;
+}
+
 void mudclient_check_connection(mudclient *mud) {
     // packet_tick
     // TODO maybe just use SDL_GetTicks
-    //int64_t timestamp = time(NULL) * 1000;
+    // int64_t timestamp = time(NULL) * 1000;
     int timestamp = SDL_GetTicks();
 
     if (packet_stream_has_packet(mud->packet_stream)) {
@@ -1921,11 +2115,47 @@ void mudclient_check_connection(mudclient *mud) {
 
     packet_stream_write_packet(mud->packet_stream, 20);
 
-    int length = packet_stream_read_packet(mud->packet_stream, mud->incoming_packet);
+    int length =
+        packet_stream_read_packet(mud->packet_stream, mud->incoming_packet);
 
     if (length > 0) {
-        int opcode = mud->incoming_packet[0] & 0xff; // TODO isaac
-        printf("got opcode: %d\n", opcode);
+        int8_t *data = mud->incoming_packet;
+        int opcode = data[0] & 0xff; // TODO isaac
+
+        switch (opcode) {
+        case SERVER_WORLD_INFO:
+            mud->loading_area = 1;
+            mud->local_player_server_index = get_unsigned_short(data, 1);
+            mud->plane_width = get_unsigned_short(data, 3);
+            mud->plane_height = get_unsigned_short(data, 5);
+            mud->plane_index = get_unsigned_short(data, 7);
+            mud->plane_multiplier = get_unsigned_short(data, 9);
+            mud->plane_height -= mud->plane_index * mud->plane_multiplier;
+            break;
+        case SERVER_REGION_PLAYERS:
+            mud->known_player_count = mud->player_count;
+
+            for (int i = 0; i < mud->known_player_count; i++) {
+                mud->known_players[i] = mud->players[i];
+            }
+
+            int offset = 8;
+
+            mud->local_region_x = get_bit_mask(data, offset, 11);
+            offset += 11;
+
+            mud->local_region_y = get_bit_mask(data, offset, 13);
+            offset += 13;
+
+            int sprite = get_bit_mask(data, offset, 4);
+            offset += 4;
+
+            int has_loaded_region = mudclient_load_next_region(
+                mud, mud->local_region_x, mud->local_region_y);
+            break;
+        case SERVER_REGION_PLAYER_UPDATE:
+            break;
+        }
     }
 }
 
@@ -2221,7 +2451,7 @@ void mudclient_draw_game(mudclient *mud) {
     }
 
     /*
-    if (this.systemUpdate !== 0) {
+    if (this.systemUpdate != 0) {
         let seconds = ((this.systemUpdate / 50) | 0);
         const minutes = (seconds / 60) | 0;
 
@@ -2259,8 +2489,8 @@ void mudclient_draw_game(mudclient *mud) {
             sprintf(wilderness_label, "Level: %d", wilderness_level);
 
             surface_draw_string_centre(mud->surface, wilderness_label,
-                                            mud->game_width - 47,
-                                            mud->game_height - 7, 1, 0xffff00);
+                                       mud->game_width - 47,
+                                       mud->game_height - 7, 1, 0xffff00);
 
             if (mud->show_ui_wild_warn == 0) {
                 mud->show_ui_wild_warn = 2;
@@ -2272,16 +2502,13 @@ void mudclient_draw_game(mudclient *mud) {
         }
     }
 
-    //mudclient_draw_chat_message_tabs_panel(mud);
+    // mudclient_draw_chat_message_tabs_panel(mud);
 
-    surface_draw_sprite_alpha_from4(
-        mud->surface,
-        mud->surface->width2 - 3 - 197, 3,
-        mud->sprite_media,
-        128
-    );
+    surface_draw_sprite_alpha_from4(mud->surface,
+                                    mud->surface->width2 - 3 - 197, 3,
+                                    mud->sprite_media, 128);
 
-    //mudclient_draw_ui(mud);
+    // mudclient_draw_ui(mud);
     mud->surface->logged_in = 0;
     surface_draw(mud->surface);
 }
@@ -2490,7 +2717,7 @@ int main(int argc, char **argv) {
     init_mudclient_global();
 
     mudclient *mud = malloc(sizeof(mudclient));
-    //memset(mud, 0, sizeof(mudclient));
+    // memset(mud, 0, sizeof(mudclient));
     mudclient_new(mud);
     mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT,
                                 "Runescape by Andrew Gower");

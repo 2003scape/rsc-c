@@ -22,6 +22,8 @@
 #define ZOOM_INDOORS 550
 #define ZOOM_OUTDOORS 750
 
+#define MAGIC_LOC 128
+
 #define FONT_COUNT 8
 #define ANIMATED_MODELS_COUNT 20
 #define MAX_SOCIAL_LIST_COUNT 100
@@ -34,6 +36,7 @@
 #define PLAYERS_MAX 500
 #define NPCS_SERVER_MAX 5000
 #define NPCS_MAX 500
+#define GROUND_ITEMS_MAX 5000
 #define PRAYER_COUNT 50
 
 #define MUD_WIDTH 512
@@ -50,6 +53,7 @@ typedef struct mudclient mudclient;
 #include "packet-stream.h"
 #include "panel.h"
 #include "scene.h"
+#include "server-opcodes.h"
 #include "surface.h"
 #include "utility.h"
 #include "version.h"
@@ -199,6 +203,12 @@ typedef struct mudclient {
     GameCharacter *npcs_server[NPCS_SERVER_MAX];
     GameCharacter *npcs[NPCS_MAX];
     int ground_item_count;
+    int ground_item_x [GROUND_ITEMS_MAX];
+    int ground_item_y [GROUND_ITEMS_MAX];
+    int ground_item_id[GROUND_ITEMS_MAX];
+    int ground_item_z [GROUND_ITEMS_MAX];
+    int known_player_count;
+    GameCharacter *known_players[PLAYERS_MAX];
 
     int8_t prayer_on[PRAYER_COUNT];
     int is_sleeping;
@@ -247,10 +257,18 @@ typedef struct mudclient {
     int region_y;
     int local_region_x;
     int region_x;
-
     int show_ui_wild_warn;
 
     int packet_last_read;
+
+    int local_player_server_index;
+    int plane_index;
+    int plane_multiplier;
+    int local_lower_x;
+    int local_lower_y;
+    int local_upper_x;
+    int local_upper_y;
+    int death_screen_timeout;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -289,6 +307,9 @@ void mudclient_reset_game(mudclient *mud);
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting);
 void mudclient_handle_login_screen_input(mudclient *mud);
+GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
+                                  int id, int count);
+int mudclient_load_next_region(mudclient *mud, int lx, int ly);
 void mudclient_check_connection(mudclient *mud);
 void mudclient_handle_game_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
