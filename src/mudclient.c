@@ -27,7 +27,7 @@ int experience_array[100];
 char login_screen_status[255];
 
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
-    *char_code = 65535;
+    *char_code = -1;
 
     switch (keysym->scancode) {
     case SDL_SCANCODE_LEFT:
@@ -123,23 +123,15 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    mud->camera_rotation = 128;
     mud->server = "127.0.0.1";
     mud->port = 43594;
-    mud->members = 0;
     mud->game_width = mud->applet_width;
     mud->game_height = mud->applet_height - 12;
-    /*mud->login_timer = 0;
-    mud->camera_rotation_time = 0;
-    mud->camera_rotation_x = 0;
-    mud->camera_rotation_y = 0;*/
+    mud->camera_angle = 1;
+    mud->camera_rotation = 128;
+    mud->camera_zoom = ZOOM_INDOORS;
     mud->camera_rotation_x_increment = 2;
     mud->camera_rotation_y_increment = 2;
-    /*mud->message_tab_flash_all = 0;
-    mud->message_tab_flash_history = 0;
-    mud->message_tab_flash_quest = 0;
-    mud->message_tab_flash_private = 0;*/
-    // mud->object_count = 0;
     mud->last_height_offset = -1;
 
     mud->options = malloc(sizeof(Options));
@@ -150,7 +142,8 @@ void mudclient_new(mudclient *mud) {
     memset(mud->input_text_final, '\0', INPUT_TEXT_LENGTH + 1);
     memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
 
-    game_character_new(&mud->local_player);
+    mud->local_player = malloc(sizeof(GameCharacter));
+    game_character_new(mud->local_player);
 }
 
 void mudclient_start_application(mudclient *mud, int width, int height,
@@ -1334,12 +1327,14 @@ void mudclient_reset_game(mudclient *mud) {
 
     for (int i = 0; i < mud->object_count; i++) {
         scene_remove_model(mud->scene, mud->object_model[i]);
+
         world_remove_object(mud->world, mud->object_x[i], mud->object_y[i],
                             mud->object_id[i]);
     }
 
     for (int i = 0; i < mud->wall_object_count; i++) {
         scene_remove_model(mud->scene, mud->wall_object_model[i]);
+
         world_remove_wall_object(
             mud->world, mud->wall_object_x[i], mud->wall_object_y[i],
             mud->wall_object_direction[i], mud->wall_object_id[i]);
@@ -1964,6 +1959,8 @@ GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
 }
 
 int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
+    printf("load next region %d %d\n", lx, ly);
+
     if (mud->death_screen_timeout != 0) {
         mud->world->player_alive = 0;
         return 0;
@@ -1980,8 +1977,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         return 0;
     }
 
-    surface_draw_string_centre(mud->surface, "Loading... Please wait", 256, 192, 1,
-                               0xffffff);
+    surface_draw_string_centre(mud->surface, "Loading... Please wait", 256, 192,
+                               1, 0xffffff);
     // mudclient_draw_chat_message_tabs(mud);
     surface_draw(mud->surface);
 
@@ -2097,6 +2094,53 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     return 1;
 }
 
+GameCharacter *mudclient_create_player(mudclient *mud, int server_index, int x,
+                                       int y, int animation) {
+    if (mud->player_server[server_index] == NULL) {
+        GameCharacter *game_character = malloc(sizeof(GameCharacter));
+        game_character_new(game_character);
+
+        mud->player_server[server_index] = game_character;
+        mud->player_server[server_index]->server_index = server_index;
+        mud->player_server[server_index]->server_id = 0;
+    }
+
+    GameCharacter *player = mud->player_server[server_index];
+    int flag = 0;
+
+    for (int i = 0; i < mud->known_player_count; i++) {
+        if (mud->known_players[i]->server_index != server_index) {
+            continue;
+        }
+
+        flag = 1;
+        break;
+    }
+
+    if (flag) {
+        player->animation_next = animation;
+        int j1 = player->waypoint_current;
+
+        if (x != player->waypoints_x[j1] || y != player->waypoints_y[j1]) {
+            player->waypoint_current = j1 = (j1 + 1) % 10;
+            player->waypoints_x[j1] = x;
+            player->waypoints_y[j1] = y;
+        }
+    } else {
+        player->server_index = server_index;
+        player->moving_step = 0;
+        player->waypoint_current = 0;
+        player->waypoints_x[0] = player->current_x = x;
+        player->waypoints_y[0] = player->current_y = y;
+        player->animation_next = player->animation_current = animation;
+        player->step_count = 0;
+    }
+
+    mud->players[mud->player_count++] = player;
+
+    return player;
+}
+
 void mudclient_check_connection(mudclient *mud) {
     // packet_tick
     // TODO maybe just use SDL_GetTicks
@@ -2115,47 +2159,352 @@ void mudclient_check_connection(mudclient *mud) {
 
     packet_stream_write_packet(mud->packet_stream, 20);
 
-    int length =
+    int size =
         packet_stream_read_packet(mud->packet_stream, mud->incoming_packet);
 
-    if (length > 0) {
-        int8_t *data = mud->incoming_packet;
-        int opcode = data[0] & 0xff; // TODO isaac
+    if (size <= 0) {
+        return;
+    }
 
-        switch (opcode) {
-        case SERVER_WORLD_INFO:
-            mud->loading_area = 1;
-            mud->local_player_server_index = get_unsigned_short(data, 1);
-            mud->plane_width = get_unsigned_short(data, 3);
-            mud->plane_height = get_unsigned_short(data, 5);
-            mud->plane_index = get_unsigned_short(data, 7);
-            mud->plane_multiplier = get_unsigned_short(data, 9);
-            mud->plane_height -= mud->plane_index * mud->plane_multiplier;
-            break;
-        case SERVER_REGION_PLAYERS:
-            mud->known_player_count = mud->player_count;
+    int8_t *data = mud->incoming_packet;
+    int opcode = data[0] & 0xff; // TODO isaac
 
-            for (int i = 0; i < mud->known_player_count; i++) {
-                mud->known_players[i] = mud->players[i];
+    printf("got opcode %d\n", opcode);
+
+    switch (opcode) {
+    case SERVER_WORLD_INFO:
+        mud->loading_area = 1;
+        mud->local_player_server_index = get_unsigned_short(data, 1);
+        mud->plane_width = get_unsigned_short(data, 3);
+        mud->plane_height = get_unsigned_short(data, 5);
+        mud->plane_index = get_unsigned_short(data, 7);
+        mud->plane_multiplier = get_unsigned_short(data, 9);
+        mud->plane_height -= mud->plane_index * mud->plane_multiplier;
+        break;
+    case SERVER_REGION_PLAYERS: {
+        mud->known_player_count = mud->player_count;
+
+        for (int i = 0; i < mud->known_player_count; i++) {
+            mud->known_players[i] = mud->players[i];
+        }
+
+        int offset = 8;
+
+        mud->local_region_x = get_bit_mask(data, offset, 11);
+        offset += 11;
+
+        mud->local_region_y = get_bit_mask(data, offset, 13);
+        offset += 13;
+
+        int sprite = get_bit_mask(data, offset, 4);
+        offset += 4;
+
+        int has_loaded_region = mudclient_load_next_region(
+            mud, mud->local_region_x, mud->local_region_y);
+
+        printf("have we loaded? %d\n", has_loaded_region);
+
+        mud->local_region_x -= mud->region_x;
+        mud->local_region_y -= mud->region_y;
+
+        int player_x = mud->local_region_x * MAGIC_LOC + 64;
+        int player_y = mud->local_region_y * MAGIC_LOC + 64;
+
+        if (has_loaded_region) {
+            mud->local_player->waypoint_current = 0;
+            mud->local_player->moving_step = 0;
+
+            mud->local_player->current_x = mud->local_player->waypoints_x[0] =
+                player_x;
+
+            mud->local_player->current_y = mud->local_player->waypoints_y[0] =
+                player_y;
+        }
+
+        mud->player_count = 0;
+
+        mud->local_player = mudclient_create_player(
+            mud, mud->local_player_server_index, player_x, player_y, sprite);
+
+        int length = get_bit_mask(data, offset, 8);
+        offset += 8;
+
+        for (int i = 0; i < length; i++) {
+            GameCharacter *player = mud->known_players[i + 1];
+            int has_updated = get_bit_mask(data, offset, 1);
+
+            offset++;
+
+            if (has_updated != 0) {
+                int update_type = get_bit_mask(data, offset, 1);
+                offset++;
+
+                if (update_type == 0) {
+                    int sprite = get_bit_mask(data, offset, 3);
+                    offset += 3;
+
+                    int waypoint_current = player->waypoint_current;
+                    int player_x = player->waypoints_x[waypoint_current];
+                    int player_y = player->waypoints_y[waypoint_current];
+
+                    if (sprite == 2 || sprite == 1 || sprite == 3) {
+                        player_x += MAGIC_LOC;
+                    }
+
+                    if (sprite == 6 || sprite == 5 || sprite == 7) {
+                        player_x -= MAGIC_LOC;
+                    }
+
+                    if (sprite == 4 || sprite == 3 || sprite == 5) {
+                        player_y += MAGIC_LOC;
+                    }
+
+                    if (sprite == 0 || sprite == 1 || sprite == 7) {
+                        player_y -= MAGIC_LOC;
+                    }
+
+                    player->animation_next = sprite;
+
+                    player->waypoint_current = waypoint_current =
+                        (waypoint_current + 1) % 10;
+
+                    player->waypoints_x[waypoint_current] = player_x;
+                    player->waypoints_y[waypoint_current] = player_y;
+                } else {
+                    int sprite = get_bit_mask(data, offset, 4);
+
+                    if ((sprite & 12) == 12) {
+                        offset += 2;
+                        continue;
+                    }
+
+                    player->animation_next = get_bit_mask(data, offset, 4);
+                    offset += 4;
+                }
             }
 
-            int offset = 8;
+            mud->players[mud->player_count++] = player;
+        }
 
-            mud->local_region_x = get_bit_mask(data, offset, 11);
+        int player_count = 0;
+
+        while (offset + 24 < size * 8) {
+            int server_index = get_bit_mask(data, offset, 11);
             offset += 11;
 
-            mud->local_region_y = get_bit_mask(data, offset, 13);
-            offset += 13;
+            int area_x = get_bit_mask(data, offset, 5);
+            offset += 5;
+
+            if (area_x > 15) {
+                area_x -= 32;
+            }
+
+            int area_y = get_bit_mask(data, offset, 5);
+            offset += 5;
+
+            if (area_y > 15) {
+                area_y -= 32;
+            }
 
             int sprite = get_bit_mask(data, offset, 4);
             offset += 4;
 
-            int has_loaded_region = mudclient_load_next_region(
-                mud, mud->local_region_x, mud->local_region_y);
-            break;
-        case SERVER_REGION_PLAYER_UPDATE:
-            break;
+            int is_player_known = get_bit_mask(data, offset, 1);
+            offset++;
+
+            int x = (mud->local_region_x + area_x) * MAGIC_LOC + 64;
+            int y = (mud->local_region_y + area_y) * MAGIC_LOC + 64;
+
+            mudclient_create_player(mud, server_index, x, y, sprite);
+
+            if (is_player_known == 0) {
+                mud->player_server_indexes[player_count++] = server_index;
+            }
         }
+
+        if (player_count > 0) {
+            packet_stream_new_packet(mud->packet_stream, CLIENT_KNOWN_PLAYERS);
+            packet_stream_put_short(mud->packet_stream, player_count);
+
+            for (int i = 0; i < player_count; i++) {
+                GameCharacter *player =
+                    mud->player_server[mud->player_server_indexes[i]];
+
+                packet_stream_put_short(mud->packet_stream,
+                                        player->server_index);
+                packet_stream_put_short(mud->packet_stream, player->server_id);
+            }
+
+            packet_stream_send_packet(mud->packet_stream);
+            // player_count = 0;
+        }
+
+        break;
+    }
+    case SERVER_REGION_PLAYER_UPDATE: {
+        int length = get_unsigned_short(data, 1);
+        int offset = 3;
+
+        for (int i = 0; i < length; i++) {
+            int player_index = get_unsigned_short(data, offset);
+            offset += 2;
+
+            GameCharacter *player = mud->player_server[player_index];
+            int update_type = data[offset++];
+
+            if (update_type == 0) {
+                // speech bubble with an item in it
+                int item_id = get_unsigned_short(data, offset);
+                offset += 2;
+
+                if (player != NULL) {
+                    player->bubble_timeout = 150;
+                    player->bubble_item = item_id;
+                }
+            } else if (update_type == 1) {
+                // chat
+                int message_length = data[offset++];
+
+                /*if (player != NULL) {
+                    int message = chat_message->descramble(
+                        data,
+                        offset,
+                        message_length
+                    );
+
+                    if (mud->options->word_filter) {
+                        message = word_filter->filter(message);
+                    }
+
+                    int ignored = 0;
+
+                    for (int i = 0; i < mud->ignore_list_count; i++) {
+                        if (mud->ignore_list[i] == player->hash) {
+                            ignored = 1;
+                            break;
+                        }
+                    }
+
+                    if (!ignored) {
+                        player->message_timeout = 150;
+                        player->message = message;
+                        mud->show_message(
+                            `${player->name}: ${player->message}`,
+                            2
+                        );
+                    }
+                }*/
+
+                offset += message_length;
+            } else if (update_type == 2) {
+                // combat damage and hp
+                int damage = get_unsigned_byte(data[offset++]);
+                int current = get_unsigned_byte(data[offset++]);
+                int max = get_unsigned_byte(data[offset++]);
+
+                if (player != NULL) {
+                    player->damage_taken = damage;
+                    player->health_current = current;
+                    player->health_max = max;
+                    player->combat_timer = 200;
+
+                    if (player == mud->local_player) {
+                        mud->player_stat_current[3] = current;
+                        mud->player_stat_base[3] = max;
+                        // mud->show_dialog_welcome = 0;
+                        // mud->show_dialog_server_message = 0;
+                    }
+                }
+            } else if (update_type == 3) {
+                // new incoming projectile to npc
+                int projectile_sprite = get_unsigned_short(data, offset);
+                offset += 2;
+
+                int npc_index = get_unsigned_short(data, offset);
+                offset += 2;
+
+                if (player != NULL) {
+                    player->incoming_projectile_sprite = projectile_sprite;
+                    player->attacking_npc_server_index = npc_index;
+                    player->attacking_player_server_index = -1;
+                    player->projectile_range = PROJECTILE_RANGE_MAX;
+                }
+            } else if (update_type == 4) {
+                // new incoming projectile from player
+                int projectile_sprite = get_unsigned_short(data, offset);
+                offset += 2;
+
+                int opponent_index = get_unsigned_short(data, offset);
+                offset += 2;
+
+                if (player != NULL) {
+                    player->incoming_projectile_sprite = projectile_sprite;
+                    player->attacking_player_server_index = opponent_index;
+                    player->attacking_npc_server_index = -1;
+                    player->projectile_range = PROJECTILE_RANGE_MAX;
+                }
+            } else if (update_type == 5) {
+                // player appearance update
+                if (player != NULL) {
+                    player->server_id = get_unsigned_short(data, offset);
+                    offset += 2;
+
+                    player->hash = get_unsigned_long(data, offset);
+                    offset += 8;
+
+                    decode_username(player->hash, player->name);
+
+                    int equipped_count = get_unsigned_byte(data[offset]);
+                    offset++;
+
+                    for (int j = 0; j < equipped_count; j++) {
+                        player->equipped_item[j] =
+                            get_unsigned_byte(data[offset++]);
+                    }
+
+                    for (int j = equipped_count; j < 12; j++) {
+                        player->equipped_item[j] = 0;
+                    }
+
+                    player->colour_hair = data[offset++] & 0xff;
+                    player->colour_top = data[offset++] & 0xff;
+                    player->colour_bottom = data[offset++] & 0xff;
+                    player->colour_skin = data[offset++] & 0xff;
+                    player->level = data[offset++] & 0xff;
+                    player->skull_visible = data[offset++] & 0xff;
+                } else {
+                    offset += 14;
+
+                    int unused = get_unsigned_byte(data[offset]);
+                    offset += unused + 1;
+                }
+            } else if (update_type == 6) {
+                // public chat
+                int message_length = data[offset++];
+
+                /*if (player != NULL) {
+                    int message = chat_message_decode(
+                        data,
+                        offset,
+                        message_length
+                    );
+
+                    player->message_timeout = 150;
+                    player->message = message;
+
+                    if (player == mud->local_player) {
+                        mudclient_show_message(
+                            `${player->name}: ${player->message}`,
+                            5
+                        );
+                    }
+                }*/
+
+                offset += message_length;
+            }
+        }
+        break;
+    }
     }
 }
 
@@ -2169,6 +2518,322 @@ void mudclient_handle_game_input(mudclient *mud) {
     if (mud->logout_timeout > 0) {
         mud->logout_timeout--;
     }
+
+    if (mud->mouse_action_timeout > 4500 && mud->combat_timeout == 0 &&
+        mud->logout_timeout == 0) {
+        mud->mouse_action_timeout -= 500;
+        // mudclient_send_logout(mud);
+        return;
+    }
+
+    if (mud->local_player->animation_current == 8 ||
+        mud->local_player->animation_current == 9) {
+        mud->combat_timeout = 500;
+    }
+
+    if (mud->combat_timeout > 0) {
+        mud->combat_timeout--;
+    }
+
+    /*
+    if (mud->show_appearance_change) {
+        mudclient_handle_appearance_panel_input(mud);
+        return;
+    }*/
+
+    /* TODO put this in a function */
+    for (int i = 0; i < mud->player_count; i++) {
+        GameCharacter *player = mud->players[i];
+
+        int k = (player->waypoint_current + 1) % 10;
+
+        if (player->moving_step != k) {
+            int i1 = -1;
+            int l2 = player->moving_step;
+            int j4;
+
+            if (l2 < k) {
+                j4 = k - l2;
+            } else {
+                j4 = (10 + k) - l2;
+            }
+
+            int j5 = 4;
+
+            if (j4 > 2) {
+                j5 = (j4 - 1) * 4;
+            }
+
+            if (player->waypoints_x[l2] - player->current_x > MAGIC_LOC * 3 ||
+                player->waypoints_y[l2] - player->current_y > MAGIC_LOC * 3 ||
+                player->waypoints_x[l2] - player->current_x < -MAGIC_LOC * 3 ||
+                player->waypoints_y[l2] - player->current_y < -MAGIC_LOC * 3 ||
+                j4 > 8) {
+                player->current_x = player->waypoints_x[l2];
+                player->current_y = player->waypoints_y[l2];
+            } else {
+                if (player->current_x < player->waypoints_x[l2]) {
+                    player->current_x += j5;
+                    player->step_count++;
+                    i1 = 2;
+                } else if (player->current_x > player->waypoints_x[l2]) {
+                    player->current_x -= j5;
+                    player->step_count++;
+                    i1 = 6;
+                }
+
+                if (player->current_x - player->waypoints_x[l2] < j5 &&
+                    player->current_x - player->waypoints_x[l2] > -j5) {
+                    player->current_x = player->waypoints_x[l2];
+                }
+
+                if (player->current_y < player->waypoints_y[l2]) {
+                    player->current_y += j5;
+                    player->step_count++;
+
+                    if (i1 == -1) {
+                        i1 = 4;
+                    } else if (i1 == 2) {
+                        i1 = 3;
+                    } else {
+                        i1 = 5;
+                    }
+                } else if (player->current_y > player->waypoints_y[l2]) {
+                    player->current_y -= j5;
+                    player->step_count++;
+
+                    if (i1 == -1) {
+                        i1 = 0;
+                    } else if (i1 == 2) {
+                        i1 = 1;
+                    } else {
+                        i1 = 7;
+                    }
+                }
+
+                if (player->current_y - player->waypoints_y[l2] < j5 &&
+                    player->current_y - player->waypoints_y[l2] > -j5) {
+                    player->current_y = player->waypoints_y[l2];
+                }
+            }
+
+            if (i1 != -1) {
+                player->animation_current = i1;
+            }
+
+            if (player->current_x == player->waypoints_x[l2] &&
+                player->current_y == player->waypoints_y[l2]) {
+                player->moving_step = (l2 + 1) % 10;
+            }
+        } else {
+            player->animation_current = player->animation_next;
+        }
+
+        if (player->message_timeout > 0) {
+            player->message_timeout--;
+        }
+
+        if (player->bubble_timeout > 0) {
+            player->bubble_timeout--;
+        }
+
+        if (player->combat_timer > 0) {
+            player->combat_timer--;
+        }
+
+        /*
+        if (mud->death_screen_timeout > 0) {
+            mud->death_screen_timeout--;
+
+            if (mud->death_screen_timeout == 0) {
+                mudclient_show_message(mud,
+                                       "You have been granted another life. Be "
+                                       "more careful this time!",
+                                       3);
+
+                mudclient_show_message(
+                    mud,
+                    "You retain your skills. Your objects land where you died",
+                    3);
+            }
+        }*/
+    }
+
+    for (int i = 0; i < mud->npc_count; i++) {
+        GameCharacter *npc = mud->npcs[i];
+        int j1 = (npc->waypoint_current + 1) % 10;
+
+        if (npc->moving_step != j1) {
+            int i3 = -1;
+            int k4 = npc->moving_step;
+            int k5 = (k4 < j1 ? j1 - k4 : 10 + j1) - k4;
+            int l5 = 4;
+
+            if (k5 > 2) {
+                l5 = (k5 - 1) * 4;
+            }
+
+            if (npc->waypoints_x[k4] - npc->current_x > MAGIC_LOC * 3 ||
+                npc->waypoints_y[k4] - npc->current_y > MAGIC_LOC * 3 ||
+                npc->waypoints_x[k4] - npc->current_x < -MAGIC_LOC * 3 ||
+                npc->waypoints_y[k4] - npc->current_y < -MAGIC_LOC * 3 ||
+                k5 > 8) {
+                npc->current_x = npc->waypoints_x[k4];
+                npc->current_y = npc->waypoints_y[k4];
+            } else {
+                if (npc->current_x < npc->waypoints_x[k4]) {
+                    npc->current_x += l5;
+                    npc->step_count++;
+                    i3 = 2;
+                } else if (npc->current_x > npc->waypoints_x[k4]) {
+                    npc->current_x -= l5;
+                    npc->step_count++;
+                    i3 = 6;
+                }
+
+                if (npc->current_x - npc->waypoints_x[k4] < l5 &&
+                    npc->current_x - npc->waypoints_x[k4] > -l5) {
+                    npc->current_x = npc->waypoints_x[k4];
+                }
+
+                if (npc->current_y < npc->waypoints_y[k4]) {
+                    npc->current_y += l5;
+                    npc->step_count++;
+
+                    if (i3 == -1) {
+                        i3 = 4;
+                    } else if (i3 == 2) {
+                        i3 = 3;
+                    } else {
+                        i3 = 5;
+                    }
+                } else if (npc->current_y > npc->waypoints_y[k4]) {
+                    npc->current_y -= l5;
+                    npc->step_count++;
+
+                    if (i3 == -1) {
+                        i3 = 0;
+                    } else if (i3 == 2) {
+                        i3 = 1;
+                    } else {
+                        i3 = 7;
+                    }
+                }
+
+                if (npc->current_y - npc->waypoints_y[k4] < l5 &&
+                    npc->current_y - npc->waypoints_y[k4] > -l5) {
+                    npc->current_y = npc->waypoints_y[k4];
+                }
+            }
+
+            if (i3 != -1) {
+                npc->animation_current = i3;
+            }
+
+            if (npc->current_x == npc->waypoints_x[k4] &&
+                npc->current_y == npc->waypoints_y[k4]) {
+                npc->moving_step = (k4 + 1) % 10;
+            }
+        } else {
+            npc->animation_current = npc->animation_next;
+
+            if (npc->npc_id == 43) {
+                npc->step_count++;
+            }
+        }
+
+        if (npc->message_timeout > 0) {
+            npc->message_timeout--;
+        }
+
+        if (npc->bubble_timeout > 0) {
+            npc->bubble_timeout--;
+        }
+
+        if (npc->combat_timer > 0) {
+            npc->combat_timer--;
+        }
+    }
+
+    /*
+    if (mud->show_ui_tab != 2) {
+        if (surface->an_int346 > 0) {
+            mud->sleep_word_delay_timer++;
+        }
+
+        if (surface->an_int347 > 0) {
+            mud->sleep_word_delay_timer = 0;
+        }
+
+        surface->an_int346 = 0;
+        surface->an_int347 = 0;
+    }*/
+
+    for (int i = 0; i < mud->player_count; i++) {
+        GameCharacter *player = mud->players[i];
+
+        if (player->projectile_range > 0) {
+            player->projectile_range--;
+        }
+    }
+
+    if (mud->camera_auto_rotate_player_x - mud->local_player->current_x <
+            -500 ||
+        mud->camera_auto_rotate_player_x - mud->local_player->current_x > 500 ||
+        mud->camera_auto_rotate_player_y - mud->local_player->current_y <
+            -500 ||
+        mud->camera_auto_rotate_player_y - mud->local_player->current_y > 500) {
+        mud->camera_auto_rotate_player_x = mud->local_player->current_x;
+        mud->camera_auto_rotate_player_y = mud->local_player->current_y;
+    }
+
+    if (mud->camera_auto_rotate_player_x != mud->local_player->current_x) {
+        mud->camera_auto_rotate_player_x +=
+            (mud->local_player->current_x - mud->camera_auto_rotate_player_x) /
+             (16 + ((mud->camera_zoom - 500) / 15));
+    }
+
+    if (mud->camera_auto_rotate_player_y != mud->local_player->current_y) {
+        mud->camera_auto_rotate_player_y +=
+            (mud->local_player->current_y - mud->camera_auto_rotate_player_y) /
+             (16 + ((mud->camera_zoom - 500) / 15));
+    }
+
+    if (mud->option_camera_mode_auto) {
+        int k1 = mud->camera_angle * 32;
+        int j3 = k1 - mud->camera_rotation;
+        int byte0 = 1;
+
+        if (j3 != 0) {
+            mud->an_int_707++;
+
+            if (j3 > 128) {
+                byte0 = -1;
+                j3 = 256 - j3;
+            } else if (j3 > 0)
+                byte0 = 1;
+            else if (j3 < -128) {
+                byte0 = 1;
+                j3 = 256 + j3;
+            } else if (j3 < 0) {
+                byte0 = -1;
+                j3 = -j3;
+            }
+
+            mud->camera_rotation +=
+                ((mud->an_int_707 * j3 + 255) / 256) * byte0;
+
+            mud->camera_rotation &= 0xff;
+        } else {
+            mud->an_int_707 = 0;
+        }
+    }
+
+    /*
+    if (mud->sleep_word_delay_timer > 20) {
+        mud->sleep_word_delay = 0;
+        mud->sleep_word_delay_timer = 0;
+    }*/
 }
 
 void mudclient_handle_inputs(mudclient *mud) {
@@ -2237,8 +2902,8 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
                                        char *model_name) {
     int object_x = mud->object_x[object_index];
     int object_y = mud->object_y[object_index];
-    int distance_x = object_x - (mud->local_player.current_x / 128);
-    int distance_y = object_y - (mud->local_player.current_y / 128);
+    int distance_x = object_x - (mud->local_player->current_x / 128);
+    int distance_y = object_y - (mud->local_player->current_y / 128);
     int max_distance = 7;
 
     if (object_x >= 0 && object_y >= 0 && object_x < 96 && object_y < 96 &&
@@ -2284,7 +2949,7 @@ void mudclient_draw_game(mudclient *mud) {
         return;
     }
 
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene,
                            mud->world->roof_models[mud->last_height_offset][i]);
 
@@ -2300,8 +2965,8 @@ void mudclient_draw_game(mudclient *mud) {
 
             if (mud->last_height_offset == 0 &&
                 (mud->world
-                     ->object_adjacency[mud->local_player.current_x / 128]
-                                       [mud->local_player.current_y / 128] &
+                     ->object_adjacency[mud->local_player->current_x / 128]
+                                       [mud->local_player->current_y / 128] &
                  128) == 0) {
                 scene_add_model(
                     mud->scene,
@@ -2421,6 +3086,8 @@ void mudclient_draw_game(mudclient *mud) {
 
     int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
+
+    printf("camera x y: %d, %d\n", x, y);
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, mud->camera_rotation * 4, 0, mud->camera_zoom * 2);

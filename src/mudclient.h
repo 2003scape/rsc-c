@@ -38,6 +38,8 @@
 #define NPCS_MAX 500
 #define GROUND_ITEMS_MAX 5000
 #define PRAYER_COUNT 50
+#define PLAYER_STAT_COUNT 18
+#define PROJECTILE_RANGE_MAX 40
 
 #define MUD_WIDTH 512
 #define MUD_HEIGHT 346
@@ -185,6 +187,7 @@ typedef struct mudclient {
     int system_update;
     int combat_style;
     int logout_timeout;
+    int combat_timeout;
 
     int object_count;
     GameModel *object_model[OBJECTS_MAX];
@@ -200,6 +203,7 @@ typedef struct mudclient {
     int wall_object_direction[WALL_OBJECTS_MAX];
     GameCharacter *player_server[PLAYERS_SERVER_MAX];
     GameCharacter *players[PLAYERS_MAX];
+    int player_server_indexes[PLAYERS_MAX];
     GameCharacter *npcs_server[NPCS_SERVER_MAX];
     GameCharacter *npcs[NPCS_MAX];
     int ground_item_count;
@@ -214,7 +218,7 @@ typedef struct mudclient {
     int is_sleeping;
     int last_height_offset;
     int fog_of_war;
-    GameCharacter local_player;
+    GameCharacter *local_player;
 
     int object_animation_cycle;
     int last_object_animation_cycle;
@@ -235,6 +239,7 @@ typedef struct mudclient {
     int origin_mouse_x;
     int origin_rotation;
 
+    int camera_angle;
     int camera_rotation;
     int camera_zoom;
     int camera_rotation_x;
@@ -243,6 +248,7 @@ typedef struct mudclient {
     int camera_rotation_y_increment;
     int camera_auto_rotate_player_x;
     int camera_auto_rotate_player_y;
+    int an_int_707;
 
     /* yellow/red X sprite location and sprite cycle */
     int mouse_click_x_step;
@@ -269,6 +275,8 @@ typedef struct mudclient {
     int local_upper_x;
     int local_upper_y;
     int death_screen_timeout;
+    int player_stat_current[PLAYER_STAT_COUNT];
+    int player_stat_base[PLAYER_STAT_COUNT];
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -310,6 +318,8 @@ void mudclient_handle_login_screen_input(mudclient *mud);
 GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
                                   int id, int count);
 int mudclient_load_next_region(mudclient *mud, int lx, int ly);
+GameCharacter *mudclient_create_player(mudclient *mud, int server_index, int x,
+                                       int y, int animation);
 void mudclient_check_connection(mudclient *mud);
 void mudclient_handle_game_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);

@@ -885,6 +885,8 @@ void game_model_apply(GameModel *game_model) {
     if (game_model->transform_state == 1) {
         game_model->transform_state = 0;
 
+        //printf("%d %p %p\n", game_model->num_vertices, game_model->vertex_transformed_x, game_model->vertex_x, game_model->vertex_z);
+
         for (int i = 0; i < game_model->num_vertices; i++) {
             game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
             game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
@@ -1047,6 +1049,10 @@ void game_model_copy_position(GameModel *game_model, GameModel *model) {
 }
 
 void game_model_destroy(GameModel *game_model) {
+    if (game_model == NULL) {
+        return;
+    }
+
     for (int i = 0; i < game_model->num_faces; i++) {
         if (game_model->face_trans_state_thing) {
             free(game_model->face_trans_state_thing[i]);

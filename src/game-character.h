@@ -9,7 +9,7 @@
 
 typedef struct GameCharacter {
     int64_t hash;
-    char *name;
+    char name[13];
     int server_index;
     int server_id;
     int current_x;

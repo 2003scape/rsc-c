@@ -32,7 +32,7 @@ void world_new(World *world, Scene *scene, Surface *surface) {
     world->player_alive = 0;
     world->base_media_sprite = 750;
 
-    //memset(world->terrain_models, 0, TERRAIN_COUNT * sizeof(GameModel *));
+    memset(world->terrain_models, 0, TERRAIN_COUNT * sizeof(GameModel *));
 
     memset(world->local_x, 0, LOCAL_COUNT * sizeof(int));
     memset(world->local_y, 0, LOCAL_COUNT * sizeof(int));
@@ -493,14 +493,25 @@ void world_reset(World *world) {
     }
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        free(world->terrain_models[i]);
+        //printf("destroying %p\n", world->terrain_models[i]);
+
+        //game_model_destroy(world->terrain_models[i]);
+        //free(world->terrain_models[i]);
+
+        world->terrain_models[i] = NULL;
 
         for (int j = 0; j < PLANE_COUNT; j++) {
-            free(world->wall_models[j][i]);
+            //game_model_destroy(world->wall_models[j][i]);
+            //free(world->wall_models[j][i]);
+
+            world->wall_models[j][i] = NULL;
         }
 
         for (int j = 0; j < PLANE_COUNT; j++) {
-            free(world->roof_models[j][i]);
+            //game_model_destroy(world->roof_models[j][i]);
+            //free(world->roof_models[j][i]);
+
+            world->roof_models[j][i] = NULL;
         }
     }
 }
