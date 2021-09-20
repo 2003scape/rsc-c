@@ -4,15 +4,20 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef WII
+#include <network.h>
+#else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#endif
 
 typedef struct PacketStream PacketStream;
 
 #include "mudclient.h"
+#include "utility.h"
 
 typedef struct PacketStream {
     int socket;

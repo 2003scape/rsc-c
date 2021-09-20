@@ -5,9 +5,30 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
+#ifdef WII
+#include <gccore.h>
+#include <wiiuse/wpad.h>
+
+#include "config85_jag.h"
+#include "entity24_jag.h"
+#include "entity24_mem.h"
+#include "filter2_jag.h"
+#include "fonts1_jag.h"
+#include "jagex_jag.h"
+#include "land63_jag.h"
+#include "land63_mem.h"
+#include "maps63_jag.h"
+#include "maps63_mem.h"
+#include "media58_jag.h"
+#include "models36_jag.h"
+#include "sounds1_mem.h"
+#include "textures17_jag.h"
+#else
 #include <SDL2/SDL.h>
+#endif
 
 #define K_LEFT -1
 #define K_RIGHT -1
@@ -69,14 +90,20 @@ extern char *equipment_stat_names[];
 extern int experience_array[100];
 extern char login_screen_status[255];
 
+#ifndef WII
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
+#endif
 
 void init_mudclient_global();
 
 typedef struct mudclient {
+#ifdef WII
+    uint8_t *framebuffer;
+#else
     SDL_Window *window;
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
+#endif
     Options *options;
     int8_t middle_button_down;
     int mouse_scroll_delta;
@@ -328,7 +355,7 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
 void mudclient_draw_game(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
-void mudclient_poll_sdl_events(mudclient *mud);
+void mudclient_poll_events(mudclient *mud);
 void mudclient_run(mudclient *mud);
 void mudclient_sort_friends(mudclient *mud);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,

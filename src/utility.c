@@ -1,5 +1,9 @@
 #include "utility.h"
 
+#ifndef WII
+#include <SDL2/SDL.h>
+#endif
+
 int sin_cos_512[512];
 int sin_cos_2048[2048];
 
@@ -11,6 +15,10 @@ int BITMASK[] = {0,          1,          3,         7,         15,
                  0x1ffffff,  0x3ffffff,  0x7ffffff, 0xfffffff, 0x1fffffff,
                  0x3fffffff, 0x7fffffff, -1};
 
+#ifdef WII
+int start_time;
+#endif
+
 void init_utility_global() {
     for (int i = 0; i < 256; i++) {
         sin_cos_512[i] = (int)(sin((double)i * 0.02454369) * 32768);
@@ -21,6 +29,10 @@ void init_utility_global() {
         sin_cos_2048[i] = (int)(sin((double)i * 0.00613592315) * 32768);
         sin_cos_2048[i + 1024] = (int)(cos((double)i * 0.00613592315) * 32768);
     }
+
+#ifdef WII
+    start_time = time(NULL);
+#endif
 }
 
 void charrev(char *s, int l) {
@@ -375,4 +387,20 @@ void format_confirm_amount(int amount, char *formatted) {
 
         sprintf(formatted, "@cya@%s K @whi@(%s)", short_num, formatted_copy);
     }
+}
+
+int get_ticks() {
+#ifdef WII
+    return (time(NULL) - start_time) * 1000;
+#else
+    return SDL_GetTicks();
+#endif
+}
+
+void delay_ticks(int ticks) {
+#ifdef WII
+    usleep(ticks * 1000);
+#else
+    SDL_Delay(ticks);
+#endif
 }

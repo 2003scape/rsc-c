@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "bzip.h"
 
@@ -21,8 +22,11 @@
 
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
-
 extern int BITMASK[];
+
+#ifdef WII
+extern int start_time;
+#endif
 
 void init_utility_global();
 void charrev(char *s, int l);
@@ -45,5 +49,7 @@ int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
                     int8_t *file_data);
 int8_t *load_data(char *file_name, int extra_size, int8_t *archive_data);
 void format_confirm_amount(int amount, char *formatted);
+int get_ticks();
+void delay_ticks(int ticks);
 
 #endif

@@ -1562,15 +1562,6 @@ void scene_render(Scene *scene) {
     scene->models[scene->model_count] = scene->view;
     scene->view->transform_state = 2;
 
-    //printf("model count %d\n", scene->model_count);
-
-    if (scene->model_count == 448) {
-        printf("project %d %d %d %d %d %d %d %d\n", scene->camera_x, scene->camera_y,
-                           scene->camera_z, scene->camera_yaw,
-                           scene->camera_pitch, scene->camera_roll,
-                           scene->view_distance, scene->clip_near);
-    }
-
     for (int i = 0; i <= scene->model_count; i++) {
         game_model_project(scene->models[i], scene->camera_x, scene->camera_y,
                            scene->camera_z, scene->camera_yaw,
@@ -1579,8 +1570,6 @@ void scene_render(Scene *scene) {
     }
 
     scene->visible_polygons_count = 0;
-
-    printf("model count %d\n", scene->model_count);
 
     for (int count = 0; count < scene->model_count; count++) {
         GameModel *game_model = scene->models[count];
@@ -1679,16 +1668,7 @@ void scene_render(Scene *scene) {
                     }
                 }
             }
-        } else {
-            if (scene->model_count == 448) {
-                //printf("invisible model\n");
-            }
         }
-    }
-
-    if (scene->model_count == 448) {
-        printf("visible poly ? %d\n", scene->visible_polygons_count);
-        //exit(0);
     }
 
     GameModel *model_2d = scene->view;
@@ -1736,8 +1716,7 @@ void scene_render(Scene *scene) {
 
     scene->last_visible_polygons_count = scene->visible_polygons_count;
 
-    printf("visible poly %d\n", scene->visible_polygons_count);
-
+    /* TODO replace q_sort with native C sort */
     scene_polygons_q_sort(scene, scene->visible_polygons, 0,
                           scene->visible_polygons_count - 1);
 

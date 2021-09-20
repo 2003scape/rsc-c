@@ -5,6 +5,15 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     int ret;
 
+#ifdef WII
+    ret = if_config(NULL, NULL, NULL, 1, 20);
+
+    if (ret < 0) {
+        fprintf(stderr, "if_config(): %d\n", ret);
+        exit(1);
+    }
+#endif
+
     struct sockaddr_in server_addr = {0};
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(mud->port);
@@ -16,7 +25,11 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         exit(1);
     }
 
+#ifdef WII
+    packet_stream->socket = net_socket(AF_INET, SOCK_STREAM, 0);
+#else
     packet_stream->socket = socket(AF_INET, SOCK_STREAM, 0);
+#endif
 
     if (packet_stream->socket < 0) {
         fprintf(stderr, "socket() error: %d\n", packet_stream->socket);
@@ -25,11 +38,19 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     int set = 1;
 
+#ifdef WII
+    net_setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, &set,
+                   sizeof(set));
+
+    ret = net_connect(packet_stream->socket, (struct sockaddr *)&server_addr,
+                      sizeof(server_addr));
+#else
     setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, &set,
                sizeof(set));
 
     ret = connect(packet_stream->socket, (struct sockaddr *)&server_addr,
                   sizeof(server_addr));
+#endif
 
     if (ret < 0) {
         fprintf(stderr, "connect() error: %d\n", ret);
@@ -37,10 +58,14 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     } else {
         packet_stream->closed = 0;
 
+#ifdef WII
+        ret = net_ioctl(packet_stream->socket, FIONBIO, &set);
+#else
         ret = ioctl(packet_stream->socket, FIONBIO, &set);
+#endif
 
         if (ret < 0) {
-            fprintf(stderr, "net_ioctl() error: %d\n", ret);
+            fprintf(stderr, "ioctl() error: %d\n", ret);
         }
     }
 
@@ -53,11 +78,19 @@ int packet_stream_available_bytes(PacketStream *packet_stream, int length) {
         return 1;
     }
 
+#ifdef WII
+    int bytes = net_recv(packet_stream->socket,
+                         packet_stream->available_buffer +
+                             packet_stream->available_offset +
+                             packet_stream->available_length,
+                         length - packet_stream->available_length, 0);
+#else
     int bytes =
         recv(packet_stream->socket,
              packet_stream->available_buffer + packet_stream->available_offset +
-             packet_stream->available_length,
+                 packet_stream->available_length,
              length - packet_stream->available_length, 0);
+#endif
 
     if (bytes < 0) {
         bytes = 0;
@@ -87,10 +120,12 @@ void packet_stream_read_bytes(PacketStream *packet_stream, int length,
             copy_length = length;
         }
 
-        memcpy(buffer, packet_stream->available_buffer + packet_stream->available_offset, copy_length);
+        memcpy(buffer,
+               packet_stream->available_buffer +
+                   packet_stream->available_offset,
+               copy_length);
         length -= copy_length;
         packet_stream->available_length -= copy_length;
-
 
         if (packet_stream->available_length == 0) {
             packet_stream->available_offset = 0;
@@ -102,13 +137,17 @@ void packet_stream_read_bytes(PacketStream *packet_stream, int length,
     int offset = 0;
 
     while (length > 0) {
+#ifdef WII
+        int bytes = net_recv(packet_stream->socket, buffer + offset, length, 0);
+#else
         int bytes = recv(packet_stream->socket, buffer + offset, length, 0);
+#endif
 
         if (bytes > 0) {
             length -= bytes;
             offset += bytes;
         } else {
-            SDL_Delay(1);
+            delay_ticks(1);
         }
     }
 }

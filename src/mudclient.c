@@ -26,6 +26,7 @@ int experience_array[100];
 
 char login_screen_status[255];
 
+#ifndef WII
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     *char_code = -1;
 
@@ -101,6 +102,7 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
         break;
     }
 }
+#endif
 
 void init_mudclient_global() {
     int total_exp = 0;
@@ -154,6 +156,38 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     mud->applet_height = height;
     mud->loading_step = 1;
 
+#ifdef WII
+	VIDEO_Init();
+	WPAD_Init();
+
+	GXRModeObj *rmode = VIDEO_GetPreferredMode(NULL);
+    mud->framebuffer = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+
+	VIDEO_Configure(rmode);
+	VIDEO_SetNextFramebuffer(mud->framebuffer);
+	VIDEO_SetBlack(0);
+	VIDEO_Flush();
+	VIDEO_WaitVSync();
+
+	if(rmode->viTVMode & VI_NON_INTERLACE) {
+        VIDEO_WaitVSync();
+    }
+
+	console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+
+    /*
+	while(1) {
+		WPAD_ScanPads();
+
+		u32 pressed = WPAD_ButtonsDown(0);
+
+		if (pressed & WPAD_BUTTON_HOME) {
+            exit(0);
+        }
+
+		VIDEO_WaitVSync();
+	}*/
+#else
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         fprintf(stderr, "SDL_Init(): %s\n", SDL_GetError());
         exit(1);
@@ -181,6 +215,7 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
                                               0x00ff00, 0x0000ff, 0);
+#endif
 
     mudclient_run(mud);
 }
@@ -384,6 +419,41 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     sprintf(loading_text, "Loading %s - 0%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
 
+    int8_t header[6];
+#ifdef WII
+    int8_t *file_data = NULL;
+
+    if (strcmp(file, "fonts" FONTS ".jag") == 0) {
+        file_data = fonts1_jag;
+    } else if (strcmp(file, "config" CONFIG ".jag") == 0) {
+        file_data = config85_jag;
+    } else if (strcmp(file, "media" MEDIA ".jag") == 0) {
+        file_data = media58_jag;
+    } else if (strcmp(file, "entity" ENTITY ".jag") == 0) {
+        file_data = entity24_jag;
+    } else if (strcmp(file, "entity" ENTITY ".mem") == 0) {
+        file_data = entity24_mem;
+    } else if (strcmp(file, "textures" TEXTURES ".jag") == 0) {
+        file_data = textures17_jag;
+    } else if (strcmp(file, "maps" MAPS ".jag") == 0) {
+        file_data = maps63_jag;
+    } else if (strcmp(file, "maps" MAPS ".mem") == 0) {
+        file_data = maps63_mem;
+    } else if (strcmp(file, "land" MAPS ".jag") == 0) {
+        file_data = land63_jag;
+    } else if (strcmp(file, "land" MAPS ".mem") == 0) {
+        file_data = land63_mem;
+    } else if (strcmp(file, "models" MODELS ".jag") == 0) {
+        file_data = models36_jag;
+    }
+
+    if (file_data == NULL) {
+        fprintf(stderr, "Unable to read file: %s\n", file);
+        exit(1);
+    }
+
+    memcpy(header, file_data, 6);
+#else
     int file_length = strlen(file);
     char *prefix = "./cache";
     char prefixed_file[file_length + strlen(prefix) + 1];
@@ -396,8 +466,8 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         exit(1);
     }
 
-    int8_t header[6];
     fread(header, 6, 1, archive_stream);
+#endif
 
     int archive_size = ((header[0] & 0xff) << 16) + ((header[1] & 0xff) << 8) +
                        (header[2] & 0xff);
@@ -409,6 +479,9 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     sprintf(loading_text, "Loading %s - 5%%", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
 
+#ifdef WII
+    int8_t *archive_data = file_data + 6;
+#else
     int read = 0;
     int8_t *archive_data = malloc(archive_size_compressed);
 
@@ -420,6 +493,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         }
 
         fread(archive_data + read, length, 1, archive_stream);
+
         read += length;
 
         sprintf(loading_text, "Loading %s - %d", description,
@@ -429,6 +503,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     }
 
     fclose(archive_stream);
+#endif
 
     sprintf(loading_text, "Unpacking %s", description);
     mudclient_show_loading_progress(mud, percent, loading_text);
@@ -439,7 +514,9 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         bzip_decompress(decompressed, archive_size, archive_data,
                         archive_size_compressed, 0);
 
+#ifndef WII
         free(archive_data);
+#endif
 
         return decompressed;
     }
@@ -453,14 +530,15 @@ void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer) {}
 void mudclient_load_jagex(mudclient *mud) {
     // fill black rect
 
+    /*
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
         int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag);
+        mud->image_logo = mudclient_parse_tga(logo_tga);
         free(jagex_jag);
-        // mud->image_logo = mudclient_parse_tga(logo_tga);
-    }
+    }*/
 
     int8_t *fonts_jag =
         mudclient_read_data_file(mud, "fonts" FONTS ".jag", "Game fonts", 5);
@@ -486,6 +564,7 @@ void mudclient_load_game_config(mudclient *mud) {
     game_data_load_data(config_jag, mud->members);
     free(config_jag);
 
+    /*
     int8_t *filter_jag = mudclient_read_data_file(mud, "filter" FILTER ".jag",
                                                   "Chat system", 15);
 
@@ -494,9 +573,7 @@ void mudclient_load_game_config(mudclient *mud) {
         return;
     }
 
-    /* TODO word filter */
-
-    free(filter_jag);
+    free(filter_jag);*/
 }
 
 void mudclient_load_media(mudclient *mud) {
@@ -558,7 +635,7 @@ void mudclient_load_media(mudclient *mud) {
     int sprite_count = game_data_item_sprite_count;
 
     for (int i = 1; sprite_count > 0; i++) {
-        char file_name[15];
+        char file_name[20];
         sprintf(file_name, "objects%d.dat", i);
 
         int current_sprite_count = sprite_count;
@@ -574,7 +651,9 @@ void mudclient_load_media(mudclient *mud) {
     }
 
     free(index_dat);
+#ifndef WII
     free(media_jag);
+#endif
 
     surface_load_sprite(mud->surface, mud->sprite_media);
     surface_load_sprite(mud->surface, mud->sprite_media + 9);
@@ -703,8 +782,10 @@ void mudclient_load_entities(mudclient *mud) {
 
     printf("Loaded: %d frames of animation\n", frame_count);
 
+#ifndef WII
     free(entity_jag);
     free(entity_jag_mem);
+#endif
     free(index_dat);
     free(index_dat_mem);
 }
@@ -797,7 +878,9 @@ void mudclient_load_textures(mudclient *mud) {
         mud->surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
     }
 
+#ifndef WII
     free(textures_jag);
+#endif
     free(index_dat);
 }
 
@@ -1440,7 +1523,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    printf("Verb: Session id: %ld\n", session_id);
+    printf("Verb: Session id: %lld\n", session_id);
 
     int32_t keys[4];
     keys[0] = (((float)rand() / (float)RAND_MAX) * 99999999);
@@ -1930,7 +2013,7 @@ GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
     x2 *= MAGIC_LOC;
     y2 *= MAGIC_LOC;
 
-    int *vertices = malloc(4);
+    int *vertices = malloc(4 * sizeof(int));
 
     vertices[0] = game_model_vertex_at(
         game_model, x1, -world_get_elevation(mud->world, x1, y1), y1);
@@ -1959,8 +2042,6 @@ GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
 }
 
 int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
-    printf("load next region %d %d\n", lx, ly);
-
     if (mud->death_screen_timeout != 0) {
         mud->world->player_alive = 0;
         return 0;
@@ -2143,9 +2224,7 @@ GameCharacter *mudclient_create_player(mudclient *mud, int server_index, int x,
 
 void mudclient_check_connection(mudclient *mud) {
     // packet_tick
-    // TODO maybe just use SDL_GetTicks
-    // int64_t timestamp = time(NULL) * 1000;
-    int timestamp = SDL_GetTicks();
+    int timestamp = get_ticks();
 
     if (packet_stream_has_packet(mud->packet_stream)) {
         mud->packet_last_read = timestamp;
@@ -2201,8 +2280,6 @@ void mudclient_check_connection(mudclient *mud) {
 
         int has_loaded_region = mudclient_load_next_region(
             mud, mud->local_region_x, mud->local_region_y);
-
-        printf("have we loaded? %d\n", has_loaded_region);
 
         mud->local_region_x -= mud->region_x;
         mud->local_region_y -= mud->region_y;
@@ -2989,24 +3066,24 @@ void mudclient_draw_game(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == 97) {
-                char name[7];
+                char name[17];
                 sprintf(name, "firea%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == 274) {
-                char name[12];
+                char name[22];
                 sprintf(name, "fireplacea%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == 1031) {
-                char name[11];
+                char name[21];
                 sprintf(name, "lightning%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == 1036) {
-                char name[11];
+                char name[21];
                 sprintf(name, "firespell%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == 1147) {
-                char name[13];
+                char name[23];
                 sprintf(name, "spellcharge%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
@@ -3019,11 +3096,11 @@ void mudclient_draw_game(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == 51) {
-                char name[8];
+                char name[18];
                 sprintf(name, "torcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == 143) {
-                char name[13];
+                char name[23];
                 sprintf(name, "skulltorcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -3035,7 +3112,7 @@ void mudclient_draw_game(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == 1142) {
-                char name[11];
+                char name[21];
                 sprintf(name, "clawspell%d", mud->claw_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -3086,8 +3163,6 @@ void mudclient_draw_game(mudclient *mud) {
 
     int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
-
-    printf("camera x y: %d, %d\n", x, y);
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, mud->camera_rotation * 4, 0, mud->camera_zoom * 2);
@@ -3196,7 +3271,9 @@ void mudclient_draw(mudclient *mud) {
     }
 }
 
-void mudclient_poll_sdl_events(mudclient *mud) {
+void mudclient_poll_events(mudclient *mud) {
+#ifdef WII
+#else
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -3231,6 +3308,7 @@ void mudclient_poll_sdl_events(mudclient *mud) {
             break;
         }
     }
+#endif
 }
 
 void mudclient_run(mudclient *mud) {
@@ -3248,7 +3326,7 @@ void mudclient_run(mudclient *mud) {
     int i1 = 0;
 
     for (int j1 = 0; j1 < 10; j1++) {
-        mud->timings[j1] = SDL_GetTicks();
+        mud->timings[j1] = get_ticks();
     }
 
     while (mud->stop_timeout >= 0) {
@@ -3267,7 +3345,7 @@ void mudclient_run(mudclient *mud) {
         j = 300;
         delay = 1;
 
-        uint32_t time = SDL_GetTicks();
+        int time = get_ticks();
 
         if (mud->timings[i] == 0) {
             j = k1;
@@ -3289,7 +3367,7 @@ void mudclient_run(mudclient *mud) {
             }
         }
 
-        SDL_Delay(delay);
+        delay_ticks(delay);
 
         mud->timings[i] = time;
         i = (i + 1) % 10;
@@ -3305,7 +3383,7 @@ void mudclient_run(mudclient *mud) {
         int k2 = 0;
 
         while (i1 < 256) {
-            mudclient_poll_sdl_events(mud);
+            mudclient_poll_events(mud);
             mudclient_handle_inputs(mud);
 
             i1 += j;
@@ -3361,8 +3439,6 @@ void mudclient_sort_friends(mudclient *mud) {
     }
 }
 
-/* TODO rest of game-connection */
-
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id) {}
 
@@ -3384,7 +3460,6 @@ int main(int argc, char **argv) {
     init_mudclient_global();
 
     mudclient *mud = malloc(sizeof(mudclient));
-    // memset(mud, 0, sizeof(mudclient));
     mudclient_new(mud);
     mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT,
                                 "Runescape by Andrew Gower");

@@ -29,7 +29,7 @@ int character_width[] = {
 int32_t *surface_texture_pixels;
 
 void init_surface_global() {
-    surface_texture_pixels = calloc(32768, sizeof(int32_t));
+    surface_texture_pixels = calloc(32 * 1024, sizeof(int32_t));
 }
 
 int surface_rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
@@ -48,7 +48,11 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->height1 = height;
     surface->height2 = height;
     surface->area = width * height;
+#ifdef WII
+    surface->pixels = calloc(width * height, sizeof(int32_t));
+#else
     surface->pixels = mud->pixel_surface->pixels;
+#endif
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
     surface->sprite_colours_used = calloc(limit, sizeof(int8_t *));
     surface->sprite_colour_list = calloc(limit, sizeof(int32_t *));
@@ -97,6 +101,39 @@ void surface_reset_bounds(Surface *surface) {
 }
 
 void surface_draw(Surface *surface) {
+#ifdef WII
+    uint8_t *pixels = (uint8_t *)surface->pixels;
+    uint8_t *fb = surface->mud->framebuffer;
+    int index = 0;
+    int fb_index = 0;
+
+    for (int y = 0; y < surface->height1; y++) {
+        for (int x = 0; x < surface->width1; x += 2) {
+            int r = pixels[index + 1];
+            int g = pixels[index + 2];
+            int b = pixels[index + 3];
+            int r2 = pixels[index + 5];
+            int g2 = pixels[index + 6];
+            int b2 = pixels[index + 7];
+            index += 8;
+
+            int y1 = RGB2Y(r, g, b);
+            int y2 = RGB2Y(r2, g2, b2);
+            int u = (RGB2U(r, g, b) + RGB2U(r2, g2, b2)) / 2;
+            int v = (RGB2V(r, g, b) + RGB2V(r2, g2, b2)) / 2;
+
+            fb[fb_index] = y1;
+            fb[fb_index + 2] = y2;
+            fb[fb_index + 1] = u;
+            fb[fb_index + 3] = v;
+            fb_index += 4;
+        }
+
+        fb_index += 128 * 2;
+    }
+
+    //VIDEO_WaitVSync();
+#else
     if (surface->mud->window == NULL) {
         return;
     }
@@ -105,6 +142,7 @@ void surface_draw(Surface *surface) {
                     NULL);
 
     SDL_UpdateWindowSurface(surface->mud->window);
+#endif
 }
 
 void surface_black_screen(Surface *surface) {

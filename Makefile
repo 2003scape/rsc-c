@@ -7,7 +7,7 @@ CFLAGS = -fPIE
 ifdef DEBUG
 CFLAGS = -Wall -Wextra -pedantic -g
 else
-CFLAGS += -s -O2 -ffast-math
+CFLAGS = -s -Ofast
 endif
 LDFLAGS = -lm -lSDL2
 

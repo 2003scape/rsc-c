@@ -1,0 +1,86 @@
+# clear the implicit built in rules
+.SUFFIXES:
+ifeq ($(strip $(DEVKITPPC)),)
+$(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
+endif
+
+include $(DEVKITPPC)/wii_rules
+
+DEBUG = 1
+TARGET := mudclient
+BUILD := build
+SOURCES := src
+DATA := cache
+INCLUDES :=
+
+CFLAGS = -DWII -Ofast -Wall $(MACHDEP) $(INCLUDE)
+
+ifdef DEBUG
+CFLAGS += -g
+else
+CFLAGS += -s
+endif
+
+LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LIBS := -lwiiuse -lbte -logc -lm
+LIBDIRS :=
+
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+
+export OUTPUT := $(CURDIR)/$(TARGET)
+export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+	$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+export DEPSDIR := $(CURDIR)/$(BUILD)
+
+CFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+
+export LD := $(CC)
+export OFILES_BIN := $(addsuffix .o,$(BINFILES))
+export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
+
+# build a list of include paths
+export INCLUDE := $(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
+	$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+	-I$(CURDIR)/$(BUILD) \
+	-I$(LIBOGC_INC)
+
+export LIBPATHS	:= -L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
+.PHONY: $(BUILD) clean
+
+$(BUILD):
+	@[ -d $@ ] || mkdir -p $@
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.wii
+
+clean:
+	@echo clean ...
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
+
+run:
+	wiiload $(TARGET).dol
+
+
+else
+
+DEPENDS	:=	$(OFILES:.o=.d)
+
+$(OUTPUT).dol: $(OUTPUT).elf
+$(OUTPUT).elf: $(OFILES)
+
+$(OFILES_SOURCES) : $(HFILES)
+
+-include $(DEPENDS)
+
+%.jag.o	:	%.jag
+	@echo $(notdir $<)
+	@$(bin2o)
+
+%.mem.o	:	%.mem
+	@echo $(notdir $<)
+	@$(bin2o)
+
+endif

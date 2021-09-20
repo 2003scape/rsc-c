@@ -250,7 +250,7 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
         return;
     }
 
-    char map_name[16]; // 2 digits for %d (10), m (1), file ext (4) and null
+    char map_name[37]; // 2 digits for %d (10), m (1), file ext (4) and null
     sprintf(map_name, "m%d%d%d%d%d", plane, x / 10, x % 10, y / 10, y % 10);
     int map_name_length = strlen(map_name);
 
