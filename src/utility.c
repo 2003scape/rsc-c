@@ -391,7 +391,7 @@ void format_confirm_amount(int amount, char *formatted) {
 
 int get_ticks() {
 #ifdef WII
-    return (time(NULL) - start_time) * 1000;
+    return time(NULL);
 #else
     return SDL_GetTicks();
 #endif

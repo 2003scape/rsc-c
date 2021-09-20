@@ -176,10 +176,12 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 	console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
 
     /*
-	while(1) {
+	while (1) {
 		WPAD_ScanPads();
 
 		u32 pressed = WPAD_ButtonsDown(0);
+
+        printf("%d\n", get_ticks());
 
 		if (pressed & WPAD_BUTTON_HOME) {
             exit(0);
