@@ -26,6 +26,8 @@
 #include "models36_jag.h"
 #include "sounds1_mem.h"
 #include "textures17_jag.h"
+
+#include "arrow_yuv.h"
 #else
 #include <SDL2/SDL.h>
 #endif
@@ -99,6 +101,9 @@ void init_mudclient_global();
 typedef struct mudclient {
 #ifdef WII
     uint8_t *framebuffer;
+    int last_wii_x;
+    int last_wii_y;
+    int last_wii_button;
 #else
     SDL_Window *window;
     SDL_Surface *screen;

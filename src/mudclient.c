@@ -26,7 +26,19 @@ int experience_array[100];
 
 char login_screen_status[255];
 
-#ifndef WII
+#ifdef WII
+void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y) {
+    if (mouse_x >= 640 || mouse_y >= 460) {
+        return;
+    }
+
+    // memcpy(framebuffer, arrow_yuv, arrow_yuv_width * arrow_yuv_height);
+    for (int y = 0; y < arrow_yuv_height; y++) {
+        memcpy(framebuffer + (640 * 2 * (y + mouse_y)) + (mouse_x * 2),
+               arrow_yuv + (arrow_yuv_width * 2 * y), arrow_yuv_width * 2);
+    }
+}
+#else
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     *char_code = -1;
 
@@ -157,38 +169,41 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     mud->loading_step = 1;
 
 #ifdef WII
-	VIDEO_Init();
-	WPAD_Init();
+    VIDEO_Init();
+    WPAD_Init();
 
-	GXRModeObj *rmode = VIDEO_GetPreferredMode(NULL);
+    GXRModeObj *rmode = VIDEO_GetPreferredMode(NULL);
     mud->framebuffer = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
 
-	VIDEO_Configure(rmode);
-	VIDEO_SetNextFramebuffer(mud->framebuffer);
-	VIDEO_SetBlack(0);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
+    VIDEO_Configure(rmode);
+    VIDEO_SetNextFramebuffer(mud->framebuffer);
+    VIDEO_SetBlack(0);
+    VIDEO_Flush();
+    VIDEO_WaitVSync();
 
-	if(rmode->viTVMode & VI_NON_INTERLACE) {
+    if (rmode->viTVMode & VI_NON_INTERLACE) {
         VIDEO_WaitVSync();
     }
 
-	console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+    WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
+    WPAD_SetVRes(0, rmode->fbWidth, rmode->xfbHeight);
+
+    // console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
 
     /*
-	while (1) {
-		WPAD_ScanPads();
+        while (1) {
+                WPAD_ScanPads();
 
-		u32 pressed = WPAD_ButtonsDown(0);
+                u32 pressed = WPAD_ButtonsDown(0);
 
         printf("%d\n", get_ticks());
 
-		if (pressed & WPAD_BUTTON_HOME) {
+                if (pressed & WPAD_BUTTON_HOME) {
             exit(0);
         }
 
-		VIDEO_WaitVSync();
-	}*/
+                VIDEO_WaitVSync();
+        }*/
 #else
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         fprintf(stderr, "SDL_Init(): %s\n", SDL_GetError());
@@ -2869,13 +2884,13 @@ void mudclient_handle_game_input(mudclient *mud) {
     if (mud->camera_auto_rotate_player_x != mud->local_player->current_x) {
         mud->camera_auto_rotate_player_x +=
             (mud->local_player->current_x - mud->camera_auto_rotate_player_x) /
-             (16 + ((mud->camera_zoom - 500) / 15));
+            (16 + ((mud->camera_zoom - 500) / 15));
     }
 
     if (mud->camera_auto_rotate_player_y != mud->local_player->current_y) {
         mud->camera_auto_rotate_player_y +=
             (mud->local_player->current_y - mud->camera_auto_rotate_player_y) /
-             (16 + ((mud->camera_zoom - 500) / 15));
+            (16 + ((mud->camera_zoom - 500) / 15));
     }
 
     if (mud->option_camera_mode_auto) {
@@ -3260,7 +3275,7 @@ void mudclient_draw_game(mudclient *mud) {
 void mudclient_draw(mudclient *mud) {
     if (mud->error_loading_data) {
         /* TODO draw error */
-        printf("ERROR LOADING DATA\n");
+        // printf("ERROR LOADING DATA\n");
         return;
     }
 
@@ -3271,10 +3286,52 @@ void mudclient_draw(mudclient *mud) {
         mud->surface->logged_in = 1;
         mudclient_draw_game(mud);
     }
+
+#ifdef WII
+    draw_arrow(mud->framebuffer, mud->last_wii_x, mud->last_wii_y);
+    VIDEO_WaitVSync();
+#endif
 }
 
 void mudclient_poll_events(mudclient *mud) {
 #ifdef WII
+    WPAD_ReadPending(WPAD_CHAN_ALL, NULL);
+    int res = WPAD_Probe(0, NULL);
+
+    if (res != WPAD_ERR_NONE) {
+        return;
+    }
+
+    WPADData *wiimote_data = WPAD_Data(0);
+
+    if (!wiimote_data->ir.valid) {
+        return;
+    }
+
+    int x = (int)wiimote_data->ir.x;
+    int y = (int)wiimote_data->ir.y;
+
+    if (x != mud->last_wii_x || y != mud->last_wii_y) {
+        mudclient_mouse_moved(mud, x, y);
+        mud->last_wii_x = x;
+        mud->last_wii_y = y;
+    }
+
+    if (wiimote_data->btns_h & WPAD_BUTTON_A) {
+        mudclient_mouse_pressed(mud, x, y, 1);
+        mud->last_wii_button = 1;
+    } else if (mud->last_wii_button == 1) {
+        mudclient_mouse_released(mud, x, y, 1);
+        mud->last_wii_button = 0;
+    }
+
+    if (wiimote_data->btns_h & WPAD_BUTTON_B) {
+        mudclient_mouse_pressed(mud, x, y, 2);
+        mud->last_wii_button = 2;
+    } else if (mud->last_wii_button == 2) {
+        mudclient_mouse_released(mud, x, y, 2);
+        mud->last_wii_button = 0;
+    }
 #else
     SDL_Event event;
 
