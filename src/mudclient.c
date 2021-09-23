@@ -188,7 +188,7 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
     WPAD_SetVRes(0, rmode->fbWidth, rmode->xfbHeight);
 
-    // console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+    console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
 
     /*
         while (1) {
@@ -1495,6 +1495,13 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
+    if (strlen(username) == 0) {
+        mudclient_show_login_screen_status(mud,
+                                           "You must enter both a username",
+                                           "and a password - Please try again");
+        return;
+    }
+
     char formatted_username[21];
     format_auth_string(username, 20, formatted_username);
 
@@ -1722,10 +1729,8 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                     "To create an account please enter all the requested "
                     "details");
             }
-        }
-
-        if (panel_is_clicked(mud->panel_login_welcome,
-                             mud->control_welcome_existing_user)) {
+        } else if (panel_is_clicked(mud->panel_login_welcome,
+                                    mud->control_welcome_existing_user)) {
             mud->login_screen = 2;
 
             panel_update_text(mud->panel_login_existing_user,
@@ -1854,12 +1859,16 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                                     mud->control_login_password) ||
                    panel_is_clicked(mud->panel_login_existing_user,
                                     mud->control_login_ok)) {
+            /*
             strcpy(mud->login_user,
                    panel_get_text(mud->panel_login_existing_user,
                                   mud->control_login_user));
             strcpy(mud->login_pass,
                    panel_get_text(mud->panel_login_existing_user,
-                                  mud->control_login_password));
+                                  mud->control_login_password));*/
+
+            strcpy(mud->login_user, "farts");
+            strcpy(mud->login_pass, "farts");
 
             mudclient_login(mud, mud->login_user, mud->login_pass, 0);
         } else if (panel_is_clicked(mud->panel_login_existing_user,
@@ -3317,18 +3326,20 @@ void mudclient_poll_events(mudclient *mud) {
         mud->last_wii_y = y;
     }
 
-    if (wiimote_data->btns_h & WPAD_BUTTON_A) {
+    if (mud->last_wii_button != 1 && wiimote_data->btns_h & WPAD_BUTTON_A) {
         mudclient_mouse_pressed(mud, x, y, 1);
         mud->last_wii_button = 1;
-    } else if (mud->last_wii_button == 1) {
+    } else if (mud->last_wii_button == 1 &&
+               !(wiimote_data->btns_h & WPAD_BUTTON_A)) {
         mudclient_mouse_released(mud, x, y, 1);
         mud->last_wii_button = 0;
     }
 
-    if (wiimote_data->btns_h & WPAD_BUTTON_B) {
+    if (mud->last_wii_button != 2 && wiimote_data->btns_h & WPAD_BUTTON_B) {
         mudclient_mouse_pressed(mud, x, y, 2);
         mud->last_wii_button = 2;
-    } else if (mud->last_wii_button == 2) {
+    } else if (mud->last_wii_button == 2 &&
+               !(wiimote_data->btns_h & WPAD_BUTTON_B)) {
         mudclient_mouse_released(mud, x, y, 2);
         mud->last_wii_button = 0;
     }

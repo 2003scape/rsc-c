@@ -6,7 +6,11 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     int ret;
 
 #ifdef WII
-    ret = if_config(NULL, NULL, NULL, 1, 20);
+    char localip[16] = {0};
+    char gateway[16] = {0};
+    char netmask[16] = {0};
+
+    ret = if_config(localip, netmask, gateway, TRUE, 20);
 
     if (ret < 0) {
         fprintf(stderr, "if_config(): %d\n", ret);
@@ -66,6 +70,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
         if (ret < 0) {
             fprintf(stderr, "ioctl() error: %d\n", ret);
+            exit(1);
         }
     }
 
@@ -155,7 +160,11 @@ void packet_stream_read_bytes(PacketStream *packet_stream, int length,
 void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
                                int offset, int length) {
     if (!packet_stream->closed) {
+#ifdef WII
+        net_write(packet_stream->socket, buffer + offset, length);
+#else
         write(packet_stream->socket, buffer + offset, length);
+#endif
     }
 }
 
