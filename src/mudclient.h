@@ -28,6 +28,7 @@
 #include "textures17_jag.h"
 
 #include "arrow_yuv.h"
+#include "rsc_background_yuv.h"
 #else
 #include <SDL2/SDL.h>
 #endif
@@ -49,7 +50,7 @@
 
 #define FONT_COUNT 8
 #define ANIMATED_MODELS_COUNT 20
-#define MAX_SOCIAL_LIST_COUNT 100
+#define SOCIAL_LIST_MAX 100
 #define INPUT_TEXT_LENGTH 20
 #define INPUT_PM_LENGTH 80
 #define GAME_OBJECTS_MAX 1000
@@ -63,6 +64,9 @@
 #define PRAYER_COUNT 50
 #define PLAYER_STAT_COUNT 18
 #define PROJECTILE_RANGE_MAX 40
+#define RECEIVED_MESSAGE_MAX 50
+#define ACTION_BUBBLE_MAX 50
+#define HEALTH_BAR_MAX 50
 
 #define MUD_WIDTH 512
 #define MUD_HEIGHT 346
@@ -91,16 +95,33 @@ extern char *skill_names[];
 extern char *equipment_stat_names[];
 extern int experience_array[100];
 extern char login_screen_status[255];
+extern int npc_animation_array[8][12];
+extern int character_walk_model[4];
+extern int character_combat_model_array1[8];
+extern int character_combat_model_array2[8];
+extern int player_hair_colours[10];
+extern int player_top_bottom_colours[15];
+extern int player_skin_colours[5];
 
 #ifndef WII
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
+#else
+void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y);
 #endif
 
 void init_mudclient_global();
 
 typedef struct mudclient {
 #ifdef WII
+    /* store two for double-buffering */
+    uint8_t **framebuffers;
+
+    /* points to one of the two frame buffers in framebuffers */
     uint8_t *framebuffer;
+
+    /* index of active framebuffer */
+    int active_framebuffer;
+
     int last_wii_x;
     int last_wii_y;
     int last_wii_button;
@@ -110,6 +131,9 @@ typedef struct mudclient {
     SDL_Surface *pixel_surface;
 #endif
     Options *options;
+    int applet_width;
+    int applet_height;
+
     int8_t middle_button_down;
     int mouse_scroll_delta;
     int mouse_action_timeout;
@@ -118,48 +142,56 @@ typedef struct mudclient {
     int mouse_button_down;
     int last_mouse_button_down;
     int mouse_button_click;
+
+    int key_left;
+    int key_right;
+
+    int loading_step;
+    int loading_progress_percent;
+    char *loading_progess_text;
+    int error_loading_data;
+
     uint32_t timings[10];
     int stop_timeout;
     int interlace_timer;
-    int loading_progress_percent;
-    int applet_width;
-    int applet_height;
+
+    int fps;
     int target_fps;
     int max_draw_time;
-    int loading_step;
-    int has_referer_logo_not_used;
-    char *loading_progess_text;
-    int key_left;
-    int key_right;
     int thread_sleep;
+
     int interlace;
     char input_text_current[INPUT_TEXT_LENGTH + 1];
     char input_pm_current[INPUT_PM_LENGTH + 1];
     char input_text_final[INPUT_TEXT_LENGTH + 1];
     char input_pm_final[INPUT_PM_LENGTH + 1];
-    int fps;
     int max_read_tries;
     int world_full_timeout;
     int moderator_level;
     int auto_login_timeout;
+
     int message_index;
+    int message_tokens[SOCIAL_LIST_MAX];
+    int friend_list_count;
+    int64_t friend_list_hashes[SOCIAL_LIST_MAX * 2];
+    int friend_list_online[SOCIAL_LIST_MAX * 2];
+    int ignore_list_count;
+    int64_t ignore_list[SOCIAL_LIST_MAX * 2];
+
+    int settings_camera_auto;
     int settings_block_chat;
     int settings_block_private;
     int settings_block_trade;
     int settings_block_duel;
-    int64_t session_id;
-    int friend_list_count;
-    int friend_list_online[MAX_SOCIAL_LIST_COUNT * 2];
-    int64_t friend_list_hashes[MAX_SOCIAL_LIST_COUNT * 2];
-    int ignore_list_count;
-    int64_t ignore_list[MAX_SOCIAL_LIST_COUNT * 2];
-    int message_tokens[MAX_SOCIAL_LIST_COUNT];
+
     char *server;
     int port;
     int8_t incoming_packet[5000];
     PacketStream *packet_stream;
-    int error_loading_data;
+
     int members;
+
+    /* sprite indexes used for surface sprite drawing */
     int sprite_media;
     int sprite_util;
     int sprite_item;
@@ -167,6 +199,7 @@ typedef struct mudclient {
     int sprite_projectile;
     int sprite_texture;
     int sprite_texture_world;
+
     int game_width;
     int game_height;
     Surface *surface;
@@ -201,16 +234,17 @@ typedef struct mudclient {
     int control_login_cancel;
     int control_login_recover;
 
+    int64_t session_id;
     int logged_in;
     int login_screen;
     char login_user[21];
     char login_pass[21];
     char *login_prompt;
     char login_user_disp[22];
+
     int player_count;
     int npc_count;
     int login_timer;
-    int camera_rotation_time;
     int message_tab_flash_all;
     int message_tab_flash_history;
     int message_tab_flash_quest;
@@ -252,6 +286,8 @@ typedef struct mudclient {
     int fog_of_war;
     GameCharacter *local_player;
 
+    /* used to keep track of model indexes to swap to in order to simulate ;
+     * movement */
     int object_animation_cycle;
     int last_object_animation_cycle;
     int torch_animation_cycle;
@@ -261,10 +297,13 @@ typedef struct mudclient {
 
     int sprite_count;
     int items_above_head_count;
-    int received_messages_count;
-    int health_bar_count;
 
-    int option_camera_mode_auto;
+    int received_messages_count;
+    int received_message_x[RECEIVED_MESSAGE_MAX];
+    int received_message_y[RECEIVED_MESSAGE_MAX];
+    int received_message_mid_point[RECEIVED_MESSAGE_MAX];
+    int received_message_height[RECEIVED_MESSAGE_MAX];
+    char *received_messages[RECEIVED_MESSAGE_MAX];
 
     /* stores absolute mouse position and initial rotation for middle click
      * camera */
@@ -274,6 +313,7 @@ typedef struct mudclient {
     int camera_angle;
     int camera_rotation;
     int camera_zoom;
+    int camera_rotation_time;
     int camera_rotation_x;
     int camera_rotation_y;
     int camera_rotation_x_increment;
@@ -309,6 +349,16 @@ typedef struct mudclient {
     int death_screen_timeout;
     int player_stat_current[PLAYER_STAT_COUNT];
     int player_stat_base[PLAYER_STAT_COUNT];
+
+	int action_bubble_x[ACTION_BUBBLE_MAX];
+	int action_bubble_y[ACTION_BUBBLE_MAX];
+	int action_bubble_scale[ACTION_BUBBLE_MAX];
+	int action_bubble_item[ACTION_BUBBLE_MAX];
+
+    int health_bar_count;
+    int health_bar_x[HEALTH_BAR_MAX];
+    int health_bar_y[HEALTH_BAR_MAX];
+    int health_bar_missing[HEALTH_BAR_MAX];
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -357,6 +407,8 @@ void mudclient_handle_game_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
 void mudclient_update_object_animation(mudclient *mud, int object_index,
                                        char *model_name);
+void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
+                           int id, int tx, int ty);
 void mudclient_draw_game(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
@@ -367,8 +419,6 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id);
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
                          int id);
-void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int tx, int ty);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int tx, int ty);
 int main(int argc, char **argv);

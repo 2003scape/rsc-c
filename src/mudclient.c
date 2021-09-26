@@ -26,16 +26,50 @@ int experience_array[100];
 
 char login_screen_status[255];
 
+int npc_animation_array[8][12] = {{11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
+                                  {11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
+                                  {11, 3, 2, 9, 7, 1, 6, 10, 0, 5, 8, 4},
+                                  {3, 4, 2, 9, 7, 1, 6, 10, 8, 11, 0, 5},
+                                  {3, 4, 2, 9, 7, 1, 6, 10, 8, 11, 0, 5},
+                                  {4, 3, 2, 9, 7, 1, 6, 10, 8, 11, 0, 5},
+                                  {11, 4, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3},
+                                  {11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 4, 3}};
+
+int character_walk_model[] = {0, 1, 2, 1};
+int character_combat_model_array1[] = {0, 1, 2, 1, 0, 0, 0, 0};
+int character_combat_model_array2[] = {0, 0, 0, 0, 0, 1, 2, 1};
+
+int player_hair_colours[] = {0xffc030, 0xffa040, 0x805030, 0x604020, 0x303030,
+                             0xff6020, 0xff4000, 0xffffff, 0x00ff00, 0x00ffff};
+
+int player_top_bottom_colours[] = {0xff0000, 0xff8000, 0xffe000, 0xa0e000,
+                                   0x00e000, 0x008000, 0x00a080, 0x00b0ff,
+                                   0x0080ff, 0x0030f0, 0xe000e0, 0x303030,
+                                   0x604000, 0x805000, 0xffffff};
+
+int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
+
 #ifdef WII
+void draw_background(uint8_t *framebuffer) {
+    memcpy(framebuffer, rsc_background_yuv,
+           rsc_background_yuv_width * rsc_background_yuv_height * 2);
+}
+
 void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y) {
     if (mouse_x >= 640 || mouse_y >= 460) {
         return;
     }
 
-    // memcpy(framebuffer, arrow_yuv, arrow_yuv_width * arrow_yuv_height);
     for (int y = 0; y < arrow_yuv_height; y++) {
-        memcpy(framebuffer + (640 * 2 * (y + mouse_y)) + (mouse_x * 2),
-               arrow_yuv + (arrow_yuv_width * 2 * y), arrow_yuv_width * 2);
+        int fb_index = (640 * 2 * (y + mouse_y)) + (mouse_x * 2);
+
+        int arrow_offset =
+            (arrow_yuv_offsets[y] * 2) + (arrow_yuv_width * 2 * y);
+
+        int arrow_width = arrow_yuv_lines[y] * 2;
+
+        memcpy(framebuffer + fb_index + (arrow_yuv_offsets[y] * 2),
+               arrow_yuv + arrow_offset, arrow_width);
     }
 }
 #else
@@ -137,7 +171,7 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    mud->server = "127.0.0.1";
+    mud->server = "192.168.100.107";
     mud->port = 43594;
     mud->game_width = mud->applet_width;
     mud->game_height = mud->applet_height - 12;
@@ -173,7 +207,15 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     WPAD_Init();
 
     GXRModeObj *rmode = VIDEO_GetPreferredMode(NULL);
-    mud->framebuffer = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+    mud->framebuffers = malloc(2 * sizeof(uint8_t *));
+    mud->framebuffers[0] = SYS_AllocateFramebuffer(rmode);
+    mud->framebuffers[1] = SYS_AllocateFramebuffer(rmode);
+
+    draw_background(mud->framebuffers[0]);
+    draw_background(mud->framebuffers[1]);
+
+    mud->framebuffer = mud->framebuffers[0];
+    // MEM_K0_TO_K1
 
     VIDEO_Configure(rmode);
     VIDEO_SetNextFramebuffer(mud->framebuffer);
@@ -188,7 +230,7 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
     WPAD_SetVRes(0, rmode->fbWidth, rmode->xfbHeight);
 
-    console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+    // console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
 
     /*
         while (1) {
@@ -1547,7 +1589,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    printf("Verb: Session id: %lld\n", session_id);
+    printf("Verb: Session id: %ld\n", session_id);
 
     int32_t keys[4];
     keys[0] = (((float)rand() / (float)RAND_MAX) * 99999999);
@@ -2608,6 +2650,126 @@ void mudclient_check_connection(mudclient *mud) {
         }
         break;
     }
+    case SERVER_REGION_OBJECTS: {
+        for (int offset = 1; offset < size;) {
+            if (get_unsigned_byte(data[offset]) == 255) {
+                int index = 0;
+                int l14 = (mud->local_region_x + data[offset + 1]) >> 3;
+                int k19 = (mud->local_region_y + data[offset + 2]) >> 3;
+
+                offset += 3;
+
+                for (int i = 0; i < mud->object_count; i++) {
+                    int l26 = (mud->object_x[i] >> 3) - l14;
+                    int k29 = (mud->object_y[i] >> 3) - k19;
+
+                    if (l26 != 0 || k29 != 0) {
+                        if (i != index) {
+                            mud->object_model[index] = mud->object_model[i];
+                            mud->object_model[index]->key = index;
+                            mud->object_x[index] = mud->object_x[i];
+                            mud->object_y[index] = mud->object_y[i];
+                            mud->object_id[index] = mud->object_id[i];
+
+                            mud->object_direction[index] =
+                                mud->object_direction[i];
+                        }
+
+                        index++;
+                    } else {
+                        scene_remove_model(mud->scene, mud->object_model[i]);
+
+                        world_remove_object(mud->world, mud->object_x[i],
+                                            mud->object_y[i],
+                                            mud->object_id[i]);
+                    }
+                }
+
+                mud->object_count = index;
+            } else {
+                int object_id = get_unsigned_short(data, offset);
+                offset += 2;
+
+                int area_x = mud->local_region_x + data[offset++];
+                int area_y = mud->local_region_y + data[offset++];
+                int object_index = 0;
+
+                for (int i = 0; i < mud->object_count; i++) {
+                    if (mud->object_x[i] != area_x ||
+                        mud->object_y[i] != area_y) {
+                        if (i != object_index) {
+                            mud->object_model[object_index] =
+                                mud->object_model[i];
+                            mud->object_model[object_index]->key = object_index;
+                            mud->object_x[object_index] = mud->object_x[i];
+                            mud->object_y[object_index] = mud->object_y[i];
+                            mud->object_id[object_index] = mud->object_id[i];
+
+                            mud->object_direction[object_index] =
+                                mud->object_direction[i];
+                        }
+
+                        object_index++;
+                    } else {
+                        scene_remove_model(mud->scene, mud->object_model[i]);
+
+                        world_remove_object(mud->world, mud->object_x[i],
+                                            mud->object_y[i],
+                                            mud->object_id[i]);
+                    }
+                }
+
+                mud->object_count = object_index;
+
+                if (object_id != 60000) {
+                    int direction =
+                        world_get_tile_direction(mud->world, area_x, area_y);
+                    int width = 0;
+                    int height = 0;
+
+                    if (direction == 0 || direction == 4) {
+                        width = game_data_object_width[object_id];
+                        height = game_data_object_height[object_id];
+                    } else {
+                        height = game_data_object_width[object_id];
+                        width = game_data_object_height[object_id];
+                    }
+
+                    int model_x = ((area_x + area_x + width) * MAGIC_LOC) / 2;
+
+                    int model_y = ((area_y + area_y + height) * MAGIC_LOC) / 2;
+
+                    int model_index = game_data_object_model_index[object_id];
+                    GameModel *model =
+                        game_model_copy(mud->game_models[model_index]);
+
+                    scene_add_model(mud->scene, model);
+
+                    model->key = mud->object_count;
+                    game_model_rotate(model, 0, direction * 32, 0);
+
+                    game_model_translate(
+                        model, model_x,
+                        -world_get_elevation(mud->world, model_x, model_y),
+                        model_y);
+
+                    game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+
+                    world_remove_object2(mud->world, area_x, area_y, object_id);
+
+                    if (object_id == 74) {
+                        game_model_translate(model, 0, -480, 0);
+                    }
+
+                    mud->object_x[mud->object_count] = area_x;
+                    mud->object_y[mud->object_count] = area_y;
+                    mud->object_id[mud->object_count] = object_id;
+                    mud->object_direction[mud->object_count] = direction;
+                    mud->object_model[mud->object_count++] = model;
+                }
+            }
+        }
+    }
     }
 }
 
@@ -2902,7 +3064,7 @@ void mudclient_handle_game_input(mudclient *mud) {
             (16 + ((mud->camera_zoom - 500) / 15));
     }
 
-    if (mud->option_camera_mode_auto) {
+    if (mud->settings_camera_auto) {
         int k1 = mud->camera_angle * 32;
         int j3 = k1 - mud->camera_rotation;
         int byte0 = 1;
@@ -3022,6 +3184,215 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
         game_model_copy_position(game_model, mud->object_model[object_index]);
         game_model->key = object_index;
         mud->object_model[object_index] = game_model;
+    }
+}
+
+void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
+                           int id, int tx, int ty) {
+    GameCharacter *player = mud->players[id];
+
+    if (player->colour_bottom == 255) {
+        return;
+    }
+
+    int l1 = player->animation_current + (mud->camera_rotation + 16) / 32 & 7;
+    int flag = 0;
+    int i2 = l1;
+
+    if (i2 == 5) {
+        i2 = 3;
+        flag = 1;
+    } else if (i2 == 6) {
+        i2 = 2;
+        flag = 1;
+    } else if (i2 == 7) {
+        i2 = 1;
+        flag = 1;
+    }
+
+    int j2 = i2 * 3 + character_walk_model[(player->step_count / 6) % 4];
+
+    if (player->animation_current == 8) {
+        i2 = 5;
+        l1 = 2;
+        flag = 0;
+        x -= (5 * ty) / 100;
+        j2 = i2 * 3 + character_combat_model_array1[(mud->login_timer / 5) % 8];
+    } else if (player->animation_current == 9) {
+        i2 = 5;
+        l1 = 2;
+        flag = 1;
+        x += (5 * ty) / 100;
+        j2 = i2 * 3 + character_combat_model_array2[(mud->login_timer / 6) % 8];
+    }
+
+    /* TODO make 12 a constant */
+    for (int k2 = 0; k2 < 12; k2++) {
+        int l2 = npc_animation_array[l1][k2];
+        int l3 = player->equipped_item[l2] - 1;
+
+        if (l3 >= 0) {
+            int k4 = 0;
+            int i5 = 0;
+            int j5 = j2;
+
+            if (flag && i2 >= 1 && i2 <= 3) {
+                if (game_data_animation_has_f[l3] == 1) {
+                    j5 += 15;
+                } else if (l2 == 4 && i2 == 1) {
+                    k4 = -22;
+                    i5 = -3;
+                    j5 = i2 * 3 +
+                         character_walk_model[(2 + (player->step_count / 6)) %
+                                              4];
+                } else if (l2 == 4 && i2 == 2) {
+                    k4 = 0;
+                    i5 = -8;
+                    j5 = i2 * 3 +
+                         character_walk_model[(2 + (player->step_count / 6)) %
+                                              4];
+                } else if (l2 == 4 && i2 == 3) {
+                    k4 = 26;
+                    i5 = -5;
+                    j5 = i2 * 3 +
+                         character_walk_model[(2 + (player->step_count / 6)) %
+                                              4];
+                } else if (l2 == 3 && i2 == 1) {
+                    k4 = 22;
+                    i5 = 3;
+                    j5 = i2 * 3 +
+                         character_walk_model[(2 + (player->step_count / 6)) %
+                                              4];
+                } else if (l2 == 3 && i2 == 2) {
+                    k4 = 0;
+                    i5 = 8;
+                    j5 = i2 * 3 +
+                         character_walk_model[(2 + (player->step_count / 6)) %
+                                              4];
+                } else if (l2 == 3 && i2 == 3) {
+                    k4 = -26;
+                    i5 = 5;
+                    j5 = i2 * 3 +
+                         character_walk_model[(2 + (player->step_count / 6)) %
+                                              4];
+                }
+            }
+
+            if (i2 != 5 || game_data_animation_has_a[l3] == 1) {
+                int k5 = j5 + game_data_animation_number[l3];
+
+                k4 = (k4 * width) / mud->surface->sprite_width_full[k5];
+                i5 = (i5 * height) / mud->surface->sprite_height_full[k5];
+
+                int l5 =
+                    (width * mud->surface->sprite_width_full[k5]) /
+                    mud->surface
+                        ->sprite_width_full[game_data_animation_number[l3]];
+
+                k4 -= (l5 - width) / 2;
+
+                int i6 = game_data_animation_character_colour[l3];
+                int skin_colour = player_skin_colours[player->colour_skin];
+
+                if (i6 == 1) {
+                    i6 = player_hair_colours[player->colour_hair];
+                } else if (i6 == 2) {
+                    i6 = player_top_bottom_colours[player->colour_top];
+                } else if (i6 == 3) {
+                    i6 = player_top_bottom_colours[player->colour_bottom];
+                }
+
+                surface_sprite_clipping_from9(mud->surface, x + k4, y + i5, l5,
+                                              height, k5, i6, skin_colour, tx,
+                                              flag);
+            }
+        }
+    }
+
+    if (player->message_timeout > 0) {
+        mud->received_message_mid_point[mud->received_messages_count] =
+            surface_text_width(player->message, 1) / 2;
+
+        if (mud->received_message_mid_point[mud->received_messages_count] >
+            150) {
+            mud->received_message_mid_point[mud->received_messages_count] = 150;
+        }
+
+        mud->received_message_height[mud->received_messages_count] =
+            (surface_text_width(player->message, 1) / 300) *
+            surface_text_height(1);
+
+        mud->received_message_x[mud->received_messages_count] = x + (width / 2);
+        mud->received_message_y[mud->received_messages_count] = y;
+
+        mud->received_messages[mud->received_messages_count++] =
+            player->message;
+    }
+
+    if (player->bubble_timeout > 0) {
+        mud->action_bubble_x[mud->items_above_head_count] = x + (width / 2);
+        mud->action_bubble_y[mud->items_above_head_count] = y;
+        mud->action_bubble_scale[mud->items_above_head_count] = ty;
+
+        mud->action_bubble_item[mud->items_above_head_count++] =
+            player->bubble_item;
+    }
+
+    if (player->animation_current == 8 || player->animation_current == 9 ||
+        player->combat_timer != 0) {
+        if (player->combat_timer > 0) {
+            int i3 = x;
+
+            if (player->animation_current == 8) {
+                i3 -= (20 * ty) / 100;
+            } else if (player->animation_current == 9) {
+                i3 += (20 * ty) / 100;
+            }
+
+            int i4 = (player->health_current * 30) / player->health_max;
+
+            mud->health_bar_x[mud->health_bar_count] = i3 + (width / 2);
+            mud->health_bar_y[mud->health_bar_count] = y;
+            mud->health_bar_missing[mud->health_bar_count++] = i4;
+        }
+
+        if (player->combat_timer > 150) {
+            int j3 = x;
+
+            if (player->animation_current == 8) {
+                j3 -= ((10 * ty) / 100) | 0;
+            } else if (player->animation_current == 9) {
+                j3 += ((10 * ty) / 100) | 0;
+            }
+
+            surface_draw_sprite_from3(mud->surface, (j3 + (width / 2)) - 12,
+                                      (y + (height / 2)) - 12,
+                                      mud->sprite_media + 11);
+
+            char damage_string[4] = {0};
+            sprintf(damage_string, "%d", player->damage_taken);
+
+            surface_draw_string_centre(mud->surface, damage_string,
+                                             (j3 + (width / 2)) - 1,
+                                             y + (height / 2) + 5, 3, 0xffffff);
+        }
+    }
+
+    if (player->skull_visible == 1 && player->bubble_timeout == 0) {
+        int k3 = tx + x + (width / 2);
+
+        if (player->animation_current == 8) {
+            k3 -= (20 * ty) / 100;
+        } else if (player->animation_current == 9) {
+            k3 += (20 * ty) / 100;
+        }
+
+        int j4 = (16 * ty) / 100;
+        int l4 = (16 * ty) / 100;
+
+        surface_sprite_clipping_from5(mud->surface, k3 - (j4 / 2),
+                                      y - (l4 / 2) - ((10 * ty) / 100), j4, l4,
+                                      mud->sprite_media + 13);
     }
 }
 
@@ -3148,6 +3519,82 @@ void mudclient_draw_game(mudclient *mud) {
     scene_reduce_sprites(mud->scene, mud->sprite_count);
     mud->sprite_count = 0;
 
+    for (int i = 0; i < mud->player_count; i++) {
+        GameCharacter *player = mud->players[i];
+
+        if (player->colour_bottom != 255) {
+            int x = player->current_x;
+            int y = player->current_y;
+            int elevation = -world_get_elevation(mud->world, x, y);
+
+            int id = scene_add_sprite(mud->scene, 5000 + i, x, elevation, y,
+                                      145, 220, i + 10000);
+
+            mud->sprite_count++;
+
+            if (player == mud->local_player) {
+                scene_set_local_player(mud->scene, id);
+            }
+
+            if (player->animation_current == 8) {
+                scene_set_sprite_translate_x(mud->scene, id, -30);
+            }
+
+            if (player->animation_current == 9) {
+                scene_set_sprite_translate_x(mud->scene, id, 30);
+            }
+        }
+    }
+
+    for (int i = 0; i < mud->player_count; i++) {
+        GameCharacter *player = mud->players[i];
+
+        if (player->projectile_range > 0) {
+            GameCharacter *character = NULL;
+
+            if (player->attacking_npc_server_index != -1) {
+                character =
+                    mud->npcs_server[player->attacking_npc_server_index];
+            } else if (player->attacking_player_server_index != -1) {
+                character =
+                    mud->player_server[player->attacking_player_server_index];
+            }
+
+            if (character != NULL) {
+                int sx = player->current_x;
+                int sy = player->current_y;
+                int selev = -world_get_elevation(mud->world, sx, sy) - 110;
+                int dx = character->current_x;
+                int dy = character->current_y;
+
+                int delev = -(world_get_elevation(mud->world, dx, dy) -
+                              game_data_npc_height[character->npc_id] / 2);
+
+                int rx =
+                    (sx * player->projectile_range +
+                     dx * (PROJECTILE_RANGE_MAX - player->projectile_range)) /
+                    PROJECTILE_RANGE_MAX;
+
+                int rz = (selev * player->projectile_range +
+                          delev * (PROJECTILE_RANGE_MAX -
+                                   player->projectile_range)) /
+                         PROJECTILE_RANGE_MAX;
+
+                int ry =
+                    (sy * player->projectile_range +
+                     dy * (PROJECTILE_RANGE_MAX - player->projectile_range)) /
+                    PROJECTILE_RANGE_MAX;
+
+                scene_add_sprite(mud->scene,
+                                 mud->sprite_projectile +
+                                     player->incoming_projectile_sprite,
+                                 rx, rz, ry, 32, 32, 0);
+
+                mud->sprite_count++;
+            }
+        }
+    }
+
     /* TODO entity + bubble drawing */
 
     mud->surface->interlace = 0;
@@ -3165,7 +3612,7 @@ void mudclient_draw_game(mudclient *mud) {
     mud->received_messages_count = 0;
     mud->health_bar_count = 0;
 
-    if (mud->option_camera_mode_auto && !mud->fog_of_war) {
+    if (mud->settings_camera_auto && !mud->fog_of_war) {
         // mudclient_auto_rotate_camera(mud);
     }
 
@@ -3288,6 +3735,10 @@ void mudclient_draw(mudclient *mud) {
         return;
     }
 
+#ifdef WII
+    draw_background(mud->framebuffer);
+#endif
+
     if (mud->logged_in == 0) {
         mud->surface->logged_in = 0;
         mudclient_draw_login_screens(mud);
@@ -3298,7 +3749,11 @@ void mudclient_draw(mudclient *mud) {
 
 #ifdef WII
     draw_arrow(mud->framebuffer, mud->last_wii_x, mud->last_wii_y);
-    VIDEO_WaitVSync();
+    VIDEO_SetNextFramebuffer(mud->framebuffer);
+    mud->active_framebuffer ^= 1;
+    mud->framebuffer = mud->framebuffers[mud->active_framebuffer];
+    VIDEO_Flush();
+    // VIDEO_WaitVSync();
 #endif
 }
 
@@ -3313,6 +3768,10 @@ void mudclient_poll_events(mudclient *mud) {
 
     WPADData *wiimote_data = WPAD_Data(0);
 
+    if (wiimote_data->btns_h & WPAD_BUTTON_HOME) {
+        exit(0);
+    }
+
     if (!wiimote_data->ir.valid) {
         return;
     }
@@ -3320,27 +3779,35 @@ void mudclient_poll_events(mudclient *mud) {
     int x = (int)wiimote_data->ir.x;
     int y = (int)wiimote_data->ir.y;
 
+    if (y <= 45 && x >= 234 && x <= 396 &&
+        wiimote_data->btns_h & WPAD_BUTTON_A) {
+        exit(0);
+    }
+
+    int game_x = x - GAME_OFFSET_X;
+    int game_y = y - GAME_OFFSET_Y;
+
     if (x != mud->last_wii_x || y != mud->last_wii_y) {
-        mudclient_mouse_moved(mud, x, y);
+        mudclient_mouse_moved(mud, game_x, game_y);
         mud->last_wii_x = x;
         mud->last_wii_y = y;
     }
 
     if (mud->last_wii_button != 1 && wiimote_data->btns_h & WPAD_BUTTON_A) {
-        mudclient_mouse_pressed(mud, x, y, 1);
+        mudclient_mouse_pressed(mud, game_x, game_y, 1);
         mud->last_wii_button = 1;
     } else if (mud->last_wii_button == 1 &&
                !(wiimote_data->btns_h & WPAD_BUTTON_A)) {
-        mudclient_mouse_released(mud, x, y, 1);
+        mudclient_mouse_released(mud, game_x, game_y, 1);
         mud->last_wii_button = 0;
     }
 
     if (mud->last_wii_button != 2 && wiimote_data->btns_h & WPAD_BUTTON_B) {
-        mudclient_mouse_pressed(mud, x, y, 2);
+        mudclient_mouse_pressed(mud, game_x, game_y, 2);
         mud->last_wii_button = 2;
     } else if (mud->last_wii_button == 2 &&
                !(wiimote_data->btns_h & WPAD_BUTTON_B)) {
-        mudclient_mouse_released(mud, x, y, 2);
+        mudclient_mouse_released(mud, game_x, game_y, 2);
         mud->last_wii_button = 0;
     }
 #else
@@ -3514,9 +3981,6 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
 
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
                          int id) {}
-
-void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int tx, int ty) {}
 
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int tx, int ty) {}

@@ -102,10 +102,13 @@ void surface_reset_bounds(Surface *surface) {
 
 void surface_draw(Surface *surface) {
 #ifdef WII
-    uint8_t *pixels = (uint8_t *)surface->pixels;
     uint8_t *fb = surface->mud->framebuffer;
+    uint8_t *pixels = (uint8_t *)surface->pixels;
     int index = 0;
+
     int fb_index = 0;
+
+    // 64,54
 
     for (int y = 0; y < surface->height1; y++) {
         for (int x = 0; x < surface->width1; x += 2) {
@@ -122,17 +125,20 @@ void surface_draw(Surface *surface) {
             int u = (RGB2U(r, g, b) + RGB2U(r2, g2, b2)) / 2;
             int v = (RGB2V(r, g, b) + RGB2V(r2, g2, b2)) / 2;
 
+            fb_index =
+                (640 * 2 * (GAME_OFFSET_Y + y)) + ((GAME_OFFSET_X + x) * 2);
+
             fb[fb_index] = y1;
             fb[fb_index + 2] = y2;
             fb[fb_index + 1] = u;
             fb[fb_index + 3] = v;
-            fb_index += 4;
+            // fb_index += 4;
         }
 
-        fb_index += 128 * 2;
+        // fb_index += surface->height1 / 2;
     }
 
-    //VIDEO_WaitVSync();
+    // VIDEO_WaitVSync();
 #else
     if (surface->mud->window == NULL) {
         return;

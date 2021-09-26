@@ -20,6 +20,9 @@
 
 #define CHAR_SET_LENGTH 95
 
+#define GAME_OFFSET_X 64
+#define GAME_OFFSET_Y 54
+
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
 extern int BITMASK[];
