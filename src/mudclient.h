@@ -33,8 +33,8 @@
 #include <SDL2/SDL.h>
 #endif
 
-#define K_LEFT -1
-#define K_RIGHT -1
+#define K_LEFT 37
+#define K_RIGHT 39
 #define K_F1 -1
 #define K_ENTER -1
 #define K_BACKSPACE -1
@@ -67,6 +67,7 @@
 #define RECEIVED_MESSAGE_MAX 50
 #define ACTION_BUBBLE_MAX 50
 #define HEALTH_BAR_MAX 50
+#define TELEPORT_BUBBLE_MAX 50
 
 #define MUD_WIDTH 512
 #define MUD_HEIGHT 346
@@ -143,8 +144,8 @@ typedef struct mudclient {
     int last_mouse_button_down;
     int mouse_button_click;
 
-    int key_left;
-    int key_right;
+    int8_t key_left;
+    int8_t key_right;
 
     int loading_step;
     int loading_progress_percent;
@@ -160,7 +161,7 @@ typedef struct mudclient {
     int max_draw_time;
     int thread_sleep;
 
-    int interlace;
+    int8_t interlace;
     char input_text_current[INPUT_TEXT_LENGTH + 1];
     char input_pm_current[INPUT_PM_LENGTH + 1];
     char input_text_final[INPUT_TEXT_LENGTH + 1];
@@ -170,6 +171,7 @@ typedef struct mudclient {
     int moderator_level;
     int auto_login_timeout;
 
+    /* social lists (friends and ignore) */
     int message_index;
     int message_tokens[SOCIAL_LIST_MAX];
     int friend_list_count;
@@ -178,11 +180,12 @@ typedef struct mudclient {
     int ignore_list_count;
     int64_t ignore_list[SOCIAL_LIST_MAX * 2];
 
-    int settings_camera_auto;
-    int settings_block_chat;
-    int settings_block_private;
-    int settings_block_trade;
-    int settings_block_duel;
+    /* options settings */
+    int8_t settings_camera_auto;
+    int8_t settings_block_chat;
+    int8_t settings_block_private;
+    int8_t settings_block_trade;
+    int8_t settings_block_duel;
 
     char *server;
     int port;
@@ -242,8 +245,6 @@ typedef struct mudclient {
     char *login_prompt;
     char login_user_disp[22];
 
-    int player_count;
-    int npc_count;
     int login_timer;
     int message_tab_flash_all;
     int message_tab_flash_history;
@@ -261,33 +262,47 @@ typedef struct mudclient {
     int object_y[OBJECTS_MAX];
     int object_id[OBJECTS_MAX];
     int object_direction[OBJECTS_MAX];
+
     int wall_object_count;
     GameModel *wall_object_model[WALL_OBJECTS_MAX];
     int wall_object_x[WALL_OBJECTS_MAX];
     int wall_object_y[WALL_OBJECTS_MAX];
     int wall_object_id[WALL_OBJECTS_MAX];
     int wall_object_direction[WALL_OBJECTS_MAX];
-    GameCharacter *player_server[PLAYERS_SERVER_MAX];
-    GameCharacter *players[PLAYERS_MAX];
+
     int player_server_indexes[PLAYERS_MAX];
+    GameCharacter *player_server[PLAYERS_SERVER_MAX];
+
+    int player_count;
+    GameCharacter *players[PLAYERS_MAX];
+
+    int known_player_count;
+    GameCharacter *known_players[PLAYERS_MAX];
+
+    GameCharacter *local_player;
+
     GameCharacter *npcs_server[NPCS_SERVER_MAX];
+
+    int npc_count;
     GameCharacter *npcs[NPCS_MAX];
+
+    int known_npc_count;
+    GameCharacter *known_npcs[NPCS_MAX];
+
     int ground_item_count;
     int ground_item_x [GROUND_ITEMS_MAX];
     int ground_item_y [GROUND_ITEMS_MAX];
     int ground_item_id[GROUND_ITEMS_MAX];
     int ground_item_z [GROUND_ITEMS_MAX];
-    int known_player_count;
-    GameCharacter *known_players[PLAYERS_MAX];
 
-    int8_t prayer_on[PRAYER_COUNT];
-    int is_sleeping;
-    int last_height_offset;
-    int fog_of_war;
-    GameCharacter *local_player;
+    int8_t is_sleeping;
+
+    /* fade distant landscape */
+    int8_t fog_of_war;
 
     /* used to keep track of model indexes to swap to in order to simulate ;
      * movement */
+    int object_animation_count;
     int object_animation_cycle;
     int last_object_animation_cycle;
     int torch_animation_cycle;
@@ -295,9 +310,10 @@ typedef struct mudclient {
     int claw_animation_cycle;
     int last_claw_animation_cycle;
 
-    int sprite_count;
-    int items_above_head_count;
+    /* amount of entity, action and teleport bubble sprites */
+    int scene_sprite_count;
 
+    /* (usually) yellow messages above player and NPC heads */
     int received_messages_count;
     int received_message_x[RECEIVED_MESSAGE_MAX];
     int received_message_y[RECEIVED_MESSAGE_MAX];
@@ -340,16 +356,22 @@ typedef struct mudclient {
     int packet_last_read;
 
     int local_player_server_index;
+    int last_height_offset;
     int plane_index;
     int plane_multiplier;
     int local_lower_x;
     int local_lower_y;
     int local_upper_x;
     int local_upper_y;
+
     int death_screen_timeout;
+
+    int8_t prayer_on[PRAYER_COUNT];
+
     int player_stat_current[PLAYER_STAT_COUNT];
     int player_stat_base[PLAYER_STAT_COUNT];
 
+    int action_bubble_count;
 	int action_bubble_x[ACTION_BUBBLE_MAX];
 	int action_bubble_y[ACTION_BUBBLE_MAX];
 	int action_bubble_scale[ACTION_BUBBLE_MAX];
@@ -359,24 +381,34 @@ typedef struct mudclient {
     int health_bar_x[HEALTH_BAR_MAX];
     int health_bar_y[HEALTH_BAR_MAX];
     int health_bar_missing[HEALTH_BAR_MAX];
+
+    int teleport_bubble_count;
+    int8_t teleport_bubble_type[TELEPORT_BUBBLE_MAX];
+    int teleport_bubble_x[TELEPORT_BUBBLE_MAX];
+    int teleport_bubble_y[TELEPORT_BUBBLE_MAX];
+    int teleport_bubble_time[TELEPORT_BUBBLE_MAX];
 } mudclient;
 
 void mudclient_new(mudclient *mud);
 void mudclient_start_application(mudclient *mud, int width, int height,
                                  char *title);
+
+/* TODO events.c */
 void mudclient_handle_key_press(mudclient *mud, int key_code);
 void mudclient_key_pressed(mudclient *mud, int code, char char_code);
 void mudclient_key_released(mudclient *mud, int code);
 void mudclient_mouse_moved(mudclient *mud, int x, int y);
 void mudclient_mouse_released(mudclient *mud, int x, int y, int button);
 void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button);
+
 void mudclient_set_target_fps(mudclient *mud, int fps);
-void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1);
 void mudclient_reset_timings(mudclient *mud);
 void mudclient_start(mudclient *mud);
 void mudclient_stop(mudclient *mud);
 void mudclient_draw_string(mudclient *mud, char *string, int font, int x,
                            int y);
+
+/* TODO loader.c */
 void mudclient_draw_loading_screen(mudclient *mud, int percent, char *text);
 void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
@@ -389,7 +421,9 @@ void mudclient_load_entities(mudclient *mud);
 void mudclient_load_textures(mudclient *mud);
 void mudclient_load_models(mudclient *mud);
 void mudclient_load_maps(mudclient *mud);
+
 void mudclient_create_login_panels(mudclient *mud);
+void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1);
 void mudclient_reset_login_screen_variables(mudclient *mud);
 void mudclient_render_login_screen_viewports(mudclient *mud);
 void mudclient_draw_login_screens(mudclient *mud);
@@ -397,18 +431,35 @@ void mudclient_reset_game(mudclient *mud);
 void mudclient_login(mudclient *mud, char *username, char *password,
                      int reconnecting);
 void mudclient_handle_login_screen_input(mudclient *mud);
+
 GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
                                   int id, int count);
 int mudclient_load_next_region(mudclient *mud, int lx, int ly);
-GameCharacter *mudclient_create_player(mudclient *mud, int server_index, int x,
-                                       int y, int animation);
+GameCharacter *mudclient_add_character(mudclient *mud,
+                                       GameCharacter **character_server,
+                                       GameCharacter **known_characters,
+                                       int known_character_count,
+                                       int server_index, int x, int y,
+                                       int animation, int npc_id);
+GameCharacter *mudclient_add_player(mudclient *mud, int server_index, int x,
+                                    int y, int animation);
+GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x,
+                                    int y, int animation, int npc_id);
 void mudclient_check_connection(mudclient *mud);
+int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
 void mudclient_handle_game_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
 void mudclient_update_object_animation(mudclient *mud, int object_index,
                                        char *model_name);
+void mudclient_draw_character_message(mudclient *mud, GameCharacter *character,
+                                      int x, int y, int width);
+void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
+                                     int x, int y, int ty, int width,
+                                     int height, int is_npc);
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int tx, int ty);
+void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
+                        int id, int tx, int ty);
 void mudclient_draw_game(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
@@ -419,8 +470,6 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id);
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
                          int id);
-void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int tx, int ty);
 int main(int argc, char **argv);
 
 #endif

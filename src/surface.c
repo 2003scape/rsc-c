@@ -1849,7 +1849,7 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int i, int j,
 
 void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                                    int sprite_id, int colour1, int colour2,
-                                   int l1, int flag) {
+                                   int tx, int flag) {
     if (colour1 == 0) {
         colour1 = 0xffffff;
     }
@@ -1862,10 +1862,10 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
     int height = surface->sprite_height[sprite_id];
     int k2 = 0;
     int l2 = 0;
-    int i3 = l1 << 16;
+    int i3 = tx << 16;
     int j3 = (width << 16) / w;
     int k3 = (height << 16) / h;
-    int l3 = -((l1 << 16) / h);
+    int l3 = -((tx << 16) / h);
 
     if (surface->sprite_translate[sprite_id]) {
         int full_width = surface->sprite_width_full[sprite_id];

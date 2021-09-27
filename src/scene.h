@@ -140,6 +140,7 @@ int scene_add_sprite(Scene *scene, int n, int x, int z, int y, int w, int h,
                      int tag);
 void scene_set_local_player(Scene *scene, int i);
 void scene_set_sprite_translate_x(Scene *scene, int i, int n);
+void scene_set_mouse_loc(Scene *scene, int x, int y);
 void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
                       int clip_y, int width, int view_distance);
 void scene_polygons_q_sort(Scene *scene, Polygon **polygons, int low,

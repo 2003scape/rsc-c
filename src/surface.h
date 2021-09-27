@@ -148,7 +148,7 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int i, int j,
                                     int l1);
 void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                                    int sprite_id, int colour1, int colour2,
-                                   int l1, int flag);
+                                   int tx, int flag);
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
                                             int32_t *src, int i, int j, int k,
                                             int dest_pos, int i1, int j1,
