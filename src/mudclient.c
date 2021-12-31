@@ -164,7 +164,7 @@ void init_mudclient_global() {
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
 
-    //mud->interlace = 1;
+    // mud->interlace = 1;
     mud->applet_width = MUD_WIDTH;
     mud->applet_height = MUD_HEIGHT;
     mud->target_fps = 20;
@@ -2270,11 +2270,11 @@ GameCharacter *mudclient_add_character(mudclient *mud,
         break;
     }
 
-    if (exists) {
-        if (npc_id > -1) {
-            character->npc_id = npc_id;
-        }
+    if (npc_id > -1) {
+        character->npc_id = npc_id;
+    }
 
+    if (exists) {
         character->animation_next = animation;
         int animation_index = character->waypoint_current;
 
@@ -2314,7 +2314,7 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
                                  int animation, int npc_id) {
     GameCharacter *npc = mudclient_add_character(
         mud, mud->npcs_server, mud->known_npcs, mud->known_npc_count,
-        server_index, x, y, animation, -1);
+        server_index, x, y, animation, npc_id);
 
     mud->npcs[mud->npc_count++] = npc;
 
@@ -3823,6 +3823,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
         l1 = 2;
         flag = 1;
         x += (game_data_npc_combat_animation[npc->npc_id] * ty) / 100;
+
         j2 = i2 * 3 +
              character_combat_model_array2
                  [(mud->login_timer / game_data_npc_combat_model[npc->npc_id]) %
@@ -3861,6 +3862,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
                 int animation_colour =
                     game_data_animation_character_colour[animation_id];
+
                 int skin_colour = 0;
 
                 if (animation_colour == 1) {
@@ -4289,7 +4291,7 @@ void mudclient_draw(mudclient *mud) {
     mud->active_framebuffer ^= 1;
     mud->framebuffer = mud->framebuffers[mud->active_framebuffer];
     VIDEO_Flush();
-    //VIDEO_WaitVSync(); /* TODO investigate */
+    // VIDEO_WaitVSync(); /* TODO investigate */
 #endif
 }
 

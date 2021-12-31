@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>RuneScape</name>
+  <coder>Jagex Ltd. &amp; Zorian Medwid</coder>
+  <version>204</version>
+  <release_date>20211230000000</release_date>
+  <short_description>Fantasy MMORPG</short_description>
+  <long_description>Runescape is a massive 3d multiplayer adventure, with monsters to kill, quests to complete, and treasure to win.</long_description>
+</app>
