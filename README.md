@@ -9,7 +9,7 @@ install [libsdl2-dev](https://packages.debian.org/sid/libsdl2-dev).
     $ make
     $ ./mudclient
 
-# build (wii)
+## build (wii)
 
 install the
 [wii-dev package in devkitPro](https://devkitpro.org/wiki/Getting_Started)
