@@ -180,6 +180,7 @@ void game_model_allocate(GameModel *game_model, int num_vertices,
     }
 
     if (!game_model->unpickable) {
+        // TODO may rename this
         game_model->is_local_player = calloc(num_faces, sizeof(int8_t));
         game_model->face_tag = calloc(num_faces, sizeof(int));
     }

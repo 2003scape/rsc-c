@@ -16,6 +16,12 @@ typedef struct Scene Scene;
 
 #define VERTEX_COUNT 40
 #define RAMP_COUNT 50
+#define RAMP_SIZE 256
+
+/* originally Scene had a wide_band property and a second gradient_scanline
+ * function that was unused */
+#define RAMP_WIDE 0
+
 #define MOUSE_PICKED_MAX 100
 
 #define COLOUR_TRANSPARENT 12345678
@@ -36,15 +42,14 @@ typedef struct Scene {
     int clip_far_2d;
     int fog_z_falloff;
     int fog_z_distance;
-    int wide_band;
     int model_count;
     int max_model_count;
     GameModel **models;
     GameModel *view;
     int32_t *raster;
     int gradient_base[RAMP_COUNT];
-    int gradient_ramps[RAMP_COUNT][256];
-    int32_t *an_int_array_377;
+    int gradient_ramps[RAMP_COUNT][RAMP_SIZE];
+    int32_t *gradient_ramp;
     int texture_count;
     int8_t **texture_colours_used;
     int32_t **texture_colour_list;
@@ -102,34 +107,34 @@ typedef struct Scene {
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int sprite_count);
-void scene_texture_scanline(int32_t *ai, int32_t *ai1, int i, int j, int k,
+void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
                             int l, int i1, int j1, int k1, int l1, int i2,
                             int j2, int k2, int l2);
-void scene_texture_translucent_scanline(int32_t *ai, int32_t *ai1, int i,
-                                        int j, int k, int l, int i1, int j1,
-                                        int k1, int l1, int i2, int j2, int k2,
-                                        int l2);
-void scene_texture_back_translucent_scanline(int32_t *ai, int i, int j, int k,
-                                             int32_t *ai1, int l, int i1,
-                                             int j1, int k1, int l1, int i2,
-                                             int j2, int k2, int l2, int i3);
-void scene_texture_scanline2(int32_t *ai, int32_t *ai1, int i, int j, int k,
+void scene_texture_translucent_scanline(int32_t *raster,
+                                        int32_t *texture_pixels, int k, int l,
+                                        int i1, int j1, int k1, int l1, int i2,
+                                        int j2, int k2, int l2);
+void scene_texture_back_translucent_scanline(int32_t *raster,
+                                             int32_t *texture_pixels, int l,
+                                             int i1, int j1, int k1, int l1,
+                                             int i2, int j2, int k2, int l2,
+                                             int i3);
+void scene_texture_scanline2(int32_t *raster, int32_t *texture_pixels, int k,
                              int l, int i1, int j1, int k1, int l1, int i2,
                              int j2, int k2, int l2);
-void scene_texture_translucent_scanline2(int32_t *ai, int32_t *ai1, int i,
-                                         int j, int k, int l, int i1, int j1,
-                                         int k1, int l1, int i2, int j2, int k2,
-                                         int l2);
-void scene_texture_back_translucent_scanline2(int32_t *ai, int i, int j, int k,
-                                              int32_t *ai1, int l, int i1,
-                                              int j1, int k1, int l1, int i2,
-                                              int j2, int k2, int l2, int i3);
-void scene_gradient_scanline(int32_t *ai, int i, int j, int k, int32_t *ai1,
-                             int l, int i1);
-void scene_texture_gradient_scanline(int32_t *ai, int i, int j, int k,
-                                     int32_t *ai1, int l, int i1);
-void scene_gradient_scanline2(int32_t *ai, int i, int j, int k, int32_t *ai1,
-                              int l, int j1);
+void scene_texture_translucent_scanline2(int32_t *raster,
+                                         int32_t *texture_pixels, int k, int l,
+                                         int i1, int j1, int k1, int l1, int i2,
+                                         int j2, int k2, int l2);
+void scene_texture_back_translucent_scanline2(int32_t *raster,
+                                              int32_t *texture_pixels, int l,
+                                              int i1, int j1, int k1, int l1,
+                                              int i2, int j2, int k2, int l2,
+                                              int i3);
+void scene_gradient_translucent_scanline(int32_t *raster, int i, int j,
+                                         int32_t *ramp, int l, int i1);
+void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
+                             int32_t *ramp, int ramp_index, int ramp_inc);
 int rgb(int i, int j, int k);
 void scene_add_model(Scene *scene, GameModel *model);
 void scene_remove_model(Scene *scene, GameModel *model);
@@ -143,18 +148,17 @@ void scene_set_sprite_translate_x(Scene *scene, int i, int n);
 void scene_set_mouse_loc(Scene *scene, int x, int y);
 void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
                       int clip_y, int width, int view_distance);
-void scene_polygons_q_sort(Scene *scene, Polygon **polygons, int low,
-                           int high);
+void scene_polygons_q_sort(Scene *scene, Polygon **polygons, int low, int high);
 void scene_polygons_intersect_sort(Scene *scene, int step, Polygon **polygons,
                                    int count);
 int scene_polygons_order(Scene *scene, Polygon **polygons, int start, int end);
 void scene_set_frustum(Scene *scene, int i, int j, int k);
 void scene_render(Scene *scene);
-void scene_generate_scanlines(Scene *scene, int i, int j, int k, int l, int i1,
-                              int32_t *ai, int32_t *ai1, int32_t *ai2,
-                              GameModel *game_model, int pid);
-void scene_rasterize(Scene *scene, int i, int j, int k, int32_t *ai,
-                     int32_t *ai1, int32_t *ai2, int l,
+void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
+                              int32_t *plane_y, int32_t *vertex_shade,
+                              GameModel *game_model, int face);
+void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
+                     int32_t *vertices_y, int32_t *vertices_z, int face_fill,
                      GameModel *game_model);
 void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
                       int roll, int distance);
