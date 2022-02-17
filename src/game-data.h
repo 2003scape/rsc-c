@@ -101,7 +101,7 @@ extern char **game_data_prayer_description;
 
 extern int game_data_roof_count;
 extern int *game_data_roof_height;
-extern int *game_data_roof_num_vertices;
+extern int *game_data_roof_fills;
 
 extern int game_data_model_count;
 extern int game_data_projectile_sprite;

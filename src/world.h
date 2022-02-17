@@ -15,14 +15,30 @@ typedef struct World World;
 #define COLOUR_TRANSPARENT 12345678
 #define REGION_WIDTH 96
 #define REGION_HEIGHT 96
-#define AN_INT_585 128
 
+#define TILE_SIZE 128
 #define PLANE_COUNT 4
 #define TILE_COUNT 2304
 #define TERRAIN_COUNT 64
 #define TERRAIN_COLOUR_COUNT 256
 #define LOCAL_COUNT 18432
 #define REGION_SIZE 48
+#define PLANE_HEIGHT 80000
+
+/* length of the portion of the roof hanging over the building */
+
+#define ROOF_SLOPE 16
+
+/* https://github.com/2003scape/rsc-config/blob/master/res/types.json#L14 */
+
+#define FLOOR_TILE_TYPE 2
+#define LIQUID_TILE_TYPE 3
+#define BRIDGE_TILE_TYPE 4
+#define HOLE_TILE_TYPE 5
+
+/* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
+
+#define BRIDGE_TILE_DECORATION 12
 
 extern int terrain_colours[TERRAIN_COLOUR_COUNT];
 
@@ -69,11 +85,11 @@ int world_get_elevation(World *world, int x, int y);
 int world_get_wall_diagonal(World *world, int x, int y);
 void world_remove_object2(World *world, int x, int y, int id);
 void world_remove_wall_object(World *world, int x, int y, int k, int id);
-void world_method402(World *world, int i, int j, int k, int l,
-                     int texture_id_2);
+void world_draw_map_tile(World *world, int i, int j, int k, int l,
+                         int texture_id_2);
 void world_load_section_from4i(World *world, int x, int y, int plane,
                                int chunk);
-void world_method404(World *world, int x, int y, int k, int l);
+void world_method404(World *world, int x, int y, int width, int height);
 int world_get_object_adjacency(World *world, int x, int y);
 int world_has_roof(World *world, int x, int y);
 void world_method407(World *world, int i, int j, int k);
@@ -92,17 +108,19 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
                 int size);
 void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
                                       int id);
-void world_load_section_from4(World *world, int x, int y, int plane, int flag);
+void world_load_section_from4(World *world, int x, int y, int plane,
+                              int is_current_plane);
 void world_set_object_adjacency_from3(World *world, int i, int j, int k);
-int world_get_tile_type(World *world, int i, int j, int k);
+int world_get_tile_type(World *world, int i, int j);
 void world_add_models(World *world, GameModel **models);
-void world_method422(World *world, GameModel *game_model, int i, int j, int k,
-                     int l, int i1);
+void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
+                       int x1, int y1, int x2, int y2);
 int world_get_terrain_height(World *world, int x, int y);
 void world_load_section_from3(World *world, int x, int y, int plane);
 void world_method425(World *world, int i, int j, int k);
 void world_remove_object(World *world, int x, int y, int id);
-int world_method427(World *world, int i, int j);
-void world_method428(World *world, int i, int j, int k, int l, int i1);
+int world_has_neighbouring_roof(World *world, int x, int y);
+void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
+                             int x2, int y2);
 
 #endif

@@ -388,8 +388,8 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
     }
 }
 
-void surface_draw_line_horiz(Surface *surface, int x, int y, int width,
-                             int colour) {
+void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
+                                  int colour) {
     if (y < surface->bounds_top_y || y >= surface->bounds_bottom_y) {
         return;
     }
@@ -410,8 +410,8 @@ void surface_draw_line_horiz(Surface *surface, int x, int y, int width,
     }
 }
 
-void surface_draw_line_vert(Surface *surface, int x, int y, int height,
-                            int colour) {
+void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
+                                int colour) {
     if (x < surface->bounds_top_x || x >= surface->bounds_bottom_x) {
         return;
     }
@@ -434,10 +434,10 @@ void surface_draw_line_vert(Surface *surface, int x, int y, int height,
 
 void surface_draw_box_edge(Surface *surface, int x, int y, int width,
                            int height, int colour) {
-    surface_draw_line_horiz(surface, x, y, width, colour);
-    surface_draw_line_horiz(surface, x, y + height - 1, width, colour);
-    surface_draw_line_vert(surface, x, y, height, colour);
-    surface_draw_line_vert(surface, x + width - 1, y, height, colour);
+    surface_draw_line_horizontal(surface, x, y, width, colour);
+    surface_draw_line_horizontal(surface, x, y + height - 1, width, colour);
+    surface_draw_line_vertical(surface, x, y, height, colour);
+    surface_draw_line_vertical(surface, x + width - 1, y, height, colour);
 }
 
 void surface_set_pixel(Surface *surface, int x, int y, int colour) {
@@ -2558,13 +2558,13 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
             surface, tabs[i], x + offset_x + (tab_width / 2), y + 16, 4, BLACK);
 
         if (i > 0) {
-            surface_draw_line_vert(surface, x + offset_x, y, height, BLACK);
+            surface_draw_line_vertical(surface, x + offset_x, y, height, BLACK);
         }
 
         offset_x += tab_width;
     }
 
-    surface_draw_line_horiz(surface, x, y + height, width, BLACK);
+    surface_draw_line_horizontal(surface, x, y + height, width, BLACK);
 }
 
 void surface_free_colours(Surface *surface) {

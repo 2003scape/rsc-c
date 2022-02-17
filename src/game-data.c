@@ -92,7 +92,7 @@ char **game_data_prayer_description;
 
 int game_data_roof_count;
 int *game_data_roof_height;
-int *game_data_roof_num_vertices;
+int *game_data_roof_fills;
 
 int game_data_model_count;
 int game_data_projectile_sprite;
@@ -534,14 +534,14 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     game_data_roof_count = game_data_get_unsigned_short();
     game_data_roof_height = malloc(game_data_roof_count * sizeof(int));
-    game_data_roof_num_vertices = malloc(game_data_roof_count * sizeof(int));
+    game_data_roof_fills = malloc(game_data_roof_count * sizeof(int));
 
     for (i = 0; i < game_data_roof_count; i++) {
         game_data_roof_height[i] = game_data_get_unsigned_byte();
     }
 
     for (i = 0; i < game_data_roof_count; i++) {
-        game_data_roof_num_vertices[i] = game_data_get_unsigned_byte();
+        game_data_roof_fills[i] = game_data_get_unsigned_byte();
     }
 
     game_data_tile_count = game_data_get_unsigned_short();

@@ -26,6 +26,10 @@ typedef struct Scene Scene;
 
 #define COLOUR_TRANSPARENT 12345678
 
+/* width and height of scrollable textures */
+#define SCROLL_TEXTURE_SIZE 64
+#define SCROLL_TEXTURE_AREA (SCROLL_TEXTURE_SIZE * SCROLL_TEXTURE_SIZE)
+
 extern int scene_frustum_max_x;
 extern int scene_frustum_min_x;
 extern int scene_frustum_max_y;
@@ -173,7 +177,7 @@ void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
 void scene_prepare_texture(Scene *scene, int id);
 void scene_set_texture_pixels(Scene *scene, int id);
 void scene_scroll_texture(Scene *scene, int id);
-int scene_method302(Scene *scene, int i);
+int scene_get_fill_colour(Scene *scene, int face_fill);
 void scene_set_light_from3(Scene *scene, int x, int y, int z);
 void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
                            int y, int z);

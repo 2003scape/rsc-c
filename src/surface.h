@@ -84,9 +84,9 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
                            int height, int colour_top, int colour_bottom);
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,
                       int colour);
-void surface_draw_line_horiz(Surface *surface, int x, int y, int width,
+void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
                              int colour);
-void surface_draw_line_vert(Surface *surface, int x, int y, int height,
+void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
                             int colour);
 void surface_draw_box_edge(Surface *surface, int x, int y, int width,
                            int height, int colour);

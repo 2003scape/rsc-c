@@ -337,15 +337,15 @@ int game_model_create_vertex(GameModel *game_model, int x, int y, int z) {
 }
 
 int game_model_create_face(GameModel *game_model, int number, int *vertices,
-                           int front, int back) {
+                           int fill_front, int fill_back) {
     if (game_model->num_faces >= game_model->max_faces) {
         return -1;
     }
 
     game_model->face_num_vertices[game_model->num_faces] = number;
     game_model->face_vertices[game_model->num_faces] = vertices;
-    game_model->face_fill_front[game_model->num_faces] = front;
-    game_model->face_fill_back[game_model->num_faces] = back;
+    game_model->face_fill_front[game_model->num_faces] = fill_front;
+    game_model->face_fill_back[game_model->num_faces] = fill_back;
     game_model->transform_state = 1;
 
     return game_model->num_faces++;
@@ -489,9 +489,9 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
     game_model_set_light_from5(game_model, ambience, diffuse, x, y, z);
 }
 
-void game_model_set_vertex_ambience(GameModel *game_model, int v,
+void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience) {
-    game_model->vertex_ambience[v] = ambience & 0xff;
+    game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
 void game_model_rotate(GameModel *game_model, int yaw, int pitch, int roll) {

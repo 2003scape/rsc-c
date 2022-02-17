@@ -3533,47 +3533,52 @@ void scene_scroll_texture(Scene *scene, int id) {
 
     int32_t *colours = scene->texture_pixels[id];
 
-    for (int i = 0; i < 64; i++) {
-        int k = i + 4032;
-        int l = colours[k];
+    for (int i = 0; i < SCROLL_TEXTURE_SIZE; i++) {
+        int pixel_index = i + SCROLL_TEXTURE_AREA - SCROLL_TEXTURE_SIZE;
+        int colour = colours[pixel_index];
 
-        for (int j1 = 0; j1 < 63; j1++) {
-            colours[k] = colours[k - 64];
-            k -= 64;
+        for (int j = 0; j < SCROLL_TEXTURE_SIZE - 1; j++) {
+            colours[pixel_index] = colours[pixel_index - SCROLL_TEXTURE_SIZE];
+            pixel_index -= SCROLL_TEXTURE_SIZE;
         }
 
-        scene->texture_pixels[id][k] = l;
+        scene->texture_pixels[id][pixel_index] = colour;
     }
 
-    int c = 4096;
+    for (int i = 0; i < SCROLL_TEXTURE_AREA; i++) {
+        int colour = colours[i];
 
-    for (int i1 = 0; i1 < c; i1++) {
-        int k1 = colours[i1];
-        colours[c + i1] = (k1 - (k1 >> 3)) & 0xf8f8ff;
-        colours[c * 2 + i1] = (k1 - (k1 >> 2)) & 0xf8f8ff;
-        colours[c * 3 + i1] = (k1 - (k1 >> 2) - (k1 >> 3)) & 0xf8f8ff;
+        colours[SCROLL_TEXTURE_AREA + i] = (colour - (colour >> 3)) & 0xf8f8ff;
+
+        colours[SCROLL_TEXTURE_AREA * 2 + i] =
+            (colour - (colour >> 2)) & 0xf8f8ff;
+
+        colours[SCROLL_TEXTURE_AREA * 3 + i] =
+            (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
     }
 }
 
-int scene_method302(Scene *scene, int i) {
-    if (i == COLOUR_TRANSPARENT) {
+/* used to convert face_fill values (textures or colours) to minimap colours */
+
+int scene_get_fill_colour(Scene *scene, int face_fill) {
+    if (face_fill == COLOUR_TRANSPARENT) {
         return 0;
     }
 
-    scene_prepare_texture(scene, i);
+    scene_prepare_texture(scene, face_fill);
 
-    if (i >= 0) {
-        return scene->texture_pixels[i][0];
+    if (face_fill >= 0) {
+        return scene->texture_pixels[face_fill][0];
     }
 
-    if (i < 0) {
-        i = -(i + 1);
+    if (face_fill < 0) {
+        face_fill = -(face_fill + 1);
 
-        int j = (i >> 10) & 0x1f;
-        int k = (i >> 5) & 0x1f;
-        int l = i & 0x1f;
+        int r = (face_fill >> 10) & 0x1f;
+        int g = (face_fill >> 5) & 0x1f;
+        int b = face_fill & 0x1f;
 
-        return (j << 19) + (k << 11) + (l << 3);
+        return (r << 19) + (g << 11) + (b << 3);
     }
 
     return 0;

@@ -209,24 +209,24 @@ void panel_draw_checkbox(Panel *panel, int control, int x, int y, int width,
                          int height) {
     surface_draw_box(panel->surface, x, y, width, height, 0xffffff);
 
-    surface_draw_line_horiz(panel->surface, x, y, width,
-                            panel->colour_box_top_n_bottom);
+    surface_draw_line_horizontal(panel->surface, x, y, width,
+                                 panel->colour_box_top_n_bottom);
 
-    surface_draw_line_vert(panel->surface, x, y, height,
-                           panel->colour_box_top_n_bottom);
+    surface_draw_line_vertical(panel->surface, x, y, height,
+                               panel->colour_box_top_n_bottom);
 
-    surface_draw_line_horiz(panel->surface, x, y + height - 1, width,
-                            panel->colour_box_left_n_right);
+    surface_draw_line_horizontal(panel->surface, x, y + height - 1, width,
+                                 panel->colour_box_left_n_right);
 
-    surface_draw_line_vert(panel->surface, x + width - 1, y, height,
-                           panel->colour_box_left_n_right);
+    surface_draw_line_vertical(panel->surface, x + width - 1, y, height,
+                               panel->colour_box_left_n_right);
 
     if (panel->control_list_entry_mouse_button_down[control] == 1) {
         for (int j1 = 0; j1 < height; j1++) {
-            surface_draw_line_horiz(panel->surface, x + j1, y + j1, 1, 0);
+            surface_draw_line_horizontal(panel->surface, x + j1, y + j1, 1, 0);
 
-            surface_draw_line_horiz(panel->surface, x + width - 1 - j1, y + j1,
-                                    1, 0);
+            surface_draw_line_horizontal(panel->surface, x + width - 1 - j1,
+                                         y + j1, 1, 0);
         }
     }
 }
@@ -296,41 +296,41 @@ void panel_draw_box(Panel *panel, int x, int y, int width, int height) {
                           panel->colour_box_left_n_right,
                           panel->colour_box_top_n_bottom);
 
-    surface_draw_line_horiz(panel->surface, x, y, width,
-                            panel->colour_box_top_n_bottom);
+    surface_draw_line_horizontal(panel->surface, x, y, width,
+                                 panel->colour_box_top_n_bottom);
 
-    surface_draw_line_horiz(panel->surface, x + 1, y + 1, width - 2,
-                            panel->colour_box_top_n_bottom);
+    surface_draw_line_horizontal(panel->surface, x + 1, y + 1, width - 2,
+                                 panel->colour_box_top_n_bottom);
 
-    surface_draw_line_horiz(panel->surface, x + 2, y + 2, width - 4,
-                            panel->colour_box_top_n_bottom2);
+    surface_draw_line_horizontal(panel->surface, x + 2, y + 2, width - 4,
+                                 panel->colour_box_top_n_bottom2);
 
-    surface_draw_line_vert(panel->surface, x, y, height,
-                           panel->colour_box_top_n_bottom);
+    surface_draw_line_vertical(panel->surface, x, y, height,
+                               panel->colour_box_top_n_bottom);
 
-    surface_draw_line_vert(panel->surface, x + 1, y + 1, height - 2,
-                           panel->colour_box_top_n_bottom);
+    surface_draw_line_vertical(panel->surface, x + 1, y + 1, height - 2,
+                               panel->colour_box_top_n_bottom);
 
-    surface_draw_line_vert(panel->surface, x + 2, y + 2, height - 4,
-                           panel->colour_box_top_n_bottom2);
+    surface_draw_line_vertical(panel->surface, x + 2, y + 2, height - 4,
+                               panel->colour_box_top_n_bottom2);
 
-    surface_draw_line_horiz(panel->surface, x, y + height - 1, width,
-                            panel->colour_box_left_n_right);
+    surface_draw_line_horizontal(panel->surface, x, y + height - 1, width,
+                                 panel->colour_box_left_n_right);
 
-    surface_draw_line_horiz(panel->surface, x + 1, y + height - 2, width - 2,
-                            panel->colour_box_left_n_right);
+    surface_draw_line_horizontal(panel->surface, x + 1, y + height - 2,
+                                 width - 2, panel->colour_box_left_n_right);
 
-    surface_draw_line_horiz(panel->surface, x + 2, y + height - 3, width - 4,
-                            panel->colour_box_left_n_right2);
+    surface_draw_line_horizontal(panel->surface, x + 2, y + height - 3,
+                                 width - 4, panel->colour_box_left_n_right2);
 
-    surface_draw_line_vert(panel->surface, x + width - 1, y, height,
-                           panel->colour_box_left_n_right);
+    surface_draw_line_vertical(panel->surface, x + width - 1, y, height,
+                               panel->colour_box_left_n_right);
 
-    surface_draw_line_vert(panel->surface, x + width - 2, y + 1, height - 2,
-                           panel->colour_box_left_n_right);
+    surface_draw_line_vertical(panel->surface, x + width - 2, y + 1, height - 2,
+                               panel->colour_box_left_n_right);
 
-    surface_draw_line_vert(panel->surface, x + width - 3, y + 2, height - 4,
-                           panel->colour_box_left_n_right2);
+    surface_draw_line_vertical(panel->surface, x + width - 3, y + 2, height - 4,
+                               panel->colour_box_left_n_right2);
 
     surface_reset_bounds(panel->surface);
 }
@@ -365,7 +365,7 @@ void panel_draw_picture(Panel *panel, int x, int y, int id) {
 }
 
 void panel_draw_line_horiz(Panel *panel, int x, int y, int width) {
-    surface_draw_line_horiz(panel->surface, x, y, width, 0xffffff);
+    surface_draw_line_horizontal(panel->surface, x, y, width, 0xffffff);
 }
 
 void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
@@ -496,8 +496,8 @@ void panel_draw_list_container(Panel *panel, int x, int y, int width,
     surface_draw_sprite_from3(panel->surface, x2 + 1, y + height - 12,
                               panel_base_sprite_start + 1);
 
-    surface_draw_line_horiz(panel->surface, x2, y + 13, 12, 0);
-    surface_draw_line_horiz(panel->surface, x2, y + height - 13, 12, 0);
+    surface_draw_line_horizontal(panel->surface, x2, y + 13, 12, 0);
+    surface_draw_line_horizontal(panel->surface, x2, y + height - 13, 12, 0);
 
     surface_draw_gradient(panel->surface, x2 + 1, y + 14, 11, height - 27,
                           panel->colour_scrollbar_top,
@@ -506,11 +506,11 @@ void panel_draw_list_container(Panel *panel, int x, int y, int width,
     surface_draw_box(panel->surface, x2 + 3, corner1 + y + 14, 7, corner2,
                      panel->colour_scrollbar_handle_mid);
 
-    surface_draw_line_vert(panel->surface, x2 + 2, corner1 + y + 14, corner2,
-                           panel->colour_scrollbar_handle_left);
+    surface_draw_line_vertical(panel->surface, x2 + 2, corner1 + y + 14,
+                               corner2, panel->colour_scrollbar_handle_left);
 
-    surface_draw_line_vert(panel->surface, x2 + 2 + 8, corner1 + y + 14,
-                           corner2, panel->colour_scrollbar_handle_right);
+    surface_draw_line_vertical(panel->surface, x2 + 2 + 8, corner1 + y + 14,
+                               corner2, panel->colour_scrollbar_handle_right);
 }
 
 void panel_draw_text_list_interactive(Panel *panel, int control, int x, int y,
@@ -875,7 +875,7 @@ void panel_remove_list_entry(Panel *panel, int control, char *text, int flag) {
 
 void panel_update_text(Panel *panel, int control, char *text) {
     if (panel->control_type[control] == TEXT_INPUT) {
-        strcpy(panel->control_text[control],  text);
+        strcpy(panel->control_text[control], text);
     } else {
         panel->control_text[control] = text;
     }

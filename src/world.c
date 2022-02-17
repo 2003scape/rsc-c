@@ -70,8 +70,8 @@ void world_set_terrain_ambience(World *world, int x, int y, int x2, int y2,
     GameModel *game_model = world->terrain_models[x + y * 8];
 
     for (int i = 0; i < game_model->num_vertices; i++) {
-        if (game_model->vertex_x[i] == x2 * AN_INT_585 &&
-            game_model->vertex_z[i] == y2 * AN_INT_585) {
+        if (game_model->vertex_x[i] == x2 * TILE_SIZE &&
+            game_model->vertex_z[i] == y2 * TILE_SIZE) {
             game_model_set_vertex_ambience(game_model, i, ambience);
             return;
         }
@@ -83,34 +83,33 @@ int world_get_wall_roof(World *world, int x, int y) {
 }
 
 int world_get_elevation(World *world, int x, int y) {
-    int s_x = x >> 7;
-    int s_y = y >> 7;
-    int a_x = x & 0x7f;
-    int a_y = y & 0x7f;
+    int s_x = x / TILE_SIZE;
+    int s_y = y / TILE_SIZE;
+    int a_x = x & (TILE_SIZE - 1);
+    int a_y = y & (TILE_SIZE - 1);
 
     if (s_x < 0 || s_y < 0 || s_x >= 95 || s_y >= 95) {
         return 0;
     }
 
-    int h = 0;
-    int hx = 0;
-    int hy = 0;
+    int height = 0;
+    int height_east = 0;
+    int height_south = 0;
 
-    if (a_x <= AN_INT_585 - a_y) {
-        h = world_get_terrain_height(world, s_x, s_y);
-        hx = world_get_terrain_height(world, s_x + 1, s_y) - h;
-        hy = world_get_terrain_height(world, s_x, s_y + 1) - h;
+    if (a_x <= TILE_SIZE - a_y) {
+        height = world_get_terrain_height(world, s_x, s_y);
+        height_east = world_get_terrain_height(world, s_x + 1, s_y) - height;
+        height_south = world_get_terrain_height(world, s_x, s_y + 1) - height;
     } else {
-        h = world_get_terrain_height(world, s_x + 1, s_y + 1);
-        hx = world_get_terrain_height(world, s_x, s_y + 1) - h;
-        hy = world_get_terrain_height(world, s_x + 1, s_y) - h;
-        a_x = AN_INT_585 - a_x;
-        a_y = AN_INT_585 - a_y;
+        height = world_get_terrain_height(world, s_x + 1, s_y + 1);
+        height_east = world_get_terrain_height(world, s_x, s_y + 1) - height;
+        height_south = world_get_terrain_height(world, s_x + 1, s_y) - height;
+        a_x = TILE_SIZE - a_x;
+        a_y = TILE_SIZE - a_y;
     }
 
-    int elevation = h + ((hx * a_x) / AN_INT_585) + ((hy * a_y) / AN_INT_585);
-
-    return elevation;
+    return (height + ((height_east * a_x) / TILE_SIZE) +
+            ((height_south * a_y) / TILE_SIZE));
 }
 
 int world_get_wall_diagonal(World *world, int x, int y) {
@@ -217,30 +216,47 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
     }
 }
 
-void world_method402(World *world, int i, int j, int k, int l,
-                     int texture_id_2) {
-    int line_x = i * 3;
-    int line_y = j * 3;
-    int l1 = scene_method302(world->scene, l);
-    int i2 = scene_method302(world->scene, texture_id_2);
-    l1 = l1 >> 1 & 0x7f7f7f;
-    i2 = i2 >> 1 & 0x7f7f7f;
+void world_draw_map_tile(World *world, int x, int y, int direction,
+                         int face_fill_1, int face_fill_2) {
+    int line_x = x * 3;
+    int line_y = y * 3;
+    int colour_1 = scene_get_fill_colour(world->scene, face_fill_1);
+    int colour_2 = scene_get_fill_colour(world->scene, face_fill_2);
 
-    if (k == 0) {
-        surface_draw_line_horiz(world->surface, line_x, line_y, 3, l1);
-        surface_draw_line_horiz(world->surface, line_x, line_y + 1, 2, l1);
-        surface_draw_line_horiz(world->surface, line_x, line_y + 2, 1, l1);
-        surface_draw_line_horiz(world->surface, line_x + 2, line_y + 1, 1, i2);
-        surface_draw_line_horiz(world->surface, line_x + 1, line_y + 2, 2, i2);
-        return;
-    }
+    /* darken colours */
+    colour_1 = colour_1 >> 1 & 0x7f7f7f;
+    colour_2 = colour_2 >> 1 & 0x7f7f7f;
 
-    if (k == 1) {
-        surface_draw_line_horiz(world->surface, line_x, line_y, 3, i2);
-        surface_draw_line_horiz(world->surface, line_x + 1, line_y + 1, 2, i2);
-        surface_draw_line_horiz(world->surface, line_x + 2, line_y + 2, 1, i2);
-        surface_draw_line_horiz(world->surface, line_x, line_y + 1, 1, l1);
-        surface_draw_line_horiz(world->surface, line_x, line_y + 2, 2, l1);
+    if (direction == 0) {
+        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
+                                     colour_1);
+
+        surface_draw_line_horizontal(world->surface, line_x, line_y + 1, 2,
+                                     colour_1);
+
+        surface_draw_line_horizontal(world->surface, line_x, line_y + 2, 1,
+                                     colour_1);
+
+        surface_draw_line_horizontal(world->surface, line_x + 2, line_y + 1, 1,
+                                     colour_2);
+
+        surface_draw_line_horizontal(world->surface, line_x + 1, line_y + 2, 2,
+                                     colour_2);
+    } else if (direction == 1) {
+        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
+                                     colour_2);
+
+        surface_draw_line_horizontal(world->surface, line_x + 1, line_y + 1, 2,
+                                     colour_2);
+
+        surface_draw_line_horizontal(world->surface, line_x + 2, line_y + 2, 1,
+                                     colour_2);
+
+        surface_draw_line_horizontal(world->surface, line_x, line_y + 1, 1,
+                                     colour_1);
+
+        surface_draw_line_horizontal(world->surface, line_x, line_y + 2, 2,
+                                     colour_1);
     }
 }
 
@@ -444,13 +460,16 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
     }
 }
 
-void world_method404(World *world, int x, int y, int k, int l) {
-    if (x < 1 || y < 1 || x + k >= REGION_WIDTH || y + l >= REGION_HEIGHT) {
+/* TODO add adjacent shadows? */
+
+void world_method404(World *world, int x, int y, int width, int height) {
+    if (x < 1 || y < 1 || x + width >= REGION_WIDTH ||
+        y + height >= REGION_HEIGHT) {
         return;
     }
 
-    for (int xx = x; xx <= x + k; xx++) {
-        for (int yy = y; yy <= y + l; yy++) {
+    for (int xx = x; xx <= x + width; xx++) {
+        for (int yy = y; yy <= y + height; yy++) {
             if ((world_get_object_adjacency(world, xx, yy) & 0x63) != 0 ||
                 (world_get_object_adjacency(world, xx - 1, yy) & 0x59) != 0 ||
                 (world_get_object_adjacency(world, xx, yy - 1) & 0x56) != 0 ||
@@ -493,23 +512,23 @@ void world_reset(World *world) {
     }
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        //printf("destroying %p\n", world->terrain_models[i]);
+        // printf("destroying %p\n", world->terrain_models[i]);
 
-        //game_model_destroy(world->terrain_models[i]);
-        //free(world->terrain_models[i]);
+        // game_model_destroy(world->terrain_models[i]);
+        // free(world->terrain_models[i]);
 
         world->terrain_models[i] = NULL;
 
         for (int j = 0; j < PLANE_COUNT; j++) {
-            //game_model_destroy(world->wall_models[j][i]);
-            //free(world->wall_models[j][i]);
+            // game_model_destroy(world->wall_models[j][i]);
+            // free(world->wall_models[j][i]);
 
             world->wall_models[j][i] = NULL;
         }
 
         for (int j = 0; j < PLANE_COUNT; j++) {
-            //game_model_destroy(world->roof_models[j][i]);
-            //free(world->roof_models[j][i]);
+            // game_model_destroy(world->roof_models[j][i]);
+            // free(world->roof_models[j][i]);
 
             world->roof_models[j][i] = NULL;
         }
@@ -600,7 +619,6 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
     route_x[write_ptr] = start_x;
     route_y[write_ptr++] = start_y;
 
-    /*int size = route_x.length; TODO remember to pass this in! */
     int reached = 0;
 
     while (read_ptr != write_ptr) {
@@ -777,14 +795,18 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
     }
 }
 
-void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
-    int l = (x + 24) / 48;
-    int i1 = (y + 24) / 48;
+/* assemble a 3D model from world section */
 
-    world_load_section_from4i(world, l - 1, i1 - 1, plane, 0);
-    world_load_section_from4i(world, l, i1 - 1, plane, 1);
-    world_load_section_from4i(world, l - 1, i1, plane, 2);
-    world_load_section_from4i(world, l, i1, plane, 3);
+void world_load_section_from4(World *world, int x, int y, int plane,
+                              int is_current_plane) {
+    int region_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
+    int region_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
+
+    world_load_section_from4i(world, region_x - 1, region_y - 1, plane, 0);
+    world_load_section_from4i(world, region_x, region_y - 1, plane, 1);
+    world_load_section_from4i(world, region_x - 1, region_y, plane, 2);
+    world_load_section_from4i(world, region_x, region_y, plane, 3);
+
     world_set_tiles(world);
 
     if (world->parent_model == NULL) {
@@ -792,67 +814,75 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
         game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
     }
 
-    if (flag) {
+    if (is_current_plane) {
         surface_black_screen(world->surface);
 
-        for (int j1 = 0; j1 < REGION_WIDTH; j1++) {
-            for (int l1 = 0; l1 < REGION_HEIGHT; l1++) {
-                world->object_adjacency[j1][l1] = 0;
+        for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
+            for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
+                world->object_adjacency[r_x][r_y] = 0;
             }
         }
 
         GameModel *game_model = world->parent_model;
         game_model_clear(game_model);
 
-        for (int j2 = 0; j2 < REGION_WIDTH; j2++) {
-            for (int i3 = 0; i3 < REGION_HEIGHT; i3++) {
-                int i4 = -world_get_terrain_height(world, j2, i3);
+        for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
+            for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
+                int height = -world_get_terrain_height(world, r_x, r_y);
+                int decoration = world_get_tile_decoration(world, r_x, r_y);
 
-                if (world_get_tile_decoration(world, j2, i3) > 0 &&
-                    game_data_tile_type[world_get_tile_decoration(world, j2,
-                                                                  i3) -
-                                        1] == 4) {
-                    i4 = 0;
+                /* keep water tiles under the bridge */
+
+                if (decoration > 0 &&
+                    game_data_tile_type[decoration - 1] == BRIDGE_TILE_TYPE) {
+                    height = 0;
                 }
 
-                if (world_get_tile_decoration(world, j2 - 1, i3) > 0 &&
-                    game_data_tile_type[world_get_tile_decoration(world, j2 - 1,
-                                                                  i3) -
-                                        1] == 4) {
-                    i4 = 0;
+                int decoration_east =
+                    world_get_tile_decoration(world, r_x - 1, r_y);
+
+                if (decoration_east > 0 &&
+                    game_data_tile_type[decoration_east - 1] ==
+                        BRIDGE_TILE_TYPE) {
+                    height = 0;
                 }
 
-                if (world_get_tile_decoration(world, j2, i3 - 1) > 0 &&
-                    game_data_tile_type[world_get_tile_decoration(world, j2,
-                                                                  i3 - 1) -
-                                        1] == 4) {
-                    i4 = 0;
+                int decoration_north =
+                    world_get_tile_decoration(world, r_x, r_y - 1);
+
+                if (decoration_north > 0 &&
+                    game_data_tile_type[decoration_north - 1] ==
+                        BRIDGE_TILE_TYPE) {
+                    height = 0;
                 }
 
-                if (world_get_tile_decoration(world, j2 - 1, i3 - 1) > 0 &&
-                    game_data_tile_type[world_get_tile_decoration(world, j2 - 1,
-                                                                  i3 - 1) -
-                                        1] == 4) {
-                    i4 = 0;
+                int decoration_north_east =
+                    world_get_tile_decoration(world, r_x - 1, r_y - 1);
+
+                if (decoration_north_east > 0 &&
+                    game_data_tile_type[decoration_north_east - 1] ==
+                        BRIDGE_TILE_TYPE) {
+                    height = 0;
                 }
 
-                int j5 = game_model_vertex_at(game_model, j2 * AN_INT_585, i4,
-                                              i3 * AN_INT_585);
+                int vertex_index = game_model_vertex_at(
+                    game_model, r_x * TILE_SIZE, height, r_y * TILE_SIZE);
 
-                float r = (float)rand() / (float)RAND_MAX;
-                //float r = 0.1;
-                int j7 = (int)(r * 10) - 5;
-                game_model_set_vertex_ambience(game_model, j5, j7);
+                int ambience =
+                    (int)(((float)rand() / (float)RAND_MAX) * 10) - 5;
+
+                game_model_set_vertex_ambience(game_model, vertex_index,
+                                               ambience);
             }
         }
 
-        for (int lx = 0; lx < 95; lx++) {
-            for (int ly = 0; ly < 95; ly++) {
-                int colour_index = world_get_terrain_colour(world, lx, ly);
+        for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
+            for (int r_y = 0; r_y < REGION_HEIGHT - 1; r_y++) {
+                int colour_index = world_get_terrain_colour(world, r_x, r_y);
                 int colour = terrain_colours[colour_index];
                 int colour_1 = colour;
                 int colour_2 = colour;
-                int l14 = 0;
+                int direction = 0;
 
                 if (plane == 1 || plane == 2) {
                     colour = COLOUR_TRANSPARENT;
@@ -860,417 +890,430 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
                     colour_2 = COLOUR_TRANSPARENT;
                 }
 
-                if (world_get_tile_decoration(world, lx, ly) > 0) {
-                    int decoration_type =
-                        world_get_tile_decoration(world, lx, ly);
+                int decoration = world_get_tile_decoration(world, r_x, r_y);
 
-                    int decoration_tile_type =
-                        game_data_tile_type[decoration_type - 1];
+                if (decoration > 0) {
+                    int tile_type = game_data_tile_type[decoration - 1];
+                    int is_floor = world_get_tile_type(world, r_x, r_y);
 
-                    int tile_type = world_get_tile_type(world, lx, ly, plane);
+                    colour = game_data_tile_decoration[decoration - 1];
+                    colour_1 = game_data_tile_decoration[decoration - 1];
 
-                    colour = game_data_tile_decoration[decoration_type - 1];
-                    colour_1 = game_data_tile_decoration[decoration_type - 1];
-
-                    if (decoration_tile_type == 4) {
+                    if (tile_type == BRIDGE_TILE_TYPE) {
                         colour = 1;
                         colour_1 = 1;
 
-                        if (decoration_type == 12) {
+                        if (decoration == BRIDGE_TILE_DECORATION) {
                             colour = 31;
                             colour_1 = 31;
                         }
-                    }
+                    } else if (tile_type == HOLE_TILE_TYPE) {
+                        int diagonal = world_get_wall_diagonal(world, r_x, r_y);
 
-                    if (decoration_tile_type == 5) {
-                        if (world_get_wall_diagonal(world, lx, ly) > 0 &&
-                            world_get_wall_diagonal(world, lx, ly) < 24000) {
+                        if (diagonal > 0 && diagonal < 24000) {
                             if (world_get_tile_decoration_from4(
-                                    world, lx - 1, ly, plane, colour_2) !=
+                                    world, r_x - 1, r_y, plane, colour_2) !=
                                     COLOUR_TRANSPARENT &&
                                 world_get_tile_decoration_from4(
-                                    world, lx, ly - 1, plane, colour_2) !=
+                                    world, r_x, r_y - 1, plane, colour_2) !=
                                     COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
-                                    world, lx - 1, ly, plane, colour_2);
-                                l14 = 0;
+                                    world, r_x - 1, r_y, plane, colour_2);
+                                direction = 0;
                             } else if (world_get_tile_decoration_from4(
-                                           world, lx + 1, ly, plane,
+                                           world, r_x + 1, r_y, plane,
                                            colour_2) != COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, lx, ly + 1, plane,
+                                           world, r_x, r_y + 1, plane,
                                            colour_2) != COLOUR_TRANSPARENT) {
                                 colour_1 = world_get_tile_decoration_from4(
-                                    world, lx + 1, ly, plane, colour_2);
+                                    world, r_x + 1, r_y, plane, colour_2);
 
-                                l14 = 0;
+                                direction = 0;
                             } else if (world_get_tile_decoration_from4(
-                                           world, lx + 1, ly, plane,
+                                           world, r_x + 1, r_y, plane,
                                            colour_2) != COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, lx, ly - 1, plane,
+                                           world, r_x, r_y - 1, plane,
                                            colour_2) != COLOUR_TRANSPARENT) {
                                 colour_1 = world_get_tile_decoration_from4(
-                                    world, lx + 1, ly, plane, colour_2);
+                                    world, r_x + 1, r_y, plane, colour_2);
 
-                                l14 = 1;
+                                direction = 1;
                             } else if (world_get_tile_decoration_from4(
-                                           world, lx - 1, ly, plane,
+                                           world, r_x - 1, r_y, plane,
                                            colour_2) != COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, lx, ly + 1, plane,
+                                           world, r_x, r_y + 1, plane,
                                            colour_2) != COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
-                                    world, lx - 1, ly, plane, colour_2);
+                                    world, r_x - 1, r_y, plane, colour_2);
 
-                                l14 = 1;
+                                direction = 1;
                             }
                         }
-                    } else if (decoration_tile_type != 2 ||
-                               (world_get_wall_diagonal(world, lx, ly) > 0 &&
-                                world_get_wall_diagonal(world, lx, ly) <
+                    } else if (tile_type != FLOOR_TILE_TYPE ||
+                               (world_get_wall_diagonal(world, r_x, r_y) > 0 &&
+                                world_get_wall_diagonal(world, r_x, r_y) <
                                     24000)) {
-                        if (world_get_tile_type(world, lx - 1, ly, plane) !=
-                                tile_type &&
-                            world_get_tile_type(world, lx, ly - 1, plane) !=
-                                tile_type) {
+
+                        /* antialiasing on diagonals */
+
+                        if (world_get_tile_type(world, r_x - 1, r_y) !=
+                                is_floor &&
+                            world_get_tile_type(world, r_x, r_y - 1) !=
+                                is_floor) {
                             colour = colour_2;
-                            l14 = 0;
-                        } else if (world_get_tile_type(world, lx + 1, ly,
-                                                       plane) != tile_type &&
-                                   world_get_tile_type(world, lx, ly + 1,
-                                                       plane) != tile_type) {
+                            direction = 0;
+                        } else if (world_get_tile_type(world, r_x + 1, r_y) !=
+                                       is_floor &&
+                                   world_get_tile_type(world, r_x, r_y + 1) !=
+                                       is_floor) {
                             colour_1 = colour_2;
-                            l14 = 0;
-                        } else if (world_get_tile_type(world, lx + 1, ly,
-                                                       plane) != tile_type &&
-                                   world_get_tile_type(world, lx, ly - 1,
-                                                       plane) != tile_type) {
+                            direction = 0;
+                        } else if (world_get_tile_type(world, r_x + 1, r_y) !=
+                                       is_floor &&
+                                   world_get_tile_type(world, r_x, r_y - 1) !=
+                                       is_floor) {
                             colour_1 = colour_2;
-                            l14 = 1;
-                        } else if (world_get_tile_type(world, lx - 1, ly,
-                                                       plane) != tile_type &&
-                                   world_get_tile_type(world, lx, ly + 1,
-                                                       plane) != tile_type) {
+                            direction = 1;
+                        } else if (world_get_tile_type(world, r_x - 1, r_y) !=
+                                       is_floor &&
+                                   world_get_tile_type(world, r_x, r_y + 1) !=
+                                       is_floor) {
                             colour = colour_2;
-                            l14 = 1;
+                            direction = 1;
                         }
                     }
 
-                    if (game_data_tile_adjacent[decoration_type - 1] != 0) {
-                        world->object_adjacency[lx][ly] |= 0x40;
+                    if (game_data_tile_adjacent[decoration - 1] != 0) {
+                        world->object_adjacency[r_x][r_y] |= 0x40;
                     }
 
-                    if (game_data_tile_type[decoration_type - 1] == 2) {
-                        world->object_adjacency[lx][ly] |= 0x80;
+                    if (game_data_tile_type[decoration - 1] ==
+                        FLOOR_TILE_TYPE) {
+                        world->object_adjacency[r_x][r_y] |= 0x80;
                     }
                 }
 
-                world_method402(world, lx, ly, l14, colour, colour_1);
+                world_draw_map_tile(world, r_x, r_y, direction, colour,
+                                    colour_1);
 
-                int i17 = world_get_terrain_height(world, lx + 1, ly + 1) -
-                          world_get_terrain_height(world, lx + 1, ly) +
-                          world_get_terrain_height(world, lx, ly + 1) -
-                          world_get_terrain_height(world, lx, ly);
+                int i17 = world_get_terrain_height(world, r_x + 1, r_y + 1) -
+                          world_get_terrain_height(world, r_x + 1, r_y) +
+                          world_get_terrain_height(world, r_x, r_y + 1) -
+                          world_get_terrain_height(world, r_x, r_y);
 
                 if (colour != colour_1 || i17 != 0) {
-                    int *ai = malloc(3 * sizeof(int));
-                    int *ai7 = malloc(3 * sizeof(int));
+                    int *colour_vertices = malloc(3 * sizeof(int));
+                    int *colour_1_vertices = malloc(3 * sizeof(int));
 
-                    if (l14 == 0) {
+                    if (direction == 0) {
                         if (colour != COLOUR_TRANSPARENT) {
-                            ai[0] = ly + lx * 96 + 96;
-                            ai[1] = ly + lx * 96;
-                            ai[2] = ly + lx * 96 + 1;
+                            colour_vertices[0] = r_y + r_x * 96 + 96;
+                            colour_vertices[1] = r_y + r_x * 96;
+                            colour_vertices[2] = r_y + r_x * 96 + 1;
 
-                            int l21 = game_model_create_face(
-                                game_model, 3, ai, COLOUR_TRANSPARENT, colour);
+                            int tile_face = game_model_create_face(
+                                game_model, 3, colour_vertices,
+                                COLOUR_TRANSPARENT, colour);
 
-                            world->local_x[l21] = lx;
-                            world->local_y[l21] = ly;
+                            world->local_x[tile_face] = r_x;
+                            world->local_y[tile_face] = r_y;
 
-                            game_model->face_tag[l21] = 0x30d40 + l21;
+                            game_model->face_tag[tile_face] =
+                                0x30d40 + tile_face;
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            ai7[0] = ly + lx * 96 + 1;
-                            ai7[1] = ly + lx * 96 + 96 + 1;
-                            ai7[2] = ly + lx * 96 + 96;
+                            colour_1_vertices[0] = r_y + r_x * 96 + 1;
+                            colour_1_vertices[1] = r_y + r_x * 96 + 96 + 1;
+                            colour_1_vertices[2] = r_y + r_x * 96 + 96;
 
-                            int i22 = game_model_create_face(game_model, 3, ai7,
-                                                             COLOUR_TRANSPARENT,
-                                                             colour_1);
+                            int tile_face = game_model_create_face(
+                                game_model, 3, colour_1_vertices,
+                                COLOUR_TRANSPARENT, colour_1);
 
-                            world->local_x[i22] = lx;
-                            world->local_y[i22] = ly;
+                            world->local_x[tile_face] = r_x;
+                            world->local_y[tile_face] = r_y;
 
-                            game_model->face_tag[i22] = 0x30d40 + i22;
+                            game_model->face_tag[tile_face] =
+                                0x30d40 + tile_face;
                         }
                     } else {
                         if (colour != COLOUR_TRANSPARENT) {
-                            ai[0] = ly + lx * 96 + 1;
-                            ai[1] = ly + lx * 96 + 96 + 1;
-                            ai[2] = ly + lx * 96;
+                            colour_vertices[0] = r_y + r_x * 96 + 1;
+                            colour_vertices[1] = r_y + r_x * 96 + 96 + 1;
+                            colour_vertices[2] = r_y + r_x * 96;
 
-                            int j22 = game_model_create_face(
-                                game_model, 3, ai, COLOUR_TRANSPARENT, colour);
+                            int tile_face = game_model_create_face(
+                                game_model, 3, colour_vertices,
+                                COLOUR_TRANSPARENT, colour);
 
-                            world->local_x[j22] = lx;
-                            world->local_y[j22] = ly;
+                            world->local_x[tile_face] = r_x;
+                            world->local_y[tile_face] = r_y;
 
-                            game_model->face_tag[j22] = 0x30d40 + j22;
+                            game_model->face_tag[tile_face] =
+                                0x30d40 + tile_face;
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            ai7[0] = ly + lx * 96 + 96;
-                            ai7[1] = ly + lx * 96;
-                            ai7[2] = ly + lx * 96 + 96 + 1;
+                            colour_1_vertices[0] = r_y + r_x * 96 + 96;
+                            colour_1_vertices[1] = r_y + r_x * 96;
+                            colour_1_vertices[2] = r_y + r_x * 96 + 96 + 1;
 
-                            int k22 = game_model_create_face(game_model, 3, ai7,
-                                                             COLOUR_TRANSPARENT,
-                                                             colour_1);
+                            int tile_face = game_model_create_face(
+                                game_model, 3, colour_1_vertices,
+                                COLOUR_TRANSPARENT, colour_1);
 
-                            world->local_x[k22] = lx;
-                            world->local_y[k22] = ly;
+                            world->local_x[tile_face] = r_x;
+                            world->local_y[tile_face] = r_y;
 
-                            game_model->face_tag[k22] = 0x30d40 + k22;
+                            game_model->face_tag[tile_face] =
+                                0x30d40 + tile_face;
                         }
                     }
                 } else if (colour != COLOUR_TRANSPARENT) {
                     int *vertices = malloc(4 * sizeof(int));
-                    vertices[0] = ly + lx * 96 + 96;
-                    vertices[1] = ly + lx * 96;
-                    vertices[2] = ly + lx * 96 + 1;
-                    vertices[3] = ly + lx * 96 + 96 + 1;
 
-                    int l19 = game_model_create_face(
+                    vertices[0] = r_y + r_x * 96 + 96;
+                    vertices[1] = r_y + r_x * 96;
+                    vertices[2] = r_y + r_x * 96 + 1;
+                    vertices[3] = r_y + r_x * 96 + 96 + 1;
+
+                    int tile_face = game_model_create_face(
                         game_model, 4, vertices, COLOUR_TRANSPARENT, colour);
 
-                    world->local_x[l19] = lx;
-                    world->local_y[l19] = ly;
+                    world->local_x[tile_face] = r_x;
+                    world->local_y[tile_face] = r_y;
 
-                    game_model->face_tag[l19] = 0x30d40 + l19;
+                    game_model->face_tag[tile_face] = 0x30d40 + tile_face;
                 }
             }
         }
 
-        for (int k4 = 1; k4 < 95; k4++) {
-            for (int i6 = 1; i6 < 95; i6++) {
-                if (world_get_tile_decoration(world, k4, i6) > 0 &&
-                    game_data_tile_type[world_get_tile_decoration(world, k4,
-                                                                  i6) -
-                                        1] == 4) {
-                    int l7 = game_data_tile_decoration
-                        [world_get_tile_decoration(world, k4, i6) - 1];
+        for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
+            for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
+                int decoration = world_get_tile_decoration(world, r_x, r_y);
 
-                    int j10 = game_model_vertex_at(
-                        game_model, k4 * AN_INT_585,
-                        -world_get_terrain_height(world, k4, i6),
-                        i6 * AN_INT_585);
+                /* create bridge floor tiles over water */
 
-                    int l12 = game_model_vertex_at(
-                        game_model, (k4 + 1) * AN_INT_585,
-                        -world_get_terrain_height(world, k4 + 1, i6),
-                        i6 * AN_INT_585);
-
-                    int i15 = game_model_vertex_at(
-                        game_model, (k4 + 1) * AN_INT_585,
-                        -world_get_terrain_height(world, k4 + 1, i6 + 1),
-                        (i6 + 1) * AN_INT_585);
-
-                    int j17 = game_model_vertex_at(
-                        game_model, k4 * AN_INT_585,
-                        -world_get_terrain_height(world, k4, i6 + 1),
-                        (i6 + 1) * AN_INT_585);
+                if (decoration > 0 &&
+                    game_data_tile_type[decoration - 1] == BRIDGE_TILE_TYPE) {
+                    int fill_front = game_data_tile_decoration[decoration - 1];
 
                     int *vertices = malloc(4 * sizeof(int));
-                    vertices[0] = j10;
-                    vertices[1] = l12;
-                    vertices[2] = i15;
-                    vertices[3] = j17;
 
-                    int i20 = game_model_create_face(game_model, 4, vertices,
-                                                     l7, COLOUR_TRANSPARENT);
+                    vertices[0] = game_model_vertex_at(
+                        game_model, r_x * TILE_SIZE,
+                        -world_get_terrain_height(world, r_x, r_y),
+                        r_y * TILE_SIZE);
 
-                    world->local_x[i20] = k4;
-                    world->local_y[i20] = i6;
-                    game_model->face_tag[i20] = 0x30d40 + i20;
+                    vertices[1] = game_model_vertex_at(
+                        game_model, (r_x + 1) * TILE_SIZE,
+                        -world_get_terrain_height(world, r_x + 1, r_y),
+                        r_y * TILE_SIZE);
 
-                    world_method402(world, k4, i6, 0, l7, l7);
-                } else if (world_get_tile_decoration(world, k4, i6) == 0 ||
-                           game_data_tile_type[world_get_tile_decoration(
-                                                   world, k4, i6) -
-                                               1] != 3) {
-                    if (world_get_tile_decoration(world, k4, i6 + 1) > 0 &&
-                        game_data_tile_type[world_get_tile_decoration(world, k4,
-                                                                      i6 + 1) -
-                                            1] == 4) {
-                        int i8 = game_data_tile_decoration
-                            [world_get_tile_decoration(world, k4, i6 + 1) - 1];
+                    vertices[2] = game_model_vertex_at(
+                        game_model, (r_x + 1) * TILE_SIZE,
+                        -world_get_terrain_height(world, r_x + 1, r_y + 1),
+                        (r_y + 1) * TILE_SIZE);
 
-                        int k10 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6),
-                            i6 * AN_INT_585);
+                    vertices[3] = game_model_vertex_at(
+                        game_model, r_x * TILE_SIZE,
+                        -world_get_terrain_height(world, r_x, r_y + 1),
+                        (r_y + 1) * TILE_SIZE);
 
-                        int i13 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6),
-                            i6 * AN_INT_585);
+                    int tile_face =
+                        game_model_create_face(game_model, 4, vertices,
+                                               fill_front, COLOUR_TRANSPARENT);
 
-                        int j15 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
+                    world->local_x[tile_face] = r_x;
+                    world->local_y[tile_face] = r_y;
 
-                        int k17 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
+                    game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+
+                    world_draw_map_tile(world, r_x, r_y, 0, fill_front,
+                                        fill_front);
+                } else if (decoration == 0 ||
+                           game_data_tile_type[decoration - 1] !=
+                               LIQUID_TILE_TYPE) {
+                    int decoration_south =
+                        world_get_tile_decoration(world, r_x, r_y + 1);
+
+                    if (decoration_south > 0 &&
+                        game_data_tile_type[decoration_south - 1] ==
+                            BRIDGE_TILE_TYPE) {
+                        int fill_front =
+                            game_data_tile_decoration[decoration_south - 1];
 
                         int *vertices = malloc(4 * sizeof(int));
-                        vertices[0] = k10;
-                        vertices[1] = i13;
-                        vertices[2] = j15;
-                        vertices[3] = k17;
 
-                        int j20 = game_model_create_face(
-                            game_model, 4, vertices, i8, COLOUR_TRANSPARENT);
+                        vertices[0] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y),
+                            r_y * TILE_SIZE);
 
-                        world->local_x[j20] = k4;
-                        world->local_y[j20] = i6;
-                        game_model->face_tag[j20] = 0x30d40 + j20;
+                        vertices[1] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y),
+                            r_y * TILE_SIZE);
 
-                        world_method402(world, k4, i6, 0, i8, i8);
+                        vertices[2] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
+
+                        vertices[3] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
+
+                        int tile_face = game_model_create_face(
+                            game_model, 4, vertices, fill_front,
+                            COLOUR_TRANSPARENT);
+
+                        world->local_x[tile_face] = r_x;
+                        world->local_y[tile_face] = r_y;
+
+                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+
+                        world_draw_map_tile(world, r_x, r_y, 0, fill_front,
+                                            fill_front);
                     }
 
-                    if (world_get_tile_decoration(world, k4, i6 - 1) > 0 &&
-                        game_data_tile_type[world_get_tile_decoration(world, k4,
-                                                                      i6 - 1) -
-                                            1] == 4) {
-                        int j8 = game_data_tile_decoration
-                            [world_get_tile_decoration(world, k4, i6 - 1) - 1];
+                    int decoration_north =
+                        world_get_tile_decoration(world, r_x, r_y - 1);
 
-                        int l10 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6),
-                            i6 * AN_INT_585);
-
-                        int j13 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6),
-                            i6 * AN_INT_585);
-
-                        int k15 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
-
-                        int l17 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
+                    if (decoration_north > 0 &&
+                        game_data_tile_type[decoration_north - 1] ==
+                            BRIDGE_TILE_TYPE) {
+                        int fill_front =
+                            game_data_tile_decoration[world_get_tile_decoration(
+                                                          world, r_x, r_y - 1) -
+                                                      1];
 
                         int *vertices = malloc(4 * sizeof(int));
-                        vertices[0] = l10;
-                        vertices[1] = j13;
-                        vertices[2] = k15;
-                        vertices[3] = l17;
 
-                        int k20 = game_model_create_face(
-                            game_model, 4, vertices, j8, COLOUR_TRANSPARENT);
+                        vertices[0] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y),
+                            r_y * TILE_SIZE);
 
-                        world->local_x[k20] = k4;
-                        world->local_y[k20] = i6;
-                        game_model->face_tag[k20] = 0x30d40 + k20;
+                        vertices[1] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y),
+                            r_y * TILE_SIZE);
 
-                        world_method402(world, k4, i6, 0, j8, j8);
+                        vertices[2] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
+
+                        vertices[3] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
+
+                        int tile_face = game_model_create_face(
+                            game_model, 4, vertices, fill_front,
+                            COLOUR_TRANSPARENT);
+
+                        world->local_x[tile_face] = r_x;
+                        world->local_y[tile_face] = r_y;
+
+                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+
+                        world_draw_map_tile(world, r_x, r_y, 0, fill_front,
+                                            fill_front);
                     }
 
-                    if (world_get_tile_decoration(world, k4 + 1, i6) > 0 &&
-                        game_data_tile_type[world_get_tile_decoration(
-                                                world, k4 + 1, i6) -
-                                            1] == 4) {
-                        int k8 = game_data_tile_decoration
-                            [world_get_tile_decoration(world, k4 + 1, i6) - 1];
+                    int decoration_east =
+                        world_get_tile_decoration(world, r_x + 1, r_y);
 
-                        int i11 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6),
-                            i6 * AN_INT_585);
-
-                        int k13 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6),
-                            i6 * AN_INT_585);
-
-                        int l15 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
-
-                        int i18 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
+                    if (decoration_east > 0 &&
+                        game_data_tile_type[decoration_east - 1] ==
+                            BRIDGE_TILE_TYPE) {
+                        int fill_front =
+                            game_data_tile_decoration[decoration_east - 1];
 
                         int *vertices = malloc(4 * sizeof(int));
-                        vertices[0] = i11;
-                        vertices[1] = k13;
-                        vertices[2] = l15;
-                        vertices[3] = i18;
 
-                        int l20 = game_model_create_face(
-                            game_model, 4, vertices, k8, COLOUR_TRANSPARENT);
+                        vertices[0] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y),
+                            r_y * TILE_SIZE);
 
-                        world->local_x[l20] = k4;
-                        world->local_y[l20] = i6;
+                        vertices[1] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y),
+                            r_y * TILE_SIZE);
 
-                        game_model->face_tag[l20] = 0x30d40 + l20;
+                        vertices[2] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
 
-                        world_method402(world, k4, i6, 0, k8, k8);
+                        vertices[3] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
+
+                        int tile_face = game_model_create_face(
+                            game_model, 4, vertices, fill_front,
+                            COLOUR_TRANSPARENT);
+
+                        world->local_x[tile_face] = r_x;
+                        world->local_y[tile_face] = r_y;
+
+                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+
+                        world_draw_map_tile(world, r_x, r_y, 0, fill_front,
+                                            fill_front);
                     }
 
-                    if (world_get_tile_decoration(world, k4 - 1, i6) > 0 &&
-                        game_data_tile_type[world_get_tile_decoration(
-                                                world, k4 - 1, i6) -
-                                            1] == 4) {
-                        int l8 = game_data_tile_decoration
-                            [world_get_tile_decoration(world, k4 - 1, i6) - 1];
+                    int decoration_west =
+                        world_get_tile_decoration(world, r_x - 1, r_y);
 
-                        int j11 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6),
-                            i6 * AN_INT_585);
-
-                        int l13 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6),
-                            i6 * AN_INT_585);
-
-                        int i16 = game_model_vertex_at(
-                            game_model, (k4 + 1) * AN_INT_585,
-                            -world_get_terrain_height(world, k4 + 1, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
-
-                        int j18 = game_model_vertex_at(
-                            game_model, k4 * AN_INT_585,
-                            -world_get_terrain_height(world, k4, i6 + 1),
-                            (i6 + 1) * AN_INT_585);
+                    if (decoration_west > 0 &&
+                        game_data_tile_type[decoration_west - 1] ==
+                            BRIDGE_TILE_TYPE) {
+                        int face_fill =
+                            game_data_tile_decoration[decoration_west - 1];
 
                         int *vertices = malloc(4 * sizeof(int));
-                        vertices[0] = j11;
-                        vertices[1] = l13;
-                        vertices[2] = i16;
-                        vertices[3] = j18;
 
-                        int i21 = game_model_create_face(
-                            game_model, 4, vertices, l8, COLOUR_TRANSPARENT);
+                        vertices[0] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y),
+                            r_y * TILE_SIZE);
 
-                        world->local_x[i21] = k4;
-                        world->local_y[i21] = i6;
-                        game_model->face_tag[i21] = 0x30d40 + i21;
-                        world_method402(world, k4, i6, 0, l8, l8);
+                        vertices[1] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y),
+                            r_y * TILE_SIZE);
+
+                        vertices[2] = game_model_vertex_at(
+                            game_model, (r_x + 1) * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x + 1, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
+
+                        vertices[3] = game_model_vertex_at(
+                            game_model, r_x * TILE_SIZE,
+                            -world_get_terrain_height(world, r_x, r_y + 1),
+                            (r_y + 1) * TILE_SIZE);
+
+                        int tile_face = game_model_create_face(
+                            game_model, 4, vertices, face_fill,
+                            COLOUR_TRANSPARENT);
+
+                        world->local_x[tile_face] = r_x;
+                        world->local_y[tile_face] = r_y;
+
+                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+
+                        world_draw_map_tile(world, r_x, r_y, 0, face_fill,
+                                            face_fill);
                     }
                 }
             }
@@ -1281,104 +1324,114 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
         game_model_split(world->parent_model, world->terrain_models, 0, 0, 1536,
                          1536, 8, 64, 233, 0);
 
-        for (int j6 = 0; j6 < TERRAIN_COUNT; j6++) {
-            scene_add_model(world->scene, world->terrain_models[j6]);
+        for (int i = 0; i < TERRAIN_COUNT; i++) {
+            scene_add_model(world->scene, world->terrain_models[i]);
         }
 
-        for (int X = 0; X < REGION_WIDTH; X++) {
-            for (int Y = 0; Y < REGION_HEIGHT; Y++) {
-                world->terrain_height_local[X][Y] =
-                    world_get_terrain_height(world, X, Y);
+        for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
+            for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
+                world->terrain_height_local[r_x][r_y] =
+                    world_get_terrain_height(world, r_x, r_y);
             }
         }
     }
 
     game_model_clear(world->parent_model);
 
-    int k1 = 0x606060;
+    int colour = 0x606060;
 
-    for (int i2 = 0; i2 < 95; i2++) {
-        for (int k2 = 0; k2 < 95; k2++) {
-            int k3 = world_get_wall_east_west(world, i2, k2);
+    for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
+        for (int r_y = 0; r_y < REGION_HEIGHT - 1; r_y++) {
+            int wall = world_get_wall_east_west(world, r_x, r_y);
 
-            if (k3 > 0 && game_data_wall_object_invisible[k3 - 1] == 0) {
-                world_method422(world, world->parent_model, k3 - 1, i2, k2,
-                                i2 + 1, k2);
+            if (wall > 0 && game_data_wall_object_invisible[wall - 1] == 0) {
+                world_create_wall(world, world->parent_model, wall - 1, r_x,
+                                  r_y, r_x + 1, r_y);
 
-                if (flag && game_data_wall_object_adjacent[k3 - 1] != 0) {
-                    world->object_adjacency[i2][k2] |= 1;
+                if (is_current_plane &&
+                    game_data_wall_object_adjacent[wall - 1] != 0) {
+                    world->object_adjacency[r_x][r_y] |= 1;
 
-                    if (k2 > 0) {
-                        world_set_object_adjacency_from3(world, i2, k2 - 1, 4);
+                    if (r_y > 0) {
+                        world_set_object_adjacency_from3(world, r_x, r_y - 1,
+                                                         4);
                     }
                 }
 
-                if (flag) {
-                    surface_draw_line_horiz(world->surface, i2 * 3, k2 * 3, 3,
-                                            k1);
+                if (is_current_plane) {
+                    surface_draw_line_horizontal(world->surface, r_x * 3,
+                                                 r_y * 3, 3, colour);
                 }
             }
 
-            k3 = world_get_wall_north_south(world, i2, k2);
+            wall = world_get_wall_north_south(world, r_x, r_y);
 
-            if (k3 > 0 && game_data_wall_object_invisible[k3 - 1] == 0) {
-                world_method422(world, world->parent_model, k3 - 1, i2, k2, i2,
-                                k2 + 1);
+            if (wall > 0 && game_data_wall_object_invisible[wall - 1] == 0) {
+                world_create_wall(world, world->parent_model, wall - 1, r_x,
+                                  r_y, r_x, r_y + 1);
 
-                if (flag && game_data_wall_object_adjacent[k3 - 1] != 0) {
-                    world->object_adjacency[i2][k2] |= 2;
+                if (is_current_plane &&
+                    game_data_wall_object_adjacent[wall - 1] != 0) {
+                    world->object_adjacency[r_x][r_y] |= 2;
 
-                    if (i2 > 0) {
-                        world_set_object_adjacency_from3(world, i2 - 1, k2, 8);
+                    if (r_x > 0) {
+                        world_set_object_adjacency_from3(world, r_x - 1, r_y,
+                                                         8);
                     }
                 }
 
-                if (flag) {
-                    surface_draw_line_vert(world->surface, i2 * 3, k2 * 3, 3,
-                                           k1);
+                if (is_current_plane) {
+                    surface_draw_line_vertical(world->surface, r_x * 3, r_y * 3,
+                                               3, colour);
                 }
             }
 
-            k3 = world_get_wall_diagonal(world, i2, k2);
+            wall = world_get_wall_diagonal(world, r_x, r_y);
 
-            if (k3 > 0 && k3 < 12000 &&
-                game_data_wall_object_invisible[k3 - 1] == 0) {
-                world_method422(world, world->parent_model, k3 - 1, i2, k2,
-                                i2 + 1, k2 + 1);
+            if (wall > 0 && wall < 12000 &&
+                game_data_wall_object_invisible[wall - 1] == 0) {
+                world_create_wall(world, world->parent_model, wall - 1, r_x,
+                                  r_y, r_x + 1, r_y + 1);
 
-                if (flag && game_data_wall_object_adjacent[k3 - 1] != 0) {
-                    world->object_adjacency[i2][k2] |= 0x20;
+                if (is_current_plane &&
+                    game_data_wall_object_adjacent[wall - 1] != 0) {
+                    world->object_adjacency[r_x][r_y] |= 0x20;
                 }
 
-                if (flag) {
-                    surface_set_pixel(world->surface, i2 * 3, k2 * 3, k1);
-                    surface_set_pixel(world->surface, i2 * 3 + 1, k2 * 3 + 1,
-                                      k1);
-                    surface_set_pixel(world->surface, i2 * 3 + 2, k2 * 3 + 2,
-                                      k1);
+                if (is_current_plane) {
+                    surface_set_pixel(world->surface, r_x * 3, r_y * 3, colour);
+
+                    surface_set_pixel(world->surface, r_x * 3 + 1, r_y * 3 + 1,
+                                      colour);
+
+                    surface_set_pixel(world->surface, r_x * 3 + 2, r_y * 3 + 2,
+                                      colour);
                 }
-            }
+            } else if (wall > 12000 && wall < 24000 &&
+                       game_data_wall_object_invisible[wall - 12001] == 0) {
+                world_create_wall(world, world->parent_model, wall - 12001,
+                                  r_x + 1, r_y, r_x, r_y + 1);
 
-            if (k3 > 12000 && k3 < 24000 &&
-                game_data_wall_object_invisible[k3 - 12001] == 0) {
-                world_method422(world, world->parent_model, k3 - 12001, i2 + 1,
-                                k2, i2, k2 + 1);
-
-                if (flag && game_data_wall_object_adjacent[k3 - 12001] != 0) {
-                    world->object_adjacency[i2][k2] |= 0x10;
+                if (is_current_plane &&
+                    game_data_wall_object_adjacent[wall - 12001] != 0) {
+                    world->object_adjacency[r_x][r_y] |= 0x10;
                 }
 
-                if (flag) {
-                    surface_set_pixel(world->surface, i2 * 3 + 2, k2 * 3, k1);
-                    surface_set_pixel(world->surface, i2 * 3 + 1, k2 * 3 + 1,
-                                      k1);
-                    surface_set_pixel(world->surface, i2 * 3, k2 * 3 + 2, k1);
+                if (is_current_plane) {
+                    surface_set_pixel(world->surface, r_x * 3 + 2, r_y * 3,
+                                      colour);
+
+                    surface_set_pixel(world->surface, r_x * 3 + 1, r_y * 3 + 1,
+                                      colour);
+
+                    surface_set_pixel(world->surface, r_x * 3, r_y * 3 + 2,
+                                      colour);
                 }
             }
         }
     }
 
-    if (flag) {
+    if (is_current_plane) {
         surface_draw_sprite_from5(world->surface, world->base_media_sprite - 1,
                                   0, 0, 285, 285);
     }
@@ -1388,378 +1441,471 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
     game_model_split(world->parent_model, world->wall_models[plane], 0, 0, 1536,
                      1536, 8, 64, 338, 1);
 
-    for (int l2 = 0; l2 < TERRAIN_COUNT; l2++) {
-        scene_add_model(world->scene, world->wall_models[plane][l2]);
+    for (int i = 0; i < TERRAIN_COUNT; i++) {
+        scene_add_model(world->scene, world->wall_models[plane][i]);
     }
 
-    for (int l3 = 0; l3 < 95; l3++) {
-        for (int l4 = 0; l4 < 95; l4++) {
-            int k6 = world_get_wall_east_west(world, l3, l4);
+    for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
+        for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
+            int wall_object_id = world_get_wall_east_west(world, r_x, r_y);
 
-            if (k6 > 0) {
-                world_method428(world, k6 - 1, l3, l4, l3 + 1, l4);
+            if (wall_object_id > 0) {
+                world_raise_wall_object(world, wall_object_id - 1, r_x, r_y,
+                                        r_x + 1, r_y);
             }
 
-            k6 = world_get_wall_north_south(world, l3, l4);
+            wall_object_id = world_get_wall_north_south(world, r_x, r_y);
 
-            if (k6 > 0) {
-                world_method428(world, k6 - 1, l3, l4, l3, l4 + 1);
+            if (wall_object_id > 0) {
+                world_raise_wall_object(world, wall_object_id - 1, r_x, r_y,
+                                        r_x, r_y + 1);
             }
 
-            k6 = world_get_wall_diagonal(world, l3, l4);
+            wall_object_id = world_get_wall_diagonal(world, r_x, r_y);
 
-            if (k6 > 0 && k6 < 12000) {
-                world_method428(world, k6 - 1, l3, l4, l3 + 1, l4 + 1);
+            if (wall_object_id > 0 && wall_object_id < 12000) {
+                world_raise_wall_object(world, wall_object_id - 1, r_x, r_y,
+                                        r_x + 1, r_y + 1);
             }
 
-            if (k6 > 12000 && k6 < 24000) {
-                world_method428(world, k6 - 12001, l3 + 1, l4, l3, l4 + 1);
+            if (wall_object_id > 12000 && wall_object_id < 24000) {
+                world_raise_wall_object(world, wall_object_id - 12001, r_x + 1,
+                                        r_y, r_x, r_y + 1);
             }
         }
     }
 
-    for (int i5 = 1; i5 < 95; i5++) {
-        for (int l6 = 1; l6 < 95; l6++) {
-            int j9 = world_get_wall_roof(world, i5, l6);
+    /* create roofs */
 
-            if (j9 > 0) {
-                int l11 = i5;
-                int i14 = l6;
-                int j16 = i5 + 1;
-                int k18 = l6;
-                int j19 = i5 + 1;
-                int j21 = l6 + 1;
-                int l22 = i5;
-                int j23 = l6 + 1;
-                int l23 = 0;
-                int j24 = world->terrain_height_local[l11][i14];
-                int l24 = world->terrain_height_local[j16][k18];
-                int j25 = world->terrain_height_local[j19][j21];
-                int l25 = world->terrain_height_local[l22][j23];
+    for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
+        for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
+            int roof_id = world_get_wall_roof(world, r_x, r_y);
 
-                if (j24 > 0x13880) {
-                    j24 -= 0x13880;
-                }
+            if (roof_id <= 0) {
+                continue;
+            }
 
-                if (l24 > 0x13880) {
-                    l24 -= 0x13880;
-                }
+            int east_x = r_x + 1;
+            int south_y = r_y + 1;
+            int height = 0;
+            int terrain_height = world->terrain_height_local[r_x][r_y];
+            int terrain_east_height = world->terrain_height_local[east_x][r_y];
 
-                if (j25 > 0x13880) {
-                    j25 -= 0x13880;
-                }
+            int terrain_south_east_height =
+                world->terrain_height_local[east_x][south_y];
 
-                if (l25 > 0x13880) {
-                    l25 -= 0x13880;
-                }
+            int terrain_south_height =
+                world->terrain_height_local[r_x][south_y];
 
-                if (j24 > l23) {
-                    l23 = j24;
-                }
+            if (terrain_height > PLANE_HEIGHT) {
+                terrain_height -= PLANE_HEIGHT;
+            }
 
-                if (l24 > l23) {
-                    l23 = l24;
-                }
+            if (terrain_east_height > PLANE_HEIGHT) {
+                terrain_east_height -= PLANE_HEIGHT;
+            }
 
-                if (j25 > l23) {
-                    l23 = j25;
-                }
+            if (terrain_south_east_height > PLANE_HEIGHT) {
+                terrain_south_east_height -= PLANE_HEIGHT;
+            }
 
-                if (l25 > l23) {
-                    l23 = l25;
-                }
+            if (terrain_south_height > PLANE_HEIGHT) {
+                terrain_south_height -= PLANE_HEIGHT;
+            }
 
-                if (l23 >= 0x13880) {
-                    l23 -= 0x13880;
-                }
+            if (terrain_height > height) {
+                height = terrain_height;
+            }
 
-                if (j24 < 0x13880) {
-                    world->terrain_height_local[l11][i14] = l23;
-                } else {
-                    world->terrain_height_local[l11][i14] -= 0x13880;
-                }
+            if (terrain_east_height > height) {
+                height = terrain_east_height;
+            }
 
-                if (l24 < 0x13880) {
-                    world->terrain_height_local[j16][k18] = l23;
-                } else {
-                    world->terrain_height_local[j16][k18] -= 0x13880;
-                }
+            if (terrain_south_east_height > height) {
+                height = terrain_south_east_height;
+            }
 
-                if (j25 < 0x13880) {
-                    world->terrain_height_local[j19][j21] = l23;
-                } else {
-                    world->terrain_height_local[j19][j21] -= 0x13880;
-                }
+            if (terrain_south_height > height) {
+                height = terrain_south_height;
+            }
 
-                if (l25 < 0x13880) {
-                    world->terrain_height_local[l22][j23] = l23;
-                } else {
-                    world->terrain_height_local[l22][j23] -= 0x13880;
-                }
+            if (height >= PLANE_HEIGHT) {
+                height -= PLANE_HEIGHT;
+            }
+
+            if (terrain_height < PLANE_HEIGHT) {
+                world->terrain_height_local[r_x][r_y] = height;
+            } else {
+                world->terrain_height_local[r_x][r_y] -= PLANE_HEIGHT;
+            }
+
+            if (terrain_east_height < PLANE_HEIGHT) {
+                world->terrain_height_local[east_x][r_y] = height;
+            } else {
+                world->terrain_height_local[east_x][r_y] -= PLANE_HEIGHT;
+            }
+
+            if (terrain_south_east_height < PLANE_HEIGHT) {
+                world->terrain_height_local[east_x][south_y] = height;
+            } else {
+                world->terrain_height_local[east_x][south_y] -= PLANE_HEIGHT;
+            }
+
+            if (terrain_south_height < PLANE_HEIGHT) {
+                world->terrain_height_local[r_x][south_y] = height;
+            } else {
+                world->terrain_height_local[r_x][south_y] -= PLANE_HEIGHT;
             }
         }
     }
 
     game_model_clear(world->parent_model);
 
-    for (int i7 = 1; i7 < 95; i7++) {
-        for (int k9 = 1; k9 < 95; k9++) {
-            int roof_nvs = world_get_wall_roof(world, i7, k9);
+    for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
+        for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
+            int roof_id = world_get_wall_roof(world, r_x, r_y);
 
-            if (roof_nvs > 0) {
-                int j14 = i7;
-                int k16 = k9;
-                int l18 = i7 + 1;
-                int k19 = k9;
-                int k21 = i7 + 1;
-                int i23 = k9 + 1;
-                int k23 = i7;
-                int i24 = k9 + 1;
-                int k24 = i7 * AN_INT_585;
-                int i25 = k9 * AN_INT_585;
-                int k25 = k24 + AN_INT_585;
-                int i26 = i25 + AN_INT_585;
-                int j26 = k24;
-                int k26 = i25;
-                int l26 = k25;
-                int i27 = i26;
-                int j27 = world->terrain_height_local[j14][k16];
-                int k27 = world->terrain_height_local[l18][k19];
-                int l27 = world->terrain_height_local[k21][i23];
-                int i28 = world->terrain_height_local[k23][i24];
-                int unknown = game_data_roof_height[roof_nvs - 1];
+            if (roof_id <= 0) {
+                continue;
+            }
 
-                if (world_has_roof(world, j14, k16) && j27 < 0x13880) {
-                    j27 += unknown + 0x13880;
-                    world->terrain_height_local[j14][k16] = j27;
+            int east_x = r_x + 1;
+            int south_y = r_y + 1;
+
+            int vertex_1_x = r_x * TILE_SIZE;
+            int vertex_1_z = r_y * TILE_SIZE;
+            int vertex_2_x = vertex_1_x + TILE_SIZE;
+            int vertex_4_z = vertex_1_z + TILE_SIZE;
+            int vertex_3_x = vertex_1_x;
+            int vertex_2_z = vertex_1_z;
+            int vertex_4_x = vertex_2_x;
+            int vertex_3_z = vertex_4_z;
+
+            int terrain_height = world->terrain_height_local[r_x][r_y];
+
+            int terrain_east_height =
+                world->terrain_height_local[east_x][r_y];
+
+            int terrain_south_east_height =
+                world->terrain_height_local[east_x]
+                                           [south_y];
+
+            int terrain_south_height =
+                world->terrain_height_local[r_x][south_y];
+
+            int roof_height = game_data_roof_height[roof_id - 1];
+
+            if (world_has_roof(world, r_x, r_y) &&
+                terrain_height < PLANE_HEIGHT) {
+                terrain_height += roof_height + PLANE_HEIGHT;
+                world->terrain_height_local[r_x][r_y] = terrain_height;
+            }
+
+            if (world_has_roof(world, east_x, r_y) &&
+                terrain_east_height < PLANE_HEIGHT) {
+                terrain_east_height += roof_height + PLANE_HEIGHT;
+                world->terrain_height_local[east_x][r_y] =
+                    terrain_east_height;
+            }
+
+            if (world_has_roof(world, east_x, south_y) &&
+                terrain_south_east_height < PLANE_HEIGHT) {
+                terrain_south_east_height += roof_height + PLANE_HEIGHT;
+                world->terrain_height_local[east_x]
+                                           [south_y] =
+                    terrain_south_east_height;
+            }
+
+            if (world_has_roof(world, r_x, south_y) &&
+                terrain_south_height < PLANE_HEIGHT) {
+                terrain_south_height += roof_height + PLANE_HEIGHT;
+                world->terrain_height_local[r_x][south_y] =
+                    terrain_south_height;
+            }
+
+            if (terrain_height >= PLANE_HEIGHT) {
+                terrain_height -= PLANE_HEIGHT;
+            }
+
+            if (terrain_east_height >= PLANE_HEIGHT) {
+                terrain_east_height -= PLANE_HEIGHT;
+            }
+
+            if (terrain_south_east_height >= PLANE_HEIGHT) {
+                terrain_south_east_height -= PLANE_HEIGHT;
+            }
+
+            if (terrain_south_height >= PLANE_HEIGHT) {
+                terrain_south_height -= PLANE_HEIGHT;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x - 1, r_y)) {
+                vertex_1_x -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x + 1, r_y)) {
+                vertex_1_x += ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x, r_y - 1)) {
+                vertex_1_z -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x, r_y + 1)) {
+                vertex_1_z += ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x - 1, r_y)) {
+                vertex_2_x -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x + 1, r_y)) {
+                vertex_2_x += ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x, r_y - 1)) {
+                vertex_2_z -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x, r_y + 1)) {
+                vertex_2_z += ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x - 1, south_y)) {
+                vertex_4_x -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x + 1, south_y)) {
+                vertex_4_x += ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x, south_y - 1)) {
+                vertex_4_z -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, east_x, south_y + 1)) {
+                vertex_4_z += ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x - 1, south_y)) {
+                vertex_3_x -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x + 1, south_y)) {
+                vertex_3_x += ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x, south_y - 1)) {
+                vertex_3_z -= ROOF_SLOPE;
+            }
+
+            if (!world_has_neighbouring_roof(world, r_x, south_y + 1)) {
+                vertex_3_z += ROOF_SLOPE;
+            }
+
+            roof_id = game_data_roof_fills[roof_id - 1];
+
+            terrain_height = -terrain_height;
+            terrain_east_height = -terrain_east_height;
+            terrain_south_east_height = -terrain_south_east_height;
+            terrain_south_height = -terrain_south_height;
+
+            int diagonal = world_get_wall_diagonal(world, r_x, r_y);
+
+            if (diagonal > 12000 && diagonal < 24000 &&
+                world_get_wall_roof(world, r_x - 1, r_y - 1) == 0) {
+                int *vertices = malloc(3 * sizeof(int));
+
+                vertices[0] =
+                    game_model_vertex_at(world->parent_model, vertex_4_x,
+                                         terrain_south_east_height, vertex_4_z);
+
+                vertices[1] =
+                    game_model_vertex_at(world->parent_model, vertex_3_x,
+                                         terrain_south_height, vertex_3_z);
+
+                vertices[2] =
+                    game_model_vertex_at(world->parent_model, vertex_2_x,
+                                         terrain_east_height, vertex_2_z);
+
+                game_model_create_face(world->parent_model, 3, vertices,
+                                       roof_id, COLOUR_TRANSPARENT);
+            } else if (diagonal > 12000 && diagonal < 24000 &&
+                       world_get_wall_roof(world, r_x + 1, r_y + 1) == 0) {
+                int *vertices = malloc(3 * sizeof(int));
+
+                vertices[0] =
+                    game_model_vertex_at(world->parent_model, vertex_1_x,
+                                         terrain_height, vertex_1_z);
+
+                vertices[1] =
+                    game_model_vertex_at(world->parent_model, vertex_2_x,
+                                         terrain_east_height, vertex_2_z);
+
+                vertices[2] =
+                    game_model_vertex_at(world->parent_model, vertex_3_x,
+                                         terrain_south_height, vertex_3_z);
+
+                game_model_create_face(world->parent_model, 3, vertices,
+                                       roof_id, COLOUR_TRANSPARENT);
+            } else if (world_get_wall_diagonal(world, r_x, r_y) > 0 &&
+                       world_get_wall_diagonal(world, r_x, r_y) < 12000 &&
+                       world_get_wall_roof(world, r_x + 1, r_y - 1) == 0) {
+                int *vertices = malloc(3 * sizeof(int));
+
+                vertices[0] =
+                    game_model_vertex_at(world->parent_model, vertex_3_x,
+                                         terrain_south_height, vertex_3_z);
+
+                vertices[1] =
+                    game_model_vertex_at(world->parent_model, vertex_1_x,
+                                         terrain_height, vertex_1_z);
+
+                vertices[2] =
+                    game_model_vertex_at(world->parent_model, vertex_4_x,
+                                         terrain_south_east_height, vertex_4_z);
+
+                game_model_create_face(world->parent_model, 3, vertices,
+                                       roof_id, COLOUR_TRANSPARENT);
+            } else if (world_get_wall_diagonal(world, r_x, r_y) > 0 &&
+                       world_get_wall_diagonal(world, r_x, r_y) < 12000 &&
+                       world_get_wall_roof(world, r_x - 1, r_y + 1) == 0) {
+                int *vertices = malloc(3 * sizeof(int));
+
+                vertices[0] =
+                    game_model_vertex_at(world->parent_model, vertex_2_x,
+                                         terrain_east_height, vertex_2_z);
+
+                vertices[1] =
+                    game_model_vertex_at(world->parent_model, vertex_4_x,
+                                         terrain_south_east_height, vertex_4_z);
+
+                vertices[2] =
+                    game_model_vertex_at(world->parent_model, vertex_1_x,
+                                         terrain_height, vertex_1_z);
+
+                game_model_create_face(world->parent_model, 3, vertices,
+                                       roof_id, COLOUR_TRANSPARENT);
+            } else if (terrain_height == terrain_east_height &&
+                       terrain_south_east_height == terrain_south_height) {
+                int *vertices = malloc(4 * sizeof(int));
+                vertices[0] =
+                    game_model_vertex_at(world->parent_model, vertex_1_x,
+                                         terrain_height, vertex_1_z);
+
+                vertices[1] =
+                    game_model_vertex_at(world->parent_model, vertex_2_x,
+                                         terrain_east_height, vertex_2_z);
+
+                vertices[2] =
+                    game_model_vertex_at(world->parent_model, vertex_4_x,
+                                         terrain_south_east_height, vertex_4_z);
+
+                vertices[3] =
+                    game_model_vertex_at(world->parent_model, vertex_3_x,
+                                         terrain_south_height, vertex_3_z);
+
+                game_model_create_face(world->parent_model, 4, vertices,
+                                       roof_id, COLOUR_TRANSPARENT);
+            } else if (terrain_height == terrain_south_height &&
+                       terrain_east_height == terrain_south_east_height) {
+                int *vertices = malloc(4 * sizeof(int));
+
+                vertices[0] =
+                    game_model_vertex_at(world->parent_model, vertex_3_x,
+                                         terrain_south_height, vertex_3_z);
+
+                vertices[1] =
+                    game_model_vertex_at(world->parent_model, vertex_1_x,
+                                         terrain_height, vertex_1_z);
+
+                vertices[2] =
+                    game_model_vertex_at(world->parent_model, vertex_2_x,
+                                         terrain_east_height, vertex_2_z);
+
+                vertices[3] =
+                    game_model_vertex_at(world->parent_model, vertex_4_x,
+                                         terrain_south_east_height, vertex_4_z);
+
+                game_model_create_face(world->parent_model, 4, vertices,
+                                       roof_id, COLOUR_TRANSPARENT);
+            } else {
+                /* draw roof corners */
+
+                int direction = 1;
+
+                if (world_get_wall_roof(world, r_x - 1, r_y - 1) > 0) {
+                    direction = 0;
                 }
 
-                if (world_has_roof(world, l18, k19) && k27 < 0x13880) {
-                    k27 += unknown + 0x13880;
-                    world->terrain_height_local[l18][k19] = k27;
+                if (world_get_wall_roof(world, r_x + 1, r_y + 1) > 0) {
+                    direction = 0;
                 }
 
-                if (world_has_roof(world, k21, i23) && l27 < 0x13880) {
-                    l27 += unknown + 0x13880;
-                    world->terrain_height_local[k21][i23] = l27;
-                }
+                if (!direction) {
+                    int *triangle_1 = malloc(3 * sizeof(int));
 
-                if (world_has_roof(world, k23, i24) && i28 < 0x13880) {
-                    i28 += unknown + 0x13880;
-                    world->terrain_height_local[k23][i24] = i28;
-                }
+                    triangle_1[0] =
+                        game_model_vertex_at(world->parent_model, vertex_2_x,
+                                             terrain_east_height, vertex_2_z);
+                    triangle_1[1] = game_model_vertex_at(
+                        world->parent_model, vertex_4_x,
+                        terrain_south_east_height, vertex_4_z);
 
-                if (j27 >= 0x13880) {
-                    j27 -= 0x13880;
-                }
+                    triangle_1[2] =
+                        game_model_vertex_at(world->parent_model, vertex_1_x,
+                                             terrain_height, vertex_1_z);
 
-                if (k27 >= 0x13880) {
-                    k27 -= 0x13880;
-                }
+                    game_model_create_face(world->parent_model, 3, triangle_1,
+                                           roof_id, COLOUR_TRANSPARENT);
 
-                if (l27 >= 0x13880) {
-                    l27 -= 0x13880;
-                }
+                    int *triangle_2 = malloc(3 * sizeof(int));
 
-                if (i28 >= 0x13880) {
-                    i28 -= 0x13880;
-                }
+                    triangle_2[0] =
+                        game_model_vertex_at(world->parent_model, vertex_3_x,
+                                             terrain_south_height, vertex_3_z);
 
-                int8_t byte0 = 16;
+                    triangle_2[1] =
+                        game_model_vertex_at(world->parent_model, vertex_1_x,
+                                             terrain_height, vertex_1_z);
 
-                if (!world_method427(world, j14 - 1, k16)) {
-                    k24 -= byte0;
-                }
+                    triangle_2[2] = game_model_vertex_at(
+                        world->parent_model, vertex_4_x,
+                        terrain_south_east_height, vertex_4_z);
 
-                if (!world_method427(world, j14 + 1, k16)) {
-                    k24 += byte0;
-                }
-
-                if (!world_method427(world, j14, k16 - 1)) {
-                    i25 -= byte0;
-                }
-
-                if (!world_method427(world, j14, k16 + 1)) {
-                    i25 += byte0;
-                }
-
-                if (!world_method427(world, l18 - 1, k19)) {
-                    k25 -= byte0;
-                }
-
-                if (!world_method427(world, l18 + 1, k19)) {
-                    k25 += byte0;
-                }
-
-                if (!world_method427(world, l18, k19 - 1)) {
-                    k26 -= byte0;
-                }
-
-                if (!world_method427(world, l18, k19 + 1)) {
-                    k26 += byte0;
-                }
-
-                if (!world_method427(world, k21 - 1, i23)) {
-                    l26 -= byte0;
-                }
-
-                if (!world_method427(world, k21 + 1, i23)) {
-                    l26 += byte0;
-                }
-
-                if (!world_method427(world, k21, i23 - 1)) {
-                    i26 -= byte0;
-                }
-
-                if (!world_method427(world, k21, i23 + 1)) {
-                    i26 += byte0;
-                }
-
-                if (!world_method427(world, k23 - 1, i24)) {
-                    j26 -= byte0;
-                }
-
-                if (!world_method427(world, k23 + 1, i24)) {
-                    j26 += byte0;
-                }
-
-                if (!world_method427(world, k23, i24 - 1)) {
-                    i27 -= byte0;
-                }
-
-                if (!world_method427(world, k23, i24 + 1)) {
-                    i27 += byte0;
-                }
-
-                roof_nvs = game_data_roof_num_vertices[roof_nvs - 1];
-
-                j27 = -j27;
-                k27 = -k27;
-                l27 = -l27;
-                i28 = -i28;
-
-                if (world_get_wall_diagonal(world, i7, k9) > 12000 &&
-                    world_get_wall_diagonal(world, i7, k9) < 24000 &&
-                    world_get_wall_roof(world, i7 - 1, k9 - 1) == 0) {
-                    int *ai8 = malloc(3 * sizeof(int));
-                    ai8[0] = game_model_vertex_at(world->parent_model, l26, l27,
-                                                  i26);
-                    ai8[1] = game_model_vertex_at(world->parent_model, j26, i28,
-                                                  i27);
-                    ai8[2] = game_model_vertex_at(world->parent_model, k25, k27,
-                                                  k26);
-                    game_model_create_face(world->parent_model, 3, ai8,
-                                           roof_nvs, COLOUR_TRANSPARENT);
-                } else if (world_get_wall_diagonal(world, i7, k9) > 12000 &&
-                           world_get_wall_diagonal(world, i7, k9) < 24000 &&
-                           world_get_wall_roof(world, i7 + 1, k9 + 1) == 0) {
-                    int *ai9 = malloc(3 * sizeof(int));
-                    ai9[0] = game_model_vertex_at(world->parent_model, k24, j27,
-                                                  i25);
-                    ai9[1] = game_model_vertex_at(world->parent_model, k25, k27,
-                                                  k26);
-                    ai9[2] = game_model_vertex_at(world->parent_model, j26, i28,
-                                                  i27);
-                    game_model_create_face(world->parent_model, 3, ai9,
-                                           roof_nvs, COLOUR_TRANSPARENT);
-                } else if (world_get_wall_diagonal(world, i7, k9) > 0 &&
-                           world_get_wall_diagonal(world, i7, k9) < 12000 &&
-                           world_get_wall_roof(world, i7 + 1, k9 - 1) == 0) {
-                    int *ai10 = malloc(3 * sizeof(int));
-                    ai10[0] = game_model_vertex_at(world->parent_model, j26,
-                                                   i28, i27);
-                    ai10[1] = game_model_vertex_at(world->parent_model, k24,
-                                                   j27, i25);
-                    ai10[2] = game_model_vertex_at(world->parent_model, l26,
-                                                   l27, i26);
-                    game_model_create_face(world->parent_model, 3, ai10,
-                                           roof_nvs, COLOUR_TRANSPARENT);
-                } else if (world_get_wall_diagonal(world, i7, k9) > 0 &&
-                           world_get_wall_diagonal(world, i7, k9) < 12000 &&
-                           world_get_wall_roof(world, i7 - 1, k9 + 1) == 0) {
-                    int *ai11 = malloc(3 * sizeof(int));
-                    ai11[0] = game_model_vertex_at(world->parent_model, k25,
-                                                   k27, k26);
-                    ai11[1] = game_model_vertex_at(world->parent_model, l26,
-                                                   l27, i26);
-                    ai11[2] = game_model_vertex_at(world->parent_model, k24,
-                                                   j27, i25);
-                    game_model_create_face(world->parent_model, 3, ai11,
-                                           roof_nvs, COLOUR_TRANSPARENT);
-                } else if (j27 == k27 && l27 == i28) {
-                    int *ai12 = malloc(4 * sizeof(int));
-                    ai12[0] = game_model_vertex_at(world->parent_model, k24,
-                                                   j27, i25);
-                    ai12[1] = game_model_vertex_at(world->parent_model, k25,
-                                                   k27, k26);
-                    ai12[2] = game_model_vertex_at(world->parent_model, l26,
-                                                   l27, i26);
-                    ai12[3] = game_model_vertex_at(world->parent_model, j26,
-                                                   i28, i27);
-                    game_model_create_face(world->parent_model, 4, ai12,
-                                           roof_nvs, COLOUR_TRANSPARENT);
-                } else if (j27 == i28 && k27 == l27) {
-                    int *ai13 = malloc(4 * sizeof(int));
-                    ai13[0] = game_model_vertex_at(world->parent_model, j26,
-                                                   i28, i27);
-                    ai13[1] = game_model_vertex_at(world->parent_model, k24,
-                                                   j27, i25);
-                    ai13[2] = game_model_vertex_at(world->parent_model, k25,
-                                                   k27, k26);
-                    ai13[3] = game_model_vertex_at(world->parent_model, l26,
-                                                   l27, i26);
-                    game_model_create_face(world->parent_model, 4, ai13,
-                                           roof_nvs, COLOUR_TRANSPARENT);
+                    game_model_create_face(world->parent_model, 3, triangle_2,
+                                           roof_id, COLOUR_TRANSPARENT);
                 } else {
-                    int flag1 = 1;
+                    int *triangle_1 = malloc(3 * sizeof(int));
 
-                    if (world_get_wall_roof(world, i7 - 1, k9 - 1) > 0) {
-                        flag1 = 0;
-                    }
+                    triangle_1[0] =
+                        game_model_vertex_at(world->parent_model, vertex_1_x,
+                                             terrain_height, vertex_1_z);
+                    triangle_1[1] =
+                        game_model_vertex_at(world->parent_model, vertex_2_x,
+                                             terrain_east_height, vertex_2_z);
+                    triangle_1[2] =
+                        game_model_vertex_at(world->parent_model, vertex_3_x,
+                                             terrain_south_height, vertex_3_z);
 
-                    if (world_get_wall_roof(world, i7 + 1, k9 + 1) > 0) {
-                        flag1 = 0;
-                    }
+                    game_model_create_face(world->parent_model, 3, triangle_1,
+                                           roof_id, COLOUR_TRANSPARENT);
 
-                    if (!flag1) {
-                        int *ai14 = malloc(3 * sizeof(int));
-                        ai14[0] = game_model_vertex_at(world->parent_model, k25,
-                                                       k27, k26);
-                        ai14[1] = game_model_vertex_at(world->parent_model, l26,
-                                                       l27, i26);
-                        ai14[2] = game_model_vertex_at(world->parent_model, k24,
-                                                       j27, i25);
-                        game_model_create_face(world->parent_model, 3, ai14,
-                                               roof_nvs, COLOUR_TRANSPARENT);
-                        int *ai16 = malloc(3 * sizeof(int));
-                        ai16[0] = game_model_vertex_at(world->parent_model, j26,
-                                                       i28, i27);
-                        ai16[1] = game_model_vertex_at(world->parent_model, k24,
-                                                       j27, i25);
-                        ai16[2] = game_model_vertex_at(world->parent_model, l26,
-                                                       l27, i26);
-                        game_model_create_face(world->parent_model, 3, ai16,
-                                               roof_nvs, COLOUR_TRANSPARENT);
-                    } else {
-                        int *ai15 = malloc(3 * sizeof(int));
-                        ai15[0] = game_model_vertex_at(world->parent_model, k24,
-                                                       j27, i25);
-                        ai15[1] = game_model_vertex_at(world->parent_model, k25,
-                                                       k27, k26);
-                        ai15[2] = game_model_vertex_at(world->parent_model, j26,
-                                                       i28, i27);
-                        game_model_create_face(world->parent_model, 3, ai15,
-                                               roof_nvs, COLOUR_TRANSPARENT);
-                        int *ai17 = malloc(3 * sizeof(int));
-                        ai17[0] = game_model_vertex_at(world->parent_model, l26,
-                                                       l27, i26);
-                        ai17[1] = game_model_vertex_at(world->parent_model, j26,
-                                                       i28, i27);
-                        ai17[2] = game_model_vertex_at(world->parent_model, k25,
-                                                       k27, k26);
-                        game_model_create_face(world->parent_model, 3, ai17,
-                                               roof_nvs, COLOUR_TRANSPARENT);
-                    }
+                    int *triangle_2 = malloc(3 * sizeof(int));
+
+                    triangle_2[0] = game_model_vertex_at(
+                        world->parent_model, vertex_4_x,
+                        terrain_south_east_height, vertex_4_z);
+
+                    triangle_2[1] =
+                        game_model_vertex_at(world->parent_model, vertex_3_x,
+                                             terrain_south_height, vertex_3_z);
+                    triangle_2[2] =
+                        game_model_vertex_at(world->parent_model, vertex_2_x,
+                                             terrain_east_height, vertex_2_z);
+
+                    game_model_create_face(world->parent_model, 3, triangle_2,
+                                           roof_id, COLOUR_TRANSPARENT);
                 }
             }
         }
@@ -1770,14 +1916,14 @@ void world_load_section_from4(World *world, int x, int y, int plane, int flag) {
     game_model_split(world->parent_model, world->roof_models[plane], 0, 0, 1536,
                      1536, 8, 64, 169, 1);
 
-    for (int l9 = 0; l9 < TERRAIN_COUNT; l9++) {
-        scene_add_model(world->scene, world->roof_models[plane][l9]);
+    for (int i = 0; i < TERRAIN_COUNT; i++) {
+        scene_add_model(world->scene, world->roof_models[plane][i]);
     }
 
-    for (int j12 = 0; j12 < REGION_WIDTH; j12++) {
-        for (int k14 = 0; k14 < REGION_HEIGHT; k14++) {
-            if (world->terrain_height_local[j12][k14] >= 0x13880) {
-                world->terrain_height_local[j12][k14] -= 0x13880;
+    for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
+        for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
+            if (world->terrain_height_local[r_x][r_y] >= PLANE_HEIGHT) {
+                world->terrain_height_local[r_x][r_y] -= PLANE_HEIGHT;
             }
         }
     }
@@ -1787,78 +1933,83 @@ void world_set_object_adjacency_from3(World *world, int i, int j, int k) {
     world->object_adjacency[i][j] |= k;
 }
 
-int world_get_tile_type(World *world, int i, int j, int k) {
-    int l = world_get_tile_decoration(world, i, j);
+int world_get_tile_type(World *world, int i, int j) {
+    int decoration = world_get_tile_decoration(world, i, j);
 
-    if (l == 0) {
+    if (decoration == 0) {
         return -1;
     }
 
-    int i1 = game_data_tile_type[l - 1];
+    int type = game_data_tile_type[decoration - 1];
 
-    return i1 != 2 ? 0 : 1;
+    return type != 2 ? 0 : 1;
 }
 
 void world_add_models(World *world, GameModel **models) {
-    for (int i = 0; i < 94; i++) {
-        for (int j = 0; j < 94; j++) {
-            if (world_get_wall_diagonal(world, i, j) > 48000 &&
-                world_get_wall_diagonal(world, i, j) < 60000) {
-                int k = world_get_wall_diagonal(world, i, j) - 48001;
-                int l = world_get_tile_direction(world, i, j);
-                int i1 = 0;
-                int j1 = 0;
+    for (int x = 0; x < 94; x++) {
+        for (int y = 0; y < 94; y++) {
+            int diagonal = world_get_wall_diagonal(world, x, y);
 
-                if (l == 0 || l == 4) {
-                    i1 = game_data_object_width[k];
-                    j1 = game_data_object_height[k];
+            if (diagonal > 48000 && diagonal < 60000) {
+                int object_id = diagonal - 48001;
+                int tile_direction = world_get_tile_direction(world, x, y);
+                int width = 0;
+                int height = 0;
+
+                if (tile_direction == 0 || tile_direction == 4) {
+                    width = game_data_object_width[object_id];
+                    height = game_data_object_height[object_id];
                 } else {
-                    j1 = game_data_object_width[k];
-                    i1 = game_data_object_height[k];
+                    height = game_data_object_width[object_id];
+                    width = game_data_object_height[object_id];
                 }
 
-                world_remove_object2(world, i, j, k);
+                world_remove_object2(world, x, y, object_id);
 
                 GameModel *game_model = game_model_copy_from4(
-                    models[game_data_object_model_index[k]], 0, 1, 0, 0);
+                    models[game_data_object_model_index[object_id]], 0, 1, 0,
+                    0);
 
-                int k1 = ((i + i + i1) * AN_INT_585) / 2;
-                int i2 = ((j + j + j1) * AN_INT_585) / 2;
+                int translate_x = ((x + x + width) * TILE_SIZE) / 2;
+                int translate_y = ((y + y + height) * TILE_SIZE) / 2;
 
-                game_model_translate(game_model, k1,
-                                     -world_get_elevation(world, k1, i2), i2);
+                game_model_translate(
+                    game_model, translate_x,
+                    -world_get_elevation(world, translate_x, translate_y),
+                    translate_y);
 
                 game_model_orient(game_model, 0,
-                                  world_get_tile_direction(world, i, j) * 32,
+                                  world_get_tile_direction(world, x, y) * 32,
                                   0);
 
                 scene_add_model(world->scene, game_model);
                 game_model_set_light_from5(game_model, 48, 48, -50, -10, -50);
 
-                if (i1 > 1 || j1 > 1) {
-                    for (int k2 = i; k2 < i + i1; k2++) {
-                        for (int l2 = j; l2 < j + j1; l2++) {
-                            if ((k2 > i || l2 > j) &&
-                                world_get_wall_diagonal(world, k2, l2) -
+                if (width > 1 || height > 1) {
+                    for (int xx = x; xx < x + width; xx++) {
+                        for (int yy = y; yy < y + height; yy++) {
+                            if ((xx > x || yy > y) &&
+                                world_get_wall_diagonal(world, xx, yy) -
                                         48001 ==
-                                    k) {
-                                int l1 = k2;
-                                int j2 = l2;
-                                int8_t height = 0;
+                                    object_id) {
+                                int object_x = xx;
+                                int object_y = yy;
+                                int8_t plane = 0;
 
-                                if (l1 >= 48 && j2 < 48) {
-                                    height = 1;
-                                    l1 -= 48;
-                                } else if (l1 < 48 && j2 >= 48) {
-                                    height = 2;
-                                    j2 -= 48;
-                                } else if (l1 >= 48 && j2 >= 48) {
-                                    height = 3;
-                                    l1 -= 48;
-                                    j2 -= 48;
+                                if (object_x >= 48 && object_y < 48) {
+                                    plane = 1;
+                                    object_x -= 48;
+                                } else if (object_x < 48 && object_y >= 48) {
+                                    plane = 2;
+                                    object_y -= 48;
+                                } else if (object_x >= 48 && object_y >= 48) {
+                                    plane = 3;
+                                    object_x -= 48;
+                                    object_y -= 48;
                                 }
 
-                                world->walls_diagonal[height][l1 * 48 + j2] = 0;
+                                world->walls_diagonal[plane][object_x * 48 +
+                                                             object_y] = 0;
                             }
                         }
                     }
@@ -1868,43 +2019,42 @@ void world_add_models(World *world, GameModel **models) {
     }
 }
 
-void world_method422(World *world, GameModel *game_model, int i, int j, int k,
-                     int l, int i1) {
-    world_method425(world, j, k, 40);
-    world_method425(world, l, i1, 40);
+void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
+                       int x1, int y1, int x2, int y2) {
+    world_method425(world, x1, y1, 40);
+    world_method425(world, x2, y2, 40);
 
-    int h = game_data_wall_object_height[i];
-    int front = game_data_wall_object_texture_front[i];
-    int back = game_data_wall_object_texture_back[i];
-    int i2 = j * AN_INT_585;
-    int j2 = k * AN_INT_585;
-    int k2 = l * AN_INT_585;
-    int l2 = i1 * AN_INT_585;
-
-    int i3 = game_model_vertex_at(game_model, i2,
-                                  -world->terrain_height_local[j][k], j2);
-
-    int j3 = game_model_vertex_at(game_model, i2,
-                                  -world->terrain_height_local[j][k] - h, j2);
-
-    int k3 = game_model_vertex_at(game_model, k2,
-                                  -world->terrain_height_local[l][i1] - h, l2);
-
-    int l3 = game_model_vertex_at(game_model, k2,
-                                  -world->terrain_height_local[l][i1], l2);
+    int height = game_data_wall_object_height[wall_object_id];
+    int front = game_data_wall_object_texture_front[wall_object_id];
+    int back = game_data_wall_object_texture_back[wall_object_id];
+    int vertex_x1 = x1 * TILE_SIZE;
+    int vertex_y1 = y1 * TILE_SIZE;
+    int vertex_x2 = x2 * TILE_SIZE;
+    int vertex_y2 = y2 * TILE_SIZE;
 
     int *vertices = malloc(4 * sizeof(int));
-    vertices[0] = i3;
-    vertices[1] = j3;
-    vertices[2] = k3;
-    vertices[3] = l3;
 
-    int i4 = game_model_create_face(game_model, 4, vertices, front, back);
+    vertices[0] = game_model_vertex_at(
+        game_model, vertex_x1, -world->terrain_height_local[x1][y1], vertex_y1);
 
-    if (game_data_wall_object_invisible[i] == 5) {
-        game_model->face_tag[i4] = 30000 + i;
+    vertices[1] = game_model_vertex_at(
+        game_model, vertex_x1, -world->terrain_height_local[x1][y1] - height,
+        vertex_y1);
+
+    vertices[2] = game_model_vertex_at(
+        game_model, vertex_x2, -world->terrain_height_local[x2][y2] - height,
+        vertex_y2);
+
+    vertices[3] = game_model_vertex_at(
+        game_model, vertex_x2, -world->terrain_height_local[x2][y2], vertex_y2);
+
+    int wall_face =
+        game_model_create_face(game_model, 4, vertices, front, back);
+
+    if (game_data_wall_object_invisible[wall_object_id] == 5) {
+        game_model->face_tag[wall_face] = 30000 + wall_object_id;
     } else {
-        game_model->face_tag[i4] = 0;
+        game_model->face_tag[wall_face] = 0;
     }
 }
 
@@ -1931,6 +2081,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     }
 }
 
+/* TODO add wall shadow */
 void world_method425(World *world, int i, int j, int k) {
     int l = i / 12;
     int i1 = j / 12;
@@ -2006,21 +2157,24 @@ void world_remove_object(World *world, int x, int y, int id) {
     }
 }
 
-int world_method427(World *world, int i, int j) {
-    return (world_get_wall_roof(world, i, j) > 0 ||
-            world_get_wall_roof(world, i - 1, j) > 0 ||
-            world_get_wall_roof(world, i - 1, j - 1) > 0 ||
-            world_get_wall_roof(world, i, j - 1) > 0);
+int world_has_neighbouring_roof(World *world, int x, int y) {
+    return (world_get_wall_roof(world, x, y) > 0 ||
+            world_get_wall_roof(world, x - 1, y) > 0 ||
+            world_get_wall_roof(world, x - 1, y - 1) > 0 ||
+            world_get_wall_roof(world, x, y - 1) > 0);
 }
 
-void world_method428(World *world, int i, int j, int k, int l, int i1) {
-    int j1 = game_data_wall_object_height[i];
+/* move wall (objects) to the upper-plane */
 
-    if (world->terrain_height_local[j][k] < 0x13880) {
-        world->terrain_height_local[j][k] += 0x13880 + j1;
+void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
+                             int x2, int y2) {
+    int height = game_data_wall_object_height[wall_object_id];
+
+    if (world->terrain_height_local[x1][y1] < PLANE_HEIGHT) {
+        world->terrain_height_local[x1][y1] += PLANE_HEIGHT + height;
     }
 
-    if (world->terrain_height_local[l][i1] < 0x13880) {
-        world->terrain_height_local[l][i1] += 0x13880 + j1;
+    if (world->terrain_height_local[x2][y2] < PLANE_HEIGHT) {
+        world->terrain_height_local[x2][y2] += PLANE_HEIGHT + height;
     }
 }
