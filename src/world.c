@@ -260,6 +260,8 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
     }
 }
 
+/* TODO rename to read map files? */
+
 void world_load_section_from4i(World *world, int x, int y, int plane,
                                int chunk) {
     if (world->landscape_pack == NULL) {
@@ -799,13 +801,13 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
 
 void world_load_section_from4(World *world, int x, int y, int plane,
                               int is_current_plane) {
-    int region_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
-    int region_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
+    int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
+    int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
-    world_load_section_from4i(world, region_x - 1, region_y - 1, plane, 0);
-    world_load_section_from4i(world, region_x, region_y - 1, plane, 1);
-    world_load_section_from4i(world, region_x - 1, region_y, plane, 2);
-    world_load_section_from4i(world, region_x, region_y, plane, 3);
+    world_load_section_from4i(world, section_x - 1, section_y - 1, plane, 0);
+    world_load_section_from4i(world, section_x, section_y - 1, plane, 1);
+    world_load_section_from4i(world, section_x - 1, section_y, plane, 2);
+    world_load_section_from4i(world, section_x, section_y, plane, 3);
 
     world_set_tiles(world);
 
@@ -813,6 +815,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         world->parent_model = malloc(sizeof(GameModel));
         game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
     }
+
+    /* create terrain */
 
     if (is_current_plane) {
         surface_black_screen(world->surface);
@@ -824,7 +828,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
 
         GameModel *game_model = world->parent_model;
-        game_model_clear(game_model);
+        game_model_destroy(game_model);
+        game_model_from7(game_model, 18688, 18688, 1, 1, 0, 0, 1);
+        //game_model_clear(game_model);
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -876,6 +882,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             }
         }
 
+        /* draw regular tiles */
+
         for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT - 1; r_y++) {
                 int colour_index = world_get_terrain_colour(world, r_x, r_y);
@@ -919,6 +927,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                     COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
                                     world, r_x - 1, r_y, plane, colour_2);
+
                                 direction = 0;
                             } else if (world_get_tile_decoration_from4(
                                            world, r_x + 1, r_y, plane,
@@ -990,8 +999,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->object_adjacency[r_x][r_y] |= 0x40;
                     }
 
-                    if (game_data_tile_type[decoration - 1] ==
-                        FLOOR_TILE_TYPE) {
+                    if (tile_type == FLOOR_TILE_TYPE) {
                         world->object_adjacency[r_x][r_y] |= 0x80;
                     }
                 }
@@ -1321,8 +1329,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
         game_model_set_light_from6(game_model, 1, 40, 48, -50, -10, -50);
 
-        game_model_split(world->parent_model, world->terrain_models, 0, 0, 1536,
-                         1536, 8, 64, 233, 0);
+        //game_model_dump(game_model, 123);
+
+        game_model_split(world->parent_model, world->terrain_models, 1536, 1536,
+                         8, 64, 233, 0);
 
         for (int i = 0; i < TERRAIN_COUNT; i++) {
             scene_add_model(world->scene, world->terrain_models[i]);
@@ -1336,9 +1346,13 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
     }
 
-    game_model_clear(world->parent_model);
+    game_model_destroy(world->parent_model);
+    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    //game_model_clear(world->parent_model);
 
     int colour = 0x606060;
+
+    /* create diagonal walls */
 
     for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 0; r_y < REGION_HEIGHT - 1; r_y++) {
@@ -1431,6 +1445,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
     }
 
+    //game_model_dump(world->parent_model, 1234);
+
     if (is_current_plane) {
         surface_draw_sprite_from5(world->surface, world->base_media_sprite - 1,
                                   0, 0, 285, 285);
@@ -1438,12 +1454,14 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     game_model_set_light_from6(world->parent_model, 0, 60, 24, -50, -10, -50);
 
-    game_model_split(world->parent_model, world->wall_models[plane], 0, 0, 1536,
-                     1536, 8, 64, 338, 1);
+    game_model_split(world->parent_model, world->wall_models[plane], 1536, 1536,
+                     8, 64, 338, 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_add_model(world->scene, world->wall_models[plane][i]);
     }
+
+    /* create walls */
 
     for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -1559,7 +1577,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
     }
 
-    game_model_clear(world->parent_model);
+    game_model_destroy(world->parent_model);
+    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    //game_model_clear(world->parent_model);
 
     for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
@@ -1583,12 +1603,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
             int terrain_height = world->terrain_height_local[r_x][r_y];
 
-            int terrain_east_height =
-                world->terrain_height_local[east_x][r_y];
+            int terrain_east_height = world->terrain_height_local[east_x][r_y];
 
             int terrain_south_east_height =
-                world->terrain_height_local[east_x]
-                                           [south_y];
+                world->terrain_height_local[east_x][south_y];
 
             int terrain_south_height =
                 world->terrain_height_local[r_x][south_y];
@@ -1604,15 +1622,13 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             if (world_has_roof(world, east_x, r_y) &&
                 terrain_east_height < PLANE_HEIGHT) {
                 terrain_east_height += roof_height + PLANE_HEIGHT;
-                world->terrain_height_local[east_x][r_y] =
-                    terrain_east_height;
+                world->terrain_height_local[east_x][r_y] = terrain_east_height;
             }
 
             if (world_has_roof(world, east_x, south_y) &&
                 terrain_south_east_height < PLANE_HEIGHT) {
                 terrain_south_east_height += roof_height + PLANE_HEIGHT;
-                world->terrain_height_local[east_x]
-                                           [south_y] =
+                world->terrain_height_local[east_x][south_y] =
                     terrain_south_east_height;
             }
 
@@ -1789,6 +1805,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             } else if (terrain_height == terrain_east_height &&
                        terrain_south_east_height == terrain_south_height) {
                 int *vertices = malloc(4 * sizeof(int));
+
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_1_x,
                                          terrain_height, vertex_1_z);
@@ -1913,8 +1930,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     game_model_set_light_from6(world->parent_model, 1, 50, 50, -50, -10, -50);
 
-    game_model_split(world->parent_model, world->roof_models[plane], 0, 0, 1536,
-                     1536, 8, 64, 169, 1);
+    game_model_split(world->parent_model, world->roof_models[plane], 1536, 1536,
+                     8, 64, 169, 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_add_model(world->scene, world->roof_models[plane][i]);
@@ -2065,20 +2082,24 @@ int world_get_terrain_height(World *world, int x, int y) {
 void world_load_section_from3(World *world, int x, int y, int plane) {
     world_reset(world);
 
-    int l = (x + 24) / 48;
-    int i1 = (y + 24) / 48;
+    int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
+    int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
     world_load_section_from4(world, x, y, plane, 1);
 
     if (plane == 0) {
         world_load_section_from4(world, x, y, 1, 0);
         world_load_section_from4(world, x, y, 2, 0);
-        world_load_section_from4i(world, l - 1, i1 - 1, plane, 0);
-        world_load_section_from4i(world, l, i1 - 1, plane, 1);
-        world_load_section_from4i(world, l - 1, i1, plane, 2);
-        world_load_section_from4i(world, l, i1, plane, 3);
+        world_load_section_from4i(world, section_x - 1, section_y - 1, plane, 0);
+        world_load_section_from4i(world, section_x, section_y - 1, plane, 1);
+        world_load_section_from4i(world, section_x - 1, section_y, plane, 2);
+        world_load_section_from4i(world, section_x, section_y, plane, 3);
         world_set_tiles(world);
     }
+
+    game_model_destroy(world->parent_model);
+    free(world->parent_model);
+    world->parent_model = NULL;
 }
 
 /* TODO add wall shadow */

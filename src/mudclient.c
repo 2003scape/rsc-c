@@ -2133,16 +2133,16 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 
     int ax = mud->region_x;
     int ay = mud->region_y;
-    int section_x = (lx + 24) / 48;
-    int section_y = (ly + 24) / 48;
+    int section_x = (lx + (REGION_SIZE / 2)) / REGION_SIZE;
+    int section_y = (ly + (REGION_SIZE / 2)) / REGION_SIZE;
 
     mud->last_height_offset = mud->plane_index;
-    mud->region_x = section_x * 48 - 48;
-    mud->region_y = section_y * 48 - 48;
-    mud->local_lower_x = section_x * 48 - 32;
-    mud->local_lower_y = section_y * 48 - 32;
-    mud->local_upper_x = section_x * 48 + 32;
-    mud->local_upper_y = section_y * 48 + 32;
+    mud->region_x = section_x * REGION_SIZE - REGION_SIZE;
+    mud->region_y = section_y * REGION_SIZE - REGION_SIZE;
+    mud->local_lower_x = section_x * REGION_SIZE - 32;
+    mud->local_lower_y = section_y * REGION_SIZE - 32;
+    mud->local_upper_x = section_x * REGION_SIZE + 32;
+    mud->local_upper_y = section_y * REGION_SIZE + 32;
 
     world_load_section_from3(mud->world, lx, ly, mud->last_height_offset);
 

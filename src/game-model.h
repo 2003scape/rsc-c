@@ -2,6 +2,7 @@
 #define _H_GAME_MODEL
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct GameModel GameModel;
@@ -115,9 +116,9 @@ int game_model_vertex_at(GameModel *game_model, int x, int y, int z);
 int game_model_create_vertex(GameModel *game_model, int x, int y, int z);
 int game_model_create_face(GameModel *game_model, int number, int *vertices,
                            int fill_front, int fill_back);
-void game_model_split(GameModel *game_model, GameModel **pieces, int unused1,
-                      int unused2, int piece_dx, int piece_dz, int rows,
-                      int count, int piece_max_vertices, int pickable);
+void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
+                      int piece_dz, int rows, int count, int piece_max_vertices,
+                      int pickable);
 void game_model_copy_lighting(GameModel *game_model, GameModel *model,
                               int *src_vertices, int num_vertices, int in_face);
 void game_model_set_light_from3(GameModel *game_model, int x, int y, int z);
@@ -151,5 +152,6 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
                                  int isolated, int unlit, int pickable);
 void game_model_copy_position(GameModel *game_model, GameModel *model);
 void game_model_destroy(GameModel *game_model);
+void game_model_dump(GameModel *game_model, int i);
 
 #endif

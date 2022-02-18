@@ -220,16 +220,16 @@ void game_model_allocate(GameModel *game_model, int num_vertices,
 
 void game_model_projection_prepare(GameModel *game_model) {
     game_model->project_vertex_x =
-        malloc(game_model->num_vertices * sizeof(int));
+        calloc(game_model->num_vertices, sizeof(int));
 
     game_model->project_vertex_y =
-        malloc(game_model->num_vertices * sizeof(int));
+        calloc(game_model->num_vertices, sizeof(int));
 
     game_model->project_vertex_z =
-        malloc(game_model->num_vertices * sizeof(int));
+        calloc(game_model->num_vertices, sizeof(int));
 
-    game_model->vertex_view_x = malloc(game_model->num_vertices * sizeof(int));
-    game_model->vertex_view_y = malloc(game_model->num_vertices * sizeof(int));
+    game_model->vertex_view_x = calloc(game_model->num_vertices, sizeof(int));
+    game_model->vertex_view_y = calloc(game_model->num_vertices, sizeof(int));
 }
 
 void game_model_clear(GameModel *game_model) {
@@ -351,9 +351,9 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     return game_model->num_faces++;
 }
 
-void game_model_split(GameModel *game_model, GameModel **pieces, int unused1,
-                      int unused2, int piece_dx, int piece_dz, int rows,
-                      int count, int piece_max_vertices, int pickable) {
+void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
+                      int piece_dz, int rows, int count, int piece_max_vertices,
+                      int pickable) {
     game_model_commit(game_model);
 
     int *piece_nv = malloc(count * sizeof(int));
@@ -886,7 +886,9 @@ void game_model_apply(GameModel *game_model) {
     if (game_model->transform_state == 1) {
         game_model->transform_state = 0;
 
-        //printf("%d %p %p\n", game_model->num_vertices, game_model->vertex_transformed_x, game_model->vertex_x, game_model->vertex_z);
+        // printf("%d %p %p\n", game_model->num_vertices,
+        // game_model->vertex_transformed_x, game_model->vertex_x,
+        // game_model->vertex_z);
 
         for (int i = 0; i < game_model->num_vertices; i++) {
             game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
@@ -1054,6 +1056,8 @@ void game_model_destroy(GameModel *game_model) {
         return;
     }
 
+    game_model->num_vertices = 0;
+
     for (int i = 0; i < game_model->num_faces; i++) {
         if (game_model->face_trans_state_thing) {
             free(game_model->face_trans_state_thing[i]);
@@ -1064,7 +1068,7 @@ void game_model_destroy(GameModel *game_model) {
         game_model->face_vertices[i] = NULL;
     }
 
-    //game_model->num_faces = 0;
+    game_model->num_faces = 0;
 
     free(game_model->face_trans_state_thing);
     game_model->face_trans_state_thing = NULL;
@@ -1200,4 +1204,42 @@ void game_model_destroy(GameModel *game_model) {
 
     free(game_model->vertex_view_y);
     game_model->vertex_view_y = NULL;
+}
+
+void game_model_dump(GameModel *game_model, int i) {
+    /*
+    if (game_model->num_vertices < 1000) {
+        return;
+    }*/
+
+    char name[255];
+
+    sprintf(name, "./world-%d.obj", i);
+
+    FILE *obj_file = fopen(name, "w");
+
+    for (int i = 0; i < game_model->num_vertices; i++) {
+        /*
+        float vertex_x = (((float) game_model->vertex_x[i]) / 100) - 100;
+        float vertex_y = ((float) game_model->vertex_y[i]) / 100;
+        float vertex_z = (((float) game_model->vertex_z[i]) / 100) - 100;
+        */
+        float vertex_x = (((float)game_model->vertex_x[i]) / 100) - 100;
+        float vertex_y = ((float)game_model->vertex_y[i]) / 100;
+        float vertex_z = (((float)game_model->vertex_z[i]) / 100) - 100;
+
+        fprintf(obj_file, "v %f %f %f\n", vertex_x, -vertex_y, vertex_z);
+    }
+
+    for (int i = 0; i < game_model->num_faces; i++) {
+        fprintf(obj_file, "f ");
+
+        for (int j = 0; j < game_model->face_num_vertices[i]; j++) {
+            fprintf(obj_file, "%d ", game_model->face_vertices[i][j] + 1);
+        }
+
+        fprintf(obj_file, "\n");
+    }
+
+    fclose(obj_file);
 }

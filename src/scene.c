@@ -9,11 +9,12 @@ int scene_frustum_near_z = 0;
 int64_t scene_texture_count_loaded = 0;
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
-               int polygon_count, int sprite_count) {
+               int polygon_count, int max_sprite_count) {
     memset(scene, 0, sizeof(Scene));
 
     scene->surface = surface;
     scene->max_model_count = model_count;
+    scene->max_sprite_count = max_sprite_count;
 
     memset(scene->gradient_base, 0, RAMP_COUNT * sizeof(int));
     memset(scene->gradient_ramps, 0, RAMP_COUNT * 256 * sizeof(int));
@@ -56,17 +57,17 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     }
 
     GameModel *view = malloc(sizeof(GameModel));
-    game_model_from2(view, sprite_count * 2, sprite_count);
+    game_model_from2(view, max_sprite_count * 2, max_sprite_count);
     scene->view = view;
 
     scene->sprite_count = 0;
-    scene->sprite_id = calloc(sprite_count, sizeof(int));
-    scene->sprite_width = calloc(sprite_count, sizeof(int));
-    scene->sprite_height = calloc(sprite_count, sizeof(int));
-    scene->sprite_x = calloc(sprite_count, sizeof(int));
-    scene->sprite_z = calloc(sprite_count, sizeof(int));
-    scene->sprite_y = calloc(sprite_count, sizeof(int));
-    scene->sprite_translate_x = calloc(sprite_count, sizeof(int));
+    scene->sprite_id = calloc(max_sprite_count, sizeof(int));
+    scene->sprite_width = calloc(max_sprite_count, sizeof(int));
+    scene->sprite_height = calloc(max_sprite_count, sizeof(int));
+    scene->sprite_x = calloc(max_sprite_count, sizeof(int));
+    scene->sprite_z = calloc(max_sprite_count, sizeof(int));
+    scene->sprite_y = calloc(max_sprite_count, sizeof(int));
+    scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 }
 
 void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
@@ -1169,7 +1170,7 @@ int rgb(int i, int j, int k) {
 
 void scene_add_model(Scene *scene, GameModel *model) {
     if (model == NULL) {
-        fprintf(stderr, "Warning tried to add null object!");
+        fprintf(stderr, "Warning tried to add null object!\n");
     }
 
     if (scene->model_count < scene->max_model_count) {
@@ -1208,7 +1209,9 @@ void scene_dispose(Scene *scene) {
 
 void scene_clear(Scene *scene) {
     scene->sprite_count = 0;
-    game_model_clear(scene->view);
+    game_model_destroy(scene->view);
+    game_model_from2(scene->view, scene->max_sprite_count * 2, scene->max_sprite_count);
+    //game_model_clear(scene->view);
 }
 
 void scene_reduce_sprites(Scene *scene, int i) {

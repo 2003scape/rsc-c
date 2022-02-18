@@ -40,6 +40,7 @@ extern int scene_frustum_near_z;
 extern int64_t scene_texture_count_loaded;
 
 typedef struct Scene {
+    int max_sprite_count;
     int last_visible_polygons_count;
     int clip_near;
     int clip_far_3d;
@@ -110,7 +111,7 @@ typedef struct Scene {
 } Scene;
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
-               int polygon_count, int sprite_count);
+               int polygon_count, int max_sprite_count);
 void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
                             int l, int i1, int j1, int k1, int l1, int i2,
                             int j2, int k2, int l2);
