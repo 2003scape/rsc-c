@@ -7,19 +7,19 @@ QR code for 3DS install:
 
 ![](./3ds-cia.png?raw=true)
 
-## controls (wii):
+### controls (wii):
 
 * d-pad to control camera
 * B for right click
 * A for left click
-* - to toggle on-screen keyboard
+* \- to toggle on-screen keyboard
 * B for backspace whilst keyboard is open
-* + to press enter key
+* \+ to press enter key
 * 1 to toggle F1/interlace mode
 
 a USB keyboard and mouse can also be used.
 
-## controls (3ds):
+### controls (3ds):
 
 * d-pad/circle pad to control camera
 * touch screen for mouse input
