@@ -3,6 +3,32 @@
 portable runescape classic client ported to C. supports 204 and 177
 (for [openrsc](https://rsc.vet/) support) client revisions.
 
+QR code for 3DS install:
+
+![](./3ds-cia?raw=true)
+
+## controls (wii):
+
+    * d-pad to control camera
+    * B for right click
+    * A for left click
+    * - to toggle on-screen keyboard
+    * B for backspace whilst keyboard is open
+    * + to press enter key
+    * 1 to toggle F1/interlace mode
+
+a USB keyboard and mouse can also be used.
+
+## controls (3ds):
+
+    * d-pad/circle pad to control camera
+    * touch screen for mouse input
+    * hold L whilst tapping touch screen for right click
+    * tap R to toggle top screen zoom
+    * hold L whilst using d-pad or analogue stick to pan top screen zoom
+    * start to toggle on-screen keyboard
+    * select to toggle F1/interlace mode
+
 ## build (linux)
 
 install [libsdl2-dev](https://packages.debian.org/sid/libsdl2-dev).
