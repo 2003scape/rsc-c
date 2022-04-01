@@ -38,7 +38,7 @@ install [libsdl2-dev](https://packages.debian.org/sid/libsdl2-dev).
 
 distribute with `./cache` directory.
 
-# build (windows)
+## build (windows)
 
     $ make -f Makefile.windows
     $ wine mudclient.exe
