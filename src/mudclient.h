@@ -9,7 +9,10 @@
 #include <time.h>
 
 #ifdef WII
+#include <asndlib.h>
 #include <gccore.h>
+#include <ogc/usbmouse.h>
+#include <wiikeyboard/keyboard.h>
 #include <wiiuse/wpad.h>
 
 #include "config85_jag.h"
@@ -27,19 +30,45 @@
 #include "sounds1_mem.h"
 #include "textures17_jag.h"
 
-#include "arrow_yuv.h"
-#include "rsc_background_yuv.h"
-#else
+#include "wii/arrow_yuv.h"
+#include "wii/rsc_game_yuv.h"
+#include "wii/rsc_keyboard_shift_yuv.h"
+#include "wii/rsc_keyboard_yuv.h"
+#include "wii/rsc_type_yuv.h"
+
+#define GAME_OFFSET_X 64
+#define GAME_OFFSET_Y 54
+#endif
+
+#ifdef _3DS
+#include <3ds.h>
+
+#include "game_background_bgr.h"
+#include "game_keyboard_bgr.h"
+#include "game_keyboard_shift_bgr.h"
+#include "game_top_bgr.h"
+#include "game_type_bgr.h"
+#endif
+
+#if !defined(WII) && !defined(_3DS)
 #include <SDL2/SDL.h>
 #endif
 
+#define SAMPLE_RATE 8000
+#define SAMPLE_BUFFER_SIZE 4096
+#define BYTES_PER_SAMPLE 2
+
 #define K_LEFT 37
 #define K_RIGHT 39
-#define K_F1 -1
-#define K_ENTER -1
-#define K_BACKSPACE -1
+#define K_F1 112
+#define K_ENTER 13
+#define K_BACKSPACE 8
 
+#ifdef REVISION_177
+#define VERSION 177
+#else
 #define VERSION 204
+#endif
 
 #define ZOOM_MIN 450
 #define ZOOM_MAX 1250
@@ -50,9 +79,15 @@
 
 #define FONT_COUNT 8
 #define ANIMATED_MODELS_COUNT 20
+
 #define SOCIAL_LIST_MAX 100
+
 #define INPUT_TEXT_LENGTH 20
 #define INPUT_PM_LENGTH 80
+
+#define USERNAME_LENGTH 20
+#define PASSWORD_LENGTH 20
+
 #define GAME_OBJECTS_MAX 1000
 #define WALL_OBJECTS_MAX 500
 #define OBJECTS_MAX 1500
@@ -63,23 +98,74 @@
 #define GROUND_ITEMS_MAX 5000
 #define PRAYER_COUNT 50
 #define PLAYER_STAT_COUNT 18
+#define PLAYER_STAT_EQUIPMENT_COUNT 5
 #define PROJECTILE_RANGE_MAX 40
 #define RECEIVED_MESSAGE_MAX 50
 #define ACTION_BUBBLE_MAX 50
 #define HEALTH_BAR_MAX 50
 #define TELEPORT_BUBBLE_MAX 50
+#define INVENTORY_ITEMS_MAX 30
+#define MENU_MAX 250
+#define PATH_STEPS_MAX 8000 /* TODO seems a bit large */
+#define BANK_ITEMS_MAX 256
+#define SHOP_ITEMS_MAX 256
+#define TRADE_ITEMS_MAX 14
+#define DUEL_ITEMS_MAX 8
+
+#define MOUSE_HISTORY_LENGTH 8192
 
 #define MUD_WIDTH 512
 #define MUD_HEIGHT 346
 
+/* npc IDs */
+#define SHIFTY_MAN_ID 24
+#define GIANT_BAT_ID 43
+
+/* object IDs */
+#define WINDMILL_SAILS_ID 74
+#define FIRE_ID 97
+#define FIREPLACE_ID 274
+#define LIGHTNING_ID 1031
+#define FIRE_SPELL_ID 1036
+#define SPELL_CHARGE_ID 1147
+#define TORCH_ID 51
+#define SKULL_TORCH_ID 143
+#define CLAW_SPELL_ID 1142
+
+/* item IDs */
+#define FIRE_RUNE_ID 31
+#define FIRE_STAFF_ID 197
+#define FIRE_BATTLESTAFF_ID 615
+#define ENCHANTED_FIRE_BATTLESTAFF_ID 682
+
+#define WATER_RUNE_ID 32
+#define WATER_STAFF_ID 102
+#define WATER_BATTLESTAFF_ID 616
+#define ENCHANTED_WATER_BATTLESTAFF_ID 683
+
+#define AIR_RUNE_ID 33
+#define AIR_STAFF_ID 101
+#define AIR_BATTLESTAFF_ID 617
+#define ENCHANTED_AIR_BATTLESTAFF_ID 684
+
+#define EARTH_RUNE_ID 34
+#define EARTH_STAFF_ID 103
+#define EARTH_BATTLESTAFF_ID 618
+#define ENCHANTED_EARTH_BATTLESTAFF_ID 685
+
+/* texture IDs */
+#define FOUNTATION_ID 17
+
 typedef struct mudclient mudclient;
 
 #include "bzip.h"
+#include "chat-message.h"
 #include "client-opcodes.h"
 #include "colours.h"
 #include "game-character.h"
 #include "game-model.h"
 #include "options.h"
+#include "packet-handler.h"
 #include "packet-stream.h"
 #include "panel.h"
 #include "scene.h"
@@ -89,14 +175,28 @@ typedef struct mudclient mudclient;
 #include "version.h"
 #include "world.h"
 
+#include "ui/appearance.h"
+#include "ui/bank.h"
+#include "ui/combat-style.h"
+#include "ui/duel.h"
+#include "ui/login.h"
+#include "ui/logout.h"
+#include "ui/menu.h"
+#include "ui/message-tabs.h"
+#include "ui/option-menu.h"
+#include "ui/server-message.h"
+#include "ui/shop.h"
+#include "ui/sleep.h"
+#include "ui/stats-tab.h"
+#include "ui/trade.h"
+#include "ui/ui-tabs.h"
+#include "ui/welcome.h"
+#include "ui/wilderness-warning.h"
+
 extern char *font_files[];
 extern char *animated_models[];
-extern char *short_skill_names[];
-extern char *skill_names[];
-extern char *equipment_stat_names[];
-extern int experience_array[100];
 extern char login_screen_status[255];
-extern int npc_animation_array[8][12];
+extern int character_animation_array[8][12];
 extern int character_walk_model[4];
 extern int character_combat_model_array1[8];
 extern int character_combat_model_array2[8];
@@ -104,13 +204,43 @@ extern int player_hair_colours[10];
 extern int player_top_bottom_colours[15];
 extern int player_skin_colours[5];
 
-#ifndef WII
-void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
-#else
-void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y);
+#if defined(_3DS) || defined(WII)
+/* these are doubled for the wii */
+#define KEY_WIDTH 23
+#define KEY_HEIGHT 22
+
+extern char keyboard_buttons[5][10];
+extern char keyboard_shift_buttons[5][10];
+extern int keyboard_offsets[];
 #endif
 
-void init_mudclient_global();
+#ifdef WII
+void draw_background(uint8_t *framebuffer, int full);
+void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y);
+void draw_rectangle(uint8_t *framebuffer, int x, int y, int width, int height);
+
+extern int wii_mouse_x;
+extern int wii_mouse_y;
+extern int wii_mouse_button;
+#endif
+
+#ifdef _3DS
+#define SOC_ALIGN 0x1000
+#define SOC_BUFFER_SIZE 0x100000
+
+extern u32 *SOC_buffer;
+
+extern ndspWaveBuf wave_buf[2];
+extern u32 *audio_buffer;
+extern int fill_block;
+
+void draw_rectangle(uint8_t *framebuffer, int x, int y, int width, int height);
+void draw_blue_bar(uint8_t *framebuffer);
+#endif
+
+#if !defined(WII) && !defined(_3DS)
+void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
+#endif
 
 typedef struct mudclient {
 #ifdef WII
@@ -126,16 +256,53 @@ typedef struct mudclient {
     int last_wii_x;
     int last_wii_y;
     int last_wii_button;
-#else
+
+    int keyboard_open;
+    int last_keyboard_button;
+#endif
+
+#ifdef _3DS
+    uint8_t *framebuffer_top;
+    uint8_t *framebuffer_bottom;
+
+    int zoom_offset_x;
+    int zoom_offset_y;
+
+    int l_down;
+    int r_down;
+    int touch_down;
+    int keyboard_open;
+
+    int sound_position;
+    int sound_length;
+#endif
+
+#if !defined(WII) && !defined(_3DS)
     SDL_Window *window;
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
+
+    uint8_t *logo_pixels;
+    SDL_Surface *logo_surface;
 #endif
+
     Options *options;
     int applet_width;
     int applet_height;
+    int game_width;
+    int game_height;
 
+    int8_t key_left;
+    int8_t key_right;
+
+    /* for middle-click camera */
     int8_t middle_button_down;
+
+    /* stores absolute mouse position and initial rotation for middle click
+     * camera */
+    int origin_mouse_x;
+    int origin_rotation;
+
     int mouse_scroll_delta;
     int mouse_action_timeout;
     int mouse_x;
@@ -144,34 +311,54 @@ typedef struct mudclient {
     int last_mouse_button_down;
     int mouse_button_click;
 
-    int8_t key_left;
-    int8_t key_right;
+    /* used for trade screen (holding for longer increases the amount) */
+    int mouse_item_count_increment;
+    int mouse_button_down_time;
 
+    int mouse_click_x_history[MOUSE_HISTORY_LENGTH];
+    int mouse_click_y_history[MOUSE_HISTORY_LENGTH];
+    int mouse_click_count;
+
+    /* yellow/red X sprite location and sprite cycle */
+    int mouse_click_x_step;
+    int mouse_click_x_x;
+    int mouse_click_x_y;
+
+    /* loading bar with jagex logo */
     int loading_step;
     int loading_progress_percent;
     char *loading_progess_text;
-    int error_loading_data;
+    int8_t error_loading_data;
 
-    uint32_t timings[10];
+    int timings[10];
     int stop_timeout;
     int interlace_timer;
-
     int fps;
     int target_fps;
     int max_draw_time;
     int thread_sleep;
 
+    /* F1 mode - only render every second scanline */
     int8_t interlace;
+
+    /* used for username boxes */
     char input_text_current[INPUT_TEXT_LENGTH + 1];
-    char input_pm_current[INPUT_PM_LENGTH + 1];
     char input_text_final[INPUT_TEXT_LENGTH + 1];
+
+    /* used for private messaging */
+    char input_pm_current[INPUT_PM_LENGTH + 1];
     char input_pm_final[INPUT_PM_LENGTH + 1];
+
     int max_read_tries;
     int world_full_timeout;
     int moderator_level;
     int auto_login_timeout;
 
-    /* social lists (friends and ignore) */
+    /* ./ui/social-tab.c */
+    Panel *panel_social_list;
+    int show_dialog_social_input;
+    int control_list_social;
+    int ui_tab_social_sub_tab;
     int message_index;
     int message_tokens[SOCIAL_LIST_MAX];
     int friend_list_count;
@@ -179,20 +366,27 @@ typedef struct mudclient {
     int friend_list_online[SOCIAL_LIST_MAX * 2];
     int ignore_list_count;
     int64_t ignore_list[SOCIAL_LIST_MAX * 2];
+    int64_t private_message_target;
 
-    /* options settings */
+    /* ./ui/options-tab.c */
     int8_t settings_camera_auto;
     int8_t settings_block_chat;
     int8_t settings_block_private;
     int8_t settings_block_trade;
     int8_t settings_block_duel;
+    int8_t settings_mouse_button_one;
+    int8_t settings_sound_disabled;
 
+    int8_t members;
     char *server;
     int port;
-    int8_t incoming_packet[5000];
-    PacketStream *packet_stream;
 
-    int members;
+    PacketStream *packet_stream;
+    int packet_last_read;
+    int8_t incoming_packet[PACKET_BUFFER_LENGTH];
+
+    char username[USERNAME_LENGTH + 1];
+    char password[PASSWORD_LENGTH + 1];
 
     /* sprite indexes used for surface sprite drawing */
     int sprite_media;
@@ -203,19 +397,17 @@ typedef struct mudclient {
     int sprite_texture;
     int sprite_texture_world;
 
-    int game_width;
-    int game_height;
     Surface *surface;
-    Panel *panel_quest_list;
-    Panel *panel_magic;
-    Panel *panel_social_list;
-    int control_list_quest;
-    int control_list_magic;
-    int control_list_social;
     Scene *scene;
     World *world;
+
+    /* amount of entity, action and teleport bubble sprites */
+    int scene_sprite_count;
+
+    /* created from cache and copied for each in-game instance */
     GameModel *game_models[GAME_OBJECTS_MAX];
 
+    /* ./ui/login.c */
     Panel *panel_login_welcome;
     Panel *panel_login_new_user;
     Panel *panel_login_existing_user;
@@ -237,22 +429,42 @@ typedef struct mudclient {
     int control_login_cancel;
     int control_login_recover;
 
+#ifdef REVISION_177
+    int session_id;
+#else
     int64_t session_id;
+#endif
+
     int logged_in;
     int login_screen;
-    char login_user[21];
-    char login_pass[21];
+    char login_user[USERNAME_LENGTH + 1];
+    char login_pass[PASSWORD_LENGTH + 1];
     char *login_prompt;
-    char login_user_disp[22];
+    char login_user_disp[USERNAME_LENGTH + 3];
 
-    int login_timer;
+    /* ./ui/message-tabs.c */
+    Panel *panel_message_tabs;
+    int control_text_list_all;
+    int control_text_list_chat;
+    int control_text_list_quest;
+    int control_text_list_private;
+    int message_tab_selected;
     int message_tab_flash_all;
     int message_tab_flash_history;
     int message_tab_flash_quest;
     int message_tab_flash_private;
-    int welcome_screen_already_shown;
+    char message_history[MESSAGE_HISTORY_LENGTH][255];
+    int message_history_timeout[MESSAGE_HISTORY_LENGTH];
+
+    int login_timer;
+
+#ifndef REVISION_177
     int system_update;
+#endif
+
+    /* ./ui/combat-style.c */
     int combat_style;
+
     int logout_timeout;
     int combat_timeout;
 
@@ -262,6 +474,7 @@ typedef struct mudclient {
     int object_y[OBJECTS_MAX];
     int object_id[OBJECTS_MAX];
     int object_direction[OBJECTS_MAX];
+    int object_already_in_menu[OBJECTS_MAX];
 
     int wall_object_count;
     GameModel *wall_object_model[WALL_OBJECTS_MAX];
@@ -269,6 +482,7 @@ typedef struct mudclient {
     int wall_object_y[WALL_OBJECTS_MAX];
     int wall_object_id[WALL_OBJECTS_MAX];
     int wall_object_direction[WALL_OBJECTS_MAX];
+    int wall_object_already_in_menu[WALL_OBJECTS_MAX];
 
     int player_server_indexes[PLAYERS_MAX];
     GameCharacter *player_server[PLAYERS_SERVER_MAX];
@@ -279,6 +493,8 @@ typedef struct mudclient {
     int known_player_count;
     GameCharacter *known_players[PLAYERS_MAX];
 
+    /* the player we're controlling */
+    int local_player_server_index;
     GameCharacter *local_player;
 
     GameCharacter *npcs_server[NPCS_SERVER_MAX];
@@ -290,17 +506,22 @@ typedef struct mudclient {
     GameCharacter *known_npcs[NPCS_MAX];
 
     int ground_item_count;
-    int ground_item_x [GROUND_ITEMS_MAX];
-    int ground_item_y [GROUND_ITEMS_MAX];
+    int ground_item_x[GROUND_ITEMS_MAX];
+    int ground_item_y[GROUND_ITEMS_MAX];
     int ground_item_id[GROUND_ITEMS_MAX];
-    int ground_item_z [GROUND_ITEMS_MAX];
+    int ground_item_z[GROUND_ITEMS_MAX];
 
+    /* ./ui/sleep.c */
     int8_t is_sleeping;
+    int sleep_word_delay_timer;
+    int sleep_word_delay;
+    int fatigue_sleeping;
+    char *sleeping_status_text;
 
     /* fade distant landscape */
     int8_t fog_of_war;
 
-    /* used to keep track of model indexes to swap to in order to simulate ;
+    /* used to keep track of model indexes to swap to in order to simulate
      * movement */
     int object_animation_count;
     int object_animation_cycle;
@@ -310,9 +531,6 @@ typedef struct mudclient {
     int claw_animation_cycle;
     int last_claw_animation_cycle;
 
-    /* amount of entity, action and teleport bubble sprites */
-    int scene_sprite_count;
-
     /* (usually) yellow messages above player and NPC heads */
     int received_messages_count;
     int received_message_x[RECEIVED_MESSAGE_MAX];
@@ -320,11 +538,6 @@ typedef struct mudclient {
     int received_message_mid_point[RECEIVED_MESSAGE_MAX];
     int received_message_height[RECEIVED_MESSAGE_MAX];
     char *received_messages[RECEIVED_MESSAGE_MAX];
-
-    /* stores absolute mouse position and initial rotation for middle click
-     * camera */
-    int origin_mouse_x;
-    int origin_rotation;
 
     int camera_angle;
     int camera_rotation;
@@ -338,27 +551,21 @@ typedef struct mudclient {
     int camera_auto_rotate_player_y;
     int an_int_707;
 
-    /* yellow/red X sprite location and sprite cycle */
-    int mouse_click_x_step;
-    int mouse_click_x_x;
-    int mouse_click_x_y;
-
     int is_in_wild;
     int loading_area;
-    int plane_height;
     int plane_width;
-    int local_region_y;
-    int region_y;
-    int local_region_x;
-    int region_x;
-    int show_ui_wild_warn;
-
-    int packet_last_read;
-
-    int local_player_server_index;
-    int last_height_offset;
+    int plane_height;
     int plane_index;
     int plane_multiplier;
+    int region_y;
+    int local_region_x;
+    int local_region_y;
+    int region_x;
+
+    /* ./ui/wilderness-warning.c */
+    int show_ui_wild_warn;
+
+    int last_height_offset;
     int local_lower_x;
     int local_lower_y;
     int local_upper_x;
@@ -366,27 +573,207 @@ typedef struct mudclient {
 
     int death_screen_timeout;
 
-    int8_t prayer_on[PRAYER_COUNT];
-
-    int player_stat_current[PLAYER_STAT_COUNT];
-    int player_stat_base[PLAYER_STAT_COUNT];
-
+    /* bubbles with items above players' heads */
     int action_bubble_count;
-	int action_bubble_x[ACTION_BUBBLE_MAX];
-	int action_bubble_y[ACTION_BUBBLE_MAX];
-	int action_bubble_scale[ACTION_BUBBLE_MAX];
-	int action_bubble_item[ACTION_BUBBLE_MAX];
+    int action_bubble_x[ACTION_BUBBLE_MAX];
+    int action_bubble_y[ACTION_BUBBLE_MAX];
+    int action_bubble_scale[ACTION_BUBBLE_MAX];
+    int action_bubble_item[ACTION_BUBBLE_MAX];
 
+    /* green/red health bars displayed above characters' heads in combat */
     int health_bar_count;
     int health_bar_x[HEALTH_BAR_MAX];
     int health_bar_y[HEALTH_BAR_MAX];
     int health_bar_missing[HEALTH_BAR_MAX];
 
+    /* blue/red bubbles used for teleporting and telegrabbing */
     int teleport_bubble_count;
     int8_t teleport_bubble_type[TELEPORT_BUBBLE_MAX];
     int teleport_bubble_x[TELEPORT_BUBBLE_MAX];
     int teleport_bubble_y[TELEPORT_BUBBLE_MAX];
     int teleport_bubble_time[TELEPORT_BUBBLE_MAX];
+
+    /*int show_dialog_report_abuse_step;
+    int report_abuse_offence;*/
+
+    /* ./ui/password.c */
+    int show_change_password_step;
+    char change_password_old[PASSWORD_LENGTH + 1];
+    char change_password_new[PASSWORD_LENGTH + 1];
+
+    int show_ui_tab;
+
+    /* used to rotate minimap randomly on open for anti-macro */
+    int minimap_random1;
+    int minimap_random2;
+
+    /* ./ui/menu.c */
+    int show_right_click_menu;
+    int menu_items_count;
+    int menu_indices[MENU_MAX];
+    int menu_item_x[MENU_MAX];
+    int menu_item_y[MENU_MAX];
+    char menu_item_text1[MENU_MAX][64];
+    char menu_item_text2[MENU_MAX][64];
+    int menu_index[MENU_MAX];
+    int menu_source_index[MENU_MAX];
+    int menu_target_index[MENU_MAX];
+    int menu_type[MENU_MAX];
+    int menu_width;
+    int menu_height;
+    int menu_x;
+    int menu_y;
+
+    /* ./ui/inventory-tab.c */
+    int inventory_items_count;
+    int inventory_item_id[INVENTORY_ITEMS_MAX];
+    int inventory_item_stack_count[INVENTORY_ITEMS_MAX]; // TODO rename
+    int inventory_equipped[INVENTORY_ITEMS_MAX];
+    int selected_item_inventory_index;
+    char *selected_item_name;
+
+    /* ./ui/stats-tab.c */
+    Panel *panel_quest_list;
+    int control_list_quest;
+    int8_t *quest_complete;
+    int ui_tab_stats_sub_tab;
+    int player_stat_current[PLAYER_STAT_COUNT];
+    int player_stat_base[PLAYER_STAT_COUNT];
+    int player_experience[PLAYER_STAT_COUNT];
+    int player_quest_points;
+    int stat_fatigue;
+    int player_stat_equipment[PLAYER_STAT_EQUIPMENT_COUNT];
+
+    /* ./ui/magic-tab.c */
+    Panel *panel_magic;
+    int control_list_magic;
+    int ui_tab_magic_sub_tab;
+    int selected_spell;
+    int8_t prayer_on[PRAYER_COUNT];
+
+    /* decompressed archive of all 8-bit 8KHz ulaw samples */
+    int8_t *sound_data;
+
+    /* 100 kilobytes of 16-bit linear PCM */
+    int16_t pcm_out[1024 * 50];
+
+    int walk_path_x[PATH_STEPS_MAX];
+    int walk_path_y[PATH_STEPS_MAX];
+
+    /* ./ui/appearance.c */
+    Panel *panel_appearance;
+    int control_appearance_head_left;
+    int control_appearance_head_right;
+    int control_appearance_hair_left;
+    int control_appearance_hair_right;
+    int control_appearance_gender_left;
+    int control_appearance_gender_right;
+    int control_appearance_top_left;
+    int control_appearance_top_right;
+    int control_appearance_skin_left;
+    int control_appearance_skin_right;
+    int control_appearance_bottom_left;
+    int control_appearance_bottom_right;
+    int control_appearance_accept;
+
+    int show_appearance_change;
+    int appearance_head_type;
+    int appearance_head_gender;
+    int appearance_body_type;
+    int appearance_hair_colour;
+    int appearance_top_colour;
+    int appearance_skin_colour;
+    int appearance_bottom_colour;
+
+    /* ./ui/option-menu.c */
+    int show_option_menu;
+    int option_menu_count;
+    char option_menu_entry[5][255];
+
+    /* ./ui/welcome.c */
+    int show_dialog_welcome;
+    int welcome_screen_already_shown;
+    int welcome_last_ip;
+    int welcome_days_ago;
+    int welcome_recovery_set_days;
+    int welcome_unread_messages;
+    char *welcome_last_ip_string;
+
+    /* ./ui/server-message.c */
+    int show_dialog_server_message;
+    int server_message_box_top;
+    char server_message[1024];
+
+    /* ./ui/bank.c */
+    int show_dialog_bank;
+    int new_bank_item_count;
+    int new_bank_items[BANK_ITEMS_MAX];
+    int new_bank_items_count[BANK_ITEMS_MAX];
+    int bank_item_count;
+    int bank_items[BANK_ITEMS_MAX];
+    int bank_items_count[BANK_ITEMS_MAX];
+    int bank_items_max;
+    int bank_active_page;
+    int bank_selected_item_slot;
+    int bank_selected_item;
+
+    /* ./ui/shop.c */
+    int show_dialog_shop;
+    int shop_items[SHOP_ITEMS_MAX];
+    int shop_items_count[SHOP_ITEMS_MAX];
+    int shop_items_price[SHOP_ITEMS_MAX];
+    int shop_selected_item_index;
+    int shop_selected_item_type;
+    int shop_buy_price_mod;
+    int shop_sell_price_mod;
+
+    /* ./ui/trade.c */
+    int show_dialog_trade;
+    int trade_item_count;
+    int trade_items[TRADE_ITEMS_MAX];
+    int trade_items_count[TRADE_ITEMS_MAX];
+    int trade_recipient_accepted;
+    int trade_accepted;
+    char trade_recipient_name[USERNAME_LENGTH + 1];
+    int trade_recipient_item_count;
+    int trade_recipient_items[TRADE_ITEMS_MAX];
+    int trade_recipient_items_count[TRADE_ITEMS_MAX];
+
+    int show_dialog_trade_confirm;
+    int64_t trade_recipient_confirm_hash;
+    int trade_confirm_item_count;
+    int trade_confirm_items[TRADE_ITEMS_MAX];
+    int trade_confirm_items_count[TRADE_ITEMS_MAX];
+    int trade_recipient_confirm_item_count;
+    int trade_recipient_confirm_items[TRADE_ITEMS_MAX];
+    int trade_recipient_confirm_items_count[TRADE_ITEMS_MAX];
+    int trade_confirm_accepted;
+
+    /* ./ui/duel.c */
+    int show_dialog_duel;
+    int duel_option_retreat;
+    int duel_option_magic;
+    int duel_option_prayer;
+    int duel_option_weapons;
+    int duel_item_count;
+    int duel_items[DUEL_ITEMS_MAX];
+    int duel_items_count[DUEL_ITEMS_MAX];
+    int duel_opponent_accepted;
+    int duel_accepted;
+    char duel_opponent_name[USERNAME_LENGTH + 1];
+    int duel_opponent_item_count;
+    int duel_opponent_items[DUEL_ITEMS_MAX];
+    int duel_opponent_items_count[DUEL_ITEMS_MAX];
+
+    int show_dialog_duel_confirm;
+    int64_t duel_opponent_confirm_hash;
+    int duel_confirm_item_count;
+    int duel_confirm_items[DUEL_ITEMS_MAX];
+    int duel_confirm_items_count[DUEL_ITEMS_MAX];
+    int duel_opponent_confirm_item_count;
+    int duel_opponent_confirm_items[DUEL_ITEMS_MAX];
+    int duel_opponent_confirm_items_count[DUEL_ITEMS_MAX];
+    int duel_confirm_accepted;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -395,8 +782,9 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
 /* TODO events.c */
 void mudclient_handle_key_press(mudclient *mud, int key_code);
-void mudclient_key_pressed(mudclient *mud, int code, char char_code);
+void mudclient_key_pressed(mudclient *mud, int code, int char_code);
 void mudclient_key_released(mudclient *mud, int code);
+void mudclient_handle_mouse_history(mudclient *mud, int x, int y);
 void mudclient_mouse_moved(mudclient *mud, int x, int y);
 void mudclient_mouse_released(mudclient *mud, int x, int y, int button);
 void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button);
@@ -405,15 +793,16 @@ void mudclient_set_target_fps(mudclient *mud, int fps);
 void mudclient_reset_timings(mudclient *mud);
 void mudclient_start(mudclient *mud);
 void mudclient_stop(mudclient *mud);
-void mudclient_draw_string(mudclient *mud, char *string, int font, int x,
-                           int y);
 
 /* TODO loader.c */
-void mudclient_draw_loading_screen(mudclient *mud, int percent, char *text);
 void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent);
-void mudclient_parse_tga(mudclient *mud, int8_t *tga_buffer);
+
+#if !defined(WII) && !defined(_3DS)
+SDL_Surface *mudclient_parse_tga(mudclient *mud, int8_t *buffer);
+#endif
+
 void mudclient_load_jagex(mudclient *mud);
 void mudclient_load_game_config(mudclient *mud);
 void mudclient_load_media(mudclient *mud);
@@ -421,20 +810,12 @@ void mudclient_load_entities(mudclient *mud);
 void mudclient_load_textures(mudclient *mud);
 void mudclient_load_models(mudclient *mud);
 void mudclient_load_maps(mudclient *mud);
+void mudclient_load_sounds(mudclient *mud);
 
-void mudclient_create_login_panels(mudclient *mud);
-void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1);
-void mudclient_reset_login_screen_variables(mudclient *mud);
-void mudclient_render_login_screen_viewports(mudclient *mud);
-void mudclient_draw_login_screens(mudclient *mud);
-void mudclient_reset_game(mudclient *mud);
-void mudclient_login(mudclient *mud, char *username, char *password,
-                     int reconnecting);
-void mudclient_handle_login_screen_input(mudclient *mud);
-
-GameModel *mudclient_create_model(mudclient *mud, int x, int y, int direction,
-                                  int id, int count);
+GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
+                                        int direction, int id, int count);
 int mudclient_load_next_region(mudclient *mud, int lx, int ly);
+
 GameCharacter *mudclient_add_character(mudclient *mud,
                                        GameCharacter **character_server,
                                        GameCharacter **known_characters,
@@ -443,10 +824,14 @@ GameCharacter *mudclient_add_character(mudclient *mud,
                                        int animation, int npc_id);
 GameCharacter *mudclient_add_player(mudclient *mud, int server_index, int x,
                                     int y, int animation);
-GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x,
-                                    int y, int animation, int npc_id);
-void mudclient_check_connection(mudclient *mud);
+GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
+                                 int animation, int npc_id);
+
+void mudclient_update_bank_items(mudclient *mud);
+void mudclient_close_connection(mudclient *mud);
+void mudclient_move_character(mudclient *mud, GameCharacter *character);
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
+void mudclient_auto_rotate_camera(mudclient *mud);
 void mudclient_handle_game_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
 void mudclient_update_object_animation(mudclient *mud, int object_index,
@@ -460,16 +845,46 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int tx, int ty);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int tx, int ty);
+void mudclient_draw_ui(mudclient *mud);
+void mudclient_draw_overhead(mudclient *mud);
 void mudclient_draw_game(mudclient *mud);
+void mudclient_reset_game(mudclient *mud);
+void mudclient_login(mudclient *mud, char *username, char *password,
+                     int reconnecting);
+void mudclient_registration_login(mudclient *mud);
+void mudclient_register(mudclient *mud, char *username, char *password);
+void mudclient_change_password(mudclient *mud, char *old_password,
+                               char *new_password);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
+
+#ifdef _3DS
+void mudclient_flush_audio(mudclient *mud);
+#endif
+
 void mudclient_run(mudclient *mud);
-void mudclient_sort_friends(mudclient *mud);
+void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id);
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
                          int id);
+int mudclient_is_item_equipped(mudclient *mud, int id);
+int mudclient_get_inventory_count(mudclient *mud, int id);
+int mudclient_has_inventory_item(mudclient *mud, int id, int minimum);
+void mudclient_send_logout(mudclient *mud);
+void mudclient_play_sound(mudclient *mud, char *name);
+int mudclient_walk_to(mudclient *mud, int start_x, int start_y, int x1, int y1,
+                      int x2, int y2, int check_objects, int walk_to_action,
+                      int first_step);
+void mudclient_walk_to_action_source(mudclient *mud, int start_x, int start_y,
+                                     int dest_x, int dest_y, int action);
+void mudclient_walk_to_ground_item(mudclient *mud, int start_x, int start_y,
+                                   int dest_x, int dest_y, int walk_to_action);
+void mudclient_walk_to_wall_object(mudclient *mud, int dest_x, int dest_y,
+                                   int direction);
+void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
+                              int id);
 int main(int argc, char **argv);
 
 #endif

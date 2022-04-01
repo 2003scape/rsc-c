@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <time.h>
+
 typedef struct Scene Scene;
 
 #include "game-model.h"
@@ -99,7 +101,7 @@ typedef struct Scene {
     int camera_pitch;
     int camera_roll;
     int visible_polygons_count;
-    Polygon **visible_polygons;
+    GamePolygon **visible_polygons;
     int sprite_count;
     int *sprite_id;
     int *sprite_x;
@@ -109,6 +111,8 @@ typedef struct Scene {
     int *sprite_height;
     int *sprite_translate_x;
 } Scene;
+
+int scene_polygon_depth_compare(const void *a, const void *b);
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int max_sprite_count);
@@ -143,6 +147,7 @@ void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
 int rgb(int i, int j, int k);
 void scene_add_model(Scene *scene, GameModel *model);
 void scene_remove_model(Scene *scene, GameModel *model);
+void scene_null_model(Scene *scene, GameModel *model);
 void scene_dispose(Scene *scene);
 void scene_clear(Scene *scene);
 void scene_reduce_sprites(Scene *scene, int i);
@@ -153,11 +158,10 @@ void scene_set_sprite_translate_x(Scene *scene, int i, int n);
 void scene_set_mouse_loc(Scene *scene, int x, int y);
 void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
                       int clip_y, int width, int view_distance);
-void scene_polygons_q_sort(Scene *scene, Polygon **polygons, int low, int high);
-void scene_polygons_intersect_sort(Scene *scene, int step, Polygon **polygons,
+void scene_polygons_intersect_sort(Scene *scene, int step, GamePolygon **polygons,
                                    int count);
-int scene_polygons_order(Scene *scene, Polygon **polygons, int start, int end);
-void scene_set_frustum(Scene *scene, int i, int j, int k);
+int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start, int end);
+void scene_set_frustum(Scene *scene, int x, int y, int z);
 void scene_render(Scene *scene);
 void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
                               int32_t *plane_y, int32_t *vertex_shade,
@@ -169,8 +173,8 @@ void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
                       int roll, int distance);
 void scene_initialise_polygon_3d(Scene *scene, int i);
 void scene_initialise_polygon_2d(Scene *scene, int i);
-int scene_separate_polygon(Polygon *polygon, Polygon *polygon_1);
-int scene_heuristic_polygon(Polygon *polygon, Polygon *polygon_1);
+int scene_separate_polygon(GamePolygon *polygon, GamePolygon *polygon_1);
+int scene_heuristic_polygon(GamePolygon *polygon, GamePolygon *polygon_1);
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128);
 void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,

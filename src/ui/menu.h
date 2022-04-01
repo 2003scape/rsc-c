@@ -1,0 +1,59 @@
+#ifndef _H_MENU
+
+#include "../colours.h"
+#include "../mudclient.h"
+#include "../packet-stream.h"
+
+#define MENU_CAST_GROUNDITEM 200
+#define MENU_USEWITH_GROUNDITEM 210
+#define MENU_GROUNDITEM_TAKE 220
+#define MENU_GROUNDITEM_EXAMINE 3200
+
+#define MENU_CAST_WALLOBJECT 300
+#define MENU_USEWITH_WALLOBJECT 310
+#define MENU_WALL_OBJECT_COMMAND1 320
+#define MENU_WALL_OBJECT_COMMAND2 2300
+#define MENU_WALL_OBJECT_EXAMINE 3300
+
+#define MENU_CAST_OBJECT 400
+#define MENU_USEWITH_OBJECT 410
+#define MENU_OBJECT_COMMAND1 420
+#define MENU_OBJECT_COMMAND2 2400
+#define MENU_OBJECT_EXAMINE 3400
+
+#define MENU_CAST_INVITEM 600
+#define MENU_USEWITH_INVITEM 610
+#define MENU_INV_UNEQUIP 620
+#define MENU_INV_WEAR 630
+#define MENU_INV_COMMAND 640
+#define MENU_INV_USE 650
+#define MENU_INV_DROP 660
+#define MENU_INV_EXAMINE 3600
+
+#define MENU_CAST_NPC 700
+#define MENU_USEWITH_NPC 710
+#define MENU_NPC_TALK 720
+#define MENU_NPC_COMMAND 725
+#define MENU_NPC_ATTACK1 715
+#define MENU_NPC_ATTACK2 2715
+#define MENU_NPC_EXAMINE 3700
+
+#define MENU_CAST_PLAYER 800
+#define MENU_USEWITH_PLAYER 810
+#define MENU_PLAYER_ATTACK1 805
+#define MENU_PLAYER_ATTACK2 2805
+#define MENU_PLAYER_DUEL 2806
+#define MENU_PLAYER_TRADE 2810
+#define MENU_PLAYER_FOLLOW 2820
+
+#define MENU_CAST_GROUND 900
+#define MENU_WALK 920
+#define MENU_CAST_SELF 1000
+#define MENU_CANCEL 4000
+
+void mudclient_menu_item_click(mudclient *mud, int i);
+void mudclient_create_top_mouse_menu(mudclient *mud);
+void mudclient_create_right_click_menu(mudclient *mud);
+void mudclient_draw_right_click_menu(mudclient *mud);
+
+#endif

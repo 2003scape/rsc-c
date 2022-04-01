@@ -112,7 +112,7 @@ int game_data_get_model_index(char *name) {
         }
     }
 
-    if (name[0] == 'n' && name[1] == 'a') {
+    if (strcmp(name, "na") == 0) {
         return 0;
     }
 
@@ -157,9 +157,9 @@ char *game_data_get_string() {
 
     int end = game_data_string_offset + 1;
 
-    char *string = malloc(((end - start) + 1) * sizeof(char));
+    char *string = malloc((end - start) * sizeof(char));
     memset(string, '\0', end - start);
-    memcpy(string, game_data_data_string + start, end - start);
+    memcpy(string, game_data_data_string + start, end - start - 1);
 
     game_data_string_offset++;
 
@@ -447,8 +447,15 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data_object_count; i++) {
-        game_data_object_model_index[i] =
-            game_data_get_model_index(game_data_get_string());
+        char *model_name = game_data_get_string();
+
+        int old_count = game_data_model_count;
+        game_data_object_model_index[i] = game_data_get_model_index(model_name);
+
+        /* we re-use an existing string if it's been called before */
+        if (game_data_model_count == old_count) {
+            free(model_name);
+        }
     }
 
     for (i = 0; i < game_data_object_count; i++) {

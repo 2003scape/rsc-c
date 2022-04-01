@@ -1,0 +1,22 @@
+CC = x86_64-w64-mingw32-gcc
+#DEBUG = 1
+SRC = $(wildcard src/*.c src/ui/*.c)
+OBJ = $(SRC:.c=.o)
+CFLAGS = -DREVISION_177 -I ./SDL2-2.0.20/x86_64-w64-mingw32/include #-fPIE
+#CFLAGS = -I ./SDL2-2.0.20/x86_64-w64-mingw32/include #-fPIE
+LDFLAGS = -lm -L ./SDL2-2.0.20/x86_64-w64-mingw32/lib -lmingw32
+LDFLAGS += -lSDL2main -lSDL2 -lwsock32 -lws2_32
+
+ifdef DEBUG
+CFLAGS += -Wall -Wextra -pedantic -g
+else
+CFLAGS += -s -Ofast
+LDFLAGS += -s
+endif
+
+mudclient.exe: $(OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+clean:
+	rm -f src/*.o src/ui/*.o
+	rm -f mudclient.exe

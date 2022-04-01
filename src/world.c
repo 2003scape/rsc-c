@@ -28,7 +28,6 @@ void world_new(World *world, Scene *scene, Surface *surface) {
 
     world->scene = scene;
     world->surface = surface;
-    world->world_initialised = 1;
     world->player_alive = 0;
     world->base_media_sprite = 750;
 
@@ -134,6 +133,7 @@ int world_get_wall_diagonal(World *world, int x, int y) {
     return world->walls_diagonal[height][x * REGION_SIZE + y];
 }
 
+// TODO i don't think this removes
 void world_remove_object2(World *world, int x, int y, int id) {
     if (x < 0 || y < 0 || x >= 95 || y >= 95) {
         return;
@@ -508,32 +508,34 @@ int world_get_terrain_colour(World *world, int x, int y) {
     return get_byte_plane_coord(world->terrain_colour, x, y);
 }
 
-void world_reset(World *world) {
-    if (world->world_initialised) {
-        scene_dispose(world->scene);
-    }
-
+void world_reset(World *world, int dispose) {
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        // printf("destroying %p\n", world->terrain_models[i]);
-
-        // game_model_destroy(world->terrain_models[i]);
-        // free(world->terrain_models[i]);
+        scene_null_model(world->scene, world->terrain_models[i]);
+        game_model_destroy(world->terrain_models[i]);
+        free(world->terrain_models[i]);
 
         world->terrain_models[i] = NULL;
 
         for (int j = 0; j < PLANE_COUNT; j++) {
-            // game_model_destroy(world->wall_models[j][i]);
-            // free(world->wall_models[j][i]);
+            scene_null_model(world->scene, world->wall_models[j][i]);
+            game_model_destroy(world->wall_models[j][i]);
+            free(world->wall_models[j][i]);
 
             world->wall_models[j][i] = NULL;
         }
 
         for (int j = 0; j < PLANE_COUNT; j++) {
-            // game_model_destroy(world->roof_models[j][i]);
-            // free(world->roof_models[j][i]);
+            scene_null_model(world->scene, world->roof_models[j][i]);
+            game_model_destroy(world->roof_models[j][i]);
+            free(world->roof_models[j][i]);
 
             world->roof_models[j][i] = NULL;
         }
+    }
+
+    if (dispose) {
+        /* disable dispose for the login-screen models so we can free them */
+        scene_dispose(world->scene);
     }
 }
 
@@ -604,8 +606,7 @@ void world_set_tile_decoration(World *world, int x, int y, int decoration) {
 }
 
 int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
-                int end_x2, int end_y2, int *route_x, int *route_y, int objects,
-                int size) {
+                int end_x2, int end_y2, int *route_x, int *route_y, int objects) {
     for (int x = 0; x < REGION_WIDTH; x++) {
         for (int y = 0; y < REGION_HEIGHT; y++) {
             world->route_via[x][y] = 0;
@@ -626,7 +627,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
     while (read_ptr != write_ptr) {
         x = route_x[read_ptr];
         y = route_y[read_ptr];
-        read_ptr = (read_ptr + 1) % size;
+        read_ptr = (read_ptr + 1) % PATH_STEPS_MAX;
 
         if (x >= end_x1 && x <= end_x2 && y >= end_y1 && y <= end_y2) {
             reached = 1;
@@ -663,7 +664,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             (world->object_adjacency[x - 1][y] & 0x78) == 0) {
             route_x[write_ptr] = x - 1;
             route_y[write_ptr] = y;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x - 1][y] = 2;
         }
 
@@ -671,7 +672,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             (world->object_adjacency[x + 1][y] & 0x72) == 0) {
             route_x[write_ptr] = x + 1;
             route_y[write_ptr] = y;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x + 1][y] = 8;
         }
 
@@ -679,7 +680,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             (world->object_adjacency[x][y - 1] & 0x74) == 0) {
             route_x[write_ptr] = x;
             route_y[write_ptr] = y - 1;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x][y - 1] = 1;
         }
 
@@ -687,7 +688,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             (world->object_adjacency[x][y + 1] & 0x71) == 0) {
             route_x[write_ptr] = x;
             route_y[write_ptr] = y + 1;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x][y + 1] = 4;
         }
 
@@ -697,7 +698,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x - 1][y - 1] == 0) {
             route_x[write_ptr] = x - 1;
             route_y[write_ptr] = y - 1;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x - 1][y - 1] = 3;
         }
 
@@ -708,7 +709,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x + 1][y - 1] == 0) {
             route_x[write_ptr] = x + 1;
             route_y[write_ptr] = y - 1;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x + 1][y - 1] = 9;
         }
 
@@ -719,7 +720,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x - 1][y + 1] == 0) {
             route_x[write_ptr] = x - 1;
             route_y[write_ptr] = y + 1;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x - 1][y + 1] = 6;
         }
 
@@ -730,7 +731,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x + 1][y + 1] == 0) {
             route_x[write_ptr] = x + 1;
             route_y[write_ptr] = y + 1;
-            write_ptr = (write_ptr + 1) % size;
+            write_ptr = (write_ptr + 1) % PATH_STEPS_MAX;
             world->route_via[x + 1][y + 1] = 12;
         }
     }
@@ -813,8 +814,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     if (world->parent_model == NULL) {
         world->parent_model = malloc(sizeof(GameModel));
-        game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+        //game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
     }
+
+    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
 
     /* create terrain */
 
@@ -828,9 +831,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
 
         GameModel *game_model = world->parent_model;
+
         game_model_destroy(game_model);
         game_model_from7(game_model, 18688, 18688, 1, 1, 0, 0, 1);
-        //game_model_clear(game_model);
+        // game_model_clear(game_model);
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -1013,11 +1017,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                           world_get_terrain_height(world, r_x, r_y);
 
                 if (colour != colour_1 || i17 != 0) {
-                    int *colour_vertices = malloc(3 * sizeof(int));
-                    int *colour_1_vertices = malloc(3 * sizeof(int));
-
                     if (direction == 0) {
                         if (colour != COLOUR_TRANSPARENT) {
+                            int *colour_vertices = malloc(3 * sizeof(int));
+
                             colour_vertices[0] = r_y + r_x * 96 + 96;
                             colour_vertices[1] = r_y + r_x * 96;
                             colour_vertices[2] = r_y + r_x * 96 + 1;
@@ -1034,6 +1037,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
+                            int *colour_1_vertices = malloc(3 * sizeof(int));
+
                             colour_1_vertices[0] = r_y + r_x * 96 + 1;
                             colour_1_vertices[1] = r_y + r_x * 96 + 96 + 1;
                             colour_1_vertices[2] = r_y + r_x * 96 + 96;
@@ -1050,6 +1055,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
                     } else {
                         if (colour != COLOUR_TRANSPARENT) {
+                            int *colour_vertices = malloc(3 * sizeof(int));
+
                             colour_vertices[0] = r_y + r_x * 96 + 1;
                             colour_vertices[1] = r_y + r_x * 96 + 96 + 1;
                             colour_vertices[2] = r_y + r_x * 96;
@@ -1066,6 +1073,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
+                            int *colour_1_vertices = malloc(3 * sizeof(int));
+
                             colour_1_vertices[0] = r_y + r_x * 96 + 96;
                             colour_1_vertices[1] = r_y + r_x * 96;
                             colour_1_vertices[2] = r_y + r_x * 96 + 96 + 1;
@@ -1329,7 +1338,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
         game_model_set_light_from6(game_model, 1, 40, 48, -50, -10, -50);
 
-        //game_model_dump(game_model, 123);
+        // game_model_dump(game_model, 123);
 
         game_model_split(world->parent_model, world->terrain_models, 1536, 1536,
                          8, 64, 233, 0);
@@ -1348,7 +1357,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     game_model_destroy(world->parent_model);
     game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
-    //game_model_clear(world->parent_model);
+    // game_model_clear(world->parent_model);
 
     int colour = 0x606060;
 
@@ -1445,11 +1454,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
     }
 
-    //game_model_dump(world->parent_model, 1234);
-
     if (is_current_plane) {
-        surface_draw_sprite_from5(world->surface, world->base_media_sprite - 1,
-                                  0, 0, 285, 285);
+        surface_draw_sprite_reversed(
+            world->surface, world->base_media_sprite - 1, 0, 0, 285, 285);
     }
 
     game_model_set_light_from6(world->parent_model, 0, 60, 24, -50, -10, -50);
@@ -1579,7 +1586,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     game_model_destroy(world->parent_model);
     game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
-    //game_model_clear(world->parent_model);
+    // game_model_clear(world->parent_model);
 
     for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
@@ -1944,6 +1951,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             }
         }
     }
+
+    // TODO check
+    game_model_destroy(world->parent_model);
 }
 
 void world_set_object_adjacency_from3(World *world, int i, int j, int k) {
@@ -1962,6 +1972,7 @@ int world_get_tile_type(World *world, int i, int j) {
     return type != 2 ? 0 : 1;
 }
 
+/* adds login screen models from local game cache */
 void world_add_models(World *world, GameModel **models) {
     for (int x = 0; x < 94; x++) {
         for (int y = 0; y < 94; y++) {
@@ -2000,6 +2011,7 @@ void world_add_models(World *world, GameModel **models) {
                                   0);
 
                 scene_add_model(world->scene, game_model);
+
                 game_model_set_light_from5(game_model, 48, 48, -50, -10, -50);
 
                 if (width > 1 || height > 1) {
@@ -2036,6 +2048,7 @@ void world_add_models(World *world, GameModel **models) {
     }
 }
 
+/* create wall face */
 void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
                        int x1, int y1, int x2, int y2) {
     world_method425(world, x1, y1, 40);
@@ -2080,7 +2093,7 @@ int world_get_terrain_height(World *world, int x, int y) {
 }
 
 void world_load_section_from3(World *world, int x, int y, int plane) {
-    world_reset(world);
+    world_reset(world, 1);
 
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
@@ -2090,7 +2103,8 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     if (plane == 0) {
         world_load_section_from4(world, x, y, 1, 0);
         world_load_section_from4(world, x, y, 2, 0);
-        world_load_section_from4i(world, section_x - 1, section_y - 1, plane, 0);
+        world_load_section_from4i(world, section_x - 1, section_y - 1, plane,
+                                  0);
         world_load_section_from4i(world, section_x, section_y - 1, plane, 1);
         world_load_section_from4i(world, section_x - 1, section_y, plane, 2);
         world_load_section_from4i(world, section_x, section_y, plane, 3);

@@ -5,10 +5,11 @@
 
 typedef struct Panel Panel;
 
+#include "colours.h"
 #include "surface.h"
 #include "utility.h"
 
-#define TEXT 0
+#define PANEL_TEXT 0
 #define CENTRE_TEXT 1
 #define GRADIENT_BG 2
 #define TEXT_LIST 4
@@ -73,6 +74,8 @@ typedef struct Panel {
 
 void panel_new(Panel *panel, Surface *surface, int max);
 int panel_rgb_to_int_mod(int r, int g, int b);
+void panel_handle_mouse(Panel *panel, int x, int y, int last_button,
+                        int is_down, int scroll_delta);
 int panel_is_clicked(Panel *panel, int control);
 void panel_key_press(Panel *panel, int key);
 void panel_draw_panel(Panel *panel);
@@ -114,13 +117,14 @@ int panel_add_text_list_interactive(Panel *panel, int x, int y, int width,
                                     int height, int text_size, int max_length,
                                     int flag);
 int panel_add_button(Panel *panel, int x, int y, int width, int height);
-int panel_add_checkbox(Panel* panel, int x, int y, int width, int height);
-void panel_toggle_checkbox(Panel* panel, int control, int activated);
-int panel_is_activated(Panel* panel, int control);
-void panel_clear_list(Panel* panel, int control);
-void panel_reset_list_props(Panel* panel, int control);
-void panel_add_list_entry(Panel* panel, int control, int index, char *text);
-void panel_remove_list_entry(Panel *panel, int control, char *text, int flag);
+int panel_add_checkbox(Panel *panel, int x, int y, int width, int height);
+void panel_toggle_checkbox(Panel *panel, int control, int activated);
+int panel_is_activated(Panel *panel, int control);
+void panel_clear_list(Panel *panel, int control);
+void panel_reset_list_props(Panel *panel, int control);
+void panel_add_list_entry(Panel *panel, int control, int index, char *text);
+void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
+                                  int flash);
 void panel_update_text(Panel *panel, int control, char *text);
 char *panel_get_text(Panel *panel, int control);
 void panel_show(Panel *panel, int control);

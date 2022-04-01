@@ -1,11 +1,11 @@
 #ifndef _H_POLYGON
 #define _H_POLYGON
 
-typedef struct Polygon Polygon;
+typedef struct GamePolygon GamePolygon;
 
 #include "game-model.h"
 
-typedef struct Polygon {
+typedef struct GamePolygon {
     int min_plane_x;
     int min_plane_y;
     int max_plane_x;
@@ -23,8 +23,8 @@ typedef struct Polygon {
     int skip_something;
     int index;
     int index2;
-} Polygon;
+} GamePolygon;
 
-void polygon_new(Polygon *polygon);
+void polygon_new(GamePolygon *polygon);
 
 #endif

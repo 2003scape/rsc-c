@@ -29,18 +29,15 @@ typedef struct World World;
 #define PLANE_HEIGHT 80000
 
 /* length of the portion of the roof hanging over the building */
-
 #define ROOF_SLOPE 16
 
 /* https://github.com/2003scape/rsc-config/blob/master/res/types.json#L14 */
-
 #define FLOOR_TILE_TYPE 2
 #define LIQUID_TILE_TYPE 3
 #define BRIDGE_TILE_TYPE 4
 #define HOLE_TILE_TYPE 5
 
 /* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
-
 #define BRIDGE_TILE_DECORATION 12
 
 extern int terrain_colours[TERRAIN_COLOUR_COUNT];
@@ -50,7 +47,6 @@ void init_world_global();
 typedef struct World {
     Scene *scene;
     Surface *surface;
-    int world_initialised;
     int player_alive;
     int base_media_sprite;
     int8_t *landscape_pack;
@@ -97,7 +93,7 @@ int world_get_object_adjacency(World *world, int x, int y);
 int world_has_roof(World *world, int x, int y);
 void world_method407(World *world, int i, int j, int k);
 int world_get_terrain_colour(World *world, int x, int y);
-void world_reset(World *world);
+void world_reset(World *world, int dispose);
 void world_set_tiles(World *world);
 int world_get_wall_north_south(World *world, int x, int y);
 int world_get_tile_direction(World *world, int x, int y);
@@ -107,8 +103,8 @@ int world_get_tile_decoration_from4(World *world, int x, int y, int unused,
 int world_get_tile_decoration(World *world, int x, int y);
 void world_set_tile_decoration(World *world, int x, int y, int decoration);
 int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
-                int end_x2, int end_y2, int *route_x, int *route_y, int objects,
-                int size);
+                int end_x2, int end_y2, int *route_x, int *route_y,
+                int objects);
 void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
                                       int id);
 void world_load_section_from4(World *world, int x, int y, int plane,

@@ -1,34 +1,33 @@
 #include "surface.h"
 
-int an_int_346;
-int an_int_347;
-int an_int_348;
+int an_int_346 = 0;
+int an_int_347 = 0;
+int an_int_348 = 0;
 
 int8_t *game_fonts[50];
-
-int character_width[] = {
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 846, 558, 567, 756, 585, 594, 612, 738, 630, 639, 621, 675, 774,
-    648, 792, 810, 468, 477, 486, 495, 504, 513, 522, 531, 540, 549, 729, 720,
-    783, 666, 801, 819, 747, 0,   9,   18,  27,  36,  45,  54,  63,  72,  81,
-    90,  99,  108, 117, 126, 135, 144, 153, 162, 171, 180, 189, 198, 207, 216,
-    225, 684, 828, 702, 603, 657, 666, 234, 243, 252, 261, 270, 279, 288, 297,
-    306, 315, 324, 333, 342, 351, 360, 369, 378, 387, 396, 405, 414, 423, 432,
-    441, 450, 459, 693, 837, 711, 765, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 576, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666, 666,
-    666};
+int character_width[256];
 
 int32_t *surface_texture_pixels;
 
 void init_surface_global() {
+    for (int i = 0; i < 256; i++) {
+        int index = 74;
+
+        for (int j = 0; j < CHAR_SET_LENGTH; j++) {
+            if (CHAR_SET[j] == (char)i) {
+                index = j;
+                break;
+            }
+        }
+
+        // removed pound sign
+        if (index > 63) {
+            index++;
+        }
+
+        character_width[i] = index * 9;
+    }
+
     surface_texture_pixels = calloc(32 * 1024, sizeof(int32_t));
 }
 
@@ -48,11 +47,19 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->height1 = height;
     surface->height2 = height;
     surface->area = width * height;
+
 #ifdef WII
     surface->pixels = calloc(width * height, sizeof(int32_t));
-#else
+#endif
+
+#ifdef _3DS
+    surface->pixels = calloc(width * height, sizeof(int32_t));
+#endif
+
+#if !defined(WII) && !defined(_3DS)
     surface->pixels = mud->pixel_surface->pixels;
 #endif
+
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
     surface->sprite_colours_used = calloc(limit, sizeof(int8_t *));
     surface->sprite_colour_list = calloc(limit, sizeof(int32_t *));
@@ -101,53 +108,140 @@ void surface_reset_bounds(Surface *surface) {
 }
 
 void surface_draw(Surface *surface) {
+    mudclient *mud = surface->mud;
+
 #ifdef WII
-    uint8_t *fb = surface->mud->framebuffer;
+    uint8_t *fb = mud->framebuffer;
     uint8_t *pixels = (uint8_t *)surface->pixels;
     int index = 0;
-
-    int fb_index = 0;
 
     // 64,54
 
     for (int y = 0; y < surface->height1; y++) {
         for (int x = 0; x < surface->width1; x += 2) {
+            //int index = ((y  * surface->width1) + x) * 4;
+
             int r = pixels[index + 1];
             int g = pixels[index + 2];
             int b = pixels[index + 3];
             int r2 = pixels[index + 5];
             int g2 = pixels[index + 6];
             int b2 = pixels[index + 7];
+
             index += 8;
 
             int y1 = RGB2Y(r, g, b);
             int y2 = RGB2Y(r2, g2, b2);
-            int u = (RGB2U(r, g, b) + RGB2U(r2, g2, b2)) / 2;
-            int v = (RGB2V(r, g, b) + RGB2V(r2, g2, b2)) / 2;
+            int u = RGB2U((r + r2) / 2, (g + g2) / 2, (b + b2) / 2);
+            int v = RGB2V((r + r2) / 2, (g + g2) / 2, (b + b2) / 2);
 
-            fb_index =
+            int fb_index =
                 (640 * 2 * (GAME_OFFSET_Y + y)) + ((GAME_OFFSET_X + x) * 2);
 
             fb[fb_index] = y1;
             fb[fb_index + 2] = y2;
             fb[fb_index + 1] = u;
             fb[fb_index + 3] = v;
-            // fb_index += 4;
         }
-
-        // fb_index += surface->height1 / 2;
     }
 
     // VIDEO_WaitVSync();
-#else
-    if (surface->mud->window == NULL) {
+#endif
+
+#ifdef _3DS
+    uint8_t *pixels = (uint8_t *)surface->pixels;
+
+    if (mud->r_down) {
+        for (int y = 0; y < 240; y++) {
+            for (int x = 0; x < 400; x++) {
+                int fb_index = ((x * 240) + (240 - y)) * 3;
+
+                int pixel_index =
+                    (((y + mud->zoom_offset_y) * surface->width1) +
+                     (x + mud->zoom_offset_x)) *
+                    4;
+
+                memcpy(mud->framebuffer_top + fb_index, pixels + pixel_index,
+                       3);
+            }
+        }
+
+        // gspWaitForVBlank();
+    }
+
+    uint8_t *fb = NULL;
+    int offset_x = 0;
+    int offset_y = 0;
+
+    if (mud->keyboard_open) {
+        if (mud->r_down) {
+            return;
+        }
+
+        fb = mud->framebuffer_top;
+        offset_x = 72 + 1;
+        offset_y = (57 * 2) + 1;
+    } else {
+        fb = mud->framebuffer_bottom;
+        offset_x = 32;
+        offset_y = (6 * 2) + 1;
+    }
+
+    int index = 0;
+
+    for (int y = 0; y < surface->height1; y++) {
+        for (int x = 0; x < surface->width1 / 2; x++) {
+            if (mud->interlace) {
+                if (y % 2 == 1) {
+                    index += 8;
+                    continue;
+                }
+
+                int fb_index =
+                    (((x + offset_x) * 240) + (240 - ((y + offset_y) / 2))) * 3;
+
+                memcpy(fb + fb_index, pixels + index, 3);
+
+                index += 8;
+            } else {
+                int b1 = pixels[index];
+                int g1 = pixels[index + 1];
+                int r1 = pixels[index + 2];
+
+                index += 4;
+
+                int b2 = pixels[index];
+                int g2 = pixels[index + 1];
+                int r2 = pixels[index + 2];
+
+                index += 4;
+
+                int fb_index =
+                    (((x + offset_x) * 240) + (240 - ((y + offset_y) / 2))) * 3;
+
+                if (y % 2 == 1) {
+                    fb[fb_index] = (fb[fb_index] + b1 + b2) / 3;
+                    fb[fb_index + 1] = (fb[fb_index + 1] + g1 + g2) / 3;
+                    fb[fb_index + 2] = (fb[fb_index + 2] + r1 + r2) / 3;
+                } else {
+                    fb[fb_index] = (b1 + b2) / 2;
+                    fb[fb_index + 1] = (g1 + g2) / 2;
+                    fb[fb_index + 2] = (r1 + r2) / 2;
+                }
+            }
+        }
+    }
+
+    // gspWaitForVBlank();
+#endif
+
+#if !defined(WII) && !defined(_3DS)
+    if (mud->window == NULL) {
         return;
     }
 
-    SDL_BlitSurface(surface->mud->pixel_surface, NULL, surface->mud->screen,
-                    NULL);
-
-    SDL_UpdateWindowSurface(surface->mud->window);
+    SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
+    SDL_UpdateWindowSurface(mud->window);
 #endif
 }
 
@@ -588,8 +682,12 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
 void surface_read_sleep_word(Surface *surface, int sprite_id,
                              int8_t *sprite_data) {
-    int32_t *pixels = malloc(SLEEP_WIDTH * SLEEP_HEIGHT * sizeof(int32_t));
-    surface->surface_pixels[sprite_id] = pixels;
+    if (surface->surface_pixels[sprite_id] == NULL) {
+        surface->surface_pixels[sprite_id] =
+            malloc(SLEEP_WIDTH * SLEEP_HEIGHT * sizeof(int32_t));
+    }
+
+    int32_t *pixels = surface->surface_pixels[sprite_id];
     surface->sprite_width[sprite_id] = SLEEP_WIDTH;
     surface->sprite_height[sprite_id] = SLEEP_HEIGHT;
     surface->sprite_translate_x[sprite_id] = 0;
@@ -609,8 +707,8 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
             pixels[pixel_offset++] = colour;
         }
 
-        // alternate between black and white
-        colour = 0xffffff - colour;
+        /* alternate between black and white */
+        colour = WHITE - colour;
     }
 
     for (int y = 1; y < SLEEP_HEIGHT; y++) {
@@ -625,7 +723,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 
             if (x < SLEEP_WIDTH) {
                 pixels[pixel_offset] =
-                    0xffffff - pixels[pixel_offset - SLEEP_WIDTH];
+                    WHITE - pixels[pixel_offset - SLEEP_WIDTH];
 
                 pixel_offset++;
                 x++;
@@ -635,18 +733,17 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 }
 
 void surface_draw_world(Surface *surface, int sprite_id) {
-    /* TODO rename this - it's not draw world */
-
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
     int32_t *sprite_pixels = surface->surface_pixels[sprite_id];
 
-    for (int k = 0; k < sprite_size; k++) {
-        int l = sprite_pixels[k];
+    for (int i = 0; i < sprite_size; i++) {
+        int colour = sprite_pixels[i];
 
-        surface_texture_pixels[((l & 0xf80000) >> 9) + ((l & 0xf800) >> 6) +
-                               ((l & 0xf8) >> 3)]++;
+        surface_texture_pixels[((colour & 0xf80000) >> 9) +
+                               ((colour & 0xf800) >> 6) +
+                               ((colour & 0xf8) >> 3)]++;
     }
 
     int32_t *colour_list = calloc(256, sizeof(int32_t));
@@ -655,8 +752,8 @@ void surface_draw_world(Surface *surface, int sprite_id) {
     int32_t ai3[256];
     memset(ai3, 0, 256 * sizeof(int32_t));
 
-    for (int i1 = 0; i1 < 32768; i1++) {
-        int32_t pixel = surface_texture_pixels[i1];
+    for (int i = 0; i < 32768; i++) {
+        int32_t pixel = surface_texture_pixels[i];
 
         if (pixel > ai3[255]) {
             for (int k1 = 1; k1 < 256; k1++) {
@@ -669,21 +766,21 @@ void surface_draw_world(Surface *surface, int sprite_id) {
                     ai3[i2] = ai3[i2 - 1];
                 }
 
-                colour_list[k1] = ((i1 & 0x7c00) << 9) + ((i1 & 0x3e0) << 6) +
-                                  ((i1 & 0x1f) << 3) + 0x40404;
+                colour_list[k1] = ((i & 0x7c00) << 9) + ((i & 0x3e0) << 6) +
+                                  ((i & 0x1f) << 3) + 0x40404;
 
                 ai3[k1] = pixel;
                 break;
             }
         }
 
-        surface_texture_pixels[i1] = -1;
+        surface_texture_pixels[i] = -1;
     }
 
     int8_t *colours_used = calloc(sprite_size, sizeof(int8_t));
 
-    for (int l1 = 0; l1 < sprite_size; l1++) {
-        int j2 = sprite_pixels[l1];
+    for (int i = 0; i < sprite_size; i++) {
+        int j2 = sprite_pixels[i];
 
         int pixel_index =
             ((j2 & 0xf80000) >> 9) + ((j2 & 0xf800) >> 6) + ((j2 & 0xf8) >> 3);
@@ -714,7 +811,7 @@ void surface_draw_world(Surface *surface, int sprite_id) {
             surface_texture_pixels[pixel_index] = pixel;
         }
 
-        colours_used[l1] = pixel & 0xff;
+        colours_used[i] = pixel & 0xff;
     }
 
     surface->sprite_colours_used[sprite_id] = colours_used;
@@ -767,6 +864,8 @@ void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
     surface->sprite_width_full[sprite_id] = width;
     surface->sprite_height_full[sprite_id] = height;
 
+    free(surface->surface_pixels[sprite_id]);
+
     surface->surface_pixels[sprite_id] =
         malloc(width * height * sizeof(int32_t));
 
@@ -774,6 +873,37 @@ void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
 
     for (int yy = y; yy < y + height; yy++) {
         for (int xx = x; xx < x + width; xx++) {
+            surface->surface_pixels[sprite_id][pixel++] =
+                surface->pixels[xx + yy * surface->width2];
+        }
+    }
+
+    free(surface->sprite_colours_used[sprite_id]);
+    surface->sprite_colours_used[sprite_id] = NULL;
+
+    free(surface->sprite_colour_list[sprite_id]);
+    surface->sprite_colour_list[sprite_id] = NULL;
+}
+
+void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
+                                  int width, int height) {
+    surface->sprite_width[sprite_id] = width;
+    surface->sprite_height[sprite_id] = height;
+    surface->sprite_translate[sprite_id] = 0;
+    surface->sprite_translate_x[sprite_id] = 0;
+    surface->sprite_translate_y[sprite_id] = 0;
+    surface->sprite_width_full[sprite_id] = width;
+    surface->sprite_height_full[sprite_id] = height;
+
+    free(surface->surface_pixels[sprite_id]);
+
+    surface->surface_pixels[sprite_id] =
+        malloc(width * height * sizeof(int32_t));
+
+    int pixel = 0;
+
+    for (int xx = x; xx < x + width; xx++) {
+        for (int yy = y; yy < y + height; yy++) {
             surface->surface_pixels[sprite_id][pixel++] =
                 surface->pixels[xx + yy * surface->width2];
         }
@@ -980,7 +1110,7 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
     }
 
     int size = x + y * surface->width2;
-    int j1 = 0;
+    int src_pos = 0;
     int height = surface->sprite_height[sprite_id];
     int width = surface->sprite_width[sprite_id];
     int extra_x_space = surface->width2 - width;
@@ -990,7 +1120,7 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
         int k2 = surface->bounds_top_y - y;
         height -= k2;
         y = surface->bounds_top_y;
-        j1 += k2 * width;
+        src_pos += k2 * width;
         size += k2 * surface->width2;
     }
 
@@ -1002,7 +1132,7 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
         int l2 = surface->bounds_top_x - x;
         width -= l2;
         x = surface->bounds_top_x;
-        j1 += l2;
+        src_pos += l2;
         size += l2;
         j2 += l2;
         extra_x_space += l2;
@@ -1035,12 +1165,12 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
     if (surface->surface_pixels[sprite_id] == NULL) {
         surface_draw_sprite_alpha_from11a(
             surface->pixels, surface->sprite_colours_used[sprite_id],
-            surface->sprite_colour_list[sprite_id], j1, size, width, height,
-            extra_x_space, j2, y_inc, alpha);
+            surface->sprite_colour_list[sprite_id], src_pos, size, width,
+            height, extra_x_space, j2, y_inc, alpha);
     } else {
         surface_draw_sprite_alpha_from11(
-            surface->pixels, surface->surface_pixels[sprite_id], 0, j1, size,
-            width, height, extra_x_space, j2, y_inc, alpha);
+            surface->pixels, surface->surface_pixels[sprite_id], 0, src_pos,
+            size, width, height, extra_x_space, j2, y_inc, alpha);
     }
 }
 
@@ -1054,34 +1184,43 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
     int l2 = (sprite_height << 16) / scale_y;
 
     if (surface->sprite_translate[sprite_id]) {
-        int i3 = surface->sprite_width_full[sprite_id];
-        int k3 = surface->sprite_height_full[sprite_id];
+        int width_full = surface->sprite_width_full[sprite_id];
+        int height_full = surface->sprite_height_full[sprite_id];
 
-        k2 = (i3 << 16) / scale_x;
-        l2 = (k3 << 16) / scale_y;
+        k2 = (width_full << 16) / scale_x;
+        l2 = (height_full << 16) / scale_y;
 
-        x += (surface->sprite_translate_x[sprite_id] * scale_x + i3 - 1) / i3;
-        y += (surface->sprite_translate_y[sprite_id] * scale_y + k3 - 1) / k3;
+        x += (surface->sprite_translate_x[sprite_id] * scale_x + width_full -
+              1) /
+             width_full;
 
-        if ((surface->sprite_translate_x[sprite_id] * scale_x) % i3 != 0) {
-            i2 = ((i3 -
-                   ((surface->sprite_translate_x[sprite_id] * scale_x) % i3))
+        y += (surface->sprite_translate_y[sprite_id] * scale_y + height_full -
+              1) /
+             height_full;
+
+        if ((surface->sprite_translate_x[sprite_id] * scale_x) % width_full !=
+            0) {
+            i2 = ((width_full -
+                   ((surface->sprite_translate_x[sprite_id] * scale_x) %
+                    width_full))
                   << 16) /
                  scale_x;
         }
 
-        if ((surface->sprite_translate_y[sprite_id] * scale_y) % k3 != 0) {
-            j2 = ((k3 -
-                   ((surface->sprite_translate_y[sprite_id] * scale_y) % k3))
+        if ((surface->sprite_translate_y[sprite_id] * scale_y) % height_full !=
+            0) {
+            j2 = ((height_full -
+                   ((surface->sprite_translate_y[sprite_id] * scale_y) %
+                    height_full))
                   << 16) /
                  scale_y;
         }
 
-        scale_x =
-            (scale_x * (surface->sprite_width[sprite_id] - (i2 >> 16))) / i3;
+        scale_x = (scale_x * (surface->sprite_width[sprite_id] - (i2 >> 16))) /
+                  width_full;
 
-        scale_y =
-            (scale_y * (surface->sprite_height[sprite_id] - (j2 >> 16))) / k3;
+        scale_y = (scale_y * (surface->sprite_height[sprite_id] - (j2 >> 16))) /
+                  height_full;
     }
 
     int j3 = x + y * surface->width2;
@@ -1381,7 +1520,7 @@ void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int i,
         }
 
         size += extra_x_space;
-        src_pos += k1;
+        src_pos += k1; /* k1 = x_inc? */
     }
 }
 
@@ -1566,12 +1705,12 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
         free(surface->an_int_array_344);
         free(surface->an_int_array_345);
 
-        surface->an_int_array_340 = malloc((k1 + 1) * sizeof(int));
-        surface->an_int_array_341 = malloc((k1 + 1) * sizeof(int));
-        surface->an_int_array_342 = malloc((k1 + 1) * sizeof(int));
-        surface->an_int_array_343 = malloc((k1 + 1) * sizeof(int));
-        surface->an_int_array_344 = malloc((k1 + 1) * sizeof(int));
-        surface->an_int_array_345 = malloc((k1 + 1) * sizeof(int));
+        surface->an_int_array_340 = calloc((k1 + 1), sizeof(int));
+        surface->an_int_array_341 = calloc((k1 + 1), sizeof(int));
+        surface->an_int_array_342 = calloc((k1 + 1), sizeof(int));
+        surface->an_int_array_343 = calloc((k1 + 1), sizeof(int));
+        surface->an_int_array_344 = calloc((k1 + 1), sizeof(int));
+        surface->an_int_array_345 = calloc((k1 + 1), sizeof(int));
 
         surface->an_int_array_340_length = k1 + 1;
     }
@@ -1810,6 +1949,7 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
                     surface_draw_minimap(surface->pixels, ai, 0, l10 + j11, l11,
                                          j12, i12, k12, j11 - k11, j9);
                 } else {
+                    // minimap
                     surface_draw_minimap_translate(surface->pixels, ai, 0,
                                                    l10 + j11, l11, j12, i12,
                                                    k12, j11 - k11, j9);
@@ -1823,6 +1963,7 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
 
 void surface_draw_minimap(int32_t *dest, int32_t *src, int i, int j, int k,
                           int l, int i1, int j1, int k1, int l1) {
+    // k = x
     for (i = k1; i < 0; i++) {
         dest[j++] = src[(k >> 17) + (l >> 17) * l1];
         k += i1;
@@ -1847,15 +1988,16 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int i, int j,
     }
 }
 
+/* this might be draw_sprite_scaled */
 void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                                    int sprite_id, int colour1, int colour2,
                                    int tx, int flag) {
     if (colour1 == 0) {
-        colour1 = 0xffffff;
+        colour1 = WHITE;
     }
 
     if (colour2 == 0) {
-        colour2 = 0xffffff;
+        colour2 = WHITE;
     }
 
     int width = surface->sprite_width[sprite_id];
@@ -1922,7 +2064,7 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
         i5 = 2;
     }
 
-    if (colour2 == 0xffffff) {
+    if (colour2 == WHITE) {
         if (surface->surface_pixels[sprite_id] != NULL) {
             if (!flag) {
                 surface_transparent_sprite_plot_from15(
@@ -1978,6 +2120,8 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
             return;
         }
     }
+
+    /* flag might be flip */
 
     if (!flag) {
         surface_transparent_sprite_plot_from17(
@@ -2188,9 +2332,11 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
     int j4 = (j2 >> 16) & 0xff;
     int k4 = (j2 >> 8) & 0xff;
     int l4 = j2 & 0xff;
+
     int i5 = (k2 >> 16) & 0xff;
     int j5 = (k2 >> 8) & 0xff;
     int k5 = k2 & 0xff;
+
     int l5 = j;
 
     for (int i6 = -j1; i6 < 0; i6++) {
@@ -2214,10 +2360,10 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
 
         if (j3 != 0) {
             for (int k7 = k6; k7 < k6 + l6; k7++) {
-                i = colours[(j >> 16) + j6] & 0xff;
+                i = colour_idx[(j >> 16) + j6] & 0xff;
 
                 if (i != 0) {
-                    i = colour_idx[i];
+                    i = colours[i];
                     int k3 = (i >> 16) & 0xff;
                     int l3 = (i >> 8) & 0xff;
                     int i4 = i & 0xff;
@@ -2279,9 +2425,7 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
 
         if (text[i] == ' ') {
             end = i;
-        }
-
-        if (text[i] == '%') {
+        } else if (text[i] == '%') {
             end = i;
             width = 1000;
         }
@@ -2292,7 +2436,7 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
             }
 
             char sliced[(end - start) + 1];
-            sliced[end - start] = '\0';
+            memset(sliced, '\0', (end - start) + 1);
             strncpy(sliced, text + start, end - start);
             surface_draw_string_centre(surface, sliced, x, y, font, colour);
 
@@ -2305,6 +2449,7 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
 
     if (width > 0) {
         char sliced[(text_length - start) + 1];
+        memset(sliced, '\0', (text_length - start) + 1);
         strncpy(sliced, text + start, text_length - start);
         surface_draw_string_centre(surface, sliced, x, y, font, colour);
     }
@@ -2319,7 +2464,10 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
             int start = i + 1;
             int end = i + 4;
+
             char sliced[(end - start) + 1];
+            memset(sliced, '\0', (end - start) + 1);
+
             strncpy(sliced, text + start, end - start);
 
             int j = 0;
@@ -2548,7 +2696,7 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     int tab_width = width / tabs_length;
     int offset_x = 0;
 
-    for (int i = 0; i < tabs_length; i += 1) {
+    for (int i = 0; i < tabs_length; i++) {
         int tab_colour = selected == i ? LIGHT_GREY : TAB_DARK_GREY;
 
         surface_draw_box_alpha(surface, x + offset_x, y, tab_width, height,
@@ -2565,38 +2713,4 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     }
 
     surface_draw_line_horizontal(surface, x, y + height, width, BLACK);
-}
-
-void surface_free_colours(Surface *surface) {
-    int freed_length = 0;
-    void *freed[surface->limit];
-
-    for (int i = 0; i < surface->limit; i++) {
-        int32_t *colours = surface->sprite_colour_list[i];
-        int found = 0;
-
-        if (colours) {
-            for (int j = 0; j < freed_length; j++) {
-                if (freed[j] == colours) {
-                    found = 1;
-                    break;
-                }
-            }
-        } else {
-            found = 1;
-        }
-
-        if (!found) {
-            free(colours);
-            freed[freed_length++] = colours;
-            surface->sprite_colour_list[i] = NULL;
-        }
-    }
-
-    /*
-    free(surface->sprite_colours_used);
-    free(surface->sprite_colour_list);
-
-    surface->sprite_colours_used = NULL;
-    surface->sprite_colour_list = NULL;*/
 }

@@ -1,19 +1,20 @@
-# clear the implicit built in rules
 .SUFFIXES:
+
 ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
 include $(DEVKITPPC)/wii_rules
 
-DEBUG = 1
+#DEBUG = 1
 TARGET := mudclient
 BUILD := build
-SOURCES := src
+SOURCES := src src/ui src/wii
 DATA := cache
 INCLUDES :=
 
-CFLAGS = -DWII -Ofast -Wall $(MACHDEP) $(INCLUDE)
+#CFLAGS = -DWII -Ofast -Wall $(MACHDEP) $(INCLUDE)
+CFLAGS = -DWII -DREVISION_177 -Ofast -Wall $(MACHDEP) $(INCLUDE)
 
 ifdef DEBUG
 CFLAGS += -g
@@ -22,7 +23,7 @@ CFLAGS += -s
 endif
 
 LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map
-LIBS := -lwiiuse -lbte -logc -lm
+LIBS := -lwiikeyboard -lwiiuse -lbte -lasnd -logc -lm
 LIBDIRS :=
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))

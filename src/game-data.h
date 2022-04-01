@@ -1,6 +1,7 @@
 #ifndef _H_GAME_DATA
 #define _H_GAME_DATA
 
+#include <ctype.h>
 #include <stdint.h>
 #include <string.h>
 

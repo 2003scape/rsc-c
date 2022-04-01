@@ -4,10 +4,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#define WAYPOINT_COUNT 10
 #define EQUIP_COUNT 12
+#define WAYPOINT_COUNT 10
 
 typedef struct GameCharacter {
+    // TODO rename this to encoded_name
     int64_t hash;
     char name[13];
     int server_index;
@@ -23,7 +24,7 @@ typedef struct GameCharacter {
     int waypoints_x[WAYPOINT_COUNT];
     int waypoints_y[WAYPOINT_COUNT];
     int equipped_item[EQUIP_COUNT];
-    char *message;
+    char message[255];
     int message_timeout;
     int bubble_item;
     int bubble_timeout;

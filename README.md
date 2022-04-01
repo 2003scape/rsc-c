@@ -1,31 +1,87 @@
 # rsc-c
 
-runescape classic client ported to C.
+portable runescape classic client ported to C. supports 204 and 177
+(for [openrsc](https://rsc.vet/) support) client revisions.
 
-## build (desktop)
+## build (linux)
 
 install [libsdl2-dev](https://packages.debian.org/sid/libsdl2-dev).
 
     $ make
     $ ./mudclient
 
+distribute with `./cache` directory.
+
+# build (windows)
+
+    $ make -f Makefile.windows
+    $ wine mudclient.exe
+
+distribute with `./SDL2.dll` and `./cache` directory.
+
+## build (web)
+
+install and activate
+[emscripten emsdk](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions-using-the-emsdk-recommended).
+
+    $ make -f Makefile.emscripten
+    $ python3 -m http.server 1337 # @ http://localhost:1337/mudclient.html
+
+host `mudclient.{html,data,js,wasm}` and `./cache/` directory.
+
 ## build (wii)
 
-install the
-[wii-dev package in devkitPro](https://devkitpro.org/wiki/Getting_Started)
-(optionally [dolphin-emu](https://packages.debian.org/sid/dolphin-emu) to test
-locally).
+install
+[wii-dev package in devkitPro](https://devkitpro.org/wiki/Getting_Started),
+and optionally [clone rgb-to-yuv2](https://github.com/misterhat/rgb-to-yuv2) to
+re-build the \_yuv `.c` files in `./src/wii/` from the PNGs in `./wii`.
 
-    $ source /etc/profile.d/devkit-env.sh
-    $ make -f Makefile.wii
-    $ dolphin-emu ./mudclient.dol # optional - test the game in an emulator
-    $ cp mudclient.dol wii/boot.dol
+use [dolphin-emu](https://packages.debian.org/sid/dolphin-emu) to test
+locally. enable LLE sound for sound-effects support. on real hardware you can
+also use a USB keyboard and mouse.
 
-copy the `./wii/` directory to the `./apps`/ directory in your SD card (you can
-also rename it if you want).
+see `./build-wii.sh` for building for Wii.
+
+## build (3ds)
+
+install
+[3ds-dev package in devkitPro](https://devkitpro.org/wiki/Getting_Started),
+and optionally [bannertool](https://github.com/Steveice10/bannertool/) and
+[makerom](https://github.com/3DSGuy/Project_CTR/tree/master/makerom) to build
+an [installable `.cia` file](https://www.3dbrew.org/wiki/CIA). use
+[citra](https://citra-emu.org/download/) to test locally.
+
+see `./build-3ds.sh` for building for 3DS.
+
+## usage
+
+arguments:
+* `[members]`
+    * pass any value other than "members" to load a free to play configuration
+* `[ip address]`
+    * an IPv4 address where the RSC177/204 compatible server is hosted
+* `[port]`
+    * network port number (e.g. 43594)
+* `[RSA exponent]`
+* `[RSA modulus]`
+    * these two are used together to encrypt passwords, unique to each server.
+    they must be converted to a hexadecimal representation
+    [0-padded to a multiple of eight characters](https://github.com/kokke/tiny-bignum-c/issues/14)
+
+
+for the desktop version, these are passed as command-line arguments. on the
+web they're passed in the URL hash separated by commas
+(`http://localhost:1337/mudclient.html#free,127.0.0.1`).
+
+## libraries used
+
+* [tiny-bignum-c](https://github.com/kokke/tiny-bignum-c) for RSA encryption on
+login/registration
+* [micro-bunzip](https://landley.net/code/) for decompressing cache archives
+* [libsdl2](https://www.libsdl.org/index.php) for input/output on desktop
 
 ## license
-Copyright 2021  2003Scape Team
+Copyright 2022  2003Scape Team
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the

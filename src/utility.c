@@ -1,6 +1,6 @@
 #include "utility.h"
 
-#ifndef WII
+#if !defined(WII) && !defined(_3DS)
 #include <SDL2/SDL.h>
 #endif
 
@@ -122,6 +122,13 @@ int get_bit_mask(int8_t *buffer, int offset, int length) {
     }
 
     return bits;
+}
+
+void write_unsigned_int(int8_t *buffer, int index, int i) {
+    buffer[index] = (int8_t)(i >> 24);
+    buffer[index + 1] = (int8_t)(i >> 16);
+    buffer[index + 2] = (int8_t)(i >> 8);
+    buffer[index + 3] = (int8_t)i;
 }
 
 void format_auth_string(char *raw, int max_length, char *formatted) {
@@ -390,17 +397,84 @@ void format_confirm_amount(int amount, char *formatted) {
 }
 
 int get_ticks() {
-#ifdef WII
-    return time(NULL);
-#else
+#if !defined(WII) && !defined(_3DS)
     return SDL_GetTicks();
+#endif
+
+#ifdef _3DS
+    return (int)(svcGetSystemTick() / CPU_TICKS_PER_MSEC);
+#endif
+
+#ifdef WII
+    uint64_t ticks = gettime();
+    return (int)(ticks / TB_TIMER_CLOCK);
 #endif
 }
 
 void delay_ticks(int ticks) {
-#ifdef WII
-    usleep(ticks * 1000);
+#if !defined(WII) && !defined(_3DS)
+#ifdef EMSCRIPTEN
+    emscripten_sleep(ticks);
 #else
     SDL_Delay(ticks);
 #endif
+#endif
+
+#ifdef _3DS
+    svcSleepThread(ticks * 1000);
+#endif
+
+#ifdef WII
+    int end = get_ticks() + ticks;
+
+    while (get_ticks() != end)
+        ;
+#endif
+}
+
+void get_level_difference_colour(int level_difference, char *colour) {
+    if (level_difference < 0) {
+        strcpy(colour, "@or1@");
+    }
+
+    if (level_difference < -3) {
+        strcpy(colour, "@or2@");
+    }
+
+    if (level_difference < -6) {
+        strcpy(colour, "@or3@");
+    }
+
+    if (level_difference < -9) {
+        strcpy(colour, "@red@");
+    }
+
+    if (level_difference > 0) {
+        strcpy(colour, "@gr1@");
+    }
+
+    if (level_difference > 3) {
+        strcpy(colour, "@gr2@");
+    }
+
+    if (level_difference > 6) {
+        strcpy(colour, "@gr3@");
+    }
+
+    if (level_difference > 9) {
+        strcpy(colour, "@gre@");
+    }
+}
+
+void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
+    short t;
+    uint16_t u_val;
+
+    for (long i = 0; i < size; i++) {
+        u_val = ~(*u_ptr);
+        u_ptr++;
+        t = ((u_val & QUANT_MASK) << 3) + BIAS;
+        t <<= ((unsigned)u_val & SEG_MASK) >> SEG_SHIFT;
+        *out_ptr++ = ((u_val & SIGN_BIT) ? (BIAS - t) : (t - BIAS));
+    }
 }

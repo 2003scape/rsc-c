@@ -62,7 +62,6 @@ typedef struct GameModel {
     int autocommit;
     int magic;
     int max_faces;
-    int **face_trans_state_thing;
     int *face_bound_left;
     int *face_bound_right;
     int *face_bound_bottom;
@@ -110,8 +109,7 @@ void game_model_projection_prepare(GameModel *game_model);
 void game_model_clear(GameModel *game_model);
 void game_model_reduce(GameModel *game_model, int delta_faces,
                        int delta_vertices);
-void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
-                      int trans_state);
+void game_model_merge(GameModel *game_model, GameModel **pieces, int count);
 int game_model_vertex_at(GameModel *game_model, int x, int y, int z);
 int game_model_create_vertex(GameModel *game_model, int x, int y, int z);
 int game_model_create_face(GameModel *game_model, int number, int *vertices,

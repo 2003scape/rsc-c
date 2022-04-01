@@ -2,7 +2,6 @@
 
 void game_model_new(GameModel *game_model) {
     memset(game_model, 0, sizeof(GameModel));
-    game_model->face_trans_state_thing = NULL;
 
     game_model->transform_state = 1;
     game_model->visible = 1;
@@ -17,23 +16,14 @@ void game_model_new(GameModel *game_model) {
     game_model->light_direction_magnitude = 256;
 }
 
-void game_model_allocate_face_trans(GameModel *game_model, int num_faces) {
-    game_model->face_trans_state_thing = malloc(num_faces * sizeof(int *));
-
-    for (int i = 0; i < num_faces; i++) {
-        game_model->face_trans_state_thing[i] = calloc(1, sizeof(int));
-    }
-}
-
 void game_model_from2(GameModel *game_model, int num_vertices, int num_faces) {
     game_model_new(game_model);
     game_model_allocate(game_model, num_vertices, num_faces);
-    game_model_allocate_face_trans(game_model, num_faces);
 }
 
 void game_model_from2a(GameModel *game_model, GameModel **pieces, int count) {
     game_model_new(game_model);
-    game_model_merge(game_model, pieces, count, 1);
+    game_model_merge(game_model, pieces, count);
 }
 
 void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
@@ -45,7 +35,7 @@ void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
     game_model->unlit = unlit;
     game_model->unpickable = unpickable;
 
-    game_model_merge(game_model, pieces, count, 1);
+    game_model_merge(game_model, pieces, count);
 }
 
 void game_model_from7(GameModel *game_model, int num_vertices, int num_faces,
@@ -72,7 +62,6 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
     offset += 2;
 
     game_model_allocate(game_model, num_vertices, num_faces);
-    game_model_allocate_face_trans(game_model, num_faces);
 
     for (int i = 0; i < num_vertices; i++) {
         game_model->vertex_x[i] = get_signed_short(data, offset);
@@ -123,7 +112,7 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
             malloc(game_model->face_num_vertices[i] * sizeof(int));
 
         for (int j = 0; j < game_model->face_num_vertices[i]; j++) {
-            if (j < 256) {
+            if (num_vertices < 256) {
                 game_model->face_vertices[i][j] = data[offset++] & 0xff;
             } else {
                 game_model->face_vertices[i][j] =
@@ -158,6 +147,11 @@ void game_model_reset(GameModel *game_model) {
 
 void game_model_allocate(GameModel *game_model, int num_vertices,
                          int num_faces) {
+    /* TODO why is this happening? */
+    if (num_vertices == 0) {
+        return;
+    }
+
     game_model->vertex_x = calloc(num_vertices, sizeof(int));
     game_model->vertex_y = calloc(num_vertices, sizeof(int));
     game_model->vertex_z = calloc(num_vertices, sizeof(int));
@@ -180,7 +174,6 @@ void game_model_allocate(GameModel *game_model, int num_vertices,
     }
 
     if (!game_model->unpickable) {
-        // TODO may rename this
         game_model->is_local_player = calloc(num_faces, sizeof(int8_t));
         game_model->face_tag = calloc(num_faces, sizeof(int));
     }
@@ -219,6 +212,11 @@ void game_model_allocate(GameModel *game_model, int num_vertices,
 }
 
 void game_model_projection_prepare(GameModel *game_model) {
+    /* TODO why is this happening? */
+    if (game_model->num_vertices == 0) {
+        return;
+    }
+
     game_model->project_vertex_x =
         calloc(game_model->num_vertices, sizeof(int));
 
@@ -233,28 +231,31 @@ void game_model_projection_prepare(GameModel *game_model) {
 }
 
 void game_model_clear(GameModel *game_model) {
-    /* TODO free here as well? */
     game_model->num_faces = 0;
     game_model->num_vertices = 0;
 }
 
 void game_model_reduce(GameModel *game_model, int delta_faces,
                        int delta_vertices) {
+    if (game_model->num_faces - delta_faces < 0) {
+        delta_faces = game_model->num_faces;
+    }
+
+    /* TODO could re-use instead of free here */
+    for (int i = 1; i <= delta_faces; i++) {
+        free(game_model->face_vertices[game_model->num_faces - i]);
+    }
+
     game_model->num_faces -= delta_faces;
 
-    if (game_model->num_faces < 0) {
-        game_model->num_faces = 0;
+    if (game_model->num_vertices - delta_vertices < 0) {
+        delta_vertices = game_model->num_vertices;
     }
 
     game_model->num_vertices -= delta_vertices;
-
-    if (game_model->num_vertices < 0) {
-        game_model->num_vertices = 0;
-    }
 }
 
-void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
-                      int trans_state) {
+void game_model_merge(GameModel *game_model, GameModel **pieces, int count) {
     int num_faces = 0;
     int num_vertices = 0;
 
@@ -264,11 +265,6 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
     }
 
     game_model_allocate(game_model, num_vertices, num_faces);
-
-    if (trans_state) {
-        free(game_model->face_trans_state_thing);
-        game_model_allocate_face_trans(game_model, num_faces);
-    }
 
     for (int i = 0; i < count; i++) {
         GameModel *source = pieces[i];
@@ -304,13 +300,10 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count,
 
             game_model->normal_magnitude[dst_f] =
                 source->normal_magnitude[src_f];
-
-            if (trans_state && count <= 1) {
-                game_model->face_trans_state_thing[dst_f][0] =
-                    source->face_trans_state_thing[src_f][0];
-            }
         }
     }
+
+    game_model->transform_state = 1;
 }
 
 int game_model_vertex_at(GameModel *game_model, int x, int y, int z) {
@@ -356,13 +349,8 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
                       int pickable) {
     game_model_commit(game_model);
 
-    int *piece_nv = malloc(count * sizeof(int));
-    int *piece_nf = malloc(count * sizeof(int));
-
-    for (int i = 0; i < count; i++) {
-        piece_nv[i] = 0;
-        piece_nf[i] = 0;
-    }
+    int *piece_nv = calloc(count, sizeof(int));
+    int *piece_nf = calloc(count, sizeof(int));
 
     for (int f = 0; f < game_model->num_faces; f++) {
         int sum_x = 0;
@@ -774,10 +762,6 @@ void game_model_light(GameModel *game_model) {
     int *normal_y = malloc(game_model->num_vertices * sizeof(int));
     int *normal_z = malloc(game_model->num_vertices * sizeof(int));
     int *normal_magnitude = malloc(game_model->num_vertices * sizeof(int));
-    /*int normal_x[game_model->num_vertices];
-    int normal_y[game_model->num_vertices];
-    int normal_z[game_model->num_vertices];
-    int normal_magnitude[game_model->num_vertices];*/
 
     for (int i = 0; i < game_model->num_vertices; i++) {
         normal_x[i] = 0;
@@ -885,10 +869,6 @@ void game_model_apply(GameModel *game_model) {
 
     if (game_model->transform_state == 1) {
         game_model->transform_state = 0;
-
-        // printf("%d %p %p\n", game_model->num_vertices,
-        // game_model->vertex_transformed_x, game_model->vertex_x,
-        // game_model->vertex_z);
 
         for (int i = 0; i < game_model->num_vertices; i++) {
             game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
@@ -1025,6 +1005,8 @@ GameModel *game_model_copy(GameModel *game_model) {
     copy->depth = game_model->depth;
     copy->transparent = game_model->transparent;
 
+    free(pieces);
+
     return copy;
 }
 
@@ -1036,6 +1018,8 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
     GameModel *copy = malloc(sizeof(GameModel));
     game_model_from6(copy, pieces, 1, autocommit, isolated, unlit, pickable);
     copy->depth = game_model->depth;
+
+    free(pieces);
 
     return copy;
 }
@@ -1059,19 +1043,11 @@ void game_model_destroy(GameModel *game_model) {
     game_model->num_vertices = 0;
 
     for (int i = 0; i < game_model->num_faces; i++) {
-        if (game_model->face_trans_state_thing) {
-            free(game_model->face_trans_state_thing[i]);
-            game_model->face_trans_state_thing[i] = NULL;
-        }
-
         free(game_model->face_vertices[i]);
         game_model->face_vertices[i] = NULL;
     }
 
     game_model->num_faces = 0;
-
-    free(game_model->face_trans_state_thing);
-    game_model->face_trans_state_thing = NULL;
 
     free(game_model->face_vertices);
     game_model->face_vertices = NULL;

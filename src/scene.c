@@ -8,6 +8,21 @@ int scene_frustum_far_z = 0;
 int scene_frustum_near_z = 0;
 int64_t scene_texture_count_loaded = 0;
 
+int scene_polygon_depth_compare(const void *a, const void *b) {
+    GamePolygon *polygon_a = (*(GamePolygon **)a);
+    GamePolygon *polygon_b = (*(GamePolygon **)b);
+
+    if (polygon_a->depth == 0) {
+        return -1;
+    }
+
+    if (polygon_a->depth == polygon_b->depth) {
+        return 0;
+    }
+
+    return polygon_a->depth < polygon_b->depth ? 1 : -1;
+}
+
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int max_sprite_count) {
     memset(scene, 0, sizeof(Scene));
@@ -27,14 +42,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->fog_z_distance = 10;
     scene->mouse_picking_active = 0;
 
-    /*
-    memset(scene->plane_x, 0, VERTEX_COUNT * sizeof(int));
-    memset(scene->plane_y, 0, VERTEX_COUNT * sizeof(int));
-    memset(scene->vertex_shade, 0, VERTEX_COUNT * sizeof(int));
-    memset(scene->vertex_x, 0, VERTEX_COUNT * sizeof(int));
-    memset(scene->vertex_y, 0, VERTEX_COUNT * sizeof(int));
-    memset(scene->vertex_z, 0, VERTEX_COUNT * sizeof(int));*/
-
     scene->interlace = 0;
     scene->width = 512;
     scene->clip_x = 256;
@@ -49,15 +56,15 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->models = calloc(model_count, sizeof(GameModel *));
 
     scene->visible_polygons_count = 0;
-    scene->visible_polygons = malloc(polygon_count * sizeof(Polygon *));
+    scene->visible_polygons = malloc(polygon_count * sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
-        scene->visible_polygons[i] = malloc(sizeof(Polygon));
+        scene->visible_polygons[i] = malloc(sizeof(GamePolygon));
         polygon_new(scene->visible_polygons[i]);
     }
 
     GameModel *view = malloc(sizeof(GameModel));
-    game_model_from2(view, max_sprite_count * 2, max_sprite_count);
+    game_model_from2(view, scene->max_sprite_count * 2, scene->max_sprite_count);
     scene->view = view;
 
     scene->sprite_count = 0;
@@ -1194,24 +1201,32 @@ void scene_remove_model(Scene *scene, GameModel *model) {
     }
 }
 
-void scene_dispose(Scene *scene) {
-    scene_clear(scene);
-
+void scene_null_model(Scene *scene, GameModel *model) {
     for (int i = 0; i < scene->model_count; i++) {
-        game_model_destroy(scene->models[i]);
-        free(scene->models[i]);
+        if (scene->models[i] == model) {
+            scene->models[i] = NULL;
+        }
+    }
+}
 
+void scene_dispose(Scene *scene) {
+    for (int i = 0; i < scene->model_count; i++) {
+        /* these need to be free'd elsewhere */
         scene->models[i] = NULL;
     }
+
+    scene_clear(scene);
 
     scene->model_count = 0;
 }
 
 void scene_clear(Scene *scene) {
     scene->sprite_count = 0;
+
     game_model_destroy(scene->view);
-    game_model_from2(scene->view, scene->max_sprite_count * 2, scene->max_sprite_count);
-    //game_model_clear(scene->view);
+
+    game_model_from2(scene->view, scene->max_sprite_count * 2,
+                     scene->max_sprite_count);
 }
 
 void scene_reduce_sprites(Scene *scene, int i) {
@@ -1233,13 +1248,13 @@ int scene_add_sprite(Scene *scene, int n, int x, int z, int y, int w, int h,
     scene->sprite_height[scene->sprite_count] = h;
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
-    int bottom_vertex = game_model_create_vertex(scene->view, x, z, y);
-    int top_vertex = game_model_create_vertex(scene->view, x, z - h, y);
     int *vertices = malloc(2 * sizeof(int));
-    vertices[0] = bottom_vertex;
-    vertices[1] = top_vertex;
+
+    vertices[0] = game_model_create_vertex(scene->view, x, z, y);
+    vertices[1] = game_model_create_vertex(scene->view, x, z - h, y);
 
     game_model_create_face(scene->view, 2, vertices, 0, 0);
+
     scene->view->face_tag[scene->sprite_count] = tag;
     scene->view->is_local_player[scene->sprite_count++] = 0;
 
@@ -1270,8 +1285,8 @@ void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
     scene->width = width;
     scene->view_distance = view_distance;
 
-    /* TODO free old scanlines? */
     int scanlines_length = clip_y + base_y;
+
     scene->scanlines = malloc(scanlines_length * sizeof(Scanline *));
 
     for (int i = 0; i < scanlines_length; i++) {
@@ -1280,40 +1295,7 @@ void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
     }
 }
 
-/* TODO replace with qsort */
-void scene_polygons_q_sort(Scene *scene, Polygon **polygons, int low,
-                           int high) {
-    if (low < high) {
-        int min = low - 1;
-        int max = high + 1;
-        int mid = (low + high) / 2;
-        Polygon *polygon = polygons[mid];
-        polygons[mid] = polygons[low];
-        polygons[low] = polygon;
-        int depth = polygon->depth;
-
-        while (min < max) {
-            do {
-                max--;
-            } while (polygons[max]->depth < depth);
-
-            do {
-                min++;
-            } while (polygons[min]->depth > depth);
-
-            if (min < max) {
-                Polygon *polygon_1 = polygons[min];
-                polygons[min] = polygons[max];
-                polygons[max] = polygon_1;
-            }
-        }
-
-        scene_polygons_q_sort(scene, polygons, low, max);
-        scene_polygons_q_sort(scene, polygons, max + 1, high);
-    }
-}
-
-void scene_polygons_intersect_sort(Scene *scene, int step, Polygon **polygons,
+void scene_polygons_intersect_sort(Scene *scene, int step, GamePolygon **polygons,
                                    int count) {
     for (int i = 0; i <= count; i++) {
         polygons[i]->skip_something = 0;
@@ -1332,18 +1314,18 @@ void scene_polygons_intersect_sort(Scene *scene, int step, Polygon **polygons,
             return;
         }
 
-        Polygon *polygon = polygons[l];
+        GamePolygon *polygon = polygons[l];
         polygon->skip_something = 1;
 
-        int i1 = l;
-        int j1 = l + step;
+        int start = l;
+        int end = l + step;
 
-        if (j1 >= count) {
-            j1 = count - 1;
+        if (end >= count) {
+            end = count - 1;
         }
 
-        for (int k1 = j1; k1 >= i1 + 1; k1--) {
-            Polygon *other = polygons[k1];
+        for (int i = end; i >= start + 1; i--) {
+            GamePolygon *other = polygons[i];
 
             if (polygon->min_plane_x < other->max_plane_x &&
                 other->min_plane_x < polygon->max_plane_x &&
@@ -1352,33 +1334,33 @@ void scene_polygons_intersect_sort(Scene *scene, int step, Polygon **polygons,
                 polygon->index != other->index2 &&
                 !scene_separate_polygon(polygon, other) &&
                 scene_heuristic_polygon(other, polygon)) {
-                scene_polygons_order(scene, polygons, i1, k1);
+                scene_polygons_order(scene, polygons, start, i);
 
-                if (polygons[k1] != other) {
-                    k1++;
+                if (polygons[i] != other) {
+                    i++;
                 }
 
-                i1 = scene->new_start;
+                start = scene->new_start;
                 other->index2 = polygon->index;
             }
         }
     } while (1);
 }
 
-int scene_polygons_order(Scene *scene, Polygon **polygons, int start, int end) {
+int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start, int end) {
     do {
-        Polygon *polygon = polygons[start];
+        GamePolygon *polygon = polygons[start];
 
-        for (int k = start + 1; k <= end; k++) {
-            Polygon *polygon_1 = polygons[k];
+        for (int i = start + 1; i <= end; i++) {
+            GamePolygon *polygon_1 = polygons[i];
 
             if (!scene_separate_polygon(polygon_1, polygon)) {
                 break;
             }
 
             polygons[start] = polygon_1;
-            polygons[k] = polygon;
-            start = k;
+            polygons[i] = polygon;
+            start = i;
 
             if (start == end) {
                 scene->new_start = start;
@@ -1387,18 +1369,18 @@ int scene_polygons_order(Scene *scene, Polygon **polygons, int start, int end) {
             }
         }
 
-        Polygon *polygon_2 = polygons[end];
+        GamePolygon *polygon_2 = polygons[end];
 
-        for (int l = end - 1; l >= start; l--) {
-            Polygon *polygon_3 = polygons[l];
+        for (int i = end - 1; i >= start; i--) {
+            GamePolygon *polygon_3 = polygons[i];
 
             if (!scene_separate_polygon(polygon_2, polygon_3)) {
                 break;
             }
 
             polygons[end] = polygon_3;
-            polygons[l] = polygon_2;
-            end = l;
+            polygons[i] = polygon_2;
+            end = i;
 
             if (start == end) {
                 scene->new_start = end + 1;
@@ -1422,57 +1404,57 @@ int scene_polygons_order(Scene *scene, Polygon **polygons, int start, int end) {
     } while (1);
 }
 
-void scene_set_frustum(Scene *scene, int i, int j, int k) {
-    int l = (-scene->camera_yaw + 1024) & 1023;
-    int i1 = (-scene->camera_pitch + 1024) & 1023;
-    int j1 = (-scene->camera_roll + 1024) & 1023;
+void scene_set_frustum(Scene *scene, int x, int y, int z) {
+    int yaw = (-scene->camera_yaw + 1024) & 1023;
+    int pitch = (-scene->camera_pitch + 1024) & 1023;
+    int roll = (-scene->camera_roll + 1024) & 1023;
 
-    if (j1 != 0) {
-        int k1 = sin_cos_2048[j1];
-        int j2 = sin_cos_2048[j1 + 1024];
-        int i3 = (j * k1 + i * j2) >> 15;
-        j = (j * j2 - i * k1) >> 15;
-        i = i3;
+    if (roll != 0) {
+        int sine = sin_cos_2048[roll];
+        int cosine = sin_cos_2048[roll + 1024];
+        int i3 = (y * sine + x * cosine) / 32768;
+        y = (y * cosine - x * sine) / 32768;
+        x = i3;
     }
 
-    if (l != 0) {
-        int l1 = sin_cos_2048[l];
-        int k2 = sin_cos_2048[l + 1024];
-        int j3 = (j * k2 - k * l1) >> 15;
-        k = (j * l1 + k * k2) >> 15;
-        j = j3;
+    if (yaw != 0) {
+        int sine = sin_cos_2048[yaw];
+        int cosine = sin_cos_2048[yaw + 1024];
+        int j3 = (y * cosine - z * sine) / 32768;
+        z = (y * sine + z * cosine) / 32768;
+        y = j3;
     }
 
-    if (i1 != 0) {
-        int i2 = sin_cos_2048[i1];
-        int l2 = sin_cos_2048[i1 + 1024];
-        int k3 = (k * i2 + i * l2) >> 15;
-        k = (k * l2 - i * i2) >> 15;
-        i = k3;
+    if (pitch != 0) {
+        int sine = sin_cos_2048[pitch];
+        int cosine = sin_cos_2048[pitch + 1024];
+        int k3 = (z * sine + x * cosine) / 32768;
+        z = (z * cosine - x * sine) / 32768;
+        x = k3;
     }
 
-    if (i < scene_frustum_max_x) {
-        scene_frustum_max_x = i;
+    if (x < scene_frustum_max_x) {
+        scene_frustum_max_x = x;
     }
 
-    if (i > scene_frustum_min_x) {
-        scene_frustum_min_x = i;
+    if (x > scene_frustum_min_x) {
+        scene_frustum_min_x = x;
     }
 
-    if (j < scene_frustum_max_y) {
-        scene_frustum_max_y = j;
+    if (y < scene_frustum_max_y) {
+        scene_frustum_max_y = y;
     }
 
-    if (j > scene_frustum_min_y) {
-        scene_frustum_min_y = j;
+    if (y > scene_frustum_min_y) {
+        scene_frustum_min_y = y;
     }
 
-    if (k < scene_frustum_far_z) {
-        scene_frustum_far_z = k;
+    if (z < scene_frustum_far_z) {
+        scene_frustum_far_z = z;
     }
 
-    if (k > scene_frustum_near_z) {
-        scene_frustum_near_z = k;
+    if (z > scene_frustum_near_z) {
+        scene_frustum_near_z = z;
     }
 }
 
@@ -1517,8 +1499,8 @@ void scene_render(Scene *scene) {
 
     scene->visible_polygons_count = 0;
 
-    for (int count = 0; count < scene->model_count; count++) {
-        GameModel *game_model = scene->models[count];
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
 
         if (game_model->visible) {
             for (int face = 0; face < game_model->num_faces; face++) {
@@ -1578,7 +1560,7 @@ void scene_render(Scene *scene) {
                         }
 
                         if (view_y_count == 3) {
-                            Polygon *polygon_1 =
+                            GamePolygon *polygon_1 =
                                 scene->visible_polygons
                                     [scene->visible_polygons_count];
 
@@ -1639,7 +1621,7 @@ void scene_render(Scene *scene) {
                     vx + (vw / 2) >= -scene->clip_x &&
                     vy - vh <= scene->clip_y && vy >= -scene->clip_y) {
 
-                    Polygon *polygon_2 =
+                    GamePolygon *polygon_2 =
                         scene->visible_polygons[scene->visible_polygons_count];
 
                     polygon_2->model = model_2d;
@@ -1663,15 +1645,14 @@ void scene_render(Scene *scene) {
 
     scene->last_visible_polygons_count = scene->visible_polygons_count;
 
-    /* TODO replace q_sort with native C sort */
-    scene_polygons_q_sort(scene, scene->visible_polygons, 0,
-                          scene->visible_polygons_count - 1);
+    qsort(scene->visible_polygons, scene->visible_polygons_count,
+          sizeof(GamePolygon *), scene_polygon_depth_compare);
 
     scene_polygons_intersect_sort(scene, 100, scene->visible_polygons,
                                   scene->visible_polygons_count);
 
     for (int i = 0; i < scene->visible_polygons_count; i++) {
-        Polygon *polygon = scene->visible_polygons[i];
+        GamePolygon *polygon = scene->visible_polygons[i];
         GameModel *game_model = polygon->model;
         int face = polygon->face;
 
@@ -1877,6 +1858,7 @@ void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
         int j10 = vertex_shade[1];
         int j11 = vertex_shade[2];
         int j12 = scene->base_y + scene->clip_y - 1;
+
         int l12 = 0;
         int j13 = 0;
         int l13 = 0;
@@ -2066,6 +2048,7 @@ void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
         int i13 = vertex_shade[2];
         int k13 = vertex_shade[3];
         int i14 = scene->base_y + scene->clip_y - 1;
+
         int k14 = 0;
         int i15 = 0;
         int k15 = 0;
@@ -3003,7 +2986,7 @@ void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
 }
 
 void scene_initialise_polygon_3d(Scene *scene, int i) {
-    Polygon *polygon = scene->visible_polygons[i];
+    GamePolygon *polygon = scene->visible_polygons[i];
     GameModel *game_model = polygon->model;
     int face = polygon->face;
     int *face_vertices = game_model->face_vertices[face];
@@ -3090,7 +3073,7 @@ void scene_initialise_polygon_3d(Scene *scene, int i) {
 }
 
 void scene_initialise_polygon_2d(Scene *scene, int i) {
-    Polygon *polygon = scene->visible_polygons[i];
+    GamePolygon *polygon = scene->visible_polygons[i];
     GameModel *game_model = polygon->model;
     int j = polygon->face;
     int *ai = game_model->face_vertices[j];
@@ -3153,7 +3136,7 @@ void scene_initialise_polygon_2d(Scene *scene, int i) {
     polygon->max_plane_y = k3;
 }
 
-int scene_separate_polygon(Polygon *polygon, Polygon *polygon_1) {
+int scene_separate_polygon(GamePolygon *polygon, GamePolygon *polygon_1) {
     if (polygon->min_plane_x >= polygon_1->max_plane_x) {
         return 1;
     }
@@ -3306,7 +3289,7 @@ int scene_separate_polygon(Polygon *polygon, Polygon *polygon_1) {
     return !scene_intersect(ai2, ai3, ai4, ai5, len1, len2);
 }
 
-int scene_heuristic_polygon(Polygon *polygon, Polygon *polygon_1) {
+int scene_heuristic_polygon(GamePolygon *polygon, GamePolygon *polygon_1) {
     GameModel *game_model = polygon->model;
     GameModel *game_model_1 = polygon_1->model;
     int i = polygon->face;
@@ -3388,11 +3371,11 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
         scene->texture_loaded_number[i] = 0;
     }
 
-    // 64x64 rgba
+    /* 64x64 rgba */
     scene->texture_colours_64 = calloc(length_64, sizeof(int32_t *));
     scene->length_64 = length_64;
 
-    // 128x128 rgba
+    /* 128x128 rgba */
     scene->texture_colours_128 = calloc(length_128, sizeof(int32_t *));
     scene->length_128 = length_128;
 }
@@ -3402,7 +3385,7 @@ void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
     scene->texture_colours_used[id] = colour_idx;
     scene->texture_colour_list[id] = colours;
 
-    // is 1 if the scene->texture is 128+ pixels wide, 0 if <128
+    /* is 1 if the scene->texture is 128+ pixels wide, 0 if < 128 */
     scene->texture_dimension[id] = wide128;
 
     scene->texture_loaded_number[id] = 0;
@@ -3437,21 +3420,21 @@ void scene_prepare_texture(Scene *scene, int id) {
             }
         }
 
-        int GIGALONG = 1 << 30;
-        int wut = 0;
+        int max_id = 1 << 30;
+        int old_id = 0;
 
         for (int i = 0; i < scene->texture_count; i++) {
             if (i != id && scene->texture_dimension[i] == 0 &&
                 scene->texture_pixels[i] != NULL &&
-                scene->texture_loaded_number[i] < GIGALONG) {
-                GIGALONG = scene->texture_loaded_number[i];
-                wut = i;
+                scene->texture_loaded_number[i] < max_id) {
+                max_id = scene->texture_loaded_number[i];
+                old_id = i;
             }
         }
 
         free(scene->texture_pixels[id]);
-        scene->texture_pixels[id] = scene->texture_pixels[wut];
-        scene->texture_pixels[wut] = NULL;
+        scene->texture_pixels[id] = scene->texture_pixels[old_id];
+        scene->texture_pixels[old_id] = NULL;
 
         scene_set_texture_pixels(scene, id);
         return;
@@ -3468,21 +3451,21 @@ void scene_prepare_texture(Scene *scene, int id) {
         }
     }
 
-    int GIGALONG = 1 << 30;
-    int wut = 0;
+    int max_id = 1 << 30;
+    int old_id = 0;
 
     for (int i = 0; i < scene->texture_count; i++) {
         if (i != id && scene->texture_dimension[i] == 1 &&
             scene->texture_pixels[i] != NULL &&
-            scene->texture_loaded_number[i] < GIGALONG) {
-            GIGALONG = scene->texture_loaded_number[i];
-            wut = i;
+            scene->texture_loaded_number[i] < max_id) {
+            max_id = scene->texture_loaded_number[i];
+            old_id = i;
         }
     }
 
     free(scene->texture_pixels[id]);
-    scene->texture_pixels[id] = scene->texture_pixels[wut];
-    scene->texture_pixels[wut] = NULL;
+    scene->texture_pixels[id] = scene->texture_pixels[old_id];
+    scene->texture_pixels[old_id] = NULL;
     scene_set_texture_pixels(scene, id);
 }
 
@@ -3562,7 +3545,6 @@ void scene_scroll_texture(Scene *scene, int id) {
 }
 
 /* used to convert face_fill values (textures or colours) to minimap colours */
-
 int scene_get_fill_colour(Scene *scene, int face_fill) {
     if (face_fill == COLOUR_TRANSPARENT) {
         return 0;

@@ -14,6 +14,10 @@
 #define RGB2V(R, G, B) CLIP(((112 * (R)-94 * (G)-18 * (B) + 128) >> 8) + 128)
 #endif
 
+#ifdef _3DS
+#include <3ds.h>
+#endif
+
 typedef struct Surface Surface;
 
 #include "colours.h"
@@ -103,6 +107,8 @@ void surface_draw_world(Surface *surface, int sprite_id);
 void surface_load_sprite(Surface *surface, int sprite_id);
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
                                int width, int height);
+void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
+                                  int width, int height);
 void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id);
 void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id);
@@ -188,6 +194,5 @@ int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
-void surface_free_colours(Surface *surface);
 
 #endif
