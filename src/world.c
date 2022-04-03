@@ -30,11 +30,6 @@ void world_new(World *world, Scene *scene, Surface *surface) {
     world->surface = surface;
     world->player_alive = 0;
     world->base_media_sprite = 750;
-
-    memset(world->terrain_models, 0, TERRAIN_COUNT * sizeof(GameModel *));
-
-    memset(world->local_x, 0, LOCAL_COUNT * sizeof(int));
-    memset(world->local_y, 0, LOCAL_COUNT * sizeof(int));
 }
 
 int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
@@ -447,14 +442,13 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
             world->walls_east_west[chunk][tile] = 0;
             world->walls_diagonal[chunk][tile] = 0;
             world->walls_roof[chunk][tile] = 0;
-            world->tile_decoration[chunk][tile] = 0;
 
             if (plane == 0) {
                 world->tile_decoration[chunk][tile] = -6;
-            }
-
-            if (plane == 3) {
+            } else if (plane == 3) {
                 world->tile_decoration[chunk][tile] = 8;
+            } else {
+                world->tile_decoration[chunk][tile] = 0;
             }
 
             world->tile_direction[chunk][tile] = 0;
@@ -543,7 +537,7 @@ void world_set_tiles(World *world) {
     for (int x = 0; x < REGION_WIDTH; x++) {
         for (int y = 0; y < REGION_HEIGHT; y++) {
             if (world_get_tile_decoration(world, x, y) != 250) {
-                break;
+                continue;
             }
 
             if (x == 47 && world_get_tile_decoration(world, x + 1, y) != 250 &&
@@ -815,6 +809,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     if (world->parent_model == NULL) {
         world->parent_model = malloc(sizeof(GameModel));
         //game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    } else {
+        game_model_destroy(world->parent_model);
     }
 
     game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
@@ -2103,11 +2099,14 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     if (plane == 0) {
         world_load_section_from4(world, x, y, 1, 0);
         world_load_section_from4(world, x, y, 2, 0);
+
         world_load_section_from4i(world, section_x - 1, section_y - 1, plane,
                                   0);
+
         world_load_section_from4i(world, section_x, section_y - 1, plane, 1);
         world_load_section_from4i(world, section_x - 1, section_y, plane, 2);
         world_load_section_from4i(world, section_x, section_y, plane, 3);
+
         world_set_tiles(world);
     }
 
