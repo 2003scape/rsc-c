@@ -189,7 +189,8 @@ void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
 int scene_method306(int i, int j, int k, int l, int i1);
 int scene_method307(int i, int j, int k, int l, int flag);
 int scene_method308(int i, int j, int k, int flag);
-int scene_intersect(int *ai, int *ai1, int *ai2, int *ai3, int ai_length,
-                    int ai2_length);
+int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
+                    int *vertex_view_x_b, int *vertex_view_y_b, int length_a,
+                    int length_b);
 
 #endif
