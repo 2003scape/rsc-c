@@ -81,4 +81,10 @@ void delay_ticks(int ticks);
 void get_level_difference_colour(int level_difference, char *colour);
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
 
+#ifdef RENDER_GL
+float translate_gl_coord(int position, int range);
+float translate_gl_x(int x, int range);
+float translate_gl_y(int y, int range);
+#endif
+
 #endif

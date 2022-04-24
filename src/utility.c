@@ -478,3 +478,18 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
         *out_ptr++ = ((u_val & SIGN_BIT) ? (BIAS - t) : (t - BIAS));
     }
 }
+
+#ifdef RENDER_GL
+float translate_gl_coord(int position, int range) {
+    float half = range / 2.0f;
+    return (position - half) / half;
+}
+
+float translate_gl_x(int x, int range) {
+    return translate_gl_coord(x, range);
+}
+
+float translate_gl_y(int y, int range) {
+    return -translate_gl_coord(y, range);
+}
+#endif

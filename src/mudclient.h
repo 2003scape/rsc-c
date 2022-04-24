@@ -52,6 +52,13 @@
 
 #if !defined(WII) && !defined(_3DS)
 #include <SDL2/SDL.h>
+#ifdef RENDER_GL
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <SDL2/SDL_opengl.h>
+
+#include "shader.h"
+#endif
 #endif
 
 #define SAMPLE_RATE 8000
@@ -281,6 +288,8 @@ typedef struct mudclient {
     SDL_Window *window;
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
+
+    SDL_Window *gl_window;
 
     uint8_t *logo_pixels;
     SDL_Surface *logo_surface;

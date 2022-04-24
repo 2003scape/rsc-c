@@ -75,6 +75,40 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->interlace = 0;
 
     surface->mud = mud;
+
+#ifdef RENDER_GL
+    shader_new(&surface->flat_shader, "./flat.vs", "./flat.fs");
+
+    glGenVertexArrays(1, &(surface->flat_vao));
+    glBindVertexArray(surface->flat_vao);
+
+    glGenBuffers(1, &surface->flat_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, surface->flat_vbo);
+
+    /* 256 quads */
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 256 * 4, NULL,
+                 GL_DYNAMIC_DRAW);
+
+    /* vertices { x, y } */
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                          (void *)0);
+
+    glEnableVertexAttribArray(0);
+
+    /* colours { r, g, b, a } */
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                          (void *)(2 * sizeof(float)));
+
+    glEnableVertexAttribArray(1);
+
+    glGenBuffers(1, &surface->flat_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface->flat_ebo);
+
+    /*int indices[] = {0, 1, 2, 0, 2, 3};*/
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * 256, NULL,
+                 GL_DYNAMIC_DRAW);
+#endif
 }
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2) {
@@ -119,7 +153,7 @@ void surface_draw(Surface *surface) {
 
     for (int y = 0; y < surface->height1; y++) {
         for (int x = 0; x < surface->width1; x += 2) {
-            //int index = ((y  * surface->width1) + x) * 4;
+            // int index = ((y  * surface->width1) + x) * 4;
 
             int r = pixels[index + 1];
             int g = pixels[index + 2];
@@ -243,6 +277,20 @@ void surface_draw(Surface *surface) {
     SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
     SDL_UpdateWindowSurface(mud->window);
 #endif
+
+#ifdef RENDER_GL
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    shader_use(&surface->flat_shader);
+
+    glBindVertexArray(surface->flat_vao);
+    // glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, surface->flat_count * 6, GL_UNSIGNED_INT, 0);
+
+    SDL_GL_SwapWindow(mud->gl_window);
+#endif
+
+    surface->flat_count = 0;
 }
 
 void surface_black_screen(Surface *surface) {
@@ -403,7 +451,65 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
     int top_red = (colour_top >> 16) & 0xff;
     int top_green = (colour_top >> 8) & 0xff;
     int top_blue = colour_top & 0xff;
-    int i3 = surface->width2 - width;
+
+#ifdef RENDER_GL
+    GLfloat left_x = translate_gl_x(x, surface->width2);
+    GLfloat right_x = translate_gl_x(x + width, surface->width2);
+    GLfloat top_y = translate_gl_y(y, surface->height2);
+    GLfloat bottom_y = translate_gl_y(y + height, surface->height2);
+
+    GLfloat gradient_quads[] = {
+        /* top left / northwest */
+        left_x, top_y,      //
+        top_red / 255.0f,   //
+        top_green / 255.0f, //
+        top_blue / 255.0f,  //
+        1.0,                //
+
+        /* top right / northeast */
+        right_x, top_y,     //
+        top_red / 255.0f,   //
+        top_green / 255.0f, //
+        top_blue / 255.0f,  //
+        1.0,                //
+
+        /* bottom right / southeast */
+        right_x, bottom_y,     //
+        bottom_red / 255.0f,   //
+        bottom_green / 255.0f, //
+        bottom_blue / 255.0f,  //
+        1.0,                   //
+
+        /* bottom left / southwest */
+        left_x, bottom_y,      //
+        bottom_red / 255.0f,   //
+        bottom_green / 255.0f, //
+        bottom_blue / 255.0f,  //
+        1.0                    //
+    };
+
+    glBindBuffer(GL_ARRAY_BUFFER, surface->flat_vbo);
+
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    sizeof(GLfloat) * surface->flat_count * 6 * 4,
+                    sizeof(gradient_quads), gradient_quads);
+
+    GLuint index = surface->flat_count * 4;
+
+    GLuint gradient_indices[] = {index, index + 1, index + 2,
+                                 index, index + 2, index + 3};
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface->flat_ebo);
+
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
+                    sizeof(gradient_indices) * surface->flat_count,
+                    sizeof(gradient_indices), gradient_indices);
+
+    surface->flat_count += 1;
+#endif
+
+#ifdef RENDER_SW
+    int i3 = surface->width2 - width; // TODO offset_x
     int8_t vert_inc = 1;
 
     if (surface->interlace) {
@@ -436,6 +542,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
             pixel_idx += surface->width2;
         }
     }
+#endif
 }
 
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,

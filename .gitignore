@@ -1,5 +1,7 @@
 build/
 src/*.o
+src/ui/*.o
+src/wii/*.o
 mudclient
 *.dol
 *.elf

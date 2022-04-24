@@ -1,9 +1,10 @@
 #CC = clang
-#DEBUG = 1
+DEBUG = 1
+#RENDER_GL = 1 TODO
 SRC = $(wildcard src/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -DREVISION_177
-LDFLAGS = -lm -lSDL2
+CFLAGS = -I ./cglm/include -DREVISION_177 -DRENDER_GL
+LDFLAGS = -lm -lSDL2 -lGLEW -lGL
 
 ifdef DEBUG
 CFLAGS += -Wall -Wextra -pedantic -g

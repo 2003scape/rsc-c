@@ -260,8 +260,7 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
         break;
     /*case SDL_SCANCODE_RETURN:
         *code = K_ENTER;
-        break;*/
-    /*
+        break;
     case SDL_SCANCODE_UP:
         *code = 38;
         break;
@@ -550,6 +549,43 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
                                               0x00ff00, 0x0000ff, 0);
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
+
+#ifdef RENDER_GL
+    mud->gl_window =
+        SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                         width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+
+    SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
+
+    if (!context) {
+        fprintf(stderr, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    glewExperimental = GL_TRUE;
+
+    GLenum glew_error = glewInit();
+
+    if (glew_error != GLEW_OK) {
+        fprintf(stderr, "GLEW error: %s\n", glewGetErrorString(glew_error));
+        exit(1);
+    }
+
+    glViewport(0, 0, width, height);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    glEnable(GL_DEPTH_TEST);
+
+    /* transparent textures */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#endif
 #endif
 
     printf("Started application\n");

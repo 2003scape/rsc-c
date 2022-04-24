@@ -5,6 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef RENDER_GL
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <cglm/cglm.h>
+
+#include "shader.h"
+#endif
+
 #ifdef WII
 #include <gccore.h>
 
@@ -68,6 +76,14 @@ typedef struct Surface {
     int bounds_top_x;
     int bounds_bottom_x;
     mudclient *mud;
+
+#ifdef RENDER_GL
+    Shader flat_shader;
+    GLuint flat_vao;
+    GLuint flat_vbo;
+    GLuint flat_ebo;
+    int flat_count;
+#endif
 } Surface;
 
 int surface_rgb_to_int(int r, int g, int b);
