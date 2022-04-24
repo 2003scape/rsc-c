@@ -358,10 +358,10 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    // mud->server = "127.0.0.1";
-    // mud->port = 43594;
-    mud->server = "162.198.202.160"; /* openrsc preservation */
-    mud->port = 43596;
+    mud->server = "127.0.0.1";
+    mud->port = 43594;
+    // mud->server = "162.198.202.160"; /* openrsc preservation */
+    // mud->port = 43596;
     // mud->port = 43496; /* websockets */
     mud->game_width = mud->applet_width;
     mud->game_height = mud->applet_height - 12;
@@ -580,7 +580,8 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    glEnable(GL_DEPTH_TEST);
+    /*glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_NEVER);*/
 
     /* transparent textures */
     glEnable(GL_BLEND);

@@ -91,6 +91,11 @@ void create_font(int8_t *buffer, int id);
 
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
+
+#ifdef RENDER_GL
+void surface_buffer_flat_quad(Surface *surface, GLfloat *quad);
+#endif
+
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);
 void surface_reset_bounds(Surface *surface);
 void surface_reset_draw(Surface *surface);
@@ -112,8 +117,8 @@ void surface_draw_box_edge(Surface *surface, int x, int y, int width,
                            int height, int colour);
 void surface_set_pixel(Surface *surface, int x, int y, int colour);
 void surface_fade_to_black(Surface *surface);
-void surface_draw_line_alpha(Surface *surface, int i, int j, int x, int y,
-                             int width, int height);
+void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
+                             int height);
 void surface_clear(Surface *surface);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
