@@ -431,19 +431,19 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
 
     GLfloat box_quad[] = {
         /* top left / northwest */
-        left_x, top_y,             //
+        left_x, top_y,                   //
         red_f, green_f, blue_f, alpha_f, //
 
         /* top right / northeast */
-        right_x, top_y,            //
+        right_x, top_y,                  //
         red_f, green_f, blue_f, alpha_f, //
 
         /* bottom right / southeast */
-        right_x, bottom_y,         //
+        right_x, bottom_y,               //
         red_f, green_f, blue_f, alpha_f, //
 
         /* bottom left / southwest */
-        left_x, bottom_y,         //
+        left_x, bottom_y,               //
         red_f, green_f, blue_f, alpha_f //
     };
 
@@ -1072,6 +1072,8 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
     // free(surface->sprite_colour_list[sprite_id]);
 }
 
+/* TODO not actually draw_sprite - also allocates ? */
+/* allocates a sprite buffer to draw the landscape onto with draw_world */
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
                                int width, int height) {
     surface->sprite_width[sprite_id] = width;
@@ -1200,8 +1202,8 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
                                     r_y, width, height, w2, h2, inc);
     } else {
         surface_draw_sprite_from10(surface->pixels,
-                                   surface->surface_pixels[sprite_id], 0, r_x,
-                                   r_y, width, height, w2, h2, inc);
+                                   surface->surface_pixels[sprite_id], r_x, r_y,
+                                   width, height, w2, h2, inc);
     }
 }
 
@@ -1322,6 +1324,8 @@ void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
 
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha) {
+    return;
+
     if (surface->sprite_translate[sprite_id]) {
         x += surface->sprite_translate_x[sprite_id];
         y += surface->sprite_translate_y[sprite_id];
@@ -1574,52 +1578,53 @@ void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                               l3, width, height, k2, l2, k1, y_inc, colour);
 }
 
-void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int i, int src_pos,
+void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int src_pos,
                                 int dest_pos, int width, int height, int j1,
                                 int k1, int y_inc) {
+    int colour = 0;
     int i2 = -(width >> 2);
     width = -(width & 3);
 
-    for (int j2 = -height; j2 < 0; j2 += y_inc) {
-        for (int k2 = i2; k2 < 0; k2++) {
-            i = src[src_pos++];
+    for (int y = -height; y < 0; y += y_inc) {
+        for (int x = i2; x < 0; x++) {
+            colour = src[src_pos++];
 
-            if (i != 0) {
-                dest[dest_pos++] = i;
+            if (colour != 0) {
+                dest[dest_pos++] = colour;
             } else {
                 dest_pos++;
             }
 
-            i = src[src_pos++];
+            colour = src[src_pos++];
 
-            if (i != 0) {
-                dest[dest_pos++] = i;
+            if (colour != 0) {
+                dest[dest_pos++] = colour;
             } else {
                 dest_pos++;
             }
 
-            i = src[src_pos++];
+            colour = src[src_pos++];
 
-            if (i != 0) {
-                dest[dest_pos++] = i;
+            if (colour != 0) {
+                dest[dest_pos++] = colour;
             } else {
                 dest_pos++;
             }
 
-            i = src[src_pos++];
+            colour = src[src_pos++];
 
-            if (i != 0) {
-                dest[dest_pos++] = i;
+            if (colour != 0) {
+                dest[dest_pos++] = colour;
             } else {
                 dest_pos++;
             }
         }
 
         for (int l2 = width; l2 < 0; l2++) {
-            i = src[src_pos++];
+            colour = src[src_pos++];
 
-            if (i != 0) {
-                dest[dest_pos++] = i;
+            if (colour != 0) {
+                dest[dest_pos++] = colour;
             } else {
                 dest_pos++;
             }
@@ -1634,11 +1639,11 @@ void surface_draw_sprite_from10a(int32_t *dest, int8_t *colour_idx,
                                  int32_t *colours, int src_pos, int dest_pos,
                                  int width, int height, int w2, int h2,
                                  int y_inc) {
-    int l1 = -(width >> 2);
+    int l1 = -(width / 4);
     width = -(width & 3);
 
-    for (int i2 = -height; i2 < 0; i2 += y_inc) {
-        for (int j2 = l1; j2 < 0; j2++) {
+    for (int y = -height; y < 0; y += y_inc) {
+        for (int x = l1; x < 0; x++) {
             int8_t byte0 = colour_idx[src_pos++];
 
             if (byte0 != 0) {
@@ -1672,7 +1677,7 @@ void surface_draw_sprite_from10a(int32_t *dest, int8_t *colour_idx,
             }
         }
 
-        for (int k2 = width; k2 < 0; k2++) {
+        for (int x = width; x < 0; x++) {
             int8_t byte1 = colour_idx[src_pos++];
 
             if (byte1 != 0) {
@@ -2688,11 +2693,13 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
 
             strncpy(sliced, text + start, end - start);
 
-            int j = 0;
+            {
+                int j = 0;
 
-            while (sliced[j]) {
-                sliced[j] = tolower(sliced[j]);
-                j++;
+                while (sliced[j]) {
+                    sliced[j] = tolower(sliced[j]);
+                    j++;
+                }
             }
 
             if (strcmp(sliced, "red") == 0) {
@@ -2767,95 +2774,74 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
     }
 }
 
-void surface_draw_character(Surface *surface, int width, int x, int y,
-                            int colour, int8_t *font) {
-    int i1 = x + font[width + 5];
-    int j1 = y - font[width + 6];
-    int k1 = font[width + 3];
-    int l1 = font[width + 4];
-    int i2 = font[width] * 16384 + font[width + 1] * 128 + font[width + 2];
-    int j2 = i1 + j1 * surface->width2;
-    int k2 = surface->width2 - k1;
-    int l2 = 0;
+void surface_draw_character(Surface *surface, int font_offset, int x, int y,
+                            int colour, int8_t *font_data) {
+    /* baseline and kerning offsets */
+    int draw_x = x + font_data[font_offset + 5];
+    int draw_y = y - font_data[font_offset + 6];
 
-    if (j1 < surface->bounds_top_y) {
-        int i3 = surface->bounds_top_y - j1;
-        l1 -= i3;
-        j1 = surface->bounds_top_y;
-        i2 += i3 * k1;
-        j2 += i3 * surface->width2;
+    int width = font_data[font_offset + 3];
+    int height = font_data[font_offset + 4];
+
+    /* position of pixel data for the font (on/off) */
+    int font_pos = font_data[font_offset] * 16384 +
+                   font_data[font_offset + 1] * 128 +
+                   font_data[font_offset + 2];
+
+    int dest_pos = draw_x + draw_y * surface->width2;
+    int dest_offset = surface->width2 - width;
+    int font_data_offset = 0;
+
+    if (draw_y < surface->bounds_top_y) {
+        int clip_y = surface->bounds_top_y - draw_y;
+        height -= clip_y;
+        draw_y = surface->bounds_top_y;
+        font_pos += clip_y * width;
+        dest_pos += clip_y * surface->width2;
     }
 
-    if (j1 + l1 >= surface->bounds_bottom_y) {
-        l1 -= j1 + l1 - surface->bounds_bottom_y + 1;
+    if (draw_y + height >= surface->bounds_bottom_y) {
+        height -= draw_y + height - surface->bounds_bottom_y + 1;
     }
 
-    if (i1 < surface->bounds_top_x) {
-        int j3 = surface->bounds_top_x - i1;
-        k1 -= j3;
-        i1 = surface->bounds_top_x;
-        i2 += j3;
-        j2 += j3;
-        l2 += j3;
-        k2 += j3;
+    if (draw_x < surface->bounds_top_x) {
+        int clip_x = surface->bounds_top_x - draw_x;
+        width -= clip_x;
+        draw_x = surface->bounds_top_x;
+        font_pos += clip_x;
+        dest_pos += clip_x;
+        font_data_offset += clip_x;
+        dest_offset += clip_x;
     }
 
-    if (i1 + k1 >= surface->bounds_bottom_x) {
-        int k3 = i1 + k1 - surface->bounds_bottom_x + 1;
-        k1 -= k3;
-        l2 += k3;
-        k2 += k3;
+    if (draw_x + width >= surface->bounds_bottom_x) {
+        int clip_x = draw_x + width - surface->bounds_bottom_x + 1;
+        width -= clip_x;
+        font_data_offset += clip_x;
+        dest_offset += clip_x;
     }
 
-    if (k1 > 0 && l1 > 0) {
-        surface_plot_letter(surface->pixels, font, colour, i2, j2, k1, l1, k2,
-                            l2);
+    if (width > 0 && height > 0) {
+        surface_plot_letter(surface->pixels, font_data, colour, font_pos,
+                            dest_pos, width, height, dest_offset,
+                            font_data_offset);
     }
 }
 
-void surface_plot_letter(int32_t *dest, int8_t *font, int i, int j, int k,
-                         int l, int i1, int j1, int k1) {
-    int l1 = -(l >> 2);
-
-    l = -(l & 3);
-
-    for (int i2 = -i1; i2 < 0; i2++) {
-        for (int j2 = l1; j2 < 0; j2++) {
-            if (font[j++] != 0) {
-                dest[k++] = i;
+void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
+                         int font_pos, int dest_pos, int width, int height,
+                         int dest_offset, int font_data_offset) {
+    for (int y = 0 - height; y < 0; y++) {
+        for (int x = -width; x < 0; x++) {
+            if (font_data[font_pos++] != 0) {
+                dest[dest_pos++] = colour;
             } else {
-                k++;
-            }
-
-            if (font[j++] != 0) {
-                dest[k++] = i;
-            } else {
-                k++;
-            }
-
-            if (font[j++] != 0) {
-                dest[k++] = i;
-            } else {
-                k++;
-            }
-
-            if (font[j++] != 0) {
-                dest[k++] = i;
-            } else {
-                k++;
+                dest_pos++;
             }
         }
 
-        for (int k2 = l; k2 < 0; k2++) {
-            if (font[j++] != 0) {
-                dest[k++] = i;
-            } else {
-                k++;
-            }
-        }
-
-        k += j1;
-        j += k1;
+        dest_pos += dest_offset;
+        font_pos += font_data_offset;
     }
 }
 

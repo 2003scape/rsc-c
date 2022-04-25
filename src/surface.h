@@ -141,9 +141,9 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
                                 int scale_y, int sprite_id, int alpha);
 void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id, int colour);
-void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int i,
-                                int src_pos, int dest_pos, int width,
-                                int height, int j1, int k1, int y_inc);
+void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int src_pos,
+                                int dest_pos, int width, int height, int j1,
+                                int k1, int y_inc);
 void surface_draw_sprite_from10a(int32_t *dest, int8_t *colour_idx,
                                  int32_t *colours, int src_pos, int dest_pos,
                                  int width, int height, int w2, int h2,
@@ -206,10 +206,11 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
                             int font, int colour, int max);
 void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
                          int colour);
-void surface_draw_character(Surface *surface, int width, int x, int y,
-                            int colour, int8_t *font);
-void surface_plot_letter(int32_t *dest, int8_t *font, int i, int j, int k,
-                         int l, int i1, int j1, int k1);
+void surface_draw_character(Surface *surface, int font_offset, int x, int y,
+                            int colour, int8_t *font_data);
+void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
+                         int font_pos, int dest_pos, int width, int height,
+                         int dest_offset, int font_data_offset);
 int surface_text_height(int font_id);
 int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
