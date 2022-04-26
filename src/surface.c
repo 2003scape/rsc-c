@@ -77,6 +77,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->mud = mud;
 
 #ifdef RENDER_GL
+    /* coloured quads */
     shader_new(&surface->flat_shader, "./flat.vs", "./flat.fs");
 
     glGenVertexArrays(1, &surface->flat_vao);
@@ -107,11 +108,56 @@ void surface_new(Surface *surface, int width, int height, int limit,
     /* two triangles per quad (6 vertex indices) */
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * 256, NULL,
                  GL_DYNAMIC_DRAW);
+
+    /* textured quads */
+    shader_new(&surface->sprite_shader, "./sprite.vs", "./sprite.fs");
+
+    glGenVertexArrays(1, &surface->sprite_vao);
+    glBindVertexArray(surface->sprite_vao);
+
+    glGenBuffers(1, &surface->sprite_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, surface->sprite_vbo);
+
+    /* 256 quads */
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 5 * 256 * 4, NULL,
+                 GL_DYNAMIC_DRAW);
+
+    /* vertices { x, y } */
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          (void *)0);
+
+    glEnableVertexAttribArray(0);
+
+    /* texture positions { s, t, index } */
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          (void *)(2 * sizeof(GLfloat)));
+
+    glEnableVertexAttribArray(1);
+
+    /* texture index */
+    /*glVertexAttribIPointer(2, GL_UNSIGNED_INT, GL_FALSE, 5 * sizeof(GLuint),
+                          (void *)(2 * sizeof(GLuint)));
+
+    glEnableVertexAttribArray(2);*/
+
+    glGenBuffers(1, &surface->sprite_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface->sprite_ebo);
+
+    /* two triangles per quad (6 vertex indices) */
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * 256, NULL,
+                 GL_DYNAMIC_DRAW);
+
+    glGenTextures(1, &surface->sprite_item_textures);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
+
+    /* TODO add count */
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 48, 48, 500);
 #endif
 }
 
 #ifdef RENDER_GL
 void surface_buffer_flat_quad(Surface *surface, GLfloat *quad) {
+    glBindVertexArray(surface->flat_vao);
     glBindBuffer(GL_ARRAY_BUFFER, surface->flat_vbo);
 
     glBufferSubData(GL_ARRAY_BUFFER,
@@ -130,6 +176,28 @@ void surface_buffer_flat_quad(Surface *surface, GLfloat *quad) {
                     indices);
 
     surface->flat_count += 1;
+}
+
+void surface_buffer_sprite_quad(Surface *surface, GLfloat *quad) {
+    glBindVertexArray(surface->sprite_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, surface->sprite_vbo);
+
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    sizeof(GLfloat) * surface->sprite_count * 5 * 4,
+                    sizeof(GLfloat) * 5 * 4, quad);
+
+    GLuint index = surface->sprite_count * 4;
+
+    GLuint indices[] = {index, index + 1, index + 2,
+                        index, index + 2, index + 3};
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface->sprite_ebo);
+
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
+                    sizeof(indices) * surface->sprite_count, sizeof(indices),
+                    indices);
+
+    surface->sprite_count += 1;
 }
 #endif
 
@@ -303,16 +371,24 @@ void surface_draw(Surface *surface) {
 #ifdef RENDER_GL
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shader_use(&surface->flat_shader);
+    // TODO merge flat and sprite
 
+    shader_use(&surface->flat_shader);
     glBindVertexArray(surface->flat_vao);
     // glDrawArrays(GL_TRIANGLES, 0, 3);
     glDrawElements(GL_TRIANGLES, surface->flat_count * 6, GL_UNSIGNED_INT, 0);
 
+    shader_use(&surface->sprite_shader);
+    glBindVertexArray(surface->sprite_vao);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
+    glDrawElements(GL_TRIANGLES, surface->sprite_count * 6, GL_UNSIGNED_INT, 0);
+
     SDL_GL_SwapWindow(mud->gl_window);
-#endif
 
     surface->flat_count = 0;
+    surface->sprite_count = 0;
+#endif
 }
 
 void surface_black_screen(Surface *surface) {
@@ -356,17 +432,17 @@ void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
         bottom = surface->height2 - 1;
     }
 
-    int8_t vert_inc = 1;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
-        vert_inc = 2;
+        y_inc = 2;
 
         if ((top & 1) != 0) {
             top++;
         }
     }
 
-    for (int yy = top; yy <= bottom; yy += vert_inc) {
+    for (int yy = top; yy <= bottom; yy += y_inc) {
         int l3 = yy - y;
         int i4 = (int)sqrt(radius * radius - l3 * l3);
         int j4 = x - i4;
@@ -381,10 +457,10 @@ void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
             k4 = surface->width2 - 1;
         }
 
-        int pixel_idx = j4 + yy * surface->width2;
+        int index = j4 + yy * surface->width2;
 
         for (int i = j4; i <= k4; i++) {
-            int pixel = surface->pixels[pixel_idx];
+            int pixel = surface->pixels[index];
             int bg_red = ((pixel >> 16) & 0xff) * bg_alpha;
             int bg_green = ((pixel >> 8) & 0xff) * bg_alpha;
             int bg_blue = (pixel & 0xff) * bg_alpha;
@@ -393,7 +469,7 @@ void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
                              (((green + bg_green) >> 8) << 8) +
                              ((blue + bg_blue) >> 8);
 
-            surface->pixels[pixel_idx++] = new_colour;
+            surface->pixels[index++] = new_colour;
         }
     }
 }
@@ -456,12 +532,12 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
     int blue = (colour & 0xff) * alpha;
     int background_alpha = 256 - alpha;
 
-    int offset_x = surface->width2 - width;
-    int8_t vert_inc = 1;
+    int offset = surface->width2 - width;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
-        vert_inc = 2;
-        offset_x += surface->width2;
+        y_inc = 2;
+        offset += surface->width2;
 
         if ((y & 1) != 0) {
             y++;
@@ -469,11 +545,11 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
         }
     }
 
-    int pixel_idx = x + y * surface->width2;
+    int index = x + y * surface->width2;
 
-    for (int i = 0; i < height; i += vert_inc) {
+    for (int i = 0; i < height; i += y_inc) {
         for (int j = -width; j < 0; j++) {
-            int pixel = surface->pixels[pixel_idx];
+            int pixel = surface->pixels[index];
             int background_red = ((pixel >> 16) & 0xff) * background_alpha;
             int background_green = ((pixel >> 8) & 0xff) * background_alpha;
             int background_blue = (pixel & 0xff) * background_alpha;
@@ -482,10 +558,10 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
                              (((green + background_green) >> 8) << 8) +
                              ((blue + background_blue) >> 8);
 
-            surface->pixels[pixel_idx++] = new_colour;
+            surface->pixels[index++] = new_colour;
         }
 
-        pixel_idx += offset_x;
+        index += offset;
     }
 #endif
 }
@@ -548,12 +624,12 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
 #endif
 
 #ifdef RENDER_SW
-    int i3 = surface->width2 - width; // TODO offset_x
-    int8_t vert_inc = 1;
+    int offset = surface->width2 - width;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
-        vert_inc = 2;
-        i3 += surface->width2;
+        y_inc = 2;
+        offset += surface->width2;
 
         if ((y & 1) != 0) {
             y++;
@@ -561,9 +637,9 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         }
     }
 
-    int pixel_idx = x + y * surface->width2;
+    int index = x + y * surface->width2;
 
-    for (int i = 0; i < height; i += vert_inc) {
+    for (int i = 0; i < height; i += y_inc) {
         if (i + y >= surface->bounds_top_y &&
             i + y < surface->bounds_bottom_y) {
             int new_colour =
@@ -573,12 +649,12 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
                 (((bottom_blue * i + top_blue * (height - i)) / height));
 
             for (int j = -width; j < 0; j++) {
-                surface->pixels[pixel_idx++] = new_colour;
+                surface->pixels[index++] = new_colour;
             }
 
-            pixel_idx += i3;
+            index += offset;
         } else {
-            pixel_idx += surface->width2;
+            index += surface->width2;
         }
     }
 #endif
@@ -609,12 +685,12 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
         height = surface->bounds_bottom_y - y;
     }
 
-    int j1 = surface->width2 - width;
-    int8_t vert_inc = 1;
+    int offset = surface->width2 - width;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
-        vert_inc = 2;
-        j1 += surface->width2;
+        y_inc = 2;
+        offset += surface->width2;
 
         if ((y & 1) != 0) {
             y++;
@@ -622,14 +698,14 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
         }
     }
 
-    int pixel_idx = x + y * surface->width2;
+    int index = x + y * surface->width2;
 
-    for (int i = -height; i < 0; i += vert_inc) {
+    for (int i = -height; i < 0; i += y_inc) {
         for (int j = -width; j < 0; j++) {
-            surface->pixels[pixel_idx++] = colour;
+            surface->pixels[index++] = colour;
         }
 
-        pixel_idx += j1;
+        index += offset;
     }
 #endif
 }
@@ -828,7 +904,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
     int colour_count = index_data[index_offset++] & 0xff;
 
     int32_t *colours = calloc(colour_count, sizeof(int32_t));
-    colours[0] = 0xff00ff;
+    colours[0] = MAGENTA;
 
     for (int i = 0; i < colour_count - 1; i++) {
         colours[i + 1] = ((index_data[index_offset] & 0xff) << 16) +
@@ -852,16 +928,17 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
         index_offset += 2;
 
-        int unknown = index_data[index_offset++] & 0xff;
-
+        int type = index_data[index_offset++] & 0xff;
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
         surface->sprite_colours_used[i] = calloc(area, sizeof(int8_t));
         surface->sprite_colour_list[i] = colours;
         surface->sprite_width_full[i] = full_width;
         surface->sprite_height_full[i] = full_height;
+
         free(surface->surface_pixels[i]);
         surface->surface_pixels[i] = NULL;
+
         surface->sprite_translate[i] = 0;
 
         if (surface->sprite_translate_x[i] != 0 ||
@@ -869,25 +946,24 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
             surface->sprite_translate[i] = 1;
         }
 
-        if (unknown == 0) {
-            for (int pixel = 0; pixel < area; pixel++) {
-                surface->sprite_colours_used[i][pixel] =
+        if (type == 0) {
+            for (int j = 0; j < area; j++) {
+                surface->sprite_colours_used[i][j] =
                     sprite_data[sprite_offset++];
 
-                if (surface->sprite_colours_used[i][pixel] == 0) {
+                if (surface->sprite_colours_used[i][j] == 0) {
                     surface->sprite_translate[i] = 1;
                 }
             }
-        } else if (unknown == 1) {
+        } else if (type == 1) {
             for (int x = 0; x < surface->sprite_width[i]; x++) {
                 for (int y = 0; y < surface->sprite_height[i]; y++) {
-                    surface
-                        ->sprite_colours_used[i][x +
-                                                 y * surface->sprite_width[i]] =
+                    int index = x + y * surface->sprite_width[i];
+
+                    surface->sprite_colours_used[i][index] =
                         sprite_data[sprite_offset++];
 
-                    if (surface->sprite_colours_used
-                            [i][x + y * surface->sprite_width[i]] == 0) {
+                    if (surface->sprite_colours_used[i][index] == 0) {
                         surface->sprite_translate[i] = 1;
                     }
                 }
@@ -1040,36 +1116,54 @@ void surface_draw_world(Surface *surface, int sprite_id) {
 }
 
 void surface_load_sprite(Surface *surface, int sprite_id) {
-    int8_t *idx = surface->sprite_colours_used[sprite_id];
+    int8_t *colours = surface->sprite_colours_used[sprite_id];
 
-    if (idx == NULL) {
+    if (colours == NULL) {
         return;
     }
 
     int area =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
-    int32_t *cols = surface->sprite_colour_list[sprite_id];
+    int32_t *palette = surface->sprite_colour_list[sprite_id];
     int32_t *pixels = malloc(area * sizeof(int32_t));
 
     for (int i = 0; i < area; i++) {
-        int32_t colour = cols[idx[i] & 0xff];
+        int32_t colour = palette[colours[i] & 0xff];
 
         if (colour == 0) {
             colour = 1;
-        } else if (colour == 0xff00ff) {
+        } else if (colour == MAGENTA) {
             colour = 0;
         }
 
         pixels[i] = colour;
+
+        if (sprite_id >= 2150 && sprite_id <= (2150 + 450)) {
+            if (colour != 0) {
+                pixels[i] += 0xff000000;
+            }
+        }
     }
+
+#ifdef RENDER_GL
+    if (sprite_id >= 2150 && sprite_id <= (2150 + 450)) {
+        glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
+
+        int width = surface->sprite_width[sprite_id];
+        int height = surface->sprite_height[sprite_id];
+
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, sprite_id - 2150, width,
+                        height, 1, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+    }
+#endif
 
     surface->surface_pixels[sprite_id] = pixels;
 
     free(surface->sprite_colours_used[sprite_id]);
     surface->sprite_colours_used[sprite_id] = NULL;
-    // surface->sprite_colour_list[sprite_id] = NULL;
     // free(surface->sprite_colour_list[sprite_id]);
+    // surface->sprite_colour_list[sprite_id] = NULL;
 }
 
 /* TODO not actually draw_sprite - also allocates ? */
@@ -1120,11 +1214,11 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
     surface->surface_pixels[sprite_id] =
         malloc(width * height * sizeof(int32_t));
 
-    int pixel = 0;
+    int index = 0;
 
     for (int xx = x; xx < x + width; xx++) {
         for (int yy = y; yy < y + height; yy++) {
-            surface->surface_pixels[sprite_id][pixel++] =
+            surface->surface_pixels[sprite_id][index++] =
                 surface->pixels[xx + yy * surface->width2];
         }
     }
@@ -1142,19 +1236,19 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
         y += surface->sprite_translate_y[sprite_id];
     }
 
-    int r_y = x + y * surface->width2;
-    int r_x = 0;
+    int dest_pos = x + y * surface->width2;
+    int src_pos = 0;
     int height = surface->sprite_height[sprite_id];
     int width = surface->sprite_width[sprite_id];
-    int w2 = surface->width2 - width;
-    int h2 = 0;
+    int dest_offset = surface->width2 - width;
+    int sprite_offset = 0;
 
     if (y < surface->bounds_top_y) {
-        int j2 = surface->bounds_top_y - y;
-        height -= j2;
+        int delta_y = surface->bounds_top_y - y;
+        height -= delta_y;
         y = surface->bounds_top_y;
-        r_x += j2 * width;
-        r_y += j2 * surface->width2;
+        src_pos += delta_y * width;
+        dest_pos += delta_y * surface->width2;
     }
 
     if (y + height >= surface->bounds_bottom_y) {
@@ -1162,48 +1256,48 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
     }
 
     if (x < surface->bounds_top_x) {
-        int k2 = surface->bounds_top_x - x;
-        width -= k2;
+        int delta_x = surface->bounds_top_x - x;
+        width -= delta_x;
         x = surface->bounds_top_x;
-        r_x += k2;
-        r_y += k2;
-        h2 += k2;
-        w2 += k2;
+        src_pos += delta_x;
+        dest_pos += delta_x;
+        sprite_offset += delta_x;
+        dest_offset += delta_x;
     }
 
     if (x + width >= surface->bounds_bottom_x) {
-        int l2 = x + width - surface->bounds_bottom_x + 1;
-        width -= l2;
-        h2 += l2;
-        w2 += l2;
+        int delta_x = x + width - surface->bounds_bottom_x + 1;
+        width -= delta_x;
+        sprite_offset += delta_x;
+        dest_offset += delta_x;
     }
 
     if (width <= 0 || height <= 0) {
         return;
     }
 
-    int8_t inc = 1;
+    int8_t y_inc = 1;
 
     if (surface->interlace) {
-        inc = 2;
-        w2 += surface->width2;
-        h2 += surface->sprite_width[sprite_id];
+        y_inc = 2;
+        dest_offset += surface->width2;
+        sprite_offset += surface->sprite_width[sprite_id];
 
         if ((y & 1) != 0) {
-            r_y += surface->width2;
+            dest_pos += surface->width2;
             height--;
         }
     }
 
     if (surface->surface_pixels[sprite_id] == NULL) {
-        surface_draw_sprite_from10a(surface->pixels,
-                                    surface->sprite_colours_used[sprite_id],
-                                    surface->sprite_colour_list[sprite_id], r_x,
-                                    r_y, width, height, w2, h2, inc);
+        surface_plot_palette_sprite(
+            surface->pixels, surface->sprite_colours_used[sprite_id],
+            surface->sprite_colour_list[sprite_id], src_pos, dest_pos, width,
+            height, dest_offset, sprite_offset, y_inc);
     } else {
-        surface_draw_sprite_from10(surface->pixels,
-                                   surface->surface_pixels[sprite_id], r_x, r_y,
-                                   width, height, w2, h2, inc);
+        surface_plot_sprite(surface->pixels, surface->surface_pixels[sprite_id],
+                            src_pos, dest_pos, width, height, dest_offset,
+                            sprite_offset, y_inc);
     }
 }
 
@@ -1324,8 +1418,6 @@ void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
 
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha) {
-    return;
-
     if (surface->sprite_translate[sprite_id]) {
         x += surface->sprite_translate_x[sprite_id];
         y += surface->sprite_translate_y[sprite_id];
@@ -1578,40 +1670,12 @@ void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                               l3, width, height, k2, l2, k1, y_inc, colour);
 }
 
-void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int src_pos,
-                                int dest_pos, int width, int height, int j1,
-                                int k1, int y_inc) {
-    int colour = 0;
-    int i2 = -(width >> 2);
-    width = -(width & 3);
-
-    for (int y = -height; y < 0; y += y_inc) {
-        for (int x = i2; x < 0; x++) {
-            colour = src[src_pos++];
-
-            if (colour != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
-            }
-
-            colour = src[src_pos++];
-
-            if (colour != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
-            }
-
-            colour = src[src_pos++];
-
-            if (colour != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
-            }
-
-            colour = src[src_pos++];
+void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
+                         int width, int height, int dest_offset, int src_offset,
+                         int y_inc) {
+    for (int y = 0 - height; y < 0; y += y_inc) {
+        for (int x = -width; x < 0; x++) {
+            int colour = src[src_pos++];
 
             if (colour != 0) {
                 dest[dest_pos++] = colour;
@@ -1620,75 +1684,28 @@ void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int src_pos,
             }
         }
 
-        for (int l2 = width; l2 < 0; l2++) {
-            colour = src[src_pos++];
-
-            if (colour != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
-            }
-        }
-
-        dest_pos += j1;
-        src_pos += k1;
+        dest_pos += dest_offset;
+        src_pos += src_offset;
     }
 }
 
-void surface_draw_sprite_from10a(int32_t *dest, int8_t *colour_idx,
-                                 int32_t *colours, int src_pos, int dest_pos,
-                                 int width, int height, int w2, int h2,
-                                 int y_inc) {
-    int l1 = -(width / 4);
-    width = -(width & 3);
+void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
+                                 int32_t *palette, int src_pos, int dest_pos,
+                                 int width, int height, int dest_offset,
+                                 int src_offset, int y_inc) {
+    for (int y = 0 - height; y < 0; y += y_inc) {
+        for (int x = -width; x < 0; x++) {
+            int8_t index = colours[src_pos++];
 
-    for (int y = -height; y < 0; y += y_inc) {
-        for (int x = l1; x < 0; x++) {
-            int8_t byte0 = colour_idx[src_pos++];
-
-            if (byte0 != 0) {
-                dest[dest_pos++] = colours[byte0 & 0xff];
-            } else {
-                dest_pos++;
-            }
-
-            byte0 = colour_idx[src_pos++];
-
-            if (byte0 != 0) {
-                dest[dest_pos++] = colours[byte0 & 0xff];
-            } else {
-                dest_pos++;
-            }
-
-            byte0 = colour_idx[src_pos++];
-
-            if (byte0 != 0) {
-                dest[dest_pos++] = colours[byte0 & 0xff];
-            } else {
-                dest_pos++;
-            }
-
-            byte0 = colour_idx[src_pos++];
-
-            if (byte0 != 0) {
-                dest[dest_pos++] = colours[byte0 & 0xff];
+            if (index != 0) {
+                dest[dest_pos++] = palette[index & 0xff];
             } else {
                 dest_pos++;
             }
         }
 
-        for (int x = width; x < 0; x++) {
-            int8_t byte1 = colour_idx[src_pos++];
-
-            if (byte1 != 0) {
-                dest[dest_pos++] = colours[byte1 & 0xff];
-            } else {
-                dest_pos++;
-            }
-        }
-
-        dest_pos += w2;
-        src_pos += h2;
+        dest_pos += dest_offset;
+        src_pos += src_offset;
     }
 }
 
@@ -2169,11 +2186,10 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
 
             if (!surface->interlace || (i & 1) == 0) {
                 if (!surface->sprite_translate[sprite_id]) {
-                    surface_draw_minimap(surface->pixels, ai, 0, l10 + j11, l11,
+                    surface_draw_minimap(surface->pixels, ai, l10 + j11, l11,
                                          j12, i12, k12, j11 - k11, j9);
                 } else {
-                    // minimap
-                    surface_draw_minimap_translate(surface->pixels, ai, 0,
+                    surface_draw_minimap_translate(surface->pixels, ai,
                                                    l10 + j11, l11, j12, i12,
                                                    k12, j11 - k11, j9);
                 }
@@ -2184,26 +2200,26 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     }
 }
 
-void surface_draw_minimap(int32_t *dest, int32_t *src, int i, int j, int k,
-                          int l, int i1, int j1, int k1, int l1) {
+void surface_draw_minimap(int32_t *dest, int32_t *src, int j, int k, int l,
+                          int i1, int j1, int k1, int l1) {
     // k = x
-    for (i = k1; i < 0; i++) {
+    for (int i = k1; i < 0; i++) {
         dest[j++] = src[(k >> 17) + (l >> 17) * l1];
         k += i1;
         l += j1;
     }
 }
 
-void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int i, int j,
+void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int dest_pos,
                                     int k, int l, int i1, int j1, int k1,
                                     int l1) {
     for (int i2 = k1; i2 < 0; i2++) {
-        i = src[(k >> 17) + (l >> 17) * l1];
+        int colour = src[(k >> 17) + (l >> 17) * l1];
 
-        if (i != 0) {
-            dest[j++] = i;
+        if (colour != 0) {
+            dest[dest_pos++] = colour;
         } else {
-            j++;
+            dest_pos++;
         }
 
         k += i1;
@@ -2212,9 +2228,10 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int i, int j,
 }
 
 /* this might be draw_sprite_scaled */
-void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
+void surface_sprite_clipping_from9(Surface *surface, int x, int y,
+                                   int draw_width, int draw_height,
                                    int sprite_id, int colour1, int colour2,
-                                   int tx, int flag) {
+                                   int tx, int flip) {
     if (colour1 == 0) {
         colour1 = WHITE;
     }
@@ -2223,46 +2240,51 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
         colour2 = WHITE;
     }
 
-    int width = surface->sprite_width[sprite_id];
-    int height = surface->sprite_height[sprite_id];
+    int sprite_width = surface->sprite_width[sprite_id];
+    int sprite_height = surface->sprite_height[sprite_id];
     int k2 = 0;
     int l2 = 0;
     int i3 = tx << 16;
-    int j3 = (width << 16) / w;
-    int k3 = (height << 16) / h;
-    int l3 = -((tx << 16) / h);
+    int j3 = (sprite_width << 16) / draw_width;
+    int k3 = (sprite_height << 16) / draw_height;
+    int l3 = -((tx << 16) / draw_height);
 
     if (surface->sprite_translate[sprite_id]) {
         int full_width = surface->sprite_width_full[sprite_id];
         int full_height = surface->sprite_height_full[sprite_id];
 
-        j3 = (full_width << 16) / w;
-        k3 = (full_height << 16) / h;
+        j3 = (full_width << 16) / draw_width;
+        k3 = (full_height << 16) / draw_height;
 
-        int j5 = surface->sprite_translate_x[sprite_id];
-        int k5 = surface->sprite_translate_y[sprite_id];
+        int translate_x = surface->sprite_translate_x[sprite_id];
+        int translate_y = surface->sprite_translate_y[sprite_id];
 
-        if (flag) {
-            j5 = full_width - surface->sprite_width[sprite_id] - j5;
+        if (flip) {
+            translate_x = full_width - surface->sprite_width[sprite_id] - translate_x;
         }
 
-        x += (j5 * w + full_width - 1) / full_width;
+        x += (translate_x * draw_width + full_width - 1) / full_width;
 
-        int l5 = (k5 * h + full_height - 1) / full_height;
+        int l5 = (translate_y * draw_height + full_height - 1) / full_height;
 
         y += l5;
         i3 += l5 * l3;
 
-        if ((j5 * w) % full_width != 0) {
-            k2 = ((full_width - ((j5 * w) % full_width)) << 16) / w;
+        if ((translate_x * draw_width) % full_width != 0) {
+            k2 = ((full_width - ((translate_x * draw_width) % full_width)) << 16) /
+                 draw_width;
         }
 
-        if ((k5 * h) % full_height != 0) {
-            l2 = ((full_height - ((k5 * h) % full_height)) << 16) / h;
+        if ((translate_y * draw_height) % full_height != 0) {
+            l2 = ((full_height - ((translate_y * draw_height) % full_height)) << 16) /
+                 draw_height;
         }
 
-        w = ((surface->sprite_width[sprite_id] << 16) - k2 + j3 - 1) / j3;
-        h = ((surface->sprite_height[sprite_id] << 16) - l2 + k3 - 1) / k3;
+        draw_width =
+            ((surface->sprite_width[sprite_id] << 16) - k2 + j3 - 1) / j3;
+
+        draw_height =
+            ((surface->sprite_height[sprite_id] << 16) - l2 + k3 - 1) / k3;
     }
 
     int j4 = y * surface->width2;
@@ -2270,17 +2292,54 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
 
     if (y < surface->bounds_top_y) {
         int l4 = surface->bounds_top_y - y;
-        h -= l4;
+        draw_height -= l4;
         y = surface->bounds_top_y;
         j4 += l4 * surface->width2;
         l2 += k3 * l4;
         i3 += l3 * l4;
     }
 
-    if (y + h >= surface->bounds_bottom_y) {
-        h -= y + h - surface->bounds_bottom_y + 1;
+    if (y + draw_height >= surface->bounds_bottom_y) {
+        draw_height -= y + draw_height - surface->bounds_bottom_y + 1;
     }
 
+#ifdef RENDER_GL
+    if (sprite_id < 2150 || sprite_id > (2150 + 450)) {
+        return;
+    }
+
+    float texture_id = (float)(sprite_id - 2150);
+
+    GLfloat left_x = translate_gl_x(x, surface->width2);
+    GLfloat right_x = translate_gl_x(x + draw_width, surface->width2);
+    GLfloat top_y = translate_gl_y(y, surface->height2);
+    GLfloat bottom_y = translate_gl_y(y + draw_height, surface->height2);
+
+    GLfloat sprite_quad[] = {
+        /* top left / northwest */
+        left_x, top_y,          //
+        0, 0, texture_id, //
+
+        /* top right / northeast */
+        right_x, top_y,   //
+        sprite_width / 48.0f, 0,             //
+        texture_id, //
+
+        /* bottom right / southeast */
+        right_x, bottom_y,      //
+        sprite_width / 48.0f, sprite_height / 48.0f, //
+        texture_id, //
+
+        /* bottom left / southwest */
+        left_x, bottom_y,       //
+        0, sprite_height / 48.0f,
+        texture_id, //
+    };
+
+    surface_buffer_sprite_quad(surface, sprite_quad);
+#endif
+
+#ifdef RENDER_SW
     int i5 = (j4 / surface->width2) & 1;
 
     if (!surface->interlace) {
@@ -2289,11 +2348,12 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
 
     if (colour2 == WHITE) {
         if (surface->surface_pixels[sprite_id] != NULL) {
-            if (!flag) {
+            if (!flip) {
                 surface_transparent_sprite_plot_from15(
                     surface, surface->pixels,
-                    surface->surface_pixels[sprite_id], 0, k2, l2, j4, w, h, j3,
-                    k3, width, colour1, i3, l3, i5);
+                    surface->surface_pixels[sprite_id], 0, k2, l2, j4,
+                    draw_width, draw_height, j3, k3, sprite_width, colour1, i3, l3,
+                    i5);
 
                 return;
             } else {
@@ -2301,18 +2361,19 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                     surface, surface->pixels,
                     surface->surface_pixels[sprite_id], 0,
                     (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
-                    w, h, -j3, k3, width, colour1, i3, l3, i5);
+                    draw_width, draw_height, -j3, k3, sprite_width, colour1, i3, l3,
+                    i5);
 
                 return;
             }
         }
 
-        if (!flag) {
+        if (!flip) {
             surface_transparent_sprite_plot_from16a(
                 surface, surface->pixels,
                 surface->sprite_colours_used[sprite_id],
-                surface->sprite_colour_list[sprite_id], 0, k2, l2, j4, w, h, j3,
-                k3, width, colour1, i3, l3, i5);
+                surface->sprite_colour_list[sprite_id], 0, k2, l2, j4,
+                draw_width, draw_height, j3, k3, sprite_width, colour1, i3, l3, i5);
 
             return;
         } else {
@@ -2320,44 +2381,46 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                 surface, surface->pixels,
                 surface->sprite_colours_used[sprite_id],
                 surface->sprite_colour_list[sprite_id], 0,
-                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4, w, h,
-                -j3, k3, width, colour1, i3, l3, i5);
+                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
+                draw_width, draw_height, -j3, k3, sprite_width, colour1, i3, l3, i5);
 
             return;
         }
     }
 
     if (surface->surface_pixels[sprite_id] != NULL) {
-        if (!flag) {
+        if (!flip) {
             surface_transparent_sprite_plot_from16(
                 surface, surface->pixels, surface->surface_pixels[sprite_id], 0,
-                k2, l2, j4, w, h, j3, k3, width, colour1, colour2, i3, l3, i5);
+                k2, l2, j4, draw_width, draw_height, j3, k3, sprite_width, colour1,
+                colour2, i3, l3, i5);
 
-            return;
         } else {
             surface_transparent_sprite_plot_from16(
                 surface, surface->pixels, surface->surface_pixels[sprite_id], 0,
-                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4, w, h,
-                -j3, k3, width, colour1, colour2, i3, l3, i5);
-
-            return;
+                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
+                draw_width, draw_height, -j3, k3, sprite_width, colour1, colour2, i3,
+                l3, i5);
+        }
+    } else {
+        if (!flip) {
+            surface_transparent_sprite_plot_from17(
+                surface, surface->pixels,
+                surface->sprite_colours_used[sprite_id],
+                surface->sprite_colour_list[sprite_id], 0, k2, l2, j4,
+                draw_width, draw_height, j3, k3, sprite_width, colour1, colour2, i3,
+                l3, i5);
+        } else {
+            surface_transparent_sprite_plot_from17(
+                surface, surface->pixels,
+                surface->sprite_colours_used[sprite_id],
+                surface->sprite_colour_list[sprite_id], 0,
+                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
+                draw_width, draw_height, -j3, k3, sprite_width, colour1, colour2, i3,
+                l3, i5);
         }
     }
-
-    /* flag might be flip */
-
-    if (!flag) {
-        surface_transparent_sprite_plot_from17(
-            surface, surface->pixels, surface->sprite_colours_used[sprite_id],
-            surface->sprite_colour_list[sprite_id], 0, k2, l2, j4, w, h, j3, k3,
-            width, colour1, colour2, i3, l3, i5);
-    } else {
-        surface_transparent_sprite_plot_from17(
-            surface, surface->pixels, surface->sprite_colours_used[sprite_id],
-            surface->sprite_colour_list[sprite_id], 0,
-            (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4, w, h,
-            -j3, k3, width, colour1, colour2, i3, l3, i5);
-    }
+#endif
 }
 
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,

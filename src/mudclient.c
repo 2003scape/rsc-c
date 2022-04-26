@@ -1339,6 +1339,7 @@ void mudclient_load_entities(mudclient *mud) {
                 frame_count += 9;
             }
 
+            /* TODO why? */
             if (game_data_animation_gender[i] != 0) {
                 for (int j = animation_index; j < animation_index + 27; j++) {
                     surface_load_sprite(mud->surface, j);

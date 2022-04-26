@@ -83,6 +83,13 @@ typedef struct Surface {
     GLuint flat_vbo;
     GLuint flat_ebo;
     int flat_count;
+
+    Shader sprite_shader;
+    GLuint sprite_vao;
+    GLuint sprite_vbo;
+    GLuint sprite_ebo;
+    GLuint sprite_item_textures;
+    int sprite_count;
 #endif
 } Surface;
 
@@ -110,9 +117,9 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,
                       int colour);
 void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
-                             int colour);
+                                  int colour);
 void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
-                            int colour);
+                                int colour);
 void surface_draw_box_edge(Surface *surface, int x, int y, int width,
                            int height, int colour);
 void surface_set_pixel(Surface *surface, int x, int y, int colour);
@@ -141,38 +148,36 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
                                 int scale_y, int sprite_id, int alpha);
 void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id, int colour);
-void surface_draw_sprite_from10(int32_t *dest, int32_t *src, int src_pos,
-                                int dest_pos, int width, int height, int j1,
-                                int k1, int y_inc);
-void surface_draw_sprite_from10a(int32_t *dest, int8_t *colour_idx,
-                                 int32_t *colours, int src_pos, int dest_pos,
-                                 int width, int height, int w2, int h2,
-                                 int y_inc);
-void surface_plot_scale_from13(int32_t *dest, int32_t *src, int i, int j,
-                               int k, int dest_pos, int i1, int j1, int k1,
-                               int l1, int i2, int j2, int k2);
+void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
+                         int width, int height, int dest_offset, int src_offset,
+                         int y_inc);
+void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
+                                 int32_t *palette, int src_pos, int dest_pos,
+                                 int width, int height, int dest_offset,
+                                 int src_offset, int y_inc);
+void surface_plot_scale_from13(int32_t *dest, int32_t *src, int i, int j, int k,
+                               int dest_pos, int i1, int j1, int k1, int l1,
+                               int i2, int j2, int k2);
 void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int i,
                                       int src_pos, int size, int width,
                                       int height, int extra_x_spcae, int k1,
                                       int y_inc, int alpha);
 void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colour_idx,
-                                       int32_t *colours, int list_pos,
-                                       int size, int width, int height,
-                                       int extra_x_space, int j1, int y_inc,
-                                       int alpha);
-void surface_transparent_scale(int32_t *dest, int32_t *src, int i, int j,
-                               int k, int dest_pos, int i1, int j1, int k1,
-                               int l1, int i2, int j2, int y_inc, int alpha);
-void surface_plot_scale_from14(int32_t *dest, int32_t *src, int i, int j,
-                               int k, int l, int i1, int width, int height,
-                               int l1, int i2, int j2, int y_inc, int colour);
+                                       int32_t *colours, int list_pos, int size,
+                                       int width, int height, int extra_x_space,
+                                       int j1, int y_inc, int alpha);
+void surface_transparent_scale(int32_t *dest, int32_t *src, int i, int j, int k,
+                               int dest_pos, int i1, int j1, int k1, int l1,
+                               int i2, int j2, int y_inc, int alpha);
+void surface_plot_scale_from14(int32_t *dest, int32_t *src, int i, int j, int k,
+                               int l, int i1, int width, int height, int l1,
+                               int i2, int j2, int y_inc, int colour);
 void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
                                  int rotation, int scale);
-void surface_draw_minimap(int32_t *dest, int32_t *src, int i, int j, int k,
-                          int l, int i1, int j1, int k1, int l1);
-void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int i, int j,
-                                    int k, int l, int i1, int j1, int k1,
-                                    int l1);
+void surface_draw_minimap(int32_t *dest, int32_t *src, int j, int k, int l,
+                          int i1, int j1, int k1, int l1);
+void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
+                                    int l, int i1, int j1, int k1, int l1);
 void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                                    int sprite_id, int colour1, int colour2,
                                    int tx, int flag);
