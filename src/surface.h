@@ -11,6 +11,8 @@
 #include <cglm/cglm.h>
 
 #include "shader.h"
+
+#define FLAT_QUAD_COUNT 512
 #endif
 
 #ifdef WII
@@ -82,14 +84,17 @@ typedef struct Surface {
     GLuint flat_vao;
     GLuint flat_vbo;
     GLuint flat_ebo;
+    GLuint sprite_item_textures;
     int flat_count;
 
+#if 0
     Shader sprite_shader;
     GLuint sprite_vao;
     GLuint sprite_vbo;
     GLuint sprite_ebo;
     GLuint sprite_item_textures;
     int sprite_count;
+#endif
 #endif
 } Surface;
 
