@@ -3,7 +3,7 @@ DEBUG = 1
 #RENDER_GL = 1 TODO
 SRC = $(wildcard src/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -I ./cglm/include -DREVISION_177 -DRENDER_GL
+CFLAGS = -I ./cglm/include -DRENDER_GL -DRENDER_SW #-DREVISION_177
 LDFLAGS = -lm -lSDL2 -lGLEW -lGL
 
 ifdef DEBUG
