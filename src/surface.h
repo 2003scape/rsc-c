@@ -13,6 +13,9 @@
 #include "shader.h"
 
 #define FLAT_QUAD_COUNT 512
+
+#define ITEM_TEXTURE_WIDTH 48
+#define ITEM_TEXTURE_HEIGHT 32
 #endif
 
 #ifdef WII
@@ -187,24 +190,24 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                                    int sprite_id, int colour1, int colour2,
                                    int tx, int flag);
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
-                                            int32_t *src, int i, int j, int k,
+                                            int32_t *src, int j, int k,
                                             int dest_pos, int i1, int j1,
                                             int k1, int l1, int i2, int j2,
                                             int k2, int l2, int i3);
 void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
-                                            int32_t *src, int i, int j, int k,
+                                            int32_t *src, int j, int k,
                                             int dest_pos, int i1, int j1,
                                             int k1, int l1, int i2, int j2,
                                             int k2, int l2, int i3, int j3);
 void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
                                              int8_t *colour_idx,
-                                             int32_t *colours, int i, int j,
+                                             int32_t *colours, int j,
                                              int k, int l, int i1, int j1,
                                              int k1, int l1, int i2, int j2,
                                              int k2, int l2, int i3);
 void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
                                             int8_t *colour_idx,
-                                            int32_t *colours, int i, int j,
+                                            int32_t *colours, int j,
                                             int k, int l, int i1, int j1,
                                             int k1, int l1, int i2, int j2,
                                             int k2, int l2, int i3, int j3);

@@ -86,26 +86,32 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glGenBuffers(1, &surface->flat_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, surface->flat_vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 9 * FLAT_QUAD_COUNT * 4, NULL,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12 * FLAT_QUAD_COUNT * 4, NULL,
                  GL_DYNAMIC_DRAW);
 
-    /* vertices { x, y } */
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
+    /* vertex { x, y } */
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float),
                           (void *)0);
 
     glEnableVertexAttribArray(0);
 
-    /* colours { r, g, b, a } */
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
+    /* colour { r, g, b, a } */
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(float),
                           (void *)(2 * sizeof(float)));
 
     glEnableVertexAttribArray(1);
 
-    /* texture { s, t, index } */
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
+    /* skin colour { r, g, b } */
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float),
                           (void *)(6 * sizeof(float)));
 
     glEnableVertexAttribArray(2);
+
+    /* texture { s, t, index } */
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float),
+                          (void *)(9 * sizeof(float)));
+
+    glEnableVertexAttribArray(3);
 
     glGenBuffers(1, &surface->flat_ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface->flat_ebo);
@@ -117,8 +123,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glGenTextures(1, &surface->sprite_item_textures);
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
 
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 48, 32,
-                   game_data_item_sprite_count);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT, game_data_item_sprite_count);
 #endif
 }
 
@@ -128,8 +133,8 @@ void surface_buffer_flat_quad(Surface *surface, GLfloat *quad) {
     glBindBuffer(GL_ARRAY_BUFFER, surface->flat_vbo);
 
     glBufferSubData(GL_ARRAY_BUFFER,
-                    sizeof(GLfloat) * surface->flat_count * 9 * 4,
-                    sizeof(GLfloat) * 9 * 4, quad);
+                    sizeof(GLfloat) * surface->flat_count * 12 * 4,
+                    sizeof(GLfloat) * 12 * 4, quad);
 
     GLuint index = surface->flat_count * 4;
 
@@ -318,10 +323,8 @@ void surface_draw(Surface *surface) {
 
     shader_use(&surface->flat_shader);
     glBindVertexArray(surface->flat_vao);
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
-
     glDrawElements(GL_TRIANGLES, surface->flat_count * 6, GL_UNSIGNED_INT, 0);
 
 #if 0
@@ -454,21 +457,25 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
         /* top left / northwest */
         left_x, top_y,                   //
         red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,                        //
 
         /* top right / northeast */
         right_x, top_y,                  //
         red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,                        //
 
         /* bottom right / southeast */
         right_x, bottom_y,               //
         red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,                        //
 
         /* bottom left / southwest */
         left_x, bottom_y,                //
         red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1                         //
     };
 
@@ -546,6 +553,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         top_green / 255.0f, //
         top_blue / 255.0f,  //
         1.0,                //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,           //
 
         /* top right / northeast */
@@ -554,6 +562,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         top_green / 255.0f, //
         top_blue / 255.0f,  //
         1.0,                //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,           //
 
         /* bottom right / southeast */
@@ -562,6 +571,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         bottom_green / 255.0f, //
         bottom_blue / 255.0f,  //
         1.0,                   //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,              //
 
         /* bottom left / southwest */
@@ -570,6 +580,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         bottom_green / 255.0f, //
         bottom_blue / 255.0f,  //
         1.0,                   //
+        -1.0, -1.0, -1.0, //
         0, 0, -1               //
     };
 
@@ -692,21 +703,25 @@ void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
         /* top left / northwest */
         left_x, top_y,         //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,              //
 
         /* top right / northeast */
         right_x, top_y,        //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,              //
 
         /* bottom right / southeast */
         right_x, bottom_y,     //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,              //
 
         /* bottom left / southwest */
         left_x, bottom_y,      //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1               //
     };
 
@@ -751,21 +766,25 @@ void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
         /* top left / northwest */
         left_x, top_y,         //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,              //
 
         /* top right / northeast */
         right_x, top_y,        //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,              //
 
         /* bottom right / southeast */
         right_x, bottom_y,     //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1,              //
 
         /* bottom left / southwest */
         left_x, bottom_y,      //
         red, green, blue, 1.0, //
+        -1.0, -1.0, -1.0, //
         0, 0, -1               //
     };
 
@@ -2191,14 +2210,14 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int dest_pos,
 /* this might be draw_sprite_scaled */
 void surface_sprite_clipping_from9(Surface *surface, int x, int y,
                                    int draw_width, int draw_height,
-                                   int sprite_id, int colour1, int colour2,
+                                   int sprite_id, int mask_colour, int skin_colour,
                                    int tx, int flip) {
-    if (colour1 == 0) {
-        colour1 = WHITE;
+    if (mask_colour == 0) {
+        mask_colour = WHITE;
     }
 
-    if (colour2 == 0) {
-        colour2 = WHITE;
+    if (skin_colour == 0) {
+        skin_colour = WHITE;
     }
 
     int sprite_width = surface->sprite_width[sprite_id];
@@ -2279,27 +2298,44 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y,
     GLfloat top_y = translate_gl_y(y, surface->height2);
     GLfloat bottom_y = translate_gl_y(y + draw_height, surface->height2);
 
+    GLfloat mask_r = -1.0f;
+    GLfloat mask_g = -1.0f;
+    GLfloat mask_b = -1.0f;
+    GLfloat mask_a = -1.0f;
+
+    if (mask_colour != WHITE) {
+        mask_r = ((mask_colour >> 16) & 0xff) / 255.0f;
+        mask_g = ((mask_colour >> 8) & 0xff) / 255.0f;
+        mask_b = (mask_colour & 0xff) / 255.0f;
+        mask_a = 1.0f;
+    }
+
     GLfloat sprite_quad[] = {
         /* top left / northwest */
         left_x, top_y,    //
-        -1.0f, -1.0f, -1.0f, 1.0f, //
-        0, 0, texture_id, //
+        mask_r, mask_g, mask_b, mask_a, //
+        -1.0, -1.0, -1.0, //
+        0, 0, //
+        texture_id, //
 
         /* top right / northeast */
         right_x, top_y,          //
-        -1.0f, -1.0f, -1.0f, 1.0f, //
+        mask_r, mask_g, mask_b, mask_a, //
+        -1.0, -1.0, -1.0, //
         sprite_width / 48.0f, 0, //
         texture_id,              //
 
         /* bottom right / southeast */
         right_x, bottom_y,                           //
-        -1.0f, -1.0f, -1.0f, 1.0f, //
+        mask_r, mask_g, mask_b, mask_a, //
+        -1.0, -1.0, -1.0, //
         sprite_width / 48.0f, sprite_height / 32.0f, //
         texture_id,                                  //
 
         /* bottom left / southwest */
         left_x, bottom_y, //
-        -1.0f, -1.0f, -1.0f, 1.0f, //
+        mask_r, mask_g, mask_b, mask_a, //
+        -1.0, -1.0, -1.0, //
         0, sprite_height / 32.0f, //
         texture_id //
     };
@@ -2314,93 +2350,87 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y,
         i5 = 2;
     }
 
-    if (colour2 == WHITE) {
+    if (skin_colour == WHITE) {
         if (surface->surface_pixels[sprite_id] != NULL) {
             if (!flip) {
                 surface_transparent_sprite_plot_from15(
                     surface, surface->pixels,
-                    surface->surface_pixels[sprite_id], 0, k2, l2, j4,
-                    draw_width, draw_height, j3, k3, sprite_width, colour1, i3,
+                    surface->surface_pixels[sprite_id], k2, l2, j4,
+                    draw_width, draw_height, j3, k3, sprite_width, mask_colour, i3,
                     l3, i5);
-
-                return;
             } else {
                 surface_transparent_sprite_plot_from15(
                     surface, surface->pixels,
-                    surface->surface_pixels[sprite_id], 0,
+                    surface->surface_pixels[sprite_id],
                     (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
-                    draw_width, draw_height, -j3, k3, sprite_width, colour1, i3,
+                    draw_width, draw_height, -j3, k3, sprite_width, mask_colour, i3,
                     l3, i5);
-
-                return;
+            }
+        } else {
+            if (!flip) {
+                surface_transparent_sprite_plot_from16a(
+                    surface, surface->pixels,
+                    surface->sprite_colours_used[sprite_id],
+                    surface->sprite_colour_list[sprite_id], k2, l2, j4,
+                    draw_width, draw_height, j3, k3, sprite_width, mask_colour, i3, l3,
+                    i5);
+            } else {
+                surface_transparent_sprite_plot_from16a(
+                    surface, surface->pixels,
+                    surface->sprite_colours_used[sprite_id],
+                    surface->sprite_colour_list[sprite_id],
+                    (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
+                    draw_width, draw_height, -j3, k3, sprite_width, mask_colour, i3, l3,
+                    i5);
             }
         }
 
-        if (!flip) {
-            surface_transparent_sprite_plot_from16a(
-                surface, surface->pixels,
-                surface->sprite_colours_used[sprite_id],
-                surface->sprite_colour_list[sprite_id], 0, k2, l2, j4,
-                draw_width, draw_height, j3, k3, sprite_width, colour1, i3, l3,
-                i5);
-
-            return;
-        } else {
-            surface_transparent_sprite_plot_from16a(
-                surface, surface->pixels,
-                surface->sprite_colours_used[sprite_id],
-                surface->sprite_colour_list[sprite_id], 0,
-                (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
-                draw_width, draw_height, -j3, k3, sprite_width, colour1, i3, l3,
-                i5);
-
-            return;
-        }
+        return;
     }
 
     if (surface->surface_pixels[sprite_id] != NULL) {
         if (!flip) {
             surface_transparent_sprite_plot_from16(
-                surface, surface->pixels, surface->surface_pixels[sprite_id], 0,
+                surface, surface->pixels, surface->surface_pixels[sprite_id],
                 k2, l2, j4, draw_width, draw_height, j3, k3, sprite_width,
-                colour1, colour2, i3, l3, i5);
+                mask_colour, skin_colour, i3, l3, i5);
 
         } else {
             surface_transparent_sprite_plot_from16(
-                surface, surface->pixels, surface->surface_pixels[sprite_id], 0,
+                surface, surface->pixels, surface->surface_pixels[sprite_id],
                 (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
-                draw_width, draw_height, -j3, k3, sprite_width, colour1,
-                colour2, i3, l3, i5);
+                draw_width, draw_height, -j3, k3, sprite_width, mask_colour,
+                skin_colour, i3, l3, i5);
         }
     } else {
         if (!flip) {
             surface_transparent_sprite_plot_from17(
                 surface, surface->pixels,
                 surface->sprite_colours_used[sprite_id],
-                surface->sprite_colour_list[sprite_id], 0, k2, l2, j4,
-                draw_width, draw_height, j3, k3, sprite_width, colour1, colour2,
+                surface->sprite_colour_list[sprite_id], k2, l2, j4,
+                draw_width, draw_height, j3, k3, sprite_width, mask_colour, skin_colour,
                 i3, l3, i5);
         } else {
             surface_transparent_sprite_plot_from17(
                 surface, surface->pixels,
                 surface->sprite_colours_used[sprite_id],
-                surface->sprite_colour_list[sprite_id], 0,
+                surface->sprite_colour_list[sprite_id],
                 (surface->sprite_width[sprite_id] << 16) - k2 - 1, l2, j4,
-                draw_width, draw_height, -j3, k3, sprite_width, colour1,
-                colour2, i3, l3, i5);
+                draw_width, draw_height, -j3, k3, sprite_width, mask_colour,
+                skin_colour, i3, l3, i5);
         }
     }
 #endif
 }
 
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
-                                            int32_t *src, int i, int j, int k,
+                                            int32_t *src, int j, int k,
                                             int dest_pos, int i1, int j1,
                                             int k1, int l1, int i2, int mask_colour,
                                             int k2, int l2, int i3) {
-    int i4 = (mask_colour >> 16) & 0xff;
-    int j4 = (mask_colour >> 8) & 0xff;
-    int k4 = mask_colour & 0xff;
+    int mask_r = (mask_colour >> 16) & 0xff;
+    int mask_g = (mask_colour >> 8) & 0xff;
+    int mask_b = mask_colour & 0xff;
     int l4 = j;
 
     for (int i5 = -j1; i5 < 0; i5++) {
@@ -2424,19 +2454,19 @@ void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
 
         if (i3 != 0) {
             for (int k6 = k5; k6 < k5 + l5; k6++) {
-                i = src[(j >> 16) + j5];
+                int colour = src[(j >> 16) + j5];
 
-                if (i != 0) {
-                    int j3 = (i >> 16) & 0xff;
-                    int k3 = (i >> 8) & 0xff;
-                    int l3 = i & 0xff;
+                if (colour != 0) {
+                    int j3 = (colour >> 16) & 0xff;
+                    int k3 = (colour >> 8) & 0xff;
+                    int l3 = colour & 0xff;
 
                     if (j3 == k3 && k3 == l3) {
-                        dest[k6 + dest_pos] = (((j3 * i4) >> 8) << 16) +
-                                              (((k3 * j4) >> 8) << 8) +
-                                              ((l3 * k4) >> 8);
+                        dest[k6 + dest_pos] = (((j3 * mask_r) >> 8) << 16) +
+                                              (((k3 * mask_g) >> 8) << 8) +
+                                              ((l3 * mask_b) >> 8);
                     } else {
-                        dest[k6 + dest_pos] = i;
+                        dest[k6 + dest_pos] = colour;
                     }
                 }
 
@@ -2452,7 +2482,7 @@ void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
 }
 
 void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
-                                            int32_t *src, int colour, int j, int k,
+                                            int32_t *src, int j, int k,
                                             int dest_pos, int i1, int j1,
                                             int k1, int l1, int i2, int mask_colour,
                                             int skin_colour, int l2, int i3, int j3) {
@@ -2485,7 +2515,7 @@ void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
 
         if (j3 != 0) {
             for (int k7 = k6; k7 < k6 + l6; k7++) {
-                colour = src[(j >> 16) + j6];
+                int colour = src[(j >> 16) + j6];
 
                 if (colour != 0) {
                     int r = (colour >> 16) & 0xff;
@@ -2518,16 +2548,16 @@ void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
 
 void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
                                              int8_t *colour_idx,
-                                             int32_t *colours, int i, int j,
-                                             int k, int l, int i1, int j1,
-                                             int k1, int l1, int i2, int j2,
+                                             int32_t *colours, int j,
+                                             int k, int l, int i1, int height,
+                                             int k1, int l1, int i2, int mask_colour,
                                              int k2, int l2, int i3) {
-    int i4 = (j2 >> 16) & 0xff;
-    int j4 = (j2 >> 8) & 0xff;
-    int k4 = j2 & 0xff;
+    int mask_r = (mask_colour >> 16) & 0xff;
+    int mask_g = (mask_colour >> 8) & 0xff;
+    int mask_b = mask_colour & 0xff;
     int l4 = j;
 
-    for (int i5 = -j1; i5 < 0; i5++) {
+    for (int y = -height; y < 0; y++) {
         int j5 = (k >> 16) * i2;
         int k5 = k2 >> 16;
         int l5 = i1;
@@ -2548,21 +2578,21 @@ void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
 
         if (i3 != 0) {
             for (int k6 = k5; k6 < k5 + l5; k6++) {
-                i = colour_idx[(j >> 16) + j5] & 0xff;
+                int colour = colour_idx[(j >> 16) + j5] & 0xff;
 
-                if (i != 0) {
-                    i = colours[i];
+                if (colour != 0) {
+                    colour = colours[colour];
 
-                    int j3 = (i >> 16) & 0xff;
-                    int k3 = (i >> 8) & 0xff;
-                    int l3 = i & 0xff;
+                    int j3 = (colour >> 16) & 0xff;
+                    int k3 = (colour >> 8) & 0xff;
+                    int l3 = colour & 0xff;
 
                     if (j3 == k3 && k3 == l3) {
-                        dest[k6 + l] = (((j3 * i4) >> 8) << 16) +
-                                       (((k3 * j4) >> 8) << 8) +
-                                       ((l3 * k4) >> 8);
+                        dest[k6 + l] = (((j3 * mask_r) >> 8) << 16) +
+                                       (((k3 * mask_g) >> 8) << 8) +
+                                       ((l3 * mask_b) >> 8);
                     } else {
-                        dest[k6 + l] = i;
+                        dest[k6 + l] = colour;
                     }
                 }
 
@@ -2578,22 +2608,20 @@ void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
 }
 
 void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
-                                            int8_t *colour_idx,
-                                            int32_t *colours, int i, int j,
-                                            int k, int l, int i1, int j1,
-                                            int k1, int l1, int i2, int j2,
-                                            int k2, int l2, int i3, int j3) {
-    int j4 = (j2 >> 16) & 0xff;
-    int k4 = (j2 >> 8) & 0xff;
-    int l4 = j2 & 0xff;
-
-    int i5 = (k2 >> 16) & 0xff;
-    int j5 = (k2 >> 8) & 0xff;
-    int k5 = k2 & 0xff;
-
+                                            int8_t *colous,
+                                            int32_t *palette, int j,
+                                            int k, int l, int i1, int height,
+                                            int k1, int l1, int i2, int mask_colour,
+                                            int skin_colour, int l2, int i3, int j3) {
+    int mask_r = (mask_colour >> 16) & 0xff;
+    int mask_g = (mask_colour >> 8) & 0xff;
+    int mask_b = mask_colour & 0xff;
+    int skin_r = (skin_colour >> 16) & 0xff;
+    int skin_g = (skin_colour >> 8) & 0xff;
+    int skin_b = skin_colour & 0xff;
     int l5 = j;
 
-    for (int i6 = -j1; i6 < 0; i6++) {
+    for (int y = -height; y < 0; y++) {
         int j6 = (k >> 16) * i2;
         int k6 = l2 >> 16;
         int l6 = i1;
@@ -2614,24 +2642,25 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
 
         if (j3 != 0) {
             for (int k7 = k6; k7 < k6 + l6; k7++) {
-                i = colour_idx[(j >> 16) + j6] & 0xff;
+                int colour = colous[(j >> 16) + j6] & 0xff;
 
-                if (i != 0) {
-                    i = colours[i];
-                    int k3 = (i >> 16) & 0xff;
-                    int l3 = (i >> 8) & 0xff;
-                    int i4 = i & 0xff;
+                if (colour != 0) {
+                    colour = palette[colour];
 
-                    if (k3 == l3 && l3 == i4) {
-                        dest[k7 + l] = (((k3 * j4) >> 8) << 16) +
-                                       (((l3 * k4) >> 8) << 8) +
-                                       ((i4 * l4) >> 8);
-                    } else if (k3 == 255 && l3 == i4) {
-                        dest[k7 + l] = (((k3 * i5) >> 8) << 16) +
-                                       (((l3 * j5) >> 8) << 8) +
-                                       ((i4 * k5) >> 8);
+                    int r = (colour >> 16) & 0xff;
+                    int g = (colour >> 8) & 0xff;
+                    int b = colour & 0xff;
+
+                    if (r == g && g == b) {
+                        dest[k7 + l] = (((r * mask_r) >> 8) << 16) +
+                                       (((g * mask_g) >> 8) << 8) +
+                                       ((b * mask_b) >> 8);
+                    } else if (r == 255 && g == b) {
+                        dest[k7 + l] = (((r * skin_r) >> 8) << 16) +
+                                       (((g * skin_g) >> 8) << 8) +
+                                       ((b * skin_b) >> 8);
                     } else {
-                        dest[k7 + l] = i;
+                        dest[k7 + l] = colour;
                     }
                 }
 
