@@ -16,6 +16,9 @@
 
 #define ITEM_TEXTURE_WIDTH 48
 #define ITEM_TEXTURE_HEIGHT 32
+
+#define MEDIA_TEXTURE_WIDTH 512
+#define MEDIA_TEXTURE_HEIGHT 48
 #endif
 
 #ifdef WII
@@ -87,17 +90,17 @@ typedef struct Surface {
     GLuint flat_vao;
     GLuint flat_vbo;
     GLuint flat_ebo;
-    GLuint sprite_item_textures;
     int flat_count;
 
-#if 0
-    Shader sprite_shader;
-    GLuint sprite_vao;
-    GLuint sprite_vbo;
-    GLuint sprite_ebo;
-    GLuint sprite_item_textures;
-    int sprite_count;
-#endif
+    /* texture array for inventory items and projectiles (48x32) */
+    GLuint sprite_item_textures; // TODO rename small? icon?
+
+    /* 512x32 */
+    GLuint sprite_media_textures;
+
+    GLuint flat_context_texture[128];
+    int flat_context_triangle_counts[128];
+    int flat_context_count;
 #endif
 } Surface;
 
@@ -108,7 +111,17 @@ void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
 
 #ifdef RENDER_GL
+// TODO maybe prefix with gl_
 void surface_buffer_flat_quad(Surface *surface, GLfloat *quad);
+
+int surface_sprite_textures_id(Surface *surface, int sprite_id);
+int surface_sprite_texture_width(Surface *surface, GLuint textures_id);
+int surface_sprite_texture_height(Surface *surface, GLuint textures_id);
+int surface_sprite_texture_index(Surface *surface, int sprite_id);
+
+void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
+                           int draw_width, int draw_height, int mask_colour,
+                           int skin_colour, int alpha, int flip);
 #endif
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);
@@ -163,10 +176,10 @@ void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
                                  int32_t *palette, int src_pos, int dest_pos,
                                  int width, int height, int dest_offset,
                                  int src_offset, int y_inc);
-void surface_plot_scale_from13(int32_t *dest, int32_t *src, int i, int j, int k,
+void surface_plot_scale_from13(int32_t *dest, int32_t *src, int j, int k,
                                int dest_pos, int i1, int j1, int k1, int l1,
                                int i2, int j2, int k2);
-void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int i,
+void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src,
                                       int src_pos, int size, int width,
                                       int height, int extra_x_spcae, int k1,
                                       int y_inc, int alpha);
@@ -174,10 +187,10 @@ void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colour_idx,
                                        int32_t *colours, int list_pos, int size,
                                        int width, int height, int extra_x_space,
                                        int j1, int y_inc, int alpha);
-void surface_transparent_scale(int32_t *dest, int32_t *src, int i, int j, int k,
+void surface_transparent_scale(int32_t *dest, int32_t *src, int j, int k,
                                int dest_pos, int i1, int j1, int k1, int l1,
                                int i2, int j2, int y_inc, int alpha);
-void surface_plot_scale_from14(int32_t *dest, int32_t *src, int i, int j, int k,
+void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k,
                                int l, int i1, int width, int height, int l1,
                                int i2, int j2, int y_inc, int colour);
 void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,

@@ -1207,7 +1207,7 @@ void mudclient_load_media(mudclient *mud) {
     int sprite_count = game_data_item_sprite_count;
 
     for (int i = 1; sprite_count > 0; i++) {
-        char file_name[20];
+        char file_name[20] = {0};
         sprintf(file_name, "objects%d.dat", i);
 
         int current_sprite_count = sprite_count;

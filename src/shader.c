@@ -1,5 +1,6 @@
 #include "shader.h"
 
+#ifdef RENDER_GL
 char *buffer_file(char *path) {
     FILE *file = fopen(path, "r");
 
@@ -99,3 +100,4 @@ void shader_set_float(Shader *shader, char *name, float value) {
 void shader_set_mat4(Shader *shader, char *name, mat4 value) {
     glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE, (float*)value);
 }
+#endif
