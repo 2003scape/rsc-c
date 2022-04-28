@@ -1292,7 +1292,7 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
     }
 
     surface_draw_box_alpha(mud->surface, mud->menu_x, mud->menu_y,
-                           mud->menu_width, mud->menu_height, LIGHT_GREY2, 160);
+                           mud->menu_width, mud->menu_height, GREY_D0, 160);
 
     surface_draw_string(mud->surface, "Choose option", mud->menu_x + 2,
                         mud->menu_y + 12, 1, CYAN);

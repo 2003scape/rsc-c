@@ -12,7 +12,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     for (int i = 0; i < INVENTORY_ITEMS_MAX; i++) {
         int slot_x = ui_x + (i % INVENTORY_COLUMNS) * INVENTORY_SLOT_WIDTH;
         int slot_y = ui_y + (i / INVENTORY_COLUMNS) * INVENTORY_SLOT_HEIGHT;
-        int slot_colour = DARK_GREY;
+        int slot_colour = GREY_B5;
 
         if (i < mud->inventory_items_count && mud->inventory_equipped[i]) {
             slot_colour = RED;

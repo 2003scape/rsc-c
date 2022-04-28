@@ -93,7 +93,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                               3, mud->sprite_media + STATS_TAB_SPRITE_OFFSET);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + STATS_TAB_HEIGHT,
-                           STATS_WIDTH, height - STATS_TAB_HEIGHT, LIGHT_GREY,
+                           STATS_WIDTH, height - STATS_TAB_HEIGHT, GREY_DC,
                            128);
 
     surface_draw_line_horizontal(mud->surface, ui_x, ui_y + STATS_TAB_HEIGHT,

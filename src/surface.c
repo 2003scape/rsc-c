@@ -571,12 +571,12 @@ void surface_draw(Surface *surface) {
 
     int drawn_quads = 0;
 
-    printf("[");
+    //printf("[");
 
     for (int i = 0; i < surface->flat_context_count; i++) {
         GLuint texture_array_id = surface->flat_context_textures[i];
 
-        printf("%d: %d, ", texture_array_id, surface->flat_context_quad_counts[i]);
+        //printf("%d: %d, ", texture_array_id, surface->flat_context_quad_counts[i]);
 
         if (texture_array_id != 0) {
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
@@ -590,7 +590,7 @@ void surface_draw(Surface *surface) {
         drawn_quads += quad_count;
     }
 
-    printf("]\n");
+    //printf("]\n");
 
     // glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
     // glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
@@ -3204,7 +3204,7 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     int offset_x = 0;
 
     for (int i = 0; i < tabs_length; i++) {
-        int tab_colour = selected == i ? LIGHT_GREY : TAB_DARK_GREY;
+        int tab_colour = selected == i ? GREY_DC : GREY_A0;
 
         surface_draw_box_alpha(surface, x + offset_x, y, tab_width, height,
                                tab_colour, 128);

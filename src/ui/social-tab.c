@@ -137,7 +137,7 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + SOCIAL_TAB_HEIGHT,
                            SOCIAL_WIDTH, SOCIAL_HEIGHT - SOCIAL_TAB_HEIGHT,
-                           LIGHT_GREY, 128);
+                           GREY_DC, 128);
 
     surface_draw_line_horizontal(mud->surface, ui_x, ui_y + SOCIAL_HEIGHT - 16,
                                  SOCIAL_WIDTH, BLACK);

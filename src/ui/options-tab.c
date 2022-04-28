@@ -152,16 +152,16 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
                               3, mud->sprite_media + 6);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y, OPTIONS_WIDTH, 65,
-                           DARK_GREY, 160);
+                           GREY_B5, 160);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + 65, OPTIONS_WIDTH, 65,
-                           LIGHT_GREY3, 160);
+                           GREY_C9, 160);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + 130, OPTIONS_WIDTH, 95,
-                           DARK_GREY, 160);
+                           GREY_B5, 160);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + 225, OPTIONS_WIDTH, 40,
-                           LIGHT_GREY3, 160);
+                           GREY_C9, 160);
 
     int x = ui_x + 3;
     int y = ui_y + OPTIONS_LINE_BREAK;

@@ -11,7 +11,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + MAGIC_TAB_HEIGHT,
                            MAGIC_WIDTH, MAGIC_HEIGHT - MAGIC_TAB_HEIGHT,
-                           LIGHT_GREY, 128);
+                           GREY_DC, 128);
 
     surface_draw_line_horizontal(mud->surface, ui_x, ui_y + 113, MAGIC_WIDTH,
                                  BLACK);
