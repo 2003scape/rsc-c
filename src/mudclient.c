@@ -1228,6 +1228,7 @@ void mudclient_load_media(mudclient *mud) {
     free(media_jag);
 #endif
 
+#ifdef RENDER_SW
     surface_load_sprite(mud->surface, mud->sprite_media);
     surface_load_sprite(mud->surface, mud->sprite_media + 9);
 
@@ -1242,6 +1243,7 @@ void mudclient_load_media(mudclient *mud) {
     for (int i = 0; i < game_data_item_sprite_count; i++) {
         surface_load_sprite(mud->surface, mud->sprite_item + i);
     }
+#endif
 }
 
 void mudclient_load_entities(mudclient *mud) {
@@ -2056,9 +2058,11 @@ void mudclient_change_password(mudclient *mud, char *old_password,
     sprintf(passwords, "%s%s", formatted_old_password, formatted_new_password);
 
     packet_stream_new_packet(mud->packet_stream, CLIENT_CHANGE_PASSWORD);
+
 #ifdef REVISION_177
     packet_stream_put_password(mud->packet_stream, mud->session_id, passwords);
 #endif
+
     packet_stream_flush_packet(mud->packet_stream);
 }
 
@@ -3156,18 +3160,18 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     int animation_order =
         (player->animation_current + (mud->camera_rotation + 16) / 32) & 7;
 
-    int flag = 0;
+    int flip = 0;
     int i2 = animation_order;
 
     if (i2 == 5) {
         i2 = 3;
-        flag = 1;
+        flip = 1;
     } else if (i2 == 6) {
         i2 = 2;
-        flag = 1;
+        flip = 1;
     } else if (i2 == 7) {
         i2 = 1;
-        flag = 1;
+        flip = 1;
     }
 
     int j2 = i2 * 3 + character_walk_model[(player->step_count / 6) % 4];
@@ -3175,13 +3179,13 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     if (player->animation_current == 8) {
         i2 = 5;
         animation_order = 2;
-        flag = 0;
+        flip = 0;
         x -= (5 * ty) / 100;
         j2 = i2 * 3 + character_combat_model_array1[(mud->login_timer / 5) % 8];
     } else if (player->animation_current == 9) {
         i2 = 5;
         animation_order = 2;
-        flag = 1;
+        flip = 1;
         x += (5 * ty) / 100;
         j2 = i2 * 3 + character_combat_model_array2[(mud->login_timer / 6) % 8];
     }
@@ -3196,7 +3200,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             int offset_y = 0;
             int j5 = j2;
 
-            if (flag && i2 >= 1 && i2 <= 3) {
+            if (flip && i2 >= 1 && i2 <= 3) {
                 if (game_data_animation_has_f[l3] == 1) {
                     j5 += 15;
                 } else if (animation_index == 4 && i2 == 1) {
@@ -3275,7 +3279,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
                 surface_sprite_clipping_from9(
                     mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flag);
+                    height, sprite_id, animation_colour, skin_colour, tx, flip);
             }
         }
     }
@@ -3315,18 +3319,18 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int tx, int ty) {
     GameCharacter *npc = mud->npcs[id];
     int l1 = (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
-    int flag = 0;
+    int flip = 0;
     int i2 = l1;
 
     if (i2 == 5) {
         i2 = 3;
-        flag = 1;
+        flip = 1;
     } else if (i2 == 6) {
         i2 = 2;
-        flag = 1;
+        flip = 1;
     } else if (i2 == 7) {
         i2 = 1;
-        flag = 1;
+        flip = 1;
     }
 
     int j2 =
@@ -3337,7 +3341,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     if (npc->animation_current == 8) {
         i2 = 5;
         l1 = 2;
-        flag = 0;
+        flip = 0;
         x -= (game_data_npc_combat_animation[npc->npc_id] * ty) / 100;
         // nope
         j2 = i2 * 3 + character_combat_model_array1
@@ -3348,7 +3352,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     } else if (npc->animation_current == 9) {
         i2 = 5;
         l1 = 2;
-        flag = 1;
+        flip = 1;
         x += (game_data_npc_combat_animation[npc->npc_id] * ty) / 100;
 
         j2 = i2 * 3 +
@@ -3366,7 +3370,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
             int offset_y = 0;
             int k4 = j2;
 
-            if (flag && i2 >= 1 && i2 <= 3 &&
+            if (flip && i2 >= 1 && i2 <= 3 &&
                 game_data_animation_has_f[animation_id] == 1) {
                 k4 += 15;
             }
@@ -3405,7 +3409,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
                 surface_sprite_clipping_from9(
                     mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flag);
+                    height, sprite_id, animation_colour, skin_colour, tx, flip);
             }
         }
     }

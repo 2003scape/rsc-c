@@ -93,13 +93,18 @@ typedef struct Surface {
     int flat_count;
 
     /* texture array for inventory items and projectiles (48x32) */
-    GLuint sprite_item_textures; // TODO rename small? icon?
+    GLuint sprite_item_textures;
 
-    /* 512x32 */
+    /* (512x32) */
     GLuint sprite_media_textures;
 
-    GLuint flat_context_texture[128];
-    int flat_context_triangle_counts[128];
+    /* store the texture array IDs above */
+    GLuint flat_context_textures[256];
+
+    /* store the amount of quads per corresponding texture ID */
+    int flat_context_quad_counts[256];
+
+    /* amount of entries in the two context arrays */
     int flat_context_count;
 #endif
 } Surface;
@@ -112,16 +117,16 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
 #ifdef RENDER_GL
 // TODO maybe prefix with gl_
-void surface_buffer_flat_quad(Surface *surface, GLfloat *quad);
+void surface_buffer_flat_quad(Surface *surface, GLfloat *quad, GLuint texture_array_id);
 
-int surface_sprite_textures_id(Surface *surface, int sprite_id);
-int surface_sprite_texture_width(Surface *surface, GLuint textures_id);
-int surface_sprite_texture_height(Surface *surface, GLuint textures_id);
+int surface_sprite_texture_array_id(Surface *surface, int sprite_id);
+int surface_sprite_texture_width(Surface *surface, GLuint texture_array_id);
+int surface_sprite_texture_height(Surface *surface, GLuint texture_array_id);
 int surface_sprite_texture_index(Surface *surface, int sprite_id);
 
 void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
-                           int draw_width, int draw_height, int mask_colour,
-                           int skin_colour, int alpha, int flip);
+                           int draw_width, int draw_height, int skew_x,
+                           int mask_colour, int skin_colour, int alpha, int flip);
 #endif
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);
@@ -153,6 +158,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 void surface_read_sleep_word(Surface *surface, int sprite_id,
                              int8_t *sprite_data);
 void surface_draw_world(Surface *surface, int sprite_id);
+int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id, int add_alpha);
 void surface_load_sprite(Surface *surface, int sprite_id);
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
                                int width, int height);
