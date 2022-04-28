@@ -5,7 +5,7 @@ layout (location = 2) in vec3 skin_colour;
 layout (location = 3) in vec3 texture_position;
 
 out vec4 vertex_colour;
-out vec4 vertex_skin_colour;
+out vec4 vertex_skin_colour; // TODO make this length 1 and use a GLSL array
 out vec3 vertex_texture_position;
 
 void main() {

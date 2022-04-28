@@ -10,7 +10,7 @@ void main() {
     if (vertex_texture_position.z > -1) {
         vec4 texture_colour = texture(textures, vertex_texture_position);
 
-        if (vertex_colour.w == 1.0 && texture_colour.w == 1.0 &&
+        if (vertex_colour.x >= 0.0 && texture_colour.w == 1.0 &&
             texture_colour.x == texture_colour.y &&
             texture_colour.x == texture_colour.z) {
             texture_colour *= vertex_colour;

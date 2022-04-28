@@ -132,6 +132,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, MEDIA_TEXTURE_WIDTH,
                    MEDIA_TEXTURE_HEIGHT, mud->sprite_item - mud->sprite_media);
+
+    surface->flat_context_textures[0] = 0;
+    surface->flat_context_quad_counts[0] = 0;
+    surface->flat_context_count = 1;
 #endif
 }
 
@@ -157,22 +161,16 @@ void surface_buffer_flat_quad(Surface *surface, GLfloat *quad, GLuint texture_ar
 
     surface->flat_count += 1;
 
-    if (surface->flat_context_count > 0) {
-        GLuint last_texture_array =
-            surface->flat_context_textures[surface->flat_context_count - 1];
+    int context_index = surface->flat_context_count - 1;
+    GLuint last_texture_array = surface->flat_context_textures[context_index];
 
-        if (last_texture_array == texture_array_id) {
-            return;
-        }
+    if (texture_array_id == 0 || last_texture_array == texture_array_id) {
+        surface->flat_context_quad_counts[context_index]++;
+    } else {
+        surface->flat_context_textures[context_index + 1] = texture_array_id;
+        surface->flat_context_quad_counts[context_index + 1] = 1;
+        surface->flat_context_count++;
     }
-
-    surface->flat_context_textures[surface->flat_context_count] =
-        texture_array_id;
-
-    surface->flat_context_quad_counts[surface->flat_context_count] =
-        surface->flat_count;
-
-    surface->flat_context_count++;
 }
 
 int surface_sprite_texture_array_id(Surface *surface, int sprite_id) {
@@ -294,6 +292,7 @@ void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         y += translate_y;
     }
 
+    /*
     if (y < surface->bounds_top_y) {
         int delta_y = surface->bounds_top_y - y;
         draw_height -= delta_y;
@@ -313,7 +312,7 @@ void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     if (x + draw_width >= surface->bounds_bottom_x) {
         int delta_x = x + draw_width - surface->bounds_bottom_x + 1;
         draw_width -= delta_x;
-    }
+    }*/
 
     GLuint texture_array_id =
         surface_sprite_texture_array_id(surface, sprite_id);
@@ -571,22 +570,27 @@ void surface_draw(Surface *surface) {
     glActiveTexture(GL_TEXTURE0);
 
     int drawn_quads = 0;
-    // int last_count = 0;
+
+    printf("[");
 
     for (int i = 0; i < surface->flat_context_count; i++) {
         GLuint texture_array_id = surface->flat_context_textures[i];
+
+        printf("%d: %d, ", texture_array_id, surface->flat_context_quad_counts[i]);
 
         if (texture_array_id != 0) {
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
         }
 
-        int quad_count = surface->flat_context_quad_counts[i] - drawn_quads;
+        int quad_count = surface->flat_context_quad_counts[i];
 
         glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
                        (void *)(drawn_quads * 6 * sizeof(GLuint)));
 
         drawn_quads += quad_count;
     }
+
+    printf("]\n");
 
     // glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
     // glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
@@ -596,7 +600,9 @@ void surface_draw(Surface *surface) {
     SDL_GL_SwapWindow(mud->gl_window);
 
     surface->flat_count = 0;
-    surface->flat_context_count = 0;
+    surface->flat_context_textures[0] = 0;
+    surface->flat_context_quad_counts[0] = 0;
+    surface->flat_context_count = 1;
 #endif
 }
 
