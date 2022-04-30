@@ -35,6 +35,33 @@ int surface_rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
 
 void create_font(int8_t *buffer, int id) { game_fonts[id] = buffer; }
 
+#ifdef RENDER_GL
+void create_font_texture(int32_t *dest, int font_id) {
+    int8_t *font_data = game_fonts[font_id];
+    int slot_size = surface_text_height(font_id);
+
+    for (int i = 0; i < CHAR_SET_LENGTH; i++) {
+        int draw_x = (i % 10) * slot_size;
+        int draw_y = (i / 10) * slot_size;
+
+        int character_offset = character_width[(unsigned)CHAR_SET[i]];
+        int width = font_data[character_offset + 3];
+        int height = font_data[character_offset + 4];
+
+        /* position of pixel data for the font (on/off) */
+        int font_pos = font_data[character_offset] * 16384 +
+                       font_data[character_offset + 1] * 128 +
+                       font_data[character_offset + 2];
+
+        int dest_pos = draw_x + draw_y * FONT_TEXTURE_WIDTH;
+        int dest_offset = FONT_TEXTURE_WIDTH - width;
+
+        surface_plot_letter(dest, font_data, 0xffffffff, font_pos,
+                            dest_pos, width, height, dest_offset, 0);
+    }
+}
+#endif
+
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud) {
     memset(surface, 0, sizeof(Surface));
@@ -133,6 +160,26 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, MEDIA_TEXTURE_WIDTH,
                    MEDIA_TEXTURE_HEIGHT, mud->sprite_item - mud->sprite_media);
 
+    glGenTextures(1, &surface->font_textures);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->font_textures);
+
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, FONT_TEXTURE_WIDTH,
+                   FONT_TEXTURE_HEIGHT, FONT_COUNT);
+
+    int32_t *font_raster =
+        calloc(FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT, sizeof(int32_t));
+
+    for (int i = 0; i < FONT_COUNT; i++) {
+        create_font_texture(font_raster, i);
+
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH, FONT_TEXTURE_WIDTH, 1,
+                        GL_BGRA, GL_UNSIGNED_BYTE, font_raster);
+
+        memset(font_raster, 0, FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT * sizeof(int32_t));
+    }
+
+    free(font_raster);
+
     surface->flat_context_textures[0] = 0;
     surface->flat_context_quad_counts[0] = 0;
     surface->flat_context_count = 1;
@@ -141,6 +188,11 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
 #ifdef RENDER_GL
 void surface_buffer_flat_quad(Surface *surface, GLfloat *quad, GLuint texture_array_id) {
+    if (surface->flat_context_count >= 256) {
+        fprintf(stderr, "too many texture switches!\n");
+        return;
+    }
+
     glBindVertexArray(surface->flat_vao);
     glBindBuffer(GL_ARRAY_BUFFER, surface->flat_vbo);
 
@@ -224,10 +276,7 @@ int surface_sprite_texture_index(Surface *surface, int sprite_id) {
         return sprite_id - mud->sprite_item;
     }
 
-    if (sprite_id >= mud->sprite_projectile &&
-        sprite_id <= mud->sprite_texture) {
-        return sprite_id - mud->sprite_projectile;
-    }
+    return 0;
 }
 
 void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
@@ -291,28 +340,6 @@ void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         x += translate_x;
         y += translate_y;
     }
-
-    /*
-    if (y < surface->bounds_top_y) {
-        int delta_y = surface->bounds_top_y - y;
-        draw_height -= delta_y;
-        y = surface->bounds_top_y;
-    }
-
-    if (y + draw_height >= surface->bounds_bottom_y) {
-        draw_height -= y + draw_height - surface->bounds_bottom_y + 1;
-    }
-
-    if (x < surface->bounds_top_x) {
-        int delta_x = surface->bounds_top_x - x;
-        draw_width -= delta_x;
-        x = surface->bounds_top_x;
-    }
-
-    if (x + draw_width >= surface->bounds_bottom_x) {
-        int delta_x = x + draw_width - surface->bounds_bottom_x + 1;
-        draw_width -= delta_x;
-    }*/
 
     GLuint texture_array_id =
         surface_sprite_texture_array_id(surface, sprite_id);
@@ -386,12 +413,80 @@ void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         texture_index                      //
     };
 
-    if (surface->flat_context_count >= 256) {
-        fprintf(stderr, "too many texture switches!\n");
+    surface_buffer_flat_quad(surface, sprite_quad, texture_array_id);
+}
+
+void surface_buffer_character(Surface *surface, char character, int x, int y, int colour, int font_id) {
+    //font_id = 1;
+    int8_t *font_data = game_fonts[font_id];
+    int slot_size = surface_text_height(font_id);
+    int char_set_index = -1;
+
+    for (int i = 0; i < CHAR_SET_LENGTH; i++) {
+        if (character == CHAR_SET[i]) {
+            char_set_index = i;
+            break;
+        }
+    }
+
+    if (char_set_index == -1) {
         return;
     }
 
-    surface_buffer_flat_quad(surface, sprite_quad, texture_array_id);
+    int character_offset = character_width[(unsigned)CHAR_SET[char_set_index]];
+    int width = font_data[character_offset + 3];
+    int height = font_data[character_offset + 4];
+
+    x += font_data[character_offset + 5];
+    y -= font_data[character_offset + 6];
+
+    GLfloat left_x = translate_gl_x(x, surface->width2);
+    GLfloat right_x = translate_gl_x(x + width, surface->width2);
+    GLfloat top_y = translate_gl_y(y, surface->height2);
+    GLfloat bottom_y = translate_gl_y(y + height, surface->height2);
+
+    GLfloat r = ((colour >> 16) & 0xff) / 255.0f;
+    GLfloat g = ((colour >> 8) & 0xff) / 255.0f;
+    GLfloat b = (colour & 0xff) / 255.0f;
+
+    GLfloat texture_x = ((char_set_index % 10) * slot_size) / (float)FONT_TEXTURE_WIDTH;
+
+    GLfloat texture_y = ((char_set_index / 10) * slot_size) / (float)FONT_TEXTURE_HEIGHT;
+
+    float texture_width = width / (float)FONT_TEXTURE_WIDTH;
+    float texture_height = height / (float)FONT_TEXTURE_HEIGHT;
+
+    GLfloat char_quad[] = {
+        /* top left / northwest */
+        left_x, top_y,                  //
+        r, g, b, 1.0f, //
+        -1.0f, -1.0f, -1.0f, //
+        texture_x, texture_y,                           //
+        font_id,                  //
+
+        /* top right / northeast */
+        right_x, top_y,                  //
+        r, g, b, 1.0f,  //
+        -1.0f, -1.0f, -1.0f, //
+        texture_x + texture_width, texture_y, //
+        font_id,                   //
+
+        /* bottom right / southeast */
+        right_x, bottom_y,                                            //
+        r, g, b, 1.0f,                               //
+        -1.0f, -1.0f, -1.0f, //
+        texture_x + texture_width, texture_y + texture_height, //
+        font_id,                                                //
+
+        /* bottom left / southwest */
+        left_x, bottom_y,                  //
+        r, g, b, 1.0f,    //
+        -1.0f, -1.0f, -1.0f, //
+        texture_x, texture_y + texture_height, //
+        font_id                      //
+    };
+
+    surface_buffer_flat_quad(surface, char_quad, surface->font_textures);
 }
 #endif
 
@@ -571,12 +666,18 @@ void surface_draw(Surface *surface) {
 
     int drawn_quads = 0;
 
-    //printf("[");
+//#define DEBUG_SWITCH
+
+#ifdef DEBUG_SWITCH
+    printf("[");
+#endif
 
     for (int i = 0; i < surface->flat_context_count; i++) {
         GLuint texture_array_id = surface->flat_context_textures[i];
 
-        //printf("%d: %d, ", texture_array_id, surface->flat_context_quad_counts[i]);
+#ifdef DEBUG_SWITCH
+        printf("%d: %d, ", texture_array_id, surface->flat_context_quad_counts[i]);
+#endif
 
         if (texture_array_id != 0) {
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
@@ -590,7 +691,9 @@ void surface_draw(Surface *surface) {
         drawn_quads += quad_count;
     }
 
-    //printf("]\n");
+#ifdef DEBUG_SWITCH
+    printf("]\n");
+#endif
 
     // glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
     // glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
@@ -1512,11 +1615,11 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
     int sprite_offset = 0;
 
     if (y < surface->bounds_top_y) {
-        int delta_y = surface->bounds_top_y - y;
-        height -= delta_y;
+        int clip_y = surface->bounds_top_y - y;
+        height -= clip_y;
         y = surface->bounds_top_y;
-        src_pos += delta_y * width;
-        dest_pos += delta_y * surface->width2;
+        src_pos += clip_y * width;
+        dest_pos += clip_y * surface->width2;
     }
 
     if (y + height >= surface->bounds_bottom_y) {
@@ -1524,20 +1627,20 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
     }
 
     if (x < surface->bounds_top_x) {
-        int delta_x = surface->bounds_top_x - x;
-        width -= delta_x;
+        int clip_x = surface->bounds_top_x - x;
+        width -= clip_x;
         x = surface->bounds_top_x;
-        src_pos += delta_x;
-        dest_pos += delta_x;
-        sprite_offset += delta_x;
-        dest_offset += delta_x;
+        src_pos += clip_x;
+        dest_pos += clip_x;
+        sprite_offset += clip_x;
+        dest_offset += clip_x;
     }
 
     if (x + width >= surface->bounds_bottom_x) {
-        int delta_x = x + width - surface->bounds_bottom_x + 1;
-        width -= delta_x;
-        sprite_offset += delta_x;
-        dest_offset += delta_x;
+        int clip_x = x + width - surface->bounds_bottom_x + 1;
+        width -= clip_x;
+        sprite_offset += clip_x;
+        dest_offset += clip_x;
     }
 
     if (width <= 0 || height <= 0) {
@@ -1687,6 +1790,11 @@ void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
 
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha) {
+#ifdef RENDER_GL
+    surface_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, alpha, 0);
+#endif
+
+#ifdef RENDER_SW
     if (surface->sprite_translate[sprite_id]) {
         x += surface->sprite_translate_x[sprite_id];
         y += surface->sprite_translate_y[sprite_id];
@@ -1700,11 +1808,11 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
     int src_offset = 0;
 
     if (y < surface->bounds_top_y) {
-        int delta_y = surface->bounds_top_y - y;
-        height -= delta_y;
+        int clip_y = surface->bounds_top_y - y;
+        height -= clip_y;
         y = surface->bounds_top_y;
-        src_pos += delta_y * width;
-        size += delta_y * surface->width2;
+        src_pos += clip_y * width;
+        size += clip_y * surface->width2;
     }
 
     if (y + height >= surface->bounds_bottom_y) {
@@ -1712,20 +1820,20 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
     }
 
     if (x < surface->bounds_top_x) {
-        int delta_x = surface->bounds_top_x - x;
-        width -= delta_x;
+        int clip_x = surface->bounds_top_x - x;
+        width -= clip_x;
         x = surface->bounds_top_x;
-        src_pos += delta_x;
-        size += delta_x;
-        src_offset += delta_x;
-        dest_offset += delta_x;
+        src_pos += clip_x;
+        size += clip_x;
+        src_offset += clip_x;
+        dest_offset += clip_x;
     }
 
     if (x + width >= surface->bounds_bottom_x) {
-        int delta_x = x + width - surface->bounds_bottom_x + 1;
-        width -= delta_x;
-        src_offset += delta_x;
-        dest_offset += delta_x;
+        int clip_x = x + width - surface->bounds_bottom_x + 1;
+        width -= clip_x;
+        src_offset += clip_x;
+        dest_offset += clip_x;
     }
 
     if (width <= 0 || height <= 0) {
@@ -1755,6 +1863,7 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
             surface->pixels, surface->surface_pixels[sprite_id], src_pos, size,
             width, height, dest_offset, src_offset, y_inc, alpha);
     }
+#endif
 }
 
 void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
@@ -2571,12 +2680,12 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y,
     i3 += x << 16;
 
     if (y < surface->bounds_top_y) {
-        int delta_y = surface->bounds_top_y - y;
-        draw_height -= delta_y;
+        int clip_y = surface->bounds_top_y - y;
+        draw_height -= clip_y;
         y = surface->bounds_top_y;
-        j4 += delta_y * surface->width2;
-        offset_y += height_ratio * delta_y;
-        i3 += l3 * delta_y;
+        j4 += clip_y * surface->width2;
+        offset_y += height_ratio * clip_y;
+        i3 += l3 * clip_y;
     }
 
     if (y + draw_height >= surface->bounds_bottom_y) {
@@ -3063,33 +3172,47 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
 
             i += 4;
         } else {
-            int width = character_width[(unsigned)text[i]];
+            int character_offset = character_width[(unsigned)text[i]];
+            int draw_shadow = surface->logged_in && colour != 0;
 
-            if (surface->logged_in && colour != 0) {
-                surface_draw_character(surface, width, x + 1, y, 0, font_data);
-                surface_draw_character(surface, width, x, y + 1, 0, font_data);
+#ifdef RENDER_GL
+            if (draw_shadow) {
+                surface_buffer_character(surface, text[i], x + 1, y, BLACK, font);
+                surface_buffer_character(surface, text[i], x, y + 1, BLACK, font);
             }
 
-            surface_draw_character(surface, width, x, y, colour, font_data);
+            surface_buffer_character(surface, text[i], x, y, colour, font);
+#endif
 
-            x += font_data[width + 7];
+#ifdef RENDER_SW
+            if (draw_shadow) {
+                surface_draw_character(surface, character_offset, x + 1, y, BLACK, font_data);
+
+                surface_draw_character(surface, character_offset, x, y + 1, BLACK, font_data);
+            }
+
+            surface_draw_character(surface, character_offset, x, y, colour, font_data);
+#endif
+
+            x += font_data[character_offset + 7];
         }
     }
 }
 
-void surface_draw_character(Surface *surface, int font_offset, int x, int y,
+void surface_draw_character(Surface *surface, int character_offset, int x, int y,
                             int colour, int8_t *font_data) {
+#ifdef RENDER_SW
     /* baseline and kerning offsets */
-    int draw_x = x + font_data[font_offset + 5];
-    int draw_y = y - font_data[font_offset + 6];
+    int draw_x = x + font_data[character_offset + 5];
+    int draw_y = y - font_data[character_offset + 6];
 
-    int width = font_data[font_offset + 3];
-    int height = font_data[font_offset + 4];
+    int width = font_data[character_offset + 3];
+    int height = font_data[character_offset + 4];
 
     /* position of pixel data for the font (on/off) */
-    int font_pos = font_data[font_offset] * 16384 +
-                   font_data[font_offset + 1] * 128 +
-                   font_data[font_offset + 2];
+    int font_pos = font_data[character_offset] * 16384 +
+                   font_data[character_offset + 1] * 128 +
+                   font_data[character_offset + 2];
 
     int dest_pos = draw_x + draw_y * surface->width2;
     int dest_offset = surface->width2 - width;
@@ -3129,6 +3252,7 @@ void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             dest_pos, width, height, dest_offset,
                             font_data_offset);
     }
+#endif
 }
 
 void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,

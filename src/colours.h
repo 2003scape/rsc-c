@@ -18,7 +18,6 @@
 #define MAGENTA 0xff00ff
 #define ORANGE 0xff8000
 #define RED 0xff0000
-#define TAB_DARK_GREY 0xa0a0a0
 #define WHITE 0xffffff
 #define YELLOW 0xffff00
 

@@ -125,10 +125,10 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
             mud->menu_index[mud->menu_items_count] = item_index;
             mud->menu_items_count++;
         } else if (game_data_item_wearable[item_id] != 0) {
-            int is_wear = (game_data_item_wearable[item_id] & 24);
+            int is_wield = (game_data_item_wearable[item_id] & 24);
 
             strcpy(mud->menu_item_text1[mud->menu_items_count],
-                   is_wear ? "Wear" : "Wield");
+                   is_wield ? "Wield" : "Wear");
 
             strcpy(mud->menu_item_text2[mud->menu_items_count],
                    formatted_item_name);

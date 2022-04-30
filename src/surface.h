@@ -12,13 +12,16 @@
 
 #include "shader.h"
 
-#define FLAT_QUAD_COUNT 512
+#define FLAT_QUAD_COUNT 2048
 
 #define ITEM_TEXTURE_WIDTH 48
 #define ITEM_TEXTURE_HEIGHT 32
 
 #define MEDIA_TEXTURE_WIDTH 512
-#define MEDIA_TEXTURE_HEIGHT 48
+#define MEDIA_TEXTURE_HEIGHT 200
+
+#define FONT_TEXTURE_WIDTH 286
+#define FONT_TEXTURE_HEIGHT 286
 #endif
 
 #ifdef WII
@@ -60,7 +63,7 @@ typedef struct Surface {
     int width1;
     int height1;
     int32_t *pixels;
-    int32_t **surface_pixels;
+    int32_t **surface_pixels; // TODO rename
     int8_t **sprite_colours_used;
     int32_t **sprite_colour_list;
     int *sprite_width;
@@ -97,6 +100,9 @@ typedef struct Surface {
 
     /* (512x32) */
     GLuint sprite_media_textures;
+
+    /* (256x256) */
+    GLuint font_textures;
 
     /* store the texture array IDs above */
     GLuint flat_context_textures[256];

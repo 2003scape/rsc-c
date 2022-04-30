@@ -334,13 +334,6 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     zoom = 1100;
     rotation = 888;
 
-    /* TODO see if we need these - they're the same */
-
-    /*mud->scene->clip_far_3d = 4100;
-    mud->scene->clip_far_2d = 4100;
-    mud->scene->fog_z_falloff = 1;
-    mud->scene->fog_z_distance = 4000;*/
-
     surface_black_screen(mud->surface);
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
@@ -405,11 +398,6 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     y = 10368;
     zoom = 500;
     rotation = 376;
-
-    /*mud->scene->clip_far_3d = 4100;
-    mud->scene->clip_far_2d = 4100;
-    mud->scene->fog_z_falloff = 1;
-    mud->scene->fog_z_distance = 4000;*/
 
     surface_black_screen(mud->surface);
 
