@@ -5,14 +5,6 @@
 #include <stdio.h> // TODO remove
 #include <stdlib.h>
 
-#ifdef RENDER_GL
-#include <GL/glew.h>
-#include <GL/glu.h>
-#include <cglm/cglm.h>
-
-#include "shader.h"
-#endif
-
 typedef struct GameModel GameModel;
 
 #include "scene.h"
@@ -85,12 +77,6 @@ typedef struct GameModel {
     int scale_fx;
     int scale_fy;
     int scale_fz;
-    int shear_xy;
-    int shear_xz;
-    int shear_yx;
-    int shear_yz;
-    int shear_zx;
-    int shear_zy;
     int transform_kind;
     int diameter;
     int light_direction_x;
@@ -98,14 +84,14 @@ typedef struct GameModel {
     int light_direction_z;
     int light_direction_magnitude;
     int data_ptr;
-} GameModel;
 
 #ifdef RENDER_GL
-void game_model_create_buffer(GameModel *game_model);
+    int ebo_offset;
+    int ebo_length;
 #endif
+} GameModel;
 
 void game_model_new(GameModel *game_model);
-void game_model_allocate_face_trans(GameModel *game_model, int num_faces);
 void game_model_from2(GameModel *game_model, int num_vertices, int num_faces);
 void game_model_from2a(GameModel *game_model, GameModel **pieces, int count);
 void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
@@ -146,8 +132,6 @@ void game_model_determine_transform_kind(GameModel *game_model);
 void game_model_apply_translate(GameModel *game_model, int dx, int dy, int dz);
 void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
                                int pitch);
-void game_model_apply_shear(GameModel *game_model, int xy, int xz, int yx,
-                            int yz, int zx, int zy);
 void game_model_apply_scale(GameModel *game_model, int fx, int fy, int fz);
 void game_model_compute_bounds(GameModel *game_model);
 void game_model_light(GameModel *game_model);

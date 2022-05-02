@@ -136,12 +136,6 @@ void game_model_reset(GameModel *game_model) {
     game_model->scale_fx = 256;
     game_model->scale_fy = 256;
     game_model->scale_fz = 256;
-    game_model->shear_xy = 256;
-    game_model->shear_xz = 256;
-    game_model->shear_yx = 256;
-    game_model->shear_yz = 256;
-    game_model->shear_zx = 256;
-    game_model->shear_zy = 256;
     game_model->transform_kind = 0;
 }
 
@@ -518,11 +512,7 @@ void game_model_place(GameModel *game_model, int x, int y, int z) {
 }
 
 void game_model_determine_transform_kind(GameModel *game_model) {
-    if (game_model->shear_xy != 256 || game_model->shear_xz != 256 ||
-        game_model->shear_yx != 256 || game_model->shear_yz != 256 ||
-        game_model->shear_zx != 256 || game_model->shear_zy != 256) {
-        game_model->transform_kind = 4;
-    } else if (game_model->scale_fx != 256 || game_model->scale_fy != 256 ||
+    if (game_model->scale_fx != 256 || game_model->scale_fy != 256 ||
                game_model->scale_fz != 256) {
         game_model->transform_kind = 3;
     } else if (game_model->orientation_yaw != 0 ||
@@ -594,41 +584,6 @@ void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
                 15;
 
             game_model->vertex_transformed_x[i] = x;
-        }
-    }
-}
-
-void game_model_apply_shear(GameModel *game_model, int xy, int xz, int yx,
-                            int yz, int zx, int zy) {
-    for (int i = 0; i < game_model->num_vertices; i++) {
-        if (xy != 0) {
-            game_model->vertex_transformed_x[i] +=
-                (game_model->vertex_transformed_y[i] * xy) >> 8;
-        }
-
-        if (xz != 0) {
-            game_model->vertex_transformed_z[i] +=
-                (game_model->vertex_transformed_y[i] * xz) >> 8;
-        }
-
-        if (yx != 0) {
-            game_model->vertex_transformed_x[i] +=
-                (game_model->vertex_transformed_z[i] * yx) >> 8;
-        }
-
-        if (yz != 0) {
-            game_model->vertex_transformed_y[i] +=
-                (game_model->vertex_transformed_z[i] * yz) >> 8;
-        }
-
-        if (zx != 0) {
-            game_model->vertex_transformed_z[i] +=
-                (game_model->vertex_transformed_x[i] * zx) >> 8;
-        }
-
-        if (zy != 0) {
-            game_model->vertex_transformed_y[i] +=
-                (game_model->vertex_transformed_x[i] * zy) >> 8;
         }
     }
 }
@@ -863,11 +818,7 @@ void game_model_apply(GameModel *game_model) {
         game_model->x2 = 9999999;
         game_model->y2 = 9999999;
         game_model->z2 = 9999999;
-
-        return;
-    }
-
-    if (game_model->transform_state == 1) {
+    } else if (game_model->transform_state == 1) {
         game_model->transform_state = 0;
 
         for (int i = 0; i < game_model->num_vertices; i++) {
@@ -885,13 +836,6 @@ void game_model_apply(GameModel *game_model) {
         if (game_model->transform_kind >= 3) {
             game_model_apply_scale(game_model, game_model->scale_fx,
                                    game_model->scale_fy, game_model->scale_fz);
-        }
-
-        if (game_model->transform_kind >= 4) {
-            game_model_apply_shear(game_model, game_model->shear_xy,
-                                   game_model->shear_xz, game_model->shear_yx,
-                                   game_model->shear_yz, game_model->shear_zx,
-                                   game_model->shear_zy);
         }
 
         if (game_model->transform_kind >= 1) {
