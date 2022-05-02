@@ -2,8 +2,16 @@
 #define _H_GAME_MODEL
 
 #include <stdint.h>
-#include <stdio.h>
+#include <stdio.h> // TODO remove
 #include <stdlib.h>
+
+#ifdef RENDER_GL
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <cglm/cglm.h>
+
+#include "shader.h"
+#endif
 
 typedef struct GameModel GameModel;
 
@@ -91,6 +99,10 @@ typedef struct GameModel {
     int light_direction_magnitude;
     int data_ptr;
 } GameModel;
+
+#ifdef RENDER_GL
+void game_model_create_buffer(GameModel *game_model);
+#endif
 
 void game_model_new(GameModel *game_model);
 void game_model_allocate_face_trans(GameModel *game_model, int num_faces);

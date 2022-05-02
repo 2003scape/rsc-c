@@ -89,6 +89,8 @@ typedef struct Surface {
     mudclient *mud;
 
 #ifdef RENDER_GL
+    int fade_to_black;
+
     Shader flat_shader;
     GLuint flat_vao;
     GLuint flat_vbo;
@@ -133,6 +135,8 @@ int surface_sprite_texture_index(Surface *surface, int sprite_id);
 void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                            int draw_width, int draw_height, int skew_x,
                            int mask_colour, int skin_colour, int alpha, int flip);
+
+void surface_buffer_box(Surface *surface, int x, int y, int width, int height, int colour, int alpha);
 #endif
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);

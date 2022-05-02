@@ -304,7 +304,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
         surface_draw_line_alpha(mud->surface, i, 0, i, mud->game_width, 8);
     }
 
-    surface_draw_box(mud->surface, 0, 194, 512, 20, 0);
+    surface_draw_box(mud->surface, 0, 194, 512, 20, BLACK);
 
     for (int i = 6; i >= 1; i--) {
         surface_draw_line_alpha(mud->surface, i, 0, 194 - i, mud->game_width,
@@ -344,7 +344,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     surface_fade_to_black(mud->surface);
     surface_fade_to_black(mud->surface);
 
-    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, 0);
+    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, BLACK);
 
     for (int i = 6; i >= 1; i--) {
         surface_draw_line_alpha(mud->surface, i, 0, i, mud->game_width, 8);

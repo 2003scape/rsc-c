@@ -2152,6 +2152,56 @@ void mudclient_start_game(mudclient *mud) {
 
     mudclient_load_models(mud);
 
+#ifdef RENDER_GL
+    int total_vertices = 0;
+    int total_triangles = 0;
+
+    for (int i = 0; i < game_data_model_count - 1; i++) {
+        GameModel *game_model = mud->game_models[i];
+
+        for (int j = 0; j < game_model->num_faces; j++) {
+            int face_num_vertices = game_model->face_num_vertices[j];
+            total_vertices += face_num_vertices;
+            total_triangles += face_num_vertices - 2;
+        }
+    }
+
+    printf("%d\n", total_triangles);
+
+    glGenVertexArrays(1, &mud->game_model_vao);
+    glBindVertexArray(mud->game_model_vao);
+
+    glGenBuffers(1, &mud->game_model_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mud->game_model_vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 10 * total_vertices,
+                 NULL, GL_STATIC_DRAW);
+
+    /* vertex { x, y, z } */
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
+                          (void *)0);
+
+    glEnableVertexAttribArray(0);
+
+    /* colour { r, g, b, a } */
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
+                          (void *)(3 * sizeof(float)));
+
+    glEnableVertexAttribArray(1);
+
+    /* texture { s, t, index } */
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
+                          (void *)(7 * sizeof(float)));
+
+    glEnableVertexAttribArray(2);
+
+    glGenBuffers(1, &mud->game_model_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->game_model_ebo);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_triangles * 3 * sizeof(GLuint),
+                 NULL, GL_DYNAMIC_DRAW);
+#endif
+
     if (mud->error_loading_data) {
         return;
     }

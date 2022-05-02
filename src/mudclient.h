@@ -52,6 +52,7 @@
 
 #if !defined(WII) && !defined(_3DS)
 #include <SDL2/SDL.h>
+
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
@@ -783,6 +784,12 @@ typedef struct mudclient {
     int duel_opponent_confirm_items[DUEL_ITEMS_MAX];
     int duel_opponent_confirm_items_count[DUEL_ITEMS_MAX];
     int duel_confirm_accepted;
+
+#ifdef RENDER_GL
+    GLuint game_model_vao;
+    GLuint game_model_vbo;
+    GLuint game_model_ebo;
+#endif
 } mudclient;
 
 void mudclient_new(mudclient *mud);

@@ -279,12 +279,10 @@ void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
     if (!packet_stream->closed) {
 #ifdef WII
         net_write(packet_stream->socket, buffer + offset, length);
-#else
-#ifdef WIN32
+#elif WIN32
         send(packet_stream->socket, buffer + offset, length, 0);
 #else
         write(packet_stream->socket, buffer + offset, length);
-#endif
 #endif
     }
 }

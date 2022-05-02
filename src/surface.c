@@ -150,6 +150,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glGenTextures(1, &surface->sprite_item_textures);
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
 
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, ITEM_TEXTURE_WIDTH,
                    ITEM_TEXTURE_HEIGHT,
                    game_data_item_sprite_count + game_data_projectile_sprite);
@@ -157,17 +160,23 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glGenTextures(1, &surface->sprite_media_textures);
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
 
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, MEDIA_TEXTURE_WIDTH,
                    MEDIA_TEXTURE_HEIGHT, mud->sprite_item - mud->sprite_media);
 
     glGenTextures(1, &surface->font_textures);
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->font_textures);
 
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, FONT_TEXTURE_WIDTH,
                    FONT_TEXTURE_HEIGHT, FONT_COUNT);
 
-    int32_t *font_raster =
-        calloc(FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT, sizeof(int32_t));
+    int font_area = FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT;
+    int32_t *font_raster = calloc(font_area, sizeof(int32_t));
 
     for (int i = 0; i < FONT_COUNT; i++) {
         create_font_texture(font_raster, i);
@@ -175,7 +184,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH, FONT_TEXTURE_WIDTH, 1,
                         GL_BGRA, GL_UNSIGNED_BYTE, font_raster);
 
-        memset(font_raster, 0, FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT * sizeof(int32_t));
+        memset(font_raster, 0, font_area * sizeof(int32_t));
     }
 
     free(font_raster);
@@ -417,7 +426,10 @@ void surface_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 }
 
 void surface_buffer_character(Surface *surface, char character, int x, int y, int colour, int font_id) {
-    //font_id = 1;
+    if (character == ' ') {
+        return;
+    }
+
     int8_t *font_data = game_fonts[font_id];
     int slot_size = surface_text_height(font_id);
     int char_set_index = -1;
@@ -487,6 +499,46 @@ void surface_buffer_character(Surface *surface, char character, int x, int y, in
     };
 
     surface_buffer_flat_quad(surface, char_quad, surface->font_textures);
+}
+
+void surface_buffer_box(Surface *surface, int x, int y, int width, int height, int colour, int alpha) {
+    float red_f = ((colour >> 16) & 0xff) / 255.0f;
+    float green_f = ((colour >> 8) & 0xff) / 255.0f;
+    float blue_f = (colour & 0xff) / 255.0f;
+    float alpha_f = alpha / 255.0f;
+
+    GLfloat left_x = translate_gl_x(x, surface->width2);
+    GLfloat right_x = translate_gl_x(x + width, surface->width2);
+    GLfloat top_y = translate_gl_y(y, surface->height2);
+    GLfloat bottom_y = translate_gl_y(y + height, surface->height2);
+
+    GLfloat box_quad[] = {
+        /* top left / northwest */
+        left_x, top_y,                   //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0, -1,                        //
+
+        /* top right / northeast */
+        right_x, top_y,                  //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0, -1,                        //
+
+        /* bottom right / southeast */
+        right_x, bottom_y,               //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0, -1,                        //
+
+        /* bottom left / southwest */
+        left_x, bottom_y,                //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0, -1                         //
+    };
+
+    surface_buffer_flat_quad(surface, box_quad, 0);
 }
 #endif
 
@@ -658,7 +710,13 @@ void surface_draw(Surface *surface) {
 #endif
 
 #ifdef RENDER_GL
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glEnable(GL_BLEND);
+    //glBlendFunc(GL_DST_ALPHA, GL_SRC_ALPHA);
+
+    // TODO this almost works.
+    if (!surface->fade_to_black) {
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
 
     shader_use(&surface->flat_shader);
     glBindVertexArray(surface->flat_vao);
@@ -706,6 +764,8 @@ void surface_draw(Surface *surface) {
     surface->flat_context_textures[0] = 0;
     surface->flat_context_quad_counts[0] = 0;
     surface->flat_context_count = 1;
+
+    surface->fade_to_black = 0;
 #endif
 }
 
@@ -794,6 +854,11 @@ void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
 
 void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
                             int height, int colour, int alpha) {
+#ifdef RENDER_GL
+    surface_buffer_box(surface, x, y, width, height, colour, alpha);
+#endif
+
+#ifdef RENDER_SW
     if (x < surface->bounds_top_x) {
         width -= surface->bounds_top_x - x;
         x = surface->bounds_top_x;
@@ -812,47 +877,6 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
         height = surface->bounds_bottom_y - y;
     }
 
-#ifdef RENDER_GL
-    float red_f = ((colour >> 16) & 0xff) / 255.0f;
-    float green_f = ((colour >> 8) & 0xff) / 255.0f;
-    float blue_f = (colour & 0xff) / 255.0f;
-    float alpha_f = alpha / 255.0f;
-
-    GLfloat left_x = translate_gl_x(x, surface->width2);
-    GLfloat right_x = translate_gl_x(x + width, surface->width2);
-    GLfloat top_y = translate_gl_y(y, surface->height2);
-    GLfloat bottom_y = translate_gl_y(y + height, surface->height2);
-
-    GLfloat box_quad[] = {
-        /* top left / northwest */
-        left_x, top_y,                   //
-        red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
-        0, 0, -1,                        //
-
-        /* top right / northeast */
-        right_x, top_y,                  //
-        red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
-        0, 0, -1,                        //
-
-        /* bottom right / southeast */
-        right_x, bottom_y,               //
-        red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
-        0, 0, -1,                        //
-
-        /* bottom left / southwest */
-        left_x, bottom_y,                //
-        red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
-        0, 0, -1                         //
-    };
-
-    surface_buffer_flat_quad(surface, box_quad, 0);
-#endif
-
-#ifdef RENDER_SW
     int red = ((colour >> 16) & 0xff) * alpha;
     int green = ((colour >> 8) & 0xff) * alpha;
     int blue = (colour & 0xff) * alpha;
@@ -997,7 +1021,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,
                       int colour) {
 #ifdef RENDER_GL
-    surface_draw_box_alpha(surface, x, y, width, height, colour, 255);
+    surface_buffer_box(surface, x, y, width, height, colour, 255);
 #endif
 
 #ifdef RENDER_SW
@@ -1046,6 +1070,11 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
 
 void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
                                   int colour) {
+#ifdef RENDER_GL
+    surface_buffer_box(surface, x, y, width, 1, colour, 255);
+#endif
+
+#ifdef RENDER_SW
     if (y < surface->bounds_top_y || y >= surface->bounds_bottom_y) {
         return;
     }
@@ -1059,46 +1088,6 @@ void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
         width = surface->bounds_bottom_x - x;
     }
 
-#ifdef RENDER_GL
-    GLfloat left_x = translate_gl_x(x, surface->width2);
-    GLfloat right_x = translate_gl_x(x + width, surface->width2);
-    GLfloat top_y = translate_gl_y(y, surface->height2);
-    GLfloat bottom_y = translate_gl_y(y + 1, surface->height2);
-
-    float red = ((colour >> 16) & 0xff) / 255.0f;
-    float green = ((colour >> 8) & 0xff) / 255.0f;
-    float blue = (colour & 0xff) / 255.0f;
-
-    GLfloat box_quad[] = {
-        /* top left / northwest */
-        left_x, top_y,         //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
-
-        /* top right / northeast */
-        right_x, top_y,        //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
-
-        /* bottom right / southeast */
-        right_x, bottom_y,     //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
-
-        /* bottom left / southwest */
-        left_x, bottom_y,      //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1               //
-    };
-
-    surface_buffer_flat_quad(surface, box_quad, 0);
-#endif
-
-#ifdef RENDER_SW
     int start = x + y * surface->width2;
 
     for (int i = 0; i < width; i++) {
@@ -1109,6 +1098,11 @@ void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
 
 void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
                                 int colour) {
+#ifdef RENDER_GL
+    surface_buffer_box(surface, x, y, 1, height, colour, 255);
+#endif
+
+#ifdef RENDER_SW
     if (x < surface->bounds_top_x || x >= surface->bounds_bottom_x) {
         return;
     }
@@ -1122,46 +1116,6 @@ void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
         height = surface->bounds_bottom_y - y;
     }
 
-#ifdef RENDER_GL
-    GLfloat left_x = translate_gl_x(x, surface->width2);
-    GLfloat right_x = translate_gl_x(x + 1, surface->width2);
-    GLfloat top_y = translate_gl_y(y, surface->height2);
-    GLfloat bottom_y = translate_gl_y(y + height, surface->height2);
-
-    float red = ((colour >> 16) & 0xff) / 255.0f;
-    float green = ((colour >> 8) & 0xff) / 255.0f;
-    float blue = (colour & 0xff) / 255.0f;
-
-    GLfloat box_quad[] = {
-        /* top left / northwest */
-        left_x, top_y,         //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
-
-        /* top right / northeast */
-        right_x, top_y,        //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
-
-        /* bottom right / southeast */
-        right_x, bottom_y,     //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
-
-        /* bottom left / southwest */
-        left_x, bottom_y,      //
-        red, green, blue, 1.0, //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1               //
-    };
-
-    surface_buffer_flat_quad(surface, box_quad, 0);
-#endif
-
-#ifdef RENDER_SW
     int start = x + y * surface->width2;
 
     for (int i = 0; i < height; i++) {
@@ -1188,6 +1142,14 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour) {
 }
 
 void surface_fade_to_black(Surface *surface) {
+#ifdef RENDER_GL
+    surface->fade_to_black = 0;
+
+    // TODO a better job - this still leaves a shadow of the original image
+    surface_buffer_box(surface, 0, 0, surface->width2, surface->height2, BLACK, 25);
+#endif
+
+#ifdef RENDER_SW
     int area = surface->width2 * surface->height2;
 
     for (int i = 0; i < area; i++) {
@@ -1197,6 +1159,7 @@ void surface_fade_to_black(Surface *surface) {
             ((pixel >> 1) & 0x7f7f7f) + ((pixel >> 2) & 0x3f3f3f) +
             ((pixel >> 3) & 0x1f1f1f) + ((pixel >> 4) & 0xf0f0f);
     }
+#endif
 }
 
 void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
