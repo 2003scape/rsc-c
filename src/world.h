@@ -21,11 +21,11 @@ typedef struct World World;
 
 #define TILE_SIZE 128
 #define PLANE_COUNT 4
-#define TILE_COUNT 2304
 #define TERRAIN_COUNT 64
 #define TERRAIN_COLOUR_COUNT 256
 #define LOCAL_COUNT 18432
 #define REGION_SIZE 48
+#define TILE_COUNT (REGION_SIZE * REGION_SIZE)
 #define PLANE_HEIGHT 80000
 
 /* length of the portion of the roof hanging over the building */
@@ -77,8 +77,8 @@ int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
                          int y);
 int get_int_plane_coord(int plane_array[PLANE_COUNT][TILE_COUNT], int x, int y);
 int world_get_wall_east_west(World *world, int x, int y);
-void world_set_terrain_ambience(World *world, int x, int y, int x2, int y2,
-                                int ambience);
+void world_set_terrain_ambience(World *world, int terrain_x, int terrain_y,
+                                int vertex_x, int vertex_y, int ambience);
 int world_get_wall_roof(World *world, int x, int y);
 int world_get_elevation(World *world, int x, int y);
 int world_get_wall_diagonal(World *world, int x, int y);
@@ -98,9 +98,7 @@ void world_set_tiles(World *world);
 int world_get_wall_north_south(World *world, int x, int y);
 int world_get_tile_direction(World *world, int x, int y);
 int world_get_tile_decoration(World *world, int x, int y);
-int world_get_tile_decoration_from4(World *world, int x, int y, int unused,
-                                    int def);
-int world_get_tile_decoration(World *world, int x, int y);
+int world_get_tile_decoration_from4(World *world, int x, int y);
 void world_set_tile_decoration(World *world, int x, int y, int decoration);
 int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
                 int end_x2, int end_y2, int *route_x, int *route_y,

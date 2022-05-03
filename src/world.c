@@ -59,13 +59,13 @@ int world_get_wall_east_west(World *world, int x, int y) {
     return get_byte_plane_coord(world->walls_east_west, x, y);
 }
 
-void world_set_terrain_ambience(World *world, int x, int y, int x2, int y2,
-                                int ambience) {
-    GameModel *game_model = world->terrain_models[x + y * 8];
+void world_set_terrain_ambience(World *world, int terrain_x, int terrain_y,
+                                int vertex_x, int vertex_y, int ambience) {
+    GameModel *game_model = world->terrain_models[terrain_x + terrain_y * 8];
 
     for (int i = 0; i < game_model->num_vertices; i++) {
-        if (game_model->vertex_x[i] == x2 * TILE_SIZE &&
-            game_model->vertex_z[i] == y2 * TILE_SIZE) {
+        if (game_model->vertex_x[i] == vertex_x * TILE_SIZE &&
+            game_model->vertex_z[i] == vertex_y * TILE_SIZE) {
             game_model_set_vertex_ambience(game_model, i, ambience);
             return;
         }
@@ -297,9 +297,9 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
         for (int tile_y = 0; tile_y < 48; tile_y++) {
             for (int tile_x = 0; tile_x < 48; tile_x++) {
-                last_val = world->terrain_height[chunk][tile_x * 48 + tile_y] +
-                               last_val &
-                           0x7f;
+                last_val = (world->terrain_height[chunk][tile_x * 48 + tile_y] +
+                            last_val) &
+                           127;
 
                 world->terrain_height[chunk][tile_x * 48 + tile_y] =
                     (int8_t)(last_val * 2);
@@ -326,9 +326,9 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
         for (int tile_y = 0; tile_y < 48; tile_y++) {
             for (int tile_x = 0; tile_x < 48; tile_x++) {
-                last_val = world->terrain_colour[chunk][tile_x * 48 + tile_y] +
-                               last_val &
-                           0x7f;
+                last_val = (world->terrain_colour[chunk][tile_x * 48 + tile_y] +
+                            last_val) &
+                           127;
 
                 world->terrain_colour[chunk][tile_x * 48 + tile_y] =
                     (int8_t)(last_val * 2);
@@ -540,10 +540,11 @@ void world_set_tiles(World *world) {
                 continue;
             }
 
-            if (x == 47 && world_get_tile_decoration(world, x + 1, y) != 250 &&
+            if (x == (REGION_SIZE - 1) &&
+                world_get_tile_decoration(world, x + 1, y) != 250 &&
                 world_get_tile_decoration(world, x + 1, y) != 2) {
                 world_set_tile_decoration(world, x, y, 9);
-            } else if (y == 47 &&
+            } else if (y == (REGION_SIZE - 1) &&
                        world_get_tile_decoration(world, x, y + 1) != 250 &&
                        world_get_tile_decoration(world, x, y + 1) != 2) {
                 world_set_tile_decoration(world, x, y, 9);
@@ -566,8 +567,8 @@ int world_get_tile_decoration(World *world, int x, int y) {
     return get_byte_plane_coord(world->tile_decoration, x, y) & 0xff;
 }
 
-int world_get_tile_decoration_from4(World *world, int x, int y, int unused,
-                                    int def) {
+// TODO rename
+int world_get_tile_decoration_from4(World *world, int x, int y) {
     int decoration = world_get_tile_decoration(world, x, y);
 
     if (decoration == 0) {
@@ -600,7 +601,8 @@ void world_set_tile_decoration(World *world, int x, int y, int decoration) {
 }
 
 int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
-                int end_x2, int end_y2, int *route_x, int *route_y, int objects) {
+                int end_x2, int end_y2, int *route_x, int *route_y,
+                int objects) {
     for (int x = 0; x < REGION_WIDTH; x++) {
         for (int y = 0; y < REGION_HEIGHT; y++) {
             world->route_via[x][y] = 0;
@@ -635,19 +637,22 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
                 break;
             }
 
-            if (x < 95 && x + 1 >= end_x1 && x + 1 <= end_x2 && y >= end_y1 &&
-                y <= end_y2 && (world->object_adjacency[x + 1][y] & 2) == 0) {
+            if (x < (REGION_WIDTH - 1) && x + 1 >= end_x1 && x + 1 <= end_x2 &&
+                y >= end_y1 && y <= end_y2 &&
+                (world->object_adjacency[x + 1][y] & 2) == 0) {
                 reached = 1;
                 break;
             }
+
             if (y > 0 && x >= end_x1 && x <= end_x2 && y - 1 >= end_y1 &&
                 y - 1 <= end_y2 &&
                 (world->object_adjacency[x][y - 1] & 4) == 0) {
                 reached = 1;
                 break;
             }
-            if (y < 95 && x >= end_x1 && x <= end_x2 && y + 1 >= end_y1 &&
-                y + 1 <= end_y2 &&
+
+            if (y < (REGION_HEIGHT - 1) && x >= end_x1 && x <= end_x2 &&
+                y + 1 >= end_y1 && y + 1 <= end_y2 &&
                 (world->object_adjacency[x][y + 1] & 1) == 0) {
                 reached = 1;
                 break;
@@ -662,7 +667,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x - 1][y] = 2;
         }
 
-        if (x < 95 && world->route_via[x + 1][y] == 0 &&
+        if (x < (REGION_WIDTH - 1) && world->route_via[x + 1][y] == 0 &&
             (world->object_adjacency[x + 1][y] & 0x72) == 0) {
             route_x[write_ptr] = x + 1;
             route_y[write_ptr] = y;
@@ -678,7 +683,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x][y - 1] = 1;
         }
 
-        if (y < 95 && world->route_via[x][y + 1] == 0 &&
+        if (y < (REGION_HEIGHT - 1) && world->route_via[x][y + 1] == 0 &&
             (world->object_adjacency[x][y + 1] & 0x71) == 0) {
             route_x[write_ptr] = x;
             route_y[write_ptr] = y + 1;
@@ -696,7 +701,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x - 1][y - 1] = 3;
         }
 
-        if (x < 95 && y > 0 &&
+        if (x < (REGION_WIDTH - 1) && y > 0 &&
             (world->object_adjacency[x][y - 1] & 0x74) == 0 &&
             (world->object_adjacency[x + 1][y] & 0x72) == 0 &&
             (world->object_adjacency[x + 1][y - 1] & 0x76) == 0 &&
@@ -707,7 +712,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x + 1][y - 1] = 9;
         }
 
-        if (x > 0 && y < 95 &&
+        if (x > 0 && y < (REGION_HEIGHT - 1) &&
             (world->object_adjacency[x][y + 1] & 0x71) == 0 &&
             (world->object_adjacency[x - 1][y] & 0x78) == 0 &&
             (world->object_adjacency[x - 1][y + 1] & 0x79) == 0 &&
@@ -718,7 +723,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
             world->route_via[x - 1][y + 1] = 6;
         }
 
-        if (x < 95 && y < 95 &&
+        if (x < (REGION_WIDTH - 1) && y < (REGION_HEIGHT - 1) &&
             (world->object_adjacency[x][y + 1] & 0x71) == 0 &&
             (world->object_adjacency[x + 1][y] & 0x72) == 0 &&
             (world->object_adjacency[x + 1][y + 1] & 0x73) == 0 &&
@@ -793,7 +798,6 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
 }
 
 /* assemble a 3D model from world section */
-
 void world_load_section_from4(World *world, int x, int y, int plane,
                               int is_current_plane) {
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
@@ -808,7 +812,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     if (world->parent_model == NULL) {
         world->parent_model = malloc(sizeof(GameModel));
-        //game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
     } else {
         game_model_destroy(world->parent_model);
     }
@@ -830,7 +833,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
         game_model_destroy(game_model);
         game_model_from7(game_model, 18688, 18688, 1, 1, 0, 0, 1);
-        // game_model_clear(game_model);
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -919,44 +921,44 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         int diagonal = world_get_wall_diagonal(world, r_x, r_y);
 
                         if (diagonal > 0 && diagonal < 24000) {
-                            if (world_get_tile_decoration_from4(
-                                    world, r_x - 1, r_y, plane, colour_2) !=
+                            if (world_get_tile_decoration_from4(world, r_x - 1,
+                                                                r_y) !=
                                     COLOUR_TRANSPARENT &&
-                                world_get_tile_decoration_from4(
-                                    world, r_x, r_y - 1, plane, colour_2) !=
+                                world_get_tile_decoration_from4(world, r_x,
+                                                                r_y - 1) !=
                                     COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
-                                    world, r_x - 1, r_y, plane, colour_2);
+                                    world, r_x - 1, r_y);
 
                                 direction = 0;
                             } else if (world_get_tile_decoration_from4(
-                                           world, r_x + 1, r_y, plane,
-                                           colour_2) != COLOUR_TRANSPARENT &&
+                                           world, r_x + 1, r_y) !=
+                                           COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, r_x, r_y + 1, plane,
-                                           colour_2) != COLOUR_TRANSPARENT) {
+                                           world, r_x, r_y + 1) !=
+                                           COLOUR_TRANSPARENT) {
                                 colour_1 = world_get_tile_decoration_from4(
-                                    world, r_x + 1, r_y, plane, colour_2);
+                                    world, r_x + 1, r_y);
 
                                 direction = 0;
                             } else if (world_get_tile_decoration_from4(
-                                           world, r_x + 1, r_y, plane,
-                                           colour_2) != COLOUR_TRANSPARENT &&
+                                           world, r_x + 1, r_y) !=
+                                           COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, r_x, r_y - 1, plane,
-                                           colour_2) != COLOUR_TRANSPARENT) {
+                                           world, r_x, r_y - 1) !=
+                                           COLOUR_TRANSPARENT) {
                                 colour_1 = world_get_tile_decoration_from4(
-                                    world, r_x + 1, r_y, plane, colour_2);
+                                    world, r_x + 1, r_y);
 
                                 direction = 1;
                             } else if (world_get_tile_decoration_from4(
-                                           world, r_x - 1, r_y, plane,
-                                           colour_2) != COLOUR_TRANSPARENT &&
+                                           world, r_x - 1, r_y) !=
+                                           COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, r_x, r_y + 1, plane,
-                                           colour_2) != COLOUR_TRANSPARENT) {
+                                           world, r_x, r_y + 1) !=
+                                           COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
-                                    world, r_x - 1, r_y, plane, colour_2);
+                                    world, r_x - 1, r_y);
 
                                 direction = 1;
                             }
@@ -1353,7 +1355,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     game_model_destroy(world->parent_model);
     game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
-    // game_model_clear(world->parent_model);
 
     int colour = 0x606060;
 
@@ -1582,7 +1583,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     game_model_destroy(world->parent_model);
     game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
-    // game_model_clear(world->parent_model);
 
     for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
@@ -2021,20 +2021,24 @@ void world_add_models(World *world, GameModel **models) {
                                 int object_y = yy;
                                 int8_t plane = 0;
 
-                                if (object_x >= 48 && object_y < 48) {
+                                if (object_x >= REGION_SIZE &&
+                                    object_y < REGION_SIZE) {
                                     plane = 1;
-                                    object_x -= 48;
-                                } else if (object_x < 48 && object_y >= 48) {
+                                    object_x -= REGION_SIZE;
+                                } else if (object_x < REGION_SIZE &&
+                                           object_y >= REGION_SIZE) {
                                     plane = 2;
-                                    object_y -= 48;
-                                } else if (object_x >= 48 && object_y >= 48) {
+                                    object_y -= REGION_SIZE;
+                                } else if (object_x >= REGION_SIZE &&
+                                           object_y >= REGION_SIZE) {
                                     plane = 3;
-                                    object_x -= 48;
-                                    object_y -= 48;
+                                    object_x -= REGION_SIZE;
+                                    object_y -= REGION_SIZE;
                                 }
 
-                                world->walls_diagonal[plane][object_x * 48 +
-                                                             object_y] = 0;
+                                world->walls_diagonal[plane]
+                                                     [object_x * REGION_SIZE +
+                                                      object_y] = 0;
                             }
                         }
                     }
@@ -2116,78 +2120,81 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
 }
 
 /* TODO add wall shadow */
-void world_method425(World *world, int i, int j, int k) {
-    int l = i / 12;
-    int i1 = j / 12;
-    int j1 = (i - 1) / 12;
-    int k1 = (j - 1) / 12;
+void world_method425(World *world, int vertex_x, int vertex_z, int ambience) {
+    int terrain_x = vertex_x / 12;
+    int terrain_y = vertex_z / 12;
+    int j1 = (vertex_x - 1) / 12;
+    int k1 = (vertex_z - 1) / 12;
 
-    world_set_terrain_ambience(world, l, i1, i, j, k);
+    world_set_terrain_ambience(world, terrain_x, terrain_y, vertex_x, vertex_z,
+                               ambience);
 
-    if (l != j1) {
-        world_set_terrain_ambience(world, j1, i1, i, j, k);
+    if (terrain_x != j1) {
+        world_set_terrain_ambience(world, j1, terrain_y, vertex_x, vertex_z,
+                                   ambience);
     }
 
-    if (i1 != k1) {
-        world_set_terrain_ambience(world, l, k1, i, j, k);
+    if (terrain_y != k1) {
+        world_set_terrain_ambience(world, terrain_x, k1, vertex_x, vertex_z,
+                                   ambience);
     }
 
-    if (l != j1 && i1 != k1) {
-        world_set_terrain_ambience(world, j1, k1, i, j, k);
+    if (terrain_x != j1 && terrain_y != k1) {
+        world_set_terrain_ambience(world, j1, k1, vertex_x, vertex_z, ambience);
     }
 }
 
 void world_remove_object(World *world, int x, int y, int id) {
-    if (x < 0 || y < 0 || x >= 95 || y >= 95) {
+    if (x < 0 || y < 0 || x >= (REGION_WIDTH - 1) || y >= (REGION_HEIGHT - 1)) {
         return;
     }
 
     if (game_data_object_type[id] == 1 || game_data_object_type[id] == 2) {
-        int l = world_get_tile_direction(world, x, y);
-        int i1;
-        int j1;
+        int tile_direction = world_get_tile_direction(world, x, y);
+        int width;
+        int height;
 
-        if (l == 0 || l == 4) {
-            i1 = game_data_object_width[id];
-            j1 = game_data_object_height[id];
+        if (tile_direction == 0 || tile_direction == 4) {
+            width = game_data_object_width[id];
+            height = game_data_object_height[id];
         } else {
-            j1 = game_data_object_width[id];
-            i1 = game_data_object_height[id];
+            height = game_data_object_width[id];
+            width = game_data_object_height[id];
         }
 
-        for (int k1 = x; k1 < x + i1; k1++) {
-            for (int l1 = y; l1 < y + j1; l1++) {
+        for (int xx = x; xx < x + width; xx++) {
+            for (int yy = y; yy < y + height; yy++) {
                 if (game_data_object_type[id] == 1) {
-                    world->object_adjacency[k1][l1] &= 0xffbf;
-                } else if (l == 0) {
-                    world->object_adjacency[k1][l1] &= 0xfffd;
+                    world->object_adjacency[xx][yy] &= 0xffbf;
+                } else if (tile_direction == 0) {
+                    world->object_adjacency[xx][yy] &= 0xfffd;
 
-                    if (k1 > 0) {
-                        world_method407(world, k1 - 1, l1, 8);
+                    if (xx > 0) {
+                        world_method407(world, xx - 1, yy, 8);
                     }
-                } else if (l == 2) {
-                    world->object_adjacency[k1][l1] &= 0xfffb;
+                } else if (tile_direction == 2) {
+                    world->object_adjacency[xx][yy] &= 0xfffb;
 
-                    if (l1 < 95) {
-                        world_method407(world, k1, l1 + 1, 1);
+                    if (yy < (REGION_HEIGHT - 1)) {
+                        world_method407(world, xx, yy + 1, 1);
                     }
-                } else if (l == 4) {
-                    world->object_adjacency[k1][l1] &= 0xfff7;
+                } else if (tile_direction == 4) {
+                    world->object_adjacency[xx][yy] &= 0xfff7;
 
-                    if (k1 < 95) {
-                        world_method407(world, k1 + 1, l1, 2);
+                    if (xx < (REGION_WIDTH - 1)) {
+                        world_method407(world, xx + 1, yy, 2);
                     }
-                } else if (l == 6) {
-                    world->object_adjacency[k1][l1] &= 0xfffe;
+                } else if (tile_direction == 6) {
+                    world->object_adjacency[xx][yy] &= 0xfffe;
 
-                    if (l1 > 0) {
-                        world_method407(world, k1, l1 - 1, 4);
+                    if (yy > 0) {
+                        world_method407(world, xx, yy - 1, 4);
                     }
                 }
             }
         }
 
-        world_method404(world, x, y, i1, j1);
+        world_method404(world, x, y, width, height);
     }
 }
 
@@ -2199,7 +2206,6 @@ int world_has_neighbouring_roof(World *world, int x, int y) {
 }
 
 /* move wall (objects) to the upper-plane */
-
 void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
                              int x2, int y2) {
     int height = game_data_wall_object_height[wall_object_id];

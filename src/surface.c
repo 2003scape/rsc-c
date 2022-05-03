@@ -1143,10 +1143,10 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour) {
 
 void surface_fade_to_black(Surface *surface) {
 #ifdef RENDER_GL
-    surface->fade_to_black = 0;
+    surface->fade_to_black = 1;
 
     // TODO a better job - this still leaves a shadow of the original image
-    surface_buffer_box(surface, 0, 0, surface->width2, surface->height2, BLACK, 25);
+    surface_buffer_box(surface, 0, 0, surface->width2, surface->height2, BLACK, 20);
 #endif
 
 #ifdef RENDER_SW

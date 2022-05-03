@@ -46,8 +46,8 @@ typedef struct GameModel {
     int key;
     int *face_tag;
     int8_t *is_local_player;
-    int isolated;
-    int unlit;
+    int8_t isolated;
+    int8_t unlit;
     int unpickable;
     int projected;
     int max_verts;
@@ -60,7 +60,6 @@ typedef struct GameModel {
     int light_diffuse;
     int light_ambience;
     int autocommit;
-    int magic;
     int max_faces;
     int *face_bound_left;
     int *face_bound_right;

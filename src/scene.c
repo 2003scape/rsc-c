@@ -117,10 +117,10 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         i3 = 16256;
     }
 
-    int k3 = (i3 - i) >> 4;
-    int l3 = (j3 - j) >> 4;
+    int k3 = (i3 - i) / 16;
+    int l3 = (j3 - j) / 16;
 
-    for (int j4 = i2 >> 4; j4 > 0; j4--) {
+    for (int j4 = i2 / 16; j4 > 0; j4--) {
         i += k2 & 0x600000;
         i4 = k2 >> 23;
         k2 += l2;
@@ -196,8 +196,8 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
             i3 = 16256;
         }
 
-        k3 = (i3 - i) >> 4;
-        l3 = (j3 - j) >> 4;
+        k3 = (i3 - i) / 16;
+        l3 = (j3 - j) / 16;
     }
 
     for (int k4 = 0; k4 < (i2 & 0xf); k4++) {

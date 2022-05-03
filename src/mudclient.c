@@ -400,7 +400,7 @@ void mudclient_new(mudclient *mud) {
 
     mud->sleep_word_delay = 1;
 
-    /* set to 192 on p2p servers */
+    /* set by the server to 192 on p2p servers */
     mud->bank_items_max = 48;
 }
 
@@ -553,9 +553,8 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
-    /*SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                        SDL_GL_CONTEXT_PROFILE_CORE);*/
-
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
 #ifdef RENDER_GL
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -2142,6 +2141,7 @@ void mudclient_start_game(mudclient *mud) {
 
     mud->world = malloc(sizeof(World));
     world_new(mud->world, mud->scene, mud->surface);
+
     mud->world->base_media_sprite = mud->sprite_media;
 
     mudclient_load_textures(mud);
@@ -2152,21 +2152,27 @@ void mudclient_start_game(mudclient *mud) {
 
     mudclient_load_models(mud);
 
+    if (mud->error_loading_data) {
+        return;
+    }
+
 #ifdef RENDER_GL
     int total_vertices = 0;
-    int total_triangles = 0;
+    int total_ebo_length = 0;
 
     for (int i = 0; i < game_data_model_count - 1; i++) {
         GameModel *game_model = mud->game_models[i];
 
+        game_model->ebo_offset = total_ebo_length;
+
         for (int j = 0; j < game_model->num_faces; j++) {
             int face_num_vertices = game_model->face_num_vertices[j];
             total_vertices += face_num_vertices;
-            total_triangles += face_num_vertices - 2;
+            game_model->ebo_length += (face_num_vertices - 2) * 3;
         }
-    }
 
-    printf("%d\n", total_triangles);
+        total_ebo_length += game_model->ebo_length;
+    }
 
     glGenVertexArrays(1, &mud->game_model_vao);
     glBindVertexArray(mud->game_model_vao);
@@ -2174,8 +2180,8 @@ void mudclient_start_game(mudclient *mud) {
     glGenBuffers(1, &mud->game_model_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, mud->game_model_vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 10 * total_vertices,
-                 NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 10 * total_vertices, NULL,
+                 GL_STATIC_DRAW);
 
     /* vertex { x, y, z } */
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
@@ -2198,13 +2204,99 @@ void mudclient_start_game(mudclient *mud) {
     glGenBuffers(1, &mud->game_model_ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->game_model_ebo);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_triangles * 3 * sizeof(GLuint),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_ebo_length * sizeof(GLuint),
                  NULL, GL_DYNAMIC_DRAW);
-#endif
 
-    if (mud->error_loading_data) {
-        return;
+    total_vertices = 0;
+    total_ebo_length = 0;
+
+    for (int i = 0; i < game_data_model_count - 1; i++) {
+        GameModel *game_model = mud->game_models[i];
+
+        for (int j = 0; j < game_model->num_faces; j++) {
+            int fill_front = game_model->face_fill_front[j];
+            int fill_back = game_model->face_fill_back[j];
+
+            GLfloat r = -1.0f;
+            GLfloat g = -1.0f;
+            GLfloat b = -1.0f;
+            GLfloat a = 1.0f;
+
+            GLfloat texture_index = -1.0f;
+            GLfloat texture_x = -1.0f;
+            GLfloat texture_y = -1.0f;
+
+            if (fill_front != COLOUR_TRANSPARENT) {
+                if (fill_front < 0) {
+                    fill_front = -(fill_front + 1);
+                    r = ((fill_front >> 10) & 31) / 31.0f;
+                    g = ((fill_front >> 5) & 31) / 31.0f;
+                    b = (fill_front & 31) / 31.0f;
+                } else if (fill_front >= 0) {
+                    // TODO texture_index
+                }
+            } else if (fill_back != COLOUR_TRANSPARENT) {
+                if (fill_back < 0) {
+                    fill_back = -(fill_back + 1);
+                    r = ((fill_back >> 10) & 31) / 31.0f;
+                    g = ((fill_back >> 5) & 31) / 31.0f;
+                    b = (fill_back & 31) / 31.0f;
+                } else if (fill_front >= 0) {
+                    // TODO texture_index
+                }
+            }
+
+            int face_num_vertices = game_model->face_num_vertices[j];
+
+            for (int k = 0; k < face_num_vertices; k++) {
+                int vertex_index = game_model->face_vertices[j][k];
+
+                /*vec3 vertices = {
+                    game_model->vertex_x[vertex_index] / 1000.f,
+                    game_model->vertex_y[vertex_index] / 1000.0f,
+                    game_model->vertex_z[vertex_index] / 1000.0f
+                };*/
+
+                // glm_vec3_normalize(vertices);
+                // glm_vec3_print(vertices, stdout);
+
+                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 1000.0f;
+                GLfloat vertex_y = game_model->vertex_y[vertex_index] / 1000.0f;
+                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 1000.0f;
+
+                GLfloat vertices[] = {
+                    /* vertex */
+                    vertex_x, vertex_y, vertex_z, //
+
+                    /* colour */
+                    r, g, b, a, //
+
+                    /* texture */
+                    texture_index, texture_x, texture_y //
+                };
+
+                glBufferSubData(GL_ARRAY_BUFFER,
+                                (total_vertices + k) * 10 * sizeof(GLfloat),
+                                10 * sizeof(GLfloat) , vertices);
+            }
+
+            for (int k = 0; k < face_num_vertices - 2; k++) {
+                GLuint indices[] = {total_vertices, total_vertices + k + 1,
+                                    total_vertices + k + 2};
+
+                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
+                                total_ebo_length * sizeof(GLuint),
+                                sizeof(indices), indices);
+
+                total_ebo_length += 3;
+            }
+
+            total_vertices += face_num_vertices;
+        }
+
+        break;
     }
+#endif
 
     mudclient_load_maps(mud);
 
@@ -2309,7 +2401,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     }
 
     surface_draw_string_centre(mud->surface, "Loading... Please wait", 256, 192,
-                               1, 0xffffff);
+                               1, WHITE);
 
     mudclient_draw_chat_message_tabs(mud);
     surface_draw(mud->surface);

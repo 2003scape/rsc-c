@@ -376,14 +376,14 @@ void mudclient_packet_tick(mudclient *mud) {
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data[offset]) == 255) {
                 int index = 0;
-                int l14 = (mud->local_region_x + data[offset + 1]) >> 3;
-                int k19 = (mud->local_region_y + data[offset + 2]) >> 3;
+                int l14 = (mud->local_region_x + data[offset + 1]) / 8;
+                int k19 = (mud->local_region_y + data[offset + 2]) / 8;
 
                 offset += 3;
 
                 for (int i = 0; i < mud->object_count; i++) {
-                    int l26 = (mud->object_x[i] >> 3) - l14;
-                    int k29 = (mud->object_y[i] >> 3) - k19;
+                    int l26 = (mud->object_x[i] / 8) - l14;
+                    int k29 = (mud->object_y[i] / 8) - k19;
 
                     if (l26 != 0 || k29 != 0) {
                         if (i != index) {
@@ -676,25 +676,28 @@ void mudclient_packet_tick(mudclient *mud) {
 
         for (int i = 0; i < length; i++) {
             int delta_x =
-                (mud->local_region_x + get_signed_short(data, 1 + i * 4)) >> 3;
+                (mud->local_region_x + get_signed_short(data, 1 + i * 4)) / 8;
 
             int delta_y =
-                (mud->local_region_y + get_signed_short(data, 3 + i * 4)) >> 3;
+                (mud->local_region_y + get_signed_short(data, 3 + i * 4)) / 8;
 
             int entity_count = 0;
 
             for (int j = 0; j < mud->ground_item_count; j++) {
-                int x = (mud->ground_item_x[j] >> 3) - delta_x;
-                int y = (mud->ground_item_y[j] >> 3) - delta_y;
+                int x = (mud->ground_item_x[j] / 8) - delta_x;
+                int y = (mud->ground_item_y[j] / 8) - delta_y;
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
                         mud->ground_item_x[entity_count] =
                             mud->ground_item_x[j];
+
                         mud->ground_item_y[entity_count] =
                             mud->ground_item_y[j];
+
                         mud->ground_item_id[entity_count] =
                             mud->ground_item_id[j];
+
                         mud->ground_item_z[entity_count] =
                             mud->ground_item_z[j];
                     }
@@ -707,8 +710,8 @@ void mudclient_packet_tick(mudclient *mud) {
             entity_count = 0;
 
             for (int j = 0; j < mud->object_count; j++) {
-                int x = (mud->object_x[j] >> 3) - delta_x;
-                int y = (mud->object_y[j] >> 3) - delta_y;
+                int x = (mud->object_x[j] / 8) - delta_x;
+                int y = (mud->object_y[j] / 8) - delta_y;
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
@@ -739,8 +742,8 @@ void mudclient_packet_tick(mudclient *mud) {
             entity_count = 0;
 
             for (int j = 0; j < mud->wall_object_count; j++) {
-                int x = (mud->wall_object_x[j] >> 3) - delta_x;
-                int y = (mud->wall_object_y[j] >> 3) - delta_y;
+                int x = (mud->wall_object_x[j] / 8) - delta_x;
+                int y = (mud->wall_object_y[j] / 8) - delta_y;
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
@@ -752,6 +755,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                         mud->wall_object_x[entity_count] =
                             mud->wall_object_x[j];
+
                         mud->wall_object_y[entity_count] =
                             mud->wall_object_y[j];
 
@@ -785,14 +789,14 @@ void mudclient_packet_tick(mudclient *mud) {
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data[offset]) == 255) {
                 int index = 0;
-                int l_x = (mud->local_region_x + data[offset + 1]) >> 3;
-                int l_y = (mud->local_region_y + data[offset + 2]) >> 3;
+                int l_x = (mud->local_region_x + data[offset + 1]) / 8;
+                int l_y = (mud->local_region_y + data[offset + 2]) / 8;
 
                 offset += 3;
 
                 for (int i = 0; i < mud->wall_object_count; i++) {
-                    int s_x = (mud->wall_object_x[i] >> 3) - l_x;
-                    int s_y = (mud->wall_object_y[i] >> 3) - l_y;
+                    int s_x = (mud->wall_object_x[i] / 8) - l_x;
+                    int s_y = (mud->wall_object_y[i] / 8) - l_y;
 
                     if (s_x != 0 || s_y != 0) {
                         if (i != index) {
@@ -896,14 +900,14 @@ void mudclient_packet_tick(mudclient *mud) {
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data[offset]) == 255) {
                 int index = 0;
-                int j14 = (mud->local_region_x + data[offset + 1]) >> 3;
-                int i19 = (mud->local_region_y + data[offset + 2]) >> 3;
+                int j14 = (mud->local_region_x + data[offset + 1]) / 8;
+                int i19 = (mud->local_region_y + data[offset + 2]) / 8;
 
                 offset += 3;
 
                 for (int i = 0; i < mud->ground_item_count; i++) {
-                    int j26 = (mud->ground_item_x[i] >> 3) - j14;
-                    int j29 = (mud->ground_item_y[i] >> 3) - i19;
+                    int j26 = (mud->ground_item_x[i] / 8) - j14;
+                    int j29 = (mud->ground_item_y[i] / 8) - i19;
 
                     if (j26 != 0 || j29 != 0) {
                         if (i != index) {

@@ -453,9 +453,9 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
             surface_draw_string(mud->surface, menu_text, 6, 14, 1, YELLOW);
         }
 
-        if (!mud->settings_mouse_button_one && mud->mouse_button_click == 1 ||
-            mud->settings_mouse_button_one && mud->mouse_button_click == 1 &&
-                mud->menu_items_count == 1) {
+        if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 1) ||
+            (mud->settings_mouse_button_one && mud->mouse_button_click == 1 &&
+                mud->menu_items_count == 1)) {
             mudclient_menu_item_click(mud, mud->menu_indices[0]);
             mud->mouse_button_click = 0;
             return;
@@ -538,8 +538,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
         int face = picked_faces[i];
         GameModel *game_model = picked_models[i];
 
-        if (game_model->face_tag[face] <= 65535 ||
-            game_model->face_tag[face] >= 200000 &&
+        if ((game_model->face_tag[face] <= 65535 ||
+            game_model->face_tag[face] >= 200000) &&
                 game_model->face_tag[face] <= 300000) {
             if (game_model == mud->scene->view) {
                 int index = game_model->face_tag[face] % 10000;

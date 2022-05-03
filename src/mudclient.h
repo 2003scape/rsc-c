@@ -58,6 +58,9 @@
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
 
+#define CGLM_DEFINE_PRINTS
+#include <cglm/cglm.h>
+
 #include "shader.h"
 #endif
 #endif

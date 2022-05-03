@@ -8,7 +8,6 @@ void game_model_new(GameModel *game_model) {
     game_model->key = -1;
     game_model->light_diffuse = 512;
     game_model->light_ambience = 32;
-    game_model->magic = COLOUR_TRANSPARENT;
     game_model->diameter = COLOUR_TRANSPARENT;
     game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
@@ -89,7 +88,7 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         offset += 2;
 
         if (game_model->face_fill_front[i] == 32767) {
-            game_model->face_fill_front[i] = game_model->magic;
+            game_model->face_fill_front[i] = COLOUR_TRANSPARENT;
         }
     }
 
@@ -98,13 +97,13 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         offset += 2;
 
         if (game_model->face_fill_back[i] == 32767) {
-            game_model->face_fill_back[i] = game_model->magic;
+            game_model->face_fill_back[i] = COLOUR_TRANSPARENT;
         }
     }
 
     for (int i = 0; i < num_faces; i++) {
         int is_intense = data[offset++] & 0xff;
-        game_model->face_intensity[i] = is_intense == 0 ? 0 : game_model->magic;
+        game_model->face_intensity[i] = is_intense == 0 ? 0 : COLOUR_TRANSPARENT;
     }
 
     for (int i = 0; i < num_faces; i++) {
@@ -465,7 +464,7 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
     }
 
     for (int i = 0; i < game_model->num_faces; i++) {
-        game_model->face_intensity[i] = gouraud ? game_model->magic : 0;
+        game_model->face_intensity[i] = gouraud ? COLOUR_TRANSPARENT : 0;
     }
 
     game_model_set_light_from5(game_model, ambience, diffuse, x, y, z);
@@ -701,7 +700,7 @@ void game_model_light(GameModel *game_model) {
         8;
 
     for (int i = 0; i < game_model->num_faces; i++) {
-        if (game_model->face_intensity[i] != game_model->magic) {
+        if (game_model->face_intensity[i] != COLOUR_TRANSPARENT) {
             game_model->face_intensity[i] =
                 (int)((game_model->face_normal_x[i] *
                            game_model->light_direction_x +
@@ -726,7 +725,7 @@ void game_model_light(GameModel *game_model) {
     }
 
     for (int i = 0; i < game_model->num_faces; i++) {
-        if (game_model->face_intensity[i] == game_model->magic) {
+        if (game_model->face_intensity[i] == COLOUR_TRANSPARENT) {
             for (int v = 0; v < game_model->face_num_vertices[i]; v++) {
                 int k1 = game_model->face_vertices[i][v];
 

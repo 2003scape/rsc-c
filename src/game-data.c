@@ -64,12 +64,11 @@ char **game_data_item_description;
 char **game_data_item_command;
 int *game_data_item_picture;
 int *game_data_item_base_price;
-int *game_data_item_stackable;
-int *game_data_item_unused;
+int8_t *game_data_item_stackable;
 int *game_data_item_wearable;
 int *game_data_item_mask;
-int *game_data_item_special;
-int *game_data_item_members;
+int8_t *game_data_item_special;
+int8_t *game_data_item_members;
 
 int game_data_tile_count;
 int *game_data_tile_decoration;
@@ -183,12 +182,11 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data_item_command = malloc(game_data_item_count * sizeof(char *));
     game_data_item_picture = malloc(game_data_item_count * sizeof(int));
     game_data_item_base_price = malloc(game_data_item_count * sizeof(int));
-    game_data_item_stackable = malloc(game_data_item_count * sizeof(int));
-    game_data_item_unused = malloc(game_data_item_count * sizeof(int));
+    game_data_item_stackable = malloc(game_data_item_count * sizeof(int8_t));
     game_data_item_wearable = malloc(game_data_item_count * sizeof(int));
     game_data_item_mask = malloc(game_data_item_count * sizeof(int));
-    game_data_item_special = malloc(game_data_item_count * sizeof(int));
-    game_data_item_members = malloc(game_data_item_count * sizeof(int));
+    game_data_item_special = malloc(game_data_item_count * sizeof(int8_t));
+    game_data_item_members = malloc(game_data_item_count * sizeof(int8_t));
 
     for (i = 0; i < game_data_item_count; i++) {
         game_data_item_name[i] = game_data_get_string();
@@ -219,7 +217,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data_item_count; i++) {
-        game_data_item_unused[i] = game_data_get_unsigned_byte();
+        game_data_get_unsigned_byte(); /* unused */
     }
 
     for (i = 0; i < game_data_item_count; i++) {
@@ -240,14 +238,19 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     for (i = 0; i < game_data_item_count; i++) {
         if (!is_members && game_data_item_members[i] == 1) {
+            free(game_data_item_name[i]);
             game_data_item_name[i] = "Members object";
+
+            free(game_data_item_description[i]);
 
             game_data_item_description[i] =
                 "You need to be a member to use this object";
 
             game_data_item_base_price[i] = 0;
+
+            free(game_data_item_command[i]);
             game_data_item_command[i] = "";
-            game_data_item_unused[0] = 0;
+
             game_data_item_wearable[i] = 0;
             game_data_item_special[i] = 1;
         }

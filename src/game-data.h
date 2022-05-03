@@ -66,7 +66,6 @@ extern int **game_data_spell_runes_count;
 extern char **game_data_spell_name;
 extern char **game_data_spell_description;
 
-/* TODO some of these types can be int8_t instead */
 extern int game_data_item_count;
 extern int game_data_item_sprite_count;
 extern char **game_data_item_name;
@@ -74,12 +73,11 @@ extern char **game_data_item_description;
 extern char **game_data_item_command;
 extern int *game_data_item_picture;
 extern int *game_data_item_base_price;
-extern int *game_data_item_stackable;
-extern int *game_data_item_unused;
+extern int8_t *game_data_item_stackable;
 extern int *game_data_item_wearable;
 extern int *game_data_item_mask;
-extern int *game_data_item_special;
-extern int *game_data_item_members;
+extern int8_t *game_data_item_special;
+extern int8_t *game_data_item_members;
 
 extern int game_data_tile_count;
 extern int *game_data_tile_decoration;
