@@ -788,7 +788,11 @@ typedef struct mudclient {
     int duel_opponent_confirm_items_count[DUEL_ITEMS_MAX];
     int duel_confirm_accepted;
 
+    /* TODO should we combine the trade/duel item arrays + props? they're never
+     * simultaneous */
+
 #ifdef RENDER_GL
+    Shader game_model_shader;
     GLuint game_model_vao;
     GLuint game_model_vbo;
     GLuint game_model_ebo;

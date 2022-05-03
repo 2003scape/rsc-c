@@ -579,8 +579,7 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    /*glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_NEVER);*/
+    // glEnable(GL_DEPTH_TEST);
 
     /* transparent textures */
     glEnable(GL_BLEND);
@@ -2157,6 +2156,8 @@ void mudclient_start_game(mudclient *mud) {
     }
 
 #ifdef RENDER_GL
+    shader_new(&mud->game_model_shader, "./game-model.vs", "./game-model.fs");
+
     int total_vertices = 0;
     int total_ebo_length = 0;
 
@@ -3988,7 +3989,18 @@ void mudclient_draw_game(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, mud->camera_rotation * 4, 0, mud->camera_zoom * 2);
 
+#ifdef RENDER_SW
     scene_render(mud->scene);
+#endif
+
+#ifdef RENDER_GL
+    // glEnable(GL_DEPTH_TEST);
+
+    shader_use(&mud->game_model_shader);
+    glBindVertexArray(mud->game_model_vao);
+
+    glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, 0);
+#endif
 
     mudclient_draw_overhead(mud);
 
@@ -4006,7 +4018,7 @@ void mudclient_draw_game(mudclient *mud) {
     if (mud->options->fps_counter) {
         int offset_x = mud->is_in_wild ? 70 : 0;
 
-        char fps[17];
+        char fps[17] = {0};
         sprintf(fps, "Fps: %d", mud->fps);
 
         surface_draw_string(mud->surface, fps, mud->game_width - 62 - offset_x,
@@ -4081,6 +4093,7 @@ void mudclient_draw_game(mudclient *mud) {
     mud->surface->logged_in = 0;
 
     mudclient_draw_chat_message_tabs(mud);
+
     surface_draw(mud->surface);
 }
 
@@ -4093,6 +4106,12 @@ void mudclient_draw(mudclient *mud) {
 
 #ifdef WII
     draw_background(mud->framebuffer, 0);
+#endif
+
+#ifdef RENDER_GL
+    if (!mud->surface->fade_to_black) {
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
 #endif
 
     if (mud->logged_in == 0) {

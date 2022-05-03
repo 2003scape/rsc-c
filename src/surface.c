@@ -710,13 +710,15 @@ void surface_draw(Surface *surface) {
 #endif
 
 #ifdef RENDER_GL
-    // glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+
+    //glEnable(GL_BLEND);
     //glBlendFunc(GL_DST_ALPHA, GL_SRC_ALPHA);
 
     // TODO this almost works.
-    if (!surface->fade_to_black) {
+    /*if (!surface->fade_to_black) {
         glClear(GL_COLOR_BUFFER_BIT);
-    }
+    }*/
 
     shader_use(&surface->flat_shader);
     glBindVertexArray(surface->flat_vao);
@@ -743,8 +745,9 @@ void surface_draw(Surface *surface) {
 
         int quad_count = surface->flat_context_quad_counts[i];
 
+        /*
         glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
-                       (void *)(drawn_quads * 6 * sizeof(GLuint)));
+                       (void *)(drawn_quads * 6 * sizeof(GLuint)));*/
 
         drawn_quads += quad_count;
     }

@@ -1603,6 +1603,7 @@ void scene_render(Scene *scene) {
         }
     }
 
+    /*
     GameModel *model_2d = scene->view;
 
     if (model_2d->visible) {
@@ -1640,7 +1641,7 @@ void scene_render(Scene *scene) {
                 }
             }
         }
-    }
+    }*/
 
     if (scene->visible_polygons_count == 0) {
         return;
