@@ -213,192 +213,6 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
     }
 }
 
-void scene_texture_translucent_scanline(int32_t *raster,
-                                        int32_t *texture_pixels, int k, int l,
-                                        int i1, int j1, int k1, int l1, int i2,
-                                        int j2, int k2, int l2) {
-    if (i2 <= 0) {
-        return;
-    }
-
-    int i = 0;
-    int j = 0;
-    int i3 = 0;
-    int j3 = 0;
-    int i4 = 0;
-
-    if (i1 != 0) {
-        i = (k / i1) << 7;
-        j = (l / i1) << 7;
-    }
-
-    if (i < 0) {
-        i = 0;
-    } else if (i > 16256) {
-        i = 16256;
-    }
-
-    k += j1;
-    l += k1;
-    i1 += l1;
-
-    if (i1 != 0) {
-        i3 = (k / i1) << 7;
-        j3 = (l / i1) << 7;
-    }
-
-    if (i3 < 0) {
-        i3 = 0;
-    } else if (i3 > 16256) {
-        i3 = 16256;
-    }
-
-    int k3 = (i3 - i) >> 4;
-    int l3 = (j3 - j) >> 4;
-
-    for (int j4 = i2 >> 4; j4 > 0; j4--) {
-        i += k2 & 0x600000;
-        i4 = k2 >> 23;
-        k2 += l2;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-        i = (i & 0x3fff) + (k2 & 0x600000);
-        i4 = k2 >> 23;
-        k2 += l2;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-        i = (i & 0x3fff) + (k2 & 0x600000);
-        i4 = k2 >> 23;
-        k2 += l2;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-        i = (i & 0x3fff) + (k2 & 0x600000);
-        i4 = k2 >> 23;
-        k2 += l2;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i = i3;
-        j = j3;
-        k += j1;
-        l += k1;
-        i1 += l1;
-
-        if (i1 != 0) {
-            i3 = (k / i1) << 7;
-            j3 = (l / i1) << 7;
-        }
-
-        if (i3 < 0) {
-            i3 = 0;
-        } else if (i3 > 16256) {
-            i3 = 16256;
-        }
-
-        k3 = (i3 - i) >> 4;
-        l3 = (j3 - j) >> 4;
-    }
-
-    for (int k4 = 0; k4 < (i2 & 0xf); k4++) {
-        if ((k4 & 3) == 0) {
-            i = (i & 0x3fff) + (k2 & 0x600000);
-            i4 = k2 >> 23;
-            k2 += l2;
-        }
-
-        raster[j2++] = (texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4) +
-                       ((raster[j2] >> 1) & 0x7f7f7f);
-
-        i += k3;
-        j += l3;
-    }
-}
-
 void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
                                              int l, int i1, int j1, int k1,
                                              int l1, int i2, int j2, int k2,
@@ -725,175 +539,6 @@ void scene_texture_scanline2(int32_t *raster, int32_t *texture_pixels, int k,
     }
 }
 
-void scene_texture_translucent_scanline2(int32_t *raster,
-                                         int32_t *texture_pixels, int k, int l,
-                                         int i1, int j1, int k1, int l1, int i2,
-                                         int j2, int k2, int l2) {
-    if (i2 <= 0) {
-        return;
-    }
-
-    int i = 0;
-    int j = 0;
-    int i3 = 0;
-    int j3 = 0;
-    l2 <<= 2;
-
-    if (i1 != 0) {
-        i3 = (k / i1) << 6;
-        j3 = (l / i1) << 6;
-    }
-
-    if (i3 < 0) {
-        i3 = 0;
-    } else if (i3 > 4032) {
-        i3 = 4032;
-    }
-
-    for (int i4 = i2; i4 > 0; i4 -= 16) {
-        k += j1;
-        l += k1;
-        i1 += l1;
-        i = i3;
-        j = j3;
-
-        if (i1 != 0) {
-            i3 = (k / i1) << 6;
-            j3 = (l / i1) << 6;
-        }
-
-        if (i3 < 0) {
-            i3 = 0;
-        } else if (i3 > 4032) {
-            i3 = 4032;
-        }
-
-        int k3 = (i3 - i) >> 4;
-        int l3 = (j3 - j) >> 4;
-        int j4 = k2 >> 20;
-        i += k2 & 0xc0000;
-        k2 += l2;
-
-        if (i4 < 16) {
-            for (int k4 = 0; k4 < i4; k4++) {
-                raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                               ((raster[j2] >> 1) & 0x7f7f7f);
-
-                i += k3;
-                j += l3;
-
-                if ((k4 & 3) == 3) {
-                    i = (i & 0xfff) + (k2 & 0xc0000);
-                    j4 = k2 >> 20;
-                    k2 += l2;
-                }
-            }
-        } else {
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-            i = (i & 0xfff) + (k2 & 0xc0000);
-            j4 = k2 >> 20;
-            k2 += l2;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-            i = (i & 0xfff) + (k2 & 0xc0000);
-            j4 = k2 >> 20;
-            k2 += l2;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-            i = (i & 0xfff) + (k2 & 0xc0000);
-            j4 = k2 >> 20;
-            k2 += l2;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-
-            i += k3;
-            j += l3;
-
-            raster[j2++] = (texture_pixels[(j & 0xfc0) + (i >> 6)] >> j4) +
-                           ((raster[j2] >> 1) & 0x7f7f7f);
-        }
-    }
-}
-
 void scene_texture_back_translucent_scanline2(int32_t *raster,
                                               int32_t *texture_pixels, int l,
                                               int i1, int j1, int k1, int l1,
@@ -1189,9 +834,6 @@ void scene_add_model(Scene *scene, GameModel *model) {
 void scene_remove_model(Scene *scene, GameModel *model) {
     for (int i = 0; i < scene->model_count; i++) {
         if (scene->models[i] == model) {
-            // game_model_destroy(model);
-            // free(model);
-
             scene->models[i] = NULL;
             scene->model_count--;
 
@@ -1843,14 +1485,14 @@ void scene_render(Scene *scene) {
     scene->mouse_picking_active = 0;
 }
 
-void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
+void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                               int32_t *plane_y, int32_t *vertex_shade,
                               GameModel *game_model, int face) {
     int start_x = 0;
     int end_x = 0;
     int start_s = 0;
 
-    if (i1 == 3) {
+    if (plane == 3) {
         int k1 = plane_y[0] + scene->base_y;
         int k2 = plane_y[1] + scene->base_y;
         int k3 = plane_y[2] + scene->base_y;
@@ -2037,7 +1679,7 @@ void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
         if (scene->min_y < scene->base_y - scene->clip_y) {
             scene->min_y = scene->base_y - scene->clip_y;
         }
-    } else if (i1 == 4) {
+    } else if (plane == 4) {
         int l1 = plane_y[0] + scene->base_y;
         int l2 = plane_y[1] + scene->base_y;
         int l3 = plane_y[2] + scene->base_y;
@@ -2287,7 +1929,7 @@ void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
     } else {
         scene->max_y = scene->min_y = plane_y[0] += scene->base_y;
 
-        for (int y = 1; y < i1; y++) {
+        for (int y = 1; y < plane; y++) {
             int i2 = 0;
 
             if ((i2 = plane_y[y] += scene->base_y) < scene->min_y) {
@@ -2315,7 +1957,7 @@ void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
             scanline->end_x = -655360;
         }
 
-        int j2 = i1 - 1;
+        int j2 = plane - 1;
         int i3 = plane_y[0];
         int i4 = plane_y[j2];
 
@@ -2471,7 +2113,7 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
         return;
     }
 
-    // face_fill's > 0 are textures, < 0 map to RGB
+    /* face_fill's > 0 are textures, < 0 map to RGB */
     if (face_fill >= 0) {
         if (face_fill >= scene->texture_count) {
             face_fill = 0;
@@ -2519,6 +2161,7 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
             int k16 = scene->width;
             int i17 = scene->base_x + scene->min_y * k16;
             int8_t scanline_inc = 1;
+
             l9 += i11 * i16;
             k11 += k12 * i16;
             i13 += i14 * i16;
@@ -2537,49 +2180,6 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
                 i14 <<= 1;
                 k16 <<= 1;
                 scanline_inc = 2;
-            }
-
-            if (game_model->texture_translucent) {
-                for (int i = scene->min_y; i < scene->max_y;
-                     i += scanline_inc) {
-                    Scanline *scanline_3 = scene->scanlines[i];
-                    int j = scanline_3->start_x >> 8;
-                    int k17 = scanline_3->end_x >> 8;
-                    int k20 = k17 - j;
-
-                    if (k20 <= 0) {
-                        l9 += i11;
-                        k11 += k12;
-                        i13 += i14;
-                        i17 += k16;
-                    } else {
-                        int start_s = scanline_3->start_s;
-                        int k23 = (scanline_3->end_s - start_s) / k20;
-
-                        if (j < -scene->clip_x) {
-                            start_s += (-scene->clip_x - j) * k23;
-                            j = -scene->clip_x;
-                            k20 = k17 - j;
-                        }
-
-                        if (k17 > scene->clip_x) {
-                            int l17 = scene->clip_x;
-                            k20 = l17 - j;
-                        }
-
-                        scene_texture_translucent_scanline(
-                            scene->raster, scene->texture_pixels[face_fill],
-                            l9 + k14 * j, k11 + i15 * j, i13 + k15 * j, k10,
-                            i12, k13, k20, i17 + j, start_s, k23 << 2);
-
-                        l9 += i11;
-                        k11 += k12;
-                        i13 += i14;
-                        i17 += k16;
-                    }
-                }
-
-                return;
             }
 
             if (!scene->texture_back_transparent[face_fill]) {
@@ -2711,48 +2311,6 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
             j14 <<= 1;
             l16 <<= 1;
             scanline_inc = 2;
-        }
-
-        if (game_model->texture_translucent) {
-            for (int i = scene->min_y; i < scene->max_y; i += scanline_inc) {
-                Scanline *scanline_6 = scene->scanlines[i];
-                int j = scanline_6->start_x >> 8;
-                int i19 = scanline_6->end_x >> 8;
-                int j21 = i19 - j;
-
-                if (j21 <= 0) {
-                    i10 += j11;
-                    l11 += l12;
-                    j13 += j14;
-                    j17 += l16;
-                } else {
-                    int l22 = scanline_6->start_s;
-                    int j24 = (scanline_6->end_s - l22) / j21;
-
-                    if (j < -scene->clip_x) {
-                        l22 += (-scene->clip_x - j) * j24;
-                        j = -scene->clip_x;
-                        j21 = i19 - j;
-                    }
-
-                    if (i19 > scene->clip_x) {
-                        int j19 = scene->clip_x;
-                        j21 = j19 - j;
-                    }
-
-                    scene_texture_translucent_scanline2(
-                        scene->raster, scene->texture_pixels[face_fill],
-                        i10 + l14 * j, l11 + j15 * j, j13 + l15 * j, l10, j12,
-                        l13, j21, j17 + j, l22, j24);
-
-                    i10 += j11;
-                    l11 += l12;
-                    j13 += j14;
-                    j17 += l16;
-                }
-            }
-
-            return;
         }
 
         if (!scene->texture_back_transparent[face_fill]) {

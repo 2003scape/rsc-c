@@ -41,7 +41,6 @@ typedef struct GameModel {
     int y2;
     int z1;
     int z2;
-    int texture_translucent;
     int transparent;
     int key;
     int *face_tag;

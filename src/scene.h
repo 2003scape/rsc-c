@@ -119,10 +119,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
                             int l, int i1, int j1, int k1, int l1, int i2,
                             int j2, int k2, int l2);
-void scene_texture_translucent_scanline(int32_t *raster,
-                                        int32_t *texture_pixels, int k, int l,
-                                        int i1, int j1, int k1, int l1, int i2,
-                                        int j2, int k2, int l2);
 void scene_texture_back_translucent_scanline(int32_t *raster,
                                              int32_t *texture_pixels, int l,
                                              int i1, int j1, int k1, int l1,
@@ -131,10 +127,6 @@ void scene_texture_back_translucent_scanline(int32_t *raster,
 void scene_texture_scanline2(int32_t *raster, int32_t *texture_pixels, int k,
                              int l, int i1, int j1, int k1, int l1, int i2,
                              int j2, int k2, int l2);
-void scene_texture_translucent_scanline2(int32_t *raster,
-                                         int32_t *texture_pixels, int k, int l,
-                                         int i1, int j1, int k1, int l1, int i2,
-                                         int j2, int k2, int l2);
 void scene_texture_back_translucent_scanline2(int32_t *raster,
                                               int32_t *texture_pixels, int l,
                                               int i1, int j1, int k1, int l1,
@@ -163,7 +155,7 @@ void scene_polygons_intersect_sort(Scene *scene, int step, GamePolygon **polygon
 int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start, int end);
 void scene_set_frustum(Scene *scene, int x, int y, int z);
 void scene_render(Scene *scene);
-void scene_generate_scanlines(Scene *scene, int i1, int32_t *plane_x,
+void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                               int32_t *plane_y, int32_t *vertex_shade,
                               GameModel *game_model, int face);
 void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
