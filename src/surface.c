@@ -745,9 +745,8 @@ void surface_draw(Surface *surface) {
 
         int quad_count = surface->flat_context_quad_counts[i];
 
-        /*
         glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
-                       (void *)(drawn_quads * 6 * sizeof(GLuint)));*/
+                       (void *)(drawn_quads * 6 * sizeof(GLuint)));
 
         drawn_quads += quad_count;
     }
@@ -1364,7 +1363,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
     }
 }
 
-void surface_draw_world(Surface *surface, int sprite_id) {
+void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
@@ -1499,7 +1498,7 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
 }
 
 /* TODO not actually draw_sprite - also allocates ? */
-/* allocates a sprite buffer to draw the landscape onto with draw_world */
+/* allocates a sprite buffer to draw the landscape onto with screen_raster_to_sprite */
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
                                int width, int height) {
     surface->sprite_width[sprite_id] = width;

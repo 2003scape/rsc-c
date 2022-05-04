@@ -1603,7 +1603,6 @@ void scene_render(Scene *scene) {
         }
     }
 
-    /*
     GameModel *model_2d = scene->view;
 
     if (model_2d->visible) {
@@ -1641,7 +1640,7 @@ void scene_render(Scene *scene) {
                 }
             }
         }
-    }*/
+    }
 
     if (scene->visible_polygons_count == 0) {
         return;
@@ -2957,34 +2956,31 @@ void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
     scene->camera_pitch = (1024 - yaw) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
 
-    // printf("%d %d %d\n", scene->camera_yaw, scene->camera_pitch,
-    // scene->camera_roll);
-
     int l1 = 0;
     int i2 = 0;
     int j2 = distance;
 
     if (pitch != 0) {
-        int k2 = sin_cos_2048[pitch];
-        int j3 = sin_cos_2048[pitch + 1024];
-        int i4 = (i2 * j3 - j2 * k2) >> 15;
-        j2 = (i2 * k2 + j2 * j3) >> 15;
+        int sine = sin_cos_2048[pitch];
+        int cosine = sin_cos_2048[pitch + 1024];
+        int i4 = (i2 * cosine - j2 * sine) >> 15;
+        j2 = (i2 * sine + j2 * cosine) >> 15;
         i2 = i4;
     }
 
     if (yaw != 0) {
-        int l2 = sin_cos_2048[yaw];
-        int k3 = sin_cos_2048[yaw + 1024];
-        int j4 = (j2 * l2 + l1 * k3) >> 15;
-        j2 = (j2 * k3 - l1 * l2) >> 15;
+        int sine = sin_cos_2048[yaw];
+        int cosine = sin_cos_2048[yaw + 1024];
+        int j4 = (j2 * sine + l1 * cosine) >> 15;
+        j2 = (j2 * cosine - l1 * sine) >> 15;
         l1 = j4;
     }
 
     if (roll != 0) {
-        int i3 = sin_cos_2048[roll];
-        int l3 = sin_cos_2048[roll + 1024];
-        int k4 = (i2 * i3 + l1 * l3) >> 15;
-        i2 = (i2 * l3 - l1 * i3) >> 15;
+        int sine = sin_cos_2048[roll];
+        int cosine = sin_cos_2048[roll + 1024];
+        int k4 = (i2 * sine + l1 * cosine) >> 15;
+        i2 = (i2 * cosine - l1 * sine) >> 15;
         l1 = k4;
     }
 
@@ -2993,13 +2989,13 @@ void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
     scene->camera_z = y - j2;
 }
 
-void scene_initialise_polygon_3d(Scene *scene, int i) {
-    GamePolygon *polygon = scene->visible_polygons[i];
+void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
+    GamePolygon *polygon = scene->visible_polygons[polygon_index];
     GameModel *game_model = polygon->model;
     int face = polygon->face;
     int *face_vertices = game_model->face_vertices[face];
     int face_num_vertices = game_model->face_num_vertices[face];
-    int face_camera_normal_scale = game_model->normal_scale[face];
+    int normal_scale = game_model->normal_scale[face];
     int vcx = game_model->project_vertex_x[face_vertices[0]];
     int vcy = game_model->project_vertex_y[face_vertices[0]];
     int vcz = game_model->project_vertex_z[face_vertices[0]];
@@ -3013,25 +3009,25 @@ void scene_initialise_polygon_3d(Scene *scene, int i) {
     int t2 = vcz1 * vcx2 - vcz2 * vcx1;
     int t3 = vcx1 * vcy2 - vcx2 * vcy1;
 
-    if (face_camera_normal_scale == -1) {
-        face_camera_normal_scale = 0;
+    if (normal_scale == -1) {
+        normal_scale = 0;
 
         for (; t1 > 25000 || t2 > 25000 || t3 > 25000 || t1 < -25000 ||
                t2 < -25000 || t3 < -25000;
              t3 >>= 1) {
-            face_camera_normal_scale++;
+            normal_scale++;
             t1 >>= 1;
             t2 >>= 1;
         }
 
-        game_model->normal_scale[face] = face_camera_normal_scale;
+        game_model->normal_scale[face] = normal_scale;
 
         game_model->normal_magnitude[face] =
             (int)(scene->normal_magnitude * sqrt(t1 * t1 + t2 * t2 + t3 * t3));
     } else {
-        t1 >>= face_camera_normal_scale;
-        t2 >>= face_camera_normal_scale;
-        t3 >>= face_camera_normal_scale;
+        t1 >>= normal_scale;
+        t2 >>= normal_scale;
+        t3 >>= normal_scale;
     }
 
     polygon->visibility = vcx * t1 + vcy * t2 + vcz * t3;
@@ -3039,109 +3035,104 @@ void scene_initialise_polygon_3d(Scene *scene, int i) {
     polygon->normal_y = t2;
     polygon->normal_z = t3;
 
-    int j4 = game_model->project_vertex_z[face_vertices[0]];
-    int k4 = j4;
-    int l4 = game_model->vertex_view_x[face_vertices[0]];
-    int i5 = l4;
-    int j5 = game_model->vertex_view_y[face_vertices[0]];
-    int k5 = j5;
+    int min_z = game_model->project_vertex_z[face_vertices[0]];
+    int max_z = min_z;
+    int min_plane_x = game_model->vertex_view_x[face_vertices[0]];
+    int max_plane_x = min_plane_x;
+    int min_plane_y = game_model->vertex_view_y[face_vertices[0]];
+    int max_plane_y = min_plane_y;
 
-    for (int l5 = 1; l5 < face_num_vertices; l5++) {
-        int i1 = game_model->project_vertex_z[face_vertices[l5]];
+    for (int i = 1; i < face_num_vertices; i++) {
+        int project_vertex_z = game_model->project_vertex_z[face_vertices[i]];
 
-        if (i1 > k4) {
-            k4 = i1;
-        } else if (i1 < j4) {
-            j4 = i1;
+        if (project_vertex_z > max_z) {
+            max_z = project_vertex_z;
+        } else if (project_vertex_z < min_z) {
+            min_z = project_vertex_z;
         }
 
-        i1 = game_model->vertex_view_x[face_vertices[l5]];
+        project_vertex_z = game_model->vertex_view_x[face_vertices[i]];
 
-        if (i1 > i5) {
-            i5 = i1;
-        } else if (i1 < l4) {
-            l4 = i1;
+        if (project_vertex_z > max_plane_x) {
+            max_plane_x = project_vertex_z;
+        } else if (project_vertex_z < min_plane_x) {
+            min_plane_x = project_vertex_z;
         }
 
-        i1 = game_model->vertex_view_y[face_vertices[l5]];
+        project_vertex_z = game_model->vertex_view_y[face_vertices[i]];
 
-        if (i1 > k5) {
-            k5 = i1;
-        } else if (i1 < j5) {
-            j5 = i1;
+        if (project_vertex_z > max_plane_y) {
+            max_plane_y = project_vertex_z;
+        } else if (project_vertex_z < min_plane_y) {
+            min_plane_y = project_vertex_z;
         }
     }
 
-    polygon->min_z = j4;
-    polygon->max_z = k4;
-    polygon->min_plane_x = l4;
-    polygon->max_plane_x = i5;
-    polygon->min_plane_y = j5;
-    polygon->max_plane_y = k5;
+    polygon->min_z = min_z;
+    polygon->max_z = max_z;
+    polygon->min_plane_x = min_plane_x;
+    polygon->max_plane_x = max_plane_x;
+    polygon->min_plane_y = min_plane_y;
+    polygon->max_plane_y = max_plane_y;
 }
 
-void scene_initialise_polygon_2d(Scene *scene, int i) {
-    GamePolygon *polygon = scene->visible_polygons[i];
+void scene_initialise_polygon_2d(Scene *scene, int polygon_index) {
+    GamePolygon *polygon = scene->visible_polygons[polygon_index];
     GameModel *game_model = polygon->model;
-    int j = polygon->face;
-    int *ai = game_model->face_vertices[j];
-    int l = 0;
-    int i1 = 0;
-    int j1 = 1;
-    int k1 = game_model->project_vertex_x[ai[0]];
-    int l1 = game_model->project_vertex_y[ai[0]];
-    int i2 = game_model->project_vertex_z[ai[0]];
+    int face = polygon->face;
+    int *face_vertices = game_model->face_vertices[face];
 
-    game_model->normal_magnitude[j] = 1;
-    game_model->normal_scale[j] = 0;
-    polygon->visibility = k1 * l + l1 * i1 + i2 * j1;
-    polygon->normal_x = l;
-    polygon->normal_y = i1;
-    polygon->normal_z = j1;
+    game_model->normal_magnitude[face] = 1;
+    game_model->normal_scale[face] = 0;
 
-    int j2 = game_model->project_vertex_z[ai[0]];
-    int k2 = j2;
-    int l2 = game_model->vertex_view_x[ai[0]];
-    int i3 = l2;
+    polygon->visibility = game_model->project_vertex_z[face_vertices[0]];
+    polygon->normal_x = 0;
+    polygon->normal_y = 0;
+    polygon->normal_z = 1;
 
-    if (game_model->vertex_view_x[ai[1]] < l2) {
-        l2 = game_model->vertex_view_x[ai[1]];
+    int min_z = game_model->project_vertex_z[face_vertices[0]];
+    int max_z = min_z;
+    int min_plane_x = game_model->vertex_view_x[face_vertices[0]];
+    int max_plane_x = min_plane_x;
+
+    if (game_model->vertex_view_x[face_vertices[1]] < min_plane_x) {
+        min_plane_x = game_model->vertex_view_x[face_vertices[1]];
     } else {
-        i3 = game_model->vertex_view_x[ai[1]];
+        max_plane_x = game_model->vertex_view_x[face_vertices[1]];
     }
 
-    int j3 = game_model->vertex_view_y[ai[1]];
-    int k3 = game_model->vertex_view_y[ai[0]];
-    int k = game_model->project_vertex_z[ai[1]];
+    int min_plane_y = game_model->vertex_view_y[face_vertices[1]];
+    int max_plane_y = game_model->vertex_view_y[face_vertices[0]];
+    int project_vertex = game_model->project_vertex_z[face_vertices[1]];
 
-    if (k > k2) {
-        k2 = k;
-    } else if (k < j2) {
-        j2 = k;
+    if (project_vertex > max_z) {
+        max_z = project_vertex;
+    } else if (project_vertex < min_z) {
+        min_z = project_vertex;
     }
 
-    k = game_model->vertex_view_x[ai[1]];
+    project_vertex = game_model->vertex_view_x[face_vertices[1]];
 
-    if (k > i3) {
-        i3 = k;
-    } else if (k < l2) {
-        l2 = k;
+    if (project_vertex > max_plane_x) {
+        max_plane_x = project_vertex;
+    } else if (project_vertex < min_plane_x) {
+        min_plane_x = project_vertex;
     }
 
-    k = game_model->vertex_view_y[ai[1]];
+    project_vertex = game_model->vertex_view_y[face_vertices[1]];
 
-    if (k > k3) {
-        k3 = k;
-    } else if (k < j3) {
-        j3 = k;
+    if (project_vertex > max_plane_y) {
+        max_plane_y = project_vertex;
+    } else if (project_vertex < min_plane_y) {
+        min_plane_y = project_vertex;
     }
 
-    polygon->min_z = j2;
-    polygon->max_z = k2;
-    polygon->min_plane_x = l2 - 20;
-    polygon->max_plane_x = i3 + 20;
-    polygon->min_plane_y = j3;
-    polygon->max_plane_y = k3;
+    polygon->min_z = min_z;
+    polygon->max_z = max_z;
+    polygon->min_plane_x = min_plane_x - 20;
+    polygon->max_plane_x = max_plane_x + 20;
+    polygon->min_plane_y = min_plane_y;
+    polygon->max_plane_y = max_plane_y;
 }
 
 int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
@@ -3252,20 +3243,28 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
 
     if (face_num_vertices_a == 2) {
         length_a = 4;
+
         vertex_view_x_a = alloca(length_a * sizeof(int));
         vertex_view_y_a = alloca(length_a * sizeof(int));
+
         int first_vertex_index = face_vertices_a[0];
         int second_vertex_index = face_vertices_a[1];
+
         vertex_view_x_a[0] =
             game_model_a->vertex_view_x[first_vertex_index] - 20;
+
         vertex_view_x_a[1] =
             game_model_a->vertex_view_x[second_vertex_index] - 20;
+
         vertex_view_x_a[2] =
             game_model_a->vertex_view_x[second_vertex_index] + 20;
+
         vertex_view_x_a[3] =
             game_model_a->vertex_view_x[first_vertex_index] + 20;
+
         vertex_view_y_a[0] = vertex_view_y_a[3] =
             game_model_a->vertex_view_y[first_vertex_index];
+
         vertex_view_y_a[1] = vertex_view_y_a[2] =
             game_model_a->vertex_view_y[second_vertex_index];
     } else {
@@ -3287,26 +3286,34 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
 
     if (face_num_vertices_b == 2) {
         length_b = 4;
+
         vertex_view_x_b = alloca(length_b * sizeof(int));
         vertex_view_y_b = alloca(length_b * sizeof(int));
-        int k5 = face_vertices_b[0];
-        int l1 = face_vertices_b[1];
-        vertex_view_x_b[0] = game_model_b->vertex_view_x[k5] - 20;
-        vertex_view_x_b[1] = game_model_b->vertex_view_x[l1] - 20;
-        vertex_view_x_b[2] = game_model_b->vertex_view_x[l1] + 20;
-        vertex_view_x_b[3] = game_model_b->vertex_view_x[k5] + 20;
+
+        int first_vertex_index = face_vertices_b[0];
+        int second_vertex_index = face_vertices_b[1];
+
+        vertex_view_x_b[0] = game_model_b->vertex_view_x[first_vertex_index] - 20;
+
+        vertex_view_x_b[1] = game_model_b->vertex_view_x[second_vertex_index] - 20;
+
+        vertex_view_x_b[2] = game_model_b->vertex_view_x[second_vertex_index] + 20;
+
+        vertex_view_x_b[3] = game_model_b->vertex_view_x[first_vertex_index] + 20;
+
         vertex_view_y_b[0] = vertex_view_y_b[3] =
-            game_model_b->vertex_view_y[k5];
+            game_model_b->vertex_view_y[first_vertex_index];
+
         vertex_view_y_b[1] = vertex_view_y_b[2] =
-            game_model_b->vertex_view_y[l1];
+            game_model_b->vertex_view_y[second_vertex_index];
     } else {
         vertex_view_x_b = alloca(face_num_vertices_b * sizeof(int));
         vertex_view_y_b = alloca(face_num_vertices_b * sizeof(int));
 
         for (int i = 0; i < face_num_vertices_b; i++) {
-            int j6 = face_vertices_b[i];
-            vertex_view_x_b[i] = game_model_b->vertex_view_x[j6];
-            vertex_view_y_b[i] = game_model_b->vertex_view_y[j6];
+            int vertex_index = face_vertices_b[i];
+            vertex_view_x_b[i] = game_model_b->vertex_view_x[vertex_index];
+            vertex_view_y_b[i] = game_model_b->vertex_view_y[vertex_index];
         }
 
         length_b = face_num_vertices_b;
@@ -3316,37 +3323,38 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
                             vertex_view_y_b, length_a, length_b);
 }
 
-int scene_heuristic_polygon(GamePolygon *polygon, GamePolygon *polygon_1) {
-    GameModel *game_model = polygon->model;
-    GameModel *game_model_1 = polygon_1->model;
-    int i = polygon->face;
-    int j = polygon_1->face;
-    int *ai = game_model->face_vertices[i];
-    int *ai1 = game_model_1->face_vertices[j];
-    int k = game_model->face_num_vertices[i];
-    int l = game_model_1->face_num_vertices[j];
-    int i2 = game_model_1->project_vertex_x[ai1[0]];
-    int j2 = game_model_1->project_vertex_y[ai1[0]];
-    int k2 = game_model_1->project_vertex_z[ai1[0]];
-    int l2 = polygon_1->normal_x;
-    int i3 = polygon_1->normal_y;
-    int j3 = polygon_1->normal_z;
-    int k3 = game_model_1->normal_magnitude[j];
-    int l3 = polygon_1->visibility;
+int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
+    GameModel *game_model_a = polygon_a->model;
+    GameModel *game_model_b = polygon_b->model;
+    int face_a = polygon_a->face;
+    int face_b = polygon_b->face;
+    int *face_vertices_a = game_model_a->face_vertices[face_a];
+    int *face_vertices_b = game_model_b->face_vertices[face_b];
+    int face_num_vertices_a = game_model_a->face_num_vertices[face_a];
+    int face_num_vertices_b = game_model_b->face_num_vertices[face_b];
+
+    int first_project_x = game_model_b->project_vertex_x[face_vertices_b[0]];
+    int first_project_y = game_model_b->project_vertex_y[face_vertices_b[0]];
+    int first_project_z = game_model_b->project_vertex_z[face_vertices_b[0]];
+    int normal_x = polygon_b->normal_x;
+    int normal_y = polygon_b->normal_y;
+    int normal_z = polygon_b->normal_z;
+    int normal_magnitude = game_model_b->normal_magnitude[face_b];
+    int visibility = polygon_b->visibility;
     int flag = 0;
 
-    for (int i4 = 0; i4 < k; i4++) {
-        int i1 = ai[i4];
+    for (int i = 0; i < face_num_vertices_a; i++) {
+        int vertex_index = face_vertices_a[i];
 
-        int k1 = (i2 - game_model->project_vertex_x[i1]) * l2 +
-                 (j2 - game_model->project_vertex_y[i1]) * i3 +
-                 (k2 - game_model->project_vertex_z[i1]) * j3;
+        int magnitude = (first_project_x - game_model_a->project_vertex_x[vertex_index]) * normal_x +
+                 (first_project_y - game_model_a->project_vertex_y[vertex_index]) * normal_y +
+                 (first_project_z - game_model_a->project_vertex_z[vertex_index]) * normal_z;
 
-        if ((k1 >= -k3 || l3 >= 0) && (k1 <= k3 || l3 <= 0)) {
+        if ((magnitude >= -normal_magnitude || visibility >= 0) && (magnitude <= normal_magnitude || visibility <= 0)) {
             continue;
         }
-        flag = 1;
 
+        flag = 1;
         break;
     }
 
@@ -3354,24 +3362,24 @@ int scene_heuristic_polygon(GamePolygon *polygon, GamePolygon *polygon_1) {
         return 1;
     }
 
-    i2 = game_model->project_vertex_x[ai[0]];
-    j2 = game_model->project_vertex_y[ai[0]];
-    k2 = game_model->project_vertex_z[ai[0]];
-    l2 = polygon->normal_x;
-    i3 = polygon->normal_y;
-    j3 = polygon->normal_z;
-    k3 = game_model->normal_magnitude[i];
-    l3 = polygon->visibility;
+    first_project_x = game_model_a->project_vertex_x[face_vertices_a[0]];
+    first_project_y = game_model_a->project_vertex_y[face_vertices_a[0]];
+    first_project_z = game_model_a->project_vertex_z[face_vertices_a[0]];
+    normal_x = polygon_a->normal_x;
+    normal_y = polygon_a->normal_y;
+    normal_z = polygon_a->normal_z;
+    normal_magnitude = game_model_a->normal_magnitude[face_a];
+    visibility = polygon_a->visibility;
     flag = 0;
 
-    for (int j4 = 0; j4 < l; j4++) {
-        int j1 = ai1[j4];
+    for (int i = 0; i < face_num_vertices_b; i++) {
+        int vertex_index = face_vertices_b[i];
 
-        int l1 = (i2 - game_model_1->project_vertex_x[j1]) * l2 +
-                 (j2 - game_model_1->project_vertex_y[j1]) * i3 +
-                 (k2 - game_model_1->project_vertex_z[j1]) * j3;
+        int magnitude = (first_project_x - game_model_b->project_vertex_x[vertex_index]) * normal_x +
+                 (first_project_y - game_model_b->project_vertex_y[vertex_index]) * normal_y +
+                 (first_project_z - game_model_b->project_vertex_z[vertex_index]) * normal_z;
 
-        if ((l1 >= -k3 || l3 <= 0) && (l1 <= k3 || l3 >= 0)) {
+        if ((magnitude >= -normal_magnitude || visibility <= 0) && (magnitude <= normal_magnitude || visibility >= 0)) {
             continue;
         }
 

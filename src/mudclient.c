@@ -1379,6 +1379,18 @@ void mudclient_load_textures(mudclient *mud) {
 
     char file_name[255] = {0};
 
+#ifdef RENDER_GL
+    glGenTextures(1, &mud->game_model_textures);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, mud->game_model_textures);
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 128, 128, game_data_texture_count);
+
+    int32_t *texture_raster = calloc(128 * 128, sizeof(int32_t));
+#endif
+
     for (int i = 0; i < game_data_texture_count; i++) {
         sprintf(file_name, "%s.dat", game_data_texture_name[i]);
 
@@ -1396,7 +1408,7 @@ void mudclient_load_textures(mudclient *mud) {
         free(mud->surface->sprite_colours_used[mud->sprite_texture]);
         mud->surface->sprite_colours_used[mud->sprite_texture] = NULL;
 
-        int wh = mud->surface->sprite_width_full[mud->sprite_texture];
+        int texture_size = mud->surface->sprite_width_full[mud->sprite_texture];
         char *name_sub = game_data_texture_subtype_name[i];
 
         if (name_sub) {
@@ -1422,9 +1434,9 @@ void mudclient_load_textures(mudclient *mud) {
         }
 
         surface_draw_sprite_from5(mud->surface, mud->sprite_texture_world + i,
-                                  0, 0, wh, wh);
+                                  0, 0, texture_size, texture_size);
 
-        for (int j = 0; j < wh * wh; j++) {
+        for (int j = 0; j < texture_size * texture_size; j++) {
             if (mud->surface->surface_pixels[mud->sprite_texture_world + i]
                                             [j] == GREEN) {
                 mud->surface->surface_pixels[mud->sprite_texture_world + i][j] =
@@ -1432,16 +1444,15 @@ void mudclient_load_textures(mudclient *mud) {
             }
         }
 
-        surface_draw_world(mud->surface, mud->sprite_texture_world + i);
+        surface_screen_raster_to_sprite(mud->surface, mud->sprite_texture_world + i);
 
         scene_define_texture(
             mud->scene, i,
             mud->surface->sprite_colours_used[mud->sprite_texture_world + i],
             mud->surface->sprite_colour_list[mud->sprite_texture_world + i],
-            (wh / 64) - 1);
+            (texture_size / 64) - 1);
 
-        /*
-        free(mud->surface->sprite_colour_list[mud->sprite_texture_world + i]);
+        /*free(mud->surface->sprite_colour_list[mud->sprite_texture_world + i]);
         mud->surface->sprite_colour_list[mud->sprite_texture_world + i] = NULL;
 
         free(mud->surface->sprite_colours_used[mud->sprite_texture_world + i]);
@@ -2235,6 +2246,9 @@ void mudclient_start_game(mudclient *mud) {
                     b = (fill_front & 31) / 31.0f;
                 } else if (fill_front >= 0) {
                     // TODO texture_index
+                    r = 1.0f;
+                    g = 0.0f;
+                    b = 1.0f;
                 }
             } else if (fill_back != COLOUR_TRANSPARENT) {
                 if (fill_back < 0) {
@@ -2244,6 +2258,9 @@ void mudclient_start_game(mudclient *mud) {
                     b = (fill_back & 31) / 31.0f;
                 } else if (fill_front >= 0) {
                     // TODO texture_index
+                    r = 1.0f;
+                    g = 0.0f;
+                    b = 1.0f;
                 }
             }
 
@@ -2261,9 +2278,9 @@ void mudclient_start_game(mudclient *mud) {
                 // glm_vec3_normalize(vertices);
                 // glm_vec3_print(vertices, stdout);
 
-                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 1000.0f;
-                GLfloat vertex_y = game_model->vertex_y[vertex_index] / 1000.0f;
-                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 1000.0f;
+                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 500.0f;
+                GLfloat vertex_y = -game_model->vertex_y[vertex_index] / 500.0f;
+                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 500.0f;
 
                 GLfloat vertices[] = {
                     /* vertex */
@@ -3994,13 +4011,15 @@ void mudclient_draw_game(mudclient *mud) {
 #endif
 
 #ifdef RENDER_GL
-    // glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     shader_use(&mud->game_model_shader);
     glBindVertexArray(mud->game_model_vao);
 
     glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, 0);
 #endif
+
 
     mudclient_draw_overhead(mud);
 

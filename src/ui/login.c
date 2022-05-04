@@ -327,7 +327,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
                               mud->game_width, 200);
 
-    surface_draw_world(mud->surface, mud->sprite_logo);
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo);
 
     x = 9216;
     y = 9216;
@@ -366,7 +366,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
                               mud->game_width, 200);
 
-    surface_draw_world(mud->surface, mud->sprite_logo + 1);
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene, mud->world->roof_models[0][i]);
@@ -430,7 +430,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     surface_draw_sprite_from5(mud->surface, mud->sprite_media + 10, 0, 0,
                               mud->game_width, 200);
 
-    surface_draw_world(mud->surface, mud->sprite_media + 10);
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10);
 
     world_reset(mud->world, 0);
 

@@ -167,7 +167,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
 void surface_read_sleep_word(Surface *surface, int sprite_id,
                              int8_t *sprite_data);
-void surface_draw_world(Surface *surface, int sprite_id);
+void surface_screen_raster_to_sprite(Surface *surface, int sprite_id);
 int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id, int add_alpha);
 void surface_load_sprite(Surface *surface, int sprite_id);
 void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,

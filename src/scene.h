@@ -171,10 +171,10 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
                      GameModel *game_model);
 void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
                       int roll, int distance);
-void scene_initialise_polygon_3d(Scene *scene, int i);
-void scene_initialise_polygon_2d(Scene *scene, int i);
-int scene_separate_polygon(GamePolygon *polygon, GamePolygon *polygon_1);
-int scene_heuristic_polygon(GamePolygon *polygon, GamePolygon *polygon_1);
+void scene_initialise_polygon_3d(Scene *scene, int polygon_index);
+void scene_initialise_polygon_2d(Scene *scene, int polygon_index);
+int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
+int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128);
 void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
