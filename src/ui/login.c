@@ -225,8 +225,7 @@ void mudclient_create_login_panels(mudclient *mud) {
     if (mud->options->account_management) {
         y += 30;
 
-        /*
-        panel_add_button_background(mud->panel_login_existing_user, x + 154, y,
+        /*panel_add_button_background(mud->panel_login_existing_user, x + 154, y,
                                     160, 25);
 
         panel_add_text_centre(mud->panel_login_existing_user, x + 154, y,

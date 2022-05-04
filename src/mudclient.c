@@ -9,7 +9,7 @@ char *animated_models[] = {
     "firespell2",   "firespell3", "lightning2", "lightning3",   "clawspell2",
     "clawspell3",   "clawspell4", "clawspell5", "spellcharge2", "spellcharge3"};
 
-char login_screen_status[255];
+char login_screen_status[255] = {0};
 
 int character_animation_array[8][12] = {{11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
                                         {11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
@@ -33,6 +33,16 @@ int player_top_bottom_colours[] = {0xff0000, 0xff8000, 0xffe000, 0xa0e000,
                                    0x604000, 0x805000, 0xffffff};
 
 int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
+
+// TODO move
+#ifdef RENDER_GL
+// TODO probably re-order these too
+float tri_face_us[] = {0.0f, 1.0f, 0.0f};
+float tri_face_vs[] = {1.0f, 0.5f, 0.0f};
+
+float quad_face_us[] = {0.0f, 1.0f, 1.0f, 0.0f};
+float quad_face_vs[] = {0.0f, 0.0f, 1.0f, 1.0f};
+#endif
 
 #if defined(_3DS) || defined(WII)
 char keyboard_buttons[5][10] = {
@@ -579,8 +589,6 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    // glEnable(GL_DEPTH_TEST);
-
     /* transparent textures */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -691,8 +699,7 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             panel_key_press(mud->panel_login_existing_user, key_code);
         }
 
-        /*
-        if (mud->login_screen == 3 && mud->panel_recover_user) {
+        /*if (mud->login_screen == 3 && mud->panel_recover_user) {
             panel_key_press(mud->panel_recover_user, key_code);
         }*/
     }
@@ -1391,24 +1398,26 @@ void mudclient_load_textures(mudclient *mud) {
     int32_t *texture_raster = calloc(128 * 128, sizeof(int32_t));
 #endif
 
+    Surface *surface = mud->surface;
+
     for (int i = 0; i < game_data_texture_count; i++) {
         sprintf(file_name, "%s.dat", game_data_texture_name[i]);
 
         int8_t *texture_dat = load_data(file_name, 0, textures_jag);
 
-        surface_parse_sprite(mud->surface, mud->sprite_texture, texture_dat,
+        surface_parse_sprite(surface, mud->sprite_texture, texture_dat,
                              index_dat, 1);
 
-        surface_draw_box(mud->surface, 0, 0, 128, 128, MAGENTA);
-        surface_draw_sprite_from3(mud->surface, 0, 0, mud->sprite_texture);
+        surface_draw_box(surface, 0, 0, 128, 128, MAGENTA);
+        surface_draw_sprite_from3(surface, 0, 0, mud->sprite_texture);
 
-        free(mud->surface->sprite_colour_list[mud->sprite_texture]);
-        mud->surface->sprite_colour_list[mud->sprite_texture] = NULL;
+        free(surface->sprite_colour_list[mud->sprite_texture]);
+        surface->sprite_colour_list[mud->sprite_texture] = NULL;
 
-        free(mud->surface->sprite_colours_used[mud->sprite_texture]);
-        mud->surface->sprite_colours_used[mud->sprite_texture] = NULL;
+        free(surface->sprite_colours_used[mud->sprite_texture]);
+        surface->sprite_colours_used[mud->sprite_texture] = NULL;
 
-        int texture_size = mud->surface->sprite_width_full[mud->sprite_texture];
+        int texture_size = surface->sprite_width_full[mud->sprite_texture];
         char *name_sub = game_data_texture_subtype_name[i];
 
         if (name_sub) {
@@ -1419,49 +1428,67 @@ void mudclient_load_textures(mudclient *mud) {
 
                 int8_t *texture_sub_dat = load_data(file_name, 0, textures_jag);
 
-                surface_parse_sprite(mud->surface, mud->sprite_texture,
+                surface_parse_sprite(surface, mud->sprite_texture,
                                      texture_sub_dat, index_dat, 1);
 
-                surface_draw_sprite_from3(mud->surface, 0, 0,
-                                          mud->sprite_texture);
+                surface_draw_sprite_from3(surface, 0, 0, mud->sprite_texture);
 
-                free(mud->surface->sprite_colour_list[mud->sprite_texture]);
-                mud->surface->sprite_colour_list[mud->sprite_texture] = NULL;
+                free(surface->sprite_colour_list[mud->sprite_texture]);
+                surface->sprite_colour_list[mud->sprite_texture] = NULL;
 
-                free(mud->surface->sprite_colours_used[mud->sprite_texture]);
-                mud->surface->sprite_colours_used[mud->sprite_texture] = NULL;
+                free(surface->sprite_colours_used[mud->sprite_texture]);
+                surface->sprite_colours_used[mud->sprite_texture] = NULL;
             }
         }
 
-        surface_draw_sprite_from5(mud->surface, mud->sprite_texture_world + i,
+        surface_draw_sprite_from5(surface, mud->sprite_texture_world + i,
                                   0, 0, texture_size, texture_size);
 
         for (int j = 0; j < texture_size * texture_size; j++) {
-            if (mud->surface->surface_pixels[mud->sprite_texture_world + i]
+            if (surface->surface_pixels[mud->sprite_texture_world + i]
                                             [j] == GREEN) {
-                mud->surface->surface_pixels[mud->sprite_texture_world + i][j] =
+                surface->surface_pixels[mud->sprite_texture_world + i][j] =
                     MAGENTA;
             }
+
+#ifdef RENDER_GL
+            int colour = surface->surface_pixels[mud->sprite_texture_world + i][j];
+
+            if (colour != MAGENTA) {
+                texture_raster[j] = 0xff000000 + colour;
+            }
+#endif
         }
 
-        surface_screen_raster_to_sprite(mud->surface, mud->sprite_texture_world + i);
+#ifdef RENDER_GL
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1,
+                        GL_BGRA, GL_UNSIGNED_BYTE, texture_raster);
+
+        memset(texture_raster, 0, 128 * 128 * sizeof(int32_t));
+#endif
+
+        surface_screen_raster_to_sprite(surface, mud->sprite_texture_world + i);
 
         scene_define_texture(
             mud->scene, i,
-            mud->surface->sprite_colours_used[mud->sprite_texture_world + i],
-            mud->surface->sprite_colour_list[mud->sprite_texture_world + i],
+            surface->sprite_colours_used[mud->sprite_texture_world + i],
+            surface->sprite_colour_list[mud->sprite_texture_world + i],
             (texture_size / 64) - 1);
 
-        /*free(mud->surface->sprite_colour_list[mud->sprite_texture_world + i]);
-        mud->surface->sprite_colour_list[mud->sprite_texture_world + i] = NULL;
+        /*free(surface->sprite_colour_list[mud->sprite_texture_world + i]);
+        surface->sprite_colour_list[mud->sprite_texture_world + i] = NULL;
 
-        free(mud->surface->sprite_colours_used[mud->sprite_texture_world + i]);
-        mud->surface->sprite_colours_used[mud->sprite_texture_world + i] =
+        free(surface->sprite_colours_used[mud->sprite_texture_world + i]);
+        surface->sprite_colours_used[mud->sprite_texture_world + i] =
         NULL;*/
 
-        free(mud->surface->surface_pixels[mud->sprite_texture_world + i]);
-        mud->surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
+        free(surface->surface_pixels[mud->sprite_texture_world + i]);
+        surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
     }
+
+#ifdef RENDER_GL
+    free(texture_raster);
+#endif
 
 #ifndef WII
     free(textures_jag);
@@ -2075,6 +2102,31 @@ void mudclient_change_password(mudclient *mud, char *old_password,
     packet_stream_flush_packet(mud->packet_stream);
 }
 
+// TODO move
+int game_model_get_minimum_vertex(int *vertices, int length) {
+    int smallest = vertices[0];
+
+    for (int i = 1; i < length; i++) {
+        if (vertices[i] < smallest) {
+            smallest = vertices[i];
+        }
+    }
+
+    return smallest;
+}
+
+int game_model_get_maximum_vertex(int *vertices, int length) {
+    int largest = vertices[0];
+
+    for (int i = 1; i < length; i++) {
+        if (vertices[i] > largest) {
+            largest = vertices[i];
+        }
+    }
+
+    return largest;
+}
+
 void mudclient_start_game(mudclient *mud) {
     mudclient_load_game_config(mud);
 
@@ -2167,6 +2219,7 @@ void mudclient_start_game(mudclient *mud) {
     }
 
 #ifdef RENDER_GL
+    /* TODO move into load_models or game_model */
     shader_new(&mud->game_model_shader, "./game-model.vs", "./game-model.fs");
 
     int total_vertices = 0;
@@ -2235,8 +2288,6 @@ void mudclient_start_game(mudclient *mud) {
             GLfloat a = 1.0f;
 
             GLfloat texture_index = -1.0f;
-            GLfloat texture_x = -1.0f;
-            GLfloat texture_y = -1.0f;
 
             if (fill_front != COLOUR_TRANSPARENT) {
                 if (fill_front < 0) {
@@ -2245,10 +2296,7 @@ void mudclient_start_game(mudclient *mud) {
                     g = ((fill_front >> 5) & 31) / 31.0f;
                     b = (fill_front & 31) / 31.0f;
                 } else if (fill_front >= 0) {
-                    // TODO texture_index
-                    r = 1.0f;
-                    g = 0.0f;
-                    b = 1.0f;
+                    texture_index = (float)fill_front;
                 }
             } else if (fill_back != COLOUR_TRANSPARENT) {
                 if (fill_back < 0) {
@@ -2256,31 +2304,40 @@ void mudclient_start_game(mudclient *mud) {
                     r = ((fill_back >> 10) & 31) / 31.0f;
                     g = ((fill_back >> 5) & 31) / 31.0f;
                     b = (fill_back & 31) / 31.0f;
-                } else if (fill_front >= 0) {
-                    // TODO texture_index
-                    r = 1.0f;
-                    g = 0.0f;
-                    b = 1.0f;
+                } else if (fill_back >= 0) {
+                    texture_index = (float)fill_back;
                 }
             }
 
             int face_num_vertices = game_model->face_num_vertices[j];
 
+            float *face_us = NULL;
+            float *face_vs = NULL;
+
+            if (texture_index > -1.0f) {
+                if (face_num_vertices == 3) {
+                    face_us = tri_face_us;
+                    face_vs = tri_face_vs;
+                } else if (face_num_vertices == 4) {
+                    face_us = quad_face_us;
+                    face_vs = quad_face_vs;
+                }
+            }
+
             for (int k = 0; k < face_num_vertices; k++) {
                 int vertex_index = game_model->face_vertices[j][k];
-
-                /*vec3 vertices = {
-                    game_model->vertex_x[vertex_index] / 1000.f,
-                    game_model->vertex_y[vertex_index] / 1000.0f,
-                    game_model->vertex_z[vertex_index] / 1000.0f
-                };*/
-
-                // glm_vec3_normalize(vertices);
-                // glm_vec3_print(vertices, stdout);
 
                 GLfloat vertex_x = game_model->vertex_x[vertex_index] / 500.0f;
                 GLfloat vertex_y = -game_model->vertex_y[vertex_index] / 500.0f;
                 GLfloat vertex_z = game_model->vertex_z[vertex_index] / 500.0f;
+
+                GLfloat texture_x = -1.0f;
+                GLfloat texture_y = -1.0f;
+
+                if (face_us != NULL && face_vs != NULL) {
+                    texture_x = face_us[k];
+                    texture_y = face_vs[k];
+                }
 
                 GLfloat vertices[] = {
                     /* vertex */
@@ -2290,7 +2347,7 @@ void mudclient_start_game(mudclient *mud) {
                     r, g, b, a, //
 
                     /* texture */
-                    texture_index, texture_x, texture_y //
+                    texture_x, texture_y, texture_index //
                 };
 
                 glBufferSubData(GL_ARRAY_BUFFER,
@@ -4016,6 +4073,9 @@ void mudclient_draw_game(mudclient *mud) {
 
     shader_use(&mud->game_model_shader);
     glBindVertexArray(mud->game_model_vao);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, mud->game_model_textures);
 
     glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, 0);
 #endif

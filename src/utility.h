@@ -38,7 +38,7 @@
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567\
 89!\"£$%^&*()-_=+[{]};:'@#~,<.>/?\\| "*/
 
-/* disabled pound */
+/* disabled pound (£) */
 
 #define CHAR_SET                                                               \
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567\
@@ -49,10 +49,6 @@
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
 extern int BITMASK[];
-
-#ifdef WII
-extern int start_time;
-#endif
 
 void init_utility_global();
 void charrev(char *s, int l);

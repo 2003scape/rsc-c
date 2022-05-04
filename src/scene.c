@@ -64,8 +64,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     }
 
     GameModel *view = malloc(sizeof(GameModel));
+
     game_model_from2(view, scene->max_sprite_count * 2,
                      scene->max_sprite_count);
+
     scene->view = view;
 
     scene->sprite_count = 0;
@@ -548,7 +550,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
         return;
     }
 
-    int i = 0;
+    int colour = 0;
     int j = 0;
     int k = 0;
     int j3 = 0;
@@ -592,8 +594,8 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
 
         if (j4 < 16) {
             for (int l4 = 0; l4 < j4; l4++) {
-                if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                    raster[k2] = i;
+                if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                    raster[k2] = colour;
                 }
 
                 k2++;
@@ -607,137 +609,140 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
                 }
             }
         } else {
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
+
             j = (j & 0xfff) + (l2 & 0xc0000);
             k4 = l2 >> 20;
             l2 += i3;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
+
             j = (j & 0xfff) + (l2 & 0xc0000);
             k4 = l2 >> 20;
             l2 += i3;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
+
             j = (j & 0xfff) + (l2 & 0xc0000);
             k4 = l2 >> 20;
             l2 += i3;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
             j += l3;
             k += i4;
 
-            if ((i = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = i;
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
             }
 
             k2++;
@@ -993,17 +998,17 @@ void scene_polygons_intersect_sort(Scene *scene, int step,
 int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
                          int end) {
     do {
-        GamePolygon *polygon = polygons[start];
+        GamePolygon *polygon_start = polygons[start];
 
         for (int i = start + 1; i <= end; i++) {
-            GamePolygon *polygon_1 = polygons[i];
+            GamePolygon *polygon = polygons[i];
 
-            if (!scene_separate_polygon(polygon_1, polygon)) {
+            if (!scene_separate_polygon(polygon, polygon_start)) {
                 break;
             }
 
-            polygons[start] = polygon_1;
-            polygons[i] = polygon;
+            polygons[start] = polygon;
+            polygons[i] = polygon_start;
             start = i;
 
             if (start == end) {
@@ -1013,17 +1018,17 @@ int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
             }
         }
 
-        GamePolygon *polygon_2 = polygons[end];
+        GamePolygon *polygon_end = polygons[end];
 
         for (int i = end - 1; i >= start; i--) {
-            GamePolygon *polygon_3 = polygons[i];
+            GamePolygon *polygon = polygons[i];
 
-            if (!scene_separate_polygon(polygon_2, polygon_3)) {
+            if (!scene_separate_polygon(polygon_end, polygon)) {
                 break;
             }
 
-            polygons[end] = polygon_3;
-            polygons[i] = polygon_2;
+            polygons[end] = polygon;
+            polygons[i] = polygon_end;
             end = i;
 
             if (start == end) {
@@ -1105,8 +1110,9 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
 void scene_render(Scene *scene) {
     scene->interlace = scene->surface->interlace;
 
-    int i3 = (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
-    int j3 = (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
+    int frustum_x = (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
+
+    int frustum_y = (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
 
     scene_frustum_max_x = 0;
     scene_frustum_min_x = 0;
@@ -1115,10 +1121,10 @@ void scene_render(Scene *scene) {
     scene_frustum_far_z = 0;
     scene_frustum_near_z = 0;
 
-    scene_set_frustum(scene, -i3, -j3, scene->clip_far_3d);
-    scene_set_frustum(scene, -i3, j3, scene->clip_far_3d);
-    scene_set_frustum(scene, i3, -j3, scene->clip_far_3d);
-    scene_set_frustum(scene, i3, j3, scene->clip_far_3d);
+    scene_set_frustum(scene, -frustum_x, -frustum_y, scene->clip_far_3d);
+    scene_set_frustum(scene, -frustum_x, frustum_y, scene->clip_far_3d);
+    scene_set_frustum(scene, frustum_x, -frustum_y, scene->clip_far_3d);
+    scene_set_frustum(scene, frustum_x, frustum_y, scene->clip_far_3d);
     scene_set_frustum(scene, -scene->clip_x, -scene->clip_y, 0);
     scene_set_frustum(scene, -scene->clip_x, scene->clip_y, 0);
     scene_set_frustum(scene, scene->clip_x, -scene->clip_y, 0);
@@ -1349,34 +1355,34 @@ void scene_render(Scene *scene) {
                 }
             }
 
-            for (int k11 = 0; k11 < face_num_vertices; k11++) {
-                int k2 = face_vertices[k11];
+            for (int j = 0; j < face_num_vertices; j++) {
+                int vertex_index = face_vertices[j];
 
-                scene->vertex_x[k11] = game_model->project_vertex_x[k2];
-                scene->vertex_y[k11] = game_model->project_vertex_y[k2];
-                scene->vertex_z[k11] = game_model->project_vertex_z[k2];
+                scene->vertex_x[j] = game_model->project_vertex_x[vertex_index];
+                scene->vertex_y[j] = game_model->project_vertex_y[vertex_index];
+                scene->vertex_z[j] = game_model->project_vertex_z[vertex_index];
 
                 if (game_model->face_intensity[face] == COLOUR_TRANSPARENT) {
                     if (polygon->visibility < 0) {
                         j10 = game_model->light_ambience -
-                              game_model->vertex_intensity[k2] +
-                              game_model->vertex_ambience[k2];
+                              game_model->vertex_intensity[vertex_index] +
+                              game_model->vertex_ambience[vertex_index];
                     } else {
                         j10 = game_model->light_ambience +
-                              game_model->vertex_intensity[k2] +
-                              game_model->vertex_ambience[k2];
+                              game_model->vertex_intensity[vertex_index] +
+                              game_model->vertex_ambience[vertex_index];
                     }
                 }
 
-                if (game_model->project_vertex_z[k2] >= scene->clip_near) {
-                    scene->plane_x[k8] = game_model->vertex_view_x[k2];
-                    scene->plane_y[k8] = game_model->vertex_view_y[k2];
+                if (game_model->project_vertex_z[vertex_index] >= scene->clip_near) {
+                    scene->plane_x[k8] = game_model->vertex_view_x[vertex_index];
+                    scene->plane_y[k8] = game_model->vertex_view_y[vertex_index];
                     scene->vertex_shade[k8] = j10;
 
-                    if (game_model->project_vertex_z[k2] >
+                    if (game_model->project_vertex_z[vertex_index] >
                         scene->fog_z_distance) {
                         scene->vertex_shade[k8] +=
-                            (game_model->project_vertex_z[k2] -
+                            (game_model->project_vertex_z[vertex_index] -
                              scene->fog_z_distance) /
                             scene->fog_z_falloff;
                     }
@@ -1385,27 +1391,27 @@ void scene_render(Scene *scene) {
                 } else {
                     int k9 = 0;
 
-                    if (k11 == 0) {
+                    if (j == 0) {
                         k9 = face_vertices[face_num_vertices - 1];
                     } else {
-                        k9 = face_vertices[k11 - 1];
+                        k9 = face_vertices[j - 1];
                     }
 
                     if (game_model->project_vertex_z[k9] >= scene->clip_near) {
-                        int k7 = game_model->project_vertex_z[k2] -
+                        int k7 = game_model->project_vertex_z[vertex_index] -
                                  game_model->project_vertex_z[k9];
 
-                        int i5 = game_model->project_vertex_x[k2] -
-                                 (((game_model->project_vertex_x[k2] -
+                        int i5 = game_model->project_vertex_x[vertex_index] -
+                                 (((game_model->project_vertex_x[vertex_index] -
                                     game_model->project_vertex_x[k9]) *
-                                   (game_model->project_vertex_z[k2] -
+                                   (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   k7);
 
-                        int j6 = game_model->project_vertex_y[k2] -
-                                 (((game_model->project_vertex_y[k2] -
+                        int j6 = game_model->project_vertex_y[vertex_index] -
+                                 (((game_model->project_vertex_y[vertex_index] -
                                     game_model->project_vertex_y[k9]) *
-                                   (game_model->project_vertex_z[k2] -
+                                   (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   k7);
 
@@ -1419,27 +1425,27 @@ void scene_render(Scene *scene) {
                         k8++;
                     }
 
-                    if (k11 == face_num_vertices - 1) {
+                    if (j == face_num_vertices - 1) {
                         k9 = face_vertices[0];
                     } else {
-                        k9 = face_vertices[k11 + 1];
+                        k9 = face_vertices[j + 1];
                     }
 
                     if (game_model->project_vertex_z[k9] >= scene->clip_near) {
-                        int l7 = game_model->project_vertex_z[k2] -
+                        int l7 = game_model->project_vertex_z[vertex_index] -
                                  game_model->project_vertex_z[k9];
 
-                        int j5 = game_model->project_vertex_x[k2] -
-                                 (((game_model->project_vertex_x[k2] -
+                        int j5 = game_model->project_vertex_x[vertex_index] -
+                                 (((game_model->project_vertex_x[vertex_index] -
                                     game_model->project_vertex_x[k9]) *
-                                   (game_model->project_vertex_z[k2] -
+                                   (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   l7);
 
-                        int k6 = game_model->project_vertex_y[k2] -
-                                 (((game_model->project_vertex_y[k2] -
+                        int k6 = game_model->project_vertex_y[vertex_index] -
+                                 (((game_model->project_vertex_y[vertex_index] -
                                     game_model->project_vertex_y[k9]) *
-                                   (game_model->project_vertex_z[k2] -
+                                   (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   l7);
 
@@ -1455,18 +1461,18 @@ void scene_render(Scene *scene) {
                 }
             }
 
-            for (int i12 = 0; i12 < face_num_vertices; i12++) {
-                if (scene->vertex_shade[i12] < 0) {
-                    scene->vertex_shade[i12] = 0;
-                } else if (scene->vertex_shade[i12] > 255) {
-                    scene->vertex_shade[i12] = 255;
+            for (int j = 0; j < face_num_vertices; j++) {
+                if (scene->vertex_shade[j] < 0) {
+                    scene->vertex_shade[j] = 0;
+                } else if (scene->vertex_shade[j] > 255) {
+                    scene->vertex_shade[j] = 255;
                 }
 
                 if (polygon->facefill >= 0) {
                     if (scene->texture_dimension[polygon->facefill] == 1) {
-                        scene->vertex_shade[i12] <<= 9;
+                        scene->vertex_shade[j] <<= 9;
                     } else {
-                        scene->vertex_shade[i12] <<= 6;
+                        scene->vertex_shade[j] <<= 6;
                     }
                 }
             }
@@ -2474,16 +2480,16 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
     }
 
     for (int i = scene->min_y; i < scene->max_y; i += scanline_inc) {
-        Scanline *scanline_2 = scene->scanlines[i];
-        int j = scanline_2->start_x >> 8;
-        int k5 = scanline_2->end_x >> 8;
+        Scanline *scanline = scene->scanlines[i];
+        int j = scanline->start_x >> 8;
+        int k5 = scanline->end_x >> 8;
         int i7 = k5 - j;
 
         if (i7 <= 0) {
             l2 += i2;
         } else {
-            int j8 = scanline_2->start_s;
-            int k9 = (scanline_2->end_s - j8) / i7;
+            int j8 = scanline->start_s;
+            int k9 = (scanline->end_s - j8) / i7;
 
             if (j < -scene->clip_x) {
                 j8 += (-scene->clip_x - j) * k9;

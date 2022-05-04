@@ -796,6 +796,7 @@ typedef struct mudclient {
     GLuint game_model_vao;
     GLuint game_model_vbo;
     GLuint game_model_ebo;
+    GLuint game_model_textures;
 #endif
 } mudclient;
 
