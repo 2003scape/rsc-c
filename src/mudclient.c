@@ -42,6 +42,8 @@ float tri_face_vs[] = {1.0f, 0.5f, 0.0f};
 
 float quad_face_us[] = {0.0f, 1.0f, 1.0f, 0.0f};
 float quad_face_vs[] = {0.0f, 0.0f, 1.0f, 1.0f};
+
+#define TO_RADIANS(deg) ((float)deg * (M_PI / 180))
 #endif
 
 #if defined(_3DS) || defined(WII)
@@ -543,6 +545,7 @@ void mudclient_start_application(mudclient *mud, int width, int height,
         wanted_audio.channels = 1;
         wanted_audio.silence = 0;
         wanted_audio.samples = 1024;
+
         wanted_audio.callback = NULL;
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
@@ -551,21 +554,24 @@ void mudclient_start_application(mudclient *mud, int width, int height,
         }
     }
 
+#ifdef RENDER_SW
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          width, height, SDL_WINDOW_SHOWN);
 
-    mud->screen = SDL_GetWindowSurface(mud->window);
+    // mud->screen = SDL_GetWindowSurface(mud->window);
+#endif
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
                                               0x00ff00, 0x0000ff, 0);
 
+#ifdef RENDER_GL
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
-#ifdef RENDER_GL
+
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
@@ -576,6 +582,8 @@ void mudclient_start_application(mudclient *mud, int width, int height,
         fprintf(stderr, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
         exit(1);
     }
+
+    SDL_GL_MakeCurrent(mud->gl_window, context);
 
     glewExperimental = GL_TRUE;
 
@@ -1537,6 +1545,162 @@ void mudclient_load_models(mudclient *mud) {
     }
 
     free(models_jag);
+
+#ifdef RENDER_GL
+    shader_new(&mud->game_model_shader, "./game-model.vs", "./game-model.fs");
+
+    int total_vertices = 0;
+    int total_ebo_length = 0;
+
+    for (int i = 0; i < game_data_model_count - 1; i++) {
+        GameModel *game_model = mud->game_models[i];
+
+        game_model->ebo_offset = total_ebo_length;
+
+        for (int j = 0; j < game_model->num_faces; j++) {
+            int face_num_vertices = game_model->face_num_vertices[j];
+            total_vertices += face_num_vertices;
+            game_model->ebo_length += (face_num_vertices - 2) * 3;
+        }
+
+        total_ebo_length += game_model->ebo_length;
+    }
+
+    glGenVertexArrays(1, &mud->game_model_vao);
+    glBindVertexArray(mud->game_model_vao);
+
+    glGenBuffers(1, &mud->game_model_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mud->game_model_vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 10 * total_vertices, NULL,
+                 GL_STATIC_DRAW);
+
+    /* vertex { x, y, z } */
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
+                          (void *)0);
+
+    glEnableVertexAttribArray(0);
+
+    /* colour { r, g, b, a } */
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
+                          (void *)(3 * sizeof(float)));
+
+    glEnableVertexAttribArray(1);
+
+    /* texture { s, t, index } */
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
+                          (void *)(7 * sizeof(float)));
+
+    glEnableVertexAttribArray(2);
+
+    glGenBuffers(1, &mud->game_model_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->game_model_ebo);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_ebo_length * sizeof(GLuint),
+                 NULL, GL_DYNAMIC_DRAW);
+
+    total_vertices = 0;
+    total_ebo_length = 0;
+
+    for (int i = 0; i < game_data_model_count - 1; i++) {
+        GameModel *game_model = mud->game_models[i];
+
+        for (int j = 0; j < game_model->num_faces; j++) {
+            int fill_front = game_model->face_fill_front[j];
+            int fill_back = game_model->face_fill_back[j];
+
+            GLfloat r = -1.0f;
+            GLfloat g = -1.0f;
+            GLfloat b = -1.0f;
+            GLfloat a = 1.0f;
+
+            GLfloat texture_index = -1.0f;
+
+            if (fill_front != COLOUR_TRANSPARENT) {
+                if (fill_front < 0) {
+                    fill_front = -(fill_front + 1);
+                    r = ((fill_front >> 10) & 31) / 31.0f;
+                    g = ((fill_front >> 5) & 31) / 31.0f;
+                    b = (fill_front & 31) / 31.0f;
+                } else if (fill_front >= 0) {
+                    texture_index = (float)fill_front;
+                }
+            } else if (fill_back != COLOUR_TRANSPARENT) {
+                if (fill_back < 0) {
+                    fill_back = -(fill_back + 1);
+                    r = ((fill_back >> 10) & 31) / 31.0f;
+                    g = ((fill_back >> 5) & 31) / 31.0f;
+                    b = (fill_back & 31) / 31.0f;
+                } else if (fill_back >= 0) {
+                    texture_index = (float)fill_back;
+                }
+            }
+
+            int face_num_vertices = game_model->face_num_vertices[j];
+
+            float *face_us = NULL;
+            float *face_vs = NULL;
+
+            if (texture_index > -1.0f) {
+                if (face_num_vertices == 3) {
+                    face_us = tri_face_us;
+                    face_vs = tri_face_vs;
+                } else if (face_num_vertices == 4) {
+                    face_us = quad_face_us;
+                    face_vs = quad_face_vs;
+                }
+            }
+
+            for (int k = 0; k < face_num_vertices; k++) {
+                int vertex_index = game_model->face_vertices[j][k];
+
+                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 300.0f;
+                GLfloat vertex_y = -game_model->vertex_y[vertex_index] / 300.0f;
+                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 300.0f;
+
+                GLfloat texture_x = -1.0f;
+                GLfloat texture_y = -1.0f;
+
+                if (face_us != NULL && face_vs != NULL) {
+                    texture_x = face_us[k];
+                    texture_y = face_vs[k];
+                }
+
+                GLfloat vertices[] = {
+                    /* vertex */
+                    vertex_x, vertex_y, vertex_z, //
+
+                    /* colour */
+                    r, g, b, a, //
+
+                    /* texture */
+                    texture_x, texture_y, texture_index //
+                };
+
+                glBufferSubData(GL_ARRAY_BUFFER,
+                                (total_vertices + k) * 10 * sizeof(GLfloat),
+                                10 * sizeof(GLfloat) , vertices);
+            }
+
+            for (int k = 0; k < face_num_vertices - 2; k++) {
+                GLuint indices[] = {total_vertices, total_vertices + k + 1,
+                                    total_vertices + k + 2};
+
+                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
+                                total_ebo_length * sizeof(GLuint),
+                                sizeof(indices), indices);
+
+                total_ebo_length += 3;
+            }
+
+            total_vertices += face_num_vertices;
+        }
+
+        if (i > 10) {
+            break;
+        }
+    }
+#endif
 }
 
 void mudclient_load_maps(mudclient *mud) {
@@ -2102,31 +2266,6 @@ void mudclient_change_password(mudclient *mud, char *old_password,
     packet_stream_flush_packet(mud->packet_stream);
 }
 
-// TODO move
-int game_model_get_minimum_vertex(int *vertices, int length) {
-    int smallest = vertices[0];
-
-    for (int i = 1; i < length; i++) {
-        if (vertices[i] < smallest) {
-            smallest = vertices[i];
-        }
-    }
-
-    return smallest;
-}
-
-int game_model_get_maximum_vertex(int *vertices, int length) {
-    int largest = vertices[0];
-
-    for (int i = 1; i < length; i++) {
-        if (vertices[i] > largest) {
-            largest = vertices[i];
-        }
-    }
-
-    return largest;
-}
-
 void mudclient_start_game(mudclient *mud) {
     mudclient_load_game_config(mud);
 
@@ -2217,161 +2356,6 @@ void mudclient_start_game(mudclient *mud) {
     if (mud->error_loading_data) {
         return;
     }
-
-#ifdef RENDER_GL
-    /* TODO move into load_models or game_model */
-    shader_new(&mud->game_model_shader, "./game-model.vs", "./game-model.fs");
-
-    int total_vertices = 0;
-    int total_ebo_length = 0;
-
-    for (int i = 0; i < game_data_model_count - 1; i++) {
-        GameModel *game_model = mud->game_models[i];
-
-        game_model->ebo_offset = total_ebo_length;
-
-        for (int j = 0; j < game_model->num_faces; j++) {
-            int face_num_vertices = game_model->face_num_vertices[j];
-            total_vertices += face_num_vertices;
-            game_model->ebo_length += (face_num_vertices - 2) * 3;
-        }
-
-        total_ebo_length += game_model->ebo_length;
-    }
-
-    glGenVertexArrays(1, &mud->game_model_vao);
-    glBindVertexArray(mud->game_model_vao);
-
-    glGenBuffers(1, &mud->game_model_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mud->game_model_vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 10 * total_vertices, NULL,
-                 GL_STATIC_DRAW);
-
-    /* vertex { x, y, z } */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
-                          (void *)0);
-
-    glEnableVertexAttribArray(0);
-
-    /* colour { r, g, b, a } */
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
-                          (void *)(3 * sizeof(float)));
-
-    glEnableVertexAttribArray(1);
-
-    /* texture { s, t, index } */
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
-                          (void *)(7 * sizeof(float)));
-
-    glEnableVertexAttribArray(2);
-
-    glGenBuffers(1, &mud->game_model_ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->game_model_ebo);
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_ebo_length * sizeof(GLuint),
-                 NULL, GL_DYNAMIC_DRAW);
-
-    total_vertices = 0;
-    total_ebo_length = 0;
-
-    for (int i = 0; i < game_data_model_count - 1; i++) {
-        GameModel *game_model = mud->game_models[i];
-
-        for (int j = 0; j < game_model->num_faces; j++) {
-            int fill_front = game_model->face_fill_front[j];
-            int fill_back = game_model->face_fill_back[j];
-
-            GLfloat r = -1.0f;
-            GLfloat g = -1.0f;
-            GLfloat b = -1.0f;
-            GLfloat a = 1.0f;
-
-            GLfloat texture_index = -1.0f;
-
-            if (fill_front != COLOUR_TRANSPARENT) {
-                if (fill_front < 0) {
-                    fill_front = -(fill_front + 1);
-                    r = ((fill_front >> 10) & 31) / 31.0f;
-                    g = ((fill_front >> 5) & 31) / 31.0f;
-                    b = (fill_front & 31) / 31.0f;
-                } else if (fill_front >= 0) {
-                    texture_index = (float)fill_front;
-                }
-            } else if (fill_back != COLOUR_TRANSPARENT) {
-                if (fill_back < 0) {
-                    fill_back = -(fill_back + 1);
-                    r = ((fill_back >> 10) & 31) / 31.0f;
-                    g = ((fill_back >> 5) & 31) / 31.0f;
-                    b = (fill_back & 31) / 31.0f;
-                } else if (fill_back >= 0) {
-                    texture_index = (float)fill_back;
-                }
-            }
-
-            int face_num_vertices = game_model->face_num_vertices[j];
-
-            float *face_us = NULL;
-            float *face_vs = NULL;
-
-            if (texture_index > -1.0f) {
-                if (face_num_vertices == 3) {
-                    face_us = tri_face_us;
-                    face_vs = tri_face_vs;
-                } else if (face_num_vertices == 4) {
-                    face_us = quad_face_us;
-                    face_vs = quad_face_vs;
-                }
-            }
-
-            for (int k = 0; k < face_num_vertices; k++) {
-                int vertex_index = game_model->face_vertices[j][k];
-
-                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 500.0f;
-                GLfloat vertex_y = -game_model->vertex_y[vertex_index] / 500.0f;
-                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 500.0f;
-
-                GLfloat texture_x = -1.0f;
-                GLfloat texture_y = -1.0f;
-
-                if (face_us != NULL && face_vs != NULL) {
-                    texture_x = face_us[k];
-                    texture_y = face_vs[k];
-                }
-
-                GLfloat vertices[] = {
-                    /* vertex */
-                    vertex_x, vertex_y, vertex_z, //
-
-                    /* colour */
-                    r, g, b, a, //
-
-                    /* texture */
-                    texture_x, texture_y, texture_index //
-                };
-
-                glBufferSubData(GL_ARRAY_BUFFER,
-                                (total_vertices + k) * 10 * sizeof(GLfloat),
-                                10 * sizeof(GLfloat) , vertices);
-            }
-
-            for (int k = 0; k < face_num_vertices - 2; k++) {
-                GLuint indices[] = {total_vertices, total_vertices + k + 1,
-                                    total_vertices + k + 2};
-
-                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
-                                total_ebo_length * sizeof(GLuint),
-                                sizeof(indices), indices);
-
-                total_ebo_length += 3;
-            }
-
-            total_vertices += face_num_vertices;
-        }
-
-        break;
-    }
-#endif
 
     mudclient_load_maps(mud);
 
@@ -4068,6 +4052,45 @@ void mudclient_draw_game(mudclient *mud) {
 #endif
 
 #ifdef RENDER_GL
+    vec3 camera_pos = {0.0, 0.0, 3.0};
+    vec3 camera_front = {0.0, 0.0, -1.0};
+    vec3 camera_up = {0.0, 1.0, 0.0};
+
+    /*
+    float yaw = -90.0f;
+    float pitch = mud->scene->camera_pitch / 1024.0f;
+
+    vec3 front = {
+        cos(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch)),
+        TO_RADIANS(pitch),
+        sin(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch))
+    };*/
+
+    float yaw = -90.0f;
+    float pitch = mud->scene->camera_pitch / 1024.0f;
+
+    vec3 front = {
+        cos(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch)),
+        TO_RADIANS(pitch),
+        sin(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch))
+    };
+
+    glm_normalize_to(front, camera_front);
+
+    vec3 camera_centre = {0};
+    glm_vec3_add(camera_pos, camera_front, camera_centre);
+
+    mat4 view = {0};
+    glm_lookat(camera_pos, camera_centre, camera_up, view);
+
+    mat4 projection = {0};
+
+    glm_perspective(TO_RADIANS(45),
+                    (float)(mud->surface->width2) / (float)mud->surface->height2,
+                    0.1f,
+                    100.0f,
+                    projection);
+
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -4077,7 +4100,10 @@ void mudclient_draw_game(mudclient *mud) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, mud->game_model_textures);
 
-    glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, 0);
+    shader_set_mat4(&mud->game_model_shader, "projection", projection);
+    shader_set_mat4(&mud->game_model_shader, "view", view);
+
+    glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, (void*)(mud->game_models[0]->ebo_offset * sizeof(GLuint)));
 #endif
 
 
@@ -4188,9 +4214,9 @@ void mudclient_draw(mudclient *mud) {
 #endif
 
 #ifdef RENDER_GL
-    if (!mud->surface->fade_to_black) {
+    //if (!mud->surface->fade_to_black) {
         glClear(GL_COLOR_BUFFER_BIT);
-    }
+    //}
 #endif
 
     if (mud->logged_in == 0) {

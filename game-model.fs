@@ -9,6 +9,10 @@ uniform sampler2DArray textures;
 void main() {
     if (vertex_texture_position.z > -1) {
         fragment_colour = texture(textures, vertex_texture_position);
+
+        if (fragment_colour.a <= 0.0) {
+            discard;
+        }
     } else {
         //fragment_colour = vec4(0.0, 0, 1.0, 1.0);
         fragment_colour = vertex_colour;

@@ -1162,3 +1162,29 @@ void game_model_dump(GameModel *game_model, int i) {
 
     fclose(obj_file);
 }
+
+#ifdef RENDER_GL
+int game_model_get_minimum_vertex(int *vertices, int length) {
+    int smallest = vertices[0];
+
+    for (int i = 1; i < length; i++) {
+        if (vertices[i] < smallest) {
+            smallest = vertices[i];
+        }
+    }
+
+    return smallest;
+}
+
+int game_model_get_maximum_vertex(int *vertices, int length) {
+    int largest = vertices[0];
+
+    for (int i = 1; i < length; i++) {
+        if (vertices[i] > largest) {
+            largest = vertices[i];
+        }
+    }
+
+    return largest;
+}
+#endif

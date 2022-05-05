@@ -150,6 +150,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glGenTextures(1, &surface->sprite_item_textures);
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
 
+    //glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -159,6 +161,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     glGenTextures(1, &surface->sprite_media_textures);
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
+
+    //glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -174,6 +178,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, FONT_TEXTURE_WIDTH,
                    FONT_TEXTURE_HEIGHT, FONT_COUNT);
+
+    //glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
     int font_area = FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT;
     int32_t *font_raster = calloc(font_area, sizeof(int32_t));
@@ -701,12 +707,10 @@ void surface_draw(Surface *surface) {
 #endif
 
 #if !defined(WII) && !defined(_3DS)
-    if (mud->window == NULL) {
-        return;
+    if (mud->window != NULL) {
+        SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
+        SDL_UpdateWindowSurface(mud->window);
     }
-
-    SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
-    SDL_UpdateWindowSurface(mud->window);
 #endif
 
 #ifdef RENDER_GL
@@ -726,7 +730,7 @@ void surface_draw(Surface *surface) {
 
     int drawn_quads = 0;
 
-//#define DEBUG_SWITCH
+// #define DEBUG_SWITCH
 
 #ifdef DEBUG_SWITCH
     printf("[");
