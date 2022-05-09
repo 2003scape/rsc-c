@@ -831,6 +831,11 @@ void scene_add_model(Scene *scene, GameModel *model) {
         fprintf(stderr, "Warning tried to add null object!\n");
     }
 
+    // tree, id 0
+    if (!(model->num_vertices == 77 && model->vertex_x[0] == -64)) {
+        return;
+    }
+
     if (scene->model_count < scene->max_model_count) {
         scene->models[scene->model_count++] = model;
     }
@@ -1153,6 +1158,19 @@ void scene_render(Scene *scene) {
         GameModel *game_model = scene->models[i];
 
         if (game_model->visible) {
+            if (game_model->base_x != 4928) {
+                continue;
+            }
+
+            // printf("%d %d %d\n", game_model->base_x, game_model->base_y, game_model->base_z);
+
+            /*
+             * 4928
+             * 5696
+             * 3264
+             */
+            //printf("test %d\n", game_model->base_x);
+
             for (int face = 0; face < game_model->num_faces; face++) {
                 int num_vertices = game_model->face_num_vertices[face];
                 int *face_vertices = game_model->face_vertices[face];
@@ -2510,41 +2528,47 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
     }
 }
 
-void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
+void scene_set_camera(Scene *scene, int x, int z, int y, int yaw, int pitch,
                       int roll, int distance) {
-    pitch &= 1023;
     yaw &= 1023;
+    pitch &= 1023;
     roll &= 1023;
 
-    scene->camera_yaw = (1024 - pitch) & 1023;
-    scene->camera_pitch = (1024 - yaw) & 1023;
+    scene->camera_yaw = (1024 - yaw) & 1023; // pitch
+    // TODO i think this is the yaw
+    scene->camera_pitch = (1024 - pitch) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
+
+    /*printf("%d %f %f\n",
+            yaw,
+            sin((yaw / 256.0f) * (M_PI / 2)),
+            (sin_cos_2048[yaw] / 32768.0f));*/
 
     int l1 = 0;
     int i2 = 0;
     int j2 = distance;
 
-    if (pitch != 0) {
-        int sine = sin_cos_2048[pitch];
-        int cosine = sin_cos_2048[pitch + 1024];
-        int i4 = (i2 * cosine - j2 * sine) >> 15;
-        j2 = (i2 * sine + j2 * cosine) >> 15;
-        i2 = i4;
-    }
-
     if (yaw != 0) {
         int sine = sin_cos_2048[yaw];
         int cosine = sin_cos_2048[yaw + 1024];
-        int j4 = (j2 * sine + l1 * cosine) >> 15;
-        j2 = (j2 * cosine - l1 * sine) >> 15;
+        int i4 = (i2 * cosine - j2 * sine) / 32768;
+        j2 = (i2 * sine + j2 * cosine) / 32768;
+        i2 = i4;
+    }
+
+    if (pitch != 0) {
+        int sine = sin_cos_2048[pitch];
+        int cosine = sin_cos_2048[pitch + 1024];
+        int j4 = (j2 * sine + l1 * cosine) / 32768;
+        j2 = (j2 * cosine - l1 * sine) / 32768;
         l1 = j4;
     }
 
     if (roll != 0) {
         int sine = sin_cos_2048[roll];
         int cosine = sin_cos_2048[roll + 1024];
-        int k4 = (i2 * sine + l1 * cosine) >> 15;
-        i2 = (i2 * cosine - l1 * sine) >> 15;
+        int k4 = (i2 * sine + l1 * cosine) / 32768;
+        i2 = (i2 * cosine - l1 * sine) / 32768;
         l1 = k4;
     }
 

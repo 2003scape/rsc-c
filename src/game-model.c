@@ -62,10 +62,19 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
 
     game_model_allocate(game_model, num_vertices, num_faces);
 
+    int max = 0;
+
     for (int i = 0; i < num_vertices; i++) {
         game_model->vertex_x[i] = get_signed_short(data, offset);
+
+        if (abs(game_model->vertex_x[i]) > max) {
+            max = abs(game_model->vertex_x[i]);
+        }
+
         offset += 2;
     }
+
+    //printf("max: %d\n", max);
 
     for (int i = 0; i < num_vertices; i++) {
         game_model->vertex_y[i] = get_signed_short(data, offset);
@@ -495,6 +504,8 @@ void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll) {
 }
 
 void game_model_translate(GameModel *game_model, int x, int y, int z) {
+    //printf("%d %d %d\n", x, y, z);
+
     game_model->base_x += x;
     game_model->base_y += y;
     game_model->base_z += z;
@@ -827,9 +838,9 @@ void game_model_apply(GameModel *game_model) {
         }
 
         if (game_model->transform_kind >= 2) {
-            game_model_apply_rotation(game_model, game_model->orientation_yaw,
+            /*game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
-                                      game_model->orientation_roll);
+                                      game_model->orientation_roll);*/
         }
 
         if (game_model->transform_kind >= 3) {
@@ -871,6 +882,7 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
     int roll_sin = 0;
     int roll_cos = 0;
 
+    // there is usually no yaw
     if (camera_yaw != 0) {
         yaw_sin = sin_cos_2048[camera_yaw];
         yaw_cos = sin_cos_2048[camera_yaw + 1024];
@@ -892,20 +904,20 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
         int z = game_model->vertex_transformed_z[i] - camera_z;
 
         if (camera_yaw != 0) {
-            int X = (y * yaw_sin + x * yaw_cos) >> 15;
-            y = (y * yaw_cos - x * yaw_sin) >> 15;
+            int X = (y * yaw_sin + x * yaw_cos) / 32768;
+            y = (y * yaw_cos - x * yaw_sin) / 32768;
             x = X;
         }
 
-        if (camera_roll != 0) {
-            int X = (z * roll_sin + x * roll_cos) >> 15;
-            z = (z * roll_cos - x * roll_sin) >> 15;
+        /*if (camera_roll != 0) {
+            int X = (z * roll_sin + x * roll_cos) / 32768;
+            z = (z * roll_cos - x * roll_sin) / 32768;
             x = X;
-        }
+        }*/
 
         if (camera_pitch != 0) {
-            int Y = (y * pitch_cos - z * pitch_sin) >> 15;
-            z = (y * pitch_sin + z * pitch_cos) >> 15;
+            int Y = (y * pitch_cos - z * pitch_sin) / 32768;
+            z = (y * pitch_sin + z * pitch_cos) / 32768;
             y = Y;
         }
 
@@ -944,6 +956,7 @@ GameModel *game_model_copy(GameModel *game_model) {
     pieces[0] = game_model;
 
     GameModel *copy = malloc(sizeof(GameModel));
+
     game_model_from2a(copy, pieces, 1);
     copy->depth = game_model->depth;
     copy->transparent = game_model->transparent;

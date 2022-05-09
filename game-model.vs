@@ -10,10 +10,19 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform mat4 test_mat;
+
+uniform vec3 test;
+
 void main() {
-    gl_Position = projection * view * vec4(position, 1.0);
+    // gl_Position = projection * view * model * (vec4(position, 1.0) - vec4(test, 0.0));
+    // gl_Position = projection * view * vec4(position, 1.0);
     // gl_Position = vec4(position, 1.0);
-    // gl_Position = projection * view * model * vec4(position, 1.0);
+    // gl_Position = vec4(64 * position, 1.0);
+    // gl_Position = test_mat * vec4(position, 1.0);
+
+    gl_Position = projection * view * model * vec4(position, 1.0);
+
     vertex_colour = colour;
     vertex_texture_position = texture_position;
 }

@@ -17,5 +17,6 @@ void shader_use(Shader *shader);
 void shader_set_int(Shader *shader, char *name, int value);
 void shader_set_float(Shader *shader, char *name, float value);
 void shader_set_mat4(Shader *shader, char *name, mat4 value);
+void shader_set_vec3(Shader *shader, char *name, vec3 value);
 
 #endif

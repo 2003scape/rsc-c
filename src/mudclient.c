@@ -370,7 +370,7 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    mud->server = "127.0.0.1";
+    mud->server = "192.168.100.103";
     mud->port = 43594;
     // mud->server = "162.198.202.160"; /* openrsc preservation */
     // mud->port = 43596;
@@ -559,7 +559,7 @@ void mudclient_start_application(mudclient *mud, int width, int height,
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          width, height, SDL_WINDOW_SHOWN);
 
-    // mud->screen = SDL_GetWindowSurface(mud->window);
+    mud->screen = SDL_GetWindowSurface(mud->window);
 #endif
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
@@ -1537,6 +1537,8 @@ void mudclient_load_models(mudclient *mud) {
             game_model_from2(game_model, 1, 1);
         }
 
+        // printf("%d %d %d\n", game_model->vertex_x[0], game_model->num_faces, game_model->num_vertices);
+
         mud->game_models[i] = game_model;
 
         if (strcmp(model_name, "giantcrystal") == 0) {
@@ -1654,9 +1656,9 @@ void mudclient_load_models(mudclient *mud) {
             for (int k = 0; k < face_num_vertices; k++) {
                 int vertex_index = game_model->face_vertices[j][k];
 
-                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 300.0f;
-                GLfloat vertex_y = -game_model->vertex_y[vertex_index] / 300.0f;
-                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 300.0f;
+                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 32768.0f;
+                GLfloat vertex_y = -game_model->vertex_y[vertex_index] / 32768.0f;
+                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 32768.0f;
 
                 GLfloat texture_x = -1.0f;
                 GLfloat texture_y = -1.0f;
@@ -3783,6 +3785,7 @@ void mudclient_draw_game(mudclient *mud) {
         return;
     }
 
+#if 1
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene,
                            mud->world->roof_models[mud->last_height_offset][i]);
@@ -4046,33 +4049,33 @@ void mudclient_draw_game(mudclient *mud) {
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, mud->camera_rotation * 4, 0, mud->camera_zoom * 2);
+#endif
+    surface_black_screen(mud->surface);
 
 #ifdef RENDER_SW
     scene_render(mud->scene);
 #endif
 
 #ifdef RENDER_GL
-    vec3 camera_pos = {0.0, 0.0, 3.0};
+    vec3 camera_pos = {
+        (mud->scene->camera_x - 1000) / 32768.0f,
+        -(mud->scene->camera_y + 500) / 32768.0f,
+        (mud->scene->camera_z) / 32768.0f
+    };
+
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, 1.0, 0.0};
 
-    /*
-    float yaw = -90.0f;
-    float pitch = mud->scene->camera_pitch / 1024.0f;
+    float yaw_sin = -sin_cos_2048[mud->scene->camera_pitch] / 32768.0f;
+    float yaw_cos = -sin_cos_2048[mud->scene->camera_pitch + 1024] / 32768.0f;
+
+    float pitch_sin = -sin_cos_2048[mud->scene->camera_yaw] / 32768.0f;
+    float pitch_cos = -sin_cos_2048[mud->scene->camera_yaw + 1024] / 32768.0f;
 
     vec3 front = {
-        cos(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch)),
-        TO_RADIANS(pitch),
-        sin(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch))
-    };*/
-
-    float yaw = -90.0f;
-    float pitch = mud->scene->camera_pitch / 1024.0f;
-
-    vec3 front = {
-        cos(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch)),
-        TO_RADIANS(pitch),
-        sin(TO_RADIANS(yaw)) * cos(TO_RADIANS(pitch))
+        yaw_cos * pitch_sin,
+        -mud->scene->camera_yaw / 1024.0f, // pitch
+        yaw_sin * pitch_cos
     };
 
     glm_normalize_to(front, camera_front);
@@ -4087,8 +4090,8 @@ void mudclient_draw_game(mudclient *mud) {
 
     glm_perspective(TO_RADIANS(45),
                     (float)(mud->surface->width2) / (float)mud->surface->height2,
-                    0.1f,
-                    100.0f,
+                    mud->scene->clip_near / 32768.0f,
+                    mud->scene->clip_far_3d / 32768.0f,
                     projection);
 
     glEnable(GL_DEPTH_TEST);
@@ -4100,12 +4103,22 @@ void mudclient_draw_game(mudclient *mud) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, mud->game_model_textures);
 
-    shader_set_mat4(&mud->game_model_shader, "projection", projection);
+    mat4 model = GLM_MAT4_IDENTITY_INIT;
+
+    glm_translate(model, (vec3){
+        4928 / 32768.0f,
+        372 / 32768.0f,
+        6720 / 32768.0f
+    });
+
+    shader_set_mat4(&mud->game_model_shader, "model", model);
     shader_set_mat4(&mud->game_model_shader, "view", view);
+    shader_set_mat4(&mud->game_model_shader, "projection", projection);
+
+    // 4928 -372 6720
 
     glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, (void*)(mud->game_models[0]->ebo_offset * sizeof(GLuint)));
 #endif
-
 
     mudclient_draw_overhead(mud);
 

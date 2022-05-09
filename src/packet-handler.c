@@ -477,6 +477,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     scene_add_model(mud->scene, model);
 
                     model->key = mud->object_count;
+
                     game_model_rotate(model, 0, direction * 32, 0);
 
                     game_model_translate(
