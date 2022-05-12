@@ -44,6 +44,7 @@ float quad_face_us[] = {0.0f, 1.0f, 1.0f, 0.0f};
 float quad_face_vs[] = {0.0f, 0.0f, 1.0f, 1.0f};
 
 #define TO_RADIANS(deg) ((float)deg * (M_PI / 180))
+#define TABLE_TO_RADIANS(i) (((float)i / 256.0f) * (M_PI / 2))
 #endif
 
 #if defined(_3DS) || defined(WII)
@@ -356,6 +357,12 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     }
 }
 #endif
+
+int test_x = 0;
+int test_y = 0;
+int test_z = 0;
+int test_yaw = 0;
+int test_toggle = 0;
 
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
@@ -1657,7 +1664,7 @@ void mudclient_load_models(mudclient *mud) {
                 int vertex_index = game_model->face_vertices[j][k];
 
                 GLfloat vertex_x = game_model->vertex_x[vertex_index] / 32768.0f;
-                GLfloat vertex_y = -game_model->vertex_y[vertex_index] / 32768.0f;
+                GLfloat vertex_y = game_model->vertex_y[vertex_index] / 32768.0f;
                 GLfloat vertex_z = game_model->vertex_z[vertex_index] / 32768.0f;
 
                 GLfloat texture_x = -1.0f;
@@ -4053,30 +4060,97 @@ void mudclient_draw_game(mudclient *mud) {
     surface_black_screen(mud->surface);
 
 #ifdef RENDER_SW
+    if (test_toggle) {
+        mud->scene->camera_x += test_x;
+        mud->scene->camera_y += test_y;
+        mud->scene->camera_z += test_z;
+    }
+
     scene_render(mud->scene);
+
+    if (test_toggle) {
+        mud->scene->camera_x -= test_x;
+        mud->scene->camera_y -= test_y;
+        mud->scene->camera_z -= test_z;
+    }
 #endif
 
 #ifdef RENDER_GL
-    vec3 camera_pos = {
+    char debug[255] = {0};
+
+    sprintf(debug, "yaw: %d", test_yaw);
+
+    surface_draw_string(mud->surface, debug, 5, 12, 4, WHITE);
+
+    sprintf(debug, "camera (x, y, z): %d (%d), %d (%d), %d (%d)",
+            mud->scene->camera_x, test_x,
+            mud->scene->camera_y, test_y,
+            mud->scene->camera_z, test_z);
+
+    surface_draw_string(mud->surface, debug, 5, 26, 4, WHITE);
+
+    /*sprintf(debug, "camera (yaw, pitch, roll): %d, %d, %d", mud->scene->camera_yaw, mud->scene->camera_pitch, mud->scene->camera_roll);
+
+    surface_draw_string(mud->surface, debug, 5, 26, 4, WHITE);
+
+    surface_draw_string(mud->surface, "object (x, y, z): 4928, -372, 6720", 5, 40, 4, WHITE);*/
+
+    /*vec3 camera_pos = {
         (mud->scene->camera_x - 1000) / 32768.0f,
         -(mud->scene->camera_y + 500) / 32768.0f,
         (mud->scene->camera_z) / 32768.0f
+    };*/
+
+    // initial: 4416 6848 -366
+    // final: 4911 -1317 5801
+
+    vec3 camera_pos = {
+        (mud->scene->camera_x + test_x) / 32768.0f,
+        (mud->scene->camera_y + test_y) / 32768.0f,
+        (mud->scene->camera_z + test_z) / 32768.0f
     };
 
+    /*vec3 camera_pos = {
+        4416 / 32768.0f,
+        -(mud->scene->camera_y) / 32768.0f,
+        mud->scene->camera_z / 32768.0f
+    };*/
+
     vec3 camera_front = {0.0, 0.0, -1.0};
-    vec3 camera_up = {0.0, 1.0, 0.0};
+    vec3 camera_up = {0.0, -1.0, 0.0};
 
-    float yaw_sin = -sin_cos_2048[mud->scene->camera_pitch] / 32768.0f;
-    float yaw_cos = -sin_cos_2048[mud->scene->camera_pitch + 1024] / 32768.0f;
+    float yaw = (mud->scene->camera_pitch / 256.0f) * (M_PI / 2);
+    float pitch = (mud->scene->camera_yaw / 256.0f) * (M_PI / 2);
 
-    float pitch_sin = -sin_cos_2048[mud->scene->camera_yaw] / 32768.0f;
-    float pitch_cos = -sin_cos_2048[mud->scene->camera_yaw + 1024] / 32768.0f;
+    //yaw = 0;
+    yaw = TO_RADIANS(test_yaw);
+    pitch = 0;
+    //float pitch = 0;
+
+    /*float yaw_sin = sin_cos_2048[mud->scene->camera_pitch] / 32768.0f;
+    float yaw_cos = sin_cos_2048[mud->scene->camera_pitch + 1024] / 32768.0f;
+
+    float pitch_sin = sin_cos_2048[mud->scene->camera_yaw] / 32768.0f;
+    float pitch_cos = sin_cos_2048[mud->scene->camera_yaw + 1024] / 32768.0f;*/
+
+    vec3 front = {
+        cos(yaw) * cos(pitch),
+        -pitch,
+        sin(yaw) * cos(pitch)
+    };
+
+    /*float yaw_sin = sin_cos_2048[mud->scene->camera_yaw] / 32768.0f;
+    float yaw_cos = sin_cos_2048[mud->scene->camera_yaw + 1024] / 32768.0f;
+
+    float pitch_sin = sin_cos_2048[mud->scene->camera_pitch] / 32768.0f;
+    float pitch_cos = sin_cos_2048[mud->scene->camera_pitch + 1024] / 32768.0f;
 
     vec3 front = {
         yaw_cos * pitch_sin,
-        -mud->scene->camera_yaw / 1024.0f, // pitch
+        //-(mud->scene->camera_yaw / 1024.0f), // pitch
+        -(mud->scene->camera_pitch/ 256.0f) * (M_PI / 2), // pitch
         yaw_sin * pitch_cos
-    };
+    };*/
 
     glm_normalize_to(front, camera_front);
 
@@ -4105,17 +4179,37 @@ void mudclient_draw_game(mudclient *mud) {
 
     mat4 model = GLM_MAT4_IDENTITY_INIT;
 
-    glm_translate(model, (vec3){
+    vec3 translate_model = {
         4928 / 32768.0f,
-        372 / 32768.0f,
+        -372 / 32768.0f,
         6720 / 32768.0f
-    });
+    };
+
+    glm_translate(model, translate_model);
+
+    vec3 test = {
+        0.00f, // ~1500
+        0.000f, // ~500
+        0.0
+    };
+
+    shader_set_vec3(&mud->game_model_shader, "test", test);
+
+    vec3 camera_dir = {
+        (mud->scene->camera_pitch / 256.0f) * (M_PI / 2),
+        0.0,
+        0.0
+    };
+
+    // base 4928 -372 6720
+
+    shader_set_vec3(&mud->game_model_shader, "translate_model", translate_model);
+    shader_set_vec3(&mud->game_model_shader, "camera_pos", camera_pos);
+    shader_set_vec3(&mud->game_model_shader, "camera_dir", camera_dir);
 
     shader_set_mat4(&mud->game_model_shader, "model", model);
     shader_set_mat4(&mud->game_model_shader, "view", view);
     shader_set_mat4(&mud->game_model_shader, "projection", projection);
-
-    // 4928 -372 6720
 
     glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, (void*)(mud->game_models[0]->ebo_offset * sizeof(GLuint)));
 #endif
@@ -4720,6 +4814,31 @@ void mudclient_poll_events(mudclient *mud) {
             int code;
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_pressed(mud, code, char_code);
+
+            int mag = 10;
+
+            if (code == 113) {
+                test_x -= mag;
+            } else if (code == 97) {
+                test_x += mag;
+            } else if (code == 119) {
+                test_y -= mag;
+            } else if (code == 115) {
+                test_y += mag;
+            } else if (code == 101) {
+                test_z -= mag;
+            } else if (code == 100) {
+                test_z += mag;
+            } else if (code == 103) {
+                test_toggle = !test_toggle;
+            } else if (code == 114) {
+                test_yaw += 1;
+            } else if (code == 102) {
+                test_yaw -= 1;
+            }
+
+            //printf("%d\n", code);
+
             break;
         }
         case SDL_KEYUP: {

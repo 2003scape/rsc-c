@@ -504,8 +504,6 @@ void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll) {
 }
 
 void game_model_translate(GameModel *game_model, int x, int y, int z) {
-    //printf("%d %d %d\n", x, y, z);
-
     game_model->base_x += x;
     game_model->base_y += y;
     game_model->base_z += z;
@@ -860,7 +858,7 @@ void game_model_apply(GameModel *game_model) {
 
 void game_model_project(GameModel *game_model, int camera_x, int camera_y,
                         int camera_z, int camera_pitch, int camera_roll,
-                        int camera_yaw, int view_dist, int clip_near) {
+                        int camera_yaw, int view_distance, int clip_near) {
     game_model_apply(game_model);
 
     if (game_model->z1 > scene_frustum_near_z ||
@@ -872,6 +870,9 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
         game_model->visible = 0;
         return;
     }
+
+    //view_distance = 10;
+    //view_distance = pow(2, view_distance);*/
 
     game_model->visible = 1;
 
@@ -903,13 +904,13 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
         int y = game_model->vertex_transformed_y[i] - camera_y;
         int z = game_model->vertex_transformed_z[i] - camera_z;
 
-        if (camera_yaw != 0) {
+        /*if (camera_yaw != 0) {
             int X = (y * yaw_sin + x * yaw_cos) / 32768;
             y = (y * yaw_cos - x * yaw_sin) / 32768;
             x = X;
         }
 
-        /*if (camera_roll != 0) {
+        if (camera_roll != 0) {
             int X = (z * roll_sin + x * roll_cos) / 32768;
             z = (z * roll_cos - x * roll_sin) / 32768;
             x = X;
@@ -922,15 +923,11 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
         }
 
         if (z >= clip_near) {
-            game_model->vertex_view_x[i] = (int)((x << view_dist) / z);
+            game_model->vertex_view_x[i] = (int)((x << view_distance) / z);
+            game_model->vertex_view_y[i] = (int)((y << view_distance) / z);
         } else {
-            game_model->vertex_view_x[i] = x << view_dist;
-        }
-
-        if (z >= clip_near) {
-            game_model->vertex_view_y[i] = (int)((y << view_dist) / z);
-        } else {
-            game_model->vertex_view_y[i] = y << view_dist;
+            game_model->vertex_view_x[i] = x << view_distance;
+            game_model->vertex_view_y[i] = y << view_distance;
         }
 
         game_model->project_vertex_x[i] = x;

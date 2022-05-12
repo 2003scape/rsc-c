@@ -1162,13 +1162,14 @@ void scene_render(Scene *scene) {
                 continue;
             }
 
+            // printf("%d %d\n", game_model->z1, game_model->z2);
+
             // printf("%d %d %d\n", game_model->base_x, game_model->base_y, game_model->base_z);
 
-            /*
-             * 4928
-             * 5696
-             * 3264
-             */
+            // x1,2 4832 5024
+            // y1,2 -620 -372
+            // z1,2 6624 6816
+            // base 4928 -372 6720
             //printf("test %d\n", game_model->base_x);
 
             for (int face = 0; face < game_model->num_faces; face++) {
@@ -1211,14 +1212,14 @@ void scene_render(Scene *scene) {
                         int view_y_count = 0;
 
                         for (int vertex = 0; vertex < num_vertices; vertex++) {
-                            int k1 = game_model
+                            int vertex_y = game_model
                                          ->vertex_view_y[face_vertices[vertex]];
 
-                            if (k1 > -scene->clip_y) {
+                            if (vertex_y > -scene->clip_y) {
                                 view_y_count |= 1;
                             }
 
-                            if (k1 < scene->clip_y) {
+                            if (vertex_y < scene->clip_y) {
                                 view_y_count |= 2;
                             }
 
@@ -1271,6 +1272,7 @@ void scene_render(Scene *scene) {
 
     GameModel *model_2d = scene->view;
 
+    /*
     if (model_2d->visible) {
         for (int face = 0; face < model_2d->num_faces; face++) {
             int *face_vertices = model_2d->face_vertices[face];
@@ -1306,7 +1308,7 @@ void scene_render(Scene *scene) {
                 }
             }
         }
-    }
+    }*/
 
     if (scene->visible_polygons_count == 0) {
         return;
@@ -1325,7 +1327,7 @@ void scene_render(Scene *scene) {
         GameModel *game_model = polygon->model;
         int face = polygon->face;
 
-        if (game_model == scene->view) {
+        /*if (game_model == scene->view) {
             int *face_vertices = game_model->face_vertices[face];
             int face_0 = face_vertices[0];
             int vx = game_model->vertex_view_x[face_0];
@@ -1357,7 +1359,7 @@ void scene_render(Scene *scene) {
                     scene->mouse_picked_count++;
                 }
             }
-        } else {
+        } else*/ {
             int k8 = 0;
             int j10 = 0;
             int face_num_vertices = game_model->face_num_vertices[face];
@@ -1407,28 +1409,28 @@ void scene_render(Scene *scene) {
 
                     k8++;
                 } else {
-                    int k9 = 0;
+                    int vertex_index = 0;
 
                     if (j == 0) {
-                        k9 = face_vertices[face_num_vertices - 1];
+                        vertex_index = face_vertices[face_num_vertices - 1];
                     } else {
-                        k9 = face_vertices[j - 1];
+                        vertex_index = face_vertices[j - 1];
                     }
 
-                    if (game_model->project_vertex_z[k9] >= scene->clip_near) {
+                    if (game_model->project_vertex_z[vertex_index] >= scene->clip_near) {
                         int k7 = game_model->project_vertex_z[vertex_index] -
-                                 game_model->project_vertex_z[k9];
+                                 game_model->project_vertex_z[vertex_index];
 
                         int i5 = game_model->project_vertex_x[vertex_index] -
                                  (((game_model->project_vertex_x[vertex_index] -
-                                    game_model->project_vertex_x[k9]) *
+                                    game_model->project_vertex_x[vertex_index]) *
                                    (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   k7);
 
                         int j6 = game_model->project_vertex_y[vertex_index] -
                                  (((game_model->project_vertex_y[vertex_index] -
-                                    game_model->project_vertex_y[k9]) *
+                                    game_model->project_vertex_y[vertex_index]) *
                                    (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   k7);
@@ -1444,25 +1446,25 @@ void scene_render(Scene *scene) {
                     }
 
                     if (j == face_num_vertices - 1) {
-                        k9 = face_vertices[0];
+                        vertex_index = face_vertices[0];
                     } else {
-                        k9 = face_vertices[j + 1];
+                        vertex_index = face_vertices[j + 1];
                     }
 
-                    if (game_model->project_vertex_z[k9] >= scene->clip_near) {
+                    if (game_model->project_vertex_z[vertex_index] >= scene->clip_near) {
                         int l7 = game_model->project_vertex_z[vertex_index] -
-                                 game_model->project_vertex_z[k9];
+                                 game_model->project_vertex_z[vertex_index];
 
                         int j5 = game_model->project_vertex_x[vertex_index] -
                                  (((game_model->project_vertex_x[vertex_index] -
-                                    game_model->project_vertex_x[k9]) *
+                                    game_model->project_vertex_x[vertex_index]) *
                                    (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   l7);
 
                         int k6 = game_model->project_vertex_y[vertex_index] -
                                  (((game_model->project_vertex_y[vertex_index] -
-                                    game_model->project_vertex_y[k9]) *
+                                    game_model->project_vertex_y[vertex_index]) *
                                    (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
                                   l7);
@@ -2528,13 +2530,20 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
     }
 }
 
-void scene_set_camera(Scene *scene, int x, int z, int y, int yaw, int pitch,
+void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
                       int roll, int distance) {
     yaw &= 1023;
     pitch &= 1023;
     roll &= 1023;
 
+    yaw = 0;
+    pitch = 0;
+    roll = 0;
+
+    //printf("initial: %d %d %d\n", x, y, z);
+
     scene->camera_yaw = (1024 - yaw) & 1023; // pitch
+
     // TODO i think this is the yaw
     scene->camera_pitch = (1024 - pitch) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
@@ -2544,37 +2553,39 @@ void scene_set_camera(Scene *scene, int x, int z, int y, int yaw, int pitch,
             sin((yaw / 256.0f) * (M_PI / 2)),
             (sin_cos_2048[yaw] / 32768.0f));*/
 
-    int l1 = 0;
-    int i2 = 0;
-    int j2 = distance;
+    int offset_x = 0;
+    int offset_y = 0;
+    int offset_z = distance;
 
     if (yaw != 0) {
         int sine = sin_cos_2048[yaw];
         int cosine = sin_cos_2048[yaw + 1024];
-        int i4 = (i2 * cosine - j2 * sine) / 32768;
-        j2 = (i2 * sine + j2 * cosine) / 32768;
-        i2 = i4;
+        int i4 = (offset_y * cosine - offset_z * sine) / 32768;
+        offset_z = (offset_y * sine + offset_z * cosine) / 32768;
+        offset_y = i4;
     }
 
     if (pitch != 0) {
         int sine = sin_cos_2048[pitch];
         int cosine = sin_cos_2048[pitch + 1024];
-        int j4 = (j2 * sine + l1 * cosine) / 32768;
-        j2 = (j2 * cosine - l1 * sine) / 32768;
-        l1 = j4;
+        int j4 = (offset_z * sine + offset_x * cosine) / 32768;
+        offset_z = (offset_z * cosine - offset_x * sine) / 32768;
+        offset_x = j4;
     }
 
     if (roll != 0) {
         int sine = sin_cos_2048[roll];
         int cosine = sin_cos_2048[roll + 1024];
-        int k4 = (i2 * sine + l1 * cosine) / 32768;
-        i2 = (i2 * cosine - l1 * sine) / 32768;
-        l1 = k4;
+        int k4 = (offset_y * sine + offset_x * cosine) / 32768;
+        offset_y = (offset_y * cosine - offset_x * sine) / 32768;
+        offset_x = k4;
     }
 
-    scene->camera_x = x - l1;
-    scene->camera_y = z - i2;
-    scene->camera_z = y - j2;
+    scene->camera_x = x - offset_x;
+    scene->camera_y = y - offset_y;
+    scene->camera_z = z - offset_z;
+
+    // printf("final: %d %d %d\n", scene->camera_x, scene->camera_y, scene->camera_z);
 }
 
 void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {

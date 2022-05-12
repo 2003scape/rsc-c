@@ -21,7 +21,7 @@ void init_utility_global() {
         sin_cos_512[i + 256] = (int)(cos((double)i * 0.02454369) * 32768);
     }
 
-    /* sin(i) = sin(i / 256.0f) * (M_PI / 2) */
+    /* sin(i) = sin((i / 256.0f) * (M_PI / 2)) */
     for (int i = 0; i < 1024; i++) {
         sin_cos_2048[i] = (int)(sin((double)i * 0.00613592315) * 32768);
         sin_cos_2048[i + 1024] = (int)(cos((double)i * 0.00613592315) * 32768);

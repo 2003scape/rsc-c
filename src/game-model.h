@@ -1,6 +1,7 @@
 #ifndef _H_GAME_MODEL
 #define _H_GAME_MODEL
 
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h> // TODO remove
 #include <stdlib.h>
@@ -137,7 +138,7 @@ void game_model_relight(GameModel *game_model);
 void game_model_apply(GameModel *game_model);
 void game_model_project(GameModel *game_model, int camera_x, int camera_y,
                         int camera_z, int camera_pitch, int camera_roll,
-                        int camera_yaw, int view_dist, int clip_near);
+                        int camera_yaw, int view_distance, int clip_near);
 void game_model_commit(GameModel *game_model);
 GameModel *game_model_copy(GameModel *game_model);
 GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
