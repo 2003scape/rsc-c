@@ -61,12 +61,6 @@ typedef struct GameModel {
     int light_ambience;
     int autocommit;
     int max_faces;
-    int *face_bound_left;
-    int *face_bound_right;
-    int *face_bound_bottom;
-    int *face_bound_top;
-    int *face_bound_near;
-    int *face_bound_far;
     int base_x;
     int base_y;
     int base_z;

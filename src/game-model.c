@@ -196,15 +196,6 @@ void game_model_allocate(GameModel *game_model, int num_vertices,
         game_model->face_normal_z = calloc(num_faces, sizeof(int));
     }
 
-    if (!game_model->isolated) {
-        game_model->face_bound_left = calloc(num_faces, sizeof(int));
-        game_model->face_bound_right = calloc(num_faces, sizeof(int));
-        game_model->face_bound_bottom = calloc(num_faces, sizeof(int));
-        game_model->face_bound_top = calloc(num_faces, sizeof(int));
-        game_model->face_bound_near = calloc(num_faces, sizeof(int));
-        game_model->face_bound_far = calloc(num_faces, sizeof(int));
-    }
-
     game_model->num_faces = 0;
     game_model->num_vertices = 0;
     game_model->max_verts = num_vertices;
@@ -652,15 +643,6 @@ void game_model_compute_bounds(GameModel *game_model) {
             }
         }
 
-        if (!game_model->isolated) {
-            game_model->face_bound_left[face] = x1;
-            game_model->face_bound_right[face] = x2;
-            game_model->face_bound_bottom[face] = y1;
-            game_model->face_bound_top[face] = y2;
-            game_model->face_bound_near[face] = z1;
-            game_model->face_bound_far[face] = z2;
-        }
-
         if (x2 - x1 > game_model->diameter) {
             game_model->diameter = x2 - x1;
         }
@@ -836,9 +818,9 @@ void game_model_apply(GameModel *game_model) {
         }
 
         if (game_model->transform_kind >= 2) {
-            /*game_model_apply_rotation(game_model, game_model->orientation_yaw,
+            game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
-                                      game_model->orientation_roll);*/
+                                      game_model->orientation_roll);
         }
 
         if (game_model->transform_kind >= 3) {
@@ -1100,24 +1082,6 @@ void game_model_destroy(GameModel *game_model) {
 
     free(game_model->face_normal_z);
     game_model->face_normal_z = NULL;
-
-    free(game_model->face_bound_left);
-    game_model->face_bound_left = NULL;
-
-    free(game_model->face_bound_right);
-    game_model->face_bound_right = NULL;
-
-    free(game_model->face_bound_bottom);
-    game_model->face_bound_bottom = NULL;
-
-    free(game_model->face_bound_top);
-    game_model->face_bound_top = NULL;
-
-    free(game_model->face_bound_near);
-    game_model->face_bound_near = NULL;
-
-    free(game_model->face_bound_far);
-    game_model->face_bound_far = NULL;
 
     free(game_model->project_vertex_x);
     game_model->project_vertex_x = NULL;
