@@ -46,6 +46,11 @@
 
 #define CHAR_SET_LENGTH 94
 
+#ifdef RENDER_GL
+/* convert sin_cos_x index to radians */
+#define TABLE_TO_RADIANS(i) (((float)i / 256.0f) * (M_PI / 2))
+#endif
+
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
 extern int BITMASK[];

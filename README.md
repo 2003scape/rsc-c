@@ -31,7 +31,10 @@ a USB keyboard and mouse can also be used.
 
 ## build (linux)
 
-install [libsdl2-dev](https://packages.debian.org/sid/libsdl2-dev).
+install [libsdl2-dev](https://packages.debian.org/sid/libsdl2-dev). if compiling
+with opengl support, also install
+[libglew-dev](https://packages.debian.org/sid/libglew-dev) and
+[libgl-dev](https://packages.debian.org/sid/libgl-dev).
 
     $ make
     $ ./mudclient

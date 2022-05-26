@@ -141,4 +141,9 @@ void game_model_copy_position(GameModel *game_model, GameModel *model);
 void game_model_destroy(GameModel *game_model);
 void game_model_dump(GameModel *game_model, int i);
 
+#ifdef RENDER_GL
+void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
+                                 int *ebo_offset);
+#endif
+
 #endif

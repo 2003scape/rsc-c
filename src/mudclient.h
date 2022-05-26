@@ -207,6 +207,8 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
+extern int test_yaw; // TODO remove
+
 extern char *font_files[];
 extern char *animated_models[];
 extern char login_screen_status[255];

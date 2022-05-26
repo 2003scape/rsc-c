@@ -1,5 +1,13 @@
 #include "game-model.h"
 
+#ifdef RENDER_GL
+float tri_face_us[] = {0.0f, 1.0f, 0.0f};
+float tri_face_vs[] = {1.0f, 0.5f, 0.0f};
+
+float quad_face_us[] = {0.0f, 1.0f, 1.0f, 0.0f};
+float quad_face_vs[] = {0.0f, 0.0f, 1.0f, 1.0f};
+#endif
+
 void game_model_new(GameModel *game_model) {
     memset(game_model, 0, sizeof(GameModel));
 
@@ -1100,8 +1108,7 @@ void game_model_destroy(GameModel *game_model) {
 }
 
 void game_model_dump(GameModel *game_model, int i) {
-    /*
-    if (game_model->num_vertices < 1000) {
+    /*if (game_model->num_vertices < 1000) {
         return;
     }*/
 
@@ -1112,14 +1119,9 @@ void game_model_dump(GameModel *game_model, int i) {
     FILE *obj_file = fopen(name, "w");
 
     for (int i = 0; i < game_model->num_vertices; i++) {
-        /*
-        float vertex_x = (((float) game_model->vertex_x[i]) / 100) - 100;
-        float vertex_y = ((float) game_model->vertex_y[i]) / 100;
-        float vertex_z = (((float) game_model->vertex_z[i]) / 100) - 100;
-        */
-        float vertex_x = (((float)game_model->vertex_x[i]) / 100) - 100;
+        float vertex_x = (((float)game_model->vertex_x[i]) / 100);
         float vertex_y = ((float)game_model->vertex_y[i]) / 100;
-        float vertex_z = (((float)game_model->vertex_z[i]) / 100) - 100;
+        float vertex_z = (((float)game_model->vertex_z[i]) / 100);
 
         fprintf(obj_file, "v %f %f %f\n", vertex_x, -vertex_y, vertex_z);
     }
@@ -1138,27 +1140,99 @@ void game_model_dump(GameModel *game_model, int i) {
 }
 
 #ifdef RENDER_GL
-int game_model_get_minimum_vertex(int *vertices, int length) {
-    int smallest = vertices[0];
+void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
+                                 int *ebo_offset) {
+    for (int i = 0; i < game_model->num_faces; i++) {
+        int fill_front = game_model->face_fill_front[i];
+        int fill_back = game_model->face_fill_back[i];
 
-    for (int i = 1; i < length; i++) {
-        if (vertices[i] < smallest) {
-            smallest = vertices[i];
+        GLfloat r = -1.0f;
+        GLfloat g = -1.0f;
+        GLfloat b = -1.0f;
+        GLfloat a = 1.0f;
+
+        GLfloat texture_index = -1.0f;
+
+        if (fill_front != COLOUR_TRANSPARENT) {
+            if (fill_front < 0) {
+                fill_front = -(fill_front + 1);
+                r = ((fill_front >> 10) & 31) / 31.0f;
+                g = ((fill_front >> 5) & 31) / 31.0f;
+                b = (fill_front & 31) / 31.0f;
+            } else if (fill_front >= 0) {
+                texture_index = (float)fill_front;
+            }
+        } else if (fill_back != COLOUR_TRANSPARENT) {
+            if (fill_back < 0) {
+                fill_back = -(fill_back + 1);
+                r = ((fill_back >> 10) & 31) / 31.0f;
+                g = ((fill_back >> 5) & 31) / 31.0f;
+                b = (fill_back & 31) / 31.0f;
+            } else if (fill_back >= 0) {
+                texture_index = (float)fill_back;
+            }
         }
-    }
 
-    return smallest;
-}
+        int face_num_vertices = game_model->face_num_vertices[i];
 
-int game_model_get_maximum_vertex(int *vertices, int length) {
-    int largest = vertices[0];
+        float *face_us = NULL;
+        float *face_vs = NULL;
 
-    for (int i = 1; i < length; i++) {
-        if (vertices[i] > largest) {
-            largest = vertices[i];
+        if (texture_index > -1.0f) {
+            if (face_num_vertices == 3) {
+                face_us = tri_face_us;
+                face_vs = tri_face_vs;
+            } else if (face_num_vertices == 4) {
+                face_us = quad_face_us;
+                face_vs = quad_face_vs;
+            }
         }
-    }
 
-    return largest;
+        for (int j = 0; j < face_num_vertices; j++) {
+            int vertex_index = game_model->face_vertices[i][j];
+
+            GLfloat vertex_x = game_model->vertex_x[vertex_index] / 1000.0f;
+            GLfloat vertex_y = game_model->vertex_y[vertex_index] / 1000.0f;
+            GLfloat vertex_z = game_model->vertex_z[vertex_index] / 1000.0f;
+
+            GLfloat texture_x = -1.0f;
+            GLfloat texture_y = -1.0f;
+
+            if (face_us != NULL && face_vs != NULL) {
+                texture_x = face_us[j];
+                texture_y = face_vs[j];
+            }
+
+            GLfloat vertices[] = {
+                /* vertex */
+                vertex_x, vertex_y, vertex_z, //
+
+                /* colour */
+                r, g, b, a, //
+
+                /* texture */
+                texture_x, texture_y, texture_index //
+            };
+
+            // TODO we'll need two texture indices - and an animation position
+
+            glBufferSubData(GL_ARRAY_BUFFER,
+                            ((*vertex_offset) + j) * 10 * sizeof(GLfloat),
+                            10 * sizeof(GLfloat), vertices);
+        }
+
+        for (int j = 0; j < face_num_vertices - 2; j++) {
+            GLuint indices[] = {(*vertex_offset), (*vertex_offset) + j + 1,
+                                (*vertex_offset) + j + 2};
+
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
+                            (*ebo_offset) * sizeof(GLuint),
+                            sizeof(indices), indices);
+
+            (*ebo_offset) += 3;
+        }
+
+        (*vertex_offset) += face_num_vertices;
+    }
 }
 #endif

@@ -831,11 +831,6 @@ void scene_add_model(Scene *scene, GameModel *model) {
         fprintf(stderr, "Warning tried to add null object!\n");
     }
 
-    // tree, id 0
-    if (!(model->num_vertices == 77 && model->vertex_x[0] == -64)) {
-        return;
-    }
-
     if (scene->model_count < scene->max_model_count) {
         scene->models[scene->model_count++] = model;
     }
@@ -1158,20 +1153,6 @@ void scene_render(Scene *scene) {
         GameModel *game_model = scene->models[i];
 
         if (game_model->visible) {
-            if (game_model->base_x != 4928) {
-                continue;
-            }
-
-            // printf("%d %d\n", game_model->z1, game_model->z2);
-
-            // printf("%d %d %d\n", game_model->base_x, game_model->base_y, game_model->base_z);
-
-            // x1,2 4832 5024
-            // y1,2 -620 -372
-            // z1,2 6624 6816
-            // base 4928 -372 6720
-            //printf("test %d\n", game_model->base_x);
-
             for (int face = 0; face < game_model->num_faces; face++) {
                 int num_vertices = game_model->face_num_vertices[face];
                 int *face_vertices = game_model->face_vertices[face];
@@ -1272,7 +1253,6 @@ void scene_render(Scene *scene) {
 
     GameModel *model_2d = scene->view;
 
-    /*
     if (model_2d->visible) {
         for (int face = 0; face < model_2d->num_faces; face++) {
             int *face_vertices = model_2d->face_vertices[face];
@@ -1308,7 +1288,7 @@ void scene_render(Scene *scene) {
                 }
             }
         }
-    }*/
+    }
 
     if (scene->visible_polygons_count == 0) {
         return;
@@ -1327,7 +1307,7 @@ void scene_render(Scene *scene) {
         GameModel *game_model = polygon->model;
         int face = polygon->face;
 
-        /*if (game_model == scene->view) {
+        if (game_model == scene->view) {
             int *face_vertices = game_model->face_vertices[face];
             int face_0 = face_vertices[0];
             int vx = game_model->vertex_view_x[face_0];
@@ -1359,7 +1339,7 @@ void scene_render(Scene *scene) {
                     scene->mouse_picked_count++;
                 }
             }
-        } else*/ {
+        } else {
             int k8 = 0;
             int j10 = 0;
             int face_num_vertices = game_model->face_num_vertices[face];
@@ -1409,31 +1389,31 @@ void scene_render(Scene *scene) {
 
                     k8++;
                 } else {
-                    int vertex_index = 0;
+                    int previous_vertex_index = 0;
 
                     if (j == 0) {
-                        vertex_index = face_vertices[face_num_vertices - 1];
+                        previous_vertex_index = face_vertices[face_num_vertices - 1];
                     } else {
-                        vertex_index = face_vertices[j - 1];
+                        previous_vertex_index = face_vertices[j - 1];
                     }
 
-                    if (game_model->project_vertex_z[vertex_index] >= scene->clip_near) {
+                    if (game_model->project_vertex_z[previous_vertex_index] >= scene->clip_near) {
                         int k7 = game_model->project_vertex_z[vertex_index] -
-                                 game_model->project_vertex_z[vertex_index];
+                                 game_model->project_vertex_z[previous_vertex_index];
 
                         int i5 = game_model->project_vertex_x[vertex_index] -
-                                 (((game_model->project_vertex_x[vertex_index] -
-                                    game_model->project_vertex_x[vertex_index]) *
+                                 ((game_model->project_vertex_x[vertex_index] -
+                                    game_model->project_vertex_x[previous_vertex_index]) *
                                    (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
-                                  k7);
+                                  k7;
 
                         int j6 = game_model->project_vertex_y[vertex_index] -
-                                 (((game_model->project_vertex_y[vertex_index] -
-                                    game_model->project_vertex_y[vertex_index]) *
+                                 ((game_model->project_vertex_y[vertex_index] -
+                                    game_model->project_vertex_y[previous_vertex_index]) *
                                    (game_model->project_vertex_z[vertex_index] -
                                     scene->clip_near)) /
-                                  k7);
+                                  k7;
 
                         scene->plane_x[k8] =
                             (i5 << scene->view_distance) / scene->clip_near;
@@ -1446,28 +1426,28 @@ void scene_render(Scene *scene) {
                     }
 
                     if (j == face_num_vertices - 1) {
-                        vertex_index = face_vertices[0];
+                        previous_vertex_index = face_vertices[0];
                     } else {
-                        vertex_index = face_vertices[j + 1];
+                        previous_vertex_index = face_vertices[j + 1];
                     }
 
-                    if (game_model->project_vertex_z[vertex_index] >= scene->clip_near) {
+                    if (game_model->project_vertex_z[previous_vertex_index] >= scene->clip_near) {
                         int l7 = game_model->project_vertex_z[vertex_index] -
-                                 game_model->project_vertex_z[vertex_index];
+                                 game_model->project_vertex_z[previous_vertex_index];
 
                         int j5 = game_model->project_vertex_x[vertex_index] -
-                                 (((game_model->project_vertex_x[vertex_index] -
-                                    game_model->project_vertex_x[vertex_index]) *
-                                   (game_model->project_vertex_z[vertex_index] -
+                                 ((game_model->project_vertex_x[previous_vertex_index] -
+                                    game_model->project_vertex_x[previous_vertex_index]) *
+                                   (game_model->project_vertex_z[previous_vertex_index] -
                                     scene->clip_near)) /
-                                  l7);
+                                  l7;
 
-                        int k6 = game_model->project_vertex_y[vertex_index] -
-                                 (((game_model->project_vertex_y[vertex_index] -
-                                    game_model->project_vertex_y[vertex_index]) *
-                                   (game_model->project_vertex_z[vertex_index] -
+                        int k6 = game_model->project_vertex_y[previous_vertex_index] -
+                                 ((game_model->project_vertex_y[previous_vertex_index] -
+                                    game_model->project_vertex_y[previous_vertex_index]) *
+                                   (game_model->project_vertex_z[previous_vertex_index] -
                                     scene->clip_near)) /
-                                  l7);
+                                  l7;
 
                         scene->plane_x[k8] =
                             (j5 << scene->view_distance) / scene->clip_near;
@@ -2540,6 +2520,8 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     pitch = 0;
     roll = 0;
 
+    yaw = 1024 - test_yaw;
+
     //printf("initial: %d %d %d\n", x, y, z);
 
     scene->camera_yaw = (1024 - yaw) & 1023; // pitch
@@ -3112,6 +3094,8 @@ void scene_set_texture_pixels(Scene *scene, int id) {
         texture_width = 128;
     }
 
+    // int texture_width = scene->texture_dimension[id] ? 128 : 64;
+    // TODO
     int32_t *colours = scene->texture_pixels[id];
     int colour_count = 0;
 

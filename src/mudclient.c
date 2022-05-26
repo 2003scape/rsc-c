@@ -34,19 +34,6 @@ int player_top_bottom_colours[] = {0xff0000, 0xff8000, 0xffe000, 0xa0e000,
 
 int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
 
-// TODO move
-#ifdef RENDER_GL
-// TODO probably re-order these too
-float tri_face_us[] = {0.0f, 1.0f, 0.0f};
-float tri_face_vs[] = {1.0f, 0.5f, 0.0f};
-
-float quad_face_us[] = {0.0f, 1.0f, 1.0f, 0.0f};
-float quad_face_vs[] = {0.0f, 0.0f, 1.0f, 1.0f};
-
-#define TO_RADIANS(deg) ((float)deg * (M_PI / 180))
-#define TABLE_TO_RADIANS(i) (((float)i / 256.0f) * (M_PI / 2))
-#endif
-
 #if defined(_3DS) || defined(WII)
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
@@ -1408,7 +1395,8 @@ void mudclient_load_textures(mudclient *mud) {
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 128, 128, game_data_texture_count);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 128, 128,
+                   game_data_texture_count);
 
     int32_t *texture_raster = calloc(128 * 128, sizeof(int32_t));
 #endif
@@ -1456,18 +1444,19 @@ void mudclient_load_textures(mudclient *mud) {
             }
         }
 
-        surface_draw_sprite_from5(surface, mud->sprite_texture_world + i,
-                                  0, 0, texture_size, texture_size);
+        surface_draw_sprite_from5(surface, mud->sprite_texture_world + i, 0, 0,
+                                  texture_size, texture_size);
 
         for (int j = 0; j < texture_size * texture_size; j++) {
-            if (surface->surface_pixels[mud->sprite_texture_world + i]
-                                            [j] == GREEN) {
+            if (surface->surface_pixels[mud->sprite_texture_world + i][j] ==
+                GREEN) {
                 surface->surface_pixels[mud->sprite_texture_world + i][j] =
                     MAGENTA;
             }
 
 #ifdef RENDER_GL
-            int colour = surface->surface_pixels[mud->sprite_texture_world + i][j];
+            int colour =
+                surface->surface_pixels[mud->sprite_texture_world + i][j];
 
             if (colour != MAGENTA) {
                 texture_raster[j] = 0xff000000 + colour;
@@ -1476,8 +1465,8 @@ void mudclient_load_textures(mudclient *mud) {
         }
 
 #ifdef RENDER_GL
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1,
-                        GL_BGRA, GL_UNSIGNED_BYTE, texture_raster);
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, texture_raster);
 
         memset(texture_raster, 0, 128 * 128 * sizeof(int32_t));
 #endif
@@ -1544,8 +1533,6 @@ void mudclient_load_models(mudclient *mud) {
             game_model_from2(game_model, 1, 1);
         }
 
-        // printf("%d %d %d\n", game_model->vertex_x[0], game_model->num_faces, game_model->num_vertices);
-
         mud->game_models[i] = game_model;
 
         if (strcmp(model_name, "giantcrystal") == 0) {
@@ -1581,24 +1568,24 @@ void mudclient_load_models(mudclient *mud) {
     glGenBuffers(1, &mud->game_model_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, mud->game_model_vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 10 * total_vertices, NULL,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 10 * total_vertices, NULL,
                  GL_STATIC_DRAW);
 
     /* vertex { x, y, z } */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
                           (void *)0);
 
     glEnableVertexAttribArray(0);
 
     /* colour { r, g, b, a } */
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
-                          (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
+                          (void *)(3 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(1);
 
     /* texture { s, t, index } */
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float),
-                          (void *)(7 * sizeof(float)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
+                          (void *)(7 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(2);
 
@@ -1606,7 +1593,7 @@ void mudclient_load_models(mudclient *mud) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->game_model_ebo);
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_ebo_length * sizeof(GLuint),
-                 NULL, GL_DYNAMIC_DRAW);
+                 NULL, GL_STATIC_DRAW);
 
     total_vertices = 0;
     total_ebo_length = 0;
@@ -1614,96 +1601,8 @@ void mudclient_load_models(mudclient *mud) {
     for (int i = 0; i < game_data_model_count - 1; i++) {
         GameModel *game_model = mud->game_models[i];
 
-        for (int j = 0; j < game_model->num_faces; j++) {
-            int fill_front = game_model->face_fill_front[j];
-            int fill_back = game_model->face_fill_back[j];
-
-            GLfloat r = -1.0f;
-            GLfloat g = -1.0f;
-            GLfloat b = -1.0f;
-            GLfloat a = 1.0f;
-
-            GLfloat texture_index = -1.0f;
-
-            if (fill_front != COLOUR_TRANSPARENT) {
-                if (fill_front < 0) {
-                    fill_front = -(fill_front + 1);
-                    r = ((fill_front >> 10) & 31) / 31.0f;
-                    g = ((fill_front >> 5) & 31) / 31.0f;
-                    b = (fill_front & 31) / 31.0f;
-                } else if (fill_front >= 0) {
-                    texture_index = (float)fill_front;
-                }
-            } else if (fill_back != COLOUR_TRANSPARENT) {
-                if (fill_back < 0) {
-                    fill_back = -(fill_back + 1);
-                    r = ((fill_back >> 10) & 31) / 31.0f;
-                    g = ((fill_back >> 5) & 31) / 31.0f;
-                    b = (fill_back & 31) / 31.0f;
-                } else if (fill_back >= 0) {
-                    texture_index = (float)fill_back;
-                }
-            }
-
-            int face_num_vertices = game_model->face_num_vertices[j];
-
-            float *face_us = NULL;
-            float *face_vs = NULL;
-
-            if (texture_index > -1.0f) {
-                if (face_num_vertices == 3) {
-                    face_us = tri_face_us;
-                    face_vs = tri_face_vs;
-                } else if (face_num_vertices == 4) {
-                    face_us = quad_face_us;
-                    face_vs = quad_face_vs;
-                }
-            }
-
-            for (int k = 0; k < face_num_vertices; k++) {
-                int vertex_index = game_model->face_vertices[j][k];
-
-                GLfloat vertex_x = game_model->vertex_x[vertex_index] / 32768.0f;
-                GLfloat vertex_y = game_model->vertex_y[vertex_index] / 32768.0f;
-                GLfloat vertex_z = game_model->vertex_z[vertex_index] / 32768.0f;
-
-                GLfloat texture_x = -1.0f;
-                GLfloat texture_y = -1.0f;
-
-                if (face_us != NULL && face_vs != NULL) {
-                    texture_x = face_us[k];
-                    texture_y = face_vs[k];
-                }
-
-                GLfloat vertices[] = {
-                    /* vertex */
-                    vertex_x, vertex_y, vertex_z, //
-
-                    /* colour */
-                    r, g, b, a, //
-
-                    /* texture */
-                    texture_x, texture_y, texture_index //
-                };
-
-                glBufferSubData(GL_ARRAY_BUFFER,
-                                (total_vertices + k) * 10 * sizeof(GLfloat),
-                                10 * sizeof(GLfloat) , vertices);
-            }
-
-            for (int k = 0; k < face_num_vertices - 2; k++) {
-                GLuint indices[] = {total_vertices, total_vertices + k + 1,
-                                    total_vertices + k + 2};
-
-                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
-                                total_ebo_length * sizeof(GLuint),
-                                sizeof(indices), indices);
-
-                total_ebo_length += 3;
-            }
-
-            total_vertices += face_num_vertices;
-        }
+        game_model_gl_buffer_arrays(game_model, &total_vertices,
+                                    &total_ebo_length);
 
         if (i > 10) {
             break;
@@ -4083,74 +3982,25 @@ void mudclient_draw_game(mudclient *mud) {
     surface_draw_string(mud->surface, debug, 5, 12, 4, WHITE);
 
     sprintf(debug, "camera (x, y, z): %d (%d), %d (%d), %d (%d)",
-            mud->scene->camera_x, test_x,
-            mud->scene->camera_y, test_y,
+            mud->scene->camera_x, test_x, mud->scene->camera_y, test_y,
             mud->scene->camera_z, test_z);
 
     surface_draw_string(mud->surface, debug, 5, 26, 4, WHITE);
 
-    /*sprintf(debug, "camera (yaw, pitch, roll): %d, %d, %d", mud->scene->camera_yaw, mud->scene->camera_pitch, mud->scene->camera_roll);
-
-    surface_draw_string(mud->surface, debug, 5, 26, 4, WHITE);
-
-    surface_draw_string(mud->surface, "object (x, y, z): 4928, -372, 6720", 5, 40, 4, WHITE);*/
-
-    /*vec3 camera_pos = {
-        (mud->scene->camera_x - 1000) / 32768.0f,
-        -(mud->scene->camera_y + 500) / 32768.0f,
-        (mud->scene->camera_z) / 32768.0f
-    };*/
-
-    // initial: 4416 6848 -366
-    // final: 4911 -1317 5801
-
-    vec3 camera_pos = {
-        (mud->scene->camera_x + test_x) / 32768.0f,
-        (mud->scene->camera_y + test_y) / 32768.0f,
-        (mud->scene->camera_z + test_z) / 32768.0f
-    };
-
-    /*vec3 camera_pos = {
-        4416 / 32768.0f,
-        -(mud->scene->camera_y) / 32768.0f,
-        mud->scene->camera_z / 32768.0f
-    };*/
+    vec3 camera_pos = {(mud->scene->camera_x + test_x) / 1000.0f,
+                       (mud->scene->camera_y + test_y) / 1000.0f,
+                       (mud->scene->camera_z + test_z) / 1000.0f};
 
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, -1.0, 0.0};
 
-    float yaw = (mud->scene->camera_pitch / 256.0f) * (M_PI / 2);
-    float pitch = (mud->scene->camera_yaw / 256.0f) * (M_PI / 2);
+    float yaw = TABLE_TO_RADIANS(mud->scene->camera_pitch);
+    float pitch = TABLE_TO_RADIANS(mud->scene->camera_yaw);
 
-    //yaw = 0;
-    yaw = TO_RADIANS(test_yaw);
+    yaw = glm_rad(90);
     pitch = 0;
-    //float pitch = 0;
 
-    /*float yaw_sin = sin_cos_2048[mud->scene->camera_pitch] / 32768.0f;
-    float yaw_cos = sin_cos_2048[mud->scene->camera_pitch + 1024] / 32768.0f;
-
-    float pitch_sin = sin_cos_2048[mud->scene->camera_yaw] / 32768.0f;
-    float pitch_cos = sin_cos_2048[mud->scene->camera_yaw + 1024] / 32768.0f;*/
-
-    vec3 front = {
-        cos(yaw) * cos(pitch),
-        -pitch,
-        sin(yaw) * cos(pitch)
-    };
-
-    /*float yaw_sin = sin_cos_2048[mud->scene->camera_yaw] / 32768.0f;
-    float yaw_cos = sin_cos_2048[mud->scene->camera_yaw + 1024] / 32768.0f;
-
-    float pitch_sin = sin_cos_2048[mud->scene->camera_pitch] / 32768.0f;
-    float pitch_cos = sin_cos_2048[mud->scene->camera_pitch + 1024] / 32768.0f;
-
-    vec3 front = {
-        yaw_cos * pitch_sin,
-        //-(mud->scene->camera_yaw / 1024.0f), // pitch
-        -(mud->scene->camera_pitch/ 256.0f) * (M_PI / 2), // pitch
-        yaw_sin * pitch_cos
-    };*/
+    vec3 front = {cos(yaw) * cos(pitch), -pitch, sin(yaw) * cos(pitch)};
 
     glm_normalize_to(front, camera_front);
 
@@ -4162,11 +4012,11 @@ void mudclient_draw_game(mudclient *mud) {
 
     mat4 projection = {0};
 
-    glm_perspective(TO_RADIANS(45),
-                    (float)(mud->surface->width2) / (float)mud->surface->height2,
-                    mud->scene->clip_near / 32768.0f,
-                    mud->scene->clip_far_3d / 32768.0f,
-                    projection);
+    glm_perspective(glm_rad(38),
+                    (float)(mud->surface->width2) /
+                        (float)mud->surface->height2,
+                    mud->scene->clip_near / 1000.0f,
+                    mud->scene->clip_far_3d / 1000.0f, projection);
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -4179,39 +4029,19 @@ void mudclient_draw_game(mudclient *mud) {
 
     mat4 model = GLM_MAT4_IDENTITY_INIT;
 
-    vec3 translate_model = {
-        4928 / 32768.0f,
-        -372 / 32768.0f,
-        6720 / 32768.0f
-    };
+    vec3 translate_model = {4928 / 1000.0f, -372 / 1000.0f, 6720 / 1000.0f};
 
     glm_translate(model, translate_model);
 
-    vec3 test = {
-        0.00f, // ~1500
-        0.000f, // ~500
-        0.0
-    };
-
-    shader_set_vec3(&mud->game_model_shader, "test", test);
-
-    vec3 camera_dir = {
-        (mud->scene->camera_pitch / 256.0f) * (M_PI / 2),
-        0.0,
-        0.0
-    };
-
     // base 4928 -372 6720
-
-    shader_set_vec3(&mud->game_model_shader, "translate_model", translate_model);
-    shader_set_vec3(&mud->game_model_shader, "camera_pos", camera_pos);
-    shader_set_vec3(&mud->game_model_shader, "camera_dir", camera_dir);
 
     shader_set_mat4(&mud->game_model_shader, "model", model);
     shader_set_mat4(&mud->game_model_shader, "view", view);
     shader_set_mat4(&mud->game_model_shader, "projection", projection);
 
-    glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length, GL_UNSIGNED_INT, (void*)(mud->game_models[0]->ebo_offset * sizeof(GLuint)));
+    glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length,
+                   GL_UNSIGNED_INT,
+                   (void *)(mud->game_models[0]->ebo_offset * sizeof(GLuint)));
 #endif
 
     mudclient_draw_overhead(mud);
@@ -4321,8 +4151,8 @@ void mudclient_draw(mudclient *mud) {
 #endif
 
 #ifdef RENDER_GL
-    //if (!mud->surface->fade_to_black) {
-        glClear(GL_COLOR_BUFFER_BIT);
+    // if (!mud->surface->fade_to_black) {
+    glClear(GL_COLOR_BUFFER_BIT);
     //}
 #endif
 
@@ -4837,7 +4667,7 @@ void mudclient_poll_events(mudclient *mud) {
                 test_yaw -= 1;
             }
 
-            //printf("%d\n", code);
+            // printf("%d\n", code);
 
             break;
         }
