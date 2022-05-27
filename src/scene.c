@@ -2516,24 +2516,16 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     pitch &= 1023;
     roll &= 1023;
 
+    // TODO remove
     yaw = 0;
     pitch = 0;
     roll = 0;
-
-    yaw = 1024 - test_yaw;
-
-    //printf("initial: %d %d %d\n", x, y, z);
 
     scene->camera_yaw = (1024 - yaw) & 1023; // pitch
 
     // TODO i think this is the yaw
     scene->camera_pitch = (1024 - pitch) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
-
-    /*printf("%d %f %f\n",
-            yaw,
-            sin((yaw / 256.0f) * (M_PI / 2)),
-            (sin_cos_2048[yaw] / 32768.0f));*/
 
     int offset_x = 0;
     int offset_y = 0;
@@ -2566,8 +2558,6 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     scene->camera_x = x - offset_x;
     scene->camera_y = y - offset_y;
     scene->camera_z = z - offset_z;
-
-    // printf("final: %d %d %d\n", scene->camera_x, scene->camera_y, scene->camera_z);
 }
 
 void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {

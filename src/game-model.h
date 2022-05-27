@@ -6,6 +6,11 @@
 #include <stdio.h> // TODO remove
 #include <stdlib.h>
 
+#ifdef RENDER_GL
+#define CGLM_DEFINE_PRINTS
+#include <cglm/cglm.h>
+#endif
+
 typedef struct GameModel GameModel;
 
 #include "scene.h"
@@ -142,6 +147,8 @@ void game_model_destroy(GameModel *game_model);
 void game_model_dump(GameModel *game_model, int i);
 
 #ifdef RENDER_GL
+void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
+                              int face_num_vertices, GLfloat *us, GLfloat *vs);
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
 #endif
