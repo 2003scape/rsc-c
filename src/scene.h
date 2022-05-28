@@ -6,7 +6,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <time.h>
+#ifdef RENDER_GL
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <SDL2/SDL_opengl.h>
+
+#define CGLM_DEFINE_PRINTS
+#include <cglm/cglm.h>
+
+#include "shader.h"
+#endif
 
 typedef struct Scene Scene;
 
@@ -110,6 +119,14 @@ typedef struct Scene {
     int *sprite_width;
     int *sprite_height;
     int *sprite_translate_x;
+
+#ifdef RENDER_GL
+    Shader game_model_shader;
+    GLuint game_model_vao;
+    GLuint game_model_vbo;
+    GLuint game_model_ebo;
+    GLuint game_model_textures;
+#endif
 } Scene;
 
 int scene_polygon_depth_compare(const void *a, const void *b);

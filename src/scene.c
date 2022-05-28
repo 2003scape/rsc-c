@@ -78,6 +78,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_z = calloc(max_sprite_count, sizeof(int));
     scene->sprite_y = calloc(max_sprite_count, sizeof(int));
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
+
+#ifdef RENDER_GL
+    shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
+#endif
 }
 
 void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
@@ -594,7 +598,8 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
 
         if (j4 < 16) {
             for (int l4 = 0; l4 < j4; l4++) {
-                if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) !=
+                    0) {
                     raster[k2] = colour;
                 }
 
@@ -1108,11 +1113,90 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
 }
 
 void scene_render(Scene *scene) {
+#ifdef RENDER_GL
+    vec3 camera_pos = {scene->camera_x / 1000.0f, scene->camera_y / 1000.0f,
+                       scene->camera_z / 1000.0f};
+
+    vec3 camera_front = {0.0, 0.0, -1.0};
+    vec3 camera_up = {0.0, -1.0, 0.0};
+
+    float yaw = TABLE_TO_RADIANS(scene->camera_pitch);
+    float pitch = TABLE_TO_RADIANS(scene->camera_yaw);
+
+    yaw = glm_rad(90);
+    pitch = 0;
+
+    vec3 front = {cos(yaw) * cos(pitch), -pitch, sin(yaw) * cos(pitch)};
+
+    glm_normalize_to(front, camera_front);
+
+    vec3 camera_centre = {0};
+    glm_vec3_add(camera_pos, camera_front, camera_centre);
+
+    mat4 view = {0};
+    glm_lookat(camera_pos, camera_centre, camera_up, view);
+
+    mat4 projection = {0};
+
+    glm_perspective(
+        glm_rad(38),
+        (float)(scene->surface->width2) / (float)scene->surface->height2,
+        scene->clip_near / 1000.0f, scene->clip_far_3d / 1000.0f, projection);
+
+    /* TODO this could be optional? */
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    shader_use(&scene->game_model_shader);
+    glBindVertexArray(scene->game_model_vao);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
+
+    shader_set_mat4(&scene->game_model_shader, "view", view);
+    shader_set_mat4(&scene->game_model_shader, "projection", projection);
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (game_model->ebo_offset == -1) {
+            continue;
+        }
+
+        if (game_model->visible) {
+            // TODO remove
+            if (game_model->base_x != 4928) {
+                continue;
+            }
+
+            mat4 model = GLM_MAT4_IDENTITY_INIT;
+
+            vec3 translate_model = {game_model->base_x / 1000.0f,
+                                    game_model->base_y / 1000.0f,
+                                    game_model->base_z / 1000.0f};
+
+            glm_translate(model, translate_model);
+
+            shader_set_mat4(&scene->game_model_shader, "model", model);
+
+            glDrawElements(GL_TRIANGLES, game_model->ebo_length,
+                           GL_UNSIGNED_INT,
+                           (void *)(game_model->ebo_offset * sizeof(GLuint)));
+        }
+    }
+#endif
+
+#ifdef RENDER_SW
     scene->interlace = scene->surface->interlace;
 
-    int frustum_x = (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
+    int frustum_x =
+        (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
 
-    int frustum_y = (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
+    int frustum_y =
+        (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
 
     scene_frustum_max_x = 0;
     scene_frustum_min_x = 0;
@@ -1153,6 +1237,13 @@ void scene_render(Scene *scene) {
         GameModel *game_model = scene->models[i];
 
         if (game_model->visible) {
+            // TODO remove
+            if (game_model->base_x != 4928) {
+                continue;
+            }
+
+            // printf("ebo: %d (%d)\n", game_model->ebo_offset);
+
             for (int face = 0; face < game_model->num_faces; face++) {
                 int num_vertices = game_model->face_num_vertices[face];
                 int *face_vertices = game_model->face_vertices[face];
@@ -1193,8 +1284,9 @@ void scene_render(Scene *scene) {
                         int view_y_count = 0;
 
                         for (int vertex = 0; vertex < num_vertices; vertex++) {
-                            int vertex_y = game_model
-                                         ->vertex_view_y[face_vertices[vertex]];
+                            int vertex_y =
+                                game_model
+                                    ->vertex_view_y[face_vertices[vertex]];
 
                             if (vertex_y > -scene->clip_y) {
                                 view_y_count |= 1;
@@ -1251,6 +1343,7 @@ void scene_render(Scene *scene) {
         }
     }
 
+    /*
     GameModel *model_2d = scene->view;
 
     if (model_2d->visible) {
@@ -1288,7 +1381,7 @@ void scene_render(Scene *scene) {
                 }
             }
         }
-    }
+    }*/
 
     if (scene->visible_polygons_count == 0) {
         return;
@@ -1374,9 +1467,12 @@ void scene_render(Scene *scene) {
                     }
                 }
 
-                if (game_model->project_vertex_z[vertex_index] >= scene->clip_near) {
-                    scene->plane_x[k8] = game_model->vertex_view_x[vertex_index];
-                    scene->plane_y[k8] = game_model->vertex_view_y[vertex_index];
+                if (game_model->project_vertex_z[vertex_index] >=
+                    scene->clip_near) {
+                    scene->plane_x[k8] =
+                        game_model->vertex_view_x[vertex_index];
+                    scene->plane_y[k8] =
+                        game_model->vertex_view_y[vertex_index];
                     scene->vertex_shade[k8] = j10;
 
                     if (game_model->project_vertex_z[vertex_index] >
@@ -1392,28 +1488,35 @@ void scene_render(Scene *scene) {
                     int previous_vertex_index = 0;
 
                     if (j == 0) {
-                        previous_vertex_index = face_vertices[face_num_vertices - 1];
+                        previous_vertex_index =
+                            face_vertices[face_num_vertices - 1];
                     } else {
                         previous_vertex_index = face_vertices[j - 1];
                     }
 
-                    if (game_model->project_vertex_z[previous_vertex_index] >= scene->clip_near) {
-                        int k7 = game_model->project_vertex_z[vertex_index] -
-                                 game_model->project_vertex_z[previous_vertex_index];
+                    if (game_model->project_vertex_z[previous_vertex_index] >=
+                        scene->clip_near) {
+                        int k7 =
+                            game_model->project_vertex_z[vertex_index] -
+                            game_model->project_vertex_z[previous_vertex_index];
 
-                        int i5 = game_model->project_vertex_x[vertex_index] -
-                                 ((game_model->project_vertex_x[vertex_index] -
-                                    game_model->project_vertex_x[previous_vertex_index]) *
-                                   (game_model->project_vertex_z[vertex_index] -
-                                    scene->clip_near)) /
-                                  k7;
+                        int i5 =
+                            game_model->project_vertex_x[vertex_index] -
+                            ((game_model->project_vertex_x[vertex_index] -
+                              game_model
+                                  ->project_vertex_x[previous_vertex_index]) *
+                             (game_model->project_vertex_z[vertex_index] -
+                              scene->clip_near)) /
+                                k7;
 
-                        int j6 = game_model->project_vertex_y[vertex_index] -
-                                 ((game_model->project_vertex_y[vertex_index] -
-                                    game_model->project_vertex_y[previous_vertex_index]) *
-                                   (game_model->project_vertex_z[vertex_index] -
-                                    scene->clip_near)) /
-                                  k7;
+                        int j6 =
+                            game_model->project_vertex_y[vertex_index] -
+                            ((game_model->project_vertex_y[vertex_index] -
+                              game_model
+                                  ->project_vertex_y[previous_vertex_index]) *
+                             (game_model->project_vertex_z[vertex_index] -
+                              scene->clip_near)) /
+                                k7;
 
                         scene->plane_x[k8] =
                             (i5 << scene->view_distance) / scene->clip_near;
@@ -1431,23 +1534,34 @@ void scene_render(Scene *scene) {
                         previous_vertex_index = face_vertices[j + 1];
                     }
 
-                    if (game_model->project_vertex_z[previous_vertex_index] >= scene->clip_near) {
-                        int l7 = game_model->project_vertex_z[vertex_index] -
-                                 game_model->project_vertex_z[previous_vertex_index];
+                    if (game_model->project_vertex_z[previous_vertex_index] >=
+                        scene->clip_near) {
+                        int l7 =
+                            game_model->project_vertex_z[vertex_index] -
+                            game_model->project_vertex_z[previous_vertex_index];
 
-                        int j5 = game_model->project_vertex_x[vertex_index] -
-                                 ((game_model->project_vertex_x[previous_vertex_index] -
-                                    game_model->project_vertex_x[previous_vertex_index]) *
-                                   (game_model->project_vertex_z[previous_vertex_index] -
-                                    scene->clip_near)) /
-                                  l7;
+                        int j5 =
+                            game_model->project_vertex_x[vertex_index] -
+                            ((game_model
+                                  ->project_vertex_x[previous_vertex_index] -
+                              game_model
+                                  ->project_vertex_x[previous_vertex_index]) *
+                             (game_model
+                                  ->project_vertex_z[previous_vertex_index] -
+                              scene->clip_near)) /
+                                l7;
 
-                        int k6 = game_model->project_vertex_y[previous_vertex_index] -
-                                 ((game_model->project_vertex_y[previous_vertex_index] -
-                                    game_model->project_vertex_y[previous_vertex_index]) *
-                                   (game_model->project_vertex_z[previous_vertex_index] -
-                                    scene->clip_near)) /
-                                  l7;
+                        int k6 =
+                            game_model
+                                ->project_vertex_y[previous_vertex_index] -
+                            ((game_model
+                                  ->project_vertex_y[previous_vertex_index] -
+                              game_model
+                                  ->project_vertex_y[previous_vertex_index]) *
+                             (game_model
+                                  ->project_vertex_z[previous_vertex_index] -
+                              scene->clip_near)) /
+                                l7;
 
                         scene->plane_x[k8] =
                             (j5 << scene->view_distance) / scene->clip_near;
@@ -1487,6 +1601,7 @@ void scene_render(Scene *scene) {
             }
         }
     }
+#endif
 
     scene->mouse_picking_active = 0;
 }
@@ -2864,13 +2979,17 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
         int first_vertex_index = face_vertices_b[0];
         int second_vertex_index = face_vertices_b[1];
 
-        vertex_view_x_b[0] = game_model_b->vertex_view_x[first_vertex_index] - 20;
+        vertex_view_x_b[0] =
+            game_model_b->vertex_view_x[first_vertex_index] - 20;
 
-        vertex_view_x_b[1] = game_model_b->vertex_view_x[second_vertex_index] - 20;
+        vertex_view_x_b[1] =
+            game_model_b->vertex_view_x[second_vertex_index] - 20;
 
-        vertex_view_x_b[2] = game_model_b->vertex_view_x[second_vertex_index] + 20;
+        vertex_view_x_b[2] =
+            game_model_b->vertex_view_x[second_vertex_index] + 20;
 
-        vertex_view_x_b[3] = game_model_b->vertex_view_x[first_vertex_index] + 20;
+        vertex_view_x_b[3] =
+            game_model_b->vertex_view_x[first_vertex_index] + 20;
 
         vertex_view_y_b[0] = vertex_view_y_b[3] =
             game_model_b->vertex_view_y[first_vertex_index];
@@ -2917,11 +3036,16 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     for (int i = 0; i < face_num_vertices_a; i++) {
         int vertex_index = face_vertices_a[i];
 
-        int magnitude = (first_project_x - game_model_a->project_vertex_x[vertex_index]) * normal_x +
-                 (first_project_y - game_model_a->project_vertex_y[vertex_index]) * normal_y +
-                 (first_project_z - game_model_a->project_vertex_z[vertex_index]) * normal_z;
+        int magnitude =
+            (first_project_x - game_model_a->project_vertex_x[vertex_index]) *
+                normal_x +
+            (first_project_y - game_model_a->project_vertex_y[vertex_index]) *
+                normal_y +
+            (first_project_z - game_model_a->project_vertex_z[vertex_index]) *
+                normal_z;
 
-        if ((magnitude >= -normal_magnitude || visibility >= 0) && (magnitude <= normal_magnitude || visibility <= 0)) {
+        if ((magnitude >= -normal_magnitude || visibility >= 0) &&
+            (magnitude <= normal_magnitude || visibility <= 0)) {
             continue;
         }
 
@@ -2946,11 +3070,16 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     for (int i = 0; i < face_num_vertices_b; i++) {
         int vertex_index = face_vertices_b[i];
 
-        int magnitude = (first_project_x - game_model_b->project_vertex_x[vertex_index]) * normal_x +
-                 (first_project_y - game_model_b->project_vertex_y[vertex_index]) * normal_y +
-                 (first_project_z - game_model_b->project_vertex_z[vertex_index]) * normal_z;
+        int magnitude =
+            (first_project_x - game_model_b->project_vertex_x[vertex_index]) *
+                normal_x +
+            (first_project_y - game_model_b->project_vertex_y[vertex_index]) *
+                normal_y +
+            (first_project_z - game_model_b->project_vertex_z[vertex_index]) *
+                normal_z;
 
-        if ((magnitude >= -normal_magnitude || visibility <= 0) && (magnitude <= normal_magnitude || visibility >= 0)) {
+        if ((magnitude >= -normal_magnitude || visibility <= 0) &&
+            (magnitude <= normal_magnitude || visibility >= 0)) {
             continue;
         }
 

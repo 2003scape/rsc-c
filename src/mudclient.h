@@ -207,6 +207,9 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
+extern int test_x;
+extern int test_y;
+extern int test_z;
 extern int test_yaw; // TODO remove
 
 extern char *font_files[];
@@ -795,14 +798,6 @@ typedef struct mudclient {
 
     /* TODO should we combine the trade/duel item arrays + props? they're never
      * simultaneous */
-
-#ifdef RENDER_GL
-    Shader game_model_shader;
-    GLuint game_model_vao;
-    GLuint game_model_vbo;
-    GLuint game_model_ebo;
-    GLuint game_model_textures;
-#endif
 } mudclient;
 
 void mudclient_new(mudclient *mud);

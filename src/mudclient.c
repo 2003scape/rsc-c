@@ -345,11 +345,10 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 }
 #endif
 
-int test_x = 0;
-int test_y = 0;
-int test_z = 0;
+int test_x = 520;
+int test_y = -106;
+int test_z = 750;
 int test_yaw = 0;
-int test_toggle = 0;
 
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
@@ -1389,8 +1388,8 @@ void mudclient_load_textures(mudclient *mud) {
     char file_name[255] = {0};
 
 #ifdef RENDER_GL
-    glGenTextures(1, &mud->game_model_textures);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, mud->game_model_textures);
+    glGenTextures(1, &mud->scene->game_model_textures);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, mud->scene->game_model_textures);
 
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1543,8 +1542,6 @@ void mudclient_load_models(mudclient *mud) {
     free(models_jag);
 
 #ifdef RENDER_GL
-    shader_new(&mud->game_model_shader, "./game-model.vs", "./game-model.fs");
-
     int total_vertices = 0;
     int total_ebo_length = 0;
 
@@ -1562,11 +1559,11 @@ void mudclient_load_models(mudclient *mud) {
         total_ebo_length += game_model->ebo_length;
     }
 
-    glGenVertexArrays(1, &mud->game_model_vao);
-    glBindVertexArray(mud->game_model_vao);
+    glGenVertexArrays(1, &mud->scene->game_model_vao);
+    glBindVertexArray(mud->scene->game_model_vao);
 
-    glGenBuffers(1, &mud->game_model_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mud->game_model_vbo);
+    glGenBuffers(1, &mud->scene->game_model_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mud->scene->game_model_vbo);
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 10 * total_vertices, NULL,
                  GL_STATIC_DRAW);
@@ -1589,8 +1586,8 @@ void mudclient_load_models(mudclient *mud) {
 
     glEnableVertexAttribArray(2);
 
-    glGenBuffers(1, &mud->game_model_ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->game_model_ebo);
+    glGenBuffers(1, &mud->scene->game_model_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->game_model_ebo);
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_ebo_length * sizeof(GLuint),
                  NULL, GL_STATIC_DRAW);
@@ -1604,7 +1601,7 @@ void mudclient_load_models(mudclient *mud) {
         game_model_gl_buffer_arrays(game_model, &total_vertices,
                                     &total_ebo_length);
 
-        if (i > 10) {
+        if (i > 3) {
             break;
         }
     }
@@ -3959,89 +3956,15 @@ void mudclient_draw_game(mudclient *mud) {
     surface_black_screen(mud->surface);
 
 #ifdef RENDER_SW
-    if (test_toggle) {
-        mud->scene->camera_x += test_x;
-        mud->scene->camera_y += test_y;
-        mud->scene->camera_z += test_z;
-    }
+    mud->scene->camera_x += test_x;
+    mud->scene->camera_y += test_y;
+    mud->scene->camera_z += test_z;
 
     scene_render(mud->scene);
 
-    if (test_toggle) {
-        mud->scene->camera_x -= test_x;
-        mud->scene->camera_y -= test_y;
-        mud->scene->camera_z -= test_z;
-    }
-#endif
-
-#ifdef RENDER_GL
-    char debug[255] = {0};
-
-    sprintf(debug, "yaw: %d", test_yaw);
-
-    surface_draw_string(mud->surface, debug, 5, 12, 4, WHITE);
-
-    sprintf(debug, "camera (x, y, z): %d (%d), %d (%d), %d (%d)",
-            mud->scene->camera_x, test_x, mud->scene->camera_y, test_y,
-            mud->scene->camera_z, test_z);
-
-    surface_draw_string(mud->surface, debug, 5, 26, 4, WHITE);
-
-    vec3 camera_pos = {(mud->scene->camera_x + test_x) / 1000.0f,
-                       (mud->scene->camera_y + test_y) / 1000.0f,
-                       (mud->scene->camera_z + test_z) / 1000.0f};
-
-    vec3 camera_front = {0.0, 0.0, -1.0};
-    vec3 camera_up = {0.0, -1.0, 0.0};
-
-    float yaw = TABLE_TO_RADIANS(mud->scene->camera_pitch);
-    float pitch = TABLE_TO_RADIANS(mud->scene->camera_yaw);
-
-    yaw = glm_rad(90);
-    pitch = 0;
-
-    vec3 front = {cos(yaw) * cos(pitch), -pitch, sin(yaw) * cos(pitch)};
-
-    glm_normalize_to(front, camera_front);
-
-    vec3 camera_centre = {0};
-    glm_vec3_add(camera_pos, camera_front, camera_centre);
-
-    mat4 view = {0};
-    glm_lookat(camera_pos, camera_centre, camera_up, view);
-
-    mat4 projection = {0};
-
-    glm_perspective(glm_rad(38),
-                    (float)(mud->surface->width2) /
-                        (float)mud->surface->height2,
-                    mud->scene->clip_near / 1000.0f,
-                    mud->scene->clip_far_3d / 1000.0f, projection);
-
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    shader_use(&mud->game_model_shader);
-    glBindVertexArray(mud->game_model_vao);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, mud->game_model_textures);
-
-    mat4 model = GLM_MAT4_IDENTITY_INIT;
-
-    vec3 translate_model = {4928 / 1000.0f, -372 / 1000.0f, 6720 / 1000.0f};
-
-    glm_translate(model, translate_model);
-
-    // base 4928 -372 6720
-
-    shader_set_mat4(&mud->game_model_shader, "model", model);
-    shader_set_mat4(&mud->game_model_shader, "view", view);
-    shader_set_mat4(&mud->game_model_shader, "projection", projection);
-
-    glDrawElements(GL_TRIANGLES, mud->game_models[0]->ebo_length,
-                   GL_UNSIGNED_INT,
-                   (void *)(mud->game_models[0]->ebo_offset * sizeof(GLuint)));
+    mud->scene->camera_x -= test_x;
+    mud->scene->camera_y -= test_y;
+    mud->scene->camera_z -= test_z;
 #endif
 
     mudclient_draw_overhead(mud);
@@ -4153,7 +4076,7 @@ void mudclient_draw(mudclient *mud) {
 #ifdef RENDER_GL
     // if (!mud->surface->fade_to_black) {
     glClear(GL_COLOR_BUFFER_BIT);
-    //}
+    // }
 #endif
 
     if (mud->logged_in == 0) {
@@ -4659,8 +4582,6 @@ void mudclient_poll_events(mudclient *mud) {
                 test_z -= mag;
             } else if (code == 100) {
                 test_z += mag;
-            } else if (code == 103) {
-                test_toggle = !test_toggle;
             } else if (code == 114) {
                 test_yaw += 1;
             } else if (code == 102) {

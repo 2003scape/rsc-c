@@ -18,6 +18,10 @@ void game_model_new(GameModel *game_model) {
     game_model->light_direction_y = 155;
     game_model->light_direction_z = 95;
     game_model->light_direction_magnitude = 256;
+
+#ifdef RENDER_GL
+    game_model->ebo_offset = -1;
+#endif
 }
 
 void game_model_from2(GameModel *game_model, int num_vertices, int num_faces) {
@@ -941,6 +945,11 @@ GameModel *game_model_copy(GameModel *game_model) {
     copy->depth = game_model->depth;
     copy->transparent = game_model->transparent;
 
+#ifdef RENDER_GL
+    copy->ebo_offset = game_model->ebo_offset;
+    copy->ebo_length = game_model->ebo_length;
+#endif
+
     free(pieces);
 
     return copy;
@@ -1182,11 +1191,11 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
         }
 
         if (i == 0 || x > max_y) {
-            max_y = x;
+            max_y = y;
         }
 
         if (i == 0 || x < min_y) {
-            min_y = x;
+            min_y = y;
         }
 
         us[i] = x;

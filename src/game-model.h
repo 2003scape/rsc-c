@@ -7,6 +7,10 @@
 #include <stdlib.h>
 
 #ifdef RENDER_GL
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <SDL2/SDL_opengl.h>
+
 #define CGLM_DEFINE_PRINTS
 #include <cglm/cglm.h>
 #endif
