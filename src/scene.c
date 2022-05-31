@@ -1121,13 +1121,17 @@ void scene_render(Scene *scene) {
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, -1.0, 0.0};
 
-    float yaw = TABLE_TO_RADIANS(scene->camera_pitch);
-    float pitch = TABLE_TO_RADIANS(scene->camera_yaw);
+    float fov = test_yaw;
 
-    yaw = glm_rad(90);
-    pitch = 0;
+    float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048); // works
+    float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
+    //pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048); // works
 
-    vec3 front = {cos(yaw) * cos(pitch), -pitch, sin(yaw) * cos(pitch)};
+    vec3 front = {
+        cos(yaw) * cos(pitch),
+        pitch,
+        sin(yaw) * cos(pitch)
+    };
 
     glm_normalize_to(front, camera_front);
 
@@ -1140,7 +1144,7 @@ void scene_render(Scene *scene) {
     mat4 projection = {0};
 
     glm_perspective(
-        glm_rad(38),
+        glm_rad(fov),
         (float)(scene->surface->width2) / (float)scene->surface->height2,
         scene->clip_near / 1000.0f, scene->clip_far_3d / 1000.0f, projection);
 
@@ -1175,15 +1179,8 @@ void scene_render(Scene *scene) {
 
             test_model = game_model;
 
-            mat4 model = GLM_MAT4_IDENTITY_INIT;
-
-            vec3 translate_model = {game_model->base_x / 1000.0f,
-                                    game_model->base_y / 1000.0f,
-                                    game_model->base_z / 1000.0f};
-
-            glm_translate(model, translate_model);
-
-            shader_set_mat4(&scene->game_model_shader, "model", model);
+            shader_set_mat4(&scene->game_model_shader, "model",
+                            game_model->transform);
 
             glDrawElements(GL_TRIANGLES, game_model->ebo_length,
                            GL_UNSIGNED_INT,
@@ -1244,8 +1241,6 @@ void scene_render(Scene *scene) {
             if (game_model->base_x != 4928) {
                 continue;
             }
-
-            // printf("ebo: %d (%d)\n", game_model->ebo_offset);
 
             for (int face = 0; face < game_model->num_faces; face++) {
                 int num_vertices = game_model->face_num_vertices[face];
@@ -2635,15 +2630,15 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     roll &= 1023;
 
     // TODO remove
-    yaw = 0;
-    pitch = 0;
+    //yaw = 0;
+    //pitch = 0;
     roll = 0;
 
     scene->camera_yaw = (1024 - yaw) & 1023; // pitch
-
-    // TODO i think this is the yaw
     scene->camera_pitch = (1024 - pitch) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
+
+    //printf("%d\n",
 
     int offset_x = 0;
     int offset_y = 0;

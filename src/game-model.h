@@ -15,6 +15,12 @@
 #include <cglm/cglm.h>
 #endif
 
+#define GAME_MODEL_TRANSFORM_BEGIN 1
+#define GAME_MODEL_TRANSFORM_RESET 2
+
+#define GAME_MODEL_TRANSFORM_TRANSLATE 1
+#define GAME_MODEL_TRANSFORM_ROTATE 2
+
 typedef struct GameModel GameModel;
 
 #include "scene.h"
@@ -87,6 +93,7 @@ typedef struct GameModel {
 #ifdef RENDER_GL
     int ebo_offset;
     int ebo_length;
+    mat4 transform;
 #endif
 } GameModel;
 
@@ -134,6 +141,7 @@ void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
 void game_model_compute_bounds(GameModel *game_model);
 void game_model_light(GameModel *game_model);
 void game_model_relight(GameModel *game_model);
+void game_model_reset_transform(GameModel *game_model);
 void game_model_apply(GameModel *game_model);
 void game_model_project(GameModel *game_model, int camera_x, int camera_y,
                         int camera_z, int camera_pitch, int camera_roll,

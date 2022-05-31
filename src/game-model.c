@@ -485,7 +485,7 @@ void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll) {
     game_model->orientation_pitch = pitch & 255;
     game_model->orientation_roll = roll & 255;
     game_model_determine_transform_kind(game_model);
-    game_model->transform_state = 1;
+    game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 }
 
 void game_model_rotate(GameModel *game_model, int yaw, int pitch, int roll) {
@@ -499,7 +499,7 @@ void game_model_place(GameModel *game_model, int x, int y, int z) {
     game_model->base_y = y;
     game_model->base_z = z;
     game_model_determine_transform_kind(game_model);
-    game_model->transform_state = 1;
+    game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 }
 
 void game_model_translate(GameModel *game_model, int x, int y, int z) {
@@ -509,12 +509,12 @@ void game_model_translate(GameModel *game_model, int x, int y, int z) {
 
 void game_model_determine_transform_kind(GameModel *game_model) {
     if (game_model->orientation_yaw != 0 ||
-               game_model->orientation_pitch != 0 ||
-               game_model->orientation_roll != 0) {
-        game_model->transform_kind = 2;
+        game_model->orientation_pitch != 0 ||
+        game_model->orientation_roll != 0) {
+        game_model->transform_kind = GAME_MODEL_TRANSFORM_ROTATE;
     } else if (game_model->base_x != 0 || game_model->base_y != 0 ||
                game_model->base_z != 0) {
-        game_model->transform_kind = 1;
+        game_model->transform_kind = GAME_MODEL_TRANSFORM_TRANSLATE;
     } else {
         game_model->transform_kind = 0;
     }
@@ -732,17 +732,17 @@ void game_model_relight(GameModel *game_model) {
     }
 
     for (int i = 0; i < game_model->num_faces; i++) {
-        int *verts = game_model->face_vertices[i];
+        int *face_vertices = game_model->face_vertices[i];
 
-        int a_x = game_model->vertex_transformed_x[verts[0]];
-        int a_y = game_model->vertex_transformed_y[verts[0]];
-        int a_z = game_model->vertex_transformed_z[verts[0]];
-        int b_x = game_model->vertex_transformed_x[verts[1]] - a_x;
-        int b_y = game_model->vertex_transformed_y[verts[1]] - a_y;
-        int b_z = game_model->vertex_transformed_z[verts[1]] - a_z;
-        int c_x = game_model->vertex_transformed_x[verts[2]] - a_x;
-        int c_y = game_model->vertex_transformed_y[verts[2]] - a_y;
-        int c_z = game_model->vertex_transformed_z[verts[2]] - a_z;
+        int a_x = game_model->vertex_transformed_x[face_vertices[0]];
+        int a_y = game_model->vertex_transformed_y[face_vertices[0]];
+        int a_z = game_model->vertex_transformed_z[face_vertices[0]];
+        int b_x = game_model->vertex_transformed_x[face_vertices[1]] - a_x;
+        int b_y = game_model->vertex_transformed_y[face_vertices[1]] - a_y;
+        int b_z = game_model->vertex_transformed_z[face_vertices[1]] - a_z;
+        int c_x = game_model->vertex_transformed_x[face_vertices[2]] - a_x;
+        int c_y = game_model->vertex_transformed_y[face_vertices[2]] - a_y;
+        int c_z = game_model->vertex_transformed_z[face_vertices[2]] - a_z;
 
         int norm_x = b_y * c_z - c_y * b_z;
         int norm_y = b_z * c_x - c_z * b_x;
@@ -772,19 +772,25 @@ void game_model_relight(GameModel *game_model) {
     game_model_light(game_model);
 }
 
-void game_model_apply(GameModel *game_model) {
-    if (game_model == test_model) {
-        //printf("hello\n");
+void game_model_reset_transform(GameModel *game_model) {
+    game_model->transform_state = 0;
+
+#ifdef RENDER_SW
+    for (int i = 0; i < game_model->num_vertices; i++) {
+        game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
+        game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
+        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
     }
+#endif
 
-    if (game_model->transform_state == 2) {
-        game_model->transform_state = 0;
+#ifdef RENDER_GL
+    glm_mat4_identity(game_model->transform);
+#endif
+}
 
-        for (int i = 0; i < game_model->num_vertices; i++) {
-            game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
-            game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
-            game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
-        }
+void game_model_apply(GameModel *game_model) {
+    if (game_model->transform_state == GAME_MODEL_TRANSFORM_RESET) {
+        game_model_reset_transform(game_model);
 
         game_model->x1 = -9999999;
         game_model->y1 = -9999999;
@@ -793,27 +799,47 @@ void game_model_apply(GameModel *game_model) {
         game_model->x2 = 9999999;
         game_model->y2 = 9999999;
         game_model->z2 = 9999999;
-    } else if (game_model->transform_state == 1) {
-        game_model->transform_state = 0;
+    } else if (game_model->transform_state == GAME_MODEL_TRANSFORM_BEGIN) {
+        game_model_reset_transform(game_model);
 
-        for (int i = 0; i < game_model->num_vertices; i++) {
-            game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
-            game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
-            game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
+#ifdef RENDER_GL
+        if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_TRANSLATE) {
+            glm_translate(game_model->transform,
+                          (vec3){game_model->base_x / 1000.0f,
+                                 game_model->base_y / 1000.0f,
+                                 game_model->base_z / 1000.0f});
         }
 
-        if (game_model->transform_kind >= 2) {
+        if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_ROTATE) {
+            glm_rotate(game_model->transform,
+                       TABLE_TO_RADIANS(game_model->orientation_yaw, 512),
+                       (vec3){1.0f, 0.0f, 0.0f});
+
+            glm_rotate(game_model->transform,
+                       TABLE_TO_RADIANS(game_model->orientation_pitch, 512),
+                       (vec3){0.0f, 1.0f, 0.0f});
+
+            glm_rotate(game_model->transform,
+                       TABLE_TO_RADIANS(game_model->orientation_roll, 512),
+                       (vec3){0.0f, 0.0f, -1.0f});
+        }
+#endif
+
+#ifdef RENDER_SW
+        if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_ROTATE) {
             game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
                                       game_model->orientation_roll);
         }
 
-        if (game_model->transform_kind >= 1) {
+        if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_TRANSLATE) {
             game_model_apply_translate(game_model, game_model->base_x,
                                        game_model->base_y, game_model->base_z);
         }
 
         game_model_compute_bounds(game_model);
+#endif
+
         game_model_relight(game_model);
     }
 }

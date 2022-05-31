@@ -345,10 +345,13 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 }
 #endif
 
-int test_x = 520;
+/*int test_x = 520;
 int test_y = -106;
-int test_z = 750;
-int test_yaw = 0;
+int test_z = 750;*/
+int test_x = 0;
+int test_y = 0;
+int test_z = 0;
+int test_yaw = 38;
 GameModel *test_model = NULL;
 
 void mudclient_new(mudclient *mud) {
@@ -364,7 +367,8 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    mud->server = "192.168.100.103";
+    //mud->server = "192.168.100.103";
+    mud->server = "127.0.0.1";
     mud->port = 43594;
     // mud->server = "162.198.202.160"; /* openrsc preservation */
     // mud->port = 43596;
@@ -4585,13 +4589,17 @@ void mudclient_poll_events(mudclient *mud) {
                 test_z += mag;
             } else if (code == 114) {
                 test_yaw += 1;
+
+                printf("yaw: %d\n", test_yaw);
             } else if (code == 102) {
                 test_yaw -= 1;
+
+                printf("yaw: %d\n", test_yaw);
             }
 
-            if (test_model) {
-                game_model_orient(test_model, test_yaw, 0, 0);
-            }
+            /*if (test_model) {
+                game_model_orient(test_model, 0, 0, test_yaw);
+            }*/
 
             // printf("%d\n", code);
 
