@@ -65,6 +65,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     GameModel *view = malloc(sizeof(GameModel));
 
+    /* 2D sprites */
     game_model_from2(view, scene->max_sprite_count * 2,
                      scene->max_sprite_count);
 
@@ -1171,6 +1172,8 @@ void scene_render(Scene *scene) {
             if (game_model->base_x != 4928) {
                 continue;
             }
+
+            test_model = game_model;
 
             mat4 model = GLM_MAT4_IDENTITY_INIT;
 

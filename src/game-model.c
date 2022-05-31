@@ -149,9 +149,6 @@ void game_model_reset(GameModel *game_model) {
     game_model->orientation_yaw = 0;
     game_model->orientation_pitch = 0;
     game_model->orientation_roll = 0;
-    game_model->scale_fx = 256;
-    game_model->scale_fy = 256;
-    game_model->scale_fz = 256;
     game_model->transform_kind = 0;
 }
 
@@ -483,31 +480,20 @@ void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
     game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
-void game_model_rotate(GameModel *game_model, int yaw, int pitch, int roll) {
-    game_model->orientation_yaw = (game_model->orientation_yaw + yaw) & 0xff;
-
-    game_model->orientation_pitch =
-        (game_model->orientation_pitch + pitch) & 0xff;
-
-    game_model->orientation_roll = (game_model->orientation_roll + roll) & 0xff;
-    game_model_determine_transform_kind(game_model);
-    game_model->transform_state = 1;
-}
-
 void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll) {
     game_model->orientation_yaw = yaw & 0xff;
     game_model->orientation_pitch = pitch & 0xff;
     game_model->orientation_roll = roll & 0xff;
+
     game_model_determine_transform_kind(game_model);
+
     game_model->transform_state = 1;
 }
 
-void game_model_translate(GameModel *game_model, int x, int y, int z) {
-    game_model->base_x += x;
-    game_model->base_y += y;
-    game_model->base_z += z;
-    game_model_determine_transform_kind(game_model);
-    game_model->transform_state = 1;
+void game_model_rotate(GameModel *game_model, int yaw, int pitch, int roll) {
+    game_model_orient(game_model, game_model->orientation_yaw + yaw,
+                      game_model->orientation_pitch + pitch,
+                      game_model->orientation_roll + roll);
 }
 
 void game_model_place(GameModel *game_model, int x, int y, int z) {
@@ -518,11 +504,13 @@ void game_model_place(GameModel *game_model, int x, int y, int z) {
     game_model->transform_state = 1;
 }
 
+void game_model_translate(GameModel *game_model, int x, int y, int z) {
+    game_model_place(game_model, game_model->base_x + x, game_model->base_y + y,
+                     game_model->base_z + z);
+}
+
 void game_model_determine_transform_kind(GameModel *game_model) {
-    if (game_model->scale_fx != 256 || game_model->scale_fy != 256 ||
-        game_model->scale_fz != 256) {
-        game_model->transform_kind = 3;
-    } else if (game_model->orientation_yaw != 0 ||
+    if (game_model->orientation_yaw != 0 ||
                game_model->orientation_pitch != 0 ||
                game_model->orientation_roll != 0) {
         game_model->transform_kind = 2;
@@ -800,6 +788,10 @@ void game_model_relight(GameModel *game_model) {
 }
 
 void game_model_apply(GameModel *game_model) {
+    if (game_model == test_model) {
+        //printf("hello\n");
+    }
+
     if (game_model->transform_state == 2) {
         game_model->transform_state = 0;
 
@@ -829,11 +821,6 @@ void game_model_apply(GameModel *game_model) {
             game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
                                       game_model->orientation_roll);
-        }
-
-        if (game_model->transform_kind >= 3) {
-            game_model_apply_scale(game_model, game_model->scale_fx,
-                                   game_model->scale_fy, game_model->scale_fz);
         }
 
         if (game_model->transform_kind >= 1) {

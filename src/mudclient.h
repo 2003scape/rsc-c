@@ -210,7 +210,8 @@ typedef struct mudclient mudclient;
 extern int test_x;
 extern int test_y;
 extern int test_z;
-extern int test_yaw; // TODO remove
+extern int test_yaw;
+extern GameModel *test_model; // TODO remove
 
 extern char *font_files[];
 extern char *animated_models[];

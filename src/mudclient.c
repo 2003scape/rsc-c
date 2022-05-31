@@ -349,6 +349,7 @@ int test_x = 520;
 int test_y = -106;
 int test_z = 750;
 int test_yaw = 0;
+GameModel *test_model = NULL;
 
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
@@ -4586,6 +4587,10 @@ void mudclient_poll_events(mudclient *mud) {
                 test_yaw += 1;
             } else if (code == 102) {
                 test_yaw -= 1;
+            }
+
+            if (test_model) {
+                game_model_orient(test_model, test_yaw, 0, 0);
             }
 
             // printf("%d\n", code);

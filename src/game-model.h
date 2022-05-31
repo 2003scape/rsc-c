@@ -76,9 +76,6 @@ typedef struct GameModel {
     int orientation_yaw;
     int orientation_pitch;
     int orientation_roll;
-    int scale_fx;
-    int scale_fy;
-    int scale_fz;
     int transform_kind;
     int diameter;
     int light_direction_x;
