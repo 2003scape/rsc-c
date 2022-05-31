@@ -123,15 +123,14 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
                                 int ambience, int diffuse, int x, int y, int z);
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience);
-void game_model_rotate(GameModel *game_model, int yaw, int pitch, int roll);
 void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll);
-void game_model_translate(GameModel *game_model, int x, int y, int z);
+void game_model_rotate(GameModel *game_model, int yaw, int pitch, int roll);
 void game_model_place(GameModel *game_model, int x, int y, int z);
+void game_model_translate(GameModel *game_model, int x, int y, int z);
 void game_model_determine_transform_kind(GameModel *game_model);
 void game_model_apply_translate(GameModel *game_model, int dx, int dy, int dz);
 void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
                                int pitch);
-void game_model_apply_scale(GameModel *game_model, int fx, int fy, int fz);
 void game_model_compute_bounds(GameModel *game_model);
 void game_model_light(GameModel *game_model);
 void game_model_relight(GameModel *game_model);

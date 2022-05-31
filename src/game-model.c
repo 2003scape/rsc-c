@@ -481,12 +481,10 @@ void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
 }
 
 void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll) {
-    game_model->orientation_yaw = yaw & 0xff;
-    game_model->orientation_pitch = pitch & 0xff;
-    game_model->orientation_roll = roll & 0xff;
-
+    game_model->orientation_yaw = yaw & 255;
+    game_model->orientation_pitch = pitch & 255;
+    game_model->orientation_roll = roll & 255;
     game_model_determine_transform_kind(game_model);
-
     game_model->transform_state = 1;
 }
 
@@ -580,19 +578,6 @@ void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
 
             game_model->vertex_transformed_x[i] = x;
         }
-    }
-}
-
-void game_model_apply_scale(GameModel *game_model, int fx, int fy, int fz) {
-    for (int i = 0; i < game_model->num_vertices; i++) {
-        game_model->vertex_transformed_x[i] =
-            (game_model->vertex_transformed_x[i] * fx) >> 8;
-
-        game_model->vertex_transformed_y[i] =
-            (game_model->vertex_transformed_y[i] * fy) >> 8;
-
-        game_model->vertex_transformed_z[i] =
-            (game_model->vertex_transformed_z[i] * fz) >> 8;
     }
 }
 
@@ -713,14 +698,14 @@ void game_model_light(GameModel *game_model) {
 
     for (int i = 0; i < game_model->num_faces; i++) {
         if (game_model->face_intensity[i] == COLOUR_TRANSPARENT) {
-            for (int v = 0; v < game_model->face_num_vertices[i]; v++) {
-                int k1 = game_model->face_vertices[i][v];
+            for (int j = 0; j < game_model->face_num_vertices[i]; j++) {
+                int vertex_index = game_model->face_vertices[i][j];
 
-                normal_x[k1] += game_model->face_normal_x[i];
-                normal_y[k1] += game_model->face_normal_y[i];
-                normal_z[k1] += game_model->face_normal_z[i];
+                normal_x[vertex_index] += game_model->face_normal_x[i];
+                normal_y[vertex_index] += game_model->face_normal_y[i];
+                normal_z[vertex_index] += game_model->face_normal_z[i];
 
-                normal_magnitude[k1]++;
+                normal_magnitude[vertex_index]++;
             }
         }
     }
