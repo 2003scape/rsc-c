@@ -1606,7 +1606,7 @@ void mudclient_load_models(mudclient *mud) {
         game_model_gl_buffer_arrays(game_model, &total_vertices,
                                     &total_ebo_length);
 
-        if (i > 3) {
+        if (i >= 1) {
             break;
         }
     }

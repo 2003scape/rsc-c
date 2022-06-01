@@ -1115,6 +1115,7 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
 
 void scene_render(Scene *scene) {
 #ifdef RENDER_GL
+//#if 0
     vec3 camera_pos = {scene->camera_x / 1000.0f, scene->camera_y / 1000.0f,
                        scene->camera_z / 1000.0f};
 
@@ -1174,7 +1175,7 @@ void scene_render(Scene *scene) {
         if (game_model->visible) {
             // TODO remove
             if (game_model->base_x != 4928) {
-                continue;
+                //continue;
             }
 
             test_model = game_model;
@@ -1239,7 +1240,7 @@ void scene_render(Scene *scene) {
         if (game_model->visible) {
             // TODO remove
             if (game_model->base_x != 4928) {
-                continue;
+                //continue;
             }
 
             for (int face = 0; face < game_model->num_faces; face++) {
@@ -2637,8 +2638,6 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     scene->camera_yaw = (1024 - yaw) & 1023; // pitch
     scene->camera_pitch = (1024 - pitch) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
-
-    //printf("%d\n",
 
     int offset_x = 0;
     int offset_y = 0;

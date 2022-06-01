@@ -1175,7 +1175,10 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
 
     for (int i = 0; i < face_num_vertices; i++) {
         vec3 vertex = {0};
-        glm_vec3_sub(vertices[i], vertices[0], vertex);
+        //glm_vec3_sub(vertices[i], vertices[0], vertex);
+        vertex[0] = vertices[i][0];
+        vertex[1] = vertices[i][1];
+        vertex[2] = vertices[i][2];
 
         GLfloat x = glm_vec3_dot(vertex, location_x);
         GLfloat y = glm_vec3_dot(vertex, location_y);
@@ -1204,8 +1207,8 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
         GLfloat x = us[i];
         GLfloat y = vs[i];
 
-        us[i] = (x - min_x) / (max_x - min_x);
-        vs[i] = 1.0f - ((y - min_y) / (max_y - min_y));
+        us[i] = fabs((x - min_x) / (max_x - min_x));
+        vs[i] = fabs((y - min_y) / (max_y - min_y));
     }
 }
 
