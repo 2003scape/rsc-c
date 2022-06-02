@@ -186,8 +186,8 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
 int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128);
-void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
-                          int32_t *colours, int wide128);
+void scene_define_texture(Scene *scene, int id, int8_t *colours,
+                          int32_t *palette, int wide128);
 void scene_prepare_texture(Scene *scene, int id);
 void scene_set_texture_pixels(Scene *scene, int id);
 void scene_scroll_texture(Scene *scene, int id);

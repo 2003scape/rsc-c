@@ -1392,19 +1392,6 @@ void mudclient_load_textures(mudclient *mud) {
 
     char file_name[255] = {0};
 
-#ifdef RENDER_GL
-    glGenTextures(1, &mud->scene->game_model_textures);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, mud->scene->game_model_textures);
-
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 128, 128,
-                   game_data_texture_count);
-
-    int32_t *texture_raster = calloc(128 * 128, sizeof(int32_t));
-#endif
-
     Surface *surface = mud->surface;
 
     for (int i = 0; i < game_data_texture_count; i++) {
@@ -1457,23 +1444,7 @@ void mudclient_load_textures(mudclient *mud) {
                 surface->surface_pixels[mud->sprite_texture_world + i][j] =
                     MAGENTA;
             }
-
-#ifdef RENDER_GL
-            int colour =
-                surface->surface_pixels[mud->sprite_texture_world + i][j];
-
-            if (colour != MAGENTA) {
-                texture_raster[j] = 0xff000000 + colour;
-            }
-#endif
         }
-
-#ifdef RENDER_GL
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_BGRA,
-                        GL_UNSIGNED_BYTE, texture_raster);
-
-        memset(texture_raster, 0, 128 * 128 * sizeof(int32_t));
-#endif
 
         surface_screen_raster_to_sprite(surface, mud->sprite_texture_world + i);
 
@@ -1483,20 +1454,9 @@ void mudclient_load_textures(mudclient *mud) {
             surface->sprite_colour_list[mud->sprite_texture_world + i],
             (texture_size / 64) - 1);
 
-        /*free(surface->sprite_colour_list[mud->sprite_texture_world + i]);
-        surface->sprite_colour_list[mud->sprite_texture_world + i] = NULL;
-
-        free(surface->sprite_colours_used[mud->sprite_texture_world + i]);
-        surface->sprite_colours_used[mud->sprite_texture_world + i] =
-        NULL;*/
-
         free(surface->surface_pixels[mud->sprite_texture_world + i]);
         surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
     }
-
-#ifdef RENDER_GL
-    free(texture_raster);
-#endif
 
 #ifndef WII
     free(textures_jag);
@@ -1606,7 +1566,7 @@ void mudclient_load_models(mudclient *mud) {
         game_model_gl_buffer_arrays(game_model, &total_vertices,
                                     &total_ebo_length);
 
-        if (i >= 1) {
+        if (i >= 3) {
             break;
         }
     }

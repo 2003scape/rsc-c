@@ -1175,10 +1175,12 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
 
     for (int i = 0; i < face_num_vertices; i++) {
         vec3 vertex = {0};
-        //glm_vec3_sub(vertices[i], vertices[0], vertex);
-        vertex[0] = vertices[i][0];
+
+        /*vertex[0] = vertices[i][0];
         vertex[1] = vertices[i][1];
-        vertex[2] = vertices[i][2];
+        vertex[2] = vertices[i][2];*/
+
+        glm_vec3_sub(vertices[i], vertices[0], vertex);
 
         GLfloat x = glm_vec3_dot(vertex, location_x);
         GLfloat y = glm_vec3_dot(vertex, location_y);
@@ -1191,11 +1193,11 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
             min_x = x;
         }
 
-        if (i == 0 || x > max_y) {
+        if (i == 0 || y > max_y) {
             max_y = y;
         }
 
-        if (i == 0 || x < min_y) {
+        if (i == 0 || y < min_y) {
             min_y = y;
         }
 
@@ -1207,8 +1209,8 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
         GLfloat x = us[i];
         GLfloat y = vs[i];
 
-        us[i] = fabs((x - min_x) / (max_x - min_x));
-        vs[i] = fabs((y - min_y) / (max_y - min_y));
+        us[i] = (x - min_x) / (max_x - min_x);
+        vs[i] = 1.0f - (y - min_y) / (max_y - min_y);
     }
 }
 
@@ -1279,7 +1281,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 texture_y = 1.0f - face_vs[j];
             }
 
-            GLfloat vertices[] = {
+            GLfloat vertex[] = {
                 /* vertex */
                 vertex_x, vertex_y, vertex_z, //
 
@@ -1290,13 +1292,14 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 texture_x, texture_y, texture_index //
             };
 
-            // TODO we'll need two texture indices - and an animation position
+            // TODO two texture indices - and an animation position?
 
             glBufferSubData(GL_ARRAY_BUFFER,
                             ((*vertex_offset) + j) * 10 * sizeof(GLfloat),
-                            10 * sizeof(GLfloat), vertices);
+                            10 * sizeof(GLfloat), vertex);
         }
 
+        // TODO preserve winding order for GL_CULL_FACE
         for (int j = 0; j < face_num_vertices - 2; j++) {
             GLuint indices[] = {(*vertex_offset), (*vertex_offset) + j + 1,
                                 (*vertex_offset) + j + 2};

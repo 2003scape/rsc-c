@@ -1150,8 +1150,8 @@ void scene_render(Scene *scene) {
         scene->clip_near / 1000.0f, scene->clip_far_3d / 1000.0f, projection);
 
     /* TODO this could be optional? */
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
+    /*glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);*/
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -1178,7 +1178,7 @@ void scene_render(Scene *scene) {
                 //continue;
             }
 
-            test_model = game_model;
+            //test_model = game_model;
 
             shader_set_mat4(&scene->game_model_shader, "model",
                             game_model->transform);
@@ -3110,19 +3110,56 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     /* 128x128 rgba */
     scene->texture_colours_128 = calloc(length_128, sizeof(int32_t *));
     scene->length_128 = length_128;
+
+#ifdef RENDER_GL
+    glGenTextures(1, &scene->game_model_textures);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 128, 128,
+                   game_data_texture_count);
+#endif
 }
 
-void scene_define_texture(Scene *scene, int id, int8_t *colour_idx,
-                          int32_t *colours, int wide128) {
-    scene->texture_colours_used[id] = colour_idx;
-    scene->texture_colour_list[id] = colours;
-
-    /* is 1 if the scene->texture is 128+ pixels wide, 0 if < 128 */
-    scene->texture_dimension[id] = wide128;
+void scene_define_texture(Scene *scene, int id, int8_t *colours,
+                          int32_t *palette, int is_128) {
+    scene->texture_colours_used[id] = colours;
+    scene->texture_colour_list[id] = palette;
+    scene->texture_dimension[id] = is_128;
 
     scene->texture_loaded_number[id] = 0;
     scene->texture_back_transparent[id] = 0;
     scene->texture_pixels[id] = NULL;
+
+#ifdef RENDER_GL
+    int texture_width = is_128 ? 128 : 64;
+    int32_t *texture_raster = calloc(128 * 128, sizeof(int32_t));
+    int raster_position = 0;
+
+    /* make all the textures 128x128. */
+    for (int x = 0; x < 128; x++) {
+        for (int y = 0; y < 128; y++) {
+            int sprite_x = is_128 ? x : x / 2;
+            int sprite_y = is_128 ? y : y / 2;
+
+            int colour = palette[colours[sprite_y + sprite_x * texture_width] & 0xff];
+
+            if (colour != MAGENTA) {
+                texture_raster[raster_position] = 0xff000000 + colour;
+            }
+
+            raster_position++;
+        }
+    }
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, 128, 128, 1, GL_BGRA,
+                    GL_UNSIGNED_BYTE, texture_raster);
+
+    free(texture_raster);
+    texture_raster = NULL;
+#endif
 
     scene_prepare_texture(scene, id);
 }
@@ -3196,22 +3233,15 @@ void scene_prepare_texture(Scene *scene, int id) {
     }
 
     free(scene->texture_pixels[id]);
+
     scene->texture_pixels[id] = scene->texture_pixels[old_id];
     scene->texture_pixels[old_id] = NULL;
+
     scene_set_texture_pixels(scene, id);
 }
 
 void scene_set_texture_pixels(Scene *scene, int id) {
-    int texture_width = 0;
-
-    if (scene->texture_dimension[id] == 0) {
-        texture_width = 64;
-    } else {
-        texture_width = 128;
-    }
-
-    // int texture_width = scene->texture_dimension[id] ? 128 : 64;
-    // TODO
+    int texture_width = scene->texture_dimension[id] ? 128 : 64;
     int32_t *colours = scene->texture_pixels[id];
     int colour_count = 0;
 
