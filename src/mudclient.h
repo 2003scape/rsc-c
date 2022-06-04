@@ -872,6 +872,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int tx, int ty);
 void mudclient_draw_ui(mudclient *mud);
 void mudclient_draw_overhead(mudclient *mud);
+void mudclient_animate_objects(mudclient *mud);
 void mudclient_draw_game(mudclient *mud);
 void mudclient_reset_game(mudclient *mud);
 void mudclient_login(mudclient *mud, char *username, char *password,

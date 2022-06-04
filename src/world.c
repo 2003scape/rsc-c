@@ -533,6 +533,7 @@ void world_reset(World *world, int dispose) {
     }
 }
 
+// TODO adds the water and sloping tiles
 void world_set_tiles(World *world) {
     for (int x = 0; x < REGION_WIDTH; x++) {
         for (int y = 0; y < REGION_HEIGHT; y++) {
@@ -1343,6 +1344,11 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
         for (int i = 0; i < TERRAIN_COUNT; i++) {
             scene_add_model(world->scene, world->terrain_models[i]);
+
+#ifdef RENDER_GL
+            world->world_models_buffer[world->world_models_offset++] =
+                world->terrain_models[i];
+#endif
         }
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
@@ -1463,6 +1469,11 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_add_model(world->scene, world->wall_models[plane][i]);
+
+#ifdef RENDER_GL
+        world->world_models_buffer[world->world_models_offset++] =
+            world->wall_models[plane][i];
+#endif
     }
 
     /* create walls */
@@ -1938,6 +1949,11 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_add_model(world->scene, world->roof_models[plane][i]);
+
+#ifdef RENDER_GL
+        world->world_models_buffer[world->world_models_offset++] =
+            world->roof_models[plane][i];
+#endif
     }
 
     for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
@@ -1948,7 +1964,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
     }
 
-    // TODO check
     game_model_destroy(world->parent_model);
 }
 
@@ -2098,6 +2113,17 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
+#ifdef RENDER_GL
+    int max_models = (TERRAIN_COUNT * 3);
+
+    if (plane == 0) {
+        max_models *= 3;
+    }
+
+    world->world_models_buffer = calloc(max_models, sizeof(GameModel *));
+    world->world_models_offset = 0;
+#endif
+
     world_load_section_from4(world, x, y, plane, 1);
 
     if (plane == 0) {
@@ -2113,6 +2139,16 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
 
         world_set_tiles(world);
     }
+
+#ifdef RENDER_GL
+    game_model_gl_buffer_models(
+        &world->scene->terrain_vao, &world->scene->terrain_vbo,
+        &world->scene->terrain_ebo, world->world_models_buffer,
+        world->world_models_offset);
+
+    free(world->world_models_buffer);
+    world->world_models_buffer = NULL;
+#endif
 
     game_model_destroy(world->parent_model);
     free(world->parent_model);

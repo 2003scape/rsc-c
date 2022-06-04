@@ -764,7 +764,7 @@ void surface_draw(Surface *surface) {
     printf("]\n");
 #endif
 
-    SDL_GL_SwapWindow(mud->gl_window);
+    // SDL_GL_SwapWindow(mud->gl_window);
 
     surface->flat_count = 0;
     surface->flat_context_textures[0] = 0;

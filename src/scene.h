@@ -122,10 +122,16 @@ typedef struct Scene {
 
 #ifdef RENDER_GL
     Shader game_model_shader;
+
     GLuint game_model_vao;
     GLuint game_model_vbo;
     GLuint game_model_ebo;
     GLuint game_model_textures;
+
+    GLuint terrain_vao;
+    GLuint terrain_vbo;
+    GLuint terrain_ebo;
+    GLuint terrain_textures;
 #endif
 } Scene;
 

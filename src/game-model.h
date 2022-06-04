@@ -15,9 +15,11 @@
 #include <cglm/cglm.h>
 #endif
 
+/* states */
 #define GAME_MODEL_TRANSFORM_BEGIN 1
 #define GAME_MODEL_TRANSFORM_RESET 2
 
+/* types */
 #define GAME_MODEL_TRANSFORM_TRANSLATE 1
 #define GAME_MODEL_TRANSFORM_ROTATE 2
 
@@ -91,6 +93,7 @@ typedef struct GameModel {
     int data_ptr;
 
 #ifdef RENDER_GL
+    GLuint vao;
     int ebo_offset;
     int ebo_length;
     mat4 transform;
@@ -150,15 +153,18 @@ void game_model_commit(GameModel *game_model);
 GameModel *game_model_copy(GameModel *game_model);
 GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
                                  int isolated, int unlit, int pickable);
-void game_model_copy_position(GameModel *game_model, GameModel *model);
+void game_model_copy_position(GameModel *game_model, GameModel *source);
 void game_model_destroy(GameModel *game_model);
 void game_model_dump(GameModel *game_model, int i);
 
 #ifdef RENDER_GL
+void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                              int vbo_length, int ebo_length);
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
                               int face_num_vertices, GLfloat *us, GLfloat *vs);
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
+void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                                 GameModel **game_models, int length);
 #endif
-
 #endif

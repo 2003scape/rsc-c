@@ -8,7 +8,7 @@ float gl_tri_face_vs[] = {1.0f, 1.0f, 0.0f};
 void game_model_new(GameModel *game_model) {
     memset(game_model, 0, sizeof(GameModel));
 
-    game_model->transform_state = 1;
+    game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
     game_model->visible = 1;
     game_model->key = -1;
     game_model->light_diffuse = 512;
@@ -21,6 +21,7 @@ void game_model_new(GameModel *game_model) {
 
 #ifdef RENDER_GL
     game_model->ebo_offset = -1;
+    glm_mat4_identity(game_model->transform);
 #endif
 }
 
@@ -301,7 +302,7 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count) {
         }
     }
 
-    game_model->transform_state = 1;
+    game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 }
 
 int game_model_vertex_at(GameModel *game_model, int x, int y, int z) {
@@ -337,7 +338,7 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     game_model->face_vertices[game_model->num_faces] = vertices;
     game_model->face_fill_front[game_model->num_faces] = fill_front;
     game_model->face_fill_back[game_model->num_faces] = fill_back;
-    game_model->transform_state = 1;
+    game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 
     return game_model->num_faces++;
 }
@@ -944,6 +945,7 @@ GameModel *game_model_copy(GameModel *game_model) {
     copy->transparent = game_model->transparent;
 
 #ifdef RENDER_GL
+    copy->vao = game_model->vao;
     copy->ebo_offset = game_model->ebo_offset;
     copy->ebo_length = game_model->ebo_length;
 #endif
@@ -967,15 +969,19 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
     return copy;
 }
 
-void game_model_copy_position(GameModel *game_model, GameModel *model) {
-    game_model->orientation_yaw = model->orientation_yaw;
-    game_model->orientation_pitch = model->orientation_pitch;
-    game_model->orientation_roll = model->orientation_roll;
-    game_model->base_x = model->base_x;
-    game_model->base_y = model->base_y;
-    game_model->base_z = model->base_z;
+void game_model_copy_position(GameModel *game_model, GameModel *source) {
+    game_model->orientation_yaw = source->orientation_yaw;
+    game_model->orientation_pitch = source->orientation_pitch;
+    game_model->orientation_roll = source->orientation_roll;
+    game_model->base_x = source->base_x;
+    game_model->base_y = source->base_y;
+    game_model->base_z = source->base_z;
     game_model_determine_transform_kind(game_model);
-    game_model->transform_state = 1;
+    game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
+
+#ifdef RENDER_GL
+    glm_mat4_copy(source->transform, game_model->transform);
+#endif
 }
 
 void game_model_destroy(GameModel *game_model) {
@@ -1140,6 +1146,49 @@ void game_model_dump(GameModel *game_model, int i) {
 }
 
 #ifdef RENDER_GL
+void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                              int vbo_length, int ebo_length) {
+    if (*vao) {
+        glDeleteVertexArrays(1, vao);
+        glDeleteBuffers(1, vbo);
+        glDeleteBuffers(1, ebo);
+    }
+
+    glGenVertexArrays(1, vao);
+    glBindVertexArray(*vao);
+
+    glGenBuffers(1, vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 10, NULL,
+                 GL_STATIC_DRAW);
+
+    /* vertex { x, y, z } */
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
+                          (void *)0);
+
+    glEnableVertexAttribArray(0);
+
+    /* colour { r, g, b, a } */
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
+                          (void *)(3 * sizeof(GLfloat)));
+
+    glEnableVertexAttribArray(1);
+
+    /* texture { s, t, index } */
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
+                          (void *)(7 * sizeof(GLfloat)));
+
+    glEnableVertexAttribArray(2);
+
+    glGenBuffers(1, ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint),
+                 NULL, GL_STATIC_DRAW);
+
+}
+
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
                               int face_num_vertices, GLfloat *us, GLfloat *vs) {
     vec3 vertices[face_num_vertices];
@@ -1312,6 +1361,40 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         }
 
         (*vertex_offset) += face_num_vertices;
+    }
+}
+
+void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                                 GameModel **game_models, int length) {
+    int vertex_offset = 0;
+    int ebo_offset = 0;
+
+    for (int i = 0; i < length; i++) {
+        GameModel *game_model = game_models[i];
+
+        game_model->ebo_offset = ebo_offset;
+
+        for (int j = 0; j < game_model->num_faces; j++) {
+            int face_num_vertices = game_model->face_num_vertices[j];
+            vertex_offset += face_num_vertices;
+            game_model->ebo_length += (face_num_vertices - 2) * 3;
+        }
+
+        ebo_offset += game_model->ebo_length;
+    }
+
+    game_model_gl_create_vao(vao, vbo, ebo, vertex_offset, ebo_offset);
+
+    vertex_offset = 0;
+    ebo_offset = 0;
+
+    for (int i = 0; i < length; i++) {
+        GameModel *game_model = game_models[i];
+
+        game_model->vao = *vao;
+
+        game_model_gl_buffer_arrays(game_model, &vertex_offset,
+                                    &ebo_offset);
     }
 }
 #endif

@@ -7,6 +7,15 @@
 /* TODO remove */
 #include <stdlib.h>
 
+#ifdef RENDER_GL
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <SDL2/SDL_opengl.h>
+
+#define CGLM_DEFINE_PRINTS
+#include <cglm/cglm.h>
+#endif
+
 typedef struct World World;
 
 #include "game-data.h"
@@ -70,6 +79,12 @@ typedef struct World {
     int8_t walls_roof[PLANE_COUNT][TILE_COUNT];
     int local_x[LOCAL_COUNT];
     int local_y[LOCAL_COUNT];
+
+#ifdef RENDER_GL
+    /* dynamically generated terrain, wall and roof models */
+    GameModel **world_models_buffer;
+    int world_models_offset;
+#endif
 } World;
 
 void world_new(World *world, Scene *scene, Surface *surface);

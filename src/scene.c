@@ -1115,7 +1115,7 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
 
 void scene_render(Scene *scene) {
 #ifdef RENDER_GL
-//#if 0
+    // TODO move to set_camera
     vec3 camera_pos = {scene->camera_x / 1000.0f, scene->camera_y / 1000.0f,
                        scene->camera_z / 1000.0f};
 
@@ -1126,7 +1126,10 @@ void scene_render(Scene *scene) {
 
     float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048); // works
     float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
-    //pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048); // works
+    // float pitch = sin_cos_2048[scene->camera_yaw] / 32768.0f;
+    // pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048); // works
+
+    //printf("%d\n", scene->camera_yaw);
 
     vec3 front = {
         cos(yaw) * cos(pitch),
@@ -1149,7 +1152,7 @@ void scene_render(Scene *scene) {
         (float)(scene->surface->width2) / (float)scene->surface->height2,
         scene->clip_near / 1000.0f, scene->clip_far_3d / 1000.0f, projection);
 
-    /* TODO this could be optional? */
+    /* TODO this could be optional? have to fix winding order */
     /*glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);*/
 
@@ -1157,13 +1160,15 @@ void scene_render(Scene *scene) {
     glClear(GL_DEPTH_BUFFER_BIT);
 
     shader_use(&scene->game_model_shader);
-    glBindVertexArray(scene->game_model_vao);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
 
+    // TODO combine
     shader_set_mat4(&scene->game_model_shader, "view", view);
     shader_set_mat4(&scene->game_model_shader, "projection", projection);
+
+    GLuint last_vao = 0;
 
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
@@ -1172,21 +1177,21 @@ void scene_render(Scene *scene) {
             continue;
         }
 
-        if (game_model->visible) {
-            // TODO remove
-            if (game_model->base_x != 4928) {
-                //continue;
-            }
-
-            //test_model = game_model;
-
-            shader_set_mat4(&scene->game_model_shader, "model",
-                            game_model->transform);
-
-            glDrawElements(GL_TRIANGLES, game_model->ebo_length,
-                           GL_UNSIGNED_INT,
-                           (void *)(game_model->ebo_offset * sizeof(GLuint)));
+        if (!game_model->visible) {
+            continue;
         }
+
+        if (last_vao != game_model->vao) {
+            glBindVertexArray(game_model->vao);
+            last_vao = game_model->vao;
+        }
+
+        shader_set_mat4(&scene->game_model_shader, "model",
+                        game_model->transform);
+
+        glDrawElements(GL_TRIANGLES, game_model->ebo_length,
+                       GL_UNSIGNED_INT,
+                       (void *)(game_model->ebo_offset * sizeof(GLuint)));
     }
 #endif
 

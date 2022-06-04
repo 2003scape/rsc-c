@@ -351,7 +351,7 @@ int test_z = 750;*/
 int test_x = 0;
 int test_y = 0;
 int test_z = 0;
-int test_yaw = 38;
+int test_yaw = 37;
 GameModel *test_model = NULL;
 
 void mudclient_new(mudclient *mud) {
@@ -367,7 +367,7 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    //mud->server = "192.168.100.103";
+    // mud->server = "192.168.100.103";
     mud->server = "127.0.0.1";
     mud->port = 43594;
     // mud->server = "162.198.202.160"; /* openrsc preservation */
@@ -569,6 +569,9 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
+
+    // SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
+    // SDL_GL_SetSwapInterval(0);
 
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -1507,69 +1510,10 @@ void mudclient_load_models(mudclient *mud) {
     free(models_jag);
 
 #ifdef RENDER_GL
-    int total_vertices = 0;
-    int total_ebo_length = 0;
-
-    for (int i = 0; i < game_data_model_count - 1; i++) {
-        GameModel *game_model = mud->game_models[i];
-
-        game_model->ebo_offset = total_ebo_length;
-
-        for (int j = 0; j < game_model->num_faces; j++) {
-            int face_num_vertices = game_model->face_num_vertices[j];
-            total_vertices += face_num_vertices;
-            game_model->ebo_length += (face_num_vertices - 2) * 3;
-        }
-
-        total_ebo_length += game_model->ebo_length;
-    }
-
-    glGenVertexArrays(1, &mud->scene->game_model_vao);
-    glBindVertexArray(mud->scene->game_model_vao);
-
-    glGenBuffers(1, &mud->scene->game_model_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mud->scene->game_model_vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 10 * total_vertices, NULL,
-                 GL_STATIC_DRAW);
-
-    /* vertex { x, y, z } */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
-                          (void *)0);
-
-    glEnableVertexAttribArray(0);
-
-    /* colour { r, g, b, a } */
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
-                          (void *)(3 * sizeof(GLfloat)));
-
-    glEnableVertexAttribArray(1);
-
-    /* texture { s, t, index } */
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
-                          (void *)(7 * sizeof(GLfloat)));
-
-    glEnableVertexAttribArray(2);
-
-    glGenBuffers(1, &mud->scene->game_model_ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->game_model_ebo);
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, total_ebo_length * sizeof(GLuint),
-                 NULL, GL_STATIC_DRAW);
-
-    total_vertices = 0;
-    total_ebo_length = 0;
-
-    for (int i = 0; i < game_data_model_count - 1; i++) {
-        GameModel *game_model = mud->game_models[i];
-
-        game_model_gl_buffer_arrays(game_model, &total_vertices,
-                                    &total_ebo_length);
-
-        if (i >= 3) {
-            break;
-        }
-    }
+    game_model_gl_buffer_models(
+        &mud->scene->game_model_vao, &mud->scene->game_model_vbo,
+        &mud->scene->game_model_ebo, mud->game_models,
+        game_data_model_count - 1);
 #endif
 }
 
@@ -3625,71 +3569,7 @@ void mudclient_draw_overhead(mudclient *mud) {
     }
 }
 
-void mudclient_draw_game(mudclient *mud) {
-    if (mud->death_screen_timeout != 0) {
-        surface_fade_to_black(mud->surface);
-
-        surface_draw_string_centre(mud->surface, "Oh dear! You are dead...",
-                                   mud->game_width / 2, mud->game_height / 2, 7,
-                                   RED);
-
-        mudclient_draw_chat_message_tabs(mud);
-        surface_draw(mud->surface);
-
-        return;
-    }
-
-    if (mud->show_appearance_change) {
-        mudclient_draw_appearance_panel(mud);
-        return;
-    }
-
-    if (mud->is_sleeping) {
-        mudclient_draw_sleep(mud);
-        return;
-    }
-
-    if (!mud->world->player_alive) {
-        return;
-    }
-
-#if 1
-    for (int i = 0; i < TERRAIN_COUNT; i++) {
-        scene_remove_model(mud->scene,
-                           mud->world->roof_models[mud->last_height_offset][i]);
-
-        if (mud->last_height_offset == 0) {
-            scene_remove_model(mud->scene, mud->world->wall_models[1][i]);
-            scene_remove_model(mud->scene, mud->world->roof_models[1][i]);
-            scene_remove_model(mud->scene, mud->world->wall_models[2][i]);
-            scene_remove_model(mud->scene, mud->world->roof_models[2][i]);
-        }
-
-        if (mud->options->show_roofs) {
-            mud->fog_of_war = 1;
-
-            if (mud->last_height_offset == 0 &&
-                (mud->world
-                     ->object_adjacency[mud->local_player->current_x / 128]
-                                       [mud->local_player->current_y / 128] &
-                 128) == 0) {
-                scene_add_model(
-                    mud->scene,
-                    mud->world->roof_models[mud->last_height_offset][i]);
-
-                if (mud->last_height_offset == 0) {
-                    scene_add_model(mud->scene, mud->world->wall_models[1][i]);
-                    scene_add_model(mud->scene, mud->world->roof_models[1][i]);
-                    scene_add_model(mud->scene, mud->world->wall_models[2][i]);
-                    scene_add_model(mud->scene, mud->world->roof_models[2][i]);
-                }
-
-                mud->fog_of_war = 0;
-            }
-        }
-    }
-
-    /* TODO move to animate_objects */
+void mudclient_animate_objects(mudclient *mud) {
     if (mud->object_animation_cycle != mud->last_object_animation_cycle) {
         mud->last_object_animation_cycle = mud->object_animation_cycle;
 
@@ -3747,9 +3627,9 @@ void mudclient_draw_game(mudclient *mud) {
             }
         }
     }
+}
 
-    /* TODO move to draw_entity_sprites */
-
+void mudclient_draw_entity_sprites(mudclient *mud) {
     scene_reduce_sprites(mud->scene, mud->scene_sprite_count);
     mud->scene_sprite_count = 0;
 
@@ -3874,6 +3754,74 @@ void mudclient_draw_game(mudclient *mud) {
 
         mud->scene_sprite_count++;
     }
+}
+
+void mudclient_draw_game(mudclient *mud) {
+    if (mud->death_screen_timeout != 0) {
+        surface_fade_to_black(mud->surface);
+
+        surface_draw_string_centre(mud->surface, "Oh dear! You are dead...",
+                                   mud->game_width / 2, mud->game_height / 2, 7,
+                                   RED);
+
+        mudclient_draw_chat_message_tabs(mud);
+        surface_draw(mud->surface);
+
+        return;
+    }
+
+    if (mud->show_appearance_change) {
+        mudclient_draw_appearance_panel(mud);
+        return;
+    }
+
+    if (mud->is_sleeping) {
+        mudclient_draw_sleep(mud);
+        return;
+    }
+
+    if (!mud->world->player_alive) {
+        return;
+    }
+
+#if 1
+    /*for (int i = 0; i < TERRAIN_COUNT; i++) {
+        scene_remove_model(mud->scene,
+                           mud->world->roof_models[mud->last_height_offset][i]);
+
+        if (mud->last_height_offset == 0) {
+            scene_remove_model(mud->scene, mud->world->wall_models[1][i]);
+            scene_remove_model(mud->scene, mud->world->roof_models[1][i]);
+            scene_remove_model(mud->scene, mud->world->wall_models[2][i]);
+            scene_remove_model(mud->scene, mud->world->roof_models[2][i]);
+        }
+
+        if (mud->options->show_roofs) {
+            mud->fog_of_war = 1;
+
+            if (mud->last_height_offset == 0 &&
+                (mud->world
+                     ->object_adjacency[mud->local_player->current_x / 128]
+                                       [mud->local_player->current_y / 128] &
+                 128) == 0) {
+                scene_add_model(
+                    mud->scene,
+                    mud->world->roof_models[mud->last_height_offset][i]);
+
+                if (mud->last_height_offset == 0) {
+                    scene_add_model(mud->scene, mud->world->wall_models[1][i]);
+                    scene_add_model(mud->scene, mud->world->roof_models[1][i]);
+                    scene_add_model(mud->scene, mud->world->wall_models[2][i]);
+                    scene_add_model(mud->scene, mud->world->roof_models[2][i]);
+                }
+
+                mud->fog_of_war = 0;
+            }
+        }
+    }*/
+
+    mudclient_animate_objects(mud);
+    mudclient_draw_entity_sprites(mud);
 
     mud->surface->interlace = 0;
     surface_black_screen(mud->surface);
@@ -4069,6 +4017,8 @@ void mudclient_draw(mudclient *mud) {
 
     // VIDEO_WaitVSync(); /* TODO investigate */
 #endif
+
+    SDL_GL_SwapWindow(mud->gl_window);
 }
 
 void mudclient_poll_events(mudclient *mud) {
