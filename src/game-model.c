@@ -3,6 +3,9 @@
 #ifdef RENDER_GL
 float gl_tri_face_us[] = {0.0f, 1.0f, 0.0f};
 float gl_tri_face_vs[] = {1.0f, 1.0f, 0.0f};
+
+float gl_quad_face_us[] = {0.0f, 1.0f, 1.0f, 0.0f};
+float gl_quad_face_vs[] = {1.0f, 1.0f, 0.0f, 0.0f};
 #endif
 
 void game_model_new(GameModel *game_model) {
@@ -1330,6 +1333,8 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             } else if (fill_back >= 0) {
                 texture_index = (float)fill_back;
             }
+        } else {
+            a = 0;
         }
 
         int face_num_vertices = game_model->face_num_vertices[i];
@@ -1342,6 +1347,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             if (face_num_vertices == 3) {
                 face_us = gl_tri_face_us;
                 face_vs = gl_tri_face_vs;
+            } else if (face_num_vertices == 4) {
+                face_us = gl_quad_face_us;
+                face_vs = gl_quad_face_vs;
             } else {
                 face_us = alloca(face_num_vertices * sizeof(GLfloat));
                 face_vs = alloca(face_num_vertices * sizeof(GLfloat));

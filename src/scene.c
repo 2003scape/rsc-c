@@ -1234,99 +1234,101 @@ void scene_render(Scene *scene) {
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 
-        if (game_model->visible) {
-            for (int face = 0; face < game_model->num_faces; face++) {
-                int num_vertices = game_model->face_num_vertices[face];
-                int *face_vertices = game_model->face_vertices[face];
-                int visible = 0;
+        if (!game_model->visible) {
+            continue;
+        }
 
-                for (int vertex = 0; vertex < num_vertices; vertex++) {
-                    int z = game_model->project_vertex_z[face_vertices[vertex]];
+        for (int face = 0; face < game_model->num_faces; face++) {
+            int num_vertices = game_model->face_num_vertices[face];
+            int *face_vertices = game_model->face_vertices[face];
+            int visible = 0;
 
-                    if (z <= scene->clip_near || z >= scene->clip_far_3d) {
-                        continue;
-                    }
+            for (int vertex = 0; vertex < num_vertices; vertex++) {
+                int z = game_model->project_vertex_z[face_vertices[vertex]];
 
-                    visible = 1;
-                    break;
+                if (z <= scene->clip_near || z >= scene->clip_far_3d) {
+                    continue;
                 }
 
-                if (visible) {
-                    int view_x_count = 0;
+                visible = 1;
+                break;
+            }
+
+            if (visible) {
+                int view_x_count = 0;
+
+                for (int vertex = 0; vertex < num_vertices; vertex++) {
+                    int x =
+                        game_model->vertex_view_x[face_vertices[vertex]];
+
+                    if (x > -scene->clip_x) {
+                        view_x_count |= 1;
+                    }
+
+                    if (x < scene->clip_x) {
+                        view_x_count |= 2;
+                    }
+
+                    if (view_x_count == 3) {
+                        break;
+                    }
+                }
+
+                if (view_x_count == 3) {
+                    int view_y_count = 0;
 
                     for (int vertex = 0; vertex < num_vertices; vertex++) {
-                        int x =
-                            game_model->vertex_view_x[face_vertices[vertex]];
+                        int vertex_y =
+                            game_model
+                                ->vertex_view_y[face_vertices[vertex]];
 
-                        if (x > -scene->clip_x) {
-                            view_x_count |= 1;
+                        if (vertex_y > -scene->clip_y) {
+                            view_y_count |= 1;
                         }
 
-                        if (x < scene->clip_x) {
-                            view_x_count |= 2;
+                        if (vertex_y < scene->clip_y) {
+                            view_y_count |= 2;
                         }
 
-                        if (view_x_count == 3) {
+                        if (view_y_count == 3) {
                             break;
                         }
                     }
 
-                    if (view_x_count == 3) {
-                        int view_y_count = 0;
+                    if (view_y_count == 3) {
+                        GamePolygon *polygon_1 =
+                            scene->visible_polygons
+                                [scene->visible_polygons_count];
 
-                        for (int vertex = 0; vertex < num_vertices; vertex++) {
-                            int vertex_y =
-                                game_model
-                                    ->vertex_view_y[face_vertices[vertex]];
+                        polygon_1->model = game_model;
+                        polygon_1->face = face;
 
-                            if (vertex_y > -scene->clip_y) {
-                                view_y_count |= 1;
-                            }
+                        scene_initialise_polygon_3d(
+                            scene, scene->visible_polygons_count);
 
-                            if (vertex_y < scene->clip_y) {
-                                view_y_count |= 2;
-                            }
+                        int face_fill = 0;
 
-                            if (view_y_count == 3) {
-                                break;
-                            }
+                        if (polygon_1->visibility < 0) {
+                            face_fill = game_model->face_fill_front[face];
+                        } else {
+                            face_fill = game_model->face_fill_back[face];
                         }
 
-                        if (view_y_count == 3) {
-                            GamePolygon *polygon_1 =
-                                scene->visible_polygons
-                                    [scene->visible_polygons_count];
+                        if (face_fill != COLOUR_TRANSPARENT) {
+                            int h = 0;
 
-                            polygon_1->model = game_model;
-                            polygon_1->face = face;
-
-                            scene_initialise_polygon_3d(
-                                scene, scene->visible_polygons_count);
-
-                            int face_fill = 0;
-
-                            if (polygon_1->visibility < 0) {
-                                face_fill = game_model->face_fill_front[face];
-                            } else {
-                                face_fill = game_model->face_fill_back[face];
+                            for (int vertex = 0; vertex < num_vertices;
+                                 vertex++) {
+                                h += game_model->project_vertex_z
+                                         [face_vertices[vertex]];
                             }
 
-                            if (face_fill != COLOUR_TRANSPARENT) {
-                                int h = 0;
+                            polygon_1->depth =
+                                (h / num_vertices) + game_model->depth;
 
-                                for (int vertex = 0; vertex < num_vertices;
-                                     vertex++) {
-                                    h += game_model->project_vertex_z
-                                             [face_vertices[vertex]];
-                                }
+                            polygon_1->facefill = face_fill;
 
-                                polygon_1->depth =
-                                    (h / num_vertices) + game_model->depth;
-
-                                polygon_1->facefill = face_fill;
-
-                                scene->visible_polygons_count++;
-                            }
+                            scene->visible_polygons_count++;
                         }
                     }
                 }
@@ -1463,8 +1465,10 @@ void scene_render(Scene *scene) {
                     scene->clip_near) {
                     scene->plane_x[k8] =
                         game_model->vertex_view_x[vertex_index];
+
                     scene->plane_y[k8] =
                         game_model->vertex_view_y[vertex_index];
+
                     scene->vertex_shade[k8] = j10;
 
                     if (game_model->project_vertex_z[vertex_index] >

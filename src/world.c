@@ -256,7 +256,6 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
 }
 
 /* TODO rename to read map files? */
-
 void world_load_section_from4i(World *world, int x, int y, int plane,
                                int chunk) {
     if (world->landscape_pack == NULL) {
