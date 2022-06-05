@@ -13,8 +13,9 @@ void main() {
         if (fragment_colour.a <= 0.0) {
             discard;
         }
+
+        fragment_colour.w = vertex_colour.w;
     } else {
-        //fragment_colour = vec4(0.0, 0, 1.0, 1.0);
         fragment_colour = vertex_colour;
     }
 }

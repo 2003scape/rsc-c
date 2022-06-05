@@ -558,10 +558,10 @@ void mudclient_start_application(mudclient *mud, int width, int height,
                          width, height, SDL_WINDOW_SHOWN);
 
     mud->screen = SDL_GetWindowSurface(mud->window);
-#endif
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
                                               0x00ff00, 0x0000ff, 0);
+#endif
 
 #ifdef RENDER_GL
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -569,9 +569,6 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
-
-    // SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
-    // SDL_GL_SetSwapInterval(0);
 
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -1405,8 +1402,8 @@ void mudclient_load_textures(mudclient *mud) {
         surface_parse_sprite(surface, mud->sprite_texture, texture_dat,
                              index_dat, 1);
 
-        surface_draw_box(surface, 0, 0, 128, 128, MAGENTA);
-        surface_draw_sprite_from3(surface, 0, 0, mud->sprite_texture);
+        surface_draw_box_software(surface, 0, 0, 128, 128, MAGENTA);
+        surface_draw_sprite_from3_software(surface, 0, 0, mud->sprite_texture);
 
         free(surface->sprite_colour_list[mud->sprite_texture]);
         surface->sprite_colour_list[mud->sprite_texture] = NULL;
@@ -1428,7 +1425,7 @@ void mudclient_load_textures(mudclient *mud) {
                 surface_parse_sprite(surface, mud->sprite_texture,
                                      texture_sub_dat, index_dat, 1);
 
-                surface_draw_sprite_from3(surface, 0, 0, mud->sprite_texture);
+                surface_draw_sprite_from3_software(surface, 0, 0, mud->sprite_texture);
 
                 free(surface->sprite_colour_list[mud->sprite_texture]);
                 surface->sprite_colour_list[mud->sprite_texture] = NULL;
@@ -3784,8 +3781,7 @@ void mudclient_draw_game(mudclient *mud) {
         return;
     }
 
-#if 1
-    /*for (int i = 0; i < TERRAIN_COUNT; i++) {
+    for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene,
                            mud->world->roof_models[mud->last_height_offset][i]);
 
@@ -3818,7 +3814,7 @@ void mudclient_draw_game(mudclient *mud) {
                 mud->fog_of_war = 0;
             }
         }
-    }*/
+    }
 
     mudclient_animate_objects(mud);
     mudclient_draw_entity_sprites(mud);
@@ -3865,20 +3861,10 @@ void mudclient_draw_game(mudclient *mud) {
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, mud->camera_rotation * 4, 0, mud->camera_zoom * 2);
-#endif
+
     surface_black_screen(mud->surface);
 
-#ifdef RENDER_SW
-    mud->scene->camera_x += test_x;
-    mud->scene->camera_y += test_y;
-    mud->scene->camera_z += test_z;
-
     scene_render(mud->scene);
-
-    mud->scene->camera_x -= test_x;
-    mud->scene->camera_y -= test_y;
-    mud->scene->camera_z -= test_z;
-#endif
 
     mudclient_draw_overhead(mud);
 

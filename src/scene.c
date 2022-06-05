@@ -1114,6 +1114,47 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
 }
 
 void scene_render(Scene *scene) {
+    scene->interlace = scene->surface->interlace;
+
+    int frustum_x =
+        (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
+
+    int frustum_y =
+        (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
+
+    scene_frustum_max_x = 0;
+    scene_frustum_min_x = 0;
+    scene_frustum_max_y = 0;
+    scene_frustum_min_y = 0;
+    scene_frustum_far_z = 0;
+    scene_frustum_near_z = 0;
+
+    scene_set_frustum(scene, -frustum_x, -frustum_y, scene->clip_far_3d);
+    scene_set_frustum(scene, -frustum_x, frustum_y, scene->clip_far_3d);
+    scene_set_frustum(scene, frustum_x, -frustum_y, scene->clip_far_3d);
+    scene_set_frustum(scene, frustum_x, frustum_y, scene->clip_far_3d);
+    scene_set_frustum(scene, -scene->clip_x, -scene->clip_y, 0);
+    scene_set_frustum(scene, -scene->clip_x, scene->clip_y, 0);
+    scene_set_frustum(scene, scene->clip_x, -scene->clip_y, 0);
+    scene_set_frustum(scene, scene->clip_x, scene->clip_y, 0);
+
+    scene_frustum_max_x += scene->camera_x;
+    scene_frustum_min_x += scene->camera_x;
+    scene_frustum_max_y += scene->camera_y;
+    scene_frustum_min_y += scene->camera_y;
+    scene_frustum_far_z += scene->camera_z;
+    scene_frustum_near_z += scene->camera_z;
+
+    scene->models[scene->model_count] = scene->view;
+    scene->view->transform_state = GAME_MODEL_TRANSFORM_RESET;
+
+    for (int i = 0; i <= scene->model_count; i++) {
+        game_model_project(scene->models[i], scene->camera_x, scene->camera_y,
+                           scene->camera_z, scene->camera_yaw,
+                           scene->camera_pitch, scene->camera_roll,
+                           scene->view_distance, scene->clip_near);
+    }
+
 #ifdef RENDER_GL
     // TODO move to set_camera
     vec3 camera_pos = {scene->camera_x / 1000.0f, scene->camera_y / 1000.0f,
@@ -1126,10 +1167,6 @@ void scene_render(Scene *scene) {
 
     float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048); // works
     float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
-    // float pitch = sin_cos_2048[scene->camera_yaw] / 32768.0f;
-    // pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048); // works
-
-    //printf("%d\n", scene->camera_yaw);
 
     vec3 front = {
         cos(yaw) * cos(pitch),
@@ -1173,11 +1210,7 @@ void scene_render(Scene *scene) {
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 
-        if (game_model->ebo_offset == -1) {
-            continue;
-        }
-
-        if (!game_model->visible) {
+        if (game_model->ebo_offset == -1 || !game_model->visible) {
             continue;
         }
 
@@ -1196,58 +1229,12 @@ void scene_render(Scene *scene) {
 #endif
 
 #ifdef RENDER_SW
-    scene->interlace = scene->surface->interlace;
-
-    int frustum_x =
-        (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
-
-    int frustum_y =
-        (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
-
-    scene_frustum_max_x = 0;
-    scene_frustum_min_x = 0;
-    scene_frustum_max_y = 0;
-    scene_frustum_min_y = 0;
-    scene_frustum_far_z = 0;
-    scene_frustum_near_z = 0;
-
-    scene_set_frustum(scene, -frustum_x, -frustum_y, scene->clip_far_3d);
-    scene_set_frustum(scene, -frustum_x, frustum_y, scene->clip_far_3d);
-    scene_set_frustum(scene, frustum_x, -frustum_y, scene->clip_far_3d);
-    scene_set_frustum(scene, frustum_x, frustum_y, scene->clip_far_3d);
-    scene_set_frustum(scene, -scene->clip_x, -scene->clip_y, 0);
-    scene_set_frustum(scene, -scene->clip_x, scene->clip_y, 0);
-    scene_set_frustum(scene, scene->clip_x, -scene->clip_y, 0);
-    scene_set_frustum(scene, scene->clip_x, scene->clip_y, 0);
-
-    scene_frustum_max_x += scene->camera_x;
-    scene_frustum_min_x += scene->camera_x;
-    scene_frustum_max_y += scene->camera_y;
-    scene_frustum_min_y += scene->camera_y;
-    scene_frustum_far_z += scene->camera_z;
-    scene_frustum_near_z += scene->camera_z;
-
-    scene->models[scene->model_count] = scene->view;
-    scene->view->transform_state = 2;
-
-    for (int i = 0; i <= scene->model_count; i++) {
-        game_model_project(scene->models[i], scene->camera_x, scene->camera_y,
-                           scene->camera_z, scene->camera_yaw,
-                           scene->camera_pitch, scene->camera_roll,
-                           scene->view_distance, scene->clip_near);
-    }
-
     scene->visible_polygons_count = 0;
 
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 
         if (game_model->visible) {
-            // TODO remove
-            if (game_model->base_x != 4928) {
-                //continue;
-            }
-
             for (int face = 0; face < game_model->num_faces; face++) {
                 int num_vertices = game_model->face_num_vertices[face];
                 int *face_vertices = game_model->face_vertices[face];
@@ -1432,6 +1419,7 @@ void scene_render(Scene *scene) {
                     game_model->is_local_player[face] == 0) {
                     scene->mouse_picked_models[scene->mouse_picked_count] =
                         game_model;
+
                     scene->mouse_picked_faces[scene->mouse_picked_count] = face;
                     scene->mouse_picked_count++;
                 }

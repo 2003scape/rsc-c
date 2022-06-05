@@ -155,7 +155,7 @@ void game_model_reset(GameModel *game_model) {
 
 void game_model_allocate(GameModel *game_model, int num_vertices,
                          int num_faces) {
-    /* TODO why is this happening? */
+    /* each terrain, wall and roof location gets a model, even if empty */
     if (num_vertices == 0) {
         return;
     }
@@ -211,7 +211,6 @@ void game_model_allocate(GameModel *game_model, int num_vertices,
 }
 
 void game_model_projection_prepare(GameModel *game_model) {
-    /* TODO why is this happening? */
     if (game_model->num_vertices == 0) {
         return;
     }
@@ -592,36 +591,73 @@ void game_model_compute_bounds(GameModel *game_model) {
     game_model->y2 = -999999;
     game_model->z2 = -999999;
 
-    for (int face = 0; face < game_model->num_faces; face++) {
-        int *vs = game_model->face_vertices[face];
-        int v = vs[0];
-        int n = game_model->face_num_vertices[face];
-        int x1 = 0;
-        int x2 = (x1 = game_model->vertex_transformed_x[v]);
-        int y1 = 0;
-        int y2 = (y1 = game_model->vertex_transformed_y[v]);
-        int z1 = 0;
-        int z2 = (z1 = game_model->vertex_transformed_z[v]);
+    for (int i = 0; i < game_model->num_faces; i++) {
+        int *face_vertices = game_model->face_vertices[i];
+        int vertex_index = face_vertices[0];
+        int face_num_vertices = game_model->face_num_vertices[i];
 
-        for (int i = 0; i < n; i++) {
-            v = vs[i];
+#if defined(RENDER_GL) && !defined(RENDER_SW)
+        vec3 vertex = {game_model->vertex_x[vertex_index] / 1000.0f,
+                       game_model->vertex_y[vertex_index] / 1000.0f,
+                       game_model->vertex_z[vertex_index] / 1000.0f};
 
-            if (game_model->vertex_transformed_x[v] < x1) {
-                x1 = game_model->vertex_transformed_x[v];
-            } else if (game_model->vertex_transformed_x[v] > x2) {
-                x2 = game_model->vertex_transformed_x[v];
+        vec3 transformed_vertex = {0};
+        glm_mat4_mulv3(game_model->transform, vertex, 1, transformed_vertex);
+
+        int x1 = transformed_vertex[0] * 1000;
+        int x2 = x2;
+        int y1 = transformed_vertex[1] * 1000;
+        int y2 = y1;
+        int z1 = transformed_vertex[2] * 1000;
+        int z2 = z1;
+#else
+        int x1 = game_model->vertex_transformed_x[vertex_index];
+        int x2 = x2;
+        int y1 = game_model->vertex_transformed_y[vertex_index];
+        int y2 = y1;
+        int z1 = game_model->vertex_transformed_z[vertex_index];
+        int z2 = z1;
+#endif
+
+        for (int j = 0; j < face_num_vertices; j++) {
+            vertex_index = face_vertices[j];
+
+#if !defined(RENDER_SW) && defined(RENDER_GL)
+            vertex[0] = game_model->vertex_x[vertex_index] / 1000.0f;
+            vertex[1] = game_model->vertex_y[vertex_index] / 1000.0f;
+            vertex[2] = game_model->vertex_z[vertex_index] / 1000.0f;
+
+            glm_mat4_mulv3(game_model->transform, vertex, 1,
+                           transformed_vertex);
+
+            int vertex_transformed_x = transformed_vertex[0] * 1000;
+            int vertex_transformed_y = transformed_vertex[1] * 1000;
+            int vertex_transformed_z = transformed_vertex[2] * 1000;
+#else
+            int vertex_transformed_x =
+                game_model->vertex_transformed_x[vertex_index];
+            int vertex_transformed_y =
+                game_model->vertex_transformed_y[vertex_index];
+            int vertex_transformed_z =
+                game_model->vertex_transformed_z[vertex_index];
+#endif
+
+            if (vertex_transformed_x < x1) {
+                x1 = vertex_transformed_x;
+            } else if (vertex_transformed_x > x2) {
+                x2 = vertex_transformed_x;
             }
 
-            if (game_model->vertex_transformed_y[v] < y1) {
-                y1 = game_model->vertex_transformed_y[v];
-            } else if (game_model->vertex_transformed_y[v] > y2) {
-                y2 = game_model->vertex_transformed_y[v];
+            if (vertex_transformed_y < y1) {
+                y1 = vertex_transformed_y;
+            } else if (vertex_transformed_y > y2) {
+                y2 = vertex_transformed_y;
             }
 
-            if (game_model->vertex_transformed_z[v] < z1) {
-                z1 = game_model->vertex_transformed_z[v];
-            } else if (game_model->vertex_transformed_z[v] > z2) {
-                z2 = game_model->vertex_transformed_z[v];
+            if (vertex_transformed_z < z1) {
+                z1 = vertex_transformed_z;
+            } else if (vertex_transformed_z > z2) {
+                z2 = vertex_transformed_z;
             }
         }
 
@@ -826,7 +862,7 @@ void game_model_apply(GameModel *game_model) {
         }
 #endif
 
-#ifdef RENDER_SW
+#if 1
         if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_ROTATE) {
             game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
@@ -862,6 +898,7 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
 
     game_model->visible = 1;
 
+#ifdef RENDER_SW
     int yaw_sin = 0;
     int yaw_cos = 0;
     int pitch_sin = 0;
@@ -869,7 +906,6 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
     int roll_sin = 0;
     int roll_cos = 0;
 
-    // there is usually no yaw
     if (camera_yaw != 0) {
         yaw_sin = sin_cos_2048[camera_yaw];
         yaw_cos = sin_cos_2048[camera_yaw + 1024];
@@ -920,6 +956,7 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
         game_model->project_vertex_y[i] = y;
         game_model->project_vertex_z[i] = z;
     }
+#endif
 }
 
 void game_model_commit(GameModel *game_model) {
@@ -1184,9 +1221,8 @@ void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
     glGenBuffers(1, ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint),
-                 NULL, GL_STATIC_DRAW);
-
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
+                 GL_STATIC_DRAW);
 }
 
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
@@ -1393,8 +1429,7 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
 
         game_model->vao = *vao;
 
-        game_model_gl_buffer_arrays(game_model, &vertex_offset,
-                                    &ebo_offset);
+        game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
     }
 }
 #endif

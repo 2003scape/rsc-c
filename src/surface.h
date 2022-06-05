@@ -150,6 +150,8 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
                             int height, int colour, int alpha);
 void surface_draw_gradient(Surface *surface, int x, int y, int width,
                            int height, int colour_top, int colour_bottom);
+void surface_draw_box_software(Surface *surface, int x, int y, int width,
+                               int height, int colour);
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,
                       int colour);
 void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
@@ -174,6 +176,8 @@ void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
                                int width, int height);
 void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
                                   int width, int height);
+void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
+                                        int sprite_id);
 void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id);
 void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id);

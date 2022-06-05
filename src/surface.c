@@ -84,7 +84,11 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #endif
 
 #if !defined(WII) && !defined(_3DS)
+#ifndef RENDER_SW
+    surface->pixels = calloc(width * height, sizeof(int32_t));
+#else
     surface->pixels = mud->pixel_surface->pixels;
+#endif
 #endif
 
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
@@ -1024,13 +1028,8 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
 #endif
 }
 
-void surface_draw_box(Surface *surface, int x, int y, int width, int height,
-                      int colour) {
-#ifdef RENDER_GL
-    surface_buffer_box(surface, x, y, width, height, colour, 255);
-#endif
-
-#ifdef RENDER_SW
+void surface_draw_box_software(Surface *surface, int x, int y, int width,
+                               int height, int colour) {
     if (x < surface->bounds_top_x) {
         width -= surface->bounds_top_x - x;
         x = surface->bounds_top_x;
@@ -1071,6 +1070,16 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
 
         index += offset;
     }
+}
+
+void surface_draw_box(Surface *surface, int x, int y, int width, int height,
+                      int colour) {
+#ifdef RENDER_GL
+    surface_buffer_box(surface, x, y, width, height, colour, 255);
+#endif
+
+#ifdef RENDER_SW
+    surface_draw_box_software(surface, x, y, width, height, colour);
 #endif
 }
 
@@ -1567,12 +1576,9 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
     surface->sprite_colour_list[sprite_id] = NULL;
 }
 
-void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
-#ifdef RENDER_GL
-    surface_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0);
-#endif
-
-#ifdef RENDER_SW
+/* used for texture loading on GL rendering */
+void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
+                                        int sprite_id) {
     if (surface->sprite_translate[sprite_id] != 0) {
         x += surface->sprite_translate_x[sprite_id];
         y += surface->sprite_translate_y[sprite_id];
@@ -1641,6 +1647,15 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
                             src_pos, dest_pos, width, height, dest_offset,
                             sprite_offset, y_inc);
     }
+}
+
+void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
+#ifdef RENDER_GL
+    surface_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0);
+#endif
+
+#ifdef RENDER_SW
+    surface_draw_sprite_from3_software(surface, x, y, sprite_id);
 #endif
 }
 

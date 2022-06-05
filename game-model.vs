@@ -15,5 +15,11 @@ void main() {
 
     vertex_colour = colour;
     vertex_texture_position = texture_position;
+
+    /* TODO this could be better */
+    /*if (gl_Position.z > 2.32f) {
+        float alpha = min(2.4f, gl_Position.z);
+        vertex_colour.w = 1.0f - (alpha / 2.4f);
+    }*/
 }
 
