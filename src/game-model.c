@@ -806,6 +806,7 @@ void game_model_relight(GameModel *game_model) {
         game_model->face_normal_x[i] = (int)((norm_x * 0x10000) / norm_mag);
         game_model->face_normal_y[i] = (int)((norm_y * 0x10000) / norm_mag);
         game_model->face_normal_z[i] = (int)((norm_z * 0xffff) / norm_mag);
+
         game_model->normal_scale[i] = -1;
     }
 
@@ -1200,26 +1201,32 @@ void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
     glGenBuffers(1, vbo);
     glBindBuffer(GL_ARRAY_BUFFER, *vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 10, NULL,
+    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 13, NULL,
                  GL_STATIC_DRAW);
 
     /* vertex { x, y, z } */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 13 * sizeof(GLfloat),
                           (void *)0);
 
     glEnableVertexAttribArray(0);
 
-    /* colour { r, g, b, a } */
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
+    /* normal { x, y, z } */
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 13 * sizeof(GLfloat),
                           (void *)(3 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(1);
 
-    /* texture { s, t, index } */
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat),
-                          (void *)(7 * sizeof(GLfloat)));
+    /* colour { r, g, b, a } */
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 13 * sizeof(GLfloat),
+                          (void *)(6 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(2);
+
+    /* texture { s, t, index } */
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 13 * sizeof(GLfloat),
+                          (void *)(10 * sizeof(GLfloat)));
+
+    glEnableVertexAttribArray(3);
 
     glGenBuffers(1, ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
@@ -1246,6 +1253,7 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
     vec3 delta = {0};
     glm_vec3_sub(vertices[2], vertices[0], delta);
 
+    // TODO get face normal
     vec3 normal = {0};
     glm_vec3_cross(location_x, delta, normal);
 
@@ -1305,12 +1313,86 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset) {
     for (int i = 0; i < game_model->num_faces; i++) {
+        int *face_vertices = game_model->face_vertices[i];
+        int face_num_vertices = game_model->face_num_vertices[i];
+
+        vec3 vertices[3];
+
+        for (int i = 0; i < 3; i++) {
+            int vertex_index = face_vertices[i];
+
+            vertices[i][0] = game_model->vertex_x[vertex_index] / 1000.0f;
+            vertices[i][1] = game_model->vertex_y[vertex_index] / 1000.0f;
+            vertices[i][2] = game_model->vertex_z[vertex_index] / 1000.0f;
+        }
+
+        vec3 location_x = {0};
+        glm_vec3_sub(vertices[1], vertices[0], location_x);
+
+        vec3 delta = {0};
+        glm_vec3_sub(vertices[2], vertices[0], delta);
+
+        vec3 normal = {0};
+        glm_vec3_cross(location_x, delta, normal);
+
+        glm_vec3_normalize(normal);
+
+        /*int a_x = game_model->vertex_x[face_vertices[0]];
+        int a_y = game_model->vertex_y[face_vertices[0]];
+        int a_z = game_model->vertex_z[face_vertices[0]];
+        int b_x = game_model->vertex_x[face_vertices[1]] - a_x;
+        int b_y = game_model->vertex_y[face_vertices[1]] - a_y;
+        int b_z = game_model->vertex_z[face_vertices[1]] - a_z;
+        int c_x = game_model->vertex_x[face_vertices[2]] - a_x;
+        int c_y = game_model->vertex_y[face_vertices[2]] - a_y;
+        int c_z = game_model->vertex_z[face_vertices[2]] - a_z;
+
+        int norm_x = b_y * c_z - c_y * b_z;
+        int norm_y = b_z * c_x - c_z * b_x;
+        int norm_z;
+
+        for (norm_z = b_x * c_y - c_x * b_y;
+             norm_x > 8192 || norm_y > 8192 || norm_z > 8192 ||
+             norm_x < -8192 || norm_y < -8192 || norm_z < -8192;
+             norm_z >>= 1) {
+            norm_x >>= 1;
+            norm_y >>= 1;
+        }
+
+        int norm_mag =
+            256 * sqrt(norm_x * norm_x + norm_y * norm_y + norm_z * norm_z);
+
+        if (norm_mag <= 0) {
+            norm_mag = 1;
+        }
+
+        int face_normal_x = (int)((norm_x * 0x10000) / norm_mag);
+        int face_normal_y = (int)((norm_y * 0x10000) / norm_mag);
+        int face_normal_z = (int)((norm_z * 0xffff) / norm_mag);
+
+        vec3 face_normal = {
+            face_normal_x / 1000.0f,
+            face_normal_y / 1000.0f,
+            face_normal_z / 1000.0f,
+        };
+
+        glm_vec3_normalize(face_normal);
+
+        printf("%f (%f), %f (%f), %f (%f)\n",
+                face_normal[0],
+                normal[0],
+                face_normal[1],
+                normal[1],
+                face_normal[2],
+                normal[2]
+        );*/
+
         int fill_front = game_model->face_fill_front[i];
         int fill_back = game_model->face_fill_back[i];
 
-        GLfloat r = -1.0f;
-        GLfloat g = -1.0f;
-        GLfloat b = -1.0f;
+        GLfloat r = 1.0f;
+        GLfloat g = 1.0f;
+        GLfloat b = 1.0f;
         GLfloat a = 1.0f;
 
         GLfloat texture_index = -1.0f;
@@ -1336,9 +1418,6 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         } else {
             a = 0;
         }
-
-        int face_num_vertices = game_model->face_num_vertices[i];
-        int *face_vertices = game_model->face_vertices[i];
 
         GLfloat *face_us = NULL;
         GLfloat *face_vs = NULL;
@@ -1366,6 +1445,10 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             GLfloat vertex_y = game_model->vertex_y[vertex_index] / 1000.0f;
             GLfloat vertex_z = game_model->vertex_z[vertex_index] / 1000.0f;
 
+            GLfloat normal_x = normal[0];
+            GLfloat normal_y = normal[1];
+            GLfloat normal_z = normal[2];
+
             GLfloat texture_x = -1.0f;
             GLfloat texture_y = -1.0f;
 
@@ -1378,6 +1461,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 /* vertex */
                 vertex_x, vertex_y, vertex_z, //
 
+                /* normal */
+                normal_x, normal_y, normal_z, //
+
                 /* colour */
                 r, g, b, a, //
 
@@ -1385,11 +1471,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 texture_x, texture_y, texture_index //
             };
 
-            // TODO two texture indices - and an animation position?
-
             glBufferSubData(GL_ARRAY_BUFFER,
-                            ((*vertex_offset) + j) * 10 * sizeof(GLfloat),
-                            10 * sizeof(GLfloat), vertex);
+                            ((*vertex_offset) + j) * 13 * sizeof(GLfloat),
+                            13 * sizeof(GLfloat), vertex);
         }
 
         // TODO preserve winding order for GL_CULL_FACE

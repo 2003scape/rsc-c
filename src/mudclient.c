@@ -3823,6 +3823,7 @@ void mudclient_draw_game(mudclient *mud) {
     surface_black_screen(mud->surface);
     mud->surface->interlace = mud->interlace;
 
+    /* flickering lights in dungeons */
     if (mud->last_height_offset == 3) {
         int ambience = 40 + ((float)rand() / (float)RAND_MAX) * 3;
         int diffuse = 40 + ((float)rand() / (float)RAND_MAX) * 7;

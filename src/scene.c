@@ -1222,6 +1222,18 @@ void scene_render(Scene *scene) {
         shader_set_mat4(&scene->game_model_shader, "model",
                         game_model->transform);
 
+        vec3 light_position = {
+            game_model->light_direction_x / 1000.f,
+            game_model->light_direction_y / 1000.f,
+            game_model->light_direction_z / 1000.f
+        };
+
+        //glm_vec3_normalize(light_position);
+
+        shader_set_vec3(&scene->game_model_shader, "light_position", light_position);
+
+        shader_set_float(&scene->game_model_shader, "ambient", game_model->light_ambience / 128.0f);
+
         glDrawElements(GL_TRIANGLES, game_model->ebo_length,
                        GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
