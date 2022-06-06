@@ -23,8 +23,9 @@ void main() {
         discard;
     }
 
-    vec3 light_direction = normalize(light_position - vertex_position);
-    float diffuse = max(dot(vertex_normal, light_direction), 0.0);
+    fragment_colour = vec4(vec3(fragment_colour) * (ambient), fragment_colour.w);
 
-    fragment_colour = vec4(vec3(fragment_colour) * (ambient + diffuse), fragment_colour.w);
+    /*vec3 light_direction = normalize(light_position - vertex_position);
+    float diffuse = max(dot(vertex_normal, light_direction), 0.0);
+    fragment_colour = vec4(vec3(fragment_colour) * (ambient + diffuse), fragment_colour.w);*/
 }

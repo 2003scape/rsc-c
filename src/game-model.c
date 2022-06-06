@@ -12,15 +12,15 @@ void game_model_new(GameModel *game_model) {
     memset(game_model, 0, sizeof(GameModel));
 
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
+    game_model->diameter = COLOUR_TRANSPARENT;
     game_model->visible = 1;
     game_model->key = -1;
-    game_model->light_diffuse = 512;
-    game_model->light_ambience = 32;
-    game_model->diameter = COLOUR_TRANSPARENT;
-    game_model->light_direction_x = 180;
+    //game_model->light_diffuse = 512;
+    game_model->light_ambience = 32; /* 256 is the maximum */
+    /*game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
     game_model->light_direction_z = 95;
-    game_model->light_direction_magnitude = 256;
+    game_model->light_direction_magnitude = 256;*/
 
 #ifdef RENDER_GL
     game_model->ebo_offset = -1;
@@ -444,6 +444,8 @@ void game_model_copy_lighting(GameModel *game_model, GameModel *model,
 }
 
 void game_model_set_light_from3(GameModel *game_model, int x, int y, int z) {
+    return;
+
     if (game_model->unlit) {
         return;
     }
@@ -458,6 +460,8 @@ void game_model_set_light_from3(GameModel *game_model, int x, int y, int z) {
 
 void game_model_set_light_from5(GameModel *game_model, int ambience,
                                 int diffuse, int x, int y, int z) {
+    return;
+
     game_model->light_ambience = 256 - ambience * 4;
     game_model->light_diffuse = (64 - diffuse) * 16 + 128;
 
@@ -467,6 +471,8 @@ void game_model_set_light_from5(GameModel *game_model, int ambience,
 void game_model_set_light_from6(GameModel *game_model, int gouraud,
                                 int ambience, int diffuse, int x, int y,
                                 int z) {
+    return;
+
     if (game_model->unlit) {
         return;
     }
@@ -480,6 +486,8 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
 
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience) {
+    return;
+
     game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
@@ -703,6 +711,8 @@ void game_model_compute_bounds(GameModel *game_model) {
 }
 
 void game_model_light(GameModel *game_model) {
+    return;
+
     if (game_model->unlit) {
         return;
     }
@@ -767,6 +777,8 @@ void game_model_light(GameModel *game_model) {
 }
 
 void game_model_relight(GameModel *game_model) {
+    return;
+
     if (game_model->unlit && game_model->isolated) {
         return;
     }

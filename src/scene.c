@@ -1232,7 +1232,9 @@ void scene_render(Scene *scene) {
 
         shader_set_vec3(&scene->game_model_shader, "light_position", light_position);
 
-        shader_set_float(&scene->game_model_shader, "ambient", game_model->light_ambience / 128.0f);
+        shader_set_float(&scene->game_model_shader, "ambient", game_model->light_ambience / 256.0f);
+
+        // textures = 0.0744
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length,
                        GL_UNSIGNED_INT,
@@ -1240,7 +1242,7 @@ void scene_render(Scene *scene) {
     }
 #endif
 
-#ifdef RENDER_SW
+#if RENDER_SW
     scene->visible_polygons_count = 0;
 
     for (int i = 0; i < scene->model_count; i++) {
@@ -1440,16 +1442,16 @@ void scene_render(Scene *scene) {
             }
         } else {
             int k8 = 0;
-            int j10 = 0;
+            int vertex_shade = 0;
             int face_num_vertices = game_model->face_num_vertices[face];
             int *face_vertices = game_model->face_vertices[face];
 
             if (game_model->face_intensity[face] != COLOUR_TRANSPARENT) {
                 if (polygon->visibility < 0) {
-                    j10 = game_model->light_ambience -
+                    vertex_shade = game_model->light_ambience -
                           game_model->face_intensity[face];
                 } else {
-                    j10 = game_model->light_ambience +
+                    vertex_shade = game_model->light_ambience +
                           game_model->face_intensity[face];
                 }
             }
@@ -1463,11 +1465,11 @@ void scene_render(Scene *scene) {
 
                 if (game_model->face_intensity[face] == COLOUR_TRANSPARENT) {
                     if (polygon->visibility < 0) {
-                        j10 = game_model->light_ambience -
+                        vertex_shade = game_model->light_ambience -
                               game_model->vertex_intensity[vertex_index] +
                               game_model->vertex_ambience[vertex_index];
                     } else {
-                        j10 = game_model->light_ambience +
+                        vertex_shade = game_model->light_ambience +
                               game_model->vertex_intensity[vertex_index] +
                               game_model->vertex_ambience[vertex_index];
                     }
@@ -1481,7 +1483,7 @@ void scene_render(Scene *scene) {
                     scene->plane_y[k8] =
                         game_model->vertex_view_y[vertex_index];
 
-                    scene->vertex_shade[k8] = j10;
+                    scene->vertex_shade[k8] = vertex_shade;
 
                     if (game_model->project_vertex_z[vertex_index] >
                         scene->fog_z_distance) {
@@ -1532,7 +1534,7 @@ void scene_render(Scene *scene) {
                         scene->plane_y[k8] =
                             (j6 << scene->view_distance) / scene->clip_near;
 
-                        scene->vertex_shade[k8] = j10;
+                        scene->vertex_shade[k8] = vertex_shade;
                         k8++;
                     }
 
@@ -1577,7 +1579,7 @@ void scene_render(Scene *scene) {
                         scene->plane_y[k8] =
                             (k6 << scene->view_distance) / scene->clip_near;
 
-                        scene->vertex_shade[k8] = j10;
+                        scene->vertex_shade[k8] = vertex_shade;
                         k8++;
                     }
                 }

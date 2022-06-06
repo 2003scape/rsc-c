@@ -21,7 +21,7 @@ void main() {
     vertex_texture_position = texture_position;
 
     vertex_position = vec3(model * vec4(position, 1.0));
-    vertex_normal = normal;
+    vertex_normal = vec3(model * vec4(normal, 1.0));
     //vertex_normal = vec3(model * vec4(normal, 1.0));
 
     /* TODO this could be better */
