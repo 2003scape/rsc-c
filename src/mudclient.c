@@ -351,7 +351,7 @@ int test_z = 750;*/
 int test_x = 0;
 int test_y = 0;
 int test_z = 0;
-int test_yaw = 37;
+int test_yaw = 0;
 GameModel *test_model = NULL;
 
 void mudclient_new(mudclient *mud) {

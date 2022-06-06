@@ -16,7 +16,7 @@ void game_model_new(GameModel *game_model) {
     game_model->visible = 1;
     game_model->key = -1;
     //game_model->light_diffuse = 512;
-    game_model->light_ambience = 32; /* 256 is the maximum */
+    game_model->light_ambience = 32; /* 256 is the maximum? */
     /*game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
     game_model->light_direction_z = 95;

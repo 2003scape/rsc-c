@@ -1163,7 +1163,8 @@ void scene_render(Scene *scene) {
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, -1.0, 0.0};
 
-    float fov = test_yaw;
+    //float fov = test_yaw;
+    float fov = 37;
 
     float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048); // works
     float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
@@ -1232,9 +1233,11 @@ void scene_render(Scene *scene) {
 
         shader_set_vec3(&scene->game_model_shader, "light_position", light_position);
 
-        shader_set_float(&scene->game_model_shader, "ambient", game_model->light_ambience / 256.0f);
+        float ambient = (1.0f - (game_model->light_ambience / 192.0f));
 
-        // textures = 0.0744
+        //* (max - min) + min;
+
+        shader_set_float(&scene->game_model_shader, "ambient", ambient);
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length,
                        GL_UNSIGNED_INT,
