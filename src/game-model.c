@@ -119,10 +119,15 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         if (game_model->face_fill_back[i] == 32767) {
             game_model->face_fill_back[i] = COLOUR_TRANSPARENT;
         }
+
+        // TODO remove
+        //game_model->face_fill_front[i] = -32768;
+        //game_model->face_fill_back[i] = -32768;
     }
 
     for (int i = 0; i < num_faces; i++) {
         int is_intense = data[offset++] & 0xff;
+
         game_model->face_intensity[i] =
             is_intense == 0 ? 0 : COLOUR_TRANSPARENT;
     }
@@ -341,6 +346,10 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     game_model->face_fill_front[game_model->num_faces] = fill_front;
     game_model->face_fill_back[game_model->num_faces] = fill_back;
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
+
+    // TODO remove
+    //game_model->face_fill_front[game_model->num_faces] = -32768;
+    //game_model->face_fill_back[game_model->num_faces] = -32768;
 
     return game_model->num_faces++;
 }
@@ -1322,6 +1331,13 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
     }
 }
 
+void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b) {
+    face_fill = -1 - face_fill;
+    *r = (((face_fill >> 10) & 31) * 8) / 255.0f;
+    *g = (((face_fill >> 5) & 31) * 8) / 255.0f;
+    *b = ((face_fill & 31) * 8) / 255.0f;
+}
+
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset) {
     for (int i = 0; i < game_model->num_faces; i++) {
@@ -1411,19 +1427,13 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
         if (fill_front != COLOUR_TRANSPARENT) {
             if (fill_front < 0) {
-                fill_front = -(fill_front + 1);
-                r = ((fill_front >> 10) & 31) / 31.0f;
-                g = ((fill_front >> 5) & 31) / 31.0f;
-                b = (fill_front & 31) / 31.0f;
+                game_model_gl_decode_face_fill(fill_front, &r, &g, &b);
             } else if (fill_front >= 0) {
                 texture_index = (float)fill_front;
             }
         } else if (fill_back != COLOUR_TRANSPARENT) {
             if (fill_back < 0) {
-                fill_back = -(fill_back + 1);
-                r = ((fill_back >> 10) & 31) / 31.0f;
-                g = ((fill_back >> 5) & 31) / 31.0f;
-                b = (fill_back & 31) / 31.0f;
+                game_model_gl_decode_face_fill(fill_back, &r, &g, &b);
             } else if (fill_back >= 0) {
                 texture_index = (float)fill_back;
             }

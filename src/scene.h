@@ -25,9 +25,9 @@ typedef struct Scene Scene;
 #include "surface.h"
 #include "utility.h"
 
-#define VERTEX_COUNT 40
+#define VERTEX_COUNT 40 // ambigious
 #define RAMP_COUNT 50
-#define RAMP_SIZE 256
+#define RAMP_SIZE 256 // TODO gradient size?
 
 /* originally Scene had a wide_band property and a second gradient_scanline
  * function that was unused */
@@ -132,6 +132,8 @@ typedef struct Scene {
     GLuint terrain_vbo;
     GLuint terrain_ebo;
     GLuint terrain_textures;
+
+    float ambience_gradient[RAMP_SIZE];
 #endif
 } Scene;
 

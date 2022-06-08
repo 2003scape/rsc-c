@@ -211,6 +211,7 @@ extern int test_x;
 extern int test_y;
 extern int test_z;
 extern int test_yaw;
+extern int test_colour;
 extern GameModel *test_model; // TODO remove
 
 extern char *font_files[];

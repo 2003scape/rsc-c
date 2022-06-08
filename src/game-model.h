@@ -162,6 +162,7 @@ void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
                               int vbo_length, int ebo_length);
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
                               int face_num_vertices, GLfloat *us, GLfloat *vs);
+void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b);
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
 void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,

@@ -82,6 +82,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
 #ifdef RENDER_GL
     shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
+
+    for (int i = 0; i < RAMP_SIZE; i++) {
+        int darkness = i * i;
+        //scene->ambience_gradient[(RAMP_SIZE - 1) - i] = darkness / 65536.0f;
+        scene->ambience_gradient[(RAMP_SIZE - 1) - i] = darkness / (65536.0f / 2.0f);
+    }
 #endif
 }
 
@@ -1215,6 +1221,8 @@ void scene_render(Scene *scene) {
             continue;
         }
 
+        game_model->light_ambience = test_yaw;
+
         if (last_vao != game_model->vao) {
             glBindVertexArray(game_model->vao);
             last_vao = game_model->vao;
@@ -1233,9 +1241,10 @@ void scene_render(Scene *scene) {
 
         shader_set_vec3(&scene->game_model_shader, "light_position", light_position);
 
-        float ambient = (1.0f - (game_model->light_ambience / 192.0f));
+        float ambient = 0;
 
-        //* (max - min) + min;
+        ambient =
+            scene->ambience_gradient[game_model->light_ambience % RAMP_SIZE];
 
         shader_set_float(&scene->game_model_shader, "ambient", ambient);
 
@@ -2530,32 +2539,33 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
     }
 
     for (int i = 0; i < RAMP_COUNT; i++) {
+        // TODO maybe rename base. it maps a gradient_ramps index to a face_fill
         if (scene->gradient_base[i] == face_fill) {
             scene->gradient_ramp = scene->gradient_ramps[i];
             break;
         }
 
         if (i == RAMP_COUNT - 1) {
-            int l1 = ((float)rand() / (float)RAND_MAX) * RAMP_COUNT;
+            int gradient_index = ((float)rand() / (float)RAND_MAX) * RAMP_COUNT;
 
-            scene->gradient_base[l1] = face_fill;
+            scene->gradient_base[gradient_index] = face_fill;
             face_fill = -1 - face_fill;
 
             int r = ((face_fill >> 10) & 0x1f) * 8;
             int g = ((face_fill >> 5) & 0x1f) * 8;
             int b = (face_fill & 0x1f) * 8;
 
-            for (int j4 = 0; j4 < 256; j4++) {
-                int j6 = j4 * j4;
-                int k7 = (r * j6) / 0x10000;
-                int l8 = (g * j6) / 0x10000;
-                int i0 = (b * j6) / 0x10000;
+            for (int j = 0; j < 256; j++) {
+                int darkness = j * j;
+                int dark_r = (r * darkness) / 0x10000;
+                int dark_g = (g * darkness) / 0x10000;
+                int dark_b = (b * darkness) / 0x10000;
 
-                scene->gradient_ramps[l1][255 - j4] =
-                    (k7 << 16) + (l8 << 8) + i0;
+                scene->gradient_ramps[gradient_index][(RAMP_SIZE - 1) - j] =
+                    (dark_r << 16) + (dark_g << 8) + dark_b;
             }
 
-            scene->gradient_ramp = scene->gradient_ramps[l1];
+            scene->gradient_ramp = scene->gradient_ramps[gradient_index];
         }
     }
 

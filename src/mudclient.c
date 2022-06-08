@@ -351,7 +351,8 @@ int test_z = 750;*/
 int test_x = 0;
 int test_y = 0;
 int test_z = 0;
-int test_yaw = 0;
+int test_yaw = 1;
+int test_colour = -1;
 GameModel *test_model = NULL;
 
 void mudclient_new(mudclient *mud) {
@@ -2244,7 +2245,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
-        scene_add_model(mud->scene, game_model);
+        //scene_add_model(mud->scene, game_model);
     }
 
     game_model->key = count + 10000;
@@ -4487,16 +4488,12 @@ void mudclient_poll_events(mudclient *mud) {
             } else if (code == 114) {
                 test_yaw += 1;
 
-                printf("yaw: %d\n", test_yaw);
+                printf("ambience: %d\n", test_yaw);
             } else if (code == 102) {
                 test_yaw -= 1;
 
-                printf("yaw: %d\n", test_yaw);
+                printf("ambience: %d\n", test_yaw);
             }
-
-            /*if (test_model) {
-                game_model_orient(test_model, 0, 0, test_yaw);
-            }*/
 
             // printf("%d\n", code);
 
