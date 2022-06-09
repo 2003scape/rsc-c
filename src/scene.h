@@ -134,6 +134,7 @@ typedef struct Scene {
     GLuint terrain_textures;
 
     float ambience_gradient[RAMP_SIZE];
+    float texture_ambience_gradient[RAMP_SIZE];
 #endif
 } Scene;
 

@@ -84,9 +84,17 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
 
     for (int i = 0; i < RAMP_SIZE; i++) {
-        int darkness = i * i;
-        //scene->ambience_gradient[(RAMP_SIZE - 1) - i] = darkness / 65536.0f;
-        scene->ambience_gradient[(RAMP_SIZE - 1) - i] = darkness / (65536.0f / 2.0f);
+        int gradient_index = (RAMP_SIZE - 1) - i;
+
+        scene->ambience_gradient[gradient_index] =
+            (i * i) / (float)(RAMP_SIZE * RAMP_SIZE);
+
+        int texture_gradient_index = i / 16;
+        int x = texture_gradient_index / 4;
+        int y = texture_gradient_index % 4;
+
+        scene->texture_ambience_gradient[gradient_index] =
+            ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
     }
 #endif
 }
@@ -105,7 +113,7 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
     int i4 = 0;
 
     if (i1 != 0) {
-        i = (k / i1) << 7;
+        i = (k / i1) << 7; // * 128
         j = (l / i1) << 7;
     }
 
@@ -1169,17 +1177,14 @@ void scene_render(Scene *scene) {
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, -1.0, 0.0};
 
-    //float fov = test_yaw;
+    // float fov = test_yaw;
     float fov = 37;
 
-    float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048); // works
+    float yaw =
+        glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048); // works
     float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
 
-    vec3 front = {
-        cos(yaw) * cos(pitch),
-        pitch,
-        sin(yaw) * cos(pitch)
-    };
+    vec3 front = {cos(yaw) * cos(pitch), pitch, sin(yaw) * cos(pitch)};
 
     glm_normalize_to(front, camera_front);
 
@@ -1231,25 +1236,30 @@ void scene_render(Scene *scene) {
         shader_set_mat4(&scene->game_model_shader, "model",
                         game_model->transform);
 
-        vec3 light_position = {
-            game_model->light_direction_x / 1000.f,
-            game_model->light_direction_y / 1000.f,
-            game_model->light_direction_z / 1000.f
-        };
+        vec3 light_position = {game_model->light_direction_x / 1000.f,
+                               game_model->light_direction_y / 1000.f,
+                               game_model->light_direction_z / 1000.f};
 
-        //glm_vec3_normalize(light_position);
+        // glm_vec3_normalize(light_position);
 
-        shader_set_vec3(&scene->game_model_shader, "light_position", light_position);
+        shader_set_vec3(&scene->game_model_shader, "light_position",
+                        light_position);
 
-        float ambient = 0;
+        int model_ambience = game_model->light_ambience;
 
-        ambient =
-            scene->ambience_gradient[game_model->light_ambience % RAMP_SIZE];
+        if (model_ambience < 0) {
+            model_ambience = 0;
+        } else if (model_ambience >= RAMP_SIZE) {
+            model_ambience = RAMP_SIZE - 1;
+        }
 
-        shader_set_float(&scene->game_model_shader, "ambient", ambient);
+        shader_set_float(&scene->game_model_shader, "vertex_ambience",
+                         scene->ambience_gradient[model_ambience]);
 
-        glDrawElements(GL_TRIANGLES, game_model->ebo_length,
-                       GL_UNSIGNED_INT,
+        shader_set_float(&scene->game_model_shader, "texture_ambience",
+                         scene->texture_ambience_gradient[model_ambience]);
+
+        glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
     }
 #endif
@@ -1284,8 +1294,7 @@ void scene_render(Scene *scene) {
                 int view_x_count = 0;
 
                 for (int vertex = 0; vertex < num_vertices; vertex++) {
-                    int x =
-                        game_model->vertex_view_x[face_vertices[vertex]];
+                    int x = game_model->vertex_view_x[face_vertices[vertex]];
 
                     if (x > -scene->clip_x) {
                         view_x_count |= 1;
@@ -1305,8 +1314,7 @@ void scene_render(Scene *scene) {
 
                     for (int vertex = 0; vertex < num_vertices; vertex++) {
                         int vertex_y =
-                            game_model
-                                ->vertex_view_y[face_vertices[vertex]];
+                            game_model->vertex_view_y[face_vertices[vertex]];
 
                         if (vertex_y > -scene->clip_y) {
                             view_y_count |= 1;
@@ -1461,10 +1469,10 @@ void scene_render(Scene *scene) {
             if (game_model->face_intensity[face] != COLOUR_TRANSPARENT) {
                 if (polygon->visibility < 0) {
                     vertex_shade = game_model->light_ambience -
-                          game_model->face_intensity[face];
+                                   game_model->face_intensity[face];
                 } else {
                     vertex_shade = game_model->light_ambience +
-                          game_model->face_intensity[face];
+                                   game_model->face_intensity[face];
                 }
             }
 
@@ -1477,13 +1485,15 @@ void scene_render(Scene *scene) {
 
                 if (game_model->face_intensity[face] == COLOUR_TRANSPARENT) {
                     if (polygon->visibility < 0) {
-                        vertex_shade = game_model->light_ambience -
-                              game_model->vertex_intensity[vertex_index] +
-                              game_model->vertex_ambience[vertex_index];
+                        vertex_shade =
+                            game_model->light_ambience -
+                            game_model->vertex_intensity[vertex_index] +
+                            game_model->vertex_ambience[vertex_index];
                     } else {
-                        vertex_shade = game_model->light_ambience +
-                              game_model->vertex_intensity[vertex_index] +
-                              game_model->vertex_ambience[vertex_index];
+                        vertex_shade =
+                            game_model->light_ambience +
+                            game_model->vertex_intensity[vertex_index] +
+                            game_model->vertex_ambience[vertex_index];
                     }
                 }
 
@@ -2655,8 +2665,8 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     roll &= 1023;
 
     // TODO remove
-    //yaw = 0;
-    //pitch = 0;
+    // yaw = 0;
+    // pitch = 0;
     roll = 0;
 
     scene->camera_yaw = (1024 - yaw) & 1023; // pitch
@@ -3168,7 +3178,8 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
             int sprite_x = is_128 ? x : x / 2;
             int sprite_y = is_128 ? y : y / 2;
 
-            int colour = palette[colours[sprite_y + sprite_x * texture_width] & 0xff];
+            int colour =
+                palette[colours[sprite_y + sprite_x * texture_width] & 0xff];
 
             if (colour != MAGENTA) {
                 texture_raster[raster_position] = 0xff000000 + colour;

@@ -1467,7 +1467,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                      8, 64, 338, 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        //scene_add_model(world->scene, world->wall_models[plane][i]);
+        scene_add_model(world->scene, world->wall_models[plane][i]);
 
 #ifdef RENDER_GL
         world->world_models_buffer[world->world_models_offset++] =
