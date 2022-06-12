@@ -23,6 +23,8 @@
 #define GAME_MODEL_TRANSFORM_TRANSLATE 1
 #define GAME_MODEL_TRANSFORM_ROTATE 2
 
+#define GAME_MODEL_USE_GOURAUD 12345678
+
 typedef struct GameModel GameModel;
 
 #include "scene.h"

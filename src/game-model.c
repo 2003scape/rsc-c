@@ -15,12 +15,12 @@ void game_model_new(GameModel *game_model) {
     game_model->diameter = COLOUR_TRANSPARENT;
     game_model->visible = 1;
     game_model->key = -1;
-    //game_model->light_diffuse = 512;
-    game_model->light_ambience = 32; /* 256 is the maximum? */
-    /*game_model->light_direction_x = 180;
+    //game_model->light_ambience = 32; /* 256 is the maximum? */
+    game_model->light_diffuse = 512;
+    game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
     game_model->light_direction_z = 95;
-    game_model->light_direction_magnitude = 256;*/
+    game_model->light_direction_magnitude = 256;
 
 #ifdef RENDER_GL
     game_model->ebo_offset = -1;
@@ -128,8 +128,9 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
     for (int i = 0; i < num_faces; i++) {
         int is_intense = data[offset++] & 0xff;
 
+        // TODO RENAME to is_gouraud!
         game_model->face_intensity[i] =
-            is_intense == 0 ? 0 : COLOUR_TRANSPARENT;
+            is_intense == 0 ? 0 : GAME_MODEL_USE_GOURAUD;
     }
 
     for (int i = 0; i < num_faces; i++) {
@@ -453,11 +454,18 @@ void game_model_copy_lighting(GameModel *game_model, GameModel *model,
 }
 
 void game_model_set_light_from3(GameModel *game_model, int x, int y, int z) {
-    return;
+    //return;
 
     if (game_model->unlit) {
         return;
     }
+
+    //x = -50;
+    //x = 180;
+    //y = -10;
+    //y = 155;
+    //z = -50;
+    //z = 95;
 
     game_model->light_direction_x = x;
     game_model->light_direction_y = y;
@@ -469,9 +477,11 @@ void game_model_set_light_from3(GameModel *game_model, int x, int y, int z) {
 
 void game_model_set_light_from5(GameModel *game_model, int ambience,
                                 int diffuse, int x, int y, int z) {
-    return;
+    if (game_model->unlit) {
+        return;
+    }
 
-    game_model->light_ambience = 256 - ambience * 4;
+    //game_model->light_ambience = 256 - ambience * 4;
     game_model->light_diffuse = (64 - diffuse) * 16 + 128;
 
     game_model_set_light_from3(game_model, x, y, z);
@@ -480,14 +490,18 @@ void game_model_set_light_from5(GameModel *game_model, int ambience,
 void game_model_set_light_from6(GameModel *game_model, int gouraud,
                                 int ambience, int diffuse, int x, int y,
                                 int z) {
-    return;
+    //return;
+    gouraud = 0;
+
+    //printf("%d\n", gouraud);
 
     if (game_model->unlit) {
         return;
     }
 
     for (int i = 0; i < game_model->num_faces; i++) {
-        game_model->face_intensity[i] = gouraud ? COLOUR_TRANSPARENT : 0;
+        game_model->face_intensity[i] = gouraud ? GAME_MODEL_USE_GOURAUD : 0;
+        // TODO rename COLOUR_TRANSPARENT to FLAT_SHADING for this class
     }
 
     game_model_set_light_from5(game_model, ambience, diffuse, x, y, z);
@@ -495,8 +509,7 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
 
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience) {
-    return;
-
+    //return;
     game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
@@ -720,7 +733,7 @@ void game_model_compute_bounds(GameModel *game_model) {
 }
 
 void game_model_light(GameModel *game_model) {
-    return;
+    //return;
 
     if (game_model->unlit) {
         return;
@@ -728,10 +741,10 @@ void game_model_light(GameModel *game_model) {
 
     int divisor =
         (game_model->light_diffuse * game_model->light_direction_magnitude) >>
-        8;
+        8; // >> 8 is / 256
 
     for (int i = 0; i < game_model->num_faces; i++) {
-        if (game_model->face_intensity[i] != COLOUR_TRANSPARENT) {
+        if (game_model->face_intensity[i] != GAME_MODEL_USE_GOURAUD) {
             game_model->face_intensity[i] =
                 (int)((game_model->face_normal_x[i] *
                            game_model->light_direction_x +
@@ -755,8 +768,8 @@ void game_model_light(GameModel *game_model) {
         normal_magnitude[i] = 0;
     }
 
-    for (int i = 0; i < game_model->num_faces; i++) {
-        if (game_model->face_intensity[i] == COLOUR_TRANSPARENT) {
+    /*for (int i = 0; i < game_model->num_faces; i++) {
+        if (game_model->face_intensity[i] == GAME_MODEL_USE_GOURAUD) {
             for (int j = 0; j < game_model->face_num_vertices[i]; j++) {
                 int vertex_index = game_model->face_vertices[i][j];
 
@@ -777,7 +790,7 @@ void game_model_light(GameModel *game_model) {
                        normal_z[i] * game_model->light_direction_z) /
                       (divisor * normal_magnitude[i]));
         }
-    }
+    }*/
 
     free(normal_x);
     free(normal_y);
@@ -786,7 +799,7 @@ void game_model_light(GameModel *game_model) {
 }
 
 void game_model_relight(GameModel *game_model) {
-    return;
+    //return;
 
     if (game_model->unlit && game_model->isolated) {
         return;
@@ -795,7 +808,7 @@ void game_model_relight(GameModel *game_model) {
     for (int i = 0; i < game_model->num_faces; i++) {
         int *face_vertices = game_model->face_vertices[i];
 
-        int a_x = game_model->vertex_transformed_x[face_vertices[0]];
+        /*int a_x = game_model->vertex_transformed_x[face_vertices[0]];
         int a_y = game_model->vertex_transformed_y[face_vertices[0]];
         int a_z = game_model->vertex_transformed_z[face_vertices[0]];
         int b_x = game_model->vertex_transformed_x[face_vertices[1]] - a_x;
@@ -803,7 +816,17 @@ void game_model_relight(GameModel *game_model) {
         int b_z = game_model->vertex_transformed_z[face_vertices[1]] - a_z;
         int c_x = game_model->vertex_transformed_x[face_vertices[2]] - a_x;
         int c_y = game_model->vertex_transformed_y[face_vertices[2]] - a_y;
-        int c_z = game_model->vertex_transformed_z[face_vertices[2]] - a_z;
+        int c_z = game_model->vertex_transformed_z[face_vertices[2]] - a_z;*/
+
+        int a_x = game_model->vertex_x[face_vertices[0]];
+        int a_y = game_model->vertex_y[face_vertices[0]];
+        int a_z = game_model->vertex_z[face_vertices[0]];
+        int b_x = game_model->vertex_x[face_vertices[1]] - a_x;
+        int b_y = game_model->vertex_y[face_vertices[1]] - a_y;
+        int b_z = game_model->vertex_z[face_vertices[1]] - a_z;
+        int c_x = game_model->vertex_x[face_vertices[2]] - a_x;
+        int c_y = game_model->vertex_y[face_vertices[2]] - a_y;
+        int c_z = game_model->vertex_z[face_vertices[2]] - a_z;
 
         int norm_x = b_y * c_z - c_y * b_z;
         int norm_y = b_z * c_x - c_z * b_x;
@@ -812,9 +835,9 @@ void game_model_relight(GameModel *game_model) {
         for (norm_z = b_x * c_y - c_x * b_y;
              norm_x > 8192 || norm_y > 8192 || norm_z > 8192 ||
              norm_x < -8192 || norm_y < -8192 || norm_z < -8192;
-             norm_z >>= 1) {
-            norm_x >>= 1;
-            norm_y >>= 1;
+             norm_z /= 2) {
+            norm_x /= 2;
+            norm_y /= 2;
         }
 
         int norm_mag =
@@ -824,9 +847,9 @@ void game_model_relight(GameModel *game_model) {
             norm_mag = 1;
         }
 
-        game_model->face_normal_x[i] = (int)((norm_x * 0x10000) / norm_mag);
-        game_model->face_normal_y[i] = (int)((norm_y * 0x10000) / norm_mag);
-        game_model->face_normal_z[i] = (int)((norm_z * 0xffff) / norm_mag);
+        game_model->face_normal_x[i] = (int)((norm_x * 65536) / norm_mag);
+        game_model->face_normal_y[i] = (int)((norm_y * 65536) / norm_mag);
+        game_model->face_normal_z[i] = (int)((norm_z * 65535) / norm_mag);
 
         game_model->normal_scale[i] = -1;
     }
@@ -1344,7 +1367,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         int *face_vertices = game_model->face_vertices[i];
         int face_num_vertices = game_model->face_num_vertices[i];
 
-        vec3 vertices[3];
+        /*vec3 vertices[3];
 
         for (int i = 0; i < 3; i++) {
             int vertex_index = face_vertices[i];
@@ -1357,15 +1380,15 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         vec3 location_x = {0};
         glm_vec3_sub(vertices[1], vertices[0], location_x);
 
-        vec3 delta = {0};
-        glm_vec3_sub(vertices[2], vertices[0], delta);
+        vec3 diff = {0};
+        glm_vec3_sub(vertices[2], vertices[0], diff);
 
         vec3 normal = {0};
-        glm_vec3_cross(location_x, delta, normal);
+        glm_vec3_cross(location_x, diff, normal);
 
-        glm_vec3_normalize(normal);
+        glm_vec3_normalize(normal);*/
 
-        /*int a_x = game_model->vertex_x[face_vertices[0]];
+        int a_x = game_model->vertex_x[face_vertices[0]];
         int a_y = game_model->vertex_y[face_vertices[0]];
         int a_z = game_model->vertex_z[face_vertices[0]];
         int b_x = game_model->vertex_x[face_vertices[1]] - a_x;
@@ -1394,26 +1417,17 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             norm_mag = 1;
         }
 
-        int face_normal_x = (int)((norm_x * 0x10000) / norm_mag);
-        int face_normal_y = (int)((norm_y * 0x10000) / norm_mag);
-        int face_normal_z = (int)((norm_z * 0xffff) / norm_mag);
+        int normal_x = (int)((norm_x * 65536) / norm_mag);
+        int normal_y = (int)((norm_y * 65536) / norm_mag);
+        int normal_z = (int)((norm_z * 65535) / norm_mag);
 
-        vec3 face_normal = {
-            face_normal_x / 1000.0f,
-            face_normal_y / 1000.0f,
-            face_normal_z / 1000.0f,
+        vec3 normal = {
+            normal_x / 1000.0f,
+            normal_y / 1000.0f,
+            normal_z / 1000.0f,
         };
 
-        glm_vec3_normalize(face_normal);
-
-        printf("%f (%f), %f (%f), %f (%f)\n",
-                face_normal[0],
-                normal[0],
-                face_normal[1],
-                normal[1],
-                face_normal[2],
-                normal[2]
-        );*/
+        //glm_vec3_normalize(normal);
 
         int fill_front = game_model->face_fill_front[i];
         int fill_back = game_model->face_fill_back[i];

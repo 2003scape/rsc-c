@@ -348,9 +348,9 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 /*int test_x = 520;
 int test_y = -106;
 int test_z = 750;*/
-int test_x = 0;
-int test_y = 0;
-int test_z = 0;
+int test_x = -50;
+int test_y = -10;
+int test_z = -50;
 int test_yaw = 1;
 int test_colour = -1;
 GameModel *test_model = NULL;
@@ -4496,6 +4496,7 @@ void mudclient_poll_events(mudclient *mud) {
             }
 
             // printf("%d\n", code);
+            printf("%d %d %d\n", test_x, test_y, test_z);
 
             break;
         }

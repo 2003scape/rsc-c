@@ -95,7 +95,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
         scene->texture_ambience_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
+
     }
+
+    /*for (int i = 0; i < RAMP_SIZE; i++)
+        printf("%f,", scene->ambience_gradient[i]);
+    printf("\n");*/
 #endif
 }
 
@@ -1196,10 +1201,12 @@ void scene_render(Scene *scene) {
 
     mat4 projection = {0};
 
+    float clip_far = (scene->clip_far_3d + scene->fog_z_falloff + scene->fog_z_distance) / 1000.0f;
+
     glm_perspective(
         glm_rad(fov),
         (float)(scene->surface->width2) / (float)scene->surface->height2,
-        scene->clip_near / 1000.0f, scene->clip_far_3d / 1000.0f, projection);
+        scene->clip_near / 1000.0f, clip_far, projection);
 
     /* TODO this could be optional? have to fix winding order */
     /*glEnable(GL_CULL_FACE);
@@ -1236,16 +1243,35 @@ void scene_render(Scene *scene) {
         shader_set_mat4(&scene->game_model_shader, "model",
                         game_model->transform);
 
-        vec3 light_position = {game_model->light_direction_x / 1000.f,
+        //vec3 light_position = {0};
+
+        vec3 light_direction = {game_model->light_direction_x / 1000.f,
                                game_model->light_direction_y / 1000.f,
                                game_model->light_direction_z / 1000.f};
 
+        //glm_vec3_normalize(light_direction);
+
+        /*vec3 light_position = {test_x / 1000.f,
+                               test_y / 1000.f,
+                               test_z / 1000.f};*/
+
+        //vec3 light_pos_test = {0};
+        //glm_mat4_mulv3(view, light_direction, 1, light_pos_test);
+
         // glm_vec3_normalize(light_position);
 
-        shader_set_vec3(&scene->game_model_shader, "light_position",
-                        light_position);
+        shader_set_vec3(&scene->game_model_shader, "light_direction",
+                        light_direction);
+
+        shader_set_float(&scene->game_model_shader, "light_diffuse",
+                        (float)game_model->light_diffuse);
+
+        shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
+                        (float)game_model->light_direction_magnitude);
 
         int model_ambience = game_model->light_ambience;
+
+        //printf("%d\n", model_ambience);
 
         if (model_ambience < 0) {
             model_ambience = 0;
@@ -1253,11 +1279,13 @@ void scene_render(Scene *scene) {
             model_ambience = RAMP_SIZE - 1;
         }
 
-        shader_set_float(&scene->game_model_shader, "vertex_ambience",
+        /*shader_set_float(&scene->game_model_shader, "vertex_ambience",
                          scene->ambience_gradient[model_ambience]);
 
         shader_set_float(&scene->game_model_shader, "texture_ambience",
-                         scene->texture_ambience_gradient[model_ambience]);
+                         scene->texture_ambience_gradient[model_ambience]);*/
+
+        shader_set_float(&scene->game_model_shader, "light_ambience", model_ambience);
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
@@ -1466,14 +1494,23 @@ void scene_render(Scene *scene) {
             int face_num_vertices = game_model->face_num_vertices[face];
             int *face_vertices = game_model->face_vertices[face];
 
-            if (game_model->face_intensity[face] != COLOUR_TRANSPARENT) {
+            if (game_model->face_intensity[face] != GAME_MODEL_USE_GOURAUD) {
+#if 0
                 if (polygon->visibility < 0) {
+                    /*vertex_shade = game_model->light_ambience -
+                                   game_model->face_intensity[face];*/
                     vertex_shade = game_model->light_ambience -
                                    game_model->face_intensity[face];
                 } else {
+                    /*vertex_shade = game_model->light_ambience +
+                                   game_model->face_intensity[face];*/
                     vertex_shade = game_model->light_ambience +
                                    game_model->face_intensity[face];
                 }
+#else
+                vertex_shade = game_model->light_ambience +
+                               game_model->face_intensity[face];
+#endif
             }
 
             for (int j = 0; j < face_num_vertices; j++) {
@@ -1483,7 +1520,7 @@ void scene_render(Scene *scene) {
                 scene->vertex_y[j] = game_model->project_vertex_y[vertex_index];
                 scene->vertex_z[j] = game_model->project_vertex_z[vertex_index];
 
-                if (game_model->face_intensity[face] == COLOUR_TRANSPARENT) {
+                /*if (game_model->face_intensity[face] == GAME_MODEL_USE_GOURAUD) {
                     if (polygon->visibility < 0) {
                         vertex_shade =
                             game_model->light_ambience -
@@ -1495,7 +1532,9 @@ void scene_render(Scene *scene) {
                             game_model->vertex_intensity[vertex_index] +
                             game_model->vertex_ambience[vertex_index];
                     }
-                }
+                }*/
+
+                // vertex shade is 0-255, uses gradient ramps
 
                 if (game_model->project_vertex_z[vertex_index] >=
                     scene->clip_near) {
@@ -1507,17 +1546,17 @@ void scene_render(Scene *scene) {
 
                     scene->vertex_shade[k8] = vertex_shade;
 
-                    if (game_model->project_vertex_z[vertex_index] >
+                    /*if (game_model->project_vertex_z[vertex_index] >
                         scene->fog_z_distance) {
                         scene->vertex_shade[k8] +=
                             (game_model->project_vertex_z[vertex_index] -
                              scene->fog_z_distance) /
                             scene->fog_z_falloff;
-                    }
+                    }*/
 
                     k8++;
                 } else {
-                    int previous_vertex_index = 0;
+                    /*int previous_vertex_index = 0;
 
                     if (j == 0) {
                         previous_vertex_index =
@@ -1603,7 +1642,7 @@ void scene_render(Scene *scene) {
 
                         scene->vertex_shade[k8] = vertex_shade;
                         k8++;
-                    }
+                    }*/
                 }
             }
 
@@ -1614,11 +1653,12 @@ void scene_render(Scene *scene) {
                     scene->vertex_shade[j] = 255;
                 }
 
+
                 if (polygon->facefill >= 0) {
                     if (scene->texture_dimension[polygon->facefill] == 1) {
-                        scene->vertex_shade[j] <<= 9;
+                        scene->vertex_shade[j] <<= 9; // * 512
                     } else {
-                        scene->vertex_shade[j] <<= 6;
+                        scene->vertex_shade[j] <<= 6; // * 64
                     }
                 }
             }
@@ -1646,15 +1686,15 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
     int start_s = 0;
 
     if (plane == 3) {
-        int k1 = plane_y[0] + scene->base_y;
-        int k2 = plane_y[1] + scene->base_y;
-        int k3 = plane_y[2] + scene->base_y;
-        int k4 = plane_x[0];
-        int l5 = plane_x[1];
-        int j7 = plane_x[2];
-        int l8 = vertex_shade[0];
-        int j10 = vertex_shade[1];
-        int j11 = vertex_shade[2];
+        int plane_y_0 = plane_y[0] + scene->base_y;
+        int plane_y_1 = plane_y[1] + scene->base_y;
+        int plane_y_2 = plane_y[2] + scene->base_y;
+        int plane_x_0 = plane_x[0];
+        int plane_x_1 = plane_x[1];
+        int plane_x_2 = plane_x[2];
+        int vertex_shade_0 = vertex_shade[0];
+        int vertex_shade_1 = vertex_shade[1];
+        int vertex_shade_2 = vertex_shade[2];
         int j12 = scene->base_y + scene->clip_y - 1;
 
         int l12 = 0;
@@ -1664,20 +1704,20 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int l14 = COLOUR_TRANSPARENT;
         int j15 = -COLOUR_TRANSPARENT;
 
-        if (k3 != k1) {
-            j13 = ((j7 - k4) << 8) / (k3 - k1);
-            j14 = ((j11 - l8) << 8) / (k3 - k1);
+        if (plane_y_2 != plane_y_0) {
+            j13 = ((plane_x_2 - plane_x_0) << 8) / (plane_y_2 - plane_y_0);
+            j14 = ((vertex_shade_2 - vertex_shade_0) << 8) / (plane_y_2 - plane_y_0);
 
-            if (k1 < k3) {
-                l12 = k4 << 8;
-                l13 = l8 << 8;
-                l14 = k1;
-                j15 = k3;
+            if (plane_y_0 < plane_y_2) {
+                l12 = plane_x_0 << 8;
+                l13 = vertex_shade_0 << 8;
+                l14 = plane_y_0;
+                j15 = plane_y_2;
             } else {
-                l12 = j7 << 8;
-                l13 = j11 << 8;
-                l14 = k3;
-                j15 = k1;
+                l12 = plane_x_2 << 8;
+                l13 = vertex_shade_2 << 8;
+                l14 = plane_y_2;
+                j15 = plane_y_0;
             }
 
             if (l14 < 0) {
@@ -1698,20 +1738,20 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int l17 = COLOUR_TRANSPARENT;
         int j18 = -COLOUR_TRANSPARENT;
 
-        if (k2 != k1) {
-            j16 = ((l5 - k4) << 8) / (k2 - k1);
-            j17 = ((j10 - l8) << 8) / (k2 - k1);
+        if (plane_y_1 != plane_y_0) {
+            j16 = ((plane_x_1 - plane_x_0) << 8) / (plane_y_1 - plane_y_0);
+            j17 = ((vertex_shade_1 - vertex_shade_0) << 8) / (plane_y_1 - plane_y_0);
 
-            if (k1 < k2) {
-                l15 = k4 << 8;
-                l16 = l8 << 8;
-                l17 = k1;
-                j18 = k2;
+            if (plane_y_0 < plane_y_1) {
+                l15 = plane_x_0 << 8;
+                l16 = vertex_shade_0 << 8;
+                l17 = plane_y_0;
+                j18 = plane_y_1;
             } else {
-                l15 = l5 << 8;
-                l16 = j10 << 8;
-                l17 = k2;
-                j18 = k1;
+                l15 = plane_x_1 << 8;
+                l16 = vertex_shade_1 << 8;
+                l17 = plane_y_1;
+                j18 = plane_y_0;
             }
 
             if (l17 < 0) {
@@ -1732,20 +1772,20 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int l20 = COLOUR_TRANSPARENT;
         int j21 = -COLOUR_TRANSPARENT;
 
-        if (k3 != k2) {
-            j19 = ((j7 - l5) << 8) / (k3 - k2);
-            j20 = ((j11 - j10) << 8) / (k3 - k2);
+        if (plane_y_2 != plane_y_1) {
+            j19 = ((plane_x_2 - plane_x_1) << 8) / (plane_y_2 - plane_y_1);
+            j20 = ((vertex_shade_2 - vertex_shade_1) << 8) / (plane_y_2 - plane_y_1);
 
-            if (k2 < k3) {
-                l18 = l5 << 8;
-                l19 = j10 << 8;
-                l20 = k2;
-                j21 = k3;
+            if (plane_y_1 < plane_y_2) {
+                l18 = plane_x_1 << 8;
+                l19 = vertex_shade_1 << 8;
+                l20 = plane_y_1;
+                j21 = plane_y_2;
             } else {
-                l18 = j7 << 8;
-                l19 = j11 << 8;
-                l20 = k3;
-                j21 = k2;
+                l18 = plane_x_2 << 8;
+                l19 = vertex_shade_2 << 8;
+                l20 = plane_y_2;
+                j21 = plane_y_1;
             }
 
             if (l20 < 0) {
@@ -1833,18 +1873,18 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
             scene->min_y = scene->base_y - scene->clip_y;
         }
     } else if (plane == 4) {
-        int l1 = plane_y[0] + scene->base_y;
-        int l2 = plane_y[1] + scene->base_y;
-        int l3 = plane_y[2] + scene->base_y;
-        int l4 = plane_y[3] + scene->base_y;
-        int i6 = plane_x[0];
-        int k7 = plane_x[1];
-        int i9 = plane_x[2];
-        int k10 = plane_x[3];
-        int k11 = vertex_shade[0];
-        int k12 = vertex_shade[1];
-        int i13 = vertex_shade[2];
-        int k13 = vertex_shade[3];
+        int plane_y_0 = plane_y[0] + scene->base_y;
+        int plane_y_1 = plane_y[1] + scene->base_y;
+        int plane_y_2 = plane_y[2] + scene->base_y;
+        int plane_y_3 = plane_y[3] + scene->base_y;
+        int plane_x_0 = plane_x[0];
+        int plane_x_1 = plane_x[1];
+        int plane_x_2 = plane_x[2];
+        int plane_x_3 = plane_x[3];
+        int vertex_shade_0 = vertex_shade[0];
+        int vertex_shade_1 = vertex_shade[1];
+        int vertex_shade_2 = vertex_shade[2];
+        int vertex_shade_3 = vertex_shade[3];
         int i14 = scene->base_y + scene->clip_y - 1;
 
         int k14 = 0;
@@ -1854,20 +1894,20 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int k16 = COLOUR_TRANSPARENT;
         int i17 = -COLOUR_TRANSPARENT;
 
-        if (l4 != l1) {
-            i15 = ((k10 - i6) << 8) / (l4 - l1);
-            i16 = ((k13 - k11) << 8) / (l4 - l1);
+        if (plane_y_3 != plane_y_0) {
+            i15 = ((plane_x_3 - plane_x_0) << 8) / (plane_y_3 - plane_y_0);
+            i16 = ((vertex_shade_3 - vertex_shade_0) << 8) / (plane_y_3 - plane_y_0);
 
-            if (l1 < l4) {
-                k14 = i6 << 8;
-                k15 = k11 << 8;
-                k16 = l1;
-                i17 = l4;
+            if (plane_y_0 < plane_y_3) {
+                k14 = plane_x_0 << 8;
+                k15 = vertex_shade_0 << 8;
+                k16 = plane_y_0;
+                i17 = plane_y_3;
             } else {
-                k14 = k10 << 8;
-                k15 = k13 << 8;
-                k16 = l4;
-                i17 = l1;
+                k14 = plane_x_3 << 8;
+                k15 = vertex_shade_3 << 8;
+                k16 = plane_y_3;
+                i17 = plane_y_0;
             }
 
             if (k16 < 0) {
@@ -1888,20 +1928,20 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int k19 = COLOUR_TRANSPARENT;
         int i20 = -COLOUR_TRANSPARENT;
 
-        if (l2 != l1) {
-            i18 = ((k7 - i6) << 8) / (l2 - l1);
-            i19 = ((k12 - k11) << 8) / (l2 - l1);
+        if (plane_y_1 != plane_y_0) {
+            i18 = ((plane_x_1 - plane_x_0) << 8) / (plane_y_1 - plane_y_0);
+            i19 = ((vertex_shade_1 - vertex_shade_0) << 8) / (plane_y_1 - plane_y_0);
 
-            if (l1 < l2) {
-                k17 = i6 << 8;
-                k18 = k11 << 8;
-                k19 = l1;
-                i20 = l2;
+            if (plane_y_0 < plane_y_1) {
+                k17 = plane_x_0 << 8;
+                k18 = vertex_shade_0 << 8;
+                k19 = plane_y_0;
+                i20 = plane_y_1;
             } else {
-                k17 = k7 << 8;
-                k18 = k12 << 8;
-                k19 = l2;
-                i20 = l1;
+                k17 = plane_x_1 << 8;
+                k18 = vertex_shade_1 << 8;
+                k19 = plane_y_1;
+                i20 = plane_y_0;
             }
 
             if (k19 < 0) {
@@ -1922,20 +1962,20 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int j22 = COLOUR_TRANSPARENT;
         int k22 = -COLOUR_TRANSPARENT;
 
-        if (l3 != l2) {
-            i21 = ((i9 - k7) << 8) / (l3 - l2);
-            i22 = ((i13 - k12) << 8) / (l3 - l2);
+        if (plane_y_2 != plane_y_1) {
+            i21 = ((plane_x_2 - plane_x_1) << 8) / (plane_y_2 - plane_y_1);
+            i22 = ((vertex_shade_2 - vertex_shade_1) << 8) / (plane_y_2 - plane_y_1);
 
-            if (l2 < l3) {
-                k20 = k7 << 8;
-                k21 = k12 << 8;
-                j22 = l2;
-                k22 = l3;
+            if (plane_y_1 < plane_y_2) {
+                k20 = plane_x_1 << 8;
+                k21 = vertex_shade_1 << 8;
+                j22 = plane_y_1;
+                k22 = plane_y_2;
             } else {
-                k20 = i9 << 8;
-                k21 = i13 << 8;
-                j22 = l3;
-                k22 = l2;
+                k20 = plane_x_2 << 8;
+                k21 = vertex_shade_2 << 8;
+                j22 = plane_y_2;
+                k22 = plane_y_1;
             }
 
             if (j22 < 0) {
@@ -1956,20 +1996,20 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int l23 = COLOUR_TRANSPARENT;
         int i24 = -COLOUR_TRANSPARENT;
 
-        if (l4 != l3) {
-            i23 = ((k10 - i9) << 8) / (l4 - l3);
-            k23 = ((k13 - i13) << 8) / (l4 - l3);
+        if (plane_y_3 != plane_y_2) {
+            i23 = ((plane_x_3 - plane_x_2) << 8) / (plane_y_3 - plane_y_2);
+            k23 = ((vertex_shade_3 - vertex_shade_2) << 8) / (plane_y_3 - plane_y_2);
 
-            if (l3 < l4) {
-                l22 = i9 << 8;
-                j23 = i13 << 8;
-                l23 = l3;
-                i24 = l4;
+            if (plane_y_2 < plane_y_3) {
+                l22 = plane_x_2 << 8;
+                j23 = vertex_shade_2 << 8;
+                l23 = plane_y_2;
+                i24 = plane_y_3;
             } else {
-                l22 = k10 << 8;
-                j23 = k13 << 8;
-                l23 = l4;
-                i24 = l3;
+                l22 = plane_x_3 << 8;
+                j23 = vertex_shade_3 << 8;
+                l23 = plane_y_3;
+                i24 = plane_y_2;
             }
 
             if (l23 < 0) {
