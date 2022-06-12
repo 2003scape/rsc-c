@@ -1234,7 +1234,7 @@ void scene_render(Scene *scene) {
             continue;
         }
 
-        game_model->light_ambience = test_yaw;
+        //game_model->light_ambience = test_yaw;
 
         if (last_vao != game_model->vao) {
             glBindVertexArray(game_model->vao);
@@ -1243,8 +1243,6 @@ void scene_render(Scene *scene) {
 
         shader_set_mat4(&scene->game_model_shader, "model",
                         game_model->transform);
-
-        //vec3 light_position = {0};
 
         vec3 light_direction = {game_model->light_direction_x / 1000.f,
                                game_model->light_direction_y / 1000.f,
@@ -1261,32 +1259,28 @@ void scene_render(Scene *scene) {
 
         // glm_vec3_normalize(light_position);
 
-        shader_set_vec3(&scene->game_model_shader, "light_direction",
-                        light_direction);
+        shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
 
-        shader_set_float(&scene->game_model_shader, "light_diffuse",
-                        (float)game_model->light_diffuse);
+        if (!game_model->unlit) {
+            shader_set_vec3(&scene->game_model_shader, "light_direction",
+                            light_direction);
 
-        shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
-                        (float)game_model->light_direction_magnitude);
+            shader_set_float(&scene->game_model_shader, "light_diffuse",
+                            (float)game_model->light_diffuse);
 
-        int model_ambience = game_model->light_ambience;
+            shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
+                            (float)game_model->light_direction_magnitude);
 
-        //printf("%d\n", model_ambience);
+            int model_ambience = game_model->light_ambience;
 
-        if (model_ambience < 0) {
-            model_ambience = 0;
-        } else if (model_ambience >= RAMP_SIZE) {
-            model_ambience = RAMP_SIZE - 1;
+            if (model_ambience < 0) {
+                model_ambience = 0;
+            } else if (model_ambience >= RAMP_SIZE) {
+                model_ambience = RAMP_SIZE - 1;
+            }
+
+            shader_set_float(&scene->game_model_shader, "light_ambience", model_ambience);
         }
-
-        /*shader_set_float(&scene->game_model_shader, "vertex_ambience",
-                         scene->ambience_gradient[model_ambience]);
-
-        shader_set_float(&scene->game_model_shader, "texture_ambience",
-                         scene->texture_ambience_gradient[model_ambience]);*/
-
-        shader_set_float(&scene->game_model_shader, "light_ambience", model_ambience);
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
@@ -1504,7 +1498,7 @@ void scene_render(Scene *scene) {
                                    game_model->face_intensity[face];
                 } else {
                     /*vertex_shade = game_model->light_ambience +
-                                   game_model->face_intensity[face];*/
+e                                  game_model->face_intensity[face];*/
                     vertex_shade = game_model->light_ambience +
                                    game_model->face_intensity[face];
                 }

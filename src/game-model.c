@@ -6,6 +6,85 @@ float gl_tri_face_vs[] = {1.0f, 1.0f, 0.0f};
 
 float gl_quad_face_us[] = {0.0f, 1.0f, 1.0f, 0.0f};
 float gl_quad_face_vs[] = {1.0f, 1.0f, 0.0f, 0.0f};
+
+// TODO put these in utility
+float light_gradient[] = {
+    0.992203, 0.984436, 0.976700, 0.968994, 0.961319, 0.953674, 0.946060,
+    0.938477, 0.930923, 0.923401, 0.915909, 0.908447, 0.901016, 0.893616,
+    0.886246, 0.878906, 0.871597, 0.864319, 0.857071, 0.849854, 0.842667,
+    0.835510, 0.828384, 0.821289, 0.814224, 0.807190, 0.800186, 0.793213,
+    0.786270, 0.779358, 0.772476, 0.765625, 0.758804, 0.752014, 0.745255,
+    0.738525, 0.731827, 0.725159, 0.718521, 0.711914, 0.705338, 0.698792,
+    0.692276, 0.685791, 0.679337, 0.672913, 0.666519, 0.660156, 0.653824,
+    0.647522, 0.641251, 0.635010, 0.628799, 0.622620, 0.616470, 0.610352,
+    0.604263, 0.598206, 0.592178, 0.586182, 0.580215, 0.574280, 0.568375,
+    0.562500, 0.556656, 0.550842, 0.545059, 0.539307, 0.533585, 0.527893,
+    0.522232, 0.516602, 0.511002, 0.505432, 0.499893, 0.494385, 0.488907,
+    0.483459, 0.478043, 0.472656, 0.467300, 0.461975, 0.456680, 0.451416,
+    0.446182, 0.440979, 0.435806, 0.430664, 0.425552, 0.420471, 0.415421,
+    0.410400, 0.405411, 0.400452, 0.395523, 0.390625, 0.385757, 0.380920,
+    0.376114, 0.371338, 0.366592, 0.361877, 0.357193, 0.352539, 0.347916,
+    0.343323, 0.338760, 0.334229, 0.329727, 0.325256, 0.320816, 0.316406,
+    0.312027, 0.307678, 0.303360, 0.299072, 0.294815, 0.290588, 0.286392,
+    0.282227, 0.278091, 0.273987, 0.269913, 0.265869, 0.261856, 0.257874,
+    0.253922, 0.250000, 0.246109, 0.242249, 0.238419, 0.234619, 0.230850,
+    0.227112, 0.223404, 0.219727, 0.216080, 0.212463, 0.208878, 0.205322,
+    0.201797, 0.198303, 0.194839, 0.191406, 0.188004, 0.184631, 0.181290,
+    0.177979, 0.174698, 0.171448, 0.168228, 0.165039, 0.161880, 0.158752,
+    0.155655, 0.152588, 0.149551, 0.146545, 0.143570, 0.140625, 0.137711,
+    0.134827, 0.131973, 0.129150, 0.126358, 0.123596, 0.120865, 0.118164,
+    0.115494, 0.112854, 0.110245, 0.107666, 0.105118, 0.102600, 0.100113,
+    0.097656, 0.095230, 0.092834, 0.090469, 0.088135, 0.085831, 0.083557,
+    0.081314, 0.079102, 0.076920, 0.074768, 0.072647, 0.070557, 0.068497,
+    0.066467, 0.064468, 0.062500, 0.060562, 0.058655, 0.056778, 0.054932,
+    0.053116, 0.051331, 0.049576, 0.047852, 0.046158, 0.044495, 0.042862,
+    0.041260, 0.039688, 0.038147, 0.036636, 0.035156, 0.033707, 0.032288,
+    0.030899, 0.029541, 0.028214, 0.026917, 0.025650, 0.024414, 0.023209,
+    0.022034, 0.020889, 0.019775, 0.018692, 0.017639, 0.016617, 0.015625,
+    0.014664, 0.013733, 0.012833, 0.011963, 0.011124, 0.010315, 0.009537,
+    0.008789, 0.008072, 0.007385, 0.006729, 0.006104, 0.005508, 0.004944,
+    0.004410, 0.003906, 0.003433, 0.002991, 0.002579, 0.002197, 0.001846,
+    0.001526, 0.001236, 0.000977, 0.000748, 0.000549, 0.000381, 0.000244,
+    0.000137, 0.000061, 0.000015, 0.000000};
+
+float texture_light_gradient[] = {
+    0.972549, 0.972549, 0.972549, 0.972549, 0.972549, 0.972549, 0.972549,
+    0.972549, 0.972549, 0.972549, 0.972549, 0.972549, 0.972549, 0.972549,
+    0.972549, 0.972549, 0.847059, 0.847059, 0.847059, 0.847059, 0.847059,
+    0.847059, 0.847059, 0.847059, 0.847059, 0.847059, 0.847059, 0.847059,
+    0.847059, 0.847059, 0.847059, 0.847059, 0.721569, 0.721569, 0.721569,
+    0.721569, 0.721569, 0.721569, 0.721569, 0.721569, 0.721569, 0.721569,
+    0.721569, 0.721569, 0.721569, 0.721569, 0.721569, 0.721569, 0.596078,
+    0.596078, 0.596078, 0.596078, 0.596078, 0.596078, 0.596078, 0.596078,
+    0.596078, 0.596078, 0.596078, 0.596078, 0.596078, 0.596078, 0.596078,
+    0.596078, 0.486275, 0.486275, 0.486275, 0.486275, 0.486275, 0.486275,
+    0.486275, 0.486275, 0.486275, 0.486275, 0.486275, 0.486275, 0.486275,
+    0.486275, 0.486275, 0.486275, 0.423529, 0.423529, 0.423529, 0.423529,
+    0.423529, 0.423529, 0.423529, 0.423529, 0.423529, 0.423529, 0.423529,
+    0.423529, 0.423529, 0.423529, 0.423529, 0.423529, 0.360784, 0.360784,
+    0.360784, 0.360784, 0.360784, 0.360784, 0.360784, 0.360784, 0.360784,
+    0.360784, 0.360784, 0.360784, 0.360784, 0.360784, 0.360784, 0.360784,
+    0.298039, 0.298039, 0.298039, 0.298039, 0.298039, 0.298039, 0.298039,
+    0.298039, 0.298039, 0.298039, 0.298039, 0.298039, 0.298039, 0.298039,
+    0.298039, 0.298039, 0.243137, 0.243137, 0.243137, 0.243137, 0.243137,
+    0.243137, 0.243137, 0.243137, 0.243137, 0.243137, 0.243137, 0.243137,
+    0.243137, 0.243137, 0.243137, 0.243137, 0.211765, 0.211765, 0.211765,
+    0.211765, 0.211765, 0.211765, 0.211765, 0.211765, 0.211765, 0.211765,
+    0.211765, 0.211765, 0.211765, 0.211765, 0.211765, 0.211765, 0.180392,
+    0.180392, 0.180392, 0.180392, 0.180392, 0.180392, 0.180392, 0.180392,
+    0.180392, 0.180392, 0.180392, 0.180392, 0.180392, 0.180392, 0.180392,
+    0.180392, 0.149020, 0.149020, 0.149020, 0.149020, 0.149020, 0.149020,
+    0.149020, 0.149020, 0.149020, 0.149020, 0.149020, 0.149020, 0.149020,
+    0.149020, 0.149020, 0.149020, 0.121569, 0.121569, 0.121569, 0.121569,
+    0.121569, 0.121569, 0.121569, 0.121569, 0.121569, 0.121569, 0.121569,
+    0.121569, 0.121569, 0.121569, 0.121569, 0.121569, 0.105882, 0.105882,
+    0.105882, 0.105882, 0.105882, 0.105882, 0.105882, 0.105882, 0.105882,
+    0.105882, 0.105882, 0.105882, 0.105882, 0.105882, 0.105882, 0.105882,
+    0.090196, 0.090196, 0.090196, 0.090196, 0.090196, 0.090196, 0.090196,
+    0.090196, 0.090196, 0.090196, 0.090196, 0.090196, 0.090196, 0.090196,
+    0.090196, 0.090196, 0.074510, 0.074510, 0.074510, 0.074510, 0.074510,
+    0.074510, 0.074510, 0.074510, 0.074510, 0.074510, 0.074510, 0.074510,
+    0.074510, 0.074510, 0.074510, 0.074510};
 #endif
 
 void game_model_new(GameModel *game_model) {
@@ -15,7 +94,7 @@ void game_model_new(GameModel *game_model) {
     game_model->diameter = COLOUR_TRANSPARENT;
     game_model->visible = 1;
     game_model->key = -1;
-    //game_model->light_ambience = 32; /* 256 is the maximum? */
+    game_model->light_ambience = 32; /* 256 is the maximum? */
     game_model->light_diffuse = 512;
     game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
@@ -44,8 +123,8 @@ void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
 
     game_model->autocommit = autocommit;
     game_model->isolated = isolated;
-    //game_model->unlit = unlit;
-    game_model->unlit = 0;
+    game_model->unlit = unlit;
+    //game_model->unlit = 0;
     game_model->unpickable = unpickable;
 
     game_model_merge(game_model, pieces, count);
@@ -58,8 +137,8 @@ void game_model_from7(GameModel *game_model, int num_vertices, int num_faces,
 
     game_model->autocommit = autocommit;
     game_model->isolated = isolated;
-    //game_model->unlit = unlit;
-    game_model->unlit = 0;
+    game_model->unlit = unlit;
+    //game_model->unlit = 0;
     game_model->unpickable = unpickable;
     game_model->projected = projected;
 
@@ -483,7 +562,7 @@ void game_model_set_light_from5(GameModel *game_model, int ambience,
         return;
     }
 
-    //game_model->light_ambience = 256 - ambience * 4;
+    game_model->light_ambience = 256 - ambience * 4;
     game_model->light_diffuse = (64 - diffuse) * 16 + 128;
 
     game_model_set_light_from3(game_model, x, y, z);
@@ -503,7 +582,6 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
 
     for (int i = 0; i < game_model->num_faces; i++) {
         game_model->face_intensity[i] = gouraud ? GAME_MODEL_USE_GOURAUD : 0;
-        // TODO rename COLOUR_TRANSPARENT to FLAT_SHADING for this class
     }
 
     game_model_set_light_from5(game_model, ambience, diffuse, x, y, z);
@@ -511,7 +589,7 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
 
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience) {
-    //return;
+    return;
     game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
@@ -671,8 +749,10 @@ void game_model_compute_bounds(GameModel *game_model) {
 #else
             int vertex_transformed_x =
                 game_model->vertex_transformed_x[vertex_index];
+
             int vertex_transformed_y =
                 game_model->vertex_transformed_y[vertex_index];
+
             int vertex_transformed_z =
                 game_model->vertex_transformed_z[vertex_index];
 #endif
@@ -763,7 +843,7 @@ void game_model_light(GameModel *game_model) {
     int *normal_z = calloc(game_model->num_vertices, sizeof(int));
     int *normal_magnitude = calloc(game_model->num_vertices, sizeof(int));
 
-    /*for (int i = 0; i < game_model->num_faces; i++) {
+    for (int i = 0; i < game_model->num_faces; i++) {
         if (game_model->face_intensity[i] == GAME_MODEL_USE_GOURAUD) {
             for (int j = 0; j < game_model->face_num_vertices[i]; j++) {
                 int vertex_index = game_model->face_vertices[i][j];
@@ -785,7 +865,7 @@ void game_model_light(GameModel *game_model) {
                        normal_z[i] * game_model->light_direction_z) /
                       (divisor * normal_magnitude[i]));
         }
-    }*/
+    }
 
     free(normal_x);
     free(normal_y);
@@ -803,7 +883,7 @@ void game_model_relight(GameModel *game_model) {
     for (int i = 0; i < game_model->num_faces; i++) {
         int *face_vertices = game_model->face_vertices[i];
 
-        /*int a_x = game_model->vertex_transformed_x[face_vertices[0]];
+        int a_x = game_model->vertex_transformed_x[face_vertices[0]];
         int a_y = game_model->vertex_transformed_y[face_vertices[0]];
         int a_z = game_model->vertex_transformed_z[face_vertices[0]];
         int b_x = game_model->vertex_transformed_x[face_vertices[1]] - a_x;
@@ -811,17 +891,7 @@ void game_model_relight(GameModel *game_model) {
         int b_z = game_model->vertex_transformed_z[face_vertices[1]] - a_z;
         int c_x = game_model->vertex_transformed_x[face_vertices[2]] - a_x;
         int c_y = game_model->vertex_transformed_y[face_vertices[2]] - a_y;
-        int c_z = game_model->vertex_transformed_z[face_vertices[2]] - a_z;*/
-
-        int a_x = game_model->vertex_x[face_vertices[0]];
-        int a_y = game_model->vertex_y[face_vertices[0]];
-        int a_z = game_model->vertex_z[face_vertices[0]];
-        int b_x = game_model->vertex_x[face_vertices[1]] - a_x;
-        int b_y = game_model->vertex_y[face_vertices[1]] - a_y;
-        int b_z = game_model->vertex_z[face_vertices[1]] - a_z;
-        int c_x = game_model->vertex_x[face_vertices[2]] - a_x;
-        int c_y = game_model->vertex_y[face_vertices[2]] - a_y;
-        int c_z = game_model->vertex_z[face_vertices[2]] - a_z;
+        int c_z = game_model->vertex_transformed_z[face_vertices[2]] - a_z;
 
         int norm_x = b_y * c_z - c_y * b_z;
         int norm_y = b_z * c_x - c_z * b_x;
@@ -1417,6 +1487,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
     }*/
 
     for (int i = 0; i < game_model->num_faces; i++) {
+        // copy face intensity
         int *face_vertices = game_model->face_vertices[i];
         int face_num_vertices = game_model->face_num_vertices[i];
 
@@ -1485,6 +1556,19 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         int fill_front = game_model->face_fill_front[i];
         int fill_back = game_model->face_fill_back[i];
 
+        int face_intensity = game_model->face_intensity[i];
+
+        // maybe check for 0 too?
+        if (face_intensity != GAME_MODEL_USE_GOURAUD) {
+            /*if (face_intensity < 0) {
+                face_intensity = 0;
+            } else*/ if (face_intensity > (RAMP_SIZE - 1)) {
+                face_intensity = RAMP_SIZE - 1;
+            }
+        } else {
+            face_intensity = -1;
+        }
+
         GLfloat r = 1.0f;
         GLfloat g = 1.0f;
         GLfloat b = 1.0f;
@@ -1511,6 +1595,8 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         GLfloat *face_us = NULL;
         GLfloat *face_vs = NULL;
 
+        float *gradient = NULL;
+
         if (texture_index > -1.0f) {
             if (face_num_vertices == 3) {
                 face_us = gl_tri_face_us;
@@ -1525,6 +1611,29 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 game_model_gl_unwrap_uvs(game_model, face_vertices,
                                          face_num_vertices, face_us, face_vs);
             }
+
+            if (face_intensity != -1) {
+                gradient = texture_light_gradient;
+            }
+        } else {
+            if (face_intensity != -1) {
+                gradient = light_gradient;
+            }
+        }
+
+        if (gradient != NULL) {
+            // TODO polygon->visiblity?
+            int gradient_index = game_model->light_ambience + face_intensity;
+
+            if (gradient_index > (RAMP_SIZE - 1)) {
+                gradient_index = (RAMP_SIZE - 1);
+            } else if (gradient_index < 0) {
+                gradient_index = 0;
+            }
+
+            r *= gradient[gradient_index];
+            g *= gradient[gradient_index];
+            b *= gradient[gradient_index];
         }
 
         for (int j = 0; j < face_num_vertices; j++) {

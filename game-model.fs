@@ -13,10 +13,12 @@ uniform sampler2DArray textures;
 
 //uniform float vertex_ambience;
 //uniform float texture_ambience;
-uniform float light_ambience;
+uniform float light_ambience; // TODO make int
 uniform vec3 light_direction;
 uniform float light_diffuse;
 uniform float light_direction_magnitude;
+
+uniform bool unlit;
 
 float light_gradient[] = float[](
     0.992203, 0.984436, 0.976700, 0.968994, 0.961319, 0.953674, 0.946060,
@@ -105,69 +107,43 @@ void main() {
         if (vertex_colour.x > -1) {
             fragment_colour *= vertex_colour;
         }
-
-        //ambience = texture_light_gradient[int(light_ambience)];
     } else {
         fragment_colour = vertex_colour;
-        //ambience = light_gradient[int(light_ambience)];
     }
 
     if (fragment_colour.w <= 0.0) {
         discard;
     }
 
-    // vec3 light_direction = normalize(light_position - vertex_position);
-    // float diffuse = max(dot(test_normal, light_direction), 0.0);
-    // float diffuse = max(dot(vertex_normal, light_direction), 0.0);
-
-    int divisor = (int(light_diffuse) * int(light_direction_magnitude)) / int(256);
-
-    vec3 normal = vertex_normal;
-
-    int intensity = (int(normal.x * 1000) * int(light_direction.x * 1000) +
-                       int(normal.y * 1000) * int(light_direction.y * 1000) +
-                       int(normal.z * 1000) * int(light_direction.z * 1000)) /
-                      divisor;
-
-    float diffuse =
-        clamp(dot(normalize(vertex_normal), normalize(light_direction)), 0.0f, 1.0f);
-
     /*float diffuse =
-        clamp(dot(normalize(light_direction), normalize(vertex_normal)), 0.0f, 1.0f);*/
+        clamp(dot(normalize(vertex_normal), normalize(light_direction)), 0.0f, 1.0f);*/
 
-    if (diffuse < 0) {
-        diffuse = 0;
+    float lightness = 1;
+
+    if (!unlit) {
+        int divisor = (int(light_diffuse) * int(light_direction_magnitude)) / int(256);
+
+        vec3 normal = vertex_normal;
+
+        int intensity = (int(normal.x * 1000) * int(light_direction.x * 1000) +
+                           int(normal.y * 1000) * int(light_direction.y * 1000) +
+                           int(normal.z * 1000) * int(light_direction.z * 1000)) /
+                          divisor;
+
+        int index = int(light_ambience) + int(intensity);
+
+        if (index > 255) {
+            index = 255;
+        } else if (index < 0) {
+            index = 0;
+        }
+
+        if (vertex_texture_position.z > -1) {
+            lightness = texture_light_gradient[index];
+        } else {
+            lightness = light_gradient[index];
+        }
     }
 
-    //int index = int(light_ambience);
-    int index = int(0) + int(intensity);
-    //int index = int(light_ambience) + int(diffuse * 255);
-
-    if (index > 255) {
-        index = 255;
-    } else if (index < 0) {
-        index = 0;
-    }
-
-    float test = 1;
-
-    if (vertex_texture_position.z > -1) {
-        test = texture_light_gradient[index];
-    } else {
-        test = light_gradient[index];
-    }
-
-    //float test = diffuse;
-
-    fragment_colour = vec4(vec3(fragment_colour) * (test), fragment_colour.w);
-
-    // works best so far
-    /*float diffuse = clamp(dot(vertex_normal, light_direction), 0.0f, 1.0f);
-
-    if (diffuse < 0) {
-        diffuse = 0;
-    }
-
-    fragment_colour =
-        vec4(vec3(fragment_colour) * (ambience + diffuse), fragment_colour.w);*/
+    fragment_colour = vec4(vec3(fragment_colour) * lightness, fragment_colour.w);
 }

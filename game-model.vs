@@ -23,10 +23,9 @@ void main() {
     vertex_texture_position = texture_position;
 
     vertex_position = vec3(model * vec4(position, 1.0));
-    //vertex_normal = vec3(model * vec4(normal, 0.0));
-    vertex_normal = vec3(vec4(normal, 0.0));
+    vertex_normal = vec3(model * vec4(normal, 0.0));
 
-    test_normal = mat3(transpose(inverse(model))) * normal;
+    //test_normal = mat3(transpose(inverse(model))) * normal;
 
     /*if (gl_Position.z > (2500.0f / 1000.0f)) {
         vertex_colour = vec4(0, 0, 0, 1);
