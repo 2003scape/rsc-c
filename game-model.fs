@@ -120,7 +120,7 @@ void main() {
     // float diffuse = max(dot(test_normal, light_direction), 0.0);
     // float diffuse = max(dot(vertex_normal, light_direction), 0.0);
 
-    int divisor = (int(light_diffuse) * int(light_direction_magnitude)) / 256;
+    int divisor = (int(light_diffuse) * int(light_direction_magnitude)) / int(256);
 
     vec3 normal = vertex_normal;
 
@@ -129,14 +129,18 @@ void main() {
                        int(normal.z * 1000) * int(light_direction.z * 1000)) /
                       divisor;
 
-    float diffuse = clamp(dot(normalize(vertex_normal), normalize(light_direction)), 0.0f, 1.0f);
+    float diffuse =
+        clamp(dot(normalize(vertex_normal), normalize(light_direction)), 0.0f, 1.0f);
+
+    /*float diffuse =
+        clamp(dot(normalize(light_direction), normalize(vertex_normal)), 0.0f, 1.0f);*/
 
     if (diffuse < 0) {
         diffuse = 0;
     }
 
     //int index = int(light_ambience);
-    int index = int(light_ambience) + int(intensity);
+    int index = int(0) + int(intensity);
     //int index = int(light_ambience) + int(diffuse * 255);
 
     if (index > 255) {
@@ -148,10 +152,12 @@ void main() {
     float test = 1;
 
     if (vertex_texture_position.z > -1) {
-        //test = texture_light_gradient[index];
+        test = texture_light_gradient[index];
     } else {
         test = light_gradient[index];
     }
+
+    //float test = diffuse;
 
     fragment_colour = vec4(vec3(fragment_colour) * (test), fragment_colour.w);
 

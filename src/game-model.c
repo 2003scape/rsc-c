@@ -44,7 +44,8 @@ void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
 
     game_model->autocommit = autocommit;
     game_model->isolated = isolated;
-    game_model->unlit = unlit;
+    //game_model->unlit = unlit;
+    game_model->unlit = 0;
     game_model->unpickable = unpickable;
 
     game_model_merge(game_model, pieces, count);
@@ -57,7 +58,8 @@ void game_model_from7(GameModel *game_model, int num_vertices, int num_faces,
 
     game_model->autocommit = autocommit;
     game_model->isolated = isolated;
-    game_model->unlit = unlit;
+    //game_model->unlit = unlit;
+    game_model->unlit = 0;
     game_model->unpickable = unpickable;
     game_model->projected = projected;
 
@@ -121,8 +123,8 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         }
 
         // TODO remove
-        //game_model->face_fill_front[i] = -32768;
-        //game_model->face_fill_back[i] = -32768;
+        game_model->face_fill_front[i] = -32768;
+        game_model->face_fill_back[i] = -32768;
     }
 
     for (int i = 0; i < num_faces; i++) {
@@ -349,8 +351,8 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 
     // TODO remove
-    //game_model->face_fill_front[game_model->num_faces] = -32768;
-    //game_model->face_fill_back[game_model->num_faces] = -32768;
+    game_model->face_fill_front[game_model->num_faces] = -32768;
+    game_model->face_fill_back[game_model->num_faces] = -32768;
 
     return game_model->num_faces++;
 }
@@ -746,27 +748,20 @@ void game_model_light(GameModel *game_model) {
     for (int i = 0; i < game_model->num_faces; i++) {
         if (game_model->face_intensity[i] != GAME_MODEL_USE_GOURAUD) {
             game_model->face_intensity[i] =
-                (int)((game_model->face_normal_x[i] *
+                (game_model->face_normal_x[i] *
                            game_model->light_direction_x +
                        game_model->face_normal_y[i] *
                            game_model->light_direction_y +
                        game_model->face_normal_z[i] *
                            game_model->light_direction_z) /
-                      divisor);
+                      divisor;
         }
     }
 
-    int *normal_x = malloc(game_model->num_vertices * sizeof(int));
-    int *normal_y = malloc(game_model->num_vertices * sizeof(int));
-    int *normal_z = malloc(game_model->num_vertices * sizeof(int));
-    int *normal_magnitude = malloc(game_model->num_vertices * sizeof(int));
-
-    for (int i = 0; i < game_model->num_vertices; i++) {
-        normal_x[i] = 0;
-        normal_y[i] = 0;
-        normal_z[i] = 0;
-        normal_magnitude[i] = 0;
-    }
+    int *normal_x = calloc(game_model->num_vertices, sizeof(int));
+    int *normal_y = calloc(game_model->num_vertices, sizeof(int));
+    int *normal_z = calloc(game_model->num_vertices, sizeof(int));
+    int *normal_magnitude = calloc(game_model->num_vertices, sizeof(int));
 
     /*for (int i = 0; i < game_model->num_faces; i++) {
         if (game_model->face_intensity[i] == GAME_MODEL_USE_GOURAUD) {
@@ -1363,6 +1358,64 @@ void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b)
 
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset) {
+    /*game_model->face_normal_x = calloc(game_model->num_faces, sizeof(int));
+    game_model->face_normal_y = calloc(game_model->num_faces, sizeof(int));
+    game_model->face_normal_z = calloc(game_model->num_faces, sizeof(int));
+
+    for (int i = 0; i < game_model->num_faces; i++) {
+        int *face_vertices = game_model->face_vertices[i];
+
+        int a_x = game_model->vertex_x[face_vertices[0]];
+        int a_y = game_model->vertex_y[face_vertices[0]];
+        int a_z = game_model->vertex_z[face_vertices[0]];
+        int b_x = game_model->vertex_x[face_vertices[1]] - a_x;
+        int b_y = game_model->vertex_y[face_vertices[1]] - a_y;
+        int b_z = game_model->vertex_z[face_vertices[1]] - a_z;
+        int c_x = game_model->vertex_x[face_vertices[2]] - a_x;
+        int c_y = game_model->vertex_y[face_vertices[2]] - a_y;
+        int c_z = game_model->vertex_z[face_vertices[2]] - a_z;
+
+        int norm_x = b_y * c_z - c_y * b_z;
+        int norm_y = b_z * c_x - c_z * b_x;
+        int norm_z;
+
+        for (norm_z = b_x * c_y - c_x * b_y;
+             norm_x > 8192 || norm_y > 8192 || norm_z > 8192 ||
+             norm_x < -8192 || norm_y < -8192 || norm_z < -8192;
+             norm_z /= 2) {
+            norm_x /= 2;
+            norm_y /= 2;
+        }
+
+        int norm_mag =
+            256 * sqrt(norm_x * norm_x + norm_y * norm_y + norm_z * norm_z);
+
+        if (norm_mag <= 0) {
+            norm_mag = 1;
+        }
+
+        game_model->face_normal_x[i] = (int)((norm_x * 65536) / norm_mag);
+        game_model->face_normal_y[i] = (int)((norm_y * 65536) / norm_mag);
+        game_model->face_normal_z[i] = (int)((norm_z * 65535) / norm_mag);
+    }
+
+    int *normal_x = calloc(game_model->num_vertices, sizeof(int));
+    int *normal_y = calloc(game_model->num_vertices, sizeof(int));
+    int *normal_z = calloc(game_model->num_vertices, sizeof(int));
+    int *normal_magnitude = calloc(game_model->num_vertices, sizeof(int));
+
+    for (int i = 0; i < game_model->num_faces; i++) {
+        for (int j = 0; j < game_model->face_num_vertices[i]; j++) {
+            int vertex_index = game_model->face_vertices[i][j];
+
+            normal_x[vertex_index] += game_model->face_normal_x[i];
+            normal_y[vertex_index] += game_model->face_normal_y[i];
+            normal_z[vertex_index] += game_model->face_normal_z[i];
+
+            normal_magnitude[vertex_index]++;
+        }
+    }*/
+
     for (int i = 0; i < game_model->num_faces; i++) {
         int *face_vertices = game_model->face_vertices[i];
         int face_num_vertices = game_model->face_num_vertices[i];
@@ -1481,10 +1534,6 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             GLfloat vertex_y = game_model->vertex_y[vertex_index] / 1000.0f;
             GLfloat vertex_z = game_model->vertex_z[vertex_index] / 1000.0f;
 
-            GLfloat normal_x = normal[0];
-            GLfloat normal_y = normal[1];
-            GLfloat normal_z = normal[2];
-
             GLfloat texture_x = -1.0f;
             GLfloat texture_y = -1.0f;
 
@@ -1498,7 +1547,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 vertex_x, vertex_y, vertex_z, //
 
                 /* normal */
-                normal_x, normal_y, normal_z, //
+                normal[0], normal[1], normal[2], //
 
                 /* colour */
                 r, g, b, a, //
@@ -1526,6 +1575,11 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
         (*vertex_offset) += face_num_vertices;
     }
+
+    /*free(normal_x);
+    free(normal_y);
+    free(normal_z);
+    free(normal_magnitude);*/
 }
 
 void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
