@@ -97,10 +97,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
 
     }
-
-    /*for (int i = 0; i < RAMP_SIZE; i++)
-        printf("%f,", scene->ambience_gradient[i]);
-    printf("\n");*/
 #endif
 }
 
@@ -1607,27 +1603,27 @@ e                                  game_model->face_intensity[face];*/
                                game_model->light_direction_y / 1000.f,
                                game_model->light_direction_z / 1000.f};
 
-        shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
+        //shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
+
+        int model_ambience = game_model->light_ambience;
+
+        /*if (model_ambience < 0) {
+            model_ambience = 0;
+        } else if (model_ambience >= RAMP_SIZE) {
+            model_ambience = RAMP_SIZE - 1;
+        }*/
+
+        shader_set_int(&scene->game_model_shader, "light_ambience", model_ambience);
 
         if (!game_model->unlit) {
             shader_set_vec3(&scene->game_model_shader, "light_direction",
                             light_direction);
 
-            shader_set_float(&scene->game_model_shader, "light_diffuse",
-                            (float)game_model->light_diffuse);
+            shader_set_int(&scene->game_model_shader, "light_diffuse",
+                            game_model->light_diffuse);
 
-            shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
-                            (float)game_model->light_direction_magnitude);
-
-            int model_ambience = game_model->light_ambience;
-
-            if (model_ambience < 0) {
-                model_ambience = 0;
-            } else if (model_ambience >= RAMP_SIZE) {
-                model_ambience = RAMP_SIZE - 1;
-            }
-
-            shader_set_float(&scene->game_model_shader, "light_ambience", model_ambience);
+            shader_set_int(&scene->game_model_shader, "light_direction_magnitude",
+                            game_model->light_direction_magnitude);
         }
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
