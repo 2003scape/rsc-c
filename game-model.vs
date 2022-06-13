@@ -11,6 +11,7 @@ out vec3 vertex_position;
 out vec3 vertex_normal;
 
 out vec3 test_normal;
+out float visibility;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -24,6 +25,11 @@ void main() {
 
     vertex_position = vec3(model * vec4(position, 1.0));
     vertex_normal = vec3(model * vec4(normal, 0.0));
+
+    vec3 test_normal = vec3(view * model * vec4(normal, 0.0));
+    vec4 test_position = view * model * vec4(position, 1.0);
+
+    visibility = test_position.x * test_normal.x + test_position.y * test_normal.y + test_position.z * test_normal.z;
 
     //test_normal = mat3(transpose(inverse(model))) * normal;
 

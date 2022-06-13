@@ -8,6 +8,7 @@ in vec3 vertex_position;
 in vec3 vertex_normal;
 
 in vec3 test_normal;
+in float visibility;
 
 uniform sampler2DArray textures;
 
@@ -118,6 +119,8 @@ void main() {
     /*float diffuse =
         clamp(dot(normalize(vertex_normal), normalize(light_direction)), 0.0f, 1.0f);*/
 
+    //float visibility = -1;
+
     float lightness = 1;
 
     if (!unlit) {
@@ -130,7 +133,16 @@ void main() {
                            int(normal.z * 1000) * int(light_direction.z * 1000)) /
                           divisor;
 
-        int index = int(light_ambience) + int(intensity);
+        //int index = int(light_ambience) + int(intensity);
+        //int index = int(light_ambience) - int(intensity);
+
+        int index = 0;
+
+        if (visibility > 0) {
+            index = int(light_ambience) + int(intensity);
+        } else {
+            index = int(light_ambience) - int(intensity);
+        }
 
         if (index > 255) {
             index = 255;
@@ -143,7 +155,9 @@ void main() {
         } else {
             lightness = light_gradient[index];
         }
-    }
 
-    fragment_colour = vec4(vec3(fragment_colour) * lightness, fragment_colour.w);
+        fragment_colour = vec4(vec3(fragment_colour) * lightness, fragment_colour.w);
+    } else {
+        fragment_colour = vec4(vec3(1,0,1), 0);
+    }
 }

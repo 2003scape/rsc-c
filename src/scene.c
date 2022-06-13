@@ -1490,7 +1490,7 @@ void scene_render(Scene *scene) {
             int *face_vertices = game_model->face_vertices[face];
 
             if (game_model->face_intensity[face] != GAME_MODEL_USE_GOURAUD) {
-#if 0
+#if 1
                 if (polygon->visibility < 0) {
                     /*vertex_shade = game_model->light_ambience -
                                    game_model->face_intensity[face];*/
@@ -2757,35 +2757,35 @@ void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     int vcx2 = game_model->project_vertex_x[face_vertices[2]] - vcx;
     int vcy2 = game_model->project_vertex_y[face_vertices[2]] - vcy;
     int vcz2 = game_model->project_vertex_z[face_vertices[2]] - vcz;
-    int t1 = vcy1 * vcz2 - vcy2 * vcz1;
-    int t2 = vcz1 * vcx2 - vcz2 * vcx1;
-    int t3 = vcx1 * vcy2 - vcx2 * vcy1;
+    int normal_x = vcy1 * vcz2 - vcy2 * vcz1;
+    int normal_y = vcz1 * vcx2 - vcz2 * vcx1;
+    int normal_z = vcx1 * vcy2 - vcx2 * vcy1;
 
     if (normal_scale == -1) {
         normal_scale = 0;
 
-        for (; t1 > 25000 || t2 > 25000 || t3 > 25000 || t1 < -25000 ||
-               t2 < -25000 || t3 < -25000;
-             t3 >>= 1) {
+        for (; normal_x > 25000 || normal_y > 25000 || normal_z > 25000 || normal_x < -25000 ||
+               normal_y < -25000 || normal_z < -25000;
+             normal_z >>= 1) {
             normal_scale++;
-            t1 >>= 1;
-            t2 >>= 1;
+            normal_x >>= 1;
+            normal_y >>= 1;
         }
 
         game_model->normal_scale[face] = normal_scale;
 
-        game_model->normal_magnitude[face] =
-            (int)(scene->normal_magnitude * sqrt(t1 * t1 + t2 * t2 + t3 * t3));
+        game_model->normal_magnitude[face] = scene->normal_magnitude * sqrt(normal_x * normal_x + normal_y * normal_y + normal_z * normal_z);
     } else {
-        t1 >>= normal_scale;
-        t2 >>= normal_scale;
-        t3 >>= normal_scale;
+        normal_x >>= normal_scale;
+        normal_y >>= normal_scale;
+        normal_z >>= normal_scale;
     }
 
-    polygon->visibility = vcx * t1 + vcy * t2 + vcz * t3;
-    polygon->normal_x = t1;
-    polygon->normal_y = t2;
-    polygon->normal_z = t3;
+    // TODO rename from visibility?
+    polygon->visibility = vcx * normal_x + vcy * normal_y + vcz * normal_z;
+    polygon->normal_x = normal_x;
+    polygon->normal_y = normal_y;
+    polygon->normal_z = normal_z;
 
     int min_z = game_model->project_vertex_z[face_vertices[0]];
     int max_z = min_z;

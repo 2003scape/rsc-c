@@ -94,7 +94,7 @@ void game_model_new(GameModel *game_model) {
     game_model->diameter = COLOUR_TRANSPARENT;
     game_model->visible = 1;
     game_model->key = -1;
-    game_model->light_ambience = 32; /* 256 is the maximum? */
+    //game_model->light_ambience = 32; /* 256 is the maximum? */
     game_model->light_diffuse = 512;
     game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
@@ -589,7 +589,7 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
 
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience) {
-    return;
+    //return;
     game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
@@ -1558,15 +1558,12 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
         int face_intensity = game_model->face_intensity[i];
 
-        // maybe check for 0 too?
         if (face_intensity != GAME_MODEL_USE_GOURAUD) {
-            /*if (face_intensity < 0) {
-                face_intensity = 0;
-            } else*/ if (face_intensity > (RAMP_SIZE - 1)) {
+            if (face_intensity > (RAMP_SIZE - 1)) {
                 face_intensity = RAMP_SIZE - 1;
             }
         } else {
-            face_intensity = -1;
+            face_intensity = -256;
         }
 
         GLfloat r = 1.0f;
@@ -1612,11 +1609,11 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                          face_num_vertices, face_us, face_vs);
             }
 
-            if (face_intensity != -1) {
+            if (face_intensity != -256) {
                 gradient = texture_light_gradient;
             }
         } else {
-            if (face_intensity != -1) {
+            if (face_intensity != -256) {
                 gradient = light_gradient;
             }
         }
