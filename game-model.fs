@@ -119,8 +119,6 @@ void main() {
     /*float diffuse =
         clamp(dot(normalize(vertex_normal), normalize(light_direction)), 0.0f, 1.0f);*/
 
-    //float visibility = -1;
-
     float lightness = 1;
 
     if (!unlit) {
@@ -132,9 +130,6 @@ void main() {
                            int(normal.y * 1000) * int(light_direction.y * 1000) +
                            int(normal.z * 1000) * int(light_direction.z * 1000)) /
                           divisor;
-
-        //int index = int(light_ambience) + int(intensity);
-        //int index = int(light_ambience) - int(intensity);
 
         int index = 0;
 
@@ -158,6 +153,7 @@ void main() {
 
         fragment_colour = vec4(vec3(fragment_colour) * lightness, fragment_colour.w);
     } else {
-        fragment_colour = vec4(vec3(1,0,1), 0);
+        fragment_colour = vec4(vec3(fragment_colour) * lightness, fragment_colour.w);
+        //fragment_colour = vec4(vec3(1,0,1), 0);
     }
 }

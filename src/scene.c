@@ -1174,119 +1174,6 @@ void scene_render(Scene *scene) {
                            scene->view_distance, scene->clip_near);
     }
 
-#ifdef RENDER_GL
-    // TODO move to set_camera
-    vec3 camera_pos = {scene->camera_x / 1000.0f, scene->camera_y / 1000.0f,
-                       scene->camera_z / 1000.0f};
-
-    vec3 camera_front = {0.0, 0.0, -1.0};
-    vec3 camera_up = {0.0, -1.0, 0.0};
-
-    // float fov = test_yaw;
-    float fov = 37;
-
-    float yaw =
-        glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048); // works
-
-    float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
-
-    vec3 front = {cos(yaw) * cos(pitch), pitch, sin(yaw) * cos(pitch)};
-
-    glm_normalize_to(front, camera_front);
-
-    vec3 camera_centre = {0};
-    glm_vec3_add(camera_pos, camera_front, camera_centre);
-
-    mat4 view = {0};
-    glm_lookat(camera_pos, camera_centre, camera_up, view);
-
-    mat4 projection = {0};
-
-    float clip_far = (scene->clip_far_3d + scene->fog_z_falloff + scene->fog_z_distance) / 1000.0f;
-
-    glm_perspective(
-        glm_rad(fov),
-        (float)(scene->surface->width2) / (float)scene->surface->height2,
-        scene->clip_near / 1000.0f, clip_far, projection);
-
-    /* TODO this could be optional? have to fix winding order */
-    /*glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);*/
-
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    shader_use(&scene->game_model_shader);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
-
-    // TODO combine
-    shader_set_mat4(&scene->game_model_shader, "view", view);
-    shader_set_mat4(&scene->game_model_shader, "projection", projection);
-
-    GLuint last_vao = 0;
-
-    for (int i = 0; i < scene->model_count; i++) {
-        GameModel *game_model = scene->models[i];
-
-        if (game_model->ebo_offset == -1 || !game_model->visible) {
-            continue;
-        }
-
-        //game_model->light_ambience = test_yaw;
-
-        if (last_vao != game_model->vao) {
-            glBindVertexArray(game_model->vao);
-            last_vao = game_model->vao;
-        }
-
-        shader_set_mat4(&scene->game_model_shader, "model",
-                        game_model->transform);
-
-        vec3 light_direction = {game_model->light_direction_x / 1000.f,
-                               game_model->light_direction_y / 1000.f,
-                               game_model->light_direction_z / 1000.f};
-
-        //glm_vec3_normalize(light_direction);
-
-        /*vec3 light_position = {test_x / 1000.f,
-                               test_y / 1000.f,
-                               test_z / 1000.f};*/
-
-        //vec3 light_pos_test = {0};
-        //glm_mat4_mulv3(view, light_direction, 1, light_pos_test);
-
-        // glm_vec3_normalize(light_position);
-
-        shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
-
-        if (!game_model->unlit) {
-            shader_set_vec3(&scene->game_model_shader, "light_direction",
-                            light_direction);
-
-            shader_set_float(&scene->game_model_shader, "light_diffuse",
-                            (float)game_model->light_diffuse);
-
-            shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
-                            (float)game_model->light_direction_magnitude);
-
-            int model_ambience = game_model->light_ambience;
-
-            if (model_ambience < 0) {
-                model_ambience = 0;
-            } else if (model_ambience >= RAMP_SIZE) {
-                model_ambience = RAMP_SIZE - 1;
-            }
-
-            shader_set_float(&scene->game_model_shader, "light_ambience", model_ambience);
-        }
-
-        glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
-                       (void *)(game_model->ebo_offset * sizeof(GLuint)));
-    }
-#endif
-
 #if RENDER_SW
     scene->visible_polygons_count = 0;
 
@@ -1667,6 +1554,84 @@ e                                  game_model->face_intensity[face];*/
                                 polygon->facefill, game_model);
             }
         }
+    }
+#endif
+
+#ifdef RENDER_GL
+    /* TODO this could be optional? have to fix winding order */
+    /*glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);*/
+
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    shader_use(&scene->game_model_shader);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
+
+    shader_set_mat4(&scene->game_model_shader, "view", scene->gl_view);
+
+    shader_set_mat4(&scene->game_model_shader, "projection", scene->gl_projection);
+
+    GLuint last_vao = 0;
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (game_model->ebo_offset == -1 || !game_model->visible) {
+            continue;
+        }
+
+        //game_model->light_ambience = test_yaw;
+
+        if (last_vao != game_model->vao) {
+            glBindVertexArray(game_model->vao);
+            last_vao = game_model->vao;
+        }
+
+        shader_set_mat4(&scene->game_model_shader, "model",
+                        game_model->transform);
+
+        mat4 view_model = {0};
+        glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
+
+        shader_set_mat4(&scene->game_model_shader, "view_model", view_model);
+
+        mat4 projection_view_model = {0};
+        glm_mat4_mul(scene->gl_projection, view_model, projection_view_model);
+
+        shader_set_mat4(&scene->game_model_shader, "projection_view_model", projection_view_model);
+
+        vec3 light_direction = {game_model->light_direction_x / 1000.f,
+                               game_model->light_direction_y / 1000.f,
+                               game_model->light_direction_z / 1000.f};
+
+        shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
+
+        if (!game_model->unlit) {
+            shader_set_vec3(&scene->game_model_shader, "light_direction",
+                            light_direction);
+
+            shader_set_float(&scene->game_model_shader, "light_diffuse",
+                            (float)game_model->light_diffuse);
+
+            shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
+                            (float)game_model->light_direction_magnitude);
+
+            int model_ambience = game_model->light_ambience;
+
+            if (model_ambience < 0) {
+                model_ambience = 0;
+            } else if (model_ambience >= RAMP_SIZE) {
+                model_ambience = RAMP_SIZE - 1;
+            }
+
+            shader_set_float(&scene->game_model_shader, "light_ambience", model_ambience);
+        }
+
+        glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
+                       (void *)(game_model->ebo_offset * sizeof(GLuint)));
     }
 #endif
 
@@ -2739,6 +2704,10 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     scene->camera_x = x - offset_x;
     scene->camera_y = y - offset_y;
     scene->camera_z = z - offset_z;
+
+#ifdef RENDER_GL
+    scene_gl_update_camera(scene);
+#endif
 }
 
 void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
@@ -4059,3 +4028,41 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 
     return scene_method308(j6, k10, k15, flag);
 }
+
+#ifdef RENDER_GL
+void scene_gl_update_camera(Scene *scene) {
+    vec3 camera_position = {scene->camera_x / 1000.0f,
+                            scene->camera_y / 1000.0f,
+                            scene->camera_z / 1000.0f};
+
+    vec3 camera_front = {0.0, 0.0, -1.0};
+    vec3 camera_up = {0.0, -1.0, 0.0};
+
+    float yaw =
+        glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048);
+
+    // TODO why 77?
+    float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
+
+    vec3 front = {cos(yaw) * cos(pitch), pitch, sin(yaw) * cos(pitch)};
+
+    glm_normalize_to(front, camera_front);
+
+    vec3 camera_centre = {0};
+    glm_vec3_add(camera_position, camera_front, camera_centre);
+
+    glm_lookat(camera_position, camera_centre, camera_up, scene->gl_view);
+
+    float clip_far = (scene->clip_far_3d + scene->fog_z_falloff +
+                      scene->fog_z_distance) / 1000.0f;
+
+    float field_of_view = 37;
+
+    glm_perspective(
+        glm_rad(field_of_view),
+        (float)(scene->surface->width2) / (float)scene->surface->height2,
+        scene->clip_near / 1000.0f, clip_far, scene->gl_projection);
+
+    glm_mat4_mul(scene->gl_projection, scene->gl_view, scene->gl_projection_view);
+}
+#endif

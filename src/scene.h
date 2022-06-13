@@ -135,6 +135,10 @@ typedef struct Scene {
 
     float ambience_gradient[RAMP_SIZE];
     float texture_ambience_gradient[RAMP_SIZE];
+
+    mat4 gl_view;
+    mat4 gl_projection;
+    mat4 gl_projection_view;
 #endif
 } Scene;
 
@@ -210,5 +214,9 @@ int scene_method308(int i, int j, int k, int flag);
 int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
                     int *vertex_view_x_b, int *vertex_view_y_b, int length_a,
                     int length_b);
+
+#ifdef RENDER_GL
+void scene_gl_update_camera(Scene *scene);
+#endif
 
 #endif
