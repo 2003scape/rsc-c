@@ -870,12 +870,12 @@ void game_model_apply(GameModel *game_model) {
 
         if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_ROTATE) {
             glm_rotate(game_model->transform,
-                       TABLE_TO_RADIANS(game_model->orientation_yaw, 512),
-                       (vec3){1.0f, 0.0f, 0.0f});
-
-            glm_rotate(game_model->transform,
                        TABLE_TO_RADIANS(game_model->orientation_pitch, 512),
                        (vec3){0.0f, 1.0f, 0.0f});
+
+            glm_rotate(game_model->transform,
+                       TABLE_TO_RADIANS(game_model->orientation_yaw, 512),
+                       (vec3){1.0f, 0.0f, 0.0f});
 
             glm_rotate(game_model->transform,
                        TABLE_TO_RADIANS(game_model->orientation_roll, 512),

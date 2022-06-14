@@ -95,7 +95,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
         scene->texture_ambience_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
-
     }
 #endif
 }
@@ -1398,8 +1397,8 @@ e                                  game_model->face_intensity[face];*/
                 scene->vertex_y[j] = game_model->project_vertex_y[vertex_index];
                 scene->vertex_z[j] = game_model->project_vertex_z[vertex_index];
 
-                /*if (game_model->face_intensity[face] == GAME_MODEL_USE_GOURAUD) {
-                    if (polygon->visibility < 0) {
+                /*if (game_model->face_intensity[face] ==
+                GAME_MODEL_USE_GOURAUD) { if (polygon->visibility < 0) {
                         vertex_shade =
                             game_model->light_ambience -
                             game_model->vertex_intensity[vertex_index] +
@@ -1531,7 +1530,6 @@ e                                  game_model->face_intensity[face];*/
                     scene->vertex_shade[j] = 255;
                 }
 
-
                 if (polygon->facefill >= 0) {
                     if (scene->texture_dimension[polygon->facefill] == 1) {
                         scene->vertex_shade[j] <<= 9; // * 512
@@ -1568,7 +1566,8 @@ e                                  game_model->face_intensity[face];*/
 
     shader_set_mat4(&scene->game_model_shader, "view", scene->gl_view);
 
-    shader_set_mat4(&scene->game_model_shader, "projection", scene->gl_projection);
+    shader_set_mat4(&scene->game_model_shader, "projection",
+                    scene->gl_projection);
 
     GLuint last_vao = 0;
 
@@ -1579,7 +1578,7 @@ e                                  game_model->face_intensity[face];*/
             continue;
         }
 
-        //game_model->light_ambience = test_yaw;
+        // game_model->light_ambience = test_yaw;
 
         if (last_vao != game_model->vao) {
             glBindVertexArray(game_model->vao);
@@ -1597,33 +1596,28 @@ e                                  game_model->face_intensity[face];*/
         mat4 projection_view_model = {0};
         glm_mat4_mul(scene->gl_projection, view_model, projection_view_model);
 
-        shader_set_mat4(&scene->game_model_shader, "projection_view_model", projection_view_model);
+        shader_set_mat4(&scene->game_model_shader, "projection_view_model",
+                        projection_view_model);
 
         vec3 light_direction = {game_model->light_direction_x / 1000.f,
-                               game_model->light_direction_y / 1000.f,
-                               game_model->light_direction_z / 1000.f};
-
-        //shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
+                                game_model->light_direction_y / 1000.f,
+                                game_model->light_direction_z / 1000.f};
 
         int model_ambience = game_model->light_ambience;
 
-        /*if (model_ambience < 0) {
-            model_ambience = 0;
-        } else if (model_ambience >= RAMP_SIZE) {
-            model_ambience = RAMP_SIZE - 1;
-        }*/
-
-        shader_set_int(&scene->game_model_shader, "light_ambience", model_ambience);
+        shader_set_int(&scene->game_model_shader, "light_ambience",
+                       model_ambience);
 
         if (!game_model->unlit) {
             shader_set_vec3(&scene->game_model_shader, "light_direction",
                             light_direction);
 
             shader_set_int(&scene->game_model_shader, "light_diffuse",
-                            game_model->light_diffuse);
+                           game_model->light_diffuse);
 
-            shader_set_int(&scene->game_model_shader, "light_direction_magnitude",
-                            game_model->light_direction_magnitude);
+            shader_set_int(&scene->game_model_shader,
+                           "light_direction_magnitude",
+                           game_model->light_direction_magnitude);
         }
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
@@ -1662,7 +1656,8 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_2 != plane_y_0) {
             j13 = ((plane_x_2 - plane_x_0) << 8) / (plane_y_2 - plane_y_0);
-            j14 = ((vertex_shade_2 - vertex_shade_0) << 8) / (plane_y_2 - plane_y_0);
+            j14 = ((vertex_shade_2 - vertex_shade_0) << 8) /
+                  (plane_y_2 - plane_y_0);
 
             if (plane_y_0 < plane_y_2) {
                 l12 = plane_x_0 << 8;
@@ -1696,7 +1691,8 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_1 != plane_y_0) {
             j16 = ((plane_x_1 - plane_x_0) << 8) / (plane_y_1 - plane_y_0);
-            j17 = ((vertex_shade_1 - vertex_shade_0) << 8) / (plane_y_1 - plane_y_0);
+            j17 = ((vertex_shade_1 - vertex_shade_0) << 8) /
+                  (plane_y_1 - plane_y_0);
 
             if (plane_y_0 < plane_y_1) {
                 l15 = plane_x_0 << 8;
@@ -1730,7 +1726,8 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_2 != plane_y_1) {
             j19 = ((plane_x_2 - plane_x_1) << 8) / (plane_y_2 - plane_y_1);
-            j20 = ((vertex_shade_2 - vertex_shade_1) << 8) / (plane_y_2 - plane_y_1);
+            j20 = ((vertex_shade_2 - vertex_shade_1) << 8) /
+                  (plane_y_2 - plane_y_1);
 
             if (plane_y_1 < plane_y_2) {
                 l18 = plane_x_1 << 8;
@@ -1852,7 +1849,8 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_3 != plane_y_0) {
             i15 = ((plane_x_3 - plane_x_0) << 8) / (plane_y_3 - plane_y_0);
-            i16 = ((vertex_shade_3 - vertex_shade_0) << 8) / (plane_y_3 - plane_y_0);
+            i16 = ((vertex_shade_3 - vertex_shade_0) << 8) /
+                  (plane_y_3 - plane_y_0);
 
             if (plane_y_0 < plane_y_3) {
                 k14 = plane_x_0 << 8;
@@ -1886,7 +1884,8 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_1 != plane_y_0) {
             i18 = ((plane_x_1 - plane_x_0) << 8) / (plane_y_1 - plane_y_0);
-            i19 = ((vertex_shade_1 - vertex_shade_0) << 8) / (plane_y_1 - plane_y_0);
+            i19 = ((vertex_shade_1 - vertex_shade_0) << 8) /
+                  (plane_y_1 - plane_y_0);
 
             if (plane_y_0 < plane_y_1) {
                 k17 = plane_x_0 << 8;
@@ -1920,7 +1919,8 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_2 != plane_y_1) {
             i21 = ((plane_x_2 - plane_x_1) << 8) / (plane_y_2 - plane_y_1);
-            i22 = ((vertex_shade_2 - vertex_shade_1) << 8) / (plane_y_2 - plane_y_1);
+            i22 = ((vertex_shade_2 - vertex_shade_1) << 8) /
+                  (plane_y_2 - plane_y_1);
 
             if (plane_y_1 < plane_y_2) {
                 k20 = plane_x_1 << 8;
@@ -1954,7 +1954,8 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_3 != plane_y_2) {
             i23 = ((plane_x_3 - plane_x_2) << 8) / (plane_y_3 - plane_y_2);
-            k23 = ((vertex_shade_3 - vertex_shade_2) << 8) / (plane_y_3 - plane_y_2);
+            k23 = ((vertex_shade_3 - vertex_shade_2) << 8) /
+                  (plane_y_3 - plane_y_2);
 
             if (plane_y_2 < plane_y_3) {
                 l22 = plane_x_2 << 8;
@@ -2729,8 +2730,8 @@ void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     if (normal_scale == -1) {
         normal_scale = 0;
 
-        for (; normal_x > 25000 || normal_y > 25000 || normal_z > 25000 || normal_x < -25000 ||
-               normal_y < -25000 || normal_z < -25000;
+        for (; normal_x > 25000 || normal_y > 25000 || normal_z > 25000 ||
+               normal_x < -25000 || normal_y < -25000 || normal_z < -25000;
              normal_z >>= 1) {
             normal_scale++;
             normal_x >>= 1;
@@ -2739,7 +2740,10 @@ void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
 
         game_model->normal_scale[face] = normal_scale;
 
-        game_model->normal_magnitude[face] = scene->normal_magnitude * sqrt(normal_x * normal_x + normal_y * normal_y + normal_z * normal_z);
+        game_model->normal_magnitude[face] =
+            scene->normal_magnitude *
+            sqrt(normal_x * normal_x + normal_y * normal_y +
+                 normal_z * normal_z);
     } else {
         normal_x >>= normal_scale;
         normal_y >>= normal_scale;
@@ -4034,8 +4038,7 @@ void scene_gl_update_camera(Scene *scene) {
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, -1.0, 0.0};
 
-    float yaw =
-        glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048);
+    float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048);
 
     // TODO why 77?
     float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
@@ -4049,16 +4052,18 @@ void scene_gl_update_camera(Scene *scene) {
 
     glm_lookat(camera_position, camera_centre, camera_up, scene->gl_view);
 
-    float clip_far = (scene->clip_far_3d + scene->fog_z_falloff +
-                      scene->fog_z_distance) / 1000.0f;
+    float clip_far =
+        (scene->clip_far_3d + scene->fog_z_falloff + scene->fog_z_distance) /
+        1000.0f;
 
     float field_of_view = 37;
 
-    glm_perspective(
-        glm_rad(field_of_view),
-        (float)(scene->surface->width2) / (float)scene->surface->height2,
-        scene->clip_near / 1000.0f, clip_far, scene->gl_projection);
+    glm_perspective(glm_rad(field_of_view),
+                    (float)(scene->surface->width2) /
+                        (float)scene->surface->height2,
+                    scene->clip_near / 1000.0f, clip_far, scene->gl_projection);
 
-    glm_mat4_mul(scene->gl_projection, scene->gl_view, scene->gl_projection_view);
+    glm_mat4_mul(scene->gl_projection, scene->gl_view,
+                 scene->gl_projection_view);
 }
 #endif
