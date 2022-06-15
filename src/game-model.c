@@ -484,7 +484,7 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
                                 int ambience, int diffuse, int x, int y,
                                 int z) {
     //return;
-    gouraud = 0;
+    gouraud = 1;
 
     if (game_model->unlit) {
         return;
@@ -499,7 +499,7 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
 
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience) {
-    //return;
+    return;
     game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
@@ -737,6 +737,15 @@ void game_model_light(GameModel *game_model) {
 
     for (int i = 0; i < game_model->num_faces; i++) {
         if (game_model->face_intensity[i] != GAME_MODEL_USE_GOURAUD) {
+            /*DOT_PRODUCT(
+                game_model->face_normal_x[i],
+                game_model->light_direction_x,
+                game_model->face_normal_y[i],
+                game_model->light_direction_y,
+                game_model->face_normal_z[i],
+                game_model->light_direction_z
+            ) / divisor;*/
+
             game_model->face_intensity[i] =
                 (game_model->face_normal_x[i] *
                            game_model->light_direction_x +
@@ -770,10 +779,10 @@ void game_model_light(GameModel *game_model) {
     for (int i = 0; i < game_model->num_vertices; i++) {
         if (normal_magnitude[i] > 0) {
             game_model->vertex_intensity[i] =
-                (int)((normal_x[i] * game_model->light_direction_x +
+                (normal_x[i] * game_model->light_direction_x +
                        normal_y[i] * game_model->light_direction_y +
                        normal_z[i] * game_model->light_direction_z) /
-                      (divisor * normal_magnitude[i]));
+                      (divisor * normal_magnitude[i]);
         }
     }
 
@@ -1218,32 +1227,38 @@ void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
     glGenBuffers(1, vbo);
     glBindBuffer(GL_ARRAY_BUFFER, *vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 14, NULL,
+    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 15, NULL,
                  GL_STATIC_DRAW);
 
     /* vertex { x, y, z } */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 15 * sizeof(GLfloat),
                           (void *)0);
 
     glEnableVertexAttribArray(0);
 
-    /* normal { x, y, z, intensity } */
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat),
+    /* normal { x, y, z } */
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 15 * sizeof(GLfloat),
                           (void *)(3 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(1);
 
-    /* colour { r, g, b, a } */
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat),
-                          (void *)(7 * sizeof(GLfloat)));
+    /* lighting { intensity, magnitude } */
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 15 * sizeof(GLfloat),
+                          (void *)(6 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(2);
 
-    /* texture { s, t, index } */
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GLfloat),
-                          (void *)(11 * sizeof(GLfloat)));
+    /* colour { r, g, b, a } */
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 15 * sizeof(GLfloat),
+                          (void *)(8 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(3);
+
+    /* texture { s, t, index } */
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 15 * sizeof(GLfloat),
+                          (void *)(12 * sizeof(GLfloat)));
+
+    glEnableVertexAttribArray(4);
 
     glGenBuffers(1, ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
@@ -1334,11 +1349,26 @@ void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b)
     *b = ((face_fill & 31) * 8) / 255.0f;
 }
 
+int game_model_gl_get_face_area(int *face_vertices, int face_num_vertices, int *vertices_x, int *vertices_y) {
+    float left_sum = 0;
+    float right_sum = 0;
+
+    for (int i = 0; i < face_num_vertices; i++) {
+        int vertex_index = face_vertices[i];
+        int next_vertex_index = face_vertices[(i + 1) % face_num_vertices];
+
+        left_sum += vertices_x[vertex_index] * vertices_y[next_vertex_index];
+        right_sum += vertices_x[next_vertex_index] * vertices_y[vertex_index];
+    }
+
+    return (left_sum - right_sum) / 2;
+}
+
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset) {
-    /*game_model->face_normal_x = calloc(game_model->num_faces, sizeof(int));
-    game_model->face_normal_y = calloc(game_model->num_faces, sizeof(int));
-    game_model->face_normal_z = calloc(game_model->num_faces, sizeof(int));
+    int *face_normal_x = calloc(game_model->num_faces, sizeof(int));
+    int *face_normal_y = calloc(game_model->num_faces, sizeof(int));
+    int *face_normal_z = calloc(game_model->num_faces, sizeof(int));
 
     for (int i = 0; i < game_model->num_faces; i++) {
         int *face_vertices = game_model->face_vertices[i];
@@ -1372,9 +1402,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             norm_mag = 1;
         }
 
-        game_model->face_normal_x[i] = (int)((norm_x * 65536) / norm_mag);
-        game_model->face_normal_y[i] = (int)((norm_y * 65536) / norm_mag);
-        game_model->face_normal_z[i] = (int)((norm_z * 65535) / norm_mag);
+        face_normal_x[i] = (int)((norm_x * 65536) / norm_mag);
+        face_normal_y[i] = (int)((norm_y * 65536) / norm_mag);
+        face_normal_z[i] = (int)((norm_z * 65535) / norm_mag);
     }
 
     int *normal_x = calloc(game_model->num_vertices, sizeof(int));
@@ -1386,19 +1416,19 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         for (int j = 0; j < game_model->face_num_vertices[i]; j++) {
             int vertex_index = game_model->face_vertices[i][j];
 
-            normal_x[vertex_index] += game_model->face_normal_x[i];
-            normal_y[vertex_index] += game_model->face_normal_y[i];
-            normal_z[vertex_index] += game_model->face_normal_z[i];
+            normal_x[vertex_index] += face_normal_x[i];
+            normal_y[vertex_index] += face_normal_y[i];
+            normal_z[vertex_index] += face_normal_z[i];
 
             normal_magnitude[vertex_index]++;
         }
-    }*/
+    }
 
     for (int i = 0; i < game_model->num_faces; i++) {
         int *face_vertices = game_model->face_vertices[i];
         int face_num_vertices = game_model->face_num_vertices[i];
 
-        /*vec3 vertices[3];
+        vec3 vertices[3];
 
         for (int i = 0; i < 3; i++) {
             int vertex_index = face_vertices[i];
@@ -1414,12 +1444,36 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         vec3 diff = {0};
         glm_vec3_sub(vertices[2], vertices[0], diff);
 
-        vec3 normal = {0};
-        glm_vec3_cross(location_x, diff, normal);
+        vec3 test_normal = {0};
+        glm_vec3_cross(location_x, diff, test_normal);
 
-        glm_vec3_normalize(normal);*/
+        glm_vec3_normalize(test_normal);
 
-        int a_x = game_model->vertex_x[face_vertices[0]];
+        vec3 a_c_sub = {0};
+        glm_vec3_sub(vertices[0], vertices[2], a_c_sub);
+
+        vec3 b_c_sub = {0};
+        glm_vec3_sub(vertices[1], vertices[2], b_c_sub);
+
+        vec3 a_c_b_c_cross = {0};
+        glm_vec3_cross(a_c_sub, b_c_sub, a_c_b_c_cross);
+
+        float dot_product = glm_vec3_dot(
+            test_normal,
+            a_c_b_c_cross
+        );
+
+        /*int x_y_area = game_model_gl_get_face_area(face_vertices, face_num_vertices, game_model->vertex_x, game_model->vertex_y);
+
+        int x_z_area = game_model_gl_get_face_area(face_vertices, face_num_vertices, game_model->vertex_x, game_model->vertex_z);
+
+        int y_z_area = game_model_gl_get_face_area(face_vertices, face_num_vertices, game_model->vertex_y, game_model->vertex_z);
+
+        printf("%d, %d, %d\n", x_y_area, x_z_area, y_z_area);*/
+
+        //printf("%f\n", dot_product);
+
+        /*int a_x = game_model->vertex_x[face_vertices[0]];
         int a_y = game_model->vertex_y[face_vertices[0]];
         int a_z = game_model->vertex_z[face_vertices[0]];
         int b_x = game_model->vertex_x[face_vertices[1]] - a_x;
@@ -1456,6 +1510,12 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             normal_x / 1000.0f,
             normal_y / 1000.0f,
             normal_z / 1000.0f,
+        };*/
+
+        vec3 normal = {
+            face_normal_x[i] / 1000.0f,
+            face_normal_y[i] / 1000.0f,
+            face_normal_z[i] / 1000.0f,
         };
 
         int fill_front = game_model->face_fill_front[i];
@@ -1520,6 +1580,14 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             GLfloat vertex_y = game_model->vertex_y[vertex_index] / 1000.0f;
             GLfloat vertex_z = game_model->vertex_z[vertex_index] / 1000.0f;
 
+            normal[0] = normal_x[vertex_index] / 1000.0f;
+            normal[1] = normal_y[vertex_index] / 1000.0f;
+            normal[2] = normal_z[vertex_index] / 1000.0f;
+
+            //glm_vec3_normalize(normal);
+
+            face_intensity = -256;
+
             GLfloat texture_x = -1.0f;
             GLfloat texture_y = -1.0f;
 
@@ -1533,7 +1601,10 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 vertex_x, vertex_y, vertex_z, //
 
                 /* normal */
-                normal[0], normal[1], normal[2], (float)(face_intensity), //
+                normal[0], normal[1], normal[2], //
+
+                /* lighting */
+                (float)(face_intensity), (float)(normal_magnitude[vertex_index]), //
 
                 /* colour */
                 r, g, b, a, //
@@ -1543,8 +1614,8 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             };
 
             glBufferSubData(GL_ARRAY_BUFFER,
-                            ((*vertex_offset) + j) * 14 * sizeof(GLfloat),
-                            14 * sizeof(GLfloat), vertex);
+                            ((*vertex_offset) + j) * 15 * sizeof(GLfloat),
+                            15 * sizeof(GLfloat), vertex);
         }
 
         // TODO preserve winding order for GL_CULL_FACE

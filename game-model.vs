@@ -1,8 +1,9 @@
 #version 330 core
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec4 normal;
-layout(location = 2) in vec4 colour;
-layout(location = 3) in vec3 texture_position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 lighting;
+layout(location = 3) in vec4 colour;
+layout(location = 4) in vec3 texture_position;
 
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
@@ -12,6 +13,15 @@ uniform mat4 view;
 
 uniform mat4 view_model;
 uniform mat4 projection_view_model;
+
+uniform int light_ambience;
+uniform vec3 light_direction;
+uniform int light_diffuse;
+uniform int light_direction_magnitude;
+
+uniform bool unlit;
+
+uniform bool cull_front;
 
 // TODO move these to uniform
 float light_gradient[] = float[](
@@ -92,37 +102,59 @@ float texture_light_gradient[] = float[](
     0.074510, 0.074510, 0.074510, 0.074510, 0.074510, 0.074510, 0.074510,
     0.074510, 0.074510, 0.074510, 0.074510);
 
-uniform int light_ambience;
-uniform vec3 light_direction;
-uniform int light_diffuse;
-uniform int light_direction_magnitude;
-
 void main() {
-    int intensity = int(normal.w);
+    int intensity = int(lighting.x);
+    int normal_magnitude = int(lighting.y);
+
+    //normal_magnitude = 1;
+
+    vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
+    //vec3 model_normal = vec3(model * vec4(vec3(normal * normal_magnitude), 0.0));
 
     if (intensity == -256) {
-        vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
+        //vec3 model_normal = vec3(model * vec4(vec3(normal * (normal_magnitude / 256.0f)), 0.0));
         int divisor = (light_diffuse * light_direction_magnitude) / 256;
 
-        intensity = (int(model_normal.x * 1000) * int(light_direction.x * 1000) +
-                       int(model_normal.y * 1000) * int(light_direction.y * 1000) +
-                       int(model_normal.z * 1000) * int(light_direction.z * 1000)) /
-                      divisor;
+        /*intensity = ((model_normal.x * 1000) * (light_direction.x * 1000) +
+                       (model_normal.y * 1000) * (light_direction.y * 1000) +
+                       (model_normal.z * 1000) * (light_direction.z * 1000)) /
+                      (divisor * normal_magnitude);*/
+
+        intensity =
+            int(dot(model_normal * 1000, light_direction * 1000) / (divisor * normal_magnitude));
     }
 
-    vec3 view_model_normal = vec3(view_model * vec4(vec3(normal), 0.0));
+    //vec3 view_model_normal = vec3(view_model * vec4(vec3(normal) / float(normal_magnitude), 0.0));
+
+    vec3 view_model_normal = mat3(transpose(inverse(view_model))) * (vec3(normal) / float(normal_magnitude));
+
     vec4 view_model_position = view_model * vec4(position, 1.0);
 
-    float visibility = view_model_position.x * view_model_normal.x +
-                 view_model_position.y * view_model_normal.y +
-                 view_model_position.z * view_model_normal.z;
+    // dot product v
+    /*int visibility = int((view_model_position.x * 1000) * (view_model_normal.x * 1000) +
+                 (view_model_position.y * 1000) * (view_model_normal.y * 1000) +
+                 (view_model_position.z * 1000) * (view_model_normal.z * 1000));*/
+
+    float visibility = dot(vec3(view_model_position), view_model_normal);
+
+    /*vec3 test_dir =
+        vec3(view * vec4(light_direction, 1.0)) -
+        vec3((view_model * vec4(position, 1.0))
+    );
+
+    float visibility = dot(normalize(view_model_normal), normalize(test_dir));*/
 
     int gradient_index = 0;
 
-    if (visibility > 0) {
+    //if (visibility < 0) {
+    if (cull_front) {
         gradient_index = light_ambience + intensity;
+        //gradient_index = light_ambience + intensity;
+        //gradient_index = 0;
     } else {
         gradient_index = light_ambience - intensity;
+        //gradient_index = light_ambience + int(intensity);
+        //gradient_index = 0;
     }
 
     if (gradient_index > 255) {
@@ -141,8 +173,13 @@ void main() {
 
     gl_Position = projection_view_model * vec4(position, 1.0);
 
-    vertex_colour = vec4(vec3(colour) * lightness, colour.w);
-    vertex_texture_position = texture_position;
+    if (unlit) {
+        vertex_colour = vec4(0,0,0,0);
+        vertex_texture_position = vec3(-1, -1, -1);
+    } else {
+        vertex_colour = vec4(vec3(colour) * lightness, colour.w);
+        vertex_texture_position = texture_position;
+    }
 
     // test_normal = mat3(transpose(inverse(model))) * normal;
 

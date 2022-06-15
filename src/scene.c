@@ -1372,22 +1372,13 @@ void scene_render(Scene *scene) {
             int *face_vertices = game_model->face_vertices[face];
 
             if (game_model->face_intensity[face] != GAME_MODEL_USE_GOURAUD) {
-#if 1
                 if (polygon->visibility < 0) {
-                    /*vertex_shade = game_model->light_ambience -
-                                   game_model->face_intensity[face];*/
                     vertex_shade = game_model->light_ambience -
                                    game_model->face_intensity[face];
                 } else {
-                    /*vertex_shade = game_model->light_ambience +
-e                                  game_model->face_intensity[face];*/
                     vertex_shade = game_model->light_ambience +
                                    game_model->face_intensity[face];
                 }
-#else
-                vertex_shade = game_model->light_ambience +
-                               game_model->face_intensity[face];
-#endif
             }
 
             for (int j = 0; j < face_num_vertices; j++) {
@@ -1397,19 +1388,19 @@ e                                  game_model->face_intensity[face];*/
                 scene->vertex_y[j] = game_model->project_vertex_y[vertex_index];
                 scene->vertex_z[j] = game_model->project_vertex_z[vertex_index];
 
-                /*if (game_model->face_intensity[face] ==
-                GAME_MODEL_USE_GOURAUD) { if (polygon->visibility < 0) {
+                if (game_model->face_intensity[face] == GAME_MODEL_USE_GOURAUD) {
+                    if (polygon->visibility < 0) {
                         vertex_shade =
                             game_model->light_ambience -
                             game_model->vertex_intensity[vertex_index] +
-                            game_model->vertex_ambience[vertex_index];
+                            /*game_model->vertex_ambience[vertex_index]*/0;
                     } else {
                         vertex_shade =
                             game_model->light_ambience +
                             game_model->vertex_intensity[vertex_index] +
-                            game_model->vertex_ambience[vertex_index];
+                            /*game_model->vertex_ambience[vertex_index]*/0;
                     }
-                }*/
+                }
 
                 // vertex shade is 0-255, uses gradient ramps
 
@@ -1553,8 +1544,8 @@ e                                  game_model->face_intensity[face];*/
 
 #ifdef RENDER_GL
     /* TODO this could be optional? have to fix winding order */
-    /*glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);*/
+    glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -1608,6 +1599,8 @@ e                                  game_model->face_intensity[face];*/
         shader_set_int(&scene->game_model_shader, "light_ambience",
                        model_ambience);
 
+        shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
+
         if (!game_model->unlit) {
             shader_set_vec3(&scene->game_model_shader, "light_direction",
                             light_direction);
@@ -1619,6 +1612,15 @@ e                                  game_model->face_intensity[face];*/
                            "light_direction_magnitude",
                            game_model->light_direction_magnitude);
         }
+
+        glCullFace(GL_FRONT);
+        shader_set_int(&scene->game_model_shader, "cull_front", 1);
+
+        glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
+                       (void *)(game_model->ebo_offset * sizeof(GLuint)));
+
+        glCullFace(GL_BACK);
+        shader_set_int(&scene->game_model_shader, "cull_front", 0);
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
