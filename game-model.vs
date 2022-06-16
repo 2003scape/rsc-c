@@ -20,7 +20,6 @@ uniform int light_diffuse;
 uniform int light_direction_magnitude;
 
 uniform bool unlit;
-
 uniform bool cull_front;
 
 // TODO move these to uniform
@@ -106,55 +105,21 @@ void main() {
     int intensity = int(lighting.x);
     int normal_magnitude = int(lighting.y);
 
-    //normal_magnitude = 1;
+    if (!unlit) {
+        vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 
-    vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
-    //vec3 model_normal = vec3(model * vec4(vec3(normal * normal_magnitude), 0.0));
-
-    if (intensity == -256) {
-        //vec3 model_normal = vec3(model * vec4(vec3(normal * (normal_magnitude / 256.0f)), 0.0));
         int divisor = (light_diffuse * light_direction_magnitude) / 256;
 
-        /*intensity = ((model_normal.x * 1000) * (light_direction.x * 1000) +
-                       (model_normal.y * 1000) * (light_direction.y * 1000) +
-                       (model_normal.z * 1000) * (light_direction.z * 1000)) /
-                      (divisor * normal_magnitude);*/
-
-        intensity =
-            int(dot(model_normal * 1000, light_direction * 1000) / (divisor * normal_magnitude));
+        intensity = int(dot(model_normal * 1000, light_direction * 1000) /
+                        (divisor * normal_magnitude));
     }
 
-    //vec3 view_model_normal = vec3(view_model * vec4(vec3(normal) / float(normal_magnitude), 0.0));
+    int gradient_index = light_ambience;
 
-    vec3 view_model_normal = mat3(transpose(inverse(view_model))) * (vec3(normal) / float(normal_magnitude));
-
-    vec4 view_model_position = view_model * vec4(position, 1.0);
-
-    // dot product v
-    /*int visibility = int((view_model_position.x * 1000) * (view_model_normal.x * 1000) +
-                 (view_model_position.y * 1000) * (view_model_normal.y * 1000) +
-                 (view_model_position.z * 1000) * (view_model_normal.z * 1000));*/
-
-    float visibility = dot(vec3(view_model_position), view_model_normal);
-
-    /*vec3 test_dir =
-        vec3(view * vec4(light_direction, 1.0)) -
-        vec3((view_model * vec4(position, 1.0))
-    );
-
-    float visibility = dot(normalize(view_model_normal), normalize(test_dir));*/
-
-    int gradient_index = 0;
-
-    //if (visibility < 0) {
     if (cull_front) {
-        gradient_index = light_ambience + intensity;
-        //gradient_index = light_ambience + intensity;
-        //gradient_index = 0;
+        gradient_index += intensity;
     } else {
-        gradient_index = light_ambience - intensity;
-        //gradient_index = light_ambience + int(intensity);
-        //gradient_index = 0;
+        gradient_index -= intensity;
     }
 
     if (gradient_index > 255) {
@@ -173,15 +138,8 @@ void main() {
 
     gl_Position = projection_view_model * vec4(position, 1.0);
 
-    if (unlit) {
-        vertex_colour = vec4(0,0,0,0);
-        vertex_texture_position = vec3(-1, -1, -1);
-    } else {
-        vertex_colour = vec4(vec3(colour) * lightness, colour.w);
-        vertex_texture_position = texture_position;
-    }
-
-    // test_normal = mat3(transpose(inverse(model))) * normal;
+    vertex_colour = vec4(vec3(colour) * lightness, colour.w);
+    vertex_texture_position = texture_position;
 
     /*if (gl_Position.z > (2500.0f / 1000.0f)) {
         vertex_colour = vec4(0, 0, 0, 1);

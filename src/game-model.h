@@ -144,6 +144,13 @@ void game_model_apply_translate(GameModel *game_model, int dx, int dy, int dz);
 void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
                                int pitch);
 void game_model_compute_bounds(GameModel *game_model);
+void game_model_get_face_normals(GameModel *game_model, int *vertex_x,
+                                 int *vertex_y, int *vertex_z,
+                                 int *face_normal_x, int *face_normal_y,
+                                 int *face_normal_z, int reset_scale);
+void game_model_get_vertex_normals(GameModel *game_model, int *normal_x,
+                                   int *normal_y, int *normal_z,
+                                   int *normal_magnitude);
 void game_model_light(GameModel *game_model);
 void game_model_relight(GameModel *game_model);
 void game_model_reset_transform(GameModel *game_model);
