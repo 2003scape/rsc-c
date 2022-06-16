@@ -97,6 +97,10 @@ void shader_set_float(Shader *shader, char *name, float value) {
     glUniform1f(glGetUniformLocation(shader->id, name), value);
 }
 
+void shader_set_float_array(Shader *shader, char *name, float *values, int length) {
+    glUniform1fv(glGetUniformLocation(shader->id, name), length, (float*)values);
+}
+
 void shader_set_mat4(Shader *shader, char *name, mat4 value) {
     glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE, (float*)value);
 }

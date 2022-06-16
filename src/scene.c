@@ -86,16 +86,24 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     for (int i = 0; i < RAMP_SIZE; i++) {
         int gradient_index = (RAMP_SIZE - 1) - i;
 
-        scene->ambience_gradient[gradient_index] =
+        scene->light_gradient[gradient_index] =
             (i * i) / (float)(RAMP_SIZE * RAMP_SIZE);
 
         int texture_gradient_index = i / 16;
         int x = texture_gradient_index / 4;
         int y = texture_gradient_index % 4;
 
-        scene->texture_ambience_gradient[gradient_index] =
+        scene->texture_light_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
     }
+
+    shader_use(&scene->game_model_shader);
+
+    shader_set_float_array(&scene->game_model_shader, "light_gradient",
+                           scene->light_gradient, RAMP_SIZE);
+
+    shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
+                           scene->texture_light_gradient, RAMP_SIZE);
 #endif
 }
 
@@ -1388,17 +1396,18 @@ void scene_render(Scene *scene) {
                 scene->vertex_y[j] = game_model->project_vertex_y[vertex_index];
                 scene->vertex_z[j] = game_model->project_vertex_z[vertex_index];
 
-                if (game_model->face_intensity[face] == GAME_MODEL_USE_GOURAUD) {
+                if (game_model->face_intensity[face] ==
+                    GAME_MODEL_USE_GOURAUD) {
                     if (polygon->visibility < 0) {
                         vertex_shade =
                             game_model->light_ambience -
                             game_model->vertex_intensity[vertex_index] +
-                            /*game_model->vertex_ambience[vertex_index]*/0;
+                            /*game_model->vertex_ambience[vertex_index]*/ 0;
                     } else {
                         vertex_shade =
                             game_model->light_ambience +
                             game_model->vertex_intensity[vertex_index] +
-                            /*game_model->vertex_ambience[vertex_index]*/0;
+                            /*game_model->vertex_ambience[vertex_index]*/ 0;
                     }
                 }
 
@@ -1543,9 +1552,7 @@ void scene_render(Scene *scene) {
 #endif
 
 #ifdef RENDER_GL
-    /* TODO this could be optional? have to fix winding order */
     glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -1554,11 +1561,6 @@ void scene_render(Scene *scene) {
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
-
-    shader_set_mat4(&scene->game_model_shader, "view", scene->gl_view);
-
-    shader_set_mat4(&scene->game_model_shader, "projection",
-                    scene->gl_projection);
 
     GLuint last_vao = 0;
 

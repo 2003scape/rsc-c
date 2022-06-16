@@ -133,8 +133,8 @@ typedef struct Scene {
     GLuint terrain_ebo;
     GLuint terrain_textures;
 
-    float ambience_gradient[RAMP_SIZE];
-    float texture_ambience_gradient[RAMP_SIZE];
+    float light_gradient[RAMP_SIZE];
+    float texture_light_gradient[RAMP_SIZE];
 
     mat4 gl_view;
     mat4 gl_projection;
