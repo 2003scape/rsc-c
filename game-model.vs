@@ -5,8 +5,10 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 normal;
 layout(location = 2) in vec2 lighting;
-layout(location = 3) in vec4 colour;
-layout(location = 4) in vec3 texture_position;
+layout(location = 3) in vec4 front_colour;
+layout(location = 4) in vec3 front_texture_position;
+layout(location = 5) in vec4 back_colour;
+layout(location = 6) in vec3 back_texture_position;
 
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
@@ -15,7 +17,6 @@ uniform float light_gradient[RAMP_SIZE];
 uniform float texture_light_gradient[RAMP_SIZE];
 
 uniform mat4 model;
-uniform mat4 view_model;
 uniform mat4 projection_view_model;
 
 uniform bool unlit;
@@ -52,8 +53,14 @@ void main() {
 
     if (cull_front) {
         gradient_index += intensity;
+
+        vertex_colour = front_colour;
+        vertex_texture_position = front_texture_position;
     } else {
         gradient_index -= intensity;
+
+        vertex_colour = back_colour;
+        vertex_texture_position = back_texture_position;
     }
 
     if (gradient_index > (RAMP_SIZE - 1)) {
@@ -64,16 +71,15 @@ void main() {
 
     float lightness = 1;
 
-    if (texture_position.z > -1) {
+    if (vertex_texture_position.z > -1) {
         lightness = texture_light_gradient[gradient_index];
     } else {
         lightness = light_gradient[gradient_index];
     }
 
-    gl_Position = projection_view_model * vec4(position, 1.0);
+    vertex_colour = vec4(vec3(vertex_colour) * lightness, vertex_colour.w);
 
-    vertex_colour = vec4(vec3(colour) * lightness, colour.w);
-    vertex_texture_position = texture_position;
+    gl_Position = projection_view_model * vec4(position, 1.0);
 
     /*if (gl_Position.z > (2500.0f / 1000.0f)) {
         vertex_colour = vec4(0, 0, 0, 1);

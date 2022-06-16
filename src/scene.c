@@ -1584,8 +1584,6 @@ void scene_render(Scene *scene) {
         mat4 view_model = {0};
         glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
 
-        shader_set_mat4(&scene->game_model_shader, "view_model", view_model);
-
         mat4 projection_view_model = {0};
         glm_mat4_mul(scene->gl_projection, view_model, projection_view_model);
 
@@ -1615,14 +1613,14 @@ void scene_render(Scene *scene) {
                            game_model->light_direction_magnitude);
         }
 
-        glCullFace(GL_FRONT);
-        shader_set_int(&scene->game_model_shader, "cull_front", 1);
+        glCullFace(GL_BACK);
+        shader_set_int(&scene->game_model_shader, "cull_front", 0);
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
 
-        glCullFace(GL_BACK);
-        shader_set_int(&scene->game_model_shader, "cull_front", 0);
+        glCullFace(GL_FRONT);
+        shader_set_int(&scene->game_model_shader, "cull_front", 1);
 
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
