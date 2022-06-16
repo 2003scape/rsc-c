@@ -3,7 +3,7 @@
 #define RAMP_SIZE 256
 
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 normal;
+layout(location = 1) in vec4 normal;
 layout(location = 2) in vec2 lighting;
 layout(location = 3) in vec4 colour;
 layout(location = 4) in vec3 texture_position;
@@ -28,10 +28,18 @@ uniform int light_direction_magnitude;
 uniform bool cull_front;
 
 void main() {
-    int intensity = int(lighting.x);
-    int normal_magnitude = int(lighting.y);
+    int face_intensity = int(lighting.x);
+    int vertex_intensity = int(lighting.y);
+    int normal_magnitude = int(normal.w);
+    int intensity = 0;
 
-    if (!unlit) {
+    if (unlit) {
+        if (face_intensity == 12345678) {
+            intensity = vertex_intensity;
+        } else {
+            intensity = face_intensity;
+        }
+    } else {
         vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 
         int divisor = (light_diffuse * light_direction_magnitude) / RAMP_SIZE;
