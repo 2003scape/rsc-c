@@ -1423,17 +1423,17 @@ void scene_render(Scene *scene) {
 
                     scene->vertex_shade[k8] = vertex_shade;
 
-                    /*if (game_model->project_vertex_z[vertex_index] >
+                    if (game_model->project_vertex_z[vertex_index] >
                         scene->fog_z_distance) {
                         scene->vertex_shade[k8] +=
                             (game_model->project_vertex_z[vertex_index] -
                              scene->fog_z_distance) /
                             scene->fog_z_falloff;
-                    }*/
+                    }
 
                     k8++;
                 } else {
-                    /*int previous_vertex_index = 0;
+                    int previous_vertex_index = 0;
 
                     if (j == 0) {
                         previous_vertex_index =
@@ -1519,7 +1519,7 @@ void scene_render(Scene *scene) {
 
                         scene->vertex_shade[k8] = vertex_shade;
                         k8++;
-                    }*/
+                    }
                 }
             }
 
@@ -1558,6 +1558,8 @@ void scene_render(Scene *scene) {
     glClear(GL_DEPTH_BUFFER_BIT);
 
     shader_use(&scene->game_model_shader);
+
+    shader_set_int(&scene->game_model_shader, "fog_distance", scene->fog_z_distance);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
@@ -4054,9 +4056,7 @@ void scene_gl_update_camera(Scene *scene) {
 
     glm_lookat(camera_position, camera_centre, camera_up, scene->gl_view);
 
-    float clip_far =
-        (scene->clip_far_3d + scene->fog_z_falloff + scene->fog_z_distance) /
-        1000.0f;
+    float clip_far = (scene->clip_far_3d + scene->fog_z_distance) / 1000.0f;
 
     float field_of_view = 37;
 

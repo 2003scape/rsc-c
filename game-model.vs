@@ -13,6 +13,8 @@ layout(location = 6) in vec3 back_texture_position;
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
 
+uniform int fog_distance;
+
 uniform float light_gradient[RAMP_SIZE];
 uniform float texture_light_gradient[RAMP_SIZE];
 
@@ -29,6 +31,8 @@ uniform int light_direction_magnitude;
 uniform bool cull_front;
 
 void main() {
+    gl_Position = projection_view_model * vec4(position, 1.0);
+
     int face_intensity = int(lighting.x);
     int vertex_intensity = int(lighting.y);
     int normal_magnitude = int(normal.w);
@@ -63,6 +67,10 @@ void main() {
         vertex_texture_position = front_texture_position;
     }
 
+    if (gl_Position.z > (fog_distance / 1000.0f)) {
+        gradient_index += int(gl_Position.z  * 1000) - fog_distance;
+    }
+
     if (gradient_index > (RAMP_SIZE - 1)) {
         gradient_index = (RAMP_SIZE - 1);
     } else if (gradient_index < 0) {
@@ -78,10 +86,4 @@ void main() {
     }
 
     vertex_colour = vec4(vec3(vertex_colour) * lightness, vertex_colour.w);
-
-    gl_Position = projection_view_model * vec4(position, 1.0);
-
-    /*if (gl_Position.z > (2500.0f / 1000.0f)) {
-        vertex_colour = vec4(0, 0, 0, 1);
-    }*/
 }
