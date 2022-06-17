@@ -1561,6 +1561,11 @@ void scene_render(Scene *scene) {
 
     shader_set_int(&scene->game_model_shader, "fog_distance", scene->fog_z_distance);
 
+    shader_set_float(&scene->game_model_shader, "scroll_texture",
+                   scene->scroll_texture_position / (float)SCROLL_TEXTURE_SIZE);
+
+    scene->scroll_texture_position = (scene->scroll_texture_position + 1) % 64;
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
 

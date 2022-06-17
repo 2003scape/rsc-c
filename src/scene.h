@@ -139,6 +139,8 @@ typedef struct Scene {
     mat4 gl_view;
     mat4 gl_projection;
     mat4 gl_projection_view;
+
+    int scroll_texture_position;
 #endif
 } Scene;
 

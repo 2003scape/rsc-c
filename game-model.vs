@@ -1,5 +1,6 @@
 #version 330 core
 
+#define FOUNTAIN_ID 17
 #define RAMP_SIZE 256
 
 layout(location = 0) in vec3 position;
@@ -12,6 +13,8 @@ layout(location = 6) in vec3 back_texture_position;
 
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
+
+uniform float scroll_texture;
 
 uniform int fog_distance;
 
@@ -81,6 +84,10 @@ void main() {
 
     if (vertex_texture_position.z > -1) {
         lightness = texture_light_gradient[gradient_index];
+
+        if (vertex_texture_position.z == FOUNTAIN_ID) {
+            vertex_texture_position.y -= scroll_texture;
+        }
     } else {
         lightness = light_gradient[gradient_index];
     }
