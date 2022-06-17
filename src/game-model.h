@@ -96,8 +96,11 @@ typedef struct GameModel {
 
 #ifdef RENDER_GL
     GLuint vao;
+
+    int vbo_offset;
     int ebo_offset;
     int ebo_length;
+
     mat4 transform;
 #endif
 } GameModel;

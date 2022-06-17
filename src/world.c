@@ -67,7 +67,7 @@ void world_set_terrain_ambience(World *world, int terrain_x, int terrain_y,
         if (game_model->vertex_x[i] == vertex_x * TILE_SIZE &&
             game_model->vertex_z[i] == vertex_y * TILE_SIZE) {
             game_model_set_vertex_ambience(game_model, i, ambience);
-            return;
+            break;
         }
     }
 }
@@ -135,11 +135,12 @@ void world_remove_object2(World *world, int x, int y, int id) {
     }
 
     if (game_data_object_type[id] == 1 || game_data_object_type[id] == 2) {
-        int tile_dir = world_get_tile_direction(world, x, y);
+        int tile_direction = world_get_tile_direction(world, x, y);
         int model_width;
         int model_height;
 
-        if (tile_dir == 0 || tile_dir == 4) {
+        // TODO make cardinal TILE_DIRs
+        if (tile_direction == 0 || tile_direction == 4) {
             model_width = game_data_object_width[id];
             model_height = game_data_object_height[id];
         } else {
@@ -151,25 +152,25 @@ void world_remove_object2(World *world, int x, int y, int id) {
             for (int my = y; my < y + model_height; my++) {
                 if (game_data_object_type[id] == 1) {
                     world->object_adjacency[mx][my] |= 0x40;
-                } else if (tile_dir == 0) {
+                } else if (tile_direction == 0) {
                     world->object_adjacency[mx][my] |= 2;
 
                     if (mx > 0) {
                         world_set_object_adjacency_from3(world, mx - 1, my, 8);
                     }
-                } else if (tile_dir == 2) {
+                } else if (tile_direction == 2) {
                     world->object_adjacency[mx][my] |= 4;
 
                     if (my < 95) {
                         world_set_object_adjacency_from3(world, mx, my + 1, 1);
                     }
-                } else if (tile_dir == 4) {
+                } else if (tile_direction == 4) {
                     world->object_adjacency[mx][my] |= 8;
 
                     if (mx < 95) {
                         world_set_object_adjacency_from3(world, mx + 1, my, 2);
                     }
-                } else if (tile_dir == 6) {
+                } else if (tile_direction == 6) {
                     world->object_adjacency[mx][my] |= 1;
 
                     if (my > 0) {
@@ -1979,7 +1980,7 @@ int world_get_tile_type(World *world, int i, int j) {
 
     int type = game_data_tile_type[decoration - 1];
 
-    return type != 2 ? 0 : 1;
+    return type != 2 ? 0 : 1; // TODO == 2
 }
 
 /* adds login screen models from local game cache */
@@ -2154,7 +2155,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     world->parent_model = NULL;
 }
 
-/* TODO add wall shadow */
+/* TODO add terrain shadow */
 void world_method425(World *world, int vertex_x, int vertex_z, int ambience) {
     int terrain_x = vertex_x / 12;
     int terrain_y = vertex_z / 12;
@@ -2253,3 +2254,22 @@ void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
         world->terrain_height_local[x2][y2] += PLANE_HEIGHT + height;
     }
 }
+
+#ifdef RENDER_GL
+/* update the terrain buffers after ambience changes */
+void world_gl_buffer_terrain(World *world) {
+    for (int i = 0; i < TERRAIN_COUNT; i++) {
+        GameModel *game_model = world->terrain_models[i];
+
+        glBindVertexArray(game_model->vao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, world->scene->terrain_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, world->scene->terrain_ebo);
+
+        int vertex_offset = game_model->vbo_offset;
+        int ebo_offset = game_model->ebo_offset;
+
+        game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
+    }
+}
+#endif

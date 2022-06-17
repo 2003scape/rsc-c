@@ -21,6 +21,10 @@ void main() {
         discard;
     }
 
+    /*fragment_colour.x = round(fragment_colour.x * 32) / 32.0f;
+    fragment_colour.y = round(fragment_colour.y * 32) / 32.0f;
+    fragment_colour.z = round(fragment_colour.z * 32) / 32.0f;*/
+
     /*float diffuse =
         clamp(dot(normalize(vertex_normal), normalize(light_direction)), 0.0f, 1.0f);*/
 }

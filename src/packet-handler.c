@@ -453,13 +453,13 @@ void mudclient_packet_tick(mudclient *mud) {
                 mud->object_count = object_index;
 
                 if (object_id != 60000) {
-                    int direction =
+                    int tile_direction =
                         world_get_tile_direction(mud->world, area_x, area_y);
 
                     int width = 0;
                     int height = 0;
 
-                    if (direction == 0 || direction == 4) {
+                    if (tile_direction == 0 || tile_direction == 4) {
                         width = game_data_object_width[object_id];
                         height = game_data_object_height[object_id];
                     } else {
@@ -478,7 +478,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     model->key = mud->object_count;
 
-                    game_model_rotate(model, 0, direction * 32, 0);
+                    game_model_rotate(model, 0, tile_direction * 32, 0);
 
                     game_model_translate(
                         model, model_x,
@@ -496,11 +496,15 @@ void mudclient_packet_tick(mudclient *mud) {
                     mud->object_x[mud->object_count] = area_x;
                     mud->object_y[mud->object_count] = area_y;
                     mud->object_id[mud->object_count] = object_id;
-                    mud->object_direction[mud->object_count] = direction;
+                    mud->object_direction[mud->object_count] = tile_direction;
                     mud->object_model[mud->object_count++] = model;
                 }
             }
         }
+
+#if RENDER_GL
+        world_gl_buffer_terrain(mud->world);
+#endif
         break;
     }
     case SERVER_REGION_NPCS: {

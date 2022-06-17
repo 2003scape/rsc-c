@@ -135,4 +135,7 @@ int world_has_neighbouring_roof(World *world, int x, int y);
 void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
                              int x2, int y2);
 
+#ifdef RENDER_GL
+void world_gl_buffer_terrain(World *world);
+#endif
 #endif

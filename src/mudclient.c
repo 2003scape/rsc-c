@@ -2309,19 +2309,19 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         GameModel *game_model = mud->object_model[i];
 
         int object_direction = mud->object_direction[i];
-        int obj_w = 0;
-        int obj_h = 0;
+        int object_width = 0;
+        int object_height = 0;
 
         if (object_direction == 0 || object_direction == 4) {
-            obj_w = game_data_object_width[object_id];
-            obj_h = game_data_object_height[object_id];
+            object_width = game_data_object_width[object_id];
+            object_height = game_data_object_height[object_id];
         } else {
-            obj_h = game_data_object_width[object_id];
-            obj_w = game_data_object_height[object_id];
+            object_height = game_data_object_width[object_id];
+            object_width = game_data_object_height[object_id];
         }
 
-        int base_x = ((object_x + object_x + obj_w) * MAGIC_LOC) / 2;
-        int base_y = ((object_y + object_y + obj_h) * MAGIC_LOC) / 2;
+        int base_x = ((object_x + object_x + object_width) * MAGIC_LOC) / 2;
+        int base_y = ((object_y + object_y + object_height) * MAGIC_LOC) / 2;
 
         if (object_x >= 0 && object_y >= 0 && object_x < 96 && object_y < 96) {
             scene_add_model(mud->scene, game_model);

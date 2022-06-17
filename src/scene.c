@@ -1402,12 +1402,12 @@ void scene_render(Scene *scene) {
                         vertex_shade =
                             game_model->light_ambience -
                             game_model->vertex_intensity[vertex_index] +
-                            /*game_model->vertex_ambience[vertex_index]*/ 0;
+                            game_model->vertex_ambience[vertex_index];
                     } else {
                         vertex_shade =
                             game_model->light_ambience +
                             game_model->vertex_intensity[vertex_index] +
-                            /*game_model->vertex_ambience[vertex_index]*/ 0;
+                            game_model->vertex_ambience[vertex_index];
                     }
                 }
 

@@ -15,7 +15,7 @@ void game_model_new(GameModel *game_model) {
     game_model->diameter = COLOUR_TRANSPARENT;
     game_model->visible = 1;
     game_model->key = -1;
-    // game_model->light_ambience = 32; /* 256 is the maximum? */
+    game_model->light_ambience = 32; /* 256 is the maximum? */
     game_model->light_diffuse = 512;
     game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
@@ -125,13 +125,12 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         // TODO remove
         game_model->face_fill_front[i] = -32768;
         game_model->face_fill_back[i] = -32768;
+        //game_model->face_fill_back[i] = -801;
     }
 
     for (int i = 0; i < num_faces; i++) {
         int is_gouraud = data[offset++] & 0xff;
-
-        game_model->face_intensity[i] = GAME_MODEL_USE_GOURAUD;
-        // is_intense == 0 ? 0 : GAME_MODEL_USE_GOURAUD;
+        game_model->face_intensity[i] = is_gouraud ? GAME_MODEL_USE_GOURAUD : 0;
     }
 
     for (int i = 0; i < num_faces; i++) {
@@ -352,6 +351,7 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     // TODO remove
     game_model->face_fill_front[game_model->num_faces] = -32768;
     game_model->face_fill_back[game_model->num_faces] = -32768;
+    //game_model->face_fill_back[game_model->num_faces] = -801;
 
     return game_model->num_faces++;
 }
@@ -485,9 +485,6 @@ void game_model_set_light_from5(GameModel *game_model, int ambience,
 void game_model_set_light_from6(GameModel *game_model, int gouraud,
                                 int ambience, int diffuse, int x, int y,
                                 int z) {
-    // return;
-    gouraud = 1;
-
     if (game_model->unlit) {
         return;
     }
@@ -501,7 +498,6 @@ void game_model_set_light_from6(GameModel *game_model, int gouraud,
 
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience) {
-    return;
     game_model->vertex_ambience[vertex_index] = ambience & 0xff;
 }
 
@@ -1030,6 +1026,7 @@ GameModel *game_model_copy(GameModel *game_model) {
 
 #ifdef RENDER_GL
     copy->vao = game_model->vao;
+    copy->vbo_offset = game_model->vbo_offset;
     copy->ebo_offset = game_model->ebo_offset;
     copy->ebo_length = game_model->ebo_length;
 #endif
@@ -1500,7 +1497,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 normal[2] = face_normal_z[i] / 1000.0f;
             }
 
-            int vertex_intensity = game_model->vertex_intensity[vertex_index];
+            int vertex_intensity =
+                game_model->vertex_intensity[vertex_index] +
+                game_model->vertex_ambience[vertex_index];
 
             GLfloat front_texture_x = -1.0f;
             GLfloat front_texture_y = -1.0f;
@@ -1579,8 +1578,6 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
     for (int i = 0; i < length; i++) {
         GameModel *game_model = game_models[i];
 
-        game_model->ebo_offset = ebo_offset;
-
         for (int j = 0; j < game_model->num_faces; j++) {
             int face_num_vertices = game_model->face_num_vertices[j];
             vertex_offset += face_num_vertices;
@@ -1599,8 +1596,11 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
         GameModel *game_model = game_models[i];
 
         game_model->vao = *vao;
+        game_model->vbo_offset = vertex_offset;
+        game_model->ebo_offset = ebo_offset;
 
         game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
+
     }
 }
 #endif
