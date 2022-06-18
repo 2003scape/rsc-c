@@ -30,53 +30,53 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 
     y = mud->game_height + 6;
 
-    int text_colour = CHAT_PURPLE;
+    int text_colour = MESSAGE_TAB_PURPLE;
 
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
-        text_colour = CHAT_ORANGE;
+        text_colour = MESSAGE_TAB_ORANGE;
     }
 
     if (mud->message_tab_flash_all % 30 > 15) {
-        text_colour = CHAT_RED;
+        text_colour = MESSAGE_TAB_RED;
     }
 
     surface_draw_string_centre(mud->surface, "All messages", x + 54, y, 0,
                                text_colour);
 
-    text_colour = CHAT_PURPLE;
+    text_colour = MESSAGE_TAB_PURPLE;
 
     if (mud->message_tab_selected == MESSAGE_TAB_CHAT) {
-        text_colour = CHAT_ORANGE;
+        text_colour = MESSAGE_TAB_ORANGE;
     }
 
     if (mud->message_tab_flash_history % 30 > 15) {
-        text_colour = CHAT_RED;
+        text_colour = MESSAGE_TAB_RED;
     }
 
     surface_draw_string_centre(mud->surface, "Chat history", x + 155, y, 0,
                                text_colour);
 
-    text_colour = CHAT_PURPLE;
+    text_colour = MESSAGE_TAB_PURPLE;
 
     if (mud->message_tab_selected == MESSAGE_TAB_QUEST) {
-        text_colour = CHAT_ORANGE;
+        text_colour = MESSAGE_TAB_ORANGE;
     }
 
     if (mud->message_tab_flash_quest % 30 > 15) {
-        text_colour = CHAT_RED;
+        text_colour = MESSAGE_TAB_RED;
     }
 
     surface_draw_string_centre(mud->surface, "Quest history", x + 255, y, 0,
                                text_colour);
 
-    text_colour = CHAT_PURPLE;
+    text_colour = MESSAGE_TAB_PURPLE;
 
     if (mud->message_tab_selected == MESSAGE_TAB_PRIVATE) {
-        text_colour = CHAT_ORANGE;
+        text_colour = MESSAGE_TAB_ORANGE;
     }
 
     if (mud->message_tab_flash_private % 30 > 15) {
-        text_colour = CHAT_RED;
+        text_colour = MESSAGE_TAB_RED;
     }
 
     surface_draw_string_centre(mud->surface, "Private history", x + 355, y, 0,

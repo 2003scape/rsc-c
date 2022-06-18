@@ -190,6 +190,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 }
 
 #ifdef RENDER_GL
+// TODO make sure we aren't going over 256 with shadows
 void surface_gl_create_font_texture(int32_t *dest, int font_id,
                                     int draw_shadow) {
     int8_t *font_data = game_fonts[font_id];
@@ -1337,8 +1338,6 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
     }
 
 #ifdef RENDER_GL
-    mudclient *mud = surface->mud;
-
     for (int i = sprite_id; i < sprite_id + frame_count; i++) {
         GLuint texture_array_id =
             surface_gl_sprite_texture_array_id(surface, i);
@@ -2270,6 +2269,12 @@ void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k,
 
 void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
                                  int rotation, int scale) {
+    rotation &= 255;
+
+#ifdef RENDER_Gl
+#endif
+
+#ifdef RENDER_SW
     int j1 = surface->width2;
     int k1 = surface->height2;
     int i2 = -(surface->sprite_width_full[sprite_id] / 2);
@@ -2286,8 +2291,6 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     int j3 = j2;
     int k3 = i2;
     int l3 = l2;
-
-    rotation &= 0xff;
 
     int i4 = sin_cos_512[rotation] * scale;
     int j4 = sin_cos_512[rotation + 256] * scale;
@@ -2600,6 +2603,7 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
             l10 += j1;
         }
     }
+#endif
 }
 
 void surface_draw_minimap(int32_t *dest, int32_t *src, int dest_pos, int k,
@@ -3139,42 +3143,41 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
             }
 
             if (strcmp(sliced, "red") == 0) {
-                colour = 0xff0000;
+                colour = STRING_RED;
             } else if (strcmp(sliced, "lre") == 0) {
-                colour = 0xff9040;
+                colour = STRING_LRE;
             } else if (strcmp(sliced, "yel") == 0) {
-                colour = 0xffff00;
+                colour = STRING_YEL;
             } else if (strcmp(sliced, "gre") == 0) {
-                colour = 0x00ff00;
+                colour = STRING_GRE;
             } else if (strcmp(sliced, "blu") == 0) {
-                colour = 0x0000ff;
+                colour = STRING_BLU;
             } else if (strcmp(sliced, "cya") == 0) {
-                colour = 0x00ffff;
+                colour = STRING_CYA;
             } else if (strcmp(sliced, "mag") == 0) {
-                colour = 0xff00ff;
+                colour = STRING_MAG;
             } else if (strcmp(sliced, "whi") == 0) {
-                colour = 0xffffff;
+                colour = STRING_WHI;
             } else if (strcmp(sliced, "bla") == 0) {
-                colour = 0;
+                colour = STRING_BLA;
             } else if (strcmp(sliced, "dre") == 0) {
-                colour = 0xc00000;
+                colour = STRING_DRE;
             } else if (strcmp(sliced, "ora") == 0) {
-                colour = 0xff9040;
+                colour = STRING_ORA;
             } else if (strcmp(sliced, "ran") == 0) {
-                float r = (float)rand() / (float)RAND_MAX;
-                colour = (int)(r * (float)WHITE);
+                colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
             } else if (strcmp(sliced, "or1") == 0) {
-                colour = 0xffb000;
+                colour = STRING_OR1;
             } else if (strcmp(sliced, "or2") == 0) {
-                colour = 0xff7000;
+                colour = STRING_OR2;
             } else if (strcmp(sliced, "or3") == 0) {
-                colour = 0xff3000;
+                colour = STRING_OR3;
             } else if (strcmp(sliced, "gr1") == 0) {
-                colour = 0xc0ff00;
+                colour = STRING_GR1;
             } else if (strcmp(sliced, "gr2") == 0) {
-                colour = 0x80ff00;
+                colour = STRING_GR2;
             } else if (strcmp(sliced, "gr3") == 0) {
-                colour = 0x40ff00;
+                colour = STRING_GR3;
             }
 
             i += 4;
@@ -3200,15 +3203,6 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
             int draw_shadow = surface->logged_in && colour != 0;
 
 #ifdef RENDER_GL
-            // TODO we can reduce each character by two quads by drawing a new
-            // character map texture with shadows in software
-            /*if (draw_shadow) {
-                surface_gl_buffer_character(surface, text[i], x + 1, y, BLACK,
-                                         font);
-                surface_gl_buffer_character(surface, text[i], x, y + 1, BLACK,
-                                         font);
-            }*/
-
             surface_gl_buffer_character(surface, text[i], x, y, colour, font,
                                         draw_shadow);
 #endif
