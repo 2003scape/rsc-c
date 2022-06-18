@@ -126,8 +126,8 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         //game_model->face_fill_front[i] = -32768;
         //game_model->face_fill_back[i] = -32768;
         //game_model->face_fill_back[i] = -801;
-        game_model->face_fill_front[i] = 17;
-        game_model->face_fill_back[i] = 17;
+        game_model->face_fill_front[i] = 8;
+        game_model->face_fill_back[i] = 8;
     }
 
     for (int i = 0; i < num_faces; i++) {
@@ -354,8 +354,8 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     //game_model->face_fill_front[game_model->num_faces] = -32768;
     //game_model->face_fill_back[game_model->num_faces] = -32768;
     //game_model->face_fill_back[game_model->num_faces] = -801;
-    game_model->face_fill_front[game_model->num_faces] = 17;
-    game_model->face_fill_back[game_model->num_faces] = 17;
+    game_model->face_fill_front[game_model->num_faces] = 8;
+    game_model->face_fill_back[game_model->num_faces] = 8;
 
     return game_model->num_faces++;
 }

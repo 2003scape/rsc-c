@@ -83,6 +83,7 @@ void main() {
     float lightness = 1;
 
     if (vertex_texture_position.z > -1) {
+        // TODO light_gradient looks ok here too. check again with white texture
         lightness = texture_light_gradient[gradient_index];
 
         if (vertex_texture_position.z == FOUNTAIN_ID) {
