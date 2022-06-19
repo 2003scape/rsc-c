@@ -124,39 +124,16 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * FLAT_QUAD_COUNT,
                  NULL, GL_DYNAMIC_DRAW);
 
-    glGenTextures(1, &surface->sprite_item_textures);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_item_textures);
+    surface_gl_create_texture_array(
+        &surface->sprite_item_textures, ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT,
+        game_data_item_sprite_count + game_data_projectile_sprite);
 
-    // glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    surface_gl_create_texture_array(&surface->sprite_media_textures,
+                                    MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
+                                    mud->sprite_item - mud->sprite_media);
 
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, ITEM_TEXTURE_WIDTH,
-                   ITEM_TEXTURE_HEIGHT,
-                   game_data_item_sprite_count + game_data_projectile_sprite);
-
-    glGenTextures(1, &surface->sprite_media_textures);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
-
-    // glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, MEDIA_TEXTURE_WIDTH,
-                   MEDIA_TEXTURE_HEIGHT, mud->sprite_item - mud->sprite_media);
-
-    glGenTextures(1, &surface->font_textures);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->font_textures);
-
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, FONT_TEXTURE_WIDTH,
-                   FONT_TEXTURE_HEIGHT, FONT_COUNT * 2);
-
-    // glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    surface_gl_create_texture_array(&surface->font_textures, FONT_TEXTURE_WIDTH,
+                                    FONT_TEXTURE_HEIGHT, FONT_COUNT * 2);
 
     int font_area = FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT;
     int32_t *font_raster = calloc(font_area, sizeof(int32_t));
@@ -188,6 +165,17 @@ void surface_new(Surface *surface, int width, int height, int limit,
 }
 
 #ifdef RENDER_GL
+void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
+                                     int height, int length) {
+    glGenTextures(1, texture_array_id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, *texture_array_id);
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, width, height, length);
+}
+
 // TODO make sure we aren't going over 256 with shadows
 void surface_gl_create_font_texture(int32_t *dest, int font_id,
                                     int draw_shadow) {
@@ -421,6 +409,8 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         for (int i = 0; i < 4; i++) {
             rotate_point(centre_x, centre_y, angle, points[i]);
         }
+
+        printf("%f\n", texture_index);
     }
 
     for (int i = 0; i < 4; i++) {
@@ -1591,6 +1581,7 @@ void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
     surface->sprite_colour_list[sprite_id] = NULL;
 }
 
+// TODO not draw - load from raster reversed
 void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
                                   int width, int height) {
     surface->sprite_width[sprite_id] = width;
@@ -1614,6 +1605,8 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
                 surface->pixels[xx + yy * surface->width2];
         }
     }
+
+    // TODO load here
 
     free(surface->sprite_colours_used[sprite_id]);
     surface->sprite_colours_used[sprite_id] = NULL;
@@ -2286,10 +2279,7 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     int gl_x = x - (surface->sprite_width_full[sprite_id] / 2) + 1;
     int gl_y = y - (surface->sprite_height_full[sprite_id] / 2) + 1;
 
-    // int gl_x = x;
-    // int gl_y = y;
-
-    if (sprite_id == 2024) {
+    if (sprite_id == 1999) {
         surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, -1, -1, 0, 0,
                                  0, 255, 0, rotation);
     }

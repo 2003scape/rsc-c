@@ -110,6 +110,9 @@ typedef struct Surface {
     /* (512x32) */
     GLuint sprite_media_textures;
 
+    /* (285*285) */
+    GLuint sprite_map_texture;
+
     /* (256x256) */
     GLuint font_textures;
 
@@ -127,6 +130,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
 
 #ifdef RENDER_GL
+void surface_gl_create_texture_array(GLuint *texture_array_id,
+                                     int width, int height, int length);
 void surface_gl_create_font_texture(int32_t *dest, int font_id,
                                     int draw_shadow);
 void surface_gl_reset_context(Surface *surface);
