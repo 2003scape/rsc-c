@@ -460,19 +460,17 @@ void get_level_difference_colour(int level_difference, char *colour) {
 }
 
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
-    short t;
-    uint16_t u_val;
-
     for (long i = 0; i < size; i++) {
-        u_val = ~(*u_ptr);
+        uint16_t u_val = ~(*u_ptr);
         u_ptr++;
-        t = ((u_val & QUANT_MASK) << 3) + BIAS;
+        short t = ((u_val & QUANT_MASK) << 3) + BIAS;
         t <<= ((unsigned)u_val & SEG_MASK) >> SEG_SHIFT;
         *out_ptr++ = ((u_val & SIGN_BIT) ? (BIAS - t) : (t - BIAS));
     }
 }
 
 #ifdef RENDER_GL
+// TODO rename gl_x instead of x_gl
 float translate_gl_coord(int position, int range) {
     float half = range / 2.0f;
     return (position - half) / half;
@@ -484,5 +482,19 @@ float translate_gl_x(int x, int range) {
 
 float translate_gl_y(int y, int range) {
     return -translate_gl_coord(y, range);
+}
+
+void rotate_point(int centre_x, int centre_y, float angle, int *point) {
+    point[0] -= centre_x;
+    point[1] -= centre_y;
+
+    float sine = sin(angle);
+    float cosine = cos(angle);
+
+    int x_new = point[0] * cosine - point[1] * sine;
+    int y_new = point[0] * sine + point[1] * cosine;
+
+    point[0] = x_new + centre_x;
+    point[1] = y_new + centre_y;
 }
 #endif

@@ -183,14 +183,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     free(font_raster);
 
-    //surface->flat_context_textures[0] = 0;
-    //surface->flat_context_quad_counts[0] = 0;
-    //surface->flat_context_count = 1;
-
-    // TODO reset_context
-    surface->gl_contexts[0].texture_id = 0;
-    surface->gl_contexts[0].quad_count = 0;
-    surface->gl_context_count = 1;
+    surface_gl_reset_context(surface);
 #endif
 }
 
@@ -239,8 +232,17 @@ void surface_gl_create_font_texture(int32_t *dest, int font_id,
     }
 }
 
+void surface_gl_reset_context(Surface *surface) {
+    surface->flat_count = 0;
+
+    surface->gl_contexts[0].texture_id = 0;
+    surface->gl_contexts[0].quad_count = 0;
+
+    surface->gl_context_count = 1;
+}
+
 void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
-                                 GLuint texture_array_id, int rotate) {
+                                 GLuint texture_array_id) {
     if (surface->gl_context_count >= 256) {
         fprintf(stderr, "too many texture switches!\n");
         return;
@@ -269,7 +271,7 @@ void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
     int context_index = surface->gl_context_count - 1;
     SurfaceGlContext *context = &surface->gl_contexts[context_index];
 
-    if (texture_array_id == 0 || context->texture_id == texture_array_id) {
+    if (context->texture_id == texture_array_id) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];
@@ -339,7 +341,7 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
-                              int flip, int rotate) {
+                              int flip, int rotation) {
     if (mask_colour == 0) {
         mask_colour = WHITE;
     }
@@ -408,10 +410,24 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     float texture_index =
         (float)surface_gl_sprite_texture_index(surface, sprite_id);
 
-    GLfloat left_x = translate_gl_x(x, surface->width2);
-    GLfloat right_x = translate_gl_x(x + draw_width, surface->width2);
-    GLfloat top_y = translate_gl_y(y, surface->height2);
-    GLfloat bottom_y = translate_gl_y(y + draw_height, surface->height2);
+    int points[][2] = {
+        {0, 0}, {draw_width, 0}, {draw_width, draw_height}, {0, draw_height}};
+
+    if (rotation != 0) {
+        int centre_x = draw_width / 2;
+        int centre_y = draw_height / 2;
+        float angle = TABLE_TO_RADIANS(-rotation, 512);
+
+        for (int i = 0; i < 4; i++) {
+            rotate_point(centre_x, centre_y, angle, points[i]);
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+        int *point = points[i];
+        point[0] += x;
+        point[1] += y;
+    }
 
     GLfloat texture_width =
         (float)surface_gl_sprite_texture_width(surface, texture_array_id);
@@ -440,37 +456,43 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         skin_b = (skin_colour & 0xff) / 255.0f;
     }
 
+#if 1
     GLfloat sprite_quad[] = {
         /* top left / northwest */
-        left_x, top_y,                  //
-        mask_r, mask_g, mask_b, mask_a, //
-        skin_r, skin_g, skin_b,         //
-        0, 0,                           //
-        texture_index,                  //
+        translate_gl_x(points[0][0], surface->width2),
+        translate_gl_y(points[0][1], surface->height2), //
+        mask_r, mask_g, mask_b, mask_a,                 //
+        skin_r, skin_g, skin_b,                         //
+        0, 0,                                           //
+        texture_index,                                  //
 
         /* top right / northeast */
-        right_x, top_y,                  //
-        mask_r, mask_g, mask_b, mask_a,  //
-        skin_r, skin_g, skin_b,          //
-        sprite_width / texture_width, 0, //
-        texture_index,                   //
+        translate_gl_x(points[1][0], surface->width2),
+        translate_gl_y(points[1][1], surface->height2), //
+        mask_r, mask_g, mask_b, mask_a,                 //
+        skin_r, skin_g, skin_b,                         //
+        sprite_width / texture_width, 0,                //
+        texture_index,                                  //
 
         /* bottom right / southeast */
-        right_x, bottom_y,                                            //
+        translate_gl_x(points[2][0], surface->width2),
+        translate_gl_y(points[2][1], surface->height2),               //
         mask_r, mask_g, mask_b, mask_a,                               //
         skin_r, skin_g, skin_b,                                       //
         sprite_width / texture_width, sprite_height / texture_height, //
         texture_index,                                                //
 
         /* bottom left / southwest */
-        left_x, bottom_y,                  //
-        mask_r, mask_g, mask_b, mask_a,    //
-        skin_r, skin_g, skin_b,            //
-        0, sprite_height / texture_height, //
-        texture_index                      //
+        translate_gl_x(points[3][0], surface->width2),
+        translate_gl_y(points[3][1], surface->height2), //
+        mask_r, mask_g, mask_b, mask_a,                 //
+        skin_r, skin_g, skin_b,                         //
+        0, sprite_height / texture_height,              //
+        texture_index                                   //
     };
+#endif
 
-    surface_gl_buffer_flat_quad(surface, sprite_quad, texture_array_id, 0);
+    surface_gl_buffer_flat_quad(surface, sprite_quad, texture_array_id);
 }
 
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
@@ -558,7 +580,7 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
         font_id                                //
     };
 
-    surface_gl_buffer_flat_quad(surface, char_quad, surface->font_textures, 0);
+    surface_gl_buffer_flat_quad(surface, char_quad, surface->font_textures);
 }
 
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
@@ -599,7 +621,7 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
         0, 0, -1                         //
     };
 
-    surface_gl_buffer_flat_quad(surface, box_quad, 0, 0);
+    surface_gl_buffer_flat_quad(surface, box_quad, 0);
 }
 #endif
 
@@ -783,39 +805,6 @@ void surface_draw(Surface *surface) {
 
     int drawn_quads = 0;
 
-    // #define DEBUG_SWITCH
-
-#if 0
-
-#ifdef DEBUG_SWITCH
-    printf("[");
-#endif
-
-    for (int i = 0; i < surface->flat_context_count; i++) {
-        GLuint texture_array_id = surface->flat_context_textures[i];
-
-#ifdef DEBUG_SWITCH
-        printf("%d: %d, ", texture_array_id,
-               surface->flat_context_quad_counts[i]);
-#endif
-
-        if (texture_array_id != 0) {
-            glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
-        }
-
-        int quad_count = surface->flat_context_quad_counts[i];
-
-        glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
-                       (void *)(drawn_quads * 6 * sizeof(GLuint)));
-
-        drawn_quads += quad_count;
-    }
-
-#ifdef DEBUG_SWITCH
-    printf("]\n");
-#endif
-#endif
-
     for (int i = 0; i < surface->gl_context_count; i++) {
         SurfaceGlContext *context = &surface->gl_contexts[i];
 
@@ -824,18 +813,6 @@ void surface_draw(Surface *surface) {
         if (texture_array_id != 0) {
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
         }
-
-        mat4 model = {0};
-
-        int rotation = context->rotation;
-
-        if (rotation != 0) {
-            glm_rotate(model, glm_rad(50), (vec3){0.0f, 0.0f, 1.0f});
-        } else {
-            glm_mat4_identity(model);
-        }
-
-        shader_set_mat4(&surface->flat_shader, "model", model);
 
         int quad_count = context->quad_count;
 
@@ -847,14 +824,7 @@ void surface_draw(Surface *surface) {
 
     // SDL_GL_SwapWindow(mud->gl_window);
 
-    surface->flat_count = 0;
-
-    surface->gl_contexts[0].texture_id = 0;
-    surface->gl_contexts[0].quad_count = 0;
-    surface->gl_context_count = 1;
-    //surface->flat_context_textures[0] = 0;
-    //surface->flat_context_quad_counts[0] = 0;
-    //surface->flat_context_count = 1;
+    surface_gl_reset_context(surface);
 
     surface->fade_to_black = 0;
 #endif
@@ -1069,7 +1039,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         0, 0, -1               //
     };
 
-    surface_gl_buffer_flat_quad(surface, gradient_quad, 0, 0);
+    surface_gl_buffer_flat_quad(surface, gradient_quad, 0);
 #endif
 
 #ifdef RENDER_SW
@@ -1296,8 +1266,6 @@ void surface_clear(Surface *surface) {
         surface->surface_pixels[i] = NULL;
         surface->sprite_width[i] = 0;
         surface->sprite_height[i] = 0;
-        // free(surface->sprite_colours_used[i]);
-        // free(surface->sprite_colour_list[i]);
     }
 }
 
@@ -1587,8 +1555,6 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
 
     free(surface->sprite_colours_used[sprite_id]);
     surface->sprite_colours_used[sprite_id] = NULL;
-    // free(surface->sprite_colour_list[sprite_id]);
-    // surface->sprite_colour_list[sprite_id] = NULL;
 }
 
 /* TODO not actually draw_sprite - also allocates ? */
@@ -2320,9 +2286,13 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     int gl_x = x - (surface->sprite_width_full[sprite_id] / 2) + 1;
     int gl_y = y - (surface->sprite_height_full[sprite_id] / 2) + 1;
 
-    //printf("%d %d\n", sprite_id, rotation);
+    // int gl_x = x;
+    // int gl_y = y;
 
-    surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, -1, -1, 0, 0, 0, 255, 0, 0);
+    if (sprite_id == 2024) {
+        surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, -1, -1, 0, 0,
+                                 0, 255, 0, rotation);
+    }
 #endif
 
 #ifdef RENDER_SW
@@ -3216,7 +3186,8 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
             } else if (strcmp(sliced, "ora") == 0) {
                 colour = STRING_ORA;
             } else if (strcmp(sliced, "ran") == 0) {
-                colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+                colour =
+                    (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
             } else if (strcmp(sliced, "or1") == 0) {
                 colour = STRING_OR1;
             } else if (strcmp(sliced, "or2") == 0) {

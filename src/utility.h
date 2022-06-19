@@ -86,6 +86,7 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
 float translate_gl_coord(int position, int range);
 float translate_gl_x(int x, int range);
 float translate_gl_y(int y, int range);
+void rotate_point(int centre_x, int centre_y, float angle, int *point);
 #endif
 
 #endif

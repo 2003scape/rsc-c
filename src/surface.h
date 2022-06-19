@@ -58,7 +58,6 @@ void init_surface_global();
 #ifdef RENDER_GL
 typedef struct SurfaceGlContext {
     GLuint texture_id;
-    int rotation;
     int quad_count;
 } SurfaceGlContext;
 #endif
@@ -118,25 +117,6 @@ typedef struct Surface {
     SurfaceGlContext gl_contexts[256];
 
     int gl_context_count;
-#if 0
-    /* store the texture array IDs above */
-    GLuint flat_context_textures[256];
-
-    /* store the amount of quads per corresponding texture ID */
-    int flat_context_quad_counts[256];
-
-    /* amount of entries in the two context arrays */
-    int flat_context_count;
-
-    /* maps to flat_count index */
-    int flat_rotation_indexes[256];
-
-    /* rotation values for above indices*/
-    int flat_rotations[256];
-
-    /* amount of non-0 rotated quads */
-    int rotation_count;
-#endif
 #endif
 } Surface;
 
@@ -149,8 +129,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #ifdef RENDER_GL
 void surface_gl_create_font_texture(int32_t *dest, int font_id,
                                     int draw_shadow);
+void surface_gl_reset_context(Surface *surface);
 void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
-                                 GLuint texture_array_id, int rotate);
+                                 GLuint texture_array_id);
 int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id);
 int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id);
 int surface_gl_sprite_texture_height(Surface *surface, GLuint texture_array_id);
@@ -158,7 +139,7 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id);
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
-                              int flip, int rotate);
+                              int flip, int rotation);
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
                                  int colour, int font_id, int draw_shadow);
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,

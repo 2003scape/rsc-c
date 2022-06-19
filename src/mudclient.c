@@ -348,8 +348,8 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 /*int test_x = 520;
 int test_y = -106;
 int test_z = 750;*/
-int test_x = -50;
-int test_y = -10;
+int test_x = 0;
+int test_y = 0;
 int test_z = -50;
 int test_yaw = 1;
 int test_colour = -1;
@@ -4471,7 +4471,7 @@ void mudclient_poll_events(mudclient *mud) {
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_pressed(mud, code, char_code);
 
-            int mag = 10;
+            int mag = 1;
 
             if (code == 113) {
                 test_x -= mag;
@@ -4488,11 +4488,11 @@ void mudclient_poll_events(mudclient *mud) {
             } else if (code == 114) {
                 test_yaw += 1;
 
-                printf("ambience: %d\n", test_yaw);
+                //printf("ambience: %d\n", test_yaw);
             } else if (code == 102) {
                 test_yaw -= 1;
 
-                printf("ambience: %d\n", test_yaw);
+                //printf("ambience: %d\n", test_yaw);
             }
 
             // printf("%d\n", code);
