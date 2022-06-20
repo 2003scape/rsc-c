@@ -132,6 +132,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
                                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
                                     mud->sprite_item - mud->sprite_media);
 
+    surface_gl_create_texture_array(&surface->map_textures, MAP_TEXTURE_WIDTH,
+                                    MAP_TEXTURE_HEIGHT, 1);
+
     surface_gl_create_texture_array(&surface->font_textures, FONT_TEXTURE_WIDTH,
                                     FONT_TEXTURE_HEIGHT, FONT_COUNT * 2);
 
@@ -226,6 +229,12 @@ void surface_gl_reset_context(Surface *surface) {
     surface->gl_contexts[0].texture_id = 0;
     surface->gl_contexts[0].quad_count = 0;
 
+    surface->gl_contexts[0].min_x = surface->bounds_top_x;
+    surface->gl_contexts[0].max_x = surface->bounds_bottom_x;
+
+    surface->gl_contexts[0].min_y = surface->bounds_top_y;
+    surface->gl_contexts[0].max_y = surface->bounds_bottom_y;
+
     surface->gl_context_count = 1;
 }
 
@@ -259,10 +268,19 @@ void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
     int context_index = surface->gl_context_count - 1;
     SurfaceGlContext *context = &surface->gl_contexts[context_index];
 
-    if (context->texture_id == texture_array_id) {
+    if (context->min_x == surface->bounds_top_x &&
+        context->max_x == surface->bounds_bottom_x &&
+        context->min_y == surface->bounds_top_y &&
+        context->max_y == surface->bounds_bottom_y &&
+        context->texture_id == texture_array_id) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];
+
+        context->min_x = surface->bounds_top_x;
+        context->max_x = surface->bounds_bottom_x;
+        context->min_y = surface->bounds_top_y;
+        context->max_y = surface->bounds_bottom_y;
 
         context->texture_id = texture_array_id;
         context->quad_count = 1;
@@ -273,6 +291,10 @@ void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
 
 int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id) {
     mudclient *mud = surface->mud;
+
+    if (sprite_id == mud->sprite_media - 1) {
+        return surface->map_textures;
+    }
 
     if (sprite_id >= mud->sprite_media && sprite_id < mud->sprite_item) {
         return surface->sprite_media_textures;
@@ -287,6 +309,10 @@ int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id) {
 }
 
 int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id) {
+    if (texture_array_id == surface->map_textures) {
+        return MAP_TEXTURE_WIDTH;
+    }
+
     if (texture_array_id == surface->sprite_media_textures) {
         return MEDIA_TEXTURE_WIDTH;
     }
@@ -300,6 +326,10 @@ int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id) {
 
 int surface_gl_sprite_texture_height(Surface *surface,
                                      GLuint texture_array_id) {
+    if (texture_array_id == surface->map_textures) {
+        return MAP_TEXTURE_HEIGHT;
+    }
+
     if (texture_array_id == surface->sprite_media_textures) {
         return MEDIA_TEXTURE_HEIGHT;
     }
@@ -409,12 +439,11 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         for (int i = 0; i < 4; i++) {
             rotate_point(centre_x, centre_y, angle, points[i]);
         }
-
-        printf("%f\n", texture_index);
     }
 
     for (int i = 0; i < 4; i++) {
         int *point = points[i];
+
         point[0] += x;
         point[1] += y;
     }
@@ -632,6 +661,7 @@ void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2) {
         y2 = surface->height2;
     }
 
+    // TODO top_x -> min_x etc
     surface->bounds_top_x = x1;
     surface->bounds_top_y = y1;
     surface->bounds_bottom_x = x2;
@@ -797,6 +827,14 @@ void surface_draw(Surface *surface) {
 
     for (int i = 0; i < surface->gl_context_count; i++) {
         SurfaceGlContext *context = &surface->gl_contexts[i];
+
+        shader_set_int(&surface->flat_shader, "bounds_min_x", context->min_x);
+        shader_set_int(&surface->flat_shader, "bounds_max_x", context->max_x);
+
+        shader_set_int(&surface->flat_shader, "bounds_min_y",
+                       surface->height2 - context->min_y);
+        shader_set_int(&surface->flat_shader, "bounds_max_y",
+                       surface->height2 - context->max_y);
 
         GLuint texture_array_id = context->texture_id;
 
@@ -1603,16 +1641,32 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
         for (int yy = y; yy < y + height; yy++) {
             surface->surface_pixels[sprite_id][index++] =
                 surface->pixels[xx + yy * surface->width2];
+
+#ifdef RENDER_GL
+            surface->surface_pixels[sprite_id][index - 1] += 0xff000000;
+#endif
         }
     }
-
-    // TODO load here
 
     free(surface->sprite_colours_used[sprite_id]);
     surface->sprite_colours_used[sprite_id] = NULL;
 
     free(surface->sprite_colour_list[sprite_id]);
     surface->sprite_colour_list[sprite_id] = NULL;
+
+#ifdef RENDER_GL
+    GLuint texture_array_id =
+        surface_gl_sprite_texture_array_id(surface, sprite_id);
+
+    if (texture_array_id == 0) {
+        return;
+    }
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_BGRA,
+                    GL_UNSIGNED_BYTE, surface->surface_pixels[sprite_id]);
+#endif
 }
 
 /* used for texture loading on GL rendering */
@@ -2279,10 +2333,10 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     int gl_x = x - (surface->sprite_width_full[sprite_id] / 2) + 1;
     int gl_y = y - (surface->sprite_height_full[sprite_id] / 2) + 1;
 
-    if (sprite_id == 1999) {
-        surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, -1, -1, 0, 0,
-                                 0, 255, 0, rotation);
-    }
+    // if (sprite_id == 1999) {
+    surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, -1, -1, 0, 0, 0,
+                             255, 0, rotation);
+    //}
 #endif
 
 #ifdef RENDER_SW

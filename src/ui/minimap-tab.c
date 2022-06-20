@@ -34,6 +34,8 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     player_y = (player_y * cos - player_x * sin) >> 18;
     player_x = temp_x;
 
+    scale = 128;
+
     surface_draw_minimap_sprite(
         mud->surface, ui_x + (MINIMAP_WIDTH / 2) - player_x,
         ui_y + (MINIMAP_HEIGHT / 2) + player_y, mud->sprite_media - 1,
@@ -135,6 +137,7 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
             ui_y + (MINIMAP_HEIGHT / 2) - other_player_y, player_colour);
     }
 
+    // player
     surface_draw_circle(mud->surface, ui_x + (MINIMAP_WIDTH / 2),
                         ui_y + (MINIMAP_HEIGHT / 2), 2, WHITE, 255);
 

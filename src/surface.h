@@ -22,6 +22,9 @@
 
 #define FONT_TEXTURE_WIDTH 286
 #define FONT_TEXTURE_HEIGHT 286
+
+#define MAP_TEXTURE_WIDTH 285
+#define MAP_TEXTURE_HEIGHT 285
 #endif
 
 #ifdef WII
@@ -59,6 +62,12 @@ void init_surface_global();
 typedef struct SurfaceGlContext {
     GLuint texture_id;
     int quad_count;
+
+    int min_x;
+    int max_x;
+
+    int min_y;
+    int max_y;
 } SurfaceGlContext;
 #endif
 
@@ -111,12 +120,12 @@ typedef struct Surface {
     GLuint sprite_media_textures;
 
     /* (285*285) */
-    GLuint sprite_map_texture;
+    GLuint map_textures;
 
     /* (256x256) */
     GLuint font_textures;
 
-    /* used for texture or model matrix changes */
+    /* used for texture array changes */
     SurfaceGlContext gl_contexts[256];
 
     int gl_context_count;
