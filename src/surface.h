@@ -116,19 +116,14 @@ typedef struct Surface {
     GLuint flat_ebo;
     int flat_count;
 
-    /* texture array for inventory items and projectiles (48x32) */
+    /* texture array for inventory items and projectiles */
     GLuint sprite_item_textures;
 
-    /* (512x32) */
     GLuint sprite_media_textures;
-
-    /* (285*285) */
     GLuint map_textures;
-
-    /* (256x256) */
     GLuint font_textures;
 
-    /* used for texture array changes */
+    /* used for texture array and boundary changes */
     SurfaceGlContext gl_contexts[256];
 
     int gl_context_count;

@@ -128,9 +128,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
         &surface->sprite_item_textures, ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT,
         game_data_item_sprite_count + game_data_projectile_sprite);
 
+    /* +1 for circle, +2 for extra login screen scenes */
     surface_gl_create_texture_array(&surface->sprite_media_textures,
                                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
-                                    (mud->sprite_item - mud->sprite_media) + 1);
+                                    (mud->sprite_item - mud->sprite_media) + 3);
 
     surface_gl_create_texture_array(&surface->map_textures, MAP_TEXTURE_WIDTH,
                                     MAP_TEXTURE_HEIGHT, 1);
@@ -235,6 +236,7 @@ void surface_gl_create_circle_texture(Surface *surface) {
 
     int *circle_pixels =
         calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int));
+
     int circle_index = 0;
 
     for (int x = 0; x < MEDIA_TEXTURE_WIDTH; x++) {
@@ -252,8 +254,7 @@ void surface_gl_create_circle_texture(Surface *surface) {
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
 
     glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
-                    (surface->mud->sprite_item - surface->mud->sprite_media) +
-                        0,
+                    surface->mud->sprite_item - surface->mud->sprite_media,
                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
                     GL_UNSIGNED_BYTE, circle_pixels);
 
@@ -333,6 +334,10 @@ int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id) {
         return surface->map_textures;
     }
 
+    if (sprite_id == mud->sprite_logo || sprite_id == mud->sprite_logo + 1) {
+        return surface->sprite_media_textures;
+    }
+
     if (sprite_id >= mud->sprite_media && sprite_id < mud->sprite_item) {
         return surface->sprite_media_textures;
     }
@@ -380,6 +385,13 @@ int surface_gl_sprite_texture_height(Surface *surface,
 
 int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
     mudclient *mud = surface->mud;
+
+    if (sprite_id == mud->sprite_logo || sprite_id == mud->sprite_logo + 1) {
+        /* +1 for circle texture */
+        int offset = (surface->mud->sprite_item - surface->mud->sprite_media) + 1;
+
+        return offset + (sprite_id - mud->sprite_logo);
+    }
 
     if (sprite_id >= mud->sprite_media && sprite_id < mud->sprite_item) {
         return sprite_id - mud->sprite_media;
@@ -1560,6 +1572,39 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 }
 
 void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
+    //printf("screen raster to sprite: %d %d %d\n", sprite_id, surface->sprite_width[sprite_id], surface->sprite_height[sprite_id]);
+
+#ifdef RENDER_GL
+    if (sprite_id == surface->mud->sprite_logo || sprite_id == surface->mud->sprite_logo + 1) {
+        int *screen_pixels =
+            calloc(surface->width2 * surface->height2, sizeof(int));
+
+        glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA, GL_UNSIGNED_BYTE, screen_pixels);
+
+        int *pixels =
+            calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int));
+
+        for (int x = 0; x < MEDIA_TEXTURE_WIDTH; x++) {
+            for (int y = 0; y < MEDIA_TEXTURE_HEIGHT; y++) {
+                int colour = screen_pixels[y + x * MEDIA_TEXTURE_HEIGHT];
+
+                pixels[y + (surface->width2 - x) * MEDIA_TEXTURE_HEIGHT] = colour;
+            }
+        }
+
+        glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
+
+        int texture_index = surface_gl_sprite_texture_index(surface, sprite_id);
+
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
+                        texture_index,
+                        MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, pixels);
+
+        free(pixels);
+    }
+#endif
+
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 

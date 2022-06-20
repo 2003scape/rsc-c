@@ -1025,6 +1025,7 @@ GameModel *game_model_copy(GameModel *game_model) {
     GameModel *copy = malloc(sizeof(GameModel));
 
     game_model_from2a(copy, pieces, 1);
+
     copy->depth = game_model->depth;
     copy->transparent = game_model->transparent;
 
@@ -1047,7 +1048,15 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
 
     GameModel *copy = malloc(sizeof(GameModel));
     game_model_from6(copy, pieces, 1, autocommit, isolated, unlit, pickable);
+
     copy->depth = game_model->depth;
+
+#ifdef RENDER_GL
+    copy->vao = game_model->vao;
+    copy->vbo_offset = game_model->vbo_offset;
+    copy->ebo_offset = game_model->ebo_offset;
+    copy->ebo_length = game_model->ebo_length;
+#endif
 
     free(pieces);
 

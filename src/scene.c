@@ -4052,6 +4052,7 @@ void scene_gl_update_camera(Scene *scene) {
     float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048);
 
     // TODO why 77?
+    //float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
     float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
 
     vec3 front = {cos(yaw) * cos(pitch), pitch, sin(yaw) * cos(pitch)};

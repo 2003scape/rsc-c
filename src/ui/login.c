@@ -89,6 +89,7 @@ void mudclient_create_login_panels(mudclient *mud) {
 
         panel_add_button_background(mud->panel_login_new_user, x, y + 17, 150,
                                     34);
+
         panel_add_text_centre(mud->panel_login_new_user, x, y + 17, "Ok", 5, 0);
 
         mud->control_login_new_ok =
@@ -310,11 +311,11 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                                 8);
     }
 
-    surface_draw_sprite_from3(
+    /*surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);
+        15, mud->sprite_media + 10);*/
 
     /* TODO: resizable logo
     surface_sprite_clipping_from9(
@@ -459,14 +460,14 @@ void mudclient_draw_login_screens(mudclient *mud) {
     if (show_background) {
         int cycle = (mud->login_timer * 2) % 3072;
 
-        if (cycle < 1024) {
+        //if (cycle < 1024) {
             surface_draw_sprite_from3(mud->surface, 0, 10, mud->sprite_logo);
 
-            if (cycle > 768) {
+            /*if (cycle > 768) {
                 surface_draw_sprite_alpha_from4(
                     mud->surface, 0, 10, mud->sprite_logo + 1, cycle - 768);
-            }
-        } else if (cycle < 2048) {
+            }*/
+        /*} else if (cycle < 2048) {
             surface_draw_sprite_from3(mud->surface, 0, 10,
                                       mud->sprite_logo + 1);
 
@@ -482,7 +483,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
                 surface_draw_sprite_alpha_from4(mud->surface, 0, 10,
                                                 mud->sprite_logo, cycle - 2816);
             }
-        }
+        }*/
     }
 
     if (mud->login_screen == 0) {
