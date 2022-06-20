@@ -460,14 +460,14 @@ void mudclient_draw_login_screens(mudclient *mud) {
     if (show_background) {
         int cycle = (mud->login_timer * 2) % 3072;
 
-        //if (cycle < 1024) {
+        if (cycle < 1024) {
             surface_draw_sprite_from3(mud->surface, 0, 10, mud->sprite_logo);
 
-            /*if (cycle > 768) {
+            if (cycle > 768) {
                 surface_draw_sprite_alpha_from4(
                     mud->surface, 0, 10, mud->sprite_logo + 1, cycle - 768);
-            }*/
-        /*} else if (cycle < 2048) {
+            }
+        } else if (cycle < 2048) {
             surface_draw_sprite_from3(mud->surface, 0, 10,
                                       mud->sprite_logo + 1);
 
@@ -483,7 +483,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
                 surface_draw_sprite_alpha_from4(mud->surface, 0, 10,
                                                 mud->sprite_logo, cycle - 2816);
             }
-        }*/
+        }
     }
 
     if (mud->login_screen == 0) {

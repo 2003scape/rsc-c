@@ -388,7 +388,8 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
 
     if (sprite_id == mud->sprite_logo || sprite_id == mud->sprite_logo + 1) {
         /* +1 for circle texture */
-        int offset = (surface->mud->sprite_item - surface->mud->sprite_media) + 1;
+        int offset =
+            (surface->mud->sprite_item - surface->mud->sprite_media) + 1;
 
         return offset + (sprite_id - mud->sprite_logo);
     }
@@ -1572,23 +1573,27 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 }
 
 void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
-    //printf("screen raster to sprite: %d %d %d\n", sprite_id, surface->sprite_width[sprite_id], surface->sprite_height[sprite_id]);
+    // printf("screen raster to sprite: %d %d %d\n", sprite_id,
+    // surface->sprite_width[sprite_id], surface->sprite_height[sprite_id]);
 
 #ifdef RENDER_GL
-    if (sprite_id == surface->mud->sprite_logo || sprite_id == surface->mud->sprite_logo + 1) {
+    if (sprite_id == surface->mud->sprite_logo ||
+        sprite_id == surface->mud->sprite_logo + 1) {
         int *screen_pixels =
             calloc(surface->width2 * surface->height2, sizeof(int));
 
-        glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA, GL_UNSIGNED_BYTE, screen_pixels);
+        glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
+                     GL_UNSIGNED_BYTE, screen_pixels);
 
         int *pixels =
             calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int));
 
         for (int x = 0; x < MEDIA_TEXTURE_WIDTH; x++) {
             for (int y = 0; y < MEDIA_TEXTURE_HEIGHT; y++) {
-                int colour = screen_pixels[y + x * MEDIA_TEXTURE_HEIGHT];
+                int colour = screen_pixels[x + (surface->height2 - y) *
+                                                   MEDIA_TEXTURE_WIDTH];
 
-                pixels[y + (surface->width2 - x) * MEDIA_TEXTURE_HEIGHT] = colour;
+                pixels[x + y * MEDIA_TEXTURE_WIDTH] = colour;
             }
         }
 
@@ -1596,8 +1601,7 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
 
         int texture_index = surface_gl_sprite_texture_index(surface, sprite_id);
 
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
-                        texture_index,
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
                         MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
                         GL_UNSIGNED_BYTE, pixels);
 
