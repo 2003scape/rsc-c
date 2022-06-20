@@ -130,7 +130,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     surface_gl_create_texture_array(&surface->sprite_media_textures,
                                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
-                                    mud->sprite_item - mud->sprite_media);
+                                    (mud->sprite_item - mud->sprite_media) + 1);
 
     surface_gl_create_texture_array(&surface->map_textures, MAP_TEXTURE_WIDTH,
                                     MAP_TEXTURE_HEIGHT, 1);
@@ -145,7 +145,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
         surface_gl_create_font_texture(font_raster, i, 0);
 
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH,
-                        FONT_TEXTURE_WIDTH, 1, GL_BGRA, GL_UNSIGNED_BYTE,
+                        FONT_TEXTURE_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_BYTE,
                         font_raster);
 
         memset(font_raster, 0, font_area * sizeof(int32_t));
@@ -155,13 +155,15 @@ void surface_new(Surface *surface, int width, int height, int limit,
         surface_gl_create_font_texture(font_raster, i, 1);
 
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, FONT_COUNT + i,
-                        FONT_TEXTURE_WIDTH, FONT_TEXTURE_WIDTH, 1, GL_BGRA,
+                        FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, 1, GL_BGRA,
                         GL_UNSIGNED_BYTE, font_raster);
 
         memset(font_raster, 0, font_area * sizeof(int32_t));
     }
 
     free(font_raster);
+
+    surface_gl_create_circle_texture(surface);
 
     surface_gl_reset_context(surface);
 #endif
@@ -223,6 +225,41 @@ void surface_gl_create_font_texture(int32_t *dest, int font_id,
     }
 }
 
+void surface_gl_create_circle_texture(Surface *surface) {
+    surface_draw_box(surface, 0, 0, CIRCLE_TEXTURE_SIZE, CIRCLE_TEXTURE_SIZE,
+                     0);
+
+    surface_draw_circle_software(surface, CIRCLE_TEXTURE_SIZE / 2,
+                                 CIRCLE_TEXTURE_SIZE / 2,
+                                 CIRCLE_TEXTURE_SIZE / 2, 0xffffffff, 255);
+
+    int *circle_pixels =
+        calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int));
+    int circle_index = 0;
+
+    for (int x = 0; x < MEDIA_TEXTURE_WIDTH; x++) {
+        for (int y = 0; y < MEDIA_TEXTURE_HEIGHT; y++) {
+            int colour = surface->pixels[y + x * MEDIA_TEXTURE_HEIGHT];
+
+            if (colour != 0) {
+                colour += 0xff000000;
+            }
+
+            circle_pixels[circle_index++] = colour;
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
+                    (surface->mud->sprite_item - surface->mud->sprite_media) +
+                        0,
+                    MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
+                    GL_UNSIGNED_BYTE, circle_pixels);
+
+    free(circle_pixels);
+}
+
 void surface_gl_reset_context(Surface *surface) {
     surface->flat_count = 0;
 
@@ -272,7 +309,7 @@ void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
         context->max_x == surface->bounds_bottom_x &&
         context->min_y == surface->bounds_top_y &&
         context->max_y == surface->bounds_bottom_y &&
-        context->texture_id == texture_array_id) {
+        (texture_array_id == 0 || context->texture_id == texture_array_id)) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];
@@ -438,8 +475,8 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         {0, 0}, {draw_width, 0}, {draw_width, draw_height}, {0, draw_height}};
 
     if (rotation != 0) {
-        int centre_x = draw_width / 2;
-        int centre_y = draw_height / 2;
+        int centre_x = (draw_width - 1) / 2;
+        int centre_y = (draw_height - 1) / 2;
         float angle = TABLE_TO_RADIANS(-rotation, 512);
 
         for (int i = 0; i < 4; i++) {
@@ -481,7 +518,6 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         skin_b = (skin_colour & 0xff) / 255.0f;
     }
 
-#if 1
     GLfloat sprite_quad[] = {
         /* top left / northwest */
         translate_gl_x(points[0][0], surface->width2),
@@ -515,7 +551,6 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         0, sprite_height / texture_height,              //
         texture_index                                   //
     };
-#endif
 
     surface_gl_buffer_flat_quad(surface, sprite_quad, texture_array_id);
 }
@@ -647,6 +682,60 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
     };
 
     surface_gl_buffer_flat_quad(surface, box_quad, 0);
+}
+
+void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
+                              int colour, int alpha) {
+    int diameter = radius * 2;
+
+    x -= radius;
+    y -= radius;
+
+    GLfloat left_x = translate_gl_x(x, surface->width2);
+    GLfloat right_x = translate_gl_x(x + diameter, surface->width2);
+    GLfloat top_y = translate_gl_y(y, surface->height2);
+    GLfloat bottom_y = translate_gl_y(y + diameter, surface->height2);
+
+    float r = ((colour >> 16) & 0xff) / 255.0f;
+    float g = ((colour >> 8) & 0xff) / 255.0f;
+    float b = (colour & 0xff) / 255.0f;
+    float a = alpha / 255.0f;
+
+    int circle_index = surface->mud->sprite_item - surface->mud->sprite_media;
+
+    GLfloat circle_quad[] = {
+        /* top left / northwest */
+        left_x, top_y,       //
+        r, g, b, a,          //
+        -1.0f, -1.0f, -1.0f, //
+        0, 0,                //
+        circle_index,        //
+
+        /* top right / northeast */
+        right_x, top_y,                                      //
+        r, g, b, a,                                          //
+        -1.0f, -1.0f, -1.0f,                                 //
+        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH, 0, //
+        circle_index,                                        //
+
+        /* bottom right / southeast */
+        right_x, bottom_y,   //
+        r, g, b, a,          //
+        -1.0f, -1.0f, -1.0f, //
+        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH,
+        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_HEIGHT, //
+        circle_index,                                      //
+
+        /* bottom left / southwest */
+        left_x, bottom_y,                                     //
+        r, g, b, a,                                           //
+        -1.0f, -1.0f, -1.0f,                                  //
+        0, CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_HEIGHT, //
+        circle_index                                          //
+    };
+
+    surface_gl_buffer_flat_quad(surface, circle_quad,
+                                surface->sprite_media_textures);
 }
 #endif
 
@@ -886,8 +975,8 @@ void surface_black_screen(Surface *surface) {
     }
 }
 
-void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
-                         int alpha) {
+void surface_draw_circle_software(Surface *surface, int x, int y, int radius,
+                                  int colour, int alpha) {
     int bg_alpha = 256 - alpha;
     int red = ((colour >> 16) & 0xff) * alpha;
     int green = ((colour >> 8) & 0xff) * alpha;
@@ -945,6 +1034,17 @@ void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
             surface->pixels[index++] = new_colour;
         }
     }
+}
+
+void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
+                         int alpha) {
+#ifdef RENDER_GL
+    surface_gl_buffer_circle(surface, x, y, radius, colour, alpha);
+#endif
+
+#ifdef RENDER_SW
+    surface_draw_circle_software(surface, x, y, radius, colour, alpha);
+#endif
 }
 
 void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
@@ -1212,7 +1312,7 @@ void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
         y = surface->bounds_top_y;
     }
 
-    if (y + height > surface->bounds_bottom_x) {
+    if (y + height > surface->bounds_bottom_y) {
         height = surface->bounds_bottom_y - y;
     }
 
@@ -2336,24 +2436,17 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     rotation &= 255;
 
 #ifdef RENDER_GL
-    int sprite_width_full = surface->sprite_width_full[sprite_id];
-    int sprite_height_full = surface->sprite_height_full[sprite_id];
+    // TODO still *slightly* off
+    int gl_sprite_width = surface->sprite_width[sprite_id];
+    int gl_sprite_height = surface->sprite_height[sprite_id];
 
-    int gl_x = x - (int)(sprite_width_full / 2);
-    int gl_y = y - (int)(sprite_height_full / 2);
+    float gl_scale = scale / 128.0f;
 
-    int draw_width = -1;
-    int draw_height = -1;
+    int draw_width = (int)(gl_sprite_width * gl_scale);
+    int draw_height = (int)(gl_sprite_height * gl_scale);
 
-    if (scale != 128) {
-        float gl_scale = scale / 128.0f;
-
-        draw_width = (int)(sprite_width_full * gl_scale) + 1;
-        draw_height = (int)(sprite_height_full * gl_scale) + 1;
-
-        gl_x = x - (int)((sprite_width_full / 2) * gl_scale);
-        gl_y = y - (int)((sprite_height_full / 2) * gl_scale);
-    }
+    int gl_x = x - (int)((gl_sprite_width / 2) * gl_scale);
+    int gl_y = y - (int)((gl_sprite_height / 2) * gl_scale);
 
     surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, draw_width,
                              draw_height, 0, 0, 0, 255, 0, rotation);

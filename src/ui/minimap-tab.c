@@ -1,11 +1,13 @@
 #include "./minimap-tab.h"
 
 void mudclient_draw_minimap_entity(mudclient *mud, int x, int y, int colour) {
-    surface_set_pixel(mud->surface, x, y, colour);
+    /*surface_set_pixel(mud->surface, x, y, colour);
     surface_set_pixel(mud->surface, x - 1, y, colour);
     surface_set_pixel(mud->surface, x + 1, y, colour);
     surface_set_pixel(mud->surface, x, y - 1, colour);
-    surface_set_pixel(mud->surface, x, y + 1, colour);
+    surface_set_pixel(mud->surface, x, y + 1, colour);*/
+    surface_draw_line_vertical(mud->surface, x, y - 1, 3, colour);
+    surface_draw_line_horizontal(mud->surface, x - 1, y, 3, colour);
 }
 
 void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
@@ -21,6 +23,7 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     surface_set_bounds(mud->surface, ui_x, ui_y, ui_x + MINIMAP_WIDTH,
                        ui_y + MINIMAP_HEIGHT);
 
+    // TODO rename random2 to random_scale
     int scale = 192 + mud->minimap_random2;
     int rotation = (mud->camera_rotation + mud->minimap_random1) & 0xff;
 
@@ -33,8 +36,6 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
 
     player_y = (player_y * cos - player_x * sin) >> 18;
     player_x = temp_x;
-
-    //scale = 128;
 
     surface_draw_minimap_sprite(
         mud->surface, ui_x + (MINIMAP_WIDTH / 2) - player_x,
@@ -137,11 +138,11 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
             ui_y + (MINIMAP_HEIGHT / 2) - other_player_y, player_colour);
     }
 
-    // player
+    /* player */
     surface_draw_circle(mud->surface, ui_x + (MINIMAP_WIDTH / 2),
                         ui_y + (MINIMAP_HEIGHT / 2), 2, WHITE, 255);
 
-    // compass
+    /* compass */
     surface_draw_minimap_sprite(mud->surface, ui_x + 19, ui_y + 19,
                                 mud->sprite_media + 24,
                                 (mud->camera_rotation + 128) & 255, 128);

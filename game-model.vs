@@ -71,6 +71,7 @@ void main() {
     }
 
     if (gl_Position.z > (fog_distance / 1000.0f)) {
+        // TODO this needs to always use light_gradient - not texture
         gradient_index += int(gl_Position.z  * 1000) - fog_distance;
     }
 

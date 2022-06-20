@@ -18,13 +18,16 @@
 #define ITEM_TEXTURE_HEIGHT 32
 
 #define MEDIA_TEXTURE_WIDTH 512
-#define MEDIA_TEXTURE_HEIGHT 200
+#define MEDIA_TEXTURE_HEIGHT 256
 
+/* TODO combine font and map? */
 #define FONT_TEXTURE_WIDTH 286
 #define FONT_TEXTURE_HEIGHT 286
 
 #define MAP_TEXTURE_WIDTH 285
 #define MAP_TEXTURE_HEIGHT 285
+
+#define CIRCLE_TEXTURE_SIZE 256
 #endif
 
 #ifdef WII
@@ -139,10 +142,11 @@ void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
 
 #ifdef RENDER_GL
-void surface_gl_create_texture_array(GLuint *texture_array_id,
-                                     int width, int height, int length);
+void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
+                                     int height, int length);
 void surface_gl_create_font_texture(int32_t *dest, int font_id,
                                     int draw_shadow);
+void surface_gl_create_circle_texture(Surface *surface);
 void surface_gl_reset_context(Surface *surface);
 void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
                                  GLuint texture_array_id);
@@ -158,6 +162,8 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
                                  int colour, int font_id, int draw_shadow);
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha);
+void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
+                              int colour, int alpha);
 #endif
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);
@@ -165,6 +171,8 @@ void surface_reset_bounds(Surface *surface);
 void surface_reset_draw(Surface *surface);
 void surface_draw(Surface *surface);
 void surface_black_screen(Surface *surface);
+void surface_draw_circle_software(Surface *surface, int x, int y, int radius,
+                                  int colour, int alpha);
 void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
                          int alpha);
 void surface_draw_box_alpha(Surface *surface, int x, int y, int width,

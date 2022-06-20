@@ -1283,10 +1283,9 @@ void scene_render(Scene *scene) {
         }
     }
 
-    /*
     GameModel *model_2d = scene->view;
 
-    if (model_2d->visible) {
+    /*if (model_2d->visible) {
         for (int face = 0; face < model_2d->num_faces; face++) {
             int *face_vertices = model_2d->face_vertices[face];
             int face_0 = face_vertices[0];
