@@ -373,44 +373,50 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     int translate_x = surface->sprite_translate_x[sprite_id];
     int translate_y = surface->sprite_translate_y[sprite_id];
 
-    if (draw_width != -1 && surface->sprite_translate[sprite_id]) {
-        int full_width = surface->sprite_width_full[sprite_id];
-        int full_height = surface->sprite_height_full[sprite_id];
-        int width_ratio = (full_width << 16) / draw_width;
-        int height_ratio = (full_height << 16) / draw_height;
+    if (draw_width != -1) {
+        if (surface->sprite_translate[sprite_id]) {
+            int full_width = surface->sprite_width_full[sprite_id];
+            int full_height = surface->sprite_height_full[sprite_id];
+            int width_ratio = (full_width << 16) / draw_width;
+            int height_ratio = (full_height << 16) / draw_height;
 
-        if (flip) {
-            translate_x =
-                full_width - surface->sprite_width[sprite_id] - translate_x;
+            if (flip) {
+                translate_x =
+                    full_width - surface->sprite_width[sprite_id] - translate_x;
+            }
+
+            x += (translate_x * draw_width + full_width - 1) / full_width;
+            y += (translate_y * draw_height + full_height - 1) / full_height;
+
+            // maybe remainder
+            int offset_x = 0;
+            int offset_y = 0;
+
+            if ((translate_x * draw_width) % full_width != 0) {
+                offset_x =
+                    ((full_width - ((translate_x * draw_width) % full_width))
+                     << 16) /
+                    draw_width;
+            }
+
+            if ((translate_y * draw_height) % full_height != 0) {
+                offset_y =
+                    ((full_height - ((translate_y * draw_height) % full_height))
+                     << 16) /
+                    draw_height;
+            }
+
+            draw_width = ((surface->sprite_width[sprite_id] << 16) - offset_x +
+                          width_ratio - 1) /
+                         width_ratio;
+
+            draw_height = ((surface->sprite_height[sprite_id] << 16) -
+                           offset_y + height_ratio - 1) /
+                          height_ratio;
+        } else {
+            x += translate_x;
+            y += translate_y;
         }
-
-        x += (translate_x * draw_width + full_width - 1) / full_width;
-        y += (translate_y * draw_height + full_height - 1) / full_height;
-
-        // maybe remainder
-        int offset_x = 0;
-        int offset_y = 0;
-
-        if ((translate_x * draw_width) % full_width != 0) {
-            offset_x = ((full_width - ((translate_x * draw_width) % full_width))
-                        << 16) /
-                       draw_width;
-        }
-
-        if ((translate_y * draw_height) % full_height != 0) {
-            offset_y =
-                ((full_height - ((translate_y * draw_height) % full_height))
-                 << 16) /
-                draw_height;
-        }
-
-        draw_width = ((surface->sprite_width[sprite_id] << 16) - offset_x +
-                      width_ratio - 1) /
-                     width_ratio;
-
-        draw_height = ((surface->sprite_height[sprite_id] << 16) - offset_y +
-                       height_ratio - 1) /
-                      height_ratio;
     } else {
         draw_width = sprite_width;
         draw_height = sprite_height;
@@ -2330,13 +2336,27 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
     rotation &= 255;
 
 #ifdef RENDER_GL
-    int gl_x = x - (surface->sprite_width_full[sprite_id] / 2) + 1;
-    int gl_y = y - (surface->sprite_height_full[sprite_id] / 2) + 1;
+    int sprite_width_full = surface->sprite_width_full[sprite_id];
+    int sprite_height_full = surface->sprite_height_full[sprite_id];
 
-    // if (sprite_id == 1999) {
-    surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, -1, -1, 0, 0, 0,
-                             255, 0, rotation);
-    //}
+    int gl_x = x - (int)(sprite_width_full / 2);
+    int gl_y = y - (int)(sprite_height_full / 2);
+
+    int draw_width = -1;
+    int draw_height = -1;
+
+    if (scale != 128) {
+        float gl_scale = scale / 128.0f;
+
+        draw_width = (int)(sprite_width_full * gl_scale) + 1;
+        draw_height = (int)(sprite_height_full * gl_scale) + 1;
+
+        gl_x = x - (int)((sprite_width_full / 2) * gl_scale);
+        gl_y = y - (int)((sprite_height_full / 2) * gl_scale);
+    }
+
+    surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, draw_width,
+                             draw_height, 0, 0, 0, 255, 0, rotation);
 #endif
 
 #ifdef RENDER_SW
