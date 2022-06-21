@@ -288,6 +288,11 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     mud->scene->fog_z_falloff = 1;
     mud->scene->fog_z_distance = 4000;
 
+#ifdef RENDER_GL
+    /* clear the previous buffer */
+    surface_gl_reset_context(mud->surface);
+#endif
+
     surface_black_screen(mud->surface);
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
@@ -295,21 +300,9 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     scene_render(mud->scene);
 
-    surface_fade_to_black(mud->surface);
-    surface_fade_to_black(mud->surface);
+    //surface_draw_box(mud->surface, 0, 0, mud->game_width, 250, WHITE);
 
-    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, BLACK);
-
-    for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(mud->surface, i, 0, i, mud->game_width, 8);
-    }
-
-    surface_draw_box(mud->surface, 0, 194, 512, 20, BLACK);
-
-    for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(mud->surface, i, 0, 194 - i, mud->game_width,
-                                8);
-    }
+    surface_apply_login_filter(mud->surface);
 
     /*surface_draw_sprite_from3(
         mud->surface,
@@ -323,6 +316,8 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
            (mud->game_width / 2) -
                (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
            15, 400, 120, mud->sprite_media + 10, 0, 0, 0, 0);*/
+
+    surface_draw(mud->surface);
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
                               mud->game_width, 200);
@@ -341,21 +336,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     scene_render(mud->scene);
 
-    surface_fade_to_black(mud->surface);
-    surface_fade_to_black(mud->surface);
-
-    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, BLACK);
-
-    for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(mud->surface, i, 0, i, mud->game_width, 8);
-    }
-
-    surface_draw_box(mud->surface, 0, 194, mud->game_width, 20, BLACK);
-
-    for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(mud->surface, i, 0, 194 - i, mud->game_width,
-                                8);
-    }
+    surface_apply_login_filter(mud->surface);
 
     surface_draw_sprite_from3(
         mud->surface,
@@ -365,6 +346,8 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
                               mud->game_width, 200);
+
+    surface_draw(mud->surface);
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1);
 
@@ -406,20 +389,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     scene_render(mud->scene);
 
-    surface_fade_to_black(mud->surface);
-    surface_fade_to_black(mud->surface);
-
-    surface_draw_box(mud->surface, 0, 0, mud->game_width, 6, BLACK);
-
-    for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(mud->surface, i, 0, i, mud->game_width, 8);
-    }
-
-    surface_draw_box(mud->surface, 0, 194, mud->game_width, 20, BLACK);
-
-    for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(mud->surface, i, 0, 194, mud->game_width, 8);
-    }
+    surface_apply_login_filter(mud->surface);
 
     surface_draw_sprite_from3(
         mud->surface,
@@ -456,6 +426,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
     } else {
         show_background = mud->login_screen >= 0 && mud->login_screen <= 3;
     }
+
+    //surface_draw_sprite_from3(mud->surface, 0, 10, mud->sprite_logo);
 
     if (show_background) {
         int cycle = (mud->login_timer * 2) % 3072;

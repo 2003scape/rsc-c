@@ -116,12 +116,11 @@ typedef struct Surface {
     GLuint flat_ebo;
     int flat_count;
 
-    /* texture array for inventory items and projectiles */
     GLuint sprite_item_textures;
-
     GLuint sprite_media_textures;
     GLuint map_textures;
     GLuint font_textures;
+    GLuint framebuffer_textures;
 
     /* used for texture array and boundary changes */
     SurfaceGlContext gl_contexts[256];
@@ -141,6 +140,7 @@ void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
                                      int height, int length);
 void surface_gl_create_font_texture(int32_t *dest, int font_id,
                                     int draw_shadow);
+void surface_gl_create_font_textures(Surface *surface);
 void surface_gl_create_circle_texture(Surface *surface);
 void surface_gl_reset_context(Surface *surface);
 void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
@@ -149,6 +149,10 @@ int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id);
 int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id);
 int surface_gl_sprite_texture_height(Surface *surface, GLuint texture_array_id);
 int surface_gl_sprite_texture_index(Surface *surface, int sprite_id);
+void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
+                                     int texture_index, int mask_colour,
+                                     int skin_colour, int alpha, int width,
+                                     int height, int (*points)[2]);
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
@@ -188,6 +192,7 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour);
 void surface_fade_to_black(Surface *surface);
 void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
                              int height);
+void surface_apply_login_filter(Surface *surface);
 void surface_clear(Surface *surface);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);

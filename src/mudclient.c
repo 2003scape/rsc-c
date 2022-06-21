@@ -4006,7 +4006,9 @@ void mudclient_draw(mudclient *mud) {
     // VIDEO_WaitVSync(); /* TODO investigate */
 #endif
 
+#ifdef RENDER_GL
     SDL_GL_SwapWindow(mud->gl_window);
+#endif
 }
 
 void mudclient_poll_events(mudclient *mud) {

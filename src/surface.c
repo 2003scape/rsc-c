@@ -139,31 +139,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface_gl_create_texture_array(&surface->font_textures, FONT_TEXTURE_WIDTH,
                                     FONT_TEXTURE_HEIGHT, FONT_COUNT * 2);
 
-    int font_area = FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT;
-    int32_t *font_raster = calloc(font_area, sizeof(int32_t));
+    surface_gl_create_texture_array(&surface->framebuffer_textures, surface->width2, surface->height2, 1);
 
-    for (int i = 0; i < FONT_COUNT; i++) {
-        surface_gl_create_font_texture(font_raster, i, 0);
-
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH,
-                        FONT_TEXTURE_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_BYTE,
-                        font_raster);
-
-        memset(font_raster, 0, font_area * sizeof(int32_t));
-    }
-
-    for (int i = 0; i < FONT_COUNT; i++) {
-        surface_gl_create_font_texture(font_raster, i, 1);
-
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, FONT_COUNT + i,
-                        FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, 1, GL_BGRA,
-                        GL_UNSIGNED_BYTE, font_raster);
-
-        memset(font_raster, 0, font_area * sizeof(int32_t));
-    }
-
-    free(font_raster);
-
+    surface_gl_create_font_textures(surface);
     surface_gl_create_circle_texture(surface);
 
     surface_gl_reset_context(surface);
@@ -224,6 +202,35 @@ void surface_gl_create_font_texture(int32_t *dest, int font_id,
         surface_plot_letter(dest, font_data, 0xffffffff, font_pos, dest_pos,
                             width, height, dest_offset, 0);
     }
+}
+
+void surface_gl_create_font_textures(Surface *surface) {
+    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->font_textures);
+
+    int font_area = FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT;
+    int32_t *font_raster = calloc(font_area, sizeof(int32_t));
+
+    for (int i = 0; i < FONT_COUNT; i++) {
+        surface_gl_create_font_texture(font_raster, i, 0);
+
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH,
+                        FONT_TEXTURE_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_BYTE,
+                        font_raster);
+
+        memset(font_raster, 0, font_area * sizeof(int32_t));
+    }
+
+    for (int i = 0; i < FONT_COUNT; i++) {
+        surface_gl_create_font_texture(font_raster, i, 1);
+
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, FONT_COUNT + i,
+                        FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, font_raster);
+
+        memset(font_raster, 0, font_area * sizeof(int32_t));
+    }
+
+    free(font_raster);
 }
 
 void surface_gl_create_circle_texture(Surface *surface) {
@@ -406,18 +413,78 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
     return 0;
 }
 
+void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
+                                     int texture_index, int mask_colour,
+                                     int skin_colour, int alpha, int width,
+                                     int height, int (*points)[2]) {
+    GLfloat mask_r = -1.0f;
+    GLfloat mask_g = -1.0f;
+    GLfloat mask_b = -1.0f;
+    GLfloat mask_a = alpha / 255.0f;
+
+    if (mask_colour != 0) {
+        mask_r = ((mask_colour >> 16) & 0xff) / 255.0f;
+        mask_g = ((mask_colour >> 8) & 0xff) / 255.0f;
+        mask_b = (mask_colour & 0xff) / 255.0f;
+    }
+
+    GLfloat skin_r = -1.0f;
+    GLfloat skin_g = -1.0f;
+    GLfloat skin_b = -1.0f;
+
+    if (skin_colour != 0) {
+        skin_r = ((skin_colour >> 16) & 0xff) / 255.0f;
+        skin_g = ((skin_colour >> 8) & 0xff) / 255.0f;
+        skin_b = (skin_colour & 0xff) / 255.0f;
+    }
+
+    GLfloat texture_width =
+        (float)surface_gl_sprite_texture_width(surface, texture_array_id);
+
+    GLfloat texture_height =
+        (float)surface_gl_sprite_texture_height(surface, texture_array_id);
+
+    GLfloat textured_quad[] = {
+        /* top left / northwest */
+        translate_gl_x(points[0][0], surface->width2),
+        translate_gl_y(points[0][1], surface->height2), //
+        mask_r, mask_g, mask_b, mask_a,                 //
+        skin_r, skin_g, skin_b,                         //
+        0, 0,                                           //
+        texture_index,                                  //
+
+        /* top right / northeast */
+        translate_gl_x(points[1][0], surface->width2),
+        translate_gl_y(points[1][1], surface->height2), //
+        mask_r, mask_g, mask_b, mask_a,                 //
+        skin_r, skin_g, skin_b,                         //
+        width / texture_width, 0,                //
+        texture_index,                                  //
+
+        /* bottom right / southeast */
+        translate_gl_x(points[2][0], surface->width2),
+        translate_gl_y(points[2][1], surface->height2),               //
+        mask_r, mask_g, mask_b, mask_a,                               //
+        skin_r, skin_g, skin_b,                                       //
+        width / texture_width, height / texture_height, //
+        texture_index,                                                //
+
+        /* bottom left / southwest */
+        translate_gl_x(points[3][0], surface->width2),
+        translate_gl_y(points[3][1], surface->height2), //
+        mask_r, mask_g, mask_b, mask_a,                 //
+        skin_r, skin_g, skin_b,                         //
+        0, height / texture_height,              //
+        texture_index                                   //
+    };
+
+    surface_gl_buffer_flat_quad(surface, textured_quad, texture_array_id);
+}
+
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
                               int flip, int rotation) {
-    if (mask_colour == 0) {
-        mask_colour = WHITE;
-    }
-
-    if (skin_colour == 0) {
-        skin_colour = WHITE;
-    }
-
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];
     int translate_x = surface->sprite_translate_x[sprite_id];
@@ -481,9 +548,6 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         return;
     }
 
-    float texture_index =
-        (float)surface_gl_sprite_texture_index(surface, sprite_id);
-
     int points[][2] = {
         {0, 0}, {draw_width, 0}, {draw_width, draw_height}, {0, draw_height}};
 
@@ -504,68 +568,9 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         point[1] += y;
     }
 
-    GLfloat texture_width =
-        (float)surface_gl_sprite_texture_width(surface, texture_array_id);
+    int texture_index = surface_gl_sprite_texture_index(surface, sprite_id);
 
-    GLfloat texture_height =
-        (float)surface_gl_sprite_texture_height(surface, texture_array_id);
-
-    GLfloat mask_r = -1.0f;
-    GLfloat mask_g = -1.0f;
-    GLfloat mask_b = -1.0f;
-    GLfloat mask_a = alpha / 255.0f;
-
-    if (mask_colour != WHITE) {
-        mask_r = ((mask_colour >> 16) & 0xff) / 255.0f;
-        mask_g = ((mask_colour >> 8) & 0xff) / 255.0f;
-        mask_b = (mask_colour & 0xff) / 255.0f;
-    }
-
-    GLfloat skin_r = -1.0f;
-    GLfloat skin_g = -1.0f;
-    GLfloat skin_b = -1.0f;
-
-    if (skin_colour != WHITE) {
-        skin_r = ((skin_colour >> 16) & 0xff) / 255.0f;
-        skin_g = ((skin_colour >> 8) & 0xff) / 255.0f;
-        skin_b = (skin_colour & 0xff) / 255.0f;
-    }
-
-    GLfloat sprite_quad[] = {
-        /* top left / northwest */
-        translate_gl_x(points[0][0], surface->width2),
-        translate_gl_y(points[0][1], surface->height2), //
-        mask_r, mask_g, mask_b, mask_a,                 //
-        skin_r, skin_g, skin_b,                         //
-        0, 0,                                           //
-        texture_index,                                  //
-
-        /* top right / northeast */
-        translate_gl_x(points[1][0], surface->width2),
-        translate_gl_y(points[1][1], surface->height2), //
-        mask_r, mask_g, mask_b, mask_a,                 //
-        skin_r, skin_g, skin_b,                         //
-        sprite_width / texture_width, 0,                //
-        texture_index,                                  //
-
-        /* bottom right / southeast */
-        translate_gl_x(points[2][0], surface->width2),
-        translate_gl_y(points[2][1], surface->height2),               //
-        mask_r, mask_g, mask_b, mask_a,                               //
-        skin_r, skin_g, skin_b,                                       //
-        sprite_width / texture_width, sprite_height / texture_height, //
-        texture_index,                                                //
-
-        /* bottom left / southwest */
-        translate_gl_x(points[3][0], surface->width2),
-        translate_gl_y(points[3][1], surface->height2), //
-        mask_r, mask_g, mask_b, mask_a,                 //
-        skin_r, skin_g, skin_b,                         //
-        0, sprite_height / texture_height,              //
-        texture_index                                   //
-    };
-
-    surface_gl_buffer_flat_quad(surface, sprite_quad, texture_array_id);
+    surface_gl_buffer_textured_quad(surface, texture_array_id, texture_index, mask_colour, skin_colour, alpha, sprite_width, sprite_height, points);
 }
 
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
@@ -941,6 +946,7 @@ void surface_draw(Surface *surface) {
 
         shader_set_int(&surface->flat_shader, "bounds_min_y",
                        surface->height2 - context->min_y);
+
         shader_set_int(&surface->flat_shader, "bounds_max_y",
                        surface->height2 - context->max_y);
 
@@ -962,11 +968,43 @@ void surface_draw(Surface *surface) {
 
     surface_gl_reset_context(surface);
 
+    if (surface->fade_to_black) {
+        glBindTexture(GL_TEXTURE_2D_ARRAY, surface->framebuffer_textures);
+
+        int *screen_pixels =
+            calloc(surface->width2 * surface->height2, sizeof(int));
+
+        glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
+                     GL_UNSIGNED_BYTE, screen_pixels);
+
+        int *texture_pixels = calloc(surface->width2 * surface->height2, sizeof(int));
+
+        for (int x = 0; x < surface->width2; x++) {
+            for (int y = 0; y < surface->height2; y++) {
+                texture_pixels[x + y * surface->width2] = screen_pixels[x + (surface->height2 - y) * surface->width2];
+            }
+        }
+
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0,
+                        surface->width2, surface->height2, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, texture_pixels);
+
+        free(screen_pixels);
+        free(texture_pixels);
+
+        //
+    }
+
     surface->fade_to_black = 0;
 #endif
 }
 
 void surface_black_screen(Surface *surface) {
+#ifdef RENDER_GL
+    //surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2, 0, 255);
+#endif
+
+#ifdef RENDER_SW
     int area = surface->width2 * surface->height2;
 
     if (!surface->interlace) {
@@ -986,6 +1024,7 @@ void surface_black_screen(Surface *surface) {
 
         pixel_idx += surface->width2;
     }
+#endif
 }
 
 void surface_draw_circle_software(Surface *surface, int x, int y, int radius,
@@ -1358,9 +1397,8 @@ void surface_fade_to_black(Surface *surface) {
 #ifdef RENDER_GL
     surface->fade_to_black = 1;
 
-    // TODO a better job - this still leaves a shadow of the original image
     surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2,
-                          BLACK, 20);
+                          BLACK, 16);
 #endif
 
 #ifdef RENDER_SW
@@ -1378,6 +1416,7 @@ void surface_fade_to_black(Surface *surface) {
 
 void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
                              int height) {
+    return;
     for (int xx = x; xx < x + width; xx++) {
         for (int yy = y; yy < y + height; yy++) {
             int r = 0;
@@ -1389,8 +1428,7 @@ void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
                 if (i2 >= 0 && i2 < surface->width2) {
                     for (int j2 = yy - j; j2 <= yy + j; j2++) {
                         if (j2 >= 0 && j2 < surface->height2) {
-                            int32_t pixel =
-                                surface->pixels[i2 + surface->width2 * j2];
+                            int32_t pixel = surface->pixels[i2 + surface->width2 * j2];
 
                             r += (pixel >> 16) & 0xff;
                             g += (pixel >> 8) & 0xff;
@@ -1404,6 +1442,25 @@ void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
             surface->pixels[xx + surface->width2 * yy] =
                 ((r / a) << 16) + ((g / a) << 8) + (b / a);
         }
+    }
+}
+
+void surface_apply_login_filter(Surface *surface) {
+    surface_fade_to_black(surface);
+    surface_fade_to_black(surface);
+
+    int game_width = surface->mud->game_width;
+
+    surface_draw_box(surface, 0, 0, game_width, 6, BLACK);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(surface, i, 0, i, game_width, 8);
+    }
+
+    surface_draw_box(surface, 0, 194, game_width, 20, BLACK);
+
+    for (int i = 6; i >= 1; i--) {
+        surface_draw_line_alpha(surface, i, 0, 194 - i, game_width, 8);
     }
 }
 
@@ -1573,27 +1630,25 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 }
 
 void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
-    // printf("screen raster to sprite: %d %d %d\n", sprite_id,
-    // surface->sprite_width[sprite_id], surface->sprite_height[sprite_id]);
-
 #ifdef RENDER_GL
     if (sprite_id == surface->mud->sprite_logo ||
         sprite_id == surface->mud->sprite_logo + 1) {
+        // TODO put into function
         int *screen_pixels =
             calloc(surface->width2 * surface->height2, sizeof(int));
 
         glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
                      GL_UNSIGNED_BYTE, screen_pixels);
 
-        int *pixels =
+        int *texture_pixels =
             calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int));
 
         for (int x = 0; x < MEDIA_TEXTURE_WIDTH; x++) {
             for (int y = 0; y < MEDIA_TEXTURE_HEIGHT; y++) {
-                int colour = screen_pixels[x + (surface->height2 - y) *
+                int colour = screen_pixels[x + (surface->height2 - y - 1) *
                                                    MEDIA_TEXTURE_WIDTH];
 
-                pixels[x + y * MEDIA_TEXTURE_WIDTH] = colour;
+                texture_pixels[x + y * MEDIA_TEXTURE_WIDTH] = colour;
             }
         }
 
@@ -1603,9 +1658,10 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
 
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
                         MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
-                        GL_UNSIGNED_BYTE, pixels);
+                        GL_UNSIGNED_BYTE, texture_pixels);
 
-        free(pixels);
+        free(screen_pixels);
+        free(texture_pixels);
     }
 #endif
 
@@ -1693,6 +1749,7 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
 
     surface->sprite_colours_used[sprite_id] = colours;
     surface->sprite_colour_list[sprite_id] = palette;
+    // TODO rename colour list to palette too
 
     free(surface->surface_pixels[sprite_id]);
     surface->surface_pixels[sprite_id] = NULL;
