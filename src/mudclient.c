@@ -353,7 +353,19 @@ int test_y = 0;
 int test_z = -50;
 int test_yaw = 1;
 int test_colour = -1;
+int test_fade = 0;
 GameModel *test_model = NULL;
+
+#ifdef RENDER_GL
+void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id,
+                                GLenum severity, GLsizei length,
+                                const GLchar *message, const void *user_param) {
+    fprintf(stderr,
+            "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type,
+            severity, message);
+}
+#endif
 
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
@@ -594,11 +606,16 @@ void mudclient_start_application(mudclient *mud, int width, int height,
     }
 
     glViewport(0, 0, width, height);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     /* transparent textures */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // TODO disable for production
+    /* debugging */
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glDebugMessageCallback(MessageCallback, 0);
 #endif
 #endif
 
@@ -1426,7 +1443,8 @@ void mudclient_load_textures(mudclient *mud) {
                 surface_parse_sprite(surface, mud->sprite_texture,
                                      texture_sub_dat, index_dat, 1);
 
-                surface_draw_sprite_from3_software(surface, 0, 0, mud->sprite_texture);
+                surface_draw_sprite_from3_software(surface, 0, 0,
+                                                   mud->sprite_texture);
 
                 free(surface->sprite_colour_list[mud->sprite_texture]);
                 surface->sprite_colour_list[mud->sprite_texture] = NULL;
@@ -1508,10 +1526,10 @@ void mudclient_load_models(mudclient *mud) {
     free(models_jag);
 
 #ifdef RENDER_GL
-    game_model_gl_buffer_models(
-        &mud->scene->game_model_vao, &mud->scene->game_model_vbo,
-        &mud->scene->game_model_ebo, mud->game_models,
-        game_data_model_count - 1);
+    game_model_gl_buffer_models(&mud->scene->game_model_vao,
+                                &mud->scene->game_model_vbo,
+                                &mud->scene->game_model_ebo, mud->game_models,
+                                game_data_model_count - 1);
 #endif
 }
 
@@ -2245,7 +2263,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
-        //scene_add_model(mud->scene, game_model);
+        // scene_add_model(mud->scene, game_model);
     }
 
     game_model->key = count + 10000;
@@ -3821,7 +3839,9 @@ void mudclient_draw_game(mudclient *mud) {
     mudclient_draw_entity_sprites(mud);
 
     mud->surface->interlace = 0;
+
     surface_black_screen(mud->surface);
+
     mud->surface->interlace = mud->interlace;
 
     /* flickering lights in dungeons */
@@ -3974,10 +3994,14 @@ void mudclient_draw(mudclient *mud) {
     draw_background(mud->framebuffer, 0);
 #endif
 
+#if 0
+    surface->fade_to_black = 2;
+#endif
+
 #ifdef RENDER_GL
     // if (!mud->surface->fade_to_black) {
-    glClear(GL_COLOR_BUFFER_BIT);
-    // }
+    // glClear(GL_COLOR_BUFFER_BIT);
+    //}
 #endif
 
     if (mud->logged_in == 0) {
@@ -4490,11 +4514,11 @@ void mudclient_poll_events(mudclient *mud) {
             } else if (code == 114) {
                 test_yaw += 1;
 
-                //printf("ambience: %d\n", test_yaw);
+                // printf("ambience: %d\n", test_yaw);
             } else if (code == 102) {
                 test_yaw -= 1;
 
-                //printf("ambience: %d\n", test_yaw);
+                // printf("ambience: %d\n", test_yaw);
             }
 
             // printf("%d\n", code);

@@ -163,6 +163,8 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha);
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha);
+void surface_gl_update_framebuffer_texture(Surface *surface, int fade);
+void surface_gl_draw(Surface *surface);
 #endif
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);

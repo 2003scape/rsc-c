@@ -370,6 +370,12 @@ int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id) {
         return ITEM_TEXTURE_WIDTH;
     }
 
+    // TODO font?
+
+    if (texture_array_id == surface->framebuffer_textures) {
+        return surface->width2;
+    }
+
     return 0;
 }
 
@@ -385,6 +391,10 @@ int surface_gl_sprite_texture_height(Surface *surface,
 
     if (texture_array_id == surface->sprite_item_textures) {
         return ITEM_TEXTURE_HEIGHT;
+    }
+
+    if (texture_array_id == surface->framebuffer_textures) {
+        return surface->height2;
     }
 
     return 0;
@@ -755,6 +765,92 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
     surface_gl_buffer_flat_quad(surface, circle_quad,
                                 surface->sprite_media_textures);
 }
+
+void surface_gl_update_framebuffer_texture(Surface *surface, int fade) {
+    int *screen_pixels =
+        calloc(surface->width2 * surface->height2, sizeof(int));
+
+    glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
+                 GL_UNSIGNED_BYTE, screen_pixels);
+
+    int *texture_pixels =
+        calloc(surface->width2 * surface->height2, sizeof(int));
+
+    for (int x = 0; x < surface->width2; x++) {
+        for (int y = 0; y < surface->height2; y++) {
+            int colour = screen_pixels[x + (surface->height2 - y - 1) *
+                                               surface->width2];
+
+            if (fade) {
+                colour = ((colour >> 1) & 0x7f7f7f) + ((colour >> 2) & 0x3f3f3f) +
+                ((colour >> 3) & 0x1f1f1f) + ((colour >> 4) & 0xf0f0f);
+
+                colour += 0xff000000;
+            }
+
+            texture_pixels[x + y * surface->width2] = colour;
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->framebuffer_textures);
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0,
+                    surface->width2, surface->height2, 1, GL_BGRA,
+                    GL_UNSIGNED_BYTE, texture_pixels);
+
+    free(screen_pixels);
+    free(texture_pixels);
+}
+
+void surface_gl_draw(Surface *surface) {
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+
+    shader_use(&surface->flat_shader);
+    glBindVertexArray(surface->flat_vao);
+    glActiveTexture(GL_TEXTURE0);
+
+    int drawn_quads = 0;
+
+    for (int i = 0; i < surface->gl_context_count; i++) {
+        SurfaceGlContext *context = &surface->gl_contexts[i];
+
+        shader_set_int(&surface->flat_shader, "bounds_min_x", context->min_x);
+        shader_set_int(&surface->flat_shader, "bounds_max_x", context->max_x);
+
+        shader_set_int(&surface->flat_shader, "bounds_min_y",
+                       surface->height2 - context->min_y);
+
+        shader_set_int(&surface->flat_shader, "bounds_max_y",
+                       surface->height2 - context->max_y);
+
+        GLuint texture_array_id = context->texture_id;
+
+        if (texture_array_id != 0) {
+            glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
+        }
+
+        int quad_count = context->quad_count;
+
+        glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
+                       (void *)(drawn_quads * 6 * sizeof(GLuint)));
+
+        drawn_quads += quad_count;
+    }
+
+#if 1
+    if (surface->fade_to_black == 1) {
+        surface_gl_update_framebuffer_texture(surface, 1);
+        test_fade = 1;
+    }
+#endif
+
+    surface_gl_reset_context(surface);
+
+    // SDL_GL_SwapWindow(mud->gl_window);
+
+    surface->fade_to_black = 0;
+}
 #endif
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2) {
@@ -924,83 +1020,14 @@ void surface_draw(Surface *surface) {
 #endif
 
 #ifdef RENDER_GL
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
-
-    // TODO this almost works.
-    /*if (!surface->fade_to_black) {
-        glClear(GL_COLOR_BUFFER_BIT);
-    }*/
-
-    shader_use(&surface->flat_shader);
-    glBindVertexArray(surface->flat_vao);
-    glActiveTexture(GL_TEXTURE0);
-
-    int drawn_quads = 0;
-
-    for (int i = 0; i < surface->gl_context_count; i++) {
-        SurfaceGlContext *context = &surface->gl_contexts[i];
-
-        shader_set_int(&surface->flat_shader, "bounds_min_x", context->min_x);
-        shader_set_int(&surface->flat_shader, "bounds_max_x", context->max_x);
-
-        shader_set_int(&surface->flat_shader, "bounds_min_y",
-                       surface->height2 - context->min_y);
-
-        shader_set_int(&surface->flat_shader, "bounds_max_y",
-                       surface->height2 - context->max_y);
-
-        GLuint texture_array_id = context->texture_id;
-
-        if (texture_array_id != 0) {
-            glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
-        }
-
-        int quad_count = context->quad_count;
-
-        glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
-                       (void *)(drawn_quads * 6 * sizeof(GLuint)));
-
-        drawn_quads += quad_count;
-    }
-
-    // SDL_GL_SwapWindow(mud->gl_window);
-
-    surface_gl_reset_context(surface);
-
-    if (surface->fade_to_black) {
-        glBindTexture(GL_TEXTURE_2D_ARRAY, surface->framebuffer_textures);
-
-        int *screen_pixels =
-            calloc(surface->width2 * surface->height2, sizeof(int));
-
-        glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
-                     GL_UNSIGNED_BYTE, screen_pixels);
-
-        int *texture_pixels = calloc(surface->width2 * surface->height2, sizeof(int));
-
-        for (int x = 0; x < surface->width2; x++) {
-            for (int y = 0; y < surface->height2; y++) {
-                texture_pixels[x + y * surface->width2] = screen_pixels[x + (surface->height2 - y) * surface->width2];
-            }
-        }
-
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0,
-                        surface->width2, surface->height2, 1, GL_BGRA,
-                        GL_UNSIGNED_BYTE, texture_pixels);
-
-        free(screen_pixels);
-        free(texture_pixels);
-
-        //
-    }
-
-    surface->fade_to_black = 0;
+    surface_gl_draw(surface);
 #endif
 }
 
 void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
+    test_fade = 0;
+    glClear(GL_COLOR_BUFFER_BIT);
     //surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2, 0, 255);
 #endif
 
@@ -1395,10 +1422,39 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour) {
 
 void surface_fade_to_black(Surface *surface) {
 #ifdef RENDER_GL
+    /*surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2,
+                          BLACK, 16);*/
+
+#if 1
+    //surface_gl_draw(surface);
+
+    if (test_fade == 0) {
+        surface_gl_update_framebuffer_texture(surface, 1);
+    }
+
+    int points[][2] = {
+        {0, 0}, //
+        {surface->width2, 0}, //
+        {surface->width2, surface->height2}, //
+        {0, surface->height2} //
+    };
+
+    surface_gl_buffer_textured_quad(
+        surface,
+        surface->framebuffer_textures,
+        0,
+        0,
+        0,
+        255,
+        surface->width2,
+        surface->height2,
+        points
+    );
+#endif
+
     surface->fade_to_black = 1;
 
-    surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2,
-                          BLACK, 16);
+    glClear(GL_COLOR_BUFFER_BIT);
 #endif
 
 #ifdef RENDER_SW
@@ -1446,8 +1502,9 @@ void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
 }
 
 void surface_apply_login_filter(Surface *surface) {
-    surface_fade_to_black(surface);
-    surface_fade_to_black(surface);
+    // TODO remove
+    //surface_fade_to_black(surface);
+    //surface_fade_to_black(surface);
 
     int game_width = surface->mud->game_width;
 
