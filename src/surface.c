@@ -81,6 +81,13 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->mud = mud;
 
 #ifdef RENDER_GL
+    // TODO only use one
+    surface->screen_pixels_reversed =
+        calloc(surface->width2 * surface->height2, sizeof(int32_t));
+
+    surface->screen_pixels =
+        calloc(surface->width2 * surface->height2, sizeof(int32_t));
+
     /* coloured quads */
     shader_new(&surface->flat_shader, "./flat.vs", "./flat.fs");
 
@@ -139,7 +146,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface_gl_create_texture_array(&surface->font_textures, FONT_TEXTURE_WIDTH,
                                     FONT_TEXTURE_HEIGHT, FONT_COUNT * 2);
 
-    surface_gl_create_texture_array(&surface->framebuffer_textures, surface->width2, surface->height2, 1);
+    surface_gl_create_texture_array(&surface->framebuffer_textures,
+                                    surface->width2, surface->height2, 1);
 
     surface_gl_create_font_textures(surface);
     surface_gl_create_circle_texture(surface);
@@ -468,23 +476,23 @@ void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
         translate_gl_y(points[1][1], surface->height2), //
         mask_r, mask_g, mask_b, mask_a,                 //
         skin_r, skin_g, skin_b,                         //
-        width / texture_width, 0,                //
+        width / texture_width, 0,                       //
         texture_index,                                  //
 
         /* bottom right / southeast */
         translate_gl_x(points[2][0], surface->width2),
-        translate_gl_y(points[2][1], surface->height2),               //
-        mask_r, mask_g, mask_b, mask_a,                               //
-        skin_r, skin_g, skin_b,                                       //
+        translate_gl_y(points[2][1], surface->height2), //
+        mask_r, mask_g, mask_b, mask_a,                 //
+        skin_r, skin_g, skin_b,                         //
         width / texture_width, height / texture_height, //
-        texture_index,                                                //
+        texture_index,                                  //
 
         /* bottom left / southwest */
         translate_gl_x(points[3][0], surface->width2),
         translate_gl_y(points[3][1], surface->height2), //
         mask_r, mask_g, mask_b, mask_a,                 //
         skin_r, skin_g, skin_b,                         //
-        0, height / texture_height,              //
+        0, height / texture_height,                     //
         texture_index                                   //
     };
 
@@ -580,7 +588,9 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 
     int texture_index = surface_gl_sprite_texture_index(surface, sprite_id);
 
-    surface_gl_buffer_textured_quad(surface, texture_array_id, texture_index, mask_colour, skin_colour, alpha, sprite_width, sprite_height, points);
+    surface_gl_buffer_textured_quad(surface, texture_array_id, texture_index,
+                                    mask_colour, skin_colour, alpha,
+                                    sprite_width, sprite_height, points);
 }
 
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
@@ -766,40 +776,40 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                                 surface->sprite_media_textures);
 }
 
-void surface_gl_update_framebuffer_texture(Surface *surface, int fade) {
-    int *screen_pixels =
-        calloc(surface->width2 * surface->height2, sizeof(int));
-
+void surface_gl_update_framebuffer(Surface *surface) {
     glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
-                 GL_UNSIGNED_BYTE, screen_pixels);
-
-    int *texture_pixels =
-        calloc(surface->width2 * surface->height2, sizeof(int));
+                 GL_UNSIGNED_BYTE, surface->screen_pixels_reversed);
 
     for (int x = 0; x < surface->width2; x++) {
         for (int y = 0; y < surface->height2; y++) {
-            int colour = screen_pixels[x + (surface->height2 - y - 1) *
-                                               surface->width2];
+            int colour =
+                surface->screen_pixels_reversed[x + (surface->height2 - y - 1) *
+                                                        surface->width2];
 
-            if (fade) {
-                colour = ((colour >> 1) & 0x7f7f7f) + ((colour >> 2) & 0x3f3f3f) +
-                ((colour >> 3) & 0x1f1f1f) + ((colour >> 4) & 0xf0f0f);
-
-                colour += 0xff000000;
-            }
-
-            texture_pixels[x + y * surface->width2] = colour;
+            surface->screen_pixels[x + y * surface->width2] = colour;
         }
     }
+}
 
+void surface_gl_update_framebuffer_texture(Surface *surface) {
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->framebuffer_textures);
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0,
-                    surface->width2, surface->height2, 1, GL_BGRA,
-                    GL_UNSIGNED_BYTE, texture_pixels);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, surface->width2,
+                    surface->height2, 1, GL_BGRA, GL_UNSIGNED_BYTE,
+                    surface->screen_pixels);
+}
 
-    free(screen_pixels);
-    free(texture_pixels);
+void surface_gl_buffer_framebuffer_quad(Surface *surface) {
+    int points[][2] = {
+        {0, 0},                              //
+        {surface->width2, 0},                //
+        {surface->width2, surface->height2}, //
+        {0, surface->height2}                //
+    };
+
+    surface_gl_buffer_textured_quad(surface, surface->framebuffer_textures, 0,
+                                    0, 0, 255, surface->width2,
+                                    surface->height2, points);
 }
 
 void surface_gl_draw(Surface *surface) {
@@ -838,12 +848,12 @@ void surface_gl_draw(Surface *surface) {
         drawn_quads += quad_count;
     }
 
-#if 1
-    if (surface->fade_to_black == 1) {
-        surface_gl_update_framebuffer_texture(surface, 1);
-        test_fade = 1;
+    if (surface->fade_to_black) {
+        surface_gl_update_framebuffer(surface);
+        surface_fade_to_black_software(surface, surface->screen_pixels, 1);
+        surface_gl_update_framebuffer_texture(surface);
+        surface->has_faded = 1;
     }
-#endif
 
     surface_gl_reset_context(surface);
 
@@ -1026,9 +1036,10 @@ void surface_draw(Surface *surface) {
 
 void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
-    test_fade = 0;
+    surface->has_faded = 0;
     glClear(GL_COLOR_BUFFER_BIT);
-    //surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2, 0, 255);
+    // surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2,
+    // 0, 255);
 #endif
 
 #ifdef RENDER_SW
@@ -1420,37 +1431,37 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour) {
     surface->pixels[x + y * surface->width2] = colour;
 }
 
+void surface_fade_to_black_software(Surface *surface, int32_t *dest,
+                                    int add_alpha) {
+    int area = surface->width2 * surface->height2;
+
+    for (int i = 0; i < area; i++) {
+        int32_t pixel = dest[i] & 0xffffff;
+
+        dest[i] = ((pixel >> 1) & 0x7f7f7f) + ((pixel >> 2) & 0x3f3f3f) +
+                  ((pixel >> 3) & 0x1f1f1f) + ((pixel >> 4) & 0xf0f0f);
+
+        if (add_alpha) {
+            dest[i] += 0xff000000;
+        }
+    }
+}
+
 void surface_fade_to_black(Surface *surface) {
 #ifdef RENDER_GL
+    // TODO this leaves some sort of residue. https://imgur.com/a/35sqk7v
+
     /*surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2,
                           BLACK, 16);*/
 
-#if 1
-    //surface_gl_draw(surface);
-
-    if (test_fade == 0) {
-        surface_gl_update_framebuffer_texture(surface, 1);
+    if (!surface->has_faded) {
+        surface_gl_update_framebuffer(surface);
+        surface_fade_to_black_software(surface, surface->screen_pixels, 1);
+        surface_gl_update_framebuffer_texture(surface);
     }
 
-    int points[][2] = {
-        {0, 0}, //
-        {surface->width2, 0}, //
-        {surface->width2, surface->height2}, //
-        {0, surface->height2} //
-    };
-
-    surface_gl_buffer_textured_quad(
-        surface,
-        surface->framebuffer_textures,
-        0,
-        0,
-        0,
-        255,
-        surface->width2,
-        surface->height2,
-        points
-    );
-#endif
+    // TODO put this in a function
+    surface_gl_buffer_framebuffer_quad(surface);
 
     surface->fade_to_black = 1;
 
@@ -1458,21 +1469,12 @@ void surface_fade_to_black(Surface *surface) {
 #endif
 
 #ifdef RENDER_SW
-    int area = surface->width2 * surface->height2;
-
-    for (int i = 0; i < area; i++) {
-        int32_t pixel = surface->pixels[i] & 0xffffff;
-
-        surface->pixels[i] =
-            ((pixel >> 1) & 0x7f7f7f) + ((pixel >> 2) & 0x3f3f3f) +
-            ((pixel >> 3) & 0x1f1f1f) + ((pixel >> 4) & 0xf0f0f);
-    }
+    surface_fade_to_black_software(surface, surface->pixels, 0);
 #endif
 }
 
-void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
-                             int height) {
-    return;
+void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
+                                int y, int width, int height, int add_alpha) {
     for (int xx = x; xx < x + width; xx++) {
         for (int yy = y; yy < y + height; yy++) {
             int r = 0;
@@ -1484,7 +1486,7 @@ void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
                 if (i2 >= 0 && i2 < surface->width2) {
                     for (int j2 = yy - j; j2 <= yy + j; j2++) {
                         if (j2 >= 0 && j2 < surface->height2) {
-                            int32_t pixel = surface->pixels[i2 + surface->width2 * j2];
+                            int32_t pixel = dest[i2 + surface->width2 * j2];
 
                             r += (pixel >> 16) & 0xff;
                             g += (pixel >> 8) & 0xff;
@@ -1495,29 +1497,54 @@ void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
                 }
             }
 
-            surface->pixels[xx + surface->width2 * yy] =
-                ((r / a) << 16) + ((g / a) << 8) + (b / a);
+            dest[xx + surface->width2 * yy] = ((r / a) << 16) + ((g / a) << 8) +
+                                              (b / a) +
+                                              (add_alpha ? 0xff000000 : 0);
         }
     }
 }
 
+void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
+                       int height) {
+#ifdef RENDER_GL
+    surface_gl_draw(surface);
+
+    surface_gl_update_framebuffer(surface);
+
+    surface_draw_blur_software(surface, surface->screen_pixels, j, x, y, width,
+                               height, 1);
+
+    surface_gl_update_framebuffer_texture(surface);
+    surface_gl_buffer_framebuffer_quad(surface);
+#endif
+
+#ifdef RENDER_SW
+    surface_draw_blur_software(surface, surface->pixels, j, x, y, width, height,
+                               1);
+#endif
+}
+
 void surface_apply_login_filter(Surface *surface) {
-    // TODO remove
-    //surface_fade_to_black(surface);
-    //surface_fade_to_black(surface);
+    surface_fade_to_black(surface);
+
+#ifdef RENDER_GL
+    surface_gl_draw(surface);
+#endif
+
+    surface_fade_to_black(surface);
 
     int game_width = surface->mud->game_width;
 
     surface_draw_box(surface, 0, 0, game_width, 6, BLACK);
 
     for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(surface, i, 0, i, game_width, 8);
+        surface_draw_blur(surface, i, 0, i, game_width, 8);
     }
 
     surface_draw_box(surface, 0, 194, game_width, 20, BLACK);
 
     for (int i = 6; i >= 1; i--) {
-        surface_draw_line_alpha(surface, i, 0, 194 - i, game_width, 8);
+        surface_draw_blur(surface, i, 0, 194 - i, game_width, 8);
     }
 }
 
@@ -1689,7 +1716,8 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
 #ifdef RENDER_GL
     if (sprite_id == surface->mud->sprite_logo ||
-        sprite_id == surface->mud->sprite_logo + 1) {
+        sprite_id == surface->mud->sprite_logo + 1 ||
+        sprite_id == surface->mud->sprite_media + 10) {
         // TODO put into function
         int *screen_pixels =
             calloc(surface->width2 * surface->height2, sizeof(int));

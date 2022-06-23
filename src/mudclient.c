@@ -3994,16 +3994,6 @@ void mudclient_draw(mudclient *mud) {
     draw_background(mud->framebuffer, 0);
 #endif
 
-#if 0
-    surface->fade_to_black = 2;
-#endif
-
-#ifdef RENDER_GL
-    // if (!mud->surface->fade_to_black) {
-    // glClear(GL_COLOR_BUFFER_BIT);
-    //}
-#endif
-
     if (mud->logged_in == 0) {
         mud->surface->logged_in = 0;
         mudclient_draw_login_screens(mud);

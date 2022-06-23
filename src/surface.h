@@ -109,6 +109,7 @@ typedef struct Surface {
 
 #ifdef RENDER_GL
     int fade_to_black;
+    int has_faded;
 
     Shader flat_shader;
     GLuint flat_vao;
@@ -126,6 +127,9 @@ typedef struct Surface {
     SurfaceGlContext gl_contexts[256];
 
     int gl_context_count;
+
+    int32_t *screen_pixels_reversed;
+    int32_t *screen_pixels;
 #endif
 } Surface;
 
@@ -163,7 +167,9 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha);
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha);
-void surface_gl_update_framebuffer_texture(Surface *surface, int fade);
+void surface_gl_update_framebuffer(Surface *surface);
+void surface_gl_update_framebuffer_texture(Surface *surface);
+void surface_gl_buffer_framebuffer_quad(Surface *surface);
 void surface_gl_draw(Surface *surface);
 #endif
 
@@ -191,9 +197,11 @@ void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
 void surface_draw_box_edge(Surface *surface, int x, int y, int width,
                            int height, int colour);
 void surface_set_pixel(Surface *surface, int x, int y, int colour);
+void surface_fade_to_black_software(Surface *surface, int32_t *dest, int add_alpha);
 void surface_fade_to_black(Surface *surface);
-void surface_draw_line_alpha(Surface *surface, int j, int x, int y, int width,
-                             int height);
+void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x, int y, int width, int height, int add_alpha);
+void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
+                       int height);
 void surface_apply_login_filter(Surface *surface);
 void surface_clear(Surface *surface);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,

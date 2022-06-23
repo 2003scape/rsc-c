@@ -304,11 +304,11 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     surface_apply_login_filter(mud->surface);
 
-    /*surface_draw_sprite_from3(
+    surface_draw_sprite_from3(
         mud->surface,
         (mud->game_width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);*/
+        15, mud->sprite_media + 10);
 
     /* TODO: resizable logo
     surface_sprite_clipping_from9(
@@ -317,10 +317,12 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
            15, 400, 120, mud->sprite_media + 10, 0, 0, 0, 0);*/
 
-    surface_draw(mud->surface);
-
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
                               mud->game_width, 200);
+
+#ifdef RENDER_GL
+    surface_gl_draw(mud->surface);
+#endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo);
 
@@ -347,7 +349,9 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
                               mud->game_width, 200);
 
-    surface_draw(mud->surface);
+#ifdef RENDER_GL
+    surface_gl_draw(mud->surface);
+#endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1);
 
@@ -400,6 +404,10 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
     surface_draw_sprite_from5(mud->surface, mud->sprite_media + 10, 0, 0,
                               mud->game_width, 200);
 
+#ifdef RENDER_GL
+    surface_gl_draw(mud->surface);
+#endif
+
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10);
 
     world_reset(mud->world, 0);
@@ -426,8 +434,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
     } else {
         show_background = mud->login_screen >= 0 && mud->login_screen <= 3;
     }
-
-    //surface_draw_sprite_from3(mud->surface, 0, 10, mud->sprite_logo);
 
     if (show_background) {
         int cycle = (mud->login_timer * 2) % 3072;
