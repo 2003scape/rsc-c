@@ -81,7 +81,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->mud = mud;
 
 #ifdef RENDER_GL
-    // TODO only use one
+    // TODO only use one - maybe check if render_sw is set and use
+    // surface->pixels
+    // TODO put this into a function for resizable mode
     surface->screen_pixels_reversed =
         calloc(surface->width2 * surface->height2, sizeof(int32_t));
 
@@ -135,10 +137,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
         &surface->sprite_item_textures, ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT,
         game_data_item_sprite_count + game_data_projectile_sprite);
 
-    /* +1 for circle, +2 for extra login screen scenes */
+    /* +1 for circle, +2 for extra login screen scenes, +1 for sleep */
     surface_gl_create_texture_array(&surface->sprite_media_textures,
                                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
-                                    (mud->sprite_item - mud->sprite_media) + 3);
+                                    (mud->sprite_item - mud->sprite_media) + 4);
 
     surface_gl_create_texture_array(&surface->map_textures, MAP_TEXTURE_WIDTH,
                                     MAP_TEXTURE_HEIGHT, 1);
@@ -349,6 +351,10 @@ int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id) {
         return surface->map_textures;
     }
 
+    if (sprite_id == mud->sprite_texture + 1) {
+        return surface->sprite_media_textures;
+    }
+
     if (sprite_id == mud->sprite_logo || sprite_id == mud->sprite_logo + 1) {
         return surface->sprite_media_textures;
     }
@@ -408,8 +414,14 @@ int surface_gl_sprite_texture_height(Surface *surface,
     return 0;
 }
 
+/* index in the 2D texture array */
 int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
     mudclient *mud = surface->mud;
+
+    /* map texture */
+    if (sprite_id == mud->sprite_media - 1) {
+        return 0;
+    }
 
     if (sprite_id == mud->sprite_logo || sprite_id == mud->sprite_logo + 1) {
         /* +1 for circle texture */
@@ -417,6 +429,11 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
             (surface->mud->sprite_item - surface->mud->sprite_media) + 1;
 
         return offset + (sprite_id - mud->sprite_logo);
+    }
+
+    /* sleep texture */
+    if (sprite_id == mud->sprite_texture + 1) {
+        return (surface->mud->sprite_item - surface->mud->sprite_media) + 3;
     }
 
     if (sprite_id >= mud->sprite_media && sprite_id < mud->sprite_item) {
@@ -1038,8 +1055,6 @@ void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
     surface->has_faded = 0;
     glClear(GL_COLOR_BUFFER_BIT);
-    // surface_gl_buffer_box(surface, 0, 0, surface->width2, surface->height2,
-    // 0, 255);
 #endif
 
 #ifdef RENDER_SW
@@ -1460,7 +1475,6 @@ void surface_fade_to_black(Surface *surface) {
         surface_gl_update_framebuffer_texture(surface);
     }
 
-    // TODO put this in a function
     surface_gl_buffer_framebuffer_quad(surface);
 
     surface->fade_to_black = 1;
@@ -1669,6 +1683,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
     }
 
     int32_t *pixels = surface->surface_pixels[sprite_id];
+
     surface->sprite_width[sprite_id] = SLEEP_WIDTH;
     surface->sprite_height[sprite_id] = SLEEP_HEIGHT;
     surface->sprite_translate_x[sprite_id] = 0;
@@ -1711,6 +1726,37 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
             }
         }
     }
+
+#ifdef RENDER_GL
+    GLuint texture_array_id =
+        surface_gl_sprite_texture_array_id(surface, sprite_id);
+
+    int texture_index = surface_gl_sprite_texture_index(surface, sprite_id);
+
+    int texture_width =
+        surface_gl_sprite_texture_width(surface, texture_array_id);
+
+    int texture_height =
+        surface_gl_sprite_texture_height(surface, texture_array_id);
+
+    int32_t *texture_pixels =
+        calloc(texture_width * texture_height, sizeof(int32_t));
+
+    for (int x = 0; x < SLEEP_WIDTH; x++) {
+        for (int y = 0; y < SLEEP_HEIGHT; y++) {
+            texture_pixels[x + y * texture_width] =
+                pixels[x + y * SLEEP_WIDTH] + 0xff000000;
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index, texture_width,
+                    texture_height, 1, GL_BGRA, GL_UNSIGNED_BYTE,
+                    texture_pixels);
+
+    free(texture_pixels);
+#endif
 }
 
 void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {

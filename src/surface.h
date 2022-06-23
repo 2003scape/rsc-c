@@ -197,9 +197,11 @@ void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
 void surface_draw_box_edge(Surface *surface, int x, int y, int width,
                            int height, int colour);
 void surface_set_pixel(Surface *surface, int x, int y, int colour);
-void surface_fade_to_black_software(Surface *surface, int32_t *dest, int add_alpha);
+void surface_fade_to_black_software(Surface *surface, int32_t *dest,
+                                    int add_alpha);
 void surface_fade_to_black(Surface *surface);
-void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x, int y, int width, int height, int add_alpha);
+void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
+                                int y, int width, int height, int add_alpha);
 void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
                        int height);
 void surface_apply_login_filter(Surface *surface);
