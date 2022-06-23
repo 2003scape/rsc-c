@@ -1373,13 +1373,8 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
 #endif
 }
 
-void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
+void surface_draw_line_horizontal_software(Surface *surface, int x, int y, int width,
                                   int colour) {
-#ifdef RENDER_GL
-    surface_gl_buffer_box(surface, x, y, width, 1, colour, 255);
-#endif
-
-#ifdef RENDER_SW
     if (y < surface->bounds_top_y || y >= surface->bounds_bottom_y) {
         return;
     }
@@ -1398,16 +1393,21 @@ void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
     for (int i = 0; i < width; i++) {
         surface->pixels[start + i] = colour;
     }
-#endif
 }
 
-void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
-                                int colour) {
+void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
+                                  int colour) {
 #ifdef RENDER_GL
-    surface_gl_buffer_box(surface, x, y, 1, height, colour, 255);
+    surface_gl_buffer_box(surface, x, y, width, 1, colour, 255);
 #endif
 
 #ifdef RENDER_SW
+    surface_draw_line_horizontal_software(surface, x, y, width, colour);
+#endif
+}
+
+void surface_draw_line_vertical_software(Surface *surface, int x, int y, int height,
+                                int colour) {
     if (x < surface->bounds_top_x || x >= surface->bounds_bottom_x) {
         return;
     }
@@ -1426,6 +1426,16 @@ void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
     for (int i = 0; i < height; i++) {
         surface->pixels[start + i * surface->width2] = colour;
     }
+}
+
+void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
+                                int colour) {
+#ifdef RENDER_GL
+    surface_gl_buffer_box(surface, x, y, 1, height, colour, 255);
+#endif
+
+#ifdef RENDER_SW
+    surface_draw_line_vertical_software(surface, x, y, height, colour);
 #endif
 }
 
@@ -1764,22 +1774,15 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
     if (sprite_id == surface->mud->sprite_logo ||
         sprite_id == surface->mud->sprite_logo + 1 ||
         sprite_id == surface->mud->sprite_media + 10) {
-        // TODO put into function
-        int *screen_pixels =
-            calloc(surface->width2 * surface->height2, sizeof(int));
+        surface_gl_update_framebuffer(surface);
 
-        glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
-                     GL_UNSIGNED_BYTE, screen_pixels);
-
-        int *texture_pixels =
-            calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int));
+        int32_t *texture_pixels =
+            calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int32_t));
 
         for (int x = 0; x < MEDIA_TEXTURE_WIDTH; x++) {
             for (int y = 0; y < MEDIA_TEXTURE_HEIGHT; y++) {
-                int colour = screen_pixels[x + (surface->height2 - y - 1) *
-                                                   MEDIA_TEXTURE_WIDTH];
-
-                texture_pixels[x + y * MEDIA_TEXTURE_WIDTH] = colour;
+                texture_pixels[x + y * MEDIA_TEXTURE_WIDTH] =
+                    surface->screen_pixels[x + y * surface->width2];
             }
         }
 
@@ -1791,7 +1794,6 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
                         MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
                         GL_UNSIGNED_BYTE, texture_pixels);
 
-        free(screen_pixels);
         free(texture_pixels);
     }
 #endif
@@ -1982,12 +1984,13 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
 
     for (int xx = x; xx < x + width; xx++) {
         for (int yy = y; yy < y + height; yy++) {
-            surface->surface_pixels[sprite_id][index++] =
-                surface->pixels[xx + yy * surface->width2];
+            int colour = surface->pixels[xx + yy * surface->width2];
 
 #ifdef RENDER_GL
-            surface->surface_pixels[sprite_id][index - 1] += 0xff000000;
+            colour += 0xff000000;
 #endif
+
+            surface->surface_pixels[sprite_id][index++] = colour;
         }
     }
 

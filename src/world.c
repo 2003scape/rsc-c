@@ -219,39 +219,39 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
     int colour_1 = scene_get_fill_colour(world->scene, face_fill_1);
     int colour_2 = scene_get_fill_colour(world->scene, face_fill_2);
 
-    /* darken colours */
+    /* darken colours by half */
     colour_1 = colour_1 >> 1 & 0x7f7f7f;
     colour_2 = colour_2 >> 1 & 0x7f7f7f;
 
     if (direction == 0) {
-        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
+        surface_draw_line_horizontal_software(world->surface, line_x, line_y, 3,
                                      colour_1);
 
-        surface_draw_line_horizontal(world->surface, line_x, line_y + 1, 2,
+        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 1, 2,
                                      colour_1);
 
-        surface_draw_line_horizontal(world->surface, line_x, line_y + 2, 1,
+        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 2, 1,
                                      colour_1);
 
-        surface_draw_line_horizontal(world->surface, line_x + 2, line_y + 1, 1,
+        surface_draw_line_horizontal_software(world->surface, line_x + 2, line_y + 1, 1,
                                      colour_2);
 
-        surface_draw_line_horizontal(world->surface, line_x + 1, line_y + 2, 2,
+        surface_draw_line_horizontal_software(world->surface, line_x + 1, line_y + 2, 2,
                                      colour_2);
     } else if (direction == 1) {
-        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
+        surface_draw_line_horizontal_software(world->surface, line_x, line_y, 3,
                                      colour_2);
 
-        surface_draw_line_horizontal(world->surface, line_x + 1, line_y + 1, 2,
+        surface_draw_line_horizontal_software(world->surface, line_x + 1, line_y + 1, 2,
                                      colour_2);
 
-        surface_draw_line_horizontal(world->surface, line_x + 2, line_y + 2, 1,
+        surface_draw_line_horizontal_software(world->surface, line_x + 2, line_y + 2, 1,
                                      colour_2);
 
-        surface_draw_line_horizontal(world->surface, line_x, line_y + 1, 1,
+        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 1, 1,
                                      colour_1);
 
-        surface_draw_line_horizontal(world->surface, line_x, line_y + 2, 2,
+        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 2, 2,
                                      colour_1);
     }
 }
@@ -1385,7 +1385,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_draw_line_horizontal(world->surface, r_x * 3,
+                    surface_draw_line_horizontal_software(world->surface, r_x * 3,
                                                  r_y * 3, 3, colour);
                 }
             }
@@ -1407,7 +1407,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_draw_line_vertical(world->surface, r_x * 3, r_y * 3,
+                    surface_draw_line_vertical_software(world->surface, r_x * 3, r_y * 3,
                                                3, colour);
                 }
             }

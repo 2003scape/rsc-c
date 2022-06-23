@@ -190,8 +190,11 @@ void surface_draw_box_software(Surface *surface, int x, int y, int width,
                                int height, int colour);
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,
                       int colour);
+void surface_draw_line_horizontal_software(Surface *surface, int x, int y,
+                                           int width, int colour);
 void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
                                   int colour);
+void surface_draw_line_vertical_software(Surface *surface, int x, int y, int height, int colour);
 void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
                                 int colour);
 void surface_draw_box_edge(Surface *surface, int x, int y, int width,
