@@ -54,7 +54,7 @@
 /* convert integer vertices to floats and vice versa */
 #define VERTEX_SCALE 100
 #define VERTEX_TO_FLOAT(vertex) (vertex / (float)VERTEX_SCALE)
-#define FLOAT_TO_VERTEX(f) (f * VERTEX_SCALE)
+#define FLOAT_TO_VERTEX(f) (int)(f * VERTEX_SCALE)
 #endif
 
 extern int sin_cos_512[512];

@@ -1621,24 +1621,6 @@ void scene_render(Scene *scene) {
             continue;
         }
 
-        vec3 model_position = {
-            VERTEX_TO_FLOAT(game_model->base_x),
-            VERTEX_TO_FLOAT(game_model->base_y),
-            VERTEX_TO_FLOAT(game_model->base_z)
-        };
-
-
-        /*float distance = glm_vec3_distance(model_position, scene->gl_mouse_world);
-
-        if (distance <= 1.0f) {
-            game_model->visible = 0;
-        }*/
-
-        //glm_vec3_print(model_position, stdout);
-        //glm_vec3_print(scene->gl_mouse_world, stdout);
-
-        //printf("%d %d %d\n", game_model->x1, game_model->x2, mouse_world_x);
-
         if (
             mouse_world_x >= game_model->x1 &&
             mouse_world_x <= game_model->x2 &&
@@ -1649,11 +1631,6 @@ void scene_render(Scene *scene) {
         ) {
             game_model->test = 1;
         }
-
-        /*printf("%f %f %f\n",
-                game_model->x1 / 100.0f,
-                game_model->y1 / 100.0f,
-                game_model->z1 / 100.0f);*/
     }
 
     for (int i = 0; i < scene->model_count; i++) {

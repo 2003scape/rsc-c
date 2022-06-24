@@ -45,7 +45,6 @@ void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
     game_model->autocommit = autocommit;
     game_model->isolated = isolated;
     game_model->unlit = unlit;
-    // game_model->unlit = 0;
     game_model->unpickable = unpickable;
 
     game_model_merge(game_model, pieces, count);
@@ -59,7 +58,6 @@ void game_model_from7(GameModel *game_model, int num_vertices, int num_faces,
     game_model->autocommit = autocommit;
     game_model->isolated = isolated;
     game_model->unlit = unlit;
-    // game_model->unlit = 0;
     game_model->unpickable = unpickable;
     game_model->projected = projected;
 
@@ -77,15 +75,8 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
 
     game_model_allocate(game_model, num_vertices, num_faces);
 
-    int max = 0;
-
     for (int i = 0; i < num_vertices; i++) {
         game_model->vertex_x[i] = get_signed_short(data, offset);
-
-        if (abs(game_model->vertex_x[i]) > max) {
-            max = abs(game_model->vertex_x[i]);
-        }
-
         offset += 2;
     }
 
@@ -611,6 +602,7 @@ void game_model_compute_bounds(GameModel *game_model) {
     game_model->y1 = 999999;
     game_model->z1 = 999999;
 
+    // TODO probably get rid of diamater?
     game_model->diameter = -999999;
     game_model->x2 = -999999;
     game_model->y2 = -999999;
@@ -621,7 +613,7 @@ void game_model_compute_bounds(GameModel *game_model) {
         int vertex_index = face_vertices[0];
         int face_num_vertices = game_model->face_num_vertices[i];
 
-#if defined(RENDER_GL) && !defined(RENDER_SW)
+#if !defined(RENDER_SW) && defined(RENDER_GL)
         vec3 vertex = {VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]),
                        VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]),
                        VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index])};
@@ -629,10 +621,9 @@ void game_model_compute_bounds(GameModel *game_model) {
         vec3 transformed_vertex = {0};
         glm_mat4_mulv3(game_model->transform, vertex, 1, transformed_vertex);
 
-        // TODO this doesn't work
-        int x1 = transformed_vertex[0] * 1000;
-        int y1 = transformed_vertex[1] * 1000;
-        int z1 = transformed_vertex[2] * 1000;
+        int x1 = FLOAT_TO_VERTEX(transformed_vertex[0]);
+        int y1 = FLOAT_TO_VERTEX(transformed_vertex[1]);
+        int z1 = FLOAT_TO_VERTEX(transformed_vertex[2]);
 #else
         int x1 = game_model->vertex_transformed_x[vertex_index];
         int y1 = game_model->vertex_transformed_y[vertex_index];
@@ -646,16 +637,18 @@ void game_model_compute_bounds(GameModel *game_model) {
             vertex_index = face_vertices[j];
 
 #if !defined(RENDER_SW) && defined(RENDER_GL)
-            vertex[0] = game_model->vertex_x[vertex_index] / 1000.0f;
-            vertex[1] = game_model->vertex_y[vertex_index] / 1000.0f;
-            vertex[2] = game_model->vertex_z[vertex_index] / 1000.0f;
+            vec3 vertex = {0};
+            vertex[0] = VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
+            vertex[1] = VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
+            vertex[2] = VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
 
+            vec3 transformed_vertex = {0};
             glm_mat4_mulv3(game_model->transform, vertex, 1,
                            transformed_vertex);
 
-            int vertex_transformed_x = transformed_vertex[0] * 1000;
-            int vertex_transformed_y = transformed_vertex[1] * 1000;
-            int vertex_transformed_z = transformed_vertex[2] * 1000;
+            int vertex_transformed_x = FLOAT_TO_VERTEX(transformed_vertex[0]);
+            int vertex_transformed_y = FLOAT_TO_VERTEX(transformed_vertex[1]);
+            int vertex_transformed_z = FLOAT_TO_VERTEX(transformed_vertex[2]);
 #else
             int vertex_transformed_x =
                 game_model->vertex_transformed_x[vertex_index];
@@ -722,6 +715,8 @@ void game_model_compute_bounds(GameModel *game_model) {
             game_model->z2 = z2;
         }
     }
+
+    printf("%d %d %d\n", game_model->autocommit, game_model->x1, game_model->x2);
 }
 
 void game_model_get_face_normals(GameModel *game_model, int *vertex_x,
@@ -857,13 +852,11 @@ void game_model_relight(GameModel *game_model) {
 void game_model_reset_transform(GameModel *game_model) {
     game_model->transform_state = 0;
 
-#ifdef RENDER_SW
     for (int i = 0; i < game_model->num_vertices; i++) {
         game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
         game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
     }
-#endif
 
 #ifdef RENDER_GL
     glm_mat4_identity(game_model->transform);
@@ -907,7 +900,7 @@ void game_model_apply(GameModel *game_model) {
         }
 #endif
 
-#if 1
+#ifdef RENDER_SW
         if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_ROTATE) {
             game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
@@ -918,9 +911,9 @@ void game_model_apply(GameModel *game_model) {
             game_model_apply_translate(game_model, game_model->base_x,
                                        game_model->base_y, game_model->base_z);
         }
+#endif
 
         game_model_compute_bounds(game_model);
-#endif
 
         game_model_relight(game_model);
     }
@@ -1068,7 +1061,9 @@ void game_model_copy_position(GameModel *game_model, GameModel *source) {
     game_model->base_x = source->base_x;
     game_model->base_y = source->base_y;
     game_model->base_z = source->base_z;
+
     game_model_determine_transform_kind(game_model);
+
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 
 #ifdef RENDER_GL
