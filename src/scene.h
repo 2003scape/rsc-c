@@ -140,6 +140,12 @@ typedef struct Scene {
     mat4 gl_projection;
     mat4 gl_projection_view;
 
+    mat4 gl_inverse_projection;
+    mat4 gl_inverse_view;
+    // TODO can these be combined? - yes
+
+    vec3 gl_mouse_world;
+
     int scroll_texture_position;
 #endif
 } Scene;
@@ -168,7 +174,7 @@ void scene_gradient_translucent_scanline(int32_t *raster, int i, int j,
                                          int32_t *ramp, int l, int i1);
 void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
                              int32_t *ramp, int ramp_index, int ramp_inc);
-int rgb(int i, int j, int k);
+int rgb(int i, int j, int k); // TODO bad name
 void scene_add_model(Scene *scene, GameModel *model);
 void scene_remove_model(Scene *scene, GameModel *model);
 void scene_null_model(Scene *scene, GameModel *model);

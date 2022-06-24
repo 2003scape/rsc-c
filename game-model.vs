@@ -14,6 +14,8 @@ layout(location = 6) in vec3 back_texture_position;
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
 
+uniform int vertex_scale;
+
 uniform float scroll_texture;
 
 uniform int fog_distance;
@@ -52,8 +54,9 @@ void main() {
 
         int divisor = (light_diffuse * light_direction_magnitude) / RAMP_SIZE;
 
-        intensity = int(dot(model_normal * 1000, light_direction * 1000) /
-                        (divisor * normal_magnitude));
+        intensity = int(
+            dot(model_normal * vertex_scale, light_direction * vertex_scale) /
+            (divisor * normal_magnitude));
     }
 
     int gradient_index = light_ambience;
@@ -70,9 +73,9 @@ void main() {
         vertex_texture_position = front_texture_position;
     }
 
-    if (gl_Position.z > (fog_distance / 1000.0f)) {
+    if (gl_Position.z > (fog_distance / float(vertex_scale))) {
         // TODO this needs to always use light_gradient - not texture
-        gradient_index += int(gl_Position.z  * 1000) - fog_distance;
+        gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
     }
 
     if (gradient_index > (RAMP_SIZE - 1)) {

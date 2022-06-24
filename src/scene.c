@@ -43,7 +43,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->mouse_picking_active = 0;
 
     scene->interlace = 0;
-    scene->width = 512;
+    scene->width = 512; // TODO these shouldn't be constants
     scene->clip_x = 256;
     scene->clip_y = 192;
     scene->base_x = 256;
@@ -950,6 +950,40 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->mouse_y = y;
     scene->mouse_picked_count = 0;
     scene->mouse_picking_active = 1;
+
+#ifdef RENDER_GL
+#if 0
+    float gl_x = translate_gl_x(x, scene->surface->width2);
+    float gl_y = translate_gl_y(y, scene->surface->height2);
+
+    //vec2 normalized = {gl_x, gl_y};
+
+    vec4 clip = {gl_x, gl_y, -1.0f, 1.0f};
+
+    vec4 eye = {0};
+
+    glm_mat4_mulv(scene->gl_inverse_projection, clip, eye);
+
+    eye[2] = -1.0f;
+    eye[3] = 0;
+
+    vec4 world = {0};
+
+    glm_mat4_mulv(scene->gl_inverse_view, eye, world);
+
+    scene->gl_mouse_world[0] = world[0];
+    scene->gl_mouse_world[1] = world[1];
+    scene->gl_mouse_world[2] = world[2];
+
+    glm_vec3_normalize(scene->gl_mouse_world);
+#endif
+
+    //glm_vec3_print(scene->gl_mouse_world, stdout);
+
+    //glm_vec4_print(world, stdout);
+
+    //printf("%f %f\n", gl_x, gl_y);
+#endif
 }
 
 void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
@@ -1183,7 +1217,7 @@ void scene_render(Scene *scene) {
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 
-        if (!game_model->visible) {
+        if (!game_model->visible || game_model->test) {
             continue;
         }
 
@@ -1552,11 +1586,13 @@ void scene_render(Scene *scene) {
 
 #ifdef RENDER_GL
     glEnable(GL_CULL_FACE);
-
     glEnable(GL_DEPTH_TEST);
+
     glClear(GL_DEPTH_BUFFER_BIT);
 
     shader_use(&scene->game_model_shader);
+
+    shader_set_int(&scene->game_model_shader, "vertex_scale", VERTEX_SCALE);
 
     shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
@@ -1573,14 +1609,59 @@ void scene_render(Scene *scene) {
 
     GLuint last_vao = 0;
 
+    int mouse_world_x = (int)(scene->gl_mouse_world[0] * 100);
+    int mouse_world_y = (int)(scene->gl_mouse_world[1] * 100);
+    int mouse_world_z = (int)(scene->gl_mouse_world[2] * 100);
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+        game_model->test = 0;
+
+        if (game_model->unpickable) {
+            continue;
+        }
+
+        vec3 model_position = {
+            VERTEX_TO_FLOAT(game_model->base_x),
+            VERTEX_TO_FLOAT(game_model->base_y),
+            VERTEX_TO_FLOAT(game_model->base_z)
+        };
+
+
+        /*float distance = glm_vec3_distance(model_position, scene->gl_mouse_world);
+
+        if (distance <= 1.0f) {
+            game_model->visible = 0;
+        }*/
+
+        //glm_vec3_print(model_position, stdout);
+        //glm_vec3_print(scene->gl_mouse_world, stdout);
+
+        //printf("%d %d %d\n", game_model->x1, game_model->x2, mouse_world_x);
+
+        if (
+            mouse_world_x >= game_model->x1 &&
+            mouse_world_x <= game_model->x2 &&
+            mouse_world_y >= game_model->y1 &&
+            mouse_world_y <= game_model->y2 &&
+            mouse_world_z >= game_model->z1 &&
+            mouse_world_z <= game_model->z2
+        ) {
+            game_model->test = 1;
+        }
+
+        /*printf("%f %f %f\n",
+                game_model->x1 / 100.0f,
+                game_model->y1 / 100.0f,
+                game_model->z1 / 100.0f);*/
+    }
+
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 
         if (game_model->ebo_offset == -1 || !game_model->visible) {
             continue;
         }
-
-        // game_model->light_ambience = test_yaw;
 
         if (last_vao != game_model->vao) {
             glBindVertexArray(game_model->vao);
@@ -1599,9 +1680,9 @@ void scene_render(Scene *scene) {
         shader_set_mat4(&scene->game_model_shader, "projection_view_model",
                         projection_view_model);
 
-        vec3 light_direction = {game_model->light_direction_x / 1000.f,
-                                game_model->light_direction_y / 1000.f,
-                                game_model->light_direction_z / 1000.f};
+        vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
+                                VERTEX_TO_FLOAT(game_model->light_direction_y),
+                                VERTEX_TO_FLOAT(game_model->light_direction_z)};
 
         int model_ambience = game_model->light_ambience;
 
@@ -1634,6 +1715,21 @@ void scene_render(Scene *scene) {
         glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
     }
+
+#if 1
+    int test_x = scene->mouse_x + 256;
+    int test_y = scene->surface->height2 - scene->mouse_y;
+    float test_z = 0;
+
+    glReadPixels(test_x, test_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &test_z);
+
+    vec3 test = {(float)test_x, (float)test_y, test_z};
+    vec4 bounds = {0, 0, scene->surface->width2, scene->surface->height2};
+
+    //vec3 object = {0};
+    glm_unproject(test, scene->gl_projection_view, bounds, scene->gl_mouse_world);
+    //glm_vec3_print(object, stdout);
+#endif
 #endif
 
     scene->mouse_picking_active = 0;
@@ -2260,6 +2356,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
             scene->mouse_x <= scanline_1->end_x >> 8 &&
             scanline_1->start_x <= scanline_1->end_x &&
             !game_model->unpickable && game_model->is_local_player[face] == 0) {
+
             scene->mouse_picked_models[scene->mouse_picked_count] = game_model;
             scene->mouse_picked_faces[scene->mouse_picked_count] = face;
             scene->mouse_picked_count++;
@@ -4042,9 +4139,9 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 
 #ifdef RENDER_GL
 void scene_gl_update_camera(Scene *scene) {
-    vec3 camera_position = {scene->camera_x / 1000.0f,
-                            scene->camera_y / 1000.0f,
-                            scene->camera_z / 1000.0f};
+    vec3 camera_position = {VERTEX_TO_FLOAT(scene->camera_x),
+                            VERTEX_TO_FLOAT(scene->camera_y),
+                            VERTEX_TO_FLOAT(scene->camera_z)};
 
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, -1.0, 0.0};
@@ -4063,16 +4160,21 @@ void scene_gl_update_camera(Scene *scene) {
 
     glm_lookat(camera_position, camera_centre, camera_up, scene->gl_view);
 
-    float clip_far = (scene->clip_far_3d + scene->fog_z_distance) / 1000.0f;
+    glm_mat4_inv(scene->gl_view, scene->gl_inverse_view);
+
+    float clip_far = VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
     float field_of_view = 37;
 
     glm_perspective(glm_rad(field_of_view),
                     (float)(scene->surface->width2) /
                         (float)scene->surface->height2,
-                    scene->clip_near / 1000.0f, clip_far, scene->gl_projection);
+                    VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+
+    glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 
     glm_mat4_mul(scene->gl_projection, scene->gl_view,
                  scene->gl_projection_view);
+
 }
 #endif

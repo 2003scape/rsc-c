@@ -1661,6 +1661,8 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         }
     }
 
+    free(sprite_data);
+
 #ifdef RENDER_GL
     for (int i = sprite_id; i < sprite_id + frame_count; i++) {
         GLuint texture_array_id =
@@ -1681,8 +1683,6 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         }
     }
 #endif
-
-    free(sprite_data);
 }
 
 void surface_read_sleep_word(Surface *surface, int sprite_id,

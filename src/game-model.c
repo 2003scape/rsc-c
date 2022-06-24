@@ -622,27 +622,25 @@ void game_model_compute_bounds(GameModel *game_model) {
         int face_num_vertices = game_model->face_num_vertices[i];
 
 #if defined(RENDER_GL) && !defined(RENDER_SW)
-        vec3 vertex = {game_model->vertex_x[vertex_index] / 1000.0f,
-                       game_model->vertex_y[vertex_index] / 1000.0f,
-                       game_model->vertex_z[vertex_index] / 1000.0f};
+        vec3 vertex = {VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]),
+                       VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]),
+                       VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index])};
 
         vec3 transformed_vertex = {0};
         glm_mat4_mulv3(game_model->transform, vertex, 1, transformed_vertex);
 
+        // TODO this doesn't work
         int x1 = transformed_vertex[0] * 1000;
-        int x2 = x2;
         int y1 = transformed_vertex[1] * 1000;
-        int y2 = y1;
         int z1 = transformed_vertex[2] * 1000;
-        int z2 = z1;
 #else
         int x1 = game_model->vertex_transformed_x[vertex_index];
-        int x2 = x2;
         int y1 = game_model->vertex_transformed_y[vertex_index];
-        int y2 = y1;
         int z1 = game_model->vertex_transformed_z[vertex_index];
-        int z2 = z1;
 #endif
+        int x2 = x1;
+        int y2 = y1;
+        int z2 = z1;
 
         for (int j = 0; j < face_num_vertices; j++) {
             vertex_index = face_vertices[j];
@@ -889,9 +887,9 @@ void game_model_apply(GameModel *game_model) {
 #ifdef RENDER_GL
         if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_TRANSLATE) {
             glm_translate(game_model->transform,
-                          (vec3){game_model->base_x / 1000.0f,
-                                 game_model->base_y / 1000.0f,
-                                 game_model->base_z / 1000.0f});
+                          (vec3){VERTEX_TO_FLOAT(game_model->base_x),
+                                 VERTEX_TO_FLOAT(game_model->base_y),
+                                 VERTEX_TO_FLOAT(game_model->base_z)});
         }
 
         if (game_model->transform_kind >= GAME_MODEL_TRANSFORM_ROTATE) {
@@ -1333,9 +1331,9 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
     for (int i = 0; i < face_num_vertices; i++) {
         int vertex_index = face_vertices[i];
 
-        vertices[i][0] = game_model->vertex_x[vertex_index] / 1000.0f;
-        vertices[i][1] = game_model->vertex_y[vertex_index] / 1000.0f;
-        vertices[i][2] = game_model->vertex_z[vertex_index] / 1000.0f;
+        vertices[i][0] = VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
+        vertices[i][1] = VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
+        vertices[i][2] = VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
     }
 
     vec3 location_x = {0};
@@ -1491,23 +1489,25 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         for (int j = 0; j < face_num_vertices; j++) {
             int vertex_index = face_vertices[j];
 
-            GLfloat vertex_x = game_model->vertex_x[vertex_index] / 1000.0f;
-            GLfloat vertex_y = game_model->vertex_y[vertex_index] / 1000.0f;
-            GLfloat vertex_z = game_model->vertex_z[vertex_index] / 1000.0f;
+            GLfloat vertex_x = VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
+
+            GLfloat vertex_y = VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
+
+            GLfloat vertex_z = VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
 
             vec3 normal = {0};
             int normal_magnitude = 1;
 
             if (face_intensity == GAME_MODEL_USE_GOURAUD) {
-                normal[0] = vertex_normal_x[vertex_index] / 1000.0f;
-                normal[1] = vertex_normal_y[vertex_index] / 1000.0f;
-                normal[2] = vertex_normal_z[vertex_index] / 1000.0f;
+                normal[0] = VERTEX_TO_FLOAT(vertex_normal_x[vertex_index]);
+                normal[1] = VERTEX_TO_FLOAT(vertex_normal_y[vertex_index]);
+                normal[2] = VERTEX_TO_FLOAT(vertex_normal_z[vertex_index]);
 
                 normal_magnitude = vertex_normal_magnitude[vertex_index];
             } else {
-                normal[0] = face_normal_x[i] / 1000.0f;
-                normal[1] = face_normal_y[i] / 1000.0f;
-                normal[2] = face_normal_z[i] / 1000.0f;
+                normal[0] = VERTEX_TO_FLOAT(face_normal_x[i]);
+                normal[1] = VERTEX_TO_FLOAT(face_normal_y[i]);
+                normal[2] = VERTEX_TO_FLOAT(face_normal_z[i]);
             }
 
             int vertex_intensity =

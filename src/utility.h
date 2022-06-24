@@ -13,8 +13,6 @@
 #include <emscripten.h>
 #endif
 
-#include "bzip.h"
-
 #ifdef _3DS
 #include <3ds.h>
 #endif
@@ -24,6 +22,9 @@
 #include <ogcsys.h>
 #endif
 
+#include "bzip.h"
+
+/* for audio conversion */
 #define SIGN_BIT (0x80)  /* Sign bit for a A-law byte.        */
 #define QUANT_MASK (0xf) /* Quantization field mask.          */
 #define SEG_SHIFT (4)    /* Left shift for segment number.    */
@@ -47,8 +48,13 @@
 #define CHAR_SET_LENGTH 94
 
 #ifdef RENDER_GL
-/* convert sin_cos_x index to radians */
+/* convert sin_cos_x array index to radians */
 #define TABLE_TO_RADIANS(i, length) ((i / (length / 8.0f)) * (M_PI / 2))
+
+/* convert integer vertices to floats and vice versa */
+#define VERTEX_SCALE 100
+#define VERTEX_TO_FLOAT(vertex) (vertex / (float)VERTEX_SCALE)
+#define FLOAT_TO_VERTEX(f) (f * VERTEX_SCALE)
 #endif
 
 extern int sin_cos_512[512];

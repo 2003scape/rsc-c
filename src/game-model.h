@@ -55,6 +55,7 @@ typedef struct GameModel {
     int depth;
     int transform_state;
     int visible;
+    // TODO rename to min/max
     int x1;
     int x2;
     int y1;
@@ -103,6 +104,8 @@ typedef struct GameModel {
 
     mat4 transform;
 #endif
+
+    int test;
 } GameModel;
 
 void game_model_new(GameModel *game_model);
