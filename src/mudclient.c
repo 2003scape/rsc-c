@@ -3878,11 +3878,16 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance += 1400;
     }
 
+    // TODO remove
+    mud->scene->clip_far_3d = 10000;
+    mud->scene->fog_z_distance = 10000;
+
     int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
-                     912, mud->camera_rotation * 4, 0, mud->camera_zoom * 2);
+                     912, mud->camera_rotation * 4, 0,
+                     (mud->camera_zoom * 2) - test_z);
 
     surface_black_screen(mud->surface);
 
@@ -4487,7 +4492,7 @@ void mudclient_poll_events(mudclient *mud) {
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_pressed(mud, code, char_code);
 
-            int mag = 1;
+            int mag = 10;
 
             if (code == 113) {
                 test_x -= mag;

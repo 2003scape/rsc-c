@@ -146,6 +146,8 @@ typedef struct Scene {
 
     vec3 gl_mouse_world;
 
+    vec3 gl_mouse_ray;
+
     int scroll_texture_position;
 #endif
 } Scene;

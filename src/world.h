@@ -49,6 +49,8 @@ typedef struct World World;
 /* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
 #define BRIDGE_TILE_DECORATION 12
 
+#define TILE_FACE_TAG 200000
+
 extern int terrain_colours[TERRAIN_COLOUR_COUNT];
 
 void init_world_global();
@@ -77,6 +79,8 @@ typedef struct World {
     int8_t walls_north_south[PLANE_COUNT][TILE_COUNT];
     GameModel *roof_models[PLANE_COUNT][TILE_COUNT];
     int8_t walls_roof[PLANE_COUNT][TILE_COUNT];
+
+    /* map face indexes to x, y coordinates for walking */
     int local_x[LOCAL_COUNT];
     int local_y[LOCAL_COUNT];
 

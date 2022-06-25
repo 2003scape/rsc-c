@@ -907,6 +907,7 @@ void scene_clear(Scene *scene) {
 
 void scene_reduce_sprites(Scene *scene, int i) {
     scene->sprite_count -= i;
+
     game_model_reduce(scene->view, i, i * 2);
 
     if (scene->sprite_count < 0) {
@@ -951,12 +952,9 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->mouse_picked_count = 0;
     scene->mouse_picking_active = 1;
 
-#ifdef RENDER_GL
-#if 0
+#if 1
     float gl_x = translate_gl_x(x, scene->surface->width2);
     float gl_y = translate_gl_y(y, scene->surface->height2);
-
-    //vec2 normalized = {gl_x, gl_y};
 
     vec4 clip = {gl_x, gl_y, -1.0f, 1.0f};
 
@@ -971,18 +969,11 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
 
     glm_mat4_mulv(scene->gl_inverse_view, eye, world);
 
-    scene->gl_mouse_world[0] = world[0];
-    scene->gl_mouse_world[1] = world[1];
-    scene->gl_mouse_world[2] = world[2];
+    scene->gl_mouse_ray[0] = world[0];
+    scene->gl_mouse_ray[1] = world[1];
+    scene->gl_mouse_ray[2] = world[2];
 
-    glm_vec3_normalize(scene->gl_mouse_world);
-#endif
-
-    //glm_vec3_print(scene->gl_mouse_world, stdout);
-
-    //glm_vec4_print(world, stdout);
-
-    //printf("%f %f\n", gl_x, gl_y);
+    glm_vec3_normalize(scene->gl_mouse_ray);
 #endif
 }
 
@@ -1609,7 +1600,7 @@ void scene_render(Scene *scene) {
 
     GLuint last_vao = 0;
 
-    int mouse_world_x = (int)(scene->gl_mouse_world[0] * 100);
+    /*int mouse_world_x = (int)(scene->gl_mouse_world[0] * 100);
     int mouse_world_y = (int)(scene->gl_mouse_world[1] * 100);
     int mouse_world_z = (int)(scene->gl_mouse_world[2] * 100);
 
@@ -1630,6 +1621,34 @@ void scene_render(Scene *scene) {
             mouse_world_z <= game_model->z2
         ) {
             game_model->test = 1;
+        }
+    }*/
+
+    vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
+                      VERTEX_TO_FLOAT(scene->camera_y),
+                      VERTEX_TO_FLOAT(scene->camera_z)};
+
+    vec3 ray_scaled = {0};
+    glm_vec3_scale(scene->gl_mouse_ray, 10.0f, ray_scaled);
+
+    vec3 ray_end = {0};
+    glm_vec3_add(ray_start, ray_scaled, ray_end);
+
+    //glm_vec3_print(ray_end, stdout);
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+        game_model->test = 0;
+
+        if (game_model->unpickable) {
+            continue;
+        }
+
+        float test = game_model_gl_intersects(game_model, scene->gl_mouse_ray, ray_end);
+
+        if (test >= 0) {
+            game_model->test = 1;
+            //printf("%f\n", test);
         }
     }
 
@@ -1693,7 +1712,7 @@ void scene_render(Scene *scene) {
                        (void *)(game_model->ebo_offset * sizeof(GLuint)));
     }
 
-#if 1
+#if 0
     int test_x = scene->mouse_x + 256;
     int test_y = scene->surface->height2 - scene->mouse_y;
     float test_z = 0;

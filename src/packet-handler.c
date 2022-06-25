@@ -481,7 +481,8 @@ void mudclient_packet_tick(mudclient *mud) {
                     game_model_rotate(model, 0, tile_direction * 32, 0);
 
                     game_model_translate(
-                        model, model_x,
+                        model,
+                        model_x,
                         -world_get_elevation(mud->world, model_x, model_y),
                         model_y);
 

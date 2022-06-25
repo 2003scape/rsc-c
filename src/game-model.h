@@ -24,13 +24,12 @@
 #define GAME_MODEL_TRANSFORM_ROTATE 2
 
 #define GAME_MODEL_USE_GOURAUD 12345678
+#define COLOUR_TRANSPARENT 12345678
 
 typedef struct GameModel GameModel;
 
 #include "scene.h"
 #include "utility.h"
-
-#define COLOUR_TRANSPARENT 12345678
 
 typedef struct GameModel {
     int num_vertices;
@@ -53,8 +52,8 @@ typedef struct GameModel {
     int *face_normal_y;
     int *face_normal_z;
     int depth;
-    int transform_state;
-    int visible;
+    int8_t visible;
+
     // TODO rename to min/max
     int x1;
     int x2;
@@ -62,40 +61,54 @@ typedef struct GameModel {
     int y2;
     int z1;
     int z2;
-    int transparent;
+
+    /* used for walls */
+    int8_t unpickable;
+
+    /* used to identify the model in mouse picking. stores entity index */
     int key;
+
+    /* used to determine which face is selected for mouse picking. used with
+     * world->local_x and world->local_y */
     int *face_tag;
+
+    int8_t transparent;
     int8_t *is_local_player;
     int8_t isolated;
-    int8_t unlit;
-    int unpickable;
-    int projected;
-    int max_verts;
+    int8_t projected;
+    int max_verts; // TODO max_vertices
     int *vertex_x;
     int *vertex_y;
     int *vertex_z;
     int *vertex_transformed_x;
     int *vertex_transformed_y;
     int *vertex_transformed_z;
-    int light_diffuse;
+
+    int8_t unlit;
     int light_ambience;
-    int autocommit;
+    int light_diffuse;
+    int light_direction_x;
+    int light_direction_y;
+    int light_direction_z;
+    int light_direction_magnitude;
+
+    /* treat vertex_ arrays as vertex_transformed_. used for geneated terrain,
+     * wall and roof models */
+    int8_t autocommit;
+
     int max_faces;
+
     int base_x;
     int base_y;
     int base_z;
     int orientation_yaw;
     int orientation_pitch;
     int orientation_roll;
-    int transform_kind;
-    int diameter;
-    int light_direction_x;
-    int light_direction_y;
-    int light_direction_z;
-    int light_direction_magnitude;
-    int data_ptr;
+    int transform_kind; // TODO rename to type
+    int transform_state;
 
 #ifdef RENDER_GL
+    // TODO prefix gl_
     GLuint vao;
 
     int vbo_offset;
@@ -187,5 +200,6 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
 void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
                                  GameModel **game_models, int length);
+float game_model_gl_intersects(GameModel *game_model, vec3 ray_start, vec3 ray_end);
 #endif
 #endif

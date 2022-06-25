@@ -1032,7 +1032,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                             world->local_y[tile_face] = r_y;
 
                             game_model->face_tag[tile_face] =
-                                0x30d40 + tile_face;
+                                TILE_FACE_TAG + tile_face;
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
@@ -1050,7 +1050,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                             world->local_y[tile_face] = r_y;
 
                             game_model->face_tag[tile_face] =
-                                0x30d40 + tile_face;
+                                TILE_FACE_TAG + tile_face;
                         }
                     } else {
                         if (colour != COLOUR_TRANSPARENT) {
@@ -1068,7 +1068,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                             world->local_y[tile_face] = r_y;
 
                             game_model->face_tag[tile_face] =
-                                0x30d40 + tile_face;
+                                TILE_FACE_TAG + tile_face;
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
@@ -1086,7 +1086,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                             world->local_y[tile_face] = r_y;
 
                             game_model->face_tag[tile_face] =
-                                0x30d40 + tile_face;
+                                TILE_FACE_TAG + tile_face;
                         }
                     }
                 } else if (colour != COLOUR_TRANSPARENT) {
@@ -1103,7 +1103,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world->local_x[tile_face] = r_x;
                     world->local_y[tile_face] = r_y;
 
-                    game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+                    game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
                 }
             }
         }
@@ -1147,7 +1147,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world->local_x[tile_face] = r_x;
                     world->local_y[tile_face] = r_y;
 
-                    game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+                    game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
 
                     world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                         fill_front);
@@ -1192,7 +1192,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                             fill_front);
@@ -1238,7 +1238,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                             fill_front);
@@ -1282,7 +1282,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                             fill_front);
@@ -1326,7 +1326,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = 0x30d40 + tile_face;
+                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, face_fill,
                                             face_fill);

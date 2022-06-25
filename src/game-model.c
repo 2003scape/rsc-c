@@ -12,10 +12,9 @@ void game_model_new(GameModel *game_model) {
     memset(game_model, 0, sizeof(GameModel));
 
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
-    game_model->diameter = COLOUR_TRANSPARENT;
     game_model->visible = 1;
     game_model->key = -1;
-    game_model->light_ambience = 32; /* 256 is the maximum? */
+    game_model->light_ambience = 32; /* 256 is the maximum */
     game_model->light_diffuse = 512;
     game_model->light_direction_x = 180;
     game_model->light_direction_y = 155;
@@ -601,9 +600,6 @@ void game_model_compute_bounds(GameModel *game_model) {
     game_model->x1 = 999999;
     game_model->y1 = 999999;
     game_model->z1 = 999999;
-
-    // TODO probably get rid of diamater?
-    game_model->diameter = -999999;
     game_model->x2 = -999999;
     game_model->y2 = -999999;
     game_model->z2 = -999999;
@@ -679,18 +675,6 @@ void game_model_compute_bounds(GameModel *game_model) {
             }
         }
 
-        if (x2 - x1 > game_model->diameter) {
-            game_model->diameter = x2 - x1;
-        }
-
-        if (y2 - y1 > game_model->diameter) {
-            game_model->diameter = y2 - y1;
-        }
-
-        if (z2 - z1 > game_model->diameter) {
-            game_model->diameter = z2 - z1;
-        }
-
         if (x1 < game_model->x1) {
             game_model->x1 = x1;
         }
@@ -716,7 +700,7 @@ void game_model_compute_bounds(GameModel *game_model) {
         }
     }
 
-    printf("%d %d %d\n", game_model->autocommit, game_model->x1, game_model->x2);
+    //printf("%d %d %d\n", game_model->autocommit, game_model->x1, game_model->x2);
 }
 
 void game_model_get_face_normals(GameModel *game_model, int *vertex_x,
@@ -870,7 +854,6 @@ void game_model_apply(GameModel *game_model) {
         game_model->x1 = -9999999;
         game_model->y1 = -9999999;
         game_model->z1 = -9999999;
-        game_model->diameter = 9999999;
         game_model->x2 = 9999999;
         game_model->y2 = 9999999;
         game_model->z2 = 9999999;
@@ -1610,5 +1593,38 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
         game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
 
     }
+}
+
+float game_model_gl_intersects(GameModel *game_model, vec3 ray_start, vec3 ray_end) {
+    float t[10] = {0};
+
+    float vmin_x = VERTEX_TO_FLOAT(game_model->x1);
+    float vmax_x = VERTEX_TO_FLOAT(game_model->x2);
+
+    float vmin_y = VERTEX_TO_FLOAT(game_model->y1);
+    float vmax_y = VERTEX_TO_FLOAT(game_model->y2);
+
+    float vmin_z = VERTEX_TO_FLOAT(game_model->z1);
+    float vmax_z = VERTEX_TO_FLOAT(game_model->z2);
+
+    float rpos_x = ray_end[0];
+    float rpos_y = ray_end[1];
+    float rpos_z = ray_end[2];
+
+    float rdir_x = ray_start[0];
+    float rdir_y = ray_start[1];
+    float rdir_z = ray_start[2];
+
+    t[1] = (vmin_x - rpos_x)/rdir_x;
+    t[2] = (vmax_x - rpos_x)/rdir_x;
+    t[3] = (vmin_y - rpos_y)/rdir_y;
+    t[4] = (vmax_y - rpos_y)/rdir_y;
+    t[5] = (vmin_z - rpos_z)/rdir_z;
+    t[6] = (vmax_z - rpos_z)/rdir_z;
+    t[7] = fmax(fmax(fmin(t[1], t[2]), fmin(t[3], t[4])), fmin(t[5], t[6]));
+    t[8] = fmin(fmin(fmax(t[1], t[2]), fmax(t[3], t[4])), fmax(t[5], t[6]));
+    t[9] = (t[8] < 0 || t[7] > t[8]) ? -1 : t[7];
+
+    return t[9];
 }
 #endif
