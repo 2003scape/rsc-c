@@ -73,9 +73,12 @@ void main() {
         vertex_texture_position = front_texture_position;
     }
 
+    bool foggy = false;
+
     if (gl_Position.z > (fog_distance / float(vertex_scale))) {
         // TODO this needs to always use light_gradient - not texture
         gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
+        foggy = true;
     }
 
     if (gradient_index > (RAMP_SIZE - 1)) {
@@ -87,8 +90,8 @@ void main() {
     float lightness = 1;
 
     if (vertex_texture_position.z > -1) {
-        // TODO light_gradient looks ok here too. check again with white texture
-        lightness = texture_light_gradient[gradient_index];
+        // TODO light_gradient looks ok here too.
+        lightness = foggy ? light_gradient[gradient_index] : texture_light_gradient[gradient_index];
 
         if (vertex_texture_position.z == FOUNTAIN_ID) {
             vertex_texture_position.y -= scroll_texture;

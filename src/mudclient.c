@@ -3045,6 +3045,22 @@ void mudclient_handle_inputs(mudclient *mud) {
         mudclient_handle_login_screen_input(mud);
     } else if (mud->logged_in == 1) {
         mud->mouse_action_timeout++;
+
+#if defined(RENDER_GL) && !defined(RENDER_SW)
+    if (mud->scene->terrain_walk && mud->scene->terrain_pick_step == 2) {
+        mud->scene->terrain_walk = 0;
+        mud->scene->terrain_pick_step = 0;
+
+        mudclient_walk_to_action_source(
+            mud, mud->local_region_x, mud->local_region_y,
+            mud->scene->terrain_pick_x, mud->scene->terrain_pick_y, 0);
+
+        if (mud->mouse_click_x_step == -24) {
+            mud->mouse_click_x_step = 24;
+        }
+    }
+#endif
+
         mudclient_handle_game_input(mud);
     }
 
@@ -3507,6 +3523,12 @@ void mudclient_draw_ui(mudclient *mud) {
                 mudclient_draw_right_click_menu(mud);
             } else {
                 mudclient_create_top_mouse_menu(mud);
+
+#ifdef RENDER_GL
+                if (!mud->scene->terrain_walk) {
+                    mud->scene->terrain_pick_step = 0;
+                }
+#endif
             }
         }
     }
@@ -3879,8 +3901,8 @@ void mudclient_draw_game(mudclient *mud) {
     }
 
     // TODO remove
-    mud->scene->clip_far_3d = 10000;
-    mud->scene->fog_z_distance = 10000;
+    //mud->scene->clip_far_3d = 10000;
+    //mud->scene->fog_z_distance = 10000;
 
     int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;

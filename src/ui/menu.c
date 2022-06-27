@@ -14,7 +14,6 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
                                       mud->local_region_y, menu_x, menu_y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_CAST_GROUNDITEM);
-
         packet_stream_put_short(mud->packet_stream, menu_x + mud->region_x);
         packet_stream_put_short(mud->packet_stream, menu_y + mud->region_y);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -28,7 +27,6 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
                                       mud->local_region_y, menu_x, menu_y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_USEWITH_GROUNDITEM);
-
         packet_stream_put_short(mud->packet_stream, menu_x + mud->region_x);
         packet_stream_put_short(mud->packet_stream, menu_y + mud->region_y);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -42,7 +40,6 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
                                       mud->local_region_y, menu_x, menu_y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_GROUNDITEM_TAKE);
-
         packet_stream_put_short(mud->packet_stream, menu_x + mud->region_x);
         packet_stream_put_short(mud->packet_stream, menu_y + mud->region_y);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -57,7 +54,6 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mudclient_walk_to_wall_object(mud, menu_x, menu_y, menu_index);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_CAST_WALLOBJECT);
-
         packet_stream_put_short(mud->packet_stream, menu_x + mud->region_x);
         packet_stream_put_short(mud->packet_stream, menu_y + mud->region_y);
         packet_stream_put_byte(mud->packet_stream, menu_index);
@@ -70,7 +66,6 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mudclient_walk_to_wall_object(mud, menu_x, menu_y, menu_index);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_USEWITH_WALLOBJECT);
-
         packet_stream_put_short(mud->packet_stream, menu_x + mud->region_x);
         packet_stream_put_short(mud->packet_stream, menu_y + mud->region_y);
         packet_stream_put_byte(mud->packet_stream, menu_index);
@@ -353,12 +348,24 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mud->selected_spell = -1;
         break;
     case MENU_WALK:
+#ifdef RENDER_GL
+        printf("click walk\n");
+
+        if (mud->scene->terrain_pick_step == 0) {
+            mud->scene->terrain_pick_step = 1;
+        }
+
+        mud->scene->terrain_walk = 1;
+#endif
+
+#ifdef RENDER_SW
         mudclient_walk_to_action_source(
             mud, mud->local_region_x, mud->local_region_y, menu_x, menu_y, 0);
 
         if (mud->mouse_click_x_step == -24) {
             mud->mouse_click_x_step = 24;
         }
+#endif
         break;
     case MENU_CAST_SELF:
         packet_stream_new_packet(mud->packet_stream, CLIENT_CAST_SELF);
@@ -1226,7 +1233,13 @@ void mudclient_create_right_click_menu(mudclient *mud) {
         mud->menu_items_count++;
     }
 
-    if (selected_face != -1) {
+    int walkable = selected_face != -1;
+
+#if defined(RENDER_GL) && !defined(RENDER_SW)
+    walkable = mud->scene->terrain_walkable;
+#endif
+
+    if (walkable) {
         if (mud->selected_spell >= 0) {
             if (game_data_spell_type[mud->selected_spell] == 6) {
                 sprintf(mud->menu_item_text1[mud->menu_items_count],
@@ -1259,7 +1272,20 @@ void mudclient_create_right_click_menu(mudclient *mud) {
             mud->menu_item_y[mud->menu_items_count] =
                 mud->world->local_y[selected_face];
 
-            //printf("walk: %d %d\n", mud->world->local_x[selected_face], mud->world->local_y[selected_face]);
+            /*printf("walk: %d %d\n",
+                   mud->world->local_x[selected_face],
+                   mud->world->local_y[selected_face]);
+
+            printf("mouse world: %d %d\n",
+               (int)(mud->scene->gl_mouse_world[0] * 100) / 128,
+               (int)(mud->scene->gl_mouse_world[2] * 100) / 128
+            );*/
+
+            /*printf("mouse world: %f %f %f\n",
+                mud->scene->gl_mouse_world[0] * 100.0f,
+                mud->scene->gl_mouse_world[1]* 100.0f,
+                mud->scene->gl_mouse_world[2]* 100.0f
+            );*/
 
             mud->menu_items_count++;
         }
@@ -1301,6 +1327,13 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
                         mud->menu_y + 12, 1, CYAN);
 
     for (int i = 0; i < mud->menu_items_count; i++) {
+#ifdef RENDER_GL
+        if (mud->scene->terrain_pick_step == 0 &&
+            mud->menu_type[i] == MENU_WALK) {
+            mud->scene->terrain_pick_step = 1;
+        }
+#endif
+
         int entry_x = mud->menu_x + 2;
         int entry_y = mud->menu_y + 27 + i * 15;
         int text_colour = WHITE;

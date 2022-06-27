@@ -1879,6 +1879,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     triangle_1[0] =
                         game_model_vertex_at(world->parent_model, vertex_2_x,
                                              terrain_east_height, vertex_2_z);
+
                     triangle_1[1] = game_model_vertex_at(
                         world->parent_model, vertex_4_x,
                         terrain_south_east_height, vertex_4_z);

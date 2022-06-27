@@ -133,6 +133,8 @@ typedef struct Scene {
     GLuint terrain_ebo;
     GLuint terrain_textures;
 
+    GLuint last_vao;
+
     float light_gradient[RAMP_SIZE];
     float texture_light_gradient[RAMP_SIZE];
 
@@ -142,11 +144,18 @@ typedef struct Scene {
 
     mat4 gl_inverse_projection;
     mat4 gl_inverse_view;
-    // TODO can these be combined? - yes
+    //mat4 gl_inverse_projection_view;
+    // TODO can these be combined?
 
+    // TODO remove mouse_world
     vec3 gl_mouse_world;
-
     vec3 gl_mouse_ray;
+
+    int terrain_walkable;
+    int terrain_pick_step;
+    int terrain_pick_x;
+    int terrain_pick_y;
+    int terrain_walk;
 
     int scroll_texture_position;
 #endif
@@ -227,6 +236,7 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 
 #ifdef RENDER_GL
 void scene_gl_update_camera(Scene *scene);
+void scene_gl_draw_game_model(Scene *scene, GameModel *game_model);
 #endif
 
 #endif

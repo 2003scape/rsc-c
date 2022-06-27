@@ -952,21 +952,20 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->mouse_picked_count = 0;
     scene->mouse_picking_active = 1;
 
-#if 1
+#ifdef RENDER_GL
+    // TODO use inverse_projection_view
     float gl_x = translate_gl_x(x, scene->surface->width2);
     float gl_y = translate_gl_y(y, scene->surface->height2);
 
     vec4 clip = {gl_x, gl_y, -1.0f, 1.0f};
 
     vec4 eye = {0};
-
     glm_mat4_mulv(scene->gl_inverse_projection, clip, eye);
 
     eye[2] = -1.0f;
     eye[3] = 0;
 
     vec4 world = {0};
-
     glm_mat4_mulv(scene->gl_inverse_view, eye, world);
 
     scene->gl_mouse_ray[0] = world[0];
@@ -1598,134 +1597,106 @@ void scene_render(Scene *scene) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
 
-    GLuint last_vao = 0;
-
-    /*int mouse_world_x = (int)(scene->gl_mouse_world[0] * 100);
-    int mouse_world_y = (int)(scene->gl_mouse_world[1] * 100);
-    int mouse_world_z = (int)(scene->gl_mouse_world[2] * 100);
-
-    for (int i = 0; i < scene->model_count; i++) {
-        GameModel *game_model = scene->models[i];
-        game_model->test = 0;
-
-        if (game_model->unpickable) {
-            continue;
-        }
-
-        if (
-            mouse_world_x >= game_model->x1 &&
-            mouse_world_x <= game_model->x2 &&
-            mouse_world_y >= game_model->y1 &&
-            mouse_world_y <= game_model->y2 &&
-            mouse_world_z >= game_model->z1 &&
-            mouse_world_z <= game_model->z2
-        ) {
-            game_model->test = 1;
-        }
-    }*/
+    scene->last_vao = 0;
 
     vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
                       VERTEX_TO_FLOAT(scene->camera_y),
                       VERTEX_TO_FLOAT(scene->camera_z)};
 
-    vec3 ray_scaled = {0};
-    glm_vec3_scale(scene->gl_mouse_ray, 10.0f, ray_scaled);
-
     vec3 ray_end = {0};
-    glm_vec3_add(ray_start, ray_scaled, ray_end);
+    glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
 
-    //glm_vec3_print(ray_end, stdout);
+    vec3 ray_test = {0};
+    glm_vec3_copy(ray_start, ray_test);
 
+#if 1
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
         game_model->test = 0;
+    }
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
 
         if (game_model->unpickable) {
             continue;
         }
 
+        // apparently called time
         float test = game_model_gl_intersects(game_model, scene->gl_mouse_ray, ray_end);
 
         if (test >= 0) {
+            if (game_model->autocommit) {
+                //game_model->test = 1;
+
+                /*ray_test[0] += test * scene->gl_mouse_ray[0];
+                ray_test[1] += test * scene->gl_mouse_ray[1];
+                ray_test[2] +=  test * scene->gl_mouse_ray[2];*/
+
+                //glm_vec3_print(ray_test, stdout);
+                //glm_vec3_print(scene->gl_mouse_world, stdout);
+
+                /*printf("mouse ray: %d %d\n",
+                       (int)(ray_test[0] * 100) / 128,
+                       (int)(ray_test[2] * 100) / 128
+                );*/
+
+                /*printf("mouse world: %d %d\n",
+                       (int)(scene->gl_mouse_world[0] * 100) / 128,
+                       (int)(scene->gl_mouse_world[2] * 100) / 128
+                );*/
+
+                scene->terrain_walkable = 1;
+            } else {
+                //scene->mouse_picked_models[scene->mouse_picked_count] = game_model;
+                //scene->mouse_picked_faces[scene->mouse_picked_count] = face;
+            }
+
             game_model->test = 1;
-            //printf("%f\n", test);
         }
     }
+#endif
+
+    /* draw the terrain first for potential mouse picking */
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (game_model->autocommit && !game_model->unpickable) {
+            scene_gl_draw_game_model(scene, game_model);
+            game_model->test = 1;
+        }
+    }
+
+#if 1
+    if (scene->terrain_pick_step == 1) {
+        int mouse_x = scene->mouse_x + (scene->surface->width2 / 2);
+        int mouse_y = scene->surface->height2 - scene->mouse_y;
+        float mouse_z = 0;
+
+        glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &mouse_z);
+
+        vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
+        vec4 bounds = {0, 0, scene->surface->width2, scene->surface->height2};
+
+        glm_unproject(position, scene->gl_projection_view, bounds, scene->gl_mouse_world);
+
+        scene->terrain_pick_step = 2;
+        scene->terrain_pick_x = (int)((scene->gl_mouse_world[0] * 100.0f) / 128);
+        scene->terrain_pick_y = (int)((scene->gl_mouse_world[2] * 100.0f) / 128);
+
+        printf("pick step == 1, %d %d\n", scene->terrain_pick_x, scene->terrain_pick_y);
+    }
+#endif
 
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 
-        if (game_model->ebo_offset == -1 || !game_model->visible) {
-            continue;
+        if (!game_model->test) {
+            scene_gl_draw_game_model(scene, game_model);
         }
 
-        if (last_vao != game_model->vao) {
-            glBindVertexArray(game_model->vao);
-            last_vao = game_model->vao;
-        }
-
-        shader_set_mat4(&scene->game_model_shader, "model",
-                        game_model->transform);
-
-        mat4 view_model = {0};
-        glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
-
-        mat4 projection_view_model = {0};
-        glm_mat4_mul(scene->gl_projection, view_model, projection_view_model);
-
-        shader_set_mat4(&scene->game_model_shader, "projection_view_model",
-                        projection_view_model);
-
-        vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
-                                VERTEX_TO_FLOAT(game_model->light_direction_y),
-                                VERTEX_TO_FLOAT(game_model->light_direction_z)};
-
-        int model_ambience = game_model->light_ambience;
-
-        shader_set_int(&scene->game_model_shader, "light_ambience",
-                       model_ambience);
-
-        shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
-
-        if (!game_model->unlit) {
-            shader_set_vec3(&scene->game_model_shader, "light_direction",
-                            light_direction);
-
-            shader_set_int(&scene->game_model_shader, "light_diffuse",
-                           game_model->light_diffuse);
-
-            shader_set_int(&scene->game_model_shader,
-                           "light_direction_magnitude",
-                           game_model->light_direction_magnitude);
-        }
-
-        glCullFace(GL_BACK);
-        shader_set_int(&scene->game_model_shader, "cull_front", 0);
-
-        glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
-                       (void *)(game_model->ebo_offset * sizeof(GLuint)));
-
-        glCullFace(GL_FRONT);
-        shader_set_int(&scene->game_model_shader, "cull_front", 1);
-
-        glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
-                       (void *)(game_model->ebo_offset * sizeof(GLuint)));
+        game_model->test = 0;
     }
-
-#if 0
-    int test_x = scene->mouse_x + 256;
-    int test_y = scene->surface->height2 - scene->mouse_y;
-    float test_z = 0;
-
-    glReadPixels(test_x, test_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &test_z);
-
-    vec3 test = {(float)test_x, (float)test_y, test_z};
-    vec4 bounds = {0, 0, scene->surface->width2, scene->surface->height2};
-
-    //vec3 object = {0};
-    glm_unproject(test, scene->gl_projection_view, bounds, scene->gl_mouse_world);
-    //glm_vec3_print(object, stdout);
-#endif
 #endif
 
     scene->mouse_picking_active = 0;
@@ -4172,5 +4143,59 @@ void scene_gl_update_camera(Scene *scene) {
     glm_mat4_mul(scene->gl_projection, scene->gl_view,
                  scene->gl_projection_view);
 
+}
+
+void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
+    if (game_model->ebo_offset == -1 || !game_model->visible) {
+        return;
+    }
+
+    if (scene->last_vao != game_model->vao) {
+        glBindVertexArray(game_model->vao);
+        scene->last_vao = game_model->vao;
+    }
+
+    shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
+
+    mat4 view_model = {0};
+    glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
+
+    mat4 projection_view_model = {0};
+    glm_mat4_mul(scene->gl_projection, view_model, projection_view_model);
+
+    shader_set_mat4(&scene->game_model_shader, "projection_view_model",
+                    projection_view_model);
+
+    vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
+                            VERTEX_TO_FLOAT(game_model->light_direction_y),
+                            VERTEX_TO_FLOAT(game_model->light_direction_z)};
+
+    int model_ambience = game_model->light_ambience;
+    shader_set_int(&scene->game_model_shader, "light_ambience", model_ambience);
+    shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
+
+    if (!game_model->unlit) {
+        shader_set_vec3(&scene->game_model_shader, "light_direction",
+                        light_direction);
+
+        shader_set_int(&scene->game_model_shader, "light_diffuse",
+                       game_model->light_diffuse);
+
+        shader_set_int(&scene->game_model_shader,
+                       "light_direction_magnitude",
+                       game_model->light_direction_magnitude);
+    }
+
+    glCullFace(GL_BACK);
+    shader_set_int(&scene->game_model_shader, "cull_front", 0);
+
+    glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->ebo_offset * sizeof(GLuint)));
+
+    glCullFace(GL_FRONT);
+    shader_set_int(&scene->game_model_shader, "cull_front", 1);
+
+    glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->ebo_offset * sizeof(GLuint)));
 }
 #endif

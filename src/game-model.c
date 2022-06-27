@@ -1595,36 +1595,70 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
     }
 }
 
-float game_model_gl_intersects(GameModel *game_model, vec3 ray_start, vec3 ray_end) {
+// dir = dir
+// position = origin
+float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
+                               vec3 ray_position) {
+#if 1
     float t[10] = {0};
 
-    float vmin_x = VERTEX_TO_FLOAT(game_model->x1);
-    float vmax_x = VERTEX_TO_FLOAT(game_model->x2);
+    float min_vertex_x = VERTEX_TO_FLOAT(game_model->x1);
+    float max_vertex_x = VERTEX_TO_FLOAT(game_model->x2);
 
-    float vmin_y = VERTEX_TO_FLOAT(game_model->y1);
-    float vmax_y = VERTEX_TO_FLOAT(game_model->y2);
+    float min_vertex_y = VERTEX_TO_FLOAT(game_model->y1);
+    float max_vertex_y = VERTEX_TO_FLOAT(game_model->y2);
 
-    float vmin_z = VERTEX_TO_FLOAT(game_model->z1);
-    float vmax_z = VERTEX_TO_FLOAT(game_model->z2);
+    float min_vertex_z = VERTEX_TO_FLOAT(game_model->z1);
+    float max_vertex_z = VERTEX_TO_FLOAT(game_model->z2);
 
-    float rpos_x = ray_end[0];
-    float rpos_y = ray_end[1];
-    float rpos_z = ray_end[2];
+    t[1] = (min_vertex_x - ray_position[0])/ray_direction[0];
+    t[2] = (max_vertex_x - ray_position[0])/ray_direction[0];
 
-    float rdir_x = ray_start[0];
-    float rdir_y = ray_start[1];
-    float rdir_z = ray_start[2];
+    t[3] = (min_vertex_y - ray_position[1])/ray_direction[1];
+    t[4] = (max_vertex_y - ray_position[1])/ray_direction[1];
 
-    t[1] = (vmin_x - rpos_x)/rdir_x;
-    t[2] = (vmax_x - rpos_x)/rdir_x;
-    t[3] = (vmin_y - rpos_y)/rdir_y;
-    t[4] = (vmax_y - rpos_y)/rdir_y;
-    t[5] = (vmin_z - rpos_z)/rdir_z;
-    t[6] = (vmax_z - rpos_z)/rdir_z;
+    t[5] = (min_vertex_z - ray_position[2])/ray_direction[2];
+    t[6] = (max_vertex_z - ray_position[2])/ray_direction[2];
+
     t[7] = fmax(fmax(fmin(t[1], t[2]), fmin(t[3], t[4])), fmin(t[5], t[6]));
     t[8] = fmin(fmin(fmax(t[1], t[2]), fmax(t[3], t[4])), fmax(t[5], t[6]));
     t[9] = (t[8] < 0 || t[7] > t[8]) ? -1 : t[7];
 
     return t[9];
+#endif
+#if 0
+    vec3 box_min = {
+        VERTEX_TO_FLOAT(game_model->x1),
+        VERTEX_TO_FLOAT(game_model->y1),
+        VERTEX_TO_FLOAT(game_model->z1),
+    };
+
+    vec3 box_max = {
+        VERTEX_TO_FLOAT(game_model->x2),
+        VERTEX_TO_FLOAT(game_model->y2),
+        VERTEX_TO_FLOAT(game_model->z2),
+    };
+
+    vec3 t_min = {0};
+    glm_vec3_sub(box_min, ray_position, t_min);
+    glm_vec3_div(t_min, ray_direction, t_min);
+
+    vec3 t_max = {0};
+    glm_vec3_sub(box_max, ray_position, t_max);
+    glm_vec3_div(t_max, ray_direction, t_max);
+
+    vec3 t1 = {0};
+    glm_vec3_minv(t_min, t_max, t1);
+
+    vec3 t2 = {0};
+    glm_vec3_maxv(t_min, t_max, t2);
+
+    float t_near = fmax(fmax(t1[0], t1[1]), t1[2]);
+    float t_far = fmin(fmin(t2[0], t2[1]), t2[2]);
+
+    return t_far >= t_near ? 1 : -1;
+    //return vec2(tNear, tFar);
+#endif
 }
+
 #endif
