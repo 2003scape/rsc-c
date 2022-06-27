@@ -116,9 +116,9 @@ typedef struct GameModel {
     int ebo_length;
 
     mat4 transform;
-#endif
 
-    int test;
+    int gl_invisible;
+#endif
 } GameModel;
 
 void game_model_new(GameModel *game_model);

@@ -3047,13 +3047,13 @@ void mudclient_handle_inputs(mudclient *mud) {
         mud->mouse_action_timeout++;
 
 #if defined(RENDER_GL) && !defined(RENDER_SW)
-    if (mud->scene->terrain_walk && mud->scene->terrain_pick_step == 2) {
-        mud->scene->terrain_walk = 0;
-        mud->scene->terrain_pick_step = 0;
+    if (mud->gl_is_walking && mud->scene->gl_terrain_pick_step == 2) {
+        mud->gl_is_walking = 0;
+        mud->scene->gl_terrain_pick_step = 0;
 
         mudclient_walk_to_action_source(
             mud, mud->local_region_x, mud->local_region_y,
-            mud->scene->terrain_pick_x, mud->scene->terrain_pick_y, 0);
+            mud->scene->gl_terrain_pick_x, mud->scene->gl_terrain_pick_y, 0);
 
         if (mud->mouse_click_x_step == -24) {
             mud->mouse_click_x_step = 24;
@@ -3525,8 +3525,8 @@ void mudclient_draw_ui(mudclient *mud) {
                 mudclient_create_top_mouse_menu(mud);
 
 #ifdef RENDER_GL
-                if (!mud->scene->terrain_walk) {
-                    mud->scene->terrain_pick_step = 0;
+                if (!mud->gl_is_walking) {
+                    mud->scene->gl_terrain_pick_step = 0;
                 }
 #endif
             }

@@ -50,6 +50,13 @@ extern int scene_frustum_near_z;
 
 extern int64_t scene_texture_count_loaded;
 
+#ifdef RENDER_GL
+typedef struct ModelTime {
+    GameModel *game_model;
+    float time;
+} ModelTime;
+#endif
+
 typedef struct Scene {
     int max_sprite_count;
     int last_visible_polygons_count;
@@ -151,11 +158,18 @@ typedef struct Scene {
     vec3 gl_mouse_world;
     vec3 gl_mouse_ray;
 
-    int terrain_walkable;
-    int terrain_pick_step;
-    int terrain_pick_x;
-    int terrain_pick_y;
-    int terrain_walk;
+    /* are we picking a terrain model? */
+    int gl_terrain_walkable;
+
+    /* 0 = no picking, 1 = pick after next render, 2 = finished picking */
+    int gl_terrain_pick_step;
+
+    /* local_x and local_y for walk_to function */
+    int gl_terrain_pick_x;
+    int gl_terrain_pick_y;
+
+    /* sort based on distance */
+    ModelTime gl_mouse_picked_time[MOUSE_PICKED_MAX];
 
     int scroll_texture_position;
 #endif

@@ -681,6 +681,10 @@ typedef struct mudclient {
     /* 100 kilobytes of 16-bit linear PCM */
     int16_t pcm_out[1024 * 50];
 
+#ifdef RENDER_GL
+    int gl_is_walking;
+#endif
+
     int walk_path_x[PATH_STEPS_MAX];
     int walk_path_y[PATH_STEPS_MAX];
 
