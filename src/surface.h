@@ -156,11 +156,11 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id);
 void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
                                      int texture_index, int mask_colour,
                                      int skin_colour, int alpha, int width,
-                                     int height, int (*points)[2]);
+                                     int height, int (*points)[2], float depth);
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
-                              int flip, int rotation);
+                              int flip, int rotation, float depth);
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
                                  int colour, int font_id, int draw_shadow);
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
@@ -170,7 +170,7 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
 void surface_gl_buffer_framebuffer_quad(Surface *surface);
-void surface_gl_draw(Surface *surface);
+void surface_gl_draw(Surface *surface, int use_depth);
 #endif
 
 void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);
@@ -226,8 +226,9 @@ void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
 void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id);
 void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id);
-void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
-                                   int height, int sprite_id, int tx, int ty);
+void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
+                                int height, int sprite_id, int tx, int ty,
+                                float depth);
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha);
 void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
@@ -264,9 +265,18 @@ void surface_draw_minimap(int32_t *dest, int32_t *src, int j, int k, int l,
                           int i1, int j1, int k1, int l1);
 void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
                                     int l, int i1, int j1, int k1, int l1);
+void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
+                                   int draw_width, int draw_height,
+                                   int sprite_id, int mask_colour,
+                                   int skin_colour, int skew_x, int flip);
+void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
+                                   int draw_width, int draw_height,
+                                   int sprite_id, int mask_colour,
+                                   int skin_colour, int skew_x, int flip,
+                                   float depth);
 void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
                                    int sprite_id, int colour1, int colour2,
-                                   int tx, int flag);
+                                   int skew_x, int flag);
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
                                             int32_t *src, int j, int k,
                                             int dest_pos, int i1, int j1,

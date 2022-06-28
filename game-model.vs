@@ -63,12 +63,10 @@ void main() {
 
     if (cull_front) {
         gradient_index += intensity;
-
         vertex_colour = back_colour;
         vertex_texture_position = back_texture_position;
     } else {
         gradient_index -= intensity;
-
         vertex_colour = front_colour;
         vertex_texture_position = front_texture_position;
     }
@@ -76,7 +74,6 @@ void main() {
     bool foggy = false;
 
     if (gl_Position.z > (fog_distance / float(vertex_scale))) {
-        // TODO this needs to always use light_gradient - not texture
         gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
         foggy = true;
     }

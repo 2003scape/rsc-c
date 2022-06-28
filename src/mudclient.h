@@ -901,7 +901,7 @@ void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id);
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
-                         int id);
+                         int id, float depth);
 int mudclient_is_item_equipped(mudclient *mud, int id);
 int mudclient_get_inventory_count(mudclient *mud, int id);
 int mudclient_has_inventory_item(mudclient *mud, int id, int minimum);

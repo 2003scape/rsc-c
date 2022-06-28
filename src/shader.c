@@ -108,4 +108,8 @@ void shader_set_mat4(Shader *shader, char *name, mat4 value) {
 void shader_set_vec3(Shader *shader, char *name, vec3 value) {
     glUniform3fv(glGetUniformLocation(shader->id, name), 1, (float*)value);
 }
+
+void shader_set_vec3_array(Shader *shader, char *name, vec3 *values, int length) {
+    glUniform3fv(glGetUniformLocation(shader->id, name), length, (float*)values);
+}
 #endif

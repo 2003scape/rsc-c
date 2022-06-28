@@ -3777,14 +3777,12 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int x = mud->ground_item_x[i] * MAGIC_LOC + 64;
         int y = mud->ground_item_y[i] * MAGIC_LOC + 64;
 
-        if (mud->ground_item_id[i] == 33) {
         scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
                          -world_get_elevation(mud->world, x, y) -
                              mud->ground_item_z[i],
                          y, 96, 64, i + 20000);
 
         mud->scene_sprite_count++;
-        }
     }
 
     for (int i = 0; i < mud->teleport_bubble_count; i++) {
@@ -4734,23 +4732,25 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
     if (type == 0) {
         /* blue bubble used for teleports */
         int colour = BLUE + time * 5 * 256;
+
         surface_draw_circle(mud->surface, x + (width / 2), y + (height / 2),
                             20 + time * 2, colour, 255 - time * 5);
     } else if (type == 1) {
         /* red bubble used for telegrab */
         int colour = RED + time * 5 * 256;
+
         surface_draw_circle(mud->surface, x + (width / 2), y + (height / 2),
                             10 + time, colour, 255 - time * 5);
     }
 }
 
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
-                         int id) {
+                         int id, float depth) {
     int picture = game_data_item_picture[id] + mud->sprite_item;
     int mask = game_data_item_mask[id];
 
-    surface_sprite_clipping_from9(mud->surface, x, y, width, height, picture,
-                                  mask, 0, 0, 0);
+    surface_sprite_clipping_from9_depth(mud->surface, x, y, width, height, picture,
+                                  mask, 0, 0, 0, depth);
 }
 
 int mudclient_is_item_equipped(mudclient *mud, int id) {

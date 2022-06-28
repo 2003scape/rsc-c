@@ -94,6 +94,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
 #ifdef RENDER_GL
+    scene->gl_sprite_depth = calloc(max_sprite_count, sizeof(float));
+
     shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
 
     for (int i = 0; i < RAMP_SIZE; i++) {
@@ -938,23 +940,15 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->sprite_height[scene->sprite_count] = height;
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
-    // TODO remove
-    //printf("%d: %d %d %d\n", sprite_id, x, y, z);
+#ifdef RENDER_GL
+    vec4 position = { VERTEX_TO_FLOAT(x), VERTEX_TO_FLOAT(y), VERTEX_TO_FLOAT(z), 1.0, };
 
-    vec4 position = {
-        VERTEX_TO_FLOAT(x),
-        VERTEX_TO_FLOAT(y),
-        VERTEX_TO_FLOAT(z),
-        1.0,
-    };
+    vec4 projected_position = {0};
+    glm_mat4_mulv(scene->gl_projection_view, position, projected_position);
 
-    vec4 test_position = {0};
-    glm_mat4_mulv(scene->gl_projection_view, position, test_position);
-    printf("%f\n", test_position[2] / test_position[3]);
-
-    test_depth = test_position[2] / test_position[3];
-
-    // scene->gl_sprite_depth[scene->sprite_count] = depth;
+    scene->gl_sprite_depth[scene->sprite_count] =
+        projected_position[2] / projected_position[3];
+#endif
 
     int *vertices = malloc(2 * sizeof(int));
 
@@ -1411,9 +1405,16 @@ void scene_render(Scene *scene) {
             int x = vx - (w / 2);
             int y = scene->base_y + vy - h;
 
-            surface_sprite_clipping_from7(scene->surface, x + scene->base_x, y,
+            float depth = 0;
+
+#ifdef RENDER_GL
+            depth = scene->gl_sprite_depth[face];
+#endif
+
+            surface_draw_entity_sprite(scene->surface, x + scene->base_x, y,
                                           w, h, scene->sprite_id[face], tx,
-                                          (256 << scene->view_distance) / vz);
+                                          (256 << scene->view_distance) / vz,
+                                          depth);
 
             if (scene->mouse_picking_active &&
                 scene->mouse_picked_count < MOUSE_PICKED_MAX) {
@@ -1688,7 +1689,6 @@ void scene_render(Scene *scene) {
 #ifndef RENDER_SW
                     /* only pick if software is disabled, so we don't pick
                      * twice */
-
                     ModelTime model_time = {game_model, time};
 
                     scene->gl_mouse_picked_time[scene->mouse_picked_count] =
@@ -1718,6 +1718,8 @@ void scene_render(Scene *scene) {
         scene->mouse_picked_faces[i] = -1;
     }
 #endif
+
+    surface_gl_draw(scene->surface, 1);
 #endif
 
     scene->mouse_picking_active = 0;
@@ -2943,9 +2945,6 @@ void scene_initialise_polygon_2d(Scene *scene, int polygon_index) {
     } else if (project_vertex < min_plane_y) {
         min_plane_y = project_vertex;
     }
-
-    //printf("zeds %f %f\n", VERTEX_TO_FLOAT(min_z), VERTEX_TO_FLOAT(max_z));
-    //printf("%f %d %d\n", 1.0f - (min_z / 32767.0f), min_z, max_z);
 
     polygon->min_z = min_z;
     polygon->max_z = max_z;
