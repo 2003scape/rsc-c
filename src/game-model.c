@@ -113,11 +113,11 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         }
 
         // TODO remove
-        //game_model->face_fill_front[i] = -32768;
-        //game_model->face_fill_back[i] = -32768;
+        game_model->face_fill_front[i] = -32768;
+        game_model->face_fill_back[i] = -32768;
         //game_model->face_fill_back[i] = -801;
-        game_model->face_fill_front[i] = 8;
-        game_model->face_fill_back[i] = 8;
+        //game_model->face_fill_front[i] = 8;
+        //game_model->face_fill_back[i] = 8;
     }
 
     for (int i = 0; i < num_faces; i++) {
@@ -341,11 +341,11 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 
     // TODO remove
-    //game_model->face_fill_front[game_model->num_faces] = -32768;
-    //game_model->face_fill_back[game_model->num_faces] = -32768;
+    game_model->face_fill_front[game_model->num_faces] = -32768;
+    game_model->face_fill_back[game_model->num_faces] = -32768;
     //game_model->face_fill_back[game_model->num_faces] = -801;
-    game_model->face_fill_front[game_model->num_faces] = 8;
-    game_model->face_fill_back[game_model->num_faces] = 8;
+    //game_model->face_fill_front[game_model->num_faces] = 8;
+    //game_model->face_fill_back[game_model->num_faces] = 8;
 
     return game_model->num_faces++;
 }
@@ -413,8 +413,8 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
                                  face_num_vertices, i);
     }
 
-    for (int p = 0; p < count; p++) {
-        game_model_projection_prepare(pieces[p]);
+    for (int i = 0; i < count; i++) {
+        game_model_projection_prepare(pieces[i]);
     }
 }
 
@@ -423,19 +423,19 @@ void game_model_copy_lighting(GameModel *game_model, GameModel *model,
                               int in_face) {
     int *dest_vertices = malloc(num_vertices * sizeof(int));
 
-    for (int in_v = 0; in_v < num_vertices; in_v++) {
-        int out_v = game_model_vertex_at(
-            model, game_model->vertex_x[src_vertices[in_v]],
-            game_model->vertex_y[src_vertices[in_v]],
-            game_model->vertex_z[src_vertices[in_v]]);
+    for (int i = 0; i < num_vertices; i++) {
+        int vertex = game_model_vertex_at(
+            model, game_model->vertex_x[src_vertices[i]],
+            game_model->vertex_y[src_vertices[i]],
+            game_model->vertex_z[src_vertices[i]]);
 
-        dest_vertices[in_v] = out_v;
+        dest_vertices[i] = vertex;
 
-        model->vertex_intensity[out_v] =
-            game_model->vertex_intensity[src_vertices[in_v]];
+        model->vertex_intensity[vertex] =
+            game_model->vertex_intensity[src_vertices[i]];
 
-        model->vertex_ambience[out_v] =
-            game_model->vertex_ambience[src_vertices[in_v]];
+        model->vertex_ambience[vertex] =
+            game_model->vertex_ambience[src_vertices[i]];
     }
 
     int out_face = game_model_create_face(model, num_vertices, dest_vertices,
@@ -699,8 +699,6 @@ void game_model_compute_bounds(GameModel *game_model) {
             game_model->z2 = z2;
         }
     }
-
-    //printf("%d %d %d\n", game_model->autocommit, game_model->x1, game_model->x2);
 }
 
 void game_model_get_face_normals(GameModel *game_model, int *vertex_x,
@@ -1536,7 +1534,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                             23 * sizeof(GLfloat), vertex);
         }
 
-        // TODO preserve winding order for GL_CULL_FACE
+        // TODO preserve winding order for GL_CULL_FACE - earcutting?
         for (int j = 0; j < face_num_vertices - 2; j++) {
             GLuint indices[] = {(*vertex_offset), (*vertex_offset) + j + 1,
                                 (*vertex_offset) + j + 2};
@@ -1595,8 +1593,6 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
     }
 }
 
-// dir = dir
-// position = origin
 float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
                                vec3 ray_position) {
 #if 1
@@ -1657,7 +1653,6 @@ float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
     float t_far = fmin(fmin(t2[0], t2[1]), t2[2]);
 
     return t_far >= t_near ? 1 : -1;
-    //return vec2(tNear, tFar);
 #endif
 }
 

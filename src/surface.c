@@ -830,8 +830,8 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface) {
 }
 
 void surface_gl_draw(Surface *surface) {
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_CULL_FACE);
+    //glDisable(GL_DEPTH_TEST);
 
     shader_use(&surface->flat_shader);
     glBindVertexArray(surface->flat_vao);
@@ -850,6 +850,9 @@ void surface_gl_draw(Surface *surface) {
 
         shader_set_int(&surface->flat_shader, "bounds_max_y",
                        surface->height2 - context->max_y);
+
+        //shader_set_float(&surface->flat_shader, "depth", test_x / 1000.0f);
+        shader_set_float(&surface->flat_shader, "depth", test_depth);
 
         GLuint texture_array_id = context->texture_id;
 
@@ -2184,6 +2187,7 @@ void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
         k3, width, height, j2, k2, sprite_width, y_inc);
 }
 
+// TODO draw billboarded scene sprite
 void surface_sprite_clipping_from7(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id, int tx, int ty) {
     if (sprite_id >= 50000) {

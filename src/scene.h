@@ -51,6 +51,7 @@ extern int scene_frustum_near_z;
 extern int64_t scene_texture_count_loaded;
 
 #ifdef RENDER_GL
+// TODO prefix gl?
 typedef struct ModelTime {
     GameModel *game_model;
     float time;
@@ -177,6 +178,10 @@ typedef struct Scene {
 
 int scene_polygon_depth_compare(const void *a, const void *b);
 
+#ifdef RENDER_GL
+int scene_gl_model_time_compare(const void *a, const void *b);
+#endif
+
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int max_sprite_count);
 void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
@@ -206,8 +211,10 @@ void scene_null_model(Scene *scene, GameModel *model);
 void scene_dispose(Scene *scene);
 void scene_clear(Scene *scene);
 void scene_reduce_sprites(Scene *scene, int i);
-int scene_add_sprite(Scene *scene, int n, int x, int z, int y, int w, int h,
-                     int tag);
+/*int scene_add_sprite(Scene *scene, int n, int x, int z, int y, int w, int h,
+                     int tag);*/
+int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
+                     int width, int height, int tag);
 void scene_set_local_player(Scene *scene, int i);
 void scene_set_sprite_translate_x(Scene *scene, int i, int n);
 void scene_set_mouse_loc(Scene *scene, int x, int y);

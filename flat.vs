@@ -11,8 +11,10 @@ out vec4 vertex_colour;
 out vec4 vertex_skin_colour;
 out vec3 vertex_texture_position;
 
+uniform float depth;
+
 void main() {
-    gl_Position = vec4(position, 0.0, 1.0);
+    gl_Position = vec4(position, depth, 1.0);
 
     vertex_colour = colour;
     vertex_skin_colour = vec4(skin_colour, 1.0);

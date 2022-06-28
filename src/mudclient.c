@@ -348,12 +348,13 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 /*int test_x = 520;
 int test_y = -106;
 int test_z = 750;*/
-int test_x = 0;
+int test_x = 990;
 int test_y = 0;
 int test_z = -50;
 int test_yaw = 1;
 int test_colour = -1;
 int test_fade = 0;
+float test_depth = 0;
 GameModel *test_model = NULL;
 
 #ifdef RENDER_GL
@@ -1530,6 +1531,8 @@ void mudclient_load_models(mudclient *mud) {
                                 &mud->scene->game_model_vbo,
                                 &mud->scene->game_model_ebo, mud->game_models,
                                 game_data_model_count - 1);
+
+    //
 #endif
 }
 
@@ -3613,24 +3616,24 @@ void mudclient_animate_objects(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == FIRE_ID) {
-                char name[17];
+                char name[17] = {0};
                 sprintf(name, "firea%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == FIREPLACE_ID) {
-                char name[22];
+                char name[22] = {0};
                 sprintf(name, "fireplacea%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == LIGHTNING_ID) {
-                char name[21];
+                char name[21] = {0};
                 sprintf(name, "lightning%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == FIRE_SPELL_ID) {
-                char name[21];
+                char name[21] = {0};
                 sprintf(name, "firespell%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == SPELL_CHARGE_ID) {
-                char name[23];
+                char name[23] = {0};
                 sprintf(name, "spellcharge%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
@@ -3643,7 +3646,7 @@ void mudclient_animate_objects(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == TORCH_ID) {
-                char name[18];
+                char name[18] = {0};
                 sprintf(name, "torcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == SKULL_TORCH_ID) {
@@ -3659,7 +3662,7 @@ void mudclient_animate_objects(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == CLAW_SPELL_ID) {
-                char name[21];
+                char name[21] = {0};
                 sprintf(name, "clawspell%d", mud->claw_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -3679,22 +3682,22 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
             int y = player->current_y;
             int elevation = -world_get_elevation(mud->world, x, y);
 
-            int id = scene_add_sprite(mud->scene, 5000 + i, x, elevation, y,
+            /*int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation, y,
                                       145, 220, i + 10000);
 
             mud->scene_sprite_count++;
 
             if (player == mud->local_player) {
-                scene_set_local_player(mud->scene, id);
+                scene_set_local_player(mud->scene, sprite_id);
             }
 
             if (player->animation_current == 8) {
-                scene_set_sprite_translate_x(mud->scene, id, -30);
+                scene_set_sprite_translate_x(mud->scene, sprite_id, -30);
             }
 
             if (player->animation_current == 9) {
-                scene_set_sprite_translate_x(mud->scene, id, 30);
-            }
+                scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
+            }*/
         }
     }
 
@@ -3747,6 +3750,8 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         }
     }
 
+    //TODO uncomment
+
     for (int i = 0; i < mud->npc_count; i++) {
         GameCharacter *npc = mud->npcs[i];
 
@@ -3754,7 +3759,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int y = npc->current_y;
         int elevation = -world_get_elevation(mud->world, x, y);
 
-        int sprite =
+        /*int sprite_id =
             scene_add_sprite(mud->scene, 20000 + i, x, elevation, y,
                              game_data_npc_width[npc->npc_id],
                              game_data_npc_height[npc->npc_id], i + 30000);
@@ -3762,22 +3767,24 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         mud->scene_sprite_count++;
 
         if (npc->animation_current == 8) {
-            scene_set_sprite_translate_x(mud->scene, sprite, -30);
+            scene_set_sprite_translate_x(mud->scene, sprite_id, -30);
         } else if (npc->animation_current == 9) {
-            scene_set_sprite_translate_x(mud->scene, sprite, 30);
-        }
+            scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
+        }*/
     }
 
     for (int i = 0; i < mud->ground_item_count; i++) {
         int x = mud->ground_item_x[i] * MAGIC_LOC + 64;
         int y = mud->ground_item_y[i] * MAGIC_LOC + 64;
 
+        if (mud->ground_item_id[i] == 33) {
         scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
                          -world_get_elevation(mud->world, x, y) -
                              mud->ground_item_z[i],
                          y, 96, 64, i + 20000);
 
         mud->scene_sprite_count++;
+        }
     }
 
     for (int i = 0; i < mud->teleport_bubble_count; i++) {
@@ -3786,11 +3793,11 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int type = mud->teleport_bubble_type[i];
         int height = type == 0 ? 256 : 64;
 
-        scene_add_sprite(mud->scene, 50000 + i, x,
+        /*scene_add_sprite(mud->scene, 50000 + i, x,
                          -world_get_elevation(mud->world, x, y), y, 128, height,
                          i + 50000);
 
-        mud->scene_sprite_count++;
+        mud->scene_sprite_count++;*/
     }
 }
 
@@ -4514,7 +4521,7 @@ void mudclient_poll_events(mudclient *mud) {
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_pressed(mud, code, char_code);
 
-            int mag = 10;
+            int mag = 1;
 
             if (code == 113) {
                 test_x -= mag;

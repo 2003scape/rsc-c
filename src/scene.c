@@ -928,20 +928,38 @@ void scene_reduce_sprites(Scene *scene, int i) {
     }
 }
 
-int scene_add_sprite(Scene *scene, int n, int x, int z, int y, int w, int h,
-                     int tag) {
-    scene->sprite_id[scene->sprite_count] = n;
+int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
+                     int width, int height, int tag) {
+    scene->sprite_id[scene->sprite_count] = sprite_id;
     scene->sprite_x[scene->sprite_count] = x;
-    scene->sprite_z[scene->sprite_count] = z;
-    scene->sprite_y[scene->sprite_count] = y;
-    scene->sprite_width[scene->sprite_count] = w;
-    scene->sprite_height[scene->sprite_count] = h;
+    scene->sprite_z[scene->sprite_count] = y;
+    scene->sprite_y[scene->sprite_count] = z;
+    scene->sprite_width[scene->sprite_count] = width;
+    scene->sprite_height[scene->sprite_count] = height;
     scene->sprite_translate_x[scene->sprite_count] = 0;
+
+    // TODO remove
+    //printf("%d: %d %d %d\n", sprite_id, x, y, z);
+
+    vec4 position = {
+        VERTEX_TO_FLOAT(x),
+        VERTEX_TO_FLOAT(y),
+        VERTEX_TO_FLOAT(z),
+        1.0,
+    };
+
+    vec4 test_position = {0};
+    glm_mat4_mulv(scene->gl_projection_view, position, test_position);
+    printf("%f\n", test_position[2] / test_position[3]);
+
+    test_depth = test_position[2] / test_position[3];
+
+    // scene->gl_sprite_depth[scene->sprite_count] = depth;
 
     int *vertices = malloc(2 * sizeof(int));
 
-    vertices[0] = game_model_create_vertex(scene->view, x, z, y);
-    vertices[1] = game_model_create_vertex(scene->view, x, z - h, y);
+    vertices[0] = game_model_create_vertex(scene->view, x, y, z);
+    vertices[1] = game_model_create_vertex(scene->view, x, y - height, z);
 
     game_model_create_face(scene->view, 2, vertices, 0, 0);
 
@@ -1322,42 +1340,47 @@ void scene_render(Scene *scene) {
 
     GameModel *model_2d = scene->view;
 
-    /*if (model_2d->visible) {
+    if (model_2d->visible) {
         for (int face = 0; face < model_2d->num_faces; face++) {
             int *face_vertices = model_2d->face_vertices[face];
             int face_0 = face_vertices[0];
-            int vx = model_2d->vertex_view_x[face_0];
-            int vy = model_2d->vertex_view_y[face_0];
-            int vz = model_2d->project_vertex_z[face_0];
+            int view_x = model_2d->vertex_view_x[face_0];
+            int view_y = model_2d->vertex_view_y[face_0];
+            int view_z = model_2d->project_vertex_z[face_0];
 
-            if (vz > scene->clip_near && vz < scene->clip_far_2d) {
-                int vw =
-                    (scene->sprite_width[face] << scene->view_distance) / vz;
+            if (view_z > scene->clip_near && view_z < scene->clip_far_2d) {
+                int view_width =
+                    (scene->sprite_width[face] << scene->view_distance) /
+                    view_z;
 
-                int vh =
-                    (scene->sprite_height[face] << scene->view_distance) / vz;
+                int view_height =
+                    (scene->sprite_height[face] << scene->view_distance) /
+                    view_z;
 
-                if (vx - (vw / 2) <= scene->clip_x &&
-                    vx + (vw / 2) >= -scene->clip_x &&
-                    vy - vh <= scene->clip_y && vy >= -scene->clip_y) {
+                if (view_x - (view_width / 2) <= scene->clip_x &&
+                    view_x + (view_width / 2) >= -scene->clip_x &&
+                    view_y - view_height <= scene->clip_y &&
+                    view_y >= -scene->clip_y) {
 
-                    GamePolygon *polygon_2 =
+                    GamePolygon *polygon =
                         scene->visible_polygons[scene->visible_polygons_count];
 
-                    polygon_2->model = model_2d;
-                    polygon_2->face = face;
+                    polygon->model = model_2d;
+                    polygon->face = face;
 
                     scene_initialise_polygon_2d(scene,
                                                 scene->visible_polygons_count);
 
-                    polygon_2->depth =
-                        (vz + model_2d->project_vertex_z[face_vertices[1]]) / 2;
+                    polygon->depth =
+                        (view_z +
+                         model_2d->project_vertex_z[face_vertices[1]]) /
+                        2;
 
                     scene->visible_polygons_count++;
                 }
             }
         }
-    }*/
+    }
 
     if (scene->visible_polygons_count == 0) {
         return;
@@ -2920,6 +2943,9 @@ void scene_initialise_polygon_2d(Scene *scene, int polygon_index) {
     } else if (project_vertex < min_plane_y) {
         min_plane_y = project_vertex;
     }
+
+    //printf("zeds %f %f\n", VERTEX_TO_FLOAT(min_z), VERTEX_TO_FLOAT(max_z));
+    //printf("%f %d %d\n", 1.0f - (min_z / 32767.0f), min_z, max_z);
 
     polygon->min_z = min_z;
     polygon->max_z = max_z;

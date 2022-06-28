@@ -66,9 +66,9 @@ typedef struct SurfaceGlContext {
     GLuint texture_id;
     int quad_count;
 
+    /* boundaries for minimap drawing */
     int min_x;
     int max_x;
-
     int min_y;
     int max_y;
 } SurfaceGlContext;

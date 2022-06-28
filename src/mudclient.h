@@ -213,6 +213,7 @@ extern int test_z;
 extern int test_yaw;
 extern int test_colour;
 extern int test_fade;
+extern float test_depth;
 extern GameModel *test_model; // TODO remove
 
 extern char *font_files[];
