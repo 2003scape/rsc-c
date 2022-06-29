@@ -96,7 +96,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
     int skin_colours_length =
         sizeof(player_skin_colours) / sizeof(player_skin_colours[0]);
 
-    vec3 skin_colour_floats[skin_colours_length];
+    // TODO need to refactor a bit more before we can do this
+    /*vec3 skin_colour_floats[skin_colours_length];
 
     for (int i = 0; i < skin_colours_length; i++) {
         int skin_colour = player_skin_colours[i];
@@ -107,13 +108,12 @@ void surface_new(Surface *surface, int width, int height, int limit,
             (skin_colour & 0xff) / 255.0f
         };
 
-        //skin_colour_floats[i] = colour;
         glm_vec3_copy(colour, skin_colour_floats[i]);
     }
 
     shader_set_vec3_array(
         &surface->flat_shader,
-        "skin_colours", skin_colour_floats, skin_colours_length);
+        "skin_colours", skin_colour_floats, skin_colours_length);*/
 
     glGenVertexArrays(1, &surface->flat_vao);
     glBindVertexArray(surface->flat_vao);
@@ -390,6 +390,10 @@ int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id) {
         return surface->sprite_item_textures;
     }
 
+    if (sprite_id <= mud->sprite_media) {
+        return surface->sprite_entity_textures;
+    }
+
     return 0;
 }
 
@@ -400,6 +404,10 @@ int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id) {
 
     if (texture_array_id == surface->sprite_media_textures) {
         return MEDIA_TEXTURE_WIDTH;
+    }
+
+    if (texture_array_id == surface->sprite_entity_textures) {
+        return ENTITY_TEXTURE_WIDTH;
     }
 
     if (texture_array_id == surface->sprite_item_textures) {
@@ -423,6 +431,10 @@ int surface_gl_sprite_texture_height(Surface *surface,
 
     if (texture_array_id == surface->sprite_media_textures) {
         return MEDIA_TEXTURE_HEIGHT;
+    }
+
+    if (texture_array_id == surface->sprite_entity_textures) {
+        return ENTITY_TEXTURE_HEIGHT;
     }
 
     if (texture_array_id == surface->sprite_item_textures) {
@@ -465,6 +477,10 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
     if (sprite_id >= mud->sprite_item &&
         sprite_id <= mud->sprite_item + game_data_item_sprite_count) {
         return sprite_id - mud->sprite_item;
+    }
+
+    if (sprite_id <= mud->sprite_media) {
+        return surface->entity_sprite_indices[sprite_id];
     }
 
     return 0;
@@ -1707,6 +1723,8 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                             height, 1, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
 
             free(pixels);
+        } else {
+            printf("missing for %d\n", i);
         }
     }
 #endif

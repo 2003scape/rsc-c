@@ -20,6 +20,9 @@
 #define MEDIA_TEXTURE_WIDTH 512
 #define MEDIA_TEXTURE_HEIGHT 256
 
+#define ENTITY_TEXTURE_WIDTH 256
+#define ENTITY_TEXTURE_HEIGHT 256
+
 /* TODO combine font and map? */
 #define FONT_TEXTURE_WIDTH 286
 #define FONT_TEXTURE_HEIGHT 286
@@ -119,6 +122,7 @@ typedef struct Surface {
 
     GLuint sprite_item_textures;
     GLuint sprite_media_textures;
+    GLuint sprite_entity_textures;
     GLuint map_textures;
     GLuint font_textures;
     GLuint framebuffer_textures;
@@ -127,6 +131,8 @@ typedef struct Surface {
     SurfaceGlContext gl_contexts[256];
 
     int gl_context_count;
+
+    int entity_sprite_indices[2000];
 
     int32_t *screen_pixels_reversed;
     int32_t *screen_pixels;

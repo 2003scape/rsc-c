@@ -838,6 +838,12 @@ SDL_Surface *mudclient_parse_tga(mudclient *mud, int8_t *buffer);
 void mudclient_load_jagex(mudclient *mud);
 void mudclient_load_game_config(mudclient *mud);
 void mudclient_load_media(mudclient *mud);
+
+#ifdef RENDER_GL
+int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
+                                     int8_t *entity_jag_mem);
+#endif
+
 void mudclient_load_entities(mudclient *mud);
 void mudclient_load_textures(mudclient *mud);
 void mudclient_load_models(mudclient *mud);

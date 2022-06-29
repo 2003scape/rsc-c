@@ -321,7 +321,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                               mud->game_width, 200);
 
 #ifdef RENDER_GL
-    surface_gl_draw(mud->surface);
+    surface_gl_draw(mud->surface, 0);
 #endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo);
@@ -350,7 +350,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                               mud->game_width, 200);
 
 #ifdef RENDER_GL
-    surface_gl_draw(mud->surface);
+    surface_gl_draw(mud->surface, 0);
 #endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1);
@@ -405,7 +405,7 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
                               mud->game_width, 200);
 
 #ifdef RENDER_GL
-    surface_gl_draw(mud->surface);
+    surface_gl_draw(mud->surface, 0);
 #endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10);
