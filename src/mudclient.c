@@ -3288,7 +3288,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 }
 
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int tx, int ty) {
+                           int id, int tx, int ty, float depth) {
     GameCharacter *player = mud->players[id];
 
     if (player->colour_bottom == 255) {
@@ -3415,9 +3415,13 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                         player_top_bottom_colours[player->colour_bottom];
                 }
 
-                surface_sprite_clipping_from9(
+                // TODO tx is always 0?
+
+                //flip = 0;
+
+                surface_sprite_clipping_from9_depth(
                     mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flip);
+                    height, sprite_id, animation_colour, skin_colour, tx, flip, depth);
             }
         }
     }
@@ -3769,7 +3773,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
             int y = player->current_y;
             int elevation = -world_get_elevation(mud->world, x, y);
 
-            /*int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation, y,
+            int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation, y,
                                       145, 220, i + 10000);
 
             mud->scene_sprite_count++;
@@ -3784,7 +3788,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
 
             if (player->animation_current == 9) {
                 scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
-            }*/
+            }
         }
     }
 

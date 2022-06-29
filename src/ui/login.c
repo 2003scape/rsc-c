@@ -430,6 +430,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
     int show_background = 0;
 
     if (mud->options->account_management) {
+        // TODO make constants for login screen stages
         show_background = mud->login_screen == 0 || mud->login_screen == 2;
     } else {
         show_background = mud->login_screen >= 0 && mud->login_screen <= 3;
@@ -471,6 +472,10 @@ void mudclient_draw_login_screens(mudclient *mud) {
     } else if (mud->login_screen == 2) {
         panel_draw_panel(mud->panel_login_existing_user);
     }
+
+    surface_sprite_clipping_from9_depth(
+        mud->surface, 250, 250, 100,
+        100, 5, 0, 0, 0, 1, 0);
 
     /* blue bar */
     surface_draw_sprite_from3(mud->surface, 0, mud->game_height - 4,
