@@ -3,6 +3,7 @@
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
+/* only the first of models with animations are stored in the cache */
 char *animated_models[] = {
     "torcha2",      "torcha3",    "torcha4",    "skulltorcha2", "skulltorcha3",
     "skulltorcha4", "firea2",     "firea3",     "fireplacea2",  "fireplacea3",
@@ -11,14 +12,56 @@ char *animated_models[] = {
 
 char login_screen_status[255] = {0};
 
-int character_animation_array[8][12] = {{11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
-                                        {11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
-                                        {11, 3, 2, 9, 7, 1, 6, 10, 0, 5, 8, 4},
-                                        {3, 4, 2, 9, 7, 1, 6, 10, 8, 11, 0, 5},
-                                        {3, 4, 2, 9, 7, 1, 6, 10, 8, 11, 0, 5},
-                                        {4, 3, 2, 9, 7, 1, 6, 10, 8, 11, 0, 5},
-                                        {11, 4, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3},
-                                        {11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 4, 3}};
+/* the order in which to draw character (player and NPC) sprites at different
+ * angles */
+int character_animation_array[8][12] = {
+    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
+     ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
+     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY, 8,
+     ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND},
+
+    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
+     ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
+     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY, 8,
+     ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND},
+
+    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_LEGS,
+     ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
+     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY, 8,
+     ANIMATION_INDEX_RIGHT_HAND},
+
+    {ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND,
+     ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY,
+     ANIMATION_INDEX_BODY, ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK,
+     8, ANIMATION_INDEX_CAPE, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY},
+
+    {ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND,
+     ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY,
+     ANIMATION_INDEX_BODY, ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK,
+     8, ANIMATION_INDEX_CAPE, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY},
+
+    {ANIMATION_INDEX_RIGHT_HAND, ANIMATION_INDEX_LEFT_HAND,
+     ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY,
+     ANIMATION_INDEX_BODY, ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK,
+     8, ANIMATION_INDEX_CAPE, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY},
+
+    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_RIGHT_HAND, ANIMATION_INDEX_LEGS,
+     ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
+     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY, 8,
+     ANIMATION_INDEX_LEFT_HAND},
+
+    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
+     ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
+     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
+     ANIMATION_INDEX_HEAD_OVERLAY, 8,
+     ANIMATION_INDEX_RIGHT_HAND, ANIMATION_INDEX_LEFT_HAND}};
 
 int character_walk_model[] = {0, 1, 2, 1};
 int character_combat_model_array1[] = {0, 1, 2, 1, 0, 0, 0, 0};
@@ -623,8 +666,8 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
     // TODO disable for production
     /* debugging */
-    //glEnable(GL_DEBUG_OUTPUT);
-    //glDebugMessageCallback(MessageCallback, 0);
+    // glEnable(GL_DEBUG_OUTPUT);
+    // glDebugMessageCallback(MessageCallback, 0);
 #endif
 #endif
 
@@ -1287,7 +1330,7 @@ void mudclient_load_media(mudclient *mud) {
 #ifdef RENDER_GL
 /* entity sprite IDs have gaps. */
 int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
-                                     int8_t *entity_jag_mem) {
+                                           int8_t *entity_jag_mem) {
     int frame_count = 0;
     int animation_index = 0;
 
@@ -1328,7 +1371,8 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 
             if (game_data_animation_has_a[i]) {
                 for (int j = 0; j < 3; j++) {
-                    mud->surface->entity_sprite_indices[animation_index + 15 + j] =
+                    mud->surface
+                        ->entity_sprite_indices[animation_index + 15 + j] =
                         frame_count + j;
                 }
 
@@ -1337,7 +1381,8 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 
             if (game_data_animation_has_f[i]) {
                 for (int j = 0; j < 9; j++) {
-                    mud->surface->entity_sprite_indices[animation_index + 18 + j] =
+                    mud->surface
+                        ->entity_sprite_indices[animation_index + 18 + j] =
                         frame_count + j;
                 }
 
@@ -1386,9 +1431,9 @@ void mudclient_load_entities(mudclient *mud) {
     int texture_array_length =
         mudclient_update_entity_sprite_indices(mud, entity_jag, entity_jag_mem);
 
-    surface_gl_create_texture_array(
-            &mud->surface->sprite_entity_textures,
-            ENTITY_TEXTURE_WIDTH, ENTITY_TEXTURE_HEIGHT, texture_array_length);
+    surface_gl_create_texture_array(&mud->surface->sprite_entity_textures,
+                                    ENTITY_TEXTURE_WIDTH, ENTITY_TEXTURE_HEIGHT,
+                                    texture_array_length);
 #endif
 
     int frame_count = 0;
@@ -2354,7 +2399,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
-        //scene_add_model(mud->scene, game_model);
+        // scene_add_model(mud->scene, game_model);
     }
 
     game_model->key = count + 10000;
@@ -3139,18 +3184,19 @@ void mudclient_handle_inputs(mudclient *mud) {
         mud->mouse_action_timeout++;
 
 #if defined(RENDER_GL) && !defined(RENDER_SW)
-    if (mud->gl_is_walking && mud->scene->gl_terrain_pick_step == 2) {
-        mud->gl_is_walking = 0;
-        mud->scene->gl_terrain_pick_step = 0;
+        if (mud->gl_is_walking && mud->scene->gl_terrain_pick_step == 2) {
+            mud->gl_is_walking = 0;
+            mud->scene->gl_terrain_pick_step = 0;
 
-        mudclient_walk_to_action_source(
-            mud, mud->local_region_x, mud->local_region_y,
-            mud->scene->gl_terrain_pick_x, mud->scene->gl_terrain_pick_y, 0);
+            mudclient_walk_to_action_source(mud, mud->local_region_x,
+                                            mud->local_region_y,
+                                            mud->scene->gl_terrain_pick_x,
+                                            mud->scene->gl_terrain_pick_y, 0);
 
-        if (mud->mouse_click_x_step == -24) {
-            mud->mouse_click_x_step = 24;
+            if (mud->mouse_click_x_step == -24) {
+                mud->mouse_click_x_step = 24;
+            }
         }
-    }
 #endif
 
         mudclient_handle_game_input(mud);
@@ -3332,6 +3378,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     /* TODO make 12 a constant */
     for (int i = 0; i < 12; i++) {
         int animation_index = character_animation_array[animation_order][i];
+
         int l3 = player->equipped_item[animation_index] - 1;
 
         if (l3 >= 0) {
@@ -3416,14 +3463,13 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                         player_top_bottom_colours[player->colour_bottom];
                 }
 
-                // TODO tx is always 0?
-
                 /* fixes draw ordering */
-                depth -= 0.00002;
+                //depth -= 0.00002;
 
                 surface_sprite_clipping_from9_depth(
                     mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flip, depth);
+                    height, sprite_id, animation_colour, skin_colour, tx, flip,
+                    depth);
             }
         }
     }
@@ -3551,11 +3597,12 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                     skin_colour = game_data_npc_colour_skin[npc->npc_id];
                 }
 
-                //printf("tx: %d\n", tx);
+                // printf("tx: %d\n", tx);
 
                 surface_sprite_clipping_from9_depth(
                     mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flip, depth);
+                    height, sprite_id, animation_colour, skin_colour, tx, flip,
+                    depth);
             }
         }
     }
@@ -3778,8 +3825,8 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
             int y = player->current_y;
             int elevation = -world_get_elevation(mud->world, x, y);
 
-            int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation, y,
-                                      145, 220, i + 10000);
+            int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation,
+                                             y, 145, 220, i + 10000);
 
             mud->scene_sprite_count++;
 
@@ -3844,7 +3891,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         }
     }
 
-    //TODO uncomment
+    // TODO uncomment
 
     for (int i = 0; i < mud->npc_count; i++) {
         GameCharacter *npc = mud->npcs[i];
@@ -3853,7 +3900,8 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int y = npc->current_y;
         int elevation = -world_get_elevation(mud->world, x, y);
 
-        /*int sprite_id =
+        // TODO put this in a function
+        int sprite_id =
             scene_add_sprite(mud->scene, 20000 + i, x, elevation, y,
                              game_data_npc_width[npc->npc_id],
                              game_data_npc_height[npc->npc_id], i + 30000);
@@ -3864,7 +3912,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
             scene_set_sprite_translate_x(mud->scene, sprite_id, -30);
         } else if (npc->animation_current == 9) {
             scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
-        }*/
+        }
     }
 
     for (int i = 0; i < mud->ground_item_count; i++) {
@@ -4000,15 +4048,14 @@ void mudclient_draw_game(mudclient *mud) {
     }
 
     // TODO remove
-    //mud->scene->clip_far_3d = 10000;
-    //mud->scene->fog_z_distance = 10000;
+    // mud->scene->clip_far_3d = 10000;
+    // mud->scene->fog_z_distance = 10000;
 
     int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
-                     912, mud->camera_rotation * 4, 0,
-                     (mud->camera_zoom * 2));
+                     912, mud->camera_rotation * 4, 0, (mud->camera_zoom * 2));
 
     surface_black_screen(mud->surface);
 
@@ -4843,8 +4890,8 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
     int picture = game_data_item_picture[id] + mud->sprite_item;
     int mask = game_data_item_mask[id];
 
-    surface_sprite_clipping_from9_depth(mud->surface, x, y, width, height, picture,
-                                  mask, 0, 0, 0, depth);
+    surface_sprite_clipping_from9_depth(mud->surface, x, y, width, height,
+                                        picture, mask, 0, 0, 0, depth);
 }
 
 int mudclient_is_item_equipped(mudclient *mud, int id) {

@@ -170,6 +170,19 @@
 /* texture IDs */
 #define FOUNTATION_ID 17
 
+/* animation order indices */
+#define ANIMATION_INDEX_HEAD 0
+#define ANIMATION_INDEX_BODY 1
+#define ANIMATION_INDEX_LEGS 2
+#define ANIMATION_INDEX_LEFT_HAND 3 /* shields */
+#define ANIMATION_INDEX_RIGHT_HAND 4 /* swords */
+#define ANIMATION_INDEX_HEAD_OVERLAY 5 /* med helms */
+#define ANIMATION_INDEX_BODY_OVERLAY 6 /* chainmail */
+#define ANIMATION_INDEX_LEGS_OVERLAY 7 /* skirts */
+#define ANIMATION_INDEX_BOOTS 9
+#define ANIMATION_INDEX_NECK 10 /* amulets */
+#define ANIMATION_INDEX_CAPE 11
+
 typedef struct mudclient mudclient;
 
 #include "bzip.h"

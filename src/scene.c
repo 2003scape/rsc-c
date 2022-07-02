@@ -1730,7 +1730,7 @@ void scene_render(Scene *scene) {
     }
 #endif
 
-    surface_gl_draw(scene->surface, 1);
+    surface_gl_draw(scene->surface, 0);
 #endif
 
     scene->mouse_picking_active = 0;
@@ -4204,8 +4204,8 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                             VERTEX_TO_FLOAT(game_model->light_direction_y),
                             VERTEX_TO_FLOAT(game_model->light_direction_z)};
 
-    int model_ambience = game_model->light_ambience;
-    shader_set_int(&scene->game_model_shader, "light_ambience", model_ambience);
+    shader_set_int(&scene->game_model_shader, "light_ambience", game_model->light_ambience);
+
     shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
 
     if (!game_model->unlit) {

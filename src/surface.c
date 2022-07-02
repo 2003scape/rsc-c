@@ -1714,43 +1714,44 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         GLuint texture_array_id =
             surface_gl_sprite_texture_array_id(surface, i);
 
-        if (texture_array_id != 0) {
-            int32_t *pixels = surface_palette_sprite_to_raster(surface, i, 1);
-            int sprite_width = surface->sprite_width[i];
-            int sprite_height = surface->sprite_height[i];
-            int texture_index = surface_gl_sprite_texture_index(surface, i);
-
-            int translate_x = surface->sprite_translate_x[i];
-            int translate_y = surface->sprite_translate_y[i];
-
-            int texture_width =
-                surface_gl_sprite_texture_width(surface, texture_array_id);
-
-            int texture_height =
-                surface_gl_sprite_texture_height(surface, texture_array_id);
-
-            int32_t *texture_pixels =
-                calloc(texture_width * texture_height, sizeof(int32_t));
-
-            for (int x = 0; x < sprite_width; x++) {
-                for (int y = 0; y < sprite_height; y++) {
-                    texture_pixels[(x + translate_x) +
-                                   (y + translate_y) * texture_width] =
-                        pixels[x + y * sprite_width];
-                }
-            }
-
-            glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
-
-            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
-                            texture_width, texture_height, 1, GL_BGRA,
-                            GL_UNSIGNED_BYTE, texture_pixels);
-
-            free(pixels);
-            free(texture_pixels);
-        } else {
-            printf("missing for %d\n", i);
+        if (texture_array_id == 0) {
+            continue;
         }
+
+        int32_t *pixels = surface_palette_sprite_to_raster(surface, i, 1);
+
+        int sprite_width = surface->sprite_width[i];
+        int sprite_height = surface->sprite_height[i];
+        int translate_x = surface->sprite_translate_x[i];
+        int translate_y = surface->sprite_translate_y[i];
+
+        int texture_index = surface_gl_sprite_texture_index(surface, i);
+
+        int texture_width =
+            surface_gl_sprite_texture_width(surface, texture_array_id);
+
+        int texture_height =
+            surface_gl_sprite_texture_height(surface, texture_array_id);
+
+        int32_t *texture_pixels =
+            calloc(texture_width * texture_height, sizeof(int32_t));
+
+        for (int x = 0; x < sprite_width; x++) {
+            for (int y = 0; y < sprite_height; y++) {
+                texture_pixels[(x + translate_x) +
+                               (y + translate_y) * texture_width] =
+                    pixels[x + y * sprite_width];
+            }
+        }
+
+        glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
+
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
+                        texture_width, texture_height, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, texture_pixels);
+
+        free(pixels);
+        free(texture_pixels);
     }
 #endif
 }

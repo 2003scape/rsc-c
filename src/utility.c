@@ -463,8 +463,10 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
     for (long i = 0; i < size; i++) {
         uint16_t u_val = ~(*u_ptr);
         u_ptr++;
+
         short t = ((u_val & QUANT_MASK) << 3) + BIAS;
         t <<= ((unsigned)u_val & SEG_MASK) >> SEG_SHIFT;
+
         *out_ptr++ = ((u_val & SIGN_BIT) ? (BIAS - t) : (t - BIAS));
     }
 }
