@@ -2,6 +2,7 @@
 
 #define FOUNTAIN_ID 17
 #define RAMP_SIZE 256
+#define USE_GOURAUD 12345678
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 normal;
@@ -44,7 +45,7 @@ void main() {
     int intensity = 0;
 
     if (unlit) {
-        if (face_intensity == 12345678) {
+        if (face_intensity == USE_GOURAUD) {
             intensity = vertex_intensity;
         } else {
             intensity = face_intensity;

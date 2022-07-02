@@ -6,12 +6,18 @@ in vec3 vertex_texture_position;
 
 uniform sampler2DArray textures;
 
+uniform bool interlace;
+
 uniform int bounds_min_x;
 uniform int bounds_max_x;
 uniform int bounds_min_y;
 uniform int bounds_max_y;
 
 void main() {
+    if (interlace && int(gl_FragCoord.y) % 2 == 0) {
+        discard;
+    }
+
     if (
         gl_FragCoord.x < bounds_min_x ||
         gl_FragCoord.x > bounds_max_x ||
