@@ -171,6 +171,7 @@
 #define FOUNTATION_ID 17
 
 /* animation order indices */
+#define ANIMATION_COUNT 12
 #define ANIMATION_INDEX_HEAD 0
 #define ANIMATION_INDEX_BODY 1
 #define ANIMATION_INDEX_LEGS 2
@@ -893,9 +894,9 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
                                      int x, int y, int ty, int width,
                                      int height, int is_npc);
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int tx, int ty, float depth);
+                           int id, int skew_x, int ty, float depth);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int tx, int ty, float depth);
+                        int id, int skew_x, int ty, float depth);
 void mudclient_draw_ui(mudclient *mud);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);

@@ -233,7 +233,7 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id);
 void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id);
 void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
-                                int height, int sprite_id, int tx, int ty,
+                                int height, int sprite_id, int skew_x, int ty,
                                 float depth);
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha);

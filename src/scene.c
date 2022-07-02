@@ -956,6 +956,8 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
         vec4 projected_position = {0};
         glm_mat4_mulv(scene->gl_projection_view, position, projected_position);
 
+        // TODO we can store two and interpolate between the top and bottom
+        // of the sprite
         scene->gl_sprite_depth[scene->sprite_count] =
             projected_position[2] / projected_position[3];
     }
@@ -1410,10 +1412,10 @@ void scene_render(Scene *scene) {
             int vx = game_model->vertex_view_x[face_0];
             int vy = game_model->vertex_view_y[face_0];
             int vz = game_model->project_vertex_z[face_0];
-            int w = (scene->sprite_width[face] << scene->view_distance) / vz;
+            int width = (scene->sprite_width[face] << scene->view_distance) / vz;
             int h = (scene->sprite_height[face] << scene->view_distance) / vz;
-            int tx = game_model->vertex_view_x[face_vertices[1]] - vx;
-            int x = vx - (w / 2);
+            int skew_x = game_model->vertex_view_x[face_vertices[1]] - vx;
+            int x = vx - (width / 2);
             int y = scene->base_y + vy - h;
 
             float depth = 0;
@@ -1423,7 +1425,7 @@ void scene_render(Scene *scene) {
 #endif
 
             surface_draw_entity_sprite(scene->surface, x + scene->base_x, y,
-                                          w, h, scene->sprite_id[face], tx,
+                                          width, h, scene->sprite_id[face], skew_x,
                                           (256 << scene->view_distance) / vz,
                                           depth);
 
@@ -1434,7 +1436,7 @@ void scene_render(Scene *scene) {
                      vz;
 
                 if (scene->mouse_y >= y && scene->mouse_y <= y + h &&
-                    scene->mouse_x >= x && scene->mouse_x <= x + w &&
+                    scene->mouse_x >= x && scene->mouse_x <= x + width &&
                     !game_model->unpickable &&
                     game_model->is_local_player[face] == 0) {
                     scene->mouse_picked_models[scene->mouse_picked_count] =
@@ -1730,7 +1732,7 @@ void scene_render(Scene *scene) {
     }
 #endif
 
-    surface_gl_draw(scene->surface, 0);
+    surface_gl_draw(scene->surface, 1);
 #endif
 
     scene->mouse_picking_active = 0;

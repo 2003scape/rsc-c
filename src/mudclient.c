@@ -3335,7 +3335,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 }
 
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int tx, int ty, float depth) {
+                           int id, int skew_x, int ty, float depth) {
     GameCharacter *player = mud->players[id];
 
     if (player->colour_bottom == 255) {
@@ -3375,102 +3375,102 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         j2 = i2 * 3 + character_combat_model_array2[(mud->login_timer / 6) % 8];
     }
 
-    /* TODO make 12 a constant */
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < ANIMATION_COUNT; i++) {
         int animation_index = character_animation_array[animation_order][i];
+        int aimation_id = player->equipped_item[animation_index] - 1;
 
-        int l3 = player->equipped_item[animation_index] - 1;
+        if (aimation_id < 0) {
+            continue;
+        }
 
-        if (l3 >= 0) {
-            int offset_x = 0;
-            int offset_y = 0;
-            int j5 = j2;
+        int offset_x = 0;
+        int offset_y = 0;
+        int j5 = j2;
 
-            if (flip && i2 >= 1 && i2 <= 3) {
-                if (game_data_animation_has_f[l3] == 1) {
-                    j5 += 15;
-                } else if (animation_index == 4 && i2 == 1) {
-                    offset_x = -22;
-                    offset_y = -3;
+        if (flip && i2 >= 1 && i2 <= 3) {
+            if (game_data_animation_has_f[aimation_id] == 1) {
+                j5 += 15;
+            } else if (animation_index == 4 && i2 == 1) {
+                offset_x = -22;
+                offset_y = -3;
 
-                    j5 = i2 * 3 +
-                         character_walk_model[(2 + (player->step_count / 6)) %
-                                              4];
-                } else if (animation_index == 4 && i2 == 2) {
-                    offset_x = 0;
-                    offset_y = -8;
+                j5 = i2 * 3 +
+                     character_walk_model[(2 + (player->step_count / 6)) %
+                                          4];
+            } else if (animation_index == 4 && i2 == 2) {
+                offset_x = 0;
+                offset_y = -8;
 
-                    j5 = i2 * 3 +
-                         character_walk_model[(2 + (player->step_count / 6)) %
-                                              4];
-                } else if (animation_index == 4 && i2 == 3) {
-                    offset_x = 26;
-                    offset_y = -5;
+                j5 = i2 * 3 +
+                     character_walk_model[(2 + (player->step_count / 6)) %
+                                          4];
+            } else if (animation_index == 4 && i2 == 3) {
+                offset_x = 26;
+                offset_y = -5;
 
-                    j5 = i2 * 3 +
-                         character_walk_model[(2 + (player->step_count / 6)) %
-                                              4];
-                } else if (animation_index == 3 && i2 == 1) {
-                    offset_x = 22;
-                    offset_y = 3;
+                j5 = i2 * 3 +
+                     character_walk_model[(2 + (player->step_count / 6)) %
+                                          4];
+            } else if (animation_index == 3 && i2 == 1) {
+                offset_x = 22;
+                offset_y = 3;
 
-                    j5 = i2 * 3 +
-                         character_walk_model[(2 + (player->step_count / 6)) %
-                                              4];
-                } else if (animation_index == 3 && i2 == 2) {
-                    offset_x = 0;
-                    offset_y = 8;
+                j5 = i2 * 3 +
+                     character_walk_model[(2 + (player->step_count / 6)) %
+                                          4];
+            } else if (animation_index == 3 && i2 == 2) {
+                offset_x = 0;
+                offset_y = 8;
 
-                    j5 = i2 * 3 +
-                         character_walk_model[(2 + (player->step_count / 6)) %
-                                              4];
-                } else if (animation_index == 3 && i2 == 3) {
-                    offset_x = -26;
-                    offset_y = 5;
+                j5 = i2 * 3 +
+                     character_walk_model[(2 + (player->step_count / 6)) %
+                                          4];
+            } else if (animation_index == 3 && i2 == 3) {
+                offset_x = -26;
+                offset_y = 5;
 
-                    j5 = i2 * 3 +
-                         character_walk_model[(2 + (player->step_count / 6)) %
-                                              4];
-                }
+                j5 = i2 * 3 +
+                     character_walk_model[(2 + (player->step_count / 6)) %
+                                          4];
+            }
+        }
+
+        if (i2 != 5 || game_data_animation_has_a[aimation_id] == 1) {
+            int sprite_id = j5 + game_data_animation_number[aimation_id];
+
+            offset_x = (offset_x * width) /
+                       mud->surface->sprite_width_full[sprite_id];
+
+            offset_y = (offset_y * height) /
+                       mud->surface->sprite_height_full[sprite_id];
+
+            int clip_width =
+                (width * mud->surface->sprite_width_full[sprite_id]) /
+                mud->surface
+                    ->sprite_width_full[game_data_animation_number[aimation_id]];
+
+            offset_x -= (clip_width - width) / 2;
+
+            int animation_colour = game_data_animation_character_colour[aimation_id];
+            int skin_colour = player_skin_colours[player->colour_skin];
+
+            if (animation_colour == 1) {
+                animation_colour = player_hair_colours[player->colour_hair];
+            } else if (animation_colour == 2) {
+                animation_colour =
+                    player_top_bottom_colours[player->colour_top];
+            } else if (animation_colour == 3) {
+                animation_colour =
+                    player_top_bottom_colours[player->colour_bottom];
             }
 
-            if (i2 != 5 || game_data_animation_has_a[l3] == 1) {
-                int sprite_id = j5 + game_data_animation_number[l3];
+            /* fixes draw ordering */
+            depth -= 0.00002;
 
-                offset_x = (offset_x * width) /
-                           mud->surface->sprite_width_full[sprite_id];
-
-                offset_y = (offset_y * height) /
-                           mud->surface->sprite_height_full[sprite_id];
-
-                int clip_width =
-                    (width * mud->surface->sprite_width_full[sprite_id]) /
-                    mud->surface
-                        ->sprite_width_full[game_data_animation_number[l3]];
-
-                offset_x -= (clip_width - width) / 2;
-
-                int animation_colour = game_data_animation_character_colour[l3];
-                int skin_colour = player_skin_colours[player->colour_skin];
-
-                if (animation_colour == 1) {
-                    animation_colour = player_hair_colours[player->colour_hair];
-                } else if (animation_colour == 2) {
-                    animation_colour =
-                        player_top_bottom_colours[player->colour_top];
-                } else if (animation_colour == 3) {
-                    animation_colour =
-                        player_top_bottom_colours[player->colour_bottom];
-                }
-
-                /* fixes draw ordering */
-                //depth -= 0.00002;
-
-                surface_sprite_clipping_from9_depth(
-                    mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flip,
-                    depth);
-            }
+            surface_sprite_clipping_from9_depth(
+                mud->surface, x + offset_x, y + offset_y, clip_width,
+                height, sprite_id, animation_colour, skin_colour, skew_x, flip,
+                depth);
         }
     }
 
@@ -3489,7 +3489,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
-        int k3 = tx + x + (width / 2);
+        int k3 = skew_x + x + (width / 2);
 
         if (player->animation_current == 8) {
             k3 -= (20 * ty) / 100;
@@ -3507,11 +3507,11 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 }
 
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int tx, int ty, float depth) {
+                        int id, int skew_x, int ty, float depth) {
     GameCharacter *npc = mud->npcs[id];
-    int l1 = (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
+    int animation_order = (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
     int flip = 0;
-    int i2 = l1;
+    int i2 = animation_order;
 
     if (i2 == 5) {
         i2 = 3;
@@ -3531,7 +3531,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
     if (npc->animation_current == 8) {
         i2 = 5;
-        l1 = 2;
+        animation_order = 2;
         flip = 0;
         x -= (game_data_npc_combat_animation[npc->npc_id] * ty) / 100;
         j2 = i2 * 3 + character_combat_model_array1
@@ -3541,7 +3541,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                            8];
     } else if (npc->animation_current == 9) {
         i2 = 5;
-        l1 = 2;
+        animation_order = 2;
         flip = 1;
         x += (game_data_npc_combat_animation[npc->npc_id] * ty) / 100;
 
@@ -3551,59 +3551,60 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                   8];
     }
 
-    for (int i = 0; i < 12; i++) {
-        int l2 = character_animation_array[l1][i];
-        int animation_id = game_data_npc_sprite[npc->npc_id][l2];
+    for (int i = 0; i < ANIMATION_COUNT; i++) {
+        int animation_index = character_animation_array[animation_order][i];
+        int animation_id = game_data_npc_sprite[npc->npc_id][animation_index];
 
-        if (animation_id >= 0) {
-            int offset_x = 0;
-            int offset_y = 0;
-            int k4 = j2;
+        if (animation_id < 0) {
+            continue;
+        }
+        int offset_x = 0;
+        int offset_y = 0;
+        int k4 = j2;
 
-            if (flip && i2 >= 1 && i2 <= 3 &&
-                game_data_animation_has_f[animation_id] == 1) {
-                k4 += 15;
+        if (flip && i2 >= 1 && i2 <= 3 &&
+            game_data_animation_has_f[animation_id] == 1) {
+            k4 += 15;
+        }
+
+        if (i2 != 5 || game_data_animation_has_a[animation_id] == 1) {
+            int sprite_id = k4 + game_data_animation_number[animation_id];
+
+            offset_x = (offset_x * width) /
+                       mud->surface->sprite_width_full[sprite_id];
+
+            offset_y = (offset_y * height) /
+                       mud->surface->sprite_height_full[sprite_id];
+
+            int clip_width =
+                (width * mud->surface->sprite_width_full[sprite_id]) /
+                mud->surface->sprite_width_full
+                    [game_data_animation_number[animation_id]];
+
+            offset_x -= (clip_width - width) / 2;
+
+            int animation_colour =
+                game_data_animation_character_colour[animation_id];
+
+            int skin_colour = 0;
+
+            if (animation_colour == 1) {
+                animation_colour = game_data_npc_colour_hair[npc->npc_id];
+                skin_colour = game_data_npc_colour_skin[npc->npc_id];
+            } else if (animation_colour == 2) {
+                animation_colour = game_data_npc_colour_top[npc->npc_id];
+                skin_colour = game_data_npc_colour_skin[npc->npc_id];
+            } else if (animation_colour == 3) {
+                animation_colour = game_data_npc_color_bottom[npc->npc_id];
+                skin_colour = game_data_npc_colour_skin[npc->npc_id];
             }
 
-            if (i2 != 5 || game_data_animation_has_a[animation_id] == 1) {
-                int sprite_id = k4 + game_data_animation_number[animation_id];
+            depth -= 0.00002;
 
-                offset_x = (offset_x * width) /
-                           mud->surface->sprite_width_full[sprite_id];
-
-                offset_y = (offset_y * height) /
-                           mud->surface->sprite_height_full[sprite_id];
-
-                int clip_width =
-                    (width * mud->surface->sprite_width_full[sprite_id]) /
-                    mud->surface->sprite_width_full
-                        [game_data_animation_number[animation_id]];
-
-                offset_x -= (clip_width - width) / 2;
-
-                int animation_colour =
-                    game_data_animation_character_colour[animation_id];
-
-                int skin_colour = 0;
-
-                if (animation_colour == 1) {
-                    animation_colour = game_data_npc_colour_hair[npc->npc_id];
-                    skin_colour = game_data_npc_colour_skin[npc->npc_id];
-                } else if (animation_colour == 2) {
-                    animation_colour = game_data_npc_colour_top[npc->npc_id];
-                    skin_colour = game_data_npc_colour_skin[npc->npc_id];
-                } else if (animation_colour == 3) {
-                    animation_colour = game_data_npc_color_bottom[npc->npc_id];
-                    skin_colour = game_data_npc_colour_skin[npc->npc_id];
-                }
-
-                // printf("tx: %d\n", tx);
-
-                surface_sprite_clipping_from9_depth(
-                    mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flip,
-                    depth);
-            }
+            surface_sprite_clipping_from9_depth(
+                mud->surface, x + offset_x, y + offset_y, clip_width,
+                height, sprite_id, animation_colour, skin_colour, skew_x, flip,
+                depth);
         }
     }
 
