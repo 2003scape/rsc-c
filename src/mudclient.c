@@ -348,9 +348,9 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 /*int test_x = 520;
 int test_y = -106;
 int test_z = 750;*/
-int test_x = 990;
+int test_x = 0;
 int test_y = 0;
-int test_z = -50;
+int test_z = 0;
 int test_yaw = 1;
 int test_colour = -1;
 int test_fade = 0;
@@ -583,6 +583,14 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
+
+    // TODO make AA toggleable
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+
+    /* 2 is more than enough. couldn't tell a difference from 4 */
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
+
+    glEnable(GL_MULTISAMPLE);
 
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -1335,6 +1343,8 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 
                 frame_count += 9;
             }
+
+            free(animation_dat);
         }
 
         game_data_animation_number[i] = animation_index;
@@ -1342,11 +1352,6 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 
         i++;
     }
-
-    /*for (int i = 0; i < 2000; i++) {
-        printf("sprite_id(%d) => texture_index(%d)\n",
-                i, mud->surface->entity_sprite_indices[i]);
-    }*/
 
     return frame_count;
 }
@@ -1390,9 +1395,6 @@ void mudclient_load_entities(mudclient *mud) {
     int animation_index = 0;
 
     int i = 0;
-
-    // int entity_sprite_indices[2000];
-    // 0-17 normal, 27: 18, 28: 19, etc.
 
     while (i < game_data_animation_count) {
     label0:;
@@ -1619,8 +1621,6 @@ void mudclient_load_models(mudclient *mud) {
                                 &mud->scene->game_model_vbo,
                                 &mud->scene->game_model_ebo, mud->game_models,
                                 game_data_model_count - 1);
-
-    //
 #endif
 }
 
@@ -2354,7 +2354,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
-        // scene_add_model(mud->scene, game_model);
+        //scene_add_model(mud->scene, game_model);
     }
 
     game_model->key = count + 10000;
@@ -2465,6 +2465,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         GameModel *wall_object_model = mudclient_create_wall_object(
             mud, wall_obj_x, wall_obj_y, wall_obj_dir, wall_obj_id, i);
 
+        // TODO loop over these and add them to terrian models?
         mud->wall_object_model[i] = wall_object_model;
     }
 
@@ -3417,7 +3418,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
                 // TODO tx is always 0?
 
-                //flip = 0;
+                /* fixes draw ordering */
+                depth -= 0.00002;
 
                 surface_sprite_clipping_from9_depth(
                     mud->surface, x + offset_x, y + offset_y, clip_width,
@@ -3437,6 +3439,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             player->bubble_item;
     }
 
+    // TODO depth too
     mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
@@ -3458,7 +3461,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 }
 
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int tx, int ty) {
+                        int id, int tx, int ty, float depth) {
     GameCharacter *npc = mud->npcs[id];
     int l1 = (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
     int flip = 0;
@@ -3548,9 +3551,11 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                     skin_colour = game_data_npc_colour_skin[npc->npc_id];
                 }
 
-                surface_sprite_clipping_from9(
+                //printf("tx: %d\n", tx);
+
+                surface_sprite_clipping_from9_depth(
                     mud->surface, x + offset_x, y + offset_y, clip_width,
-                    height, sprite_id, animation_colour, skin_colour, tx, flip);
+                    height, sprite_id, animation_colour, skin_colour, tx, flip, depth);
             }
         }
     }
@@ -3784,9 +3789,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
 
             if (player->animation_current == 8) {
                 scene_set_sprite_translate_x(mud->scene, sprite_id, -30);
-            }
-
-            if (player->animation_current == 9) {
+            } else if (player->animation_current == 9) {
                 scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
             }
         }
@@ -4005,7 +4008,7 @@ void mudclient_draw_game(mudclient *mud) {
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, mud->camera_rotation * 4, 0,
-                     (mud->camera_zoom * 2) - test_z);
+                     (mud->camera_zoom * 2));
 
     surface_black_screen(mud->surface);
 

@@ -473,9 +473,32 @@ void mudclient_draw_login_screens(mudclient *mud) {
         panel_draw_panel(mud->panel_login_existing_user);
     }
 
+    int test_sprite_id = panel_base_sprite_start;
+    test_sprite_id = 5;
+
+    /*surface_sprite_clipping_from9_depth(
+        mud->surface, 50, 200, 100,
+        100, test_sprite_id, 0, 0, test_x, 1, 0);*/
+
+    /*surface_sprite_clipping_from9_depth(
+        mud->surface, 50, 200, 200,
+        250, test_sprite_id, 0, 0, test_x, 1, 0);*/
+
     surface_sprite_clipping_from9_depth(
-        mud->surface, 250, 250, 100,
-        100, 5, 0, 0, 0, 1, 0);
+        mud->surface, 50, 200, 64,
+        102, test_sprite_id, 0, 0, test_x, 0, 0);
+
+    /*surface_draw_box(
+        mud->surface, 250, 220, INVENTORY_SLOT_WIDTH - 1,
+        INVENTORY_SLOT_HEIGHT - 2, 0xff00ff);*/
+
+    /*surface_sprite_clipping_from9(
+        mud->surface, 250, 220, INVENTORY_SLOT_WIDTH - 1,
+        INVENTORY_SLOT_HEIGHT - 2, mud->sprite_item, 0, 0, 0, 0);*/
+
+    /*surface_sprite_clipping_from9(
+        mud->surface, 250, 220, 100,
+        100, mud->sprite_item, 0, 0, 0, 0);*/
 
     /* blue bar */
     surface_draw_sprite_from3(mud->surface, 0, mud->game_height - 4,

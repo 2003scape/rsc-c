@@ -882,7 +882,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int tx, int ty, float depth);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int tx, int ty);
+                        int id, int tx, int ty, float depth);
 void mudclient_draw_ui(mudclient *mud);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);

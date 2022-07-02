@@ -108,11 +108,14 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         int x = texture_gradient_index / 4;
         int y = texture_gradient_index % 4;
 
+        /* thanks jorsa */
         scene->texture_light_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
     }
 
     shader_use(&scene->game_model_shader);
+
+    shader_set_int(&scene->game_model_shader, "vertex_scale", VERTEX_SCALE);
 
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
                            scene->light_gradient, RAMP_SIZE);
@@ -934,20 +937,28 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
                      int width, int height, int tag) {
     scene->sprite_id[scene->sprite_count] = sprite_id;
     scene->sprite_x[scene->sprite_count] = x;
-    scene->sprite_z[scene->sprite_count] = y;
+    scene->sprite_z[scene->sprite_count] = y; // TODO probably rename the z?
     scene->sprite_y[scene->sprite_count] = z;
     scene->sprite_width[scene->sprite_count] = width;
     scene->sprite_height[scene->sprite_count] = height;
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
 #ifdef RENDER_GL
-    vec4 position = { VERTEX_TO_FLOAT(x), VERTEX_TO_FLOAT(y), VERTEX_TO_FLOAT(z), 1.0, };
+    {
+        vec4 position = {
+            VERTEX_TO_FLOAT(x),
+            //VERTEX_TO_FLOAT(y),
+            VERTEX_TO_FLOAT(y) - VERTEX_TO_FLOAT(height) / 2,
+            VERTEX_TO_FLOAT(z),
+            1.0,
+        };
 
-    vec4 projected_position = {0};
-    glm_mat4_mulv(scene->gl_projection_view, position, projected_position);
+        vec4 projected_position = {0};
+        glm_mat4_mulv(scene->gl_projection_view, position, projected_position);
 
-    scene->gl_sprite_depth[scene->sprite_count] =
-        projected_position[2] / projected_position[3];
+        scene->gl_sprite_depth[scene->sprite_count] =
+            projected_position[2] / projected_position[3];
+    }
 #endif
 
     int *vertices = malloc(2 * sizeof(int));
@@ -1617,7 +1628,7 @@ void scene_render(Scene *scene) {
 
     shader_use(&scene->game_model_shader);
 
-    shader_set_int(&scene->game_model_shader, "vertex_scale", VERTEX_SCALE);
+    shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
 
     shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
