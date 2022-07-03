@@ -4,13 +4,15 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "utility.h"
+
 #define EQUIP_COUNT 12
 #define WAYPOINT_COUNT 10
 
 typedef struct GameCharacter {
     // TODO rename this to encoded_name
     int64_t hash;
-    char name[13];
+    char name[MAX_USER_LENGTH + 1];
     int server_index;
     int server_id;
     int current_x;
@@ -33,7 +35,7 @@ typedef struct GameCharacter {
     int health_max;
     int combat_timer;
     int level;
-    int colour_hair;
+    int colour_hair; // TODO reverse these names
     int colour_top;
     int colour_bottom;
     int colour_skin;
@@ -41,7 +43,7 @@ typedef struct GameCharacter {
     int attacking_player_server_index;
     int attacking_npc_server_index;
     int projectile_range;
-    int skull_visible;
+    int8_t skull_visible;
 } GameCharacter;
 
 void game_character_new(GameCharacter* game_character);

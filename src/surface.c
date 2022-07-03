@@ -93,28 +93,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
     /* coloured quads */
     shader_new(&surface->flat_shader, "./flat.vs", "./flat.fs");
 
-    // TODO need to refactor a bit more before we can do this
-    /*int skin_colours_length =
-        sizeof(player_skin_colours) / sizeof(player_skin_colours[0]);
-
-    vec3 skin_colour_floats[skin_colours_length];
-
-    for (int i = 0; i < skin_colours_length; i++) {
-        int skin_colour = player_skin_colours[i];
-
-        vec3 colour = {
-            ((skin_colour >> 16) & 0xff) / 255.0f,
-            ((skin_colour >> 8) & 0xff) / 255.0f,
-            (skin_colour & 0xff) / 255.0f
-        };
-
-        glm_vec3_copy(colour, skin_colour_floats[i]);
-    }
-
-    shader_set_vec3_array(
-        &surface->flat_shader,
-        "skin_colours", skin_colour_floats, skin_colours_length);*/
-
     glGenVertexArrays(1, &surface->flat_vao);
     glBindVertexArray(surface->flat_vao);
 

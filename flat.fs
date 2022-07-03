@@ -2,6 +2,7 @@
 out vec4 fragment_colour;
 
 in vec4 vertex_colour;
+in vec3 vertex_skin_colour;
 in vec3 vertex_texture_position;
 
 uniform sampler2DArray textures;
@@ -37,6 +38,11 @@ void main() {
                 texture_colour.x == texture_colour.y &&
                 texture_colour.x == texture_colour.z) {
                 texture_colour *= vertex_colour;
+            }
+
+            if (vertex_skin_colour.x >= 0.0 &&
+                texture_colour.x == 1.0 && texture_colour.y == texture_colour.z) {
+                texture_colour *= vec4(vertex_skin_colour, 1.0);
             }
 
             /* set alpha with or without mask colour */
