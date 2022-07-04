@@ -89,8 +89,8 @@ void main() {
 
     if (vertex_texture_position.z > -1) {
         // TODO light_gradient looks ok here too.
-        //lightness = foggy ? light_gradient[gradient_index] : texture_light_gradient[gradient_index];
-        lightness = light_gradient[gradient_index];
+        lightness = foggy ? light_gradient[gradient_index] : texture_light_gradient[gradient_index];
+        //lightness = light_gradient[gradient_index];
 
         if (vertex_texture_position.z == FOUNTAIN_ID) {
             vertex_texture_position.y -= scroll_texture;

@@ -211,7 +211,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_CAST_NPC);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -226,7 +226,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_USEWITH_NPC);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -241,7 +241,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_NPC_TALK);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -253,7 +253,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_NPC_COMMAND);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -266,7 +266,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_NPC_ATTACK);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -282,7 +282,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_CAST_PLAYER);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -297,7 +297,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_USEWITH_PLAYER);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -313,7 +313,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         int y = (menu_y - 64) / MAGIC_LOC;
 
         mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                              mud->local_region_y, x, y, 1);
+                                        mud->local_region_y, x, y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_PLAYER_ATTACK);
         packet_stream_put_short(mud->packet_stream, menu_index);
@@ -336,8 +336,8 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         packet_stream_send_packet(mud->packet_stream);
         break;
     case MENU_CAST_GROUND:
-        mudclient_walk_to_action_source(
-            mud, mud->local_region_x, mud->local_region_y, menu_x, menu_y, 1);
+        mudclient_walk_to_action_source(mud, mud->local_region_x,
+                                        mud->local_region_y, menu_x, menu_y, 1);
 
         packet_stream_new_packet(mud->packet_stream, CLIENT_CAST_GROUND);
         packet_stream_put_short(mud->packet_stream, menu_x + mud->region_x);
@@ -357,8 +357,8 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
 #endif
 
 #ifdef RENDER_SW
-        mudclient_walk_to_action_source(
-            mud, mud->local_region_x, mud->local_region_y, menu_x, menu_y, 0);
+        mudclient_walk_to_action_source(mud, mud->local_region_x,
+                                        mud->local_region_y, menu_x, menu_y, 0);
 
         if (mud->mouse_click_x_step == -24) {
             mud->mouse_click_x_step = 24;
@@ -460,7 +460,7 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
         if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 1) ||
             (mud->settings_mouse_button_one && mud->mouse_button_click == 1 &&
-                mud->menu_items_count == 1)) {
+             mud->menu_items_count == 1)) {
             mudclient_menu_item_click(mud, mud->menu_indices[0]);
             mud->mouse_button_click = 0;
             return;
@@ -544,8 +544,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
         int face = picked_faces[i];
 
         // TODO clean up
-        if (
-            !((game_model->face_tag[face] <= 65535 || game_model->face_tag[face] >= 200000) && game_model->face_tag[face] <= 300000)) {
+        if (!((game_model->face_tag[face] <= 65535 ||
+               game_model->face_tag[face] >= 200000) &&
+              game_model->face_tag[face] <= 300000)) {
             continue;
         }
 
@@ -558,8 +559,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                 if (mud->local_player->level > 0 &&
                     mud->players[index]->level > 0) {
-                    level_difference = mud->local_player->level -
-                                       mud->players[index]->level;
+                    level_difference =
+                        mud->local_player->level - mud->players[index]->level;
                 }
 
                 char colour[6] = {0};
@@ -603,11 +604,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             "Use %s with", mud->selected_item_name);
 
                     sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@whi@%s%s", mud->players[index]->name,
-                            level_text);
+                            "@whi@%s%s", mud->players[index]->name, level_text);
 
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_USEWITH_PLAYER;
+                    mud->menu_type[mud->menu_items_count] = MENU_USEWITH_PLAYER;
 
                     mud->menu_item_x[mud->menu_items_count] =
                         mud->players[index]->current_x;
@@ -678,11 +677,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                            "Trade with");
 
                     sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@whi@%s%s", mud->players[index]->name,
-                            level_text);
+                            "@whi@%s%s", mud->players[index]->name, level_text);
 
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_PLAYER_TRADE;
+                    mud->menu_type[mud->menu_items_count] = MENU_PLAYER_TRADE;
 
                     mud->menu_index[mud->menu_items_count] =
                         mud->players[index]->server_index;
@@ -693,11 +690,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                            "Follow");
 
                     sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@whi@%s%s", mud->players[index]->name,
-                            level_text);
+                            "@whi@%s%s", mud->players[index]->name, level_text);
 
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_PLAYER_FOLLOW;
+                    mud->menu_type[mud->menu_items_count] = MENU_PLAYER_FOLLOW;
 
                     mud->menu_index[mud->menu_items_count] =
                         mud->players[index]->server_index;
@@ -711,10 +706,10 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                 "Cast %s on",
                                 game_data_spell_name[mud->selected_spell]);
 
-                        sprintf(mud->menu_item_text2[mud->menu_items_count],
-                                "@lre@%s",
-                                game_data_item_name
-                                    [mud->ground_item_id[index]]);
+                        sprintf(
+                            mud->menu_item_text2[mud->menu_items_count],
+                            "@lre@%s",
+                            game_data_item_name[mud->ground_item_id[index]]);
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_CAST_GROUNDITEM;
@@ -737,10 +732,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     sprintf(mud->menu_item_text1[mud->menu_items_count],
                             "Use %s with", mud->selected_item_name);
 
-                    sprintf(
-                        mud->menu_item_text2[mud->menu_items_count],
-                        "@lre@%s",
-                        game_data_item_name[mud->ground_item_id[index]]);
+                    sprintf(mud->menu_item_text2[mud->menu_items_count],
+                            "@lre@%s",
+                            game_data_item_name[mud->ground_item_id[index]]);
 
                     mud->menu_type[mud->menu_items_count] =
                         MENU_USEWITH_GROUNDITEM;
@@ -761,10 +755,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 } else {
                     strcpy(mud->menu_item_text1[mud->menu_items_count], "Take");
 
-                    sprintf(
-                        mud->menu_item_text2[mud->menu_items_count],
-                        "@lre@%s",
-                        game_data_item_name[mud->ground_item_id[index]]);
+                    sprintf(mud->menu_item_text2[mud->menu_items_count],
+                            "@lre@%s",
+                            game_data_item_name[mud->ground_item_id[index]]);
 
                     mud->menu_type[mud->menu_items_count] =
                         MENU_GROUNDITEM_TAKE;
@@ -783,10 +776,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     strcpy(mud->menu_item_text1[mud->menu_items_count],
                            "Examine");
 
-                    sprintf(
-                        mud->menu_item_text2[mud->menu_items_count],
-                        "@lre@%s",
-                        game_data_item_name[mud->ground_item_id[index]]);
+                    sprintf(mud->menu_item_text2[mud->menu_items_count],
+                            "@lre@%s",
+                            game_data_item_name[mud->ground_item_id[index]]);
 
                     mud->menu_type[mud->menu_items_count] =
                         MENU_GROUNDITEM_EXAMINE;
@@ -802,17 +794,16 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 int id = mud->npcs[index]->npc_id;
 
                 if (game_data_npc_attackable[id] > 0) {
-                    int npc_level = (game_data_npc_attack[id] +
-                                     game_data_npc_defense[id] +
-                                     game_data_npc_strength[id] +
-                                     game_data_npc_hits[id]) /
-                                    4;
+                    int npc_level =
+                        (game_data_npc_attack[id] + game_data_npc_defense[id] +
+                         game_data_npc_strength[id] + game_data_npc_hits[id]) /
+                        4;
 
-                    int player_level = (mud->player_stat_base[0] +
-                                        mud->player_stat_base[1] +
-                                        mud->player_stat_base[2] +
-                                        mud->player_stat_base[3] + 27) /
-                                       4;
+                    int player_level =
+                        (mud->player_stat_base[0] + mud->player_stat_base[1] +
+                         mud->player_stat_base[2] + mud->player_stat_base[3] +
+                         27) /
+                        4;
 
                     level_difference = player_level - npc_level;
 
@@ -828,13 +819,11 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                 "Cast %s on",
                                 game_data_spell_name[mud->selected_spell]);
 
-                        sprintf(
-                            mud->menu_item_text2[mud->menu_items_count],
-                            "@yel@%s",
-                            game_data_npc_name[mud->npcs[index]->npc_id]);
+                        sprintf(mud->menu_item_text2[mud->menu_items_count],
+                                "@yel@%s",
+                                game_data_npc_name[mud->npcs[index]->npc_id]);
 
-                        mud->menu_type[mud->menu_items_count] =
-                            MENU_CAST_NPC;
+                        mud->menu_type[mud->menu_items_count] = MENU_CAST_NPC;
 
                         mud->menu_item_x[mud->menu_items_count] =
                             mud->npcs[index]->current_x;
@@ -858,8 +847,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             "@yel@%s",
                             game_data_npc_name[mud->npcs[index]->npc_id]);
 
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_USEWITH_NPC;
+                    mud->menu_type[mud->menu_items_count] = MENU_USEWITH_NPC;
 
                     mud->menu_item_x[mud->menu_items_count] =
                         mud->npcs[index]->current_x;
@@ -879,11 +867,10 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                "Attack");
 
-                        sprintf(
-                            mud->menu_item_text2[mud->menu_items_count],
-                            "@yel@%s%s",
-                            game_data_npc_name[mud->npcs[index]->npc_id],
-                            level_text);
+                        sprintf(mud->menu_item_text2[mud->menu_items_count],
+                                "@yel@%s%s",
+                                game_data_npc_name[mud->npcs[index]->npc_id],
+                                level_text);
 
                         if (level_difference >= 0) {
                             mud->menu_type[mud->menu_items_count] =
@@ -929,10 +916,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                game_data_npc_command[id]);
 
-                        sprintf(
-                            mud->menu_item_text2[mud->menu_items_count],
-                            "@yel@%s",
-                            game_data_npc_name[mud->npcs[index]->npc_id]);
+                        sprintf(mud->menu_item_text2[mud->menu_items_count],
+                                "@yel@%s",
+                                game_data_npc_name[mud->npcs[index]->npc_id]);
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_NPC_COMMAND;
@@ -956,8 +942,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             "@yel@%s",
                             game_data_npc_name[mud->npcs[index]->npc_id]);
 
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_NPC_EXAMINE;
+                    mud->menu_type[mud->menu_items_count] = MENU_NPC_EXAMINE;
 
                     mud->menu_index[mud->menu_items_count] =
                         mud->npcs[index]->npc_id;
@@ -1122,8 +1107,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     sprintf(mud->menu_item_text2[mud->menu_items_count],
                             "@cya@%s", game_data_object_name[id]);
 
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_USEWITH_OBJECT;
+                    mud->menu_type[mud->menu_items_count] = MENU_USEWITH_OBJECT;
 
                     mud->menu_item_x[mud->menu_items_count] =
                         mud->object_x[index];
@@ -1168,8 +1152,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         mud->menu_items_count++;
                     }
 
-                    if (strncasecmp(game_data_object_command2[id],
-                                    "Examine", 7) != 0) {
+                    if (strncasecmp(game_data_object_command2[id], "Examine",
+                                    7) != 0) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                game_data_object_command2[id]);
 
@@ -1200,8 +1184,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     sprintf(mud->menu_item_text2[mud->menu_items_count],
                             "@cya@%s", game_data_object_name[id]);
 
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_OBJECT_EXAMINE;
+                    mud->menu_type[mud->menu_items_count] = MENU_OBJECT_EXAMINE;
                     mud->menu_index[mud->menu_items_count] = id;
                     mud->menu_items_count++;
                 }

@@ -906,24 +906,9 @@ void game_model_apply(GameModel *game_model) {
     }
 }
 
-void game_model_project(GameModel *game_model, int camera_x, int camera_y,
+void game_model_project_view(GameModel *game_model, int camera_x, int camera_y,
                         int camera_z, int camera_pitch, int camera_roll,
                         int camera_yaw, int view_distance, int clip_near) {
-    game_model_apply(game_model);
-
-    if (game_model->z1 > scene_frustum_near_z ||
-        game_model->z2 < scene_frustum_far_z ||
-        game_model->x1 > scene_frustum_min_x ||
-        game_model->x2 < scene_frustum_max_x ||
-        game_model->y1 > scene_frustum_min_y ||
-        game_model->y2 < scene_frustum_max_y) {
-        game_model->visible = 0;
-        return;
-    }
-
-    game_model->visible = 1;
-
-#ifdef RENDER_SW
     int yaw_sin = 0;
     int yaw_cos = 0;
     int pitch_sin = 0;
@@ -981,6 +966,27 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
         game_model->project_vertex_y[i] = y;
         game_model->project_vertex_z[i] = z;
     }
+}
+
+void game_model_project(GameModel *game_model, int camera_x, int camera_y,
+                        int camera_z, int camera_pitch, int camera_roll,
+                        int camera_yaw, int view_distance, int clip_near) {
+    game_model_apply(game_model);
+
+    if (game_model->z1 > scene_frustum_near_z ||
+        game_model->z2 < scene_frustum_far_z ||
+        game_model->x1 > scene_frustum_min_x ||
+        game_model->x2 < scene_frustum_max_x ||
+        game_model->y1 > scene_frustum_min_y ||
+        game_model->y2 < scene_frustum_max_y) {
+        game_model->visible = 0;
+        return;
+    }
+
+    game_model->visible = 1;
+
+#ifdef RENDER_SW
+    game_model_project_view(game_model, camera_x, camera_y, camera_z, camera_pitch, camera_roll, camera_yaw, view_distance, clip_near);
 #endif
 }
 

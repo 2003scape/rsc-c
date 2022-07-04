@@ -178,6 +178,9 @@ void game_model_light(GameModel *game_model);
 void game_model_relight(GameModel *game_model);
 void game_model_reset_transform(GameModel *game_model);
 void game_model_apply(GameModel *game_model);
+void game_model_project_view(GameModel *game_model, int camera_x, int camera_y,
+                        int camera_z, int camera_pitch, int camera_roll,
+                        int camera_yaw, int view_distance, int clip_near);
 void game_model_project(GameModel *game_model, int camera_x, int camera_y,
                         int camera_z, int camera_pitch, int camera_roll,
                         int camera_yaw, int view_distance, int clip_near);

@@ -1001,6 +1001,8 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->mouse_picking_active = 1;
 
 #ifdef RENDER_GL
+    scene->gl_mouse_picked_count = 0;
+
     // TODO use inverse_projection_view
     float gl_x = translate_gl_x(x, scene->surface->width2);
     float gl_y = translate_gl_y(y, scene->surface->height2);
@@ -1249,6 +1251,8 @@ void scene_render(Scene *scene) {
                            scene->view_distance, scene->clip_near);
     }
 
+    GameModel *model_2d = scene->view;
+
 #if RENDER_SW
     scene->visible_polygons_count = 0;
 
@@ -1354,8 +1358,6 @@ void scene_render(Scene *scene) {
             }
         }
     }
-
-    GameModel *model_2d = scene->view;
 
     if (model_2d->visible) {
         for (int face = 0; face < model_2d->num_faces; face++) {
@@ -1633,6 +1635,106 @@ void scene_render(Scene *scene) {
     }
 #endif
 
+#if defined(RENDER_GL) && !defined(RENDER_SW)
+    game_model_project_view(model_2d, scene->camera_x, scene->camera_y,
+                           scene->camera_z, scene->camera_yaw,
+                           scene->camera_pitch, scene->camera_roll,
+                           scene->view_distance, scene->clip_near);
+
+    scene->visible_polygons_count = 0;
+
+    for (int face = 0; face < model_2d->num_faces; face++) {
+        int *face_vertices = model_2d->face_vertices[face];
+        int face_0 = face_vertices[0];
+        int view_x = model_2d->vertex_view_x[face_0];
+        int view_y = model_2d->vertex_view_y[face_0];
+        int view_z = model_2d->project_vertex_z[face_0];
+
+        if (view_z > scene->clip_near && view_z < scene->clip_far_2d) {
+            int view_width =
+                (scene->sprite_width[face] << scene->view_distance) /
+                view_z;
+
+            int view_height =
+                (scene->sprite_height[face] << scene->view_distance) /
+                view_z;
+
+            if (view_x - (view_width / 2) <= scene->clip_x &&
+                view_x + (view_width / 2) >= -scene->clip_x &&
+                view_y - view_height <= scene->clip_y &&
+                view_y >= -scene->clip_y) {
+
+                GamePolygon *polygon =
+                    scene->visible_polygons[scene->visible_polygons_count];
+
+                polygon->model = model_2d;
+                polygon->face = face;
+
+                scene_initialise_polygon_2d(scene,
+                                            scene->visible_polygons_count);
+
+                polygon->depth =
+                    (view_z +
+                     model_2d->project_vertex_z[face_vertices[1]]) /
+                    2;
+
+                scene->visible_polygons_count++;
+            }
+        }
+    }
+
+    qsort(scene->visible_polygons, scene->visible_polygons_count,
+          sizeof(GamePolygon *), scene_polygon_depth_compare);
+
+    for (int i = 0; i < scene->visible_polygons_count; i++) {
+        GamePolygon *polygon = scene->visible_polygons[i];
+        GameModel *game_model = polygon->model;
+        int face = polygon->face;
+
+        int *face_vertices = game_model->face_vertices[face];
+        int face_0 = face_vertices[0];
+        int vx = game_model->vertex_view_x[face_0];
+        int vy = game_model->vertex_view_y[face_0];
+        int vz = game_model->project_vertex_z[face_0];
+
+        int width =
+            (scene->sprite_width[face] << scene->view_distance) / vz;
+
+        int h = (scene->sprite_height[face] << scene->view_distance) / vz;
+        int skew_x = game_model->vertex_view_x[face_vertices[1]] - vx;
+        int x = vx - (width / 2);
+        int y = scene->base_y + vy - h;
+
+        float depth = 0;
+
+#ifdef RENDER_GL
+        depth = scene->gl_sprite_depth[face];
+#endif
+
+        surface_draw_entity_sprite(scene->surface, x + scene->base_x, y,
+                                   width, h, scene->sprite_id[face], skew_x,
+                                   (256 << scene->view_distance) / vz,
+                                   depth);
+
+        if (scene->mouse_picking_active
+            && scene->mouse_picked_count < MOUSE_PICKED_MAX) {
+            x += (scene->sprite_translate_x[face] << scene->view_distance) /
+                 vz;
+
+            if (scene->mouse_y >= y && scene->mouse_y <= y + h &&
+                scene->mouse_x >= x && scene->mouse_x <= x + width &&
+                !game_model->unpickable &&
+                game_model->is_local_player[face] == 0) {
+                scene->mouse_picked_models[scene->mouse_picked_count] =
+                    game_model;
+
+                scene->mouse_picked_faces[scene->mouse_picked_count] = face;
+                scene->mouse_picked_count++;
+            }
+        }
+    }
+#endif
+
 #ifdef RENDER_GL
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -1702,7 +1804,7 @@ void scene_render(Scene *scene) {
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 
-        if (!game_model->unpickable) {
+        if (scene->mouse_picking_active && !game_model->unpickable) {
             float time = game_model_gl_intersects(game_model,
                                                   scene->gl_mouse_ray, ray_end);
 
@@ -1715,10 +1817,10 @@ void scene_render(Scene *scene) {
                      * twice */
                     ModelTime model_time = {game_model, time};
 
-                    scene->gl_mouse_picked_time[scene->mouse_picked_count] =
+                    scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
                         model_time;
 
-                    scene->mouse_picked_count++;
+                    scene->gl_mouse_picked_count++;
 #endif
                 }
             }
@@ -1732,15 +1834,17 @@ void scene_render(Scene *scene) {
     }
 
 #ifndef RENDER_SW
-    qsort(scene->gl_mouse_picked_time, scene->mouse_picked_count,
+    qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,
           sizeof(ModelTime), scene_gl_model_time_compare);
 
-    for (int i = 0; i < scene->mouse_picked_count; i++) {
-        scene->mouse_picked_models[i] =
+    for (int i = 0; i < scene->gl_mouse_picked_count; i++) {
+        scene->mouse_picked_models[scene->mouse_picked_count + i] =
             scene->gl_mouse_picked_time[i].game_model;
 
-        scene->mouse_picked_faces[i] = -1;
+        scene->mouse_picked_faces[scene->mouse_picked_count + i] = -1;
     }
+
+    scene->mouse_picked_count += scene->gl_mouse_picked_count;
 #endif
 
     surface_gl_draw(scene->surface, 1);

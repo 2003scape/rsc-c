@@ -178,6 +178,8 @@ typedef struct Scene {
     /* sort based on distance */
     ModelTime gl_mouse_picked_time[MOUSE_PICKED_MAX];
 
+    int gl_mouse_picked_count;
+
     float *gl_sprite_depth;
 
     int scroll_texture_position;
