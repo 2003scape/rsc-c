@@ -235,6 +235,8 @@ void scene_polygons_intersect_sort(Scene *scene, int step,
 int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
                          int end);
 void scene_set_frustum(Scene *scene, int x, int y, int z);
+void scene_initialise_polygons_2d(Scene *scene, GameModel *model_2d);
+void scene_render_polygon_2d_face(Scene *scene, GameModel *game_model, int face);
 void scene_render(Scene *scene);
 void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                               int32_t *plane_y, int32_t *vertex_shade,
