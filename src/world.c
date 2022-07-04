@@ -30,6 +30,12 @@ void world_new(World *world, Scene *scene, Surface *surface) {
     world->surface = surface;
     world->player_alive = 0;
     world->base_media_sprite = 750;
+
+#ifdef RENDER_GL
+    game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
+                             &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
+                             WALL_OBJECTS_MAX * 6);
+#endif
 }
 
 int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
@@ -185,6 +191,8 @@ void world_remove_object2(World *world, int x, int y, int id) {
 }
 
 void world_remove_wall_object(World *world, int x, int y, int k, int id) {
+    printf("remove wall object\n");
+
     if (x < 0 || y < 0 || x >= 95 || y >= 95) {
         return;
     }
@@ -2121,8 +2129,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
         max_models *= 3;
     }
 
-    world->world_models_buffer = calloc(max_models, sizeof(GameModel *));
-    world->world_models_offset = 0;
+    world_gl_create_world_models_buffer(world, max_models);
 #endif
 
     world_load_section_from4(world, x, y, plane, 1);
@@ -2142,13 +2149,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     }
 
 #ifdef RENDER_GL
-    game_model_gl_buffer_models(
-        &world->scene->terrain_vao, &world->scene->terrain_vbo,
-        &world->scene->terrain_ebo, world->world_models_buffer,
-        world->world_models_offset);
-
-    free(world->world_models_buffer);
-    world->world_models_buffer = NULL;
+    world_gl_buffer_world_models(world);
 #endif
 
     game_model_destroy(world->parent_model);
@@ -2257,8 +2258,25 @@ void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
 }
 
 #ifdef RENDER_GL
-/* update the terrain buffers after ambience changes */
-void world_gl_buffer_terrain(World *world) {
+void world_gl_create_world_models_buffer(World *world, int max_models) {
+    world->world_models_buffer = calloc(max_models, sizeof(GameModel *));
+    world->world_models_offset = 0;
+}
+
+/* create and populate the initial VBO of landscape-related models */
+void world_gl_buffer_world_models(World *world) {
+    game_model_gl_buffer_models(
+        &world->scene->terrain_vao, &world->scene->terrain_vbo,
+        &world->scene->terrain_ebo, world->world_models_buffer,
+        world->world_models_offset);
+
+    free(world->world_models_buffer);
+    world->world_models_buffer = NULL;
+    world->world_models_offset = 0;
+}
+
+/* update the terrain model VBOs after ambience changes */
+void world_gl_update_terrain_buffers(World *world) {
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];
 
@@ -2272,5 +2290,12 @@ void world_gl_buffer_terrain(World *world) {
 
         game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
     }
+}
+
+void world_gl_get_wall_model_offsets(World *world, int *vbo_offset, int *ebo_offset) {
+    *vbo_offset = world->gl_wall_models_offset * 4;
+    *ebo_offset = world->gl_wall_models_offset * 6;
+
+    world->gl_wall_models_offset++;
 }
 #endif

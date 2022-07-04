@@ -19,12 +19,8 @@ void main() {
         discard;
     }
 
-    if (
-        gl_FragCoord.x < bounds_min_x ||
-        gl_FragCoord.x > bounds_max_x ||
-        gl_FragCoord.y > bounds_min_y ||
-        gl_FragCoord.y < bounds_max_y
-    ) {
+    if (gl_FragCoord.x < bounds_min_x || gl_FragCoord.x > bounds_max_x ||
+        gl_FragCoord.y > bounds_min_y || gl_FragCoord.y < bounds_max_y) {
         discard;
     }
 
@@ -40,8 +36,8 @@ void main() {
                 texture_colour *= vertex_colour;
             }
 
-            if (vertex_skin_colour.x >= 0.0 &&
-                texture_colour.x == 1.0 && texture_colour.y == texture_colour.z) {
+            if (vertex_skin_colour.x >= 0.0 && texture_colour.x == 1.0 &&
+                texture_colour.y == texture_colour.z) {
                 texture_colour *= vec4(vertex_skin_colour, 1.0);
             }
 

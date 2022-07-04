@@ -12,10 +12,10 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
         mud->mouse_y < 35) {
         mud->show_ui_tab = MAP_TAB;
 
-        mud->minimap_random1 =
+        mud->minimap_random_rotation =
             (int)((((float)rand() / (float)RAND_MAX)) * 13) - 6;
 
-        mud->minimap_random2 =
+        mud->minimap_random_scale =
             (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
     }
 
@@ -54,10 +54,10 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
         mud->mouse_x < mud->game_width - 3 - 33 && mud->mouse_y < 26) {
         mud->show_ui_tab = MAP_TAB;
 
-        mud->minimap_random1 =
+        mud->minimap_random_rotation =
             (int)((((float)rand() / (float)RAND_MAX)) * 13) - 6;
 
-        mud->minimap_random2 =
+        mud->minimap_random_scale =
             (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
     }
 

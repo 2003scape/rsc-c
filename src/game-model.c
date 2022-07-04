@@ -880,8 +880,9 @@ void game_model_apply(GameModel *game_model) {
                        (vec3){0.0f, 0.0f, -1.0f});
         }
 
-        /* fixes the z-fighting with the walls */
-        if (!game_model->autocommit) {
+        /* fixes the z-fighting with the walls. check if faces > 1 so it
+         * doesn't break wallobjects */
+        if (!game_model->autocommit && game_model->num_faces > 1) {
             glm_scale_uni(game_model->transform, 0.995f);
         }
 #endif
@@ -1221,6 +1222,8 @@ void game_model_dump(GameModel *game_model, int i) {
 #ifdef RENDER_GL
 void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
                               int vbo_length, int ebo_length) {
+    printf("creating vao\n");
+
     if (*vao) {
         glDeleteVertexArrays(1, vao);
         glDeleteBuffers(1, vbo);
@@ -1396,6 +1399,8 @@ void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b,
     }
 }
 
+/* add a game model to VBO and EBO arrays at the specified offsets, then update
+ * those offsets to new ones */
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset) {
     int *face_normal_x = calloc(game_model->num_faces, sizeof(int));
@@ -1564,6 +1569,8 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
     free(vertex_normal_magnitude);
 }
 
+/* calculate the length of the VBO and EBO arrays for a list of game models,
+ * then populate them */
 void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
                                  GameModel **game_models, int length) {
     int vertex_offset = 0;

@@ -300,8 +300,6 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     scene_render(mud->scene);
 
-    //surface_draw_box(mud->surface, 0, 0, mud->game_width, 250, WHITE);
-
     surface_apply_login_filter(mud->surface);
 
     surface_draw_sprite_from3(
@@ -430,10 +428,9 @@ void mudclient_draw_login_screens(mudclient *mud) {
     int show_background = 0;
 
     if (mud->options->account_management) {
-        // TODO make constants for login screen stages
-        show_background = mud->login_screen == 0 || mud->login_screen == 2;
+        show_background = mud->login_screen == LOGIN_STAGE_WELCOME || mud->login_screen == LOGIN_STAGE_EXISTING;
     } else {
-        show_background = mud->login_screen >= 0 && mud->login_screen <= 3;
+        show_background = mud->login_screen >= LOGIN_STAGE_WELCOME && mud->login_screen <= LOGIN_STAGE_REGISTER;
     }
 
     if (show_background) {
@@ -465,40 +462,17 @@ void mudclient_draw_login_screens(mudclient *mud) {
         }
     }
 
-    if (mud->login_screen == 0) {
-        panel_draw_panel(mud->panel_login_welcome);
-    } else if (mud->login_screen == 1) {
-        panel_draw_panel(mud->panel_login_new_user);
-    } else if (mud->login_screen == 2) {
-        panel_draw_panel(mud->panel_login_existing_user);
+    switch (mud->login_screen) {
+        case LOGIN_STAGE_WELCOME:
+            panel_draw_panel(mud->panel_login_welcome);
+            break;
+        case LOGIN_STAGE_NEW:
+            panel_draw_panel(mud->panel_login_new_user);
+            break;
+        case LOGIN_STAGE_EXISTING:
+            panel_draw_panel(mud->panel_login_existing_user);
+            break;
     }
-
-    int test_sprite_id = panel_base_sprite_start;
-    test_sprite_id = 5;
-
-    /*surface_sprite_clipping_from9_depth(
-        mud->surface, 50, 200, 100,
-        100, test_sprite_id, 0, 0, test_x, 1, 0);*/
-
-    /*surface_sprite_clipping_from9_depth(
-        mud->surface, 50, 200, 200,
-        250, test_sprite_id, 0, 0, test_x, 1, 0);*/
-
-    surface_sprite_clipping_from9_depth(
-        mud->surface, 50, 200, 64,
-        102, test_sprite_id, 0, 0, test_x, 0, 0);
-
-    /*surface_draw_box(
-        mud->surface, 250, 220, INVENTORY_SLOT_WIDTH - 1,
-        INVENTORY_SLOT_HEIGHT - 2, 0xff00ff);*/
-
-    /*surface_sprite_clipping_from9(
-        mud->surface, 250, 220, INVENTORY_SLOT_WIDTH - 1,
-        INVENTORY_SLOT_HEIGHT - 2, mud->sprite_item, 0, 0, 0, 0);*/
-
-    /*surface_sprite_clipping_from9(
-        mud->surface, 250, 220, 100,
-        100, mud->sprite_item, 0, 0, 0, 0);*/
 
     /* blue bar */
     surface_draw_sprite_from3(mud->surface, 0, mud->game_height - 4,

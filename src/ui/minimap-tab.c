@@ -24,8 +24,8 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
                        ui_y + MINIMAP_HEIGHT);
 
     // TODO rename random2 to random_scale
-    int scale = 192 + mud->minimap_random2;
-    int rotation = (mud->camera_rotation + mud->minimap_random1) & 0xff;
+    int scale = 192 + mud->minimap_random_scale;
+    int rotation = (mud->camera_rotation + mud->minimap_random_rotation) & 0xff;
 
     int player_x = ((mud->local_player->current_x - 6040) * 3 * scale) / 2048;
     int player_y = ((mud->local_player->current_y - 6040) * 3 * scale) / 2048;

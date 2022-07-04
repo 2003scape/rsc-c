@@ -139,7 +139,10 @@ typedef struct Scene {
     GLuint terrain_vao;
     GLuint terrain_vbo;
     GLuint terrain_ebo;
-    GLuint terrain_textures;
+
+    GLuint gl_wall_vao;
+    GLuint gl_wall_vbo;
+    GLuint gl_wall_ebo;
 
     GLuint last_vao;
 

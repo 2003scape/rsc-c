@@ -2398,8 +2398,27 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
 
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
+#ifdef RENDER_GL
+    game_model->vao = mud->scene->gl_wall_vao;
+    game_model->ebo_length = 6;
+
+    int vbo_offset = 0;
+    int ebo_offset = 0;
+
+    world_gl_get_wall_model_offsets(mud->world, &vbo_offset, &ebo_offset);
+
+    game_model->vbo_offset = vbo_offset;
+    game_model->ebo_offset = ebo_offset;
+
+    glBindVertexArray(mud->scene->gl_wall_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_ebo);
+
+    game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
+#endif
+
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
-        // scene_add_model(mud->scene, game_model);
+        scene_add_model(mud->scene, game_model);
     }
 
     game_model->key = count + 10000;
@@ -2425,8 +2444,9 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         return 0;
     }
 
-    surface_draw_string_centre(mud->surface, "Loading... Please wait", 256, 192,
-                               1, WHITE);
+    surface_draw_string_centre(mud->surface, "Loading... Please wait",
+                               mud->surface->width2 / 2,
+                               mud->surface->height2 / 2 + 19, 1, WHITE);
 
     mudclient_draw_chat_message_tabs(mud);
     surface_draw(mud->surface);
@@ -2510,7 +2530,6 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         GameModel *wall_object_model = mudclient_create_wall_object(
             mud, wall_obj_x, wall_obj_y, wall_obj_dir, wall_obj_id, i);
 
-        // TODO loop over these and add them to terrian models?
         mud->wall_object_model[i] = wall_object_model;
     }
 

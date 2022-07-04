@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+//#include <time.h>
 
 #ifdef WII
 #include <asndlib.h>
@@ -180,6 +180,7 @@
 #define ANIMATION_INDEX_HEAD_OVERLAY 5 /* med helms */
 #define ANIMATION_INDEX_BODY_OVERLAY 6 /* chainmail */
 #define ANIMATION_INDEX_LEGS_OVERLAY 7 /* skirts */
+// TODO what is 8?
 #define ANIMATION_INDEX_BOOTS 9
 #define ANIMATION_INDEX_NECK 10 /* amulets */
 #define ANIMATION_INDEX_CAPE 11
@@ -547,8 +548,8 @@ typedef struct mudclient {
     int ground_item_count;
     int ground_item_x[GROUND_ITEMS_MAX];
     int ground_item_y[GROUND_ITEMS_MAX];
-    int ground_item_id[GROUND_ITEMS_MAX];
     int ground_item_z[GROUND_ITEMS_MAX];
+    int ground_item_id[GROUND_ITEMS_MAX];
 
     /* ./ui/sleep.c */
     int8_t is_sleeping;
@@ -590,7 +591,7 @@ typedef struct mudclient {
     int camera_auto_rotate_player_y;
     int an_int_707;
 
-    int is_in_wild;
+    int8_t is_in_wild;
     int loading_area;
     int plane_width;
     int plane_height;
@@ -610,6 +611,7 @@ typedef struct mudclient {
     int local_upper_x;
     int local_upper_y;
 
+    /* oh dear you are dead */
     int death_screen_timeout;
 
     /* bubbles with items above players' heads */
@@ -640,11 +642,13 @@ typedef struct mudclient {
     char change_password_old[PASSWORD_LENGTH + 1];
     char change_password_new[PASSWORD_LENGTH + 1];
 
+    /* ./ui/ui-tabs.c */
+    /* which UI tab is currently hovered over */
     int show_ui_tab;
 
     /* used to rotate minimap randomly on open for anti-macro */
-    int minimap_random1;
-    int minimap_random2;
+    int minimap_random_rotation;
+    int minimap_random_scale;
 
     /* ./ui/menu.c */
     int show_right_click_menu;

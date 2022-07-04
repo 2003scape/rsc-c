@@ -503,8 +503,8 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-#if RENDER_GL
-        world_gl_buffer_terrain(mud->world);
+#ifdef RENDER_GL
+    world_gl_update_terrain_buffers(mud->world);
 #endif
         break;
     }
@@ -889,6 +889,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     GameModel *model = mudclient_create_wall_object(
                         mud, l_x, l_y, direction, id, mud->wall_object_count);
+
+                    //printf("%d\n", mud->wall_object_model[mud->wall_object_count]);
 
                     mud->wall_object_model[mud->wall_object_count] = model;
                     mud->wall_object_x[mud->wall_object_count] = l_x;

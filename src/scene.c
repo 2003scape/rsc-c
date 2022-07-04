@@ -4182,7 +4182,7 @@ void scene_gl_update_camera(Scene *scene) {
 }
 
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
-    if (game_model->ebo_offset == -1 || !game_model->visible) {
+    if (game_model->ebo_offset == -1/* || !game_model->visible*/) {
         return;
     }
 
@@ -4190,6 +4190,8 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         glBindVertexArray(game_model->vao);
         scene->last_vao = game_model->vao;
     }
+
+    glBindVertexArray(game_model->vao);
 
     shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
 

@@ -4,6 +4,11 @@
 #include "../mudclient.h"
 #include "../panel.h"
 
+#define LOGIN_STAGE_WELCOME 0
+#define LOGIN_STAGE_NEW 1
+#define LOGIN_STAGE_EXISTING 2
+#define LOGIN_STAGE_REGISTER 3
+
 void mudclient_create_login_panels(mudclient *mud);
 void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1);
 void mudclient_reset_login_screen(mudclient *mud);
