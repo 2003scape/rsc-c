@@ -3354,7 +3354,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 }
 
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int skew_x, int ty, float depth) {
+                           int id, int skew_x, int ty, float depth_top, float depth_bottom) {
     GameCharacter *player = mud->players[id];
 
     if (player->colour_bottom == 255) {
@@ -3484,12 +3484,13 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             }
 
             /* fixes draw ordering */
-            depth -= 0.00002;
+            depth_top -= 0.00002;
+            depth_bottom -= 0.00002;
 
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width,
                 height, sprite_id, animation_colour, skin_colour, skew_x, flip,
-                depth);
+                depth_top, depth_bottom);
         }
     }
 
@@ -3526,7 +3527,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 }
 
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int skew_x, int ty, float depth) {
+                        int id, int skew_x, int ty, float depth_top,
+                        float depth_bottom) {
     GameCharacter *npc = mud->npcs[id];
     int animation_order = (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
     int flip = 0;
@@ -3618,12 +3620,13 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 skin_colour = game_data_npc_colour_skin[npc->npc_id];
             }
 
-            depth -= 0.00002;
+            depth_top -= 0.00002;
+            depth_bottom -= 0.00002;
 
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width,
                 height, sprite_id, animation_colour, skin_colour, skew_x, flip,
-                depth);
+                depth_top, depth_bottom);
         }
     }
 
@@ -4906,12 +4909,12 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
 }
 
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
-                         int id, float depth) {
+                         int id, float depth_top, float depth_bottom) {
     int picture = game_data_item_picture[id] + mud->sprite_item;
     int mask = game_data_item_mask[id];
 
     surface_sprite_clipping_from9_depth(mud->surface, x, y, width, height,
-                                        picture, mask, 0, 0, 0, depth);
+                                        picture, mask, 0, 0, 0, depth_top, depth_bottom);
 }
 
 int mudclient_is_item_equipped(mudclient *mud, int id) {

@@ -898,9 +898,9 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
                                      int x, int y, int ty, int width,
                                      int height, int is_npc);
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int skew_x, int ty, float depth);
+                           int id, int skew_x, int ty, float depth_top, float depth_bottom);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int skew_x, int ty, float depth);
+                        int id, int skew_x, int ty, float depth_top, float depth_bottom);
 void mudclient_draw_ui(mudclient *mud);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);
@@ -925,7 +925,7 @@ void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id);
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
-                         int id, float depth);
+                         int id, float depth_top, float depth_bottom);
 int mudclient_is_item_equipped(mudclient *mud, int id);
 int mudclient_get_inventory_count(mudclient *mud, int id);
 int mudclient_has_inventory_item(mudclient *mud, int id, int minimum);

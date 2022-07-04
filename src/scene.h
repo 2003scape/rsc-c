@@ -161,7 +161,6 @@ typedef struct Scene {
     // mat4 gl_inverse_projection_view;
     //  TODO can these be combined?
 
-    // TODO remove mouse_world
     vec3 gl_mouse_world;
     vec3 gl_mouse_ray;
 
@@ -180,7 +179,10 @@ typedef struct Scene {
 
     int gl_mouse_picked_count;
 
-    float *gl_sprite_depth;
+    float *gl_sprite_depth; // TODO remove
+
+    float *gl_sprite_depth_bottom;
+    float *gl_sprite_depth_top;
 
     int scroll_texture_position;
 #endif
@@ -235,8 +237,8 @@ void scene_polygons_intersect_sort(Scene *scene, int step,
 int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
                          int end);
 void scene_set_frustum(Scene *scene, int x, int y, int z);
-void scene_initialise_polygons_2d(Scene *scene, GameModel *model_2d);
-void scene_render_polygon_2d_face(Scene *scene, GameModel *game_model, int face);
+void scene_initialise_polygons_2d(Scene *scene);
+void scene_render_polygon_2d_face(Scene *scene, int face);
 void scene_render(Scene *scene);
 void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                               int32_t *plane_y, int32_t *vertex_shade,
@@ -271,6 +273,7 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 #ifdef RENDER_GL
 void scene_gl_update_camera(Scene *scene);
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model);
+void scene_gl_render(Scene *scene);
 void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
                                      int *ebo_offset);
 void scene_gl_remove_wall_buffers(Scene *scene, GameModel *wall_object);

@@ -98,7 +98,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
                              &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
                              WALL_OBJECTS_MAX * 6);
 
-    scene->gl_sprite_depth = calloc(max_sprite_count, sizeof(float));
+    scene->gl_sprite_depth = calloc(max_sprite_count, sizeof(float)); // TODO remove
+
+    scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
+    scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
 
     shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
 
@@ -954,7 +957,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
 #ifdef RENDER_GL
-    {
+#if 0
         vec4 position = {
             VERTEX_TO_FLOAT(x),
             // VERTEX_TO_FLOAT(y),
@@ -966,15 +969,39 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
         vec4 projected_position = {0};
         glm_mat4_mulv(scene->gl_projection_view, position, projected_position);
 
-        // TODO we can store two and interpolate between the top and bottom
-        // of the sprite
-
         scene->gl_sprite_depth[scene->sprite_count] =
             projected_position[2] / projected_position[3];
-    }
+#endif
+    vec4 projected_position = {0};
+
+    vec4 bottom_position = {
+        VERTEX_TO_FLOAT(x),
+        VERTEX_TO_FLOAT(y),
+        VERTEX_TO_FLOAT(z),
+        1.0
+    };
+
+    glm_mat4_mulv(scene->gl_projection_view, bottom_position, projected_position);
+
+    scene->gl_sprite_depth_bottom[scene->sprite_count] =
+        projected_position[2] / projected_position[3];
+
+    glm_vec4_zero(projected_position);
+
+    vec4 top_position = {
+        VERTEX_TO_FLOAT(x),
+        VERTEX_TO_FLOAT(y) - (VERTEX_TO_FLOAT(height) * 0.75f),
+        VERTEX_TO_FLOAT(z),
+        1.0
+    };
+
+    glm_mat4_mulv(scene->gl_projection_view, top_position, projected_position);
+
+    scene->gl_sprite_depth_top[scene->sprite_count] =
+        projected_position[2] / projected_position[3];
 #endif
 
-    int *vertices = malloc(2 * sizeof(int));
+    int *vertices = calloc(2, sizeof(int));
 
     vertices[0] = game_model_create_vertex(scene->view, x, y, z);
     vertices[1] = game_model_create_vertex(scene->view, x, y - height, z);
@@ -1210,22 +1237,18 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
     }
 }
 
-void scene_initialise_polygons_2d(Scene *scene, GameModel *model_2d) {
-    if (!model_2d->visible) {
-        return;
-    }
-
-    for (int face = 0; face < model_2d->num_faces; face++) {
-        int *face_vertices = model_2d->face_vertices[face];
+void scene_initialise_polygons_2d(Scene *scene) {
+    for (int face = 0; face < scene->view->num_faces; face++) {
+        int *face_vertices = scene->view->face_vertices[face];
         int face_vertex_index = face_vertices[0];
-        int view_z = model_2d->project_vertex_z[face_vertex_index];
+        int view_z = scene->view->project_vertex_z[face_vertex_index];
 
         if (view_z < scene->clip_near || view_z > scene->clip_far_2d) {
             continue;
         }
 
-        int view_x = model_2d->vertex_view_x[face_vertex_index];
-        int view_y = model_2d->vertex_view_y[face_vertex_index];
+        int view_x = scene->view->vertex_view_x[face_vertex_index];
+        int view_y = scene->view->vertex_view_y[face_vertex_index];
 
         int view_width =
             (scene->sprite_width[face] << scene->view_distance) / view_z;
@@ -1241,42 +1264,46 @@ void scene_initialise_polygons_2d(Scene *scene, GameModel *model_2d) {
             GamePolygon *polygon =
                 scene->visible_polygons[scene->visible_polygons_count];
 
-            polygon->model = model_2d;
+            polygon->model = scene->view;
             polygon->face = face;
 
             scene_initialise_polygon_2d(scene, scene->visible_polygons_count);
 
             polygon->depth =
-                (view_z + model_2d->project_vertex_z[face_vertices[1]]) / 2;
+                (view_z + scene->view->project_vertex_z[face_vertices[1]]) / 2;
 
             scene->visible_polygons_count++;
         }
     }
 }
 
-void scene_render_polygon_2d_face(Scene *scene, GameModel *game_model, int face) {
-    int *face_vertices = game_model->face_vertices[face];
+void scene_render_polygon_2d_face(Scene *scene, int face) {
+    int *face_vertices = scene->view->face_vertices[face];
     int face_0 = face_vertices[0];
-    int vx = game_model->vertex_view_x[face_0];
-    int vy = game_model->vertex_view_y[face_0];
-    int vz = game_model->project_vertex_z[face_0];
+    int vx = scene->view->vertex_view_x[face_0];
+    int vy = scene->view->vertex_view_y[face_0];
+    int vz = scene->view->project_vertex_z[face_0];
+
     int width =
         (scene->sprite_width[face] << scene->view_distance) / vz;
+
     int h = (scene->sprite_height[face] << scene->view_distance) / vz;
-    int skew_x = game_model->vertex_view_x[face_vertices[1]] - vx;
+    int skew_x = scene->view->vertex_view_x[face_vertices[1]] - vx;
     int x = vx - (width / 2);
     int y = scene->base_y + vy - h;
 
-    float depth = 0;
+    float depth_top = 0;
+    float depth_bottom = 0;
 
 #ifdef RENDER_GL
-    depth = scene->gl_sprite_depth[face];
+    depth_top = scene->gl_sprite_depth_top[face];
+    depth_bottom = scene->gl_sprite_depth_bottom[face];
 #endif
 
     surface_draw_entity_sprite(scene->surface, x + scene->base_x, y,
                                width, h, scene->sprite_id[face], skew_x,
                                (256 << scene->view_distance) / vz,
-                               depth);
+                               depth_top, depth_bottom);
 
     if (scene->mouse_picking_active &&
         scene->mouse_picked_count < MOUSE_PICKED_MAX) {
@@ -1286,10 +1313,10 @@ void scene_render_polygon_2d_face(Scene *scene, GameModel *game_model, int face)
 
         if (scene->mouse_y >= y && scene->mouse_y <= y + h &&
             scene->mouse_x >= x && scene->mouse_x <= x + width &&
-            !game_model->unpickable &&
-            game_model->is_local_player[face] == 0) {
+            !scene->view->unpickable &&
+            scene->view->is_local_player[face] == 0) {
             scene->mouse_picked_models[scene->mouse_picked_count] =
-                game_model;
+                scene->view;
 
             scene->mouse_picked_faces[scene->mouse_picked_count] = face;
             scene->mouse_picked_count++;
@@ -1338,8 +1365,6 @@ void scene_render(Scene *scene) {
                            scene->camera_pitch, scene->camera_roll,
                            scene->view_distance, scene->clip_near);
     }
-
-    GameModel *model_2d = scene->view;
 
 #if RENDER_SW
     scene->visible_polygons_count = 0;
@@ -1447,7 +1472,7 @@ void scene_render(Scene *scene) {
         }
     }
 
-    scene_initialise_polygons_2d(scene, model_2d);
+    scene_initialise_polygons_2d(scene);
 
     if (scene->visible_polygons_count == 0) {
         return;
@@ -1467,7 +1492,7 @@ void scene_render(Scene *scene) {
         int face = polygon->face;
 
         if (game_model == scene->view) {
-            scene_render_polygon_2d_face(scene, game_model, face);
+            scene_render_polygon_2d_face(scene, face);
         } else {
             int k8 = 0;
             int vertex_shade = 0;
@@ -1644,139 +1669,8 @@ void scene_render(Scene *scene) {
     }
 #endif
 
-#if defined(RENDER_GL) && !defined(RENDER_SW)
-    game_model_project_view(model_2d, scene->camera_x, scene->camera_y,
-                           scene->camera_z, scene->camera_yaw,
-                           scene->camera_pitch, scene->camera_roll,
-                           scene->view_distance, scene->clip_near);
-
-    scene->visible_polygons_count = 0;
-
-    scene_initialise_polygons_2d(scene, model_2d);
-
-    qsort(scene->visible_polygons, scene->visible_polygons_count,
-          sizeof(GamePolygon *), scene_polygon_depth_compare);
-
-    for (int i = 0; i < scene->visible_polygons_count; i++) {
-        GamePolygon *polygon = scene->visible_polygons[i];
-
-        scene_render_polygon_2d_face(scene, scene->view, polygon->face);
-    }
-#endif
-
 #ifdef RENDER_GL
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    shader_use(&scene->game_model_shader);
-
-    shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
-
-    shader_set_int(&scene->game_model_shader, "fog_distance",
-                   scene->fog_z_distance);
-
-    shader_set_float(&scene->game_model_shader, "scroll_texture",
-                     scene->scroll_texture_position /
-                         (float)SCROLL_TEXTURE_SIZE);
-
-    scene->scroll_texture_position =
-        (scene->scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
-
-    scene->last_vao = 0;
-
-    vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
-                      VERTEX_TO_FLOAT(scene->camera_y),
-                      VERTEX_TO_FLOAT(scene->camera_z)};
-
-    vec3 ray_end = {0};
-    glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
-
-    /* draw the terrain first for potential mouse picking, since we can click
-     * through the unpickable models */
-    for (int i = 0; i < scene->model_count; i++) {
-        GameModel *game_model = scene->models[i];
-
-        if (game_model->autocommit && !game_model->unpickable) {
-            scene_gl_draw_game_model(scene, game_model);
-            game_model->gl_invisible = 1;
-        }
-    }
-
-    if (scene->gl_terrain_pick_step == 1) {
-        int mouse_x = scene->mouse_x + (scene->surface->width2 / 2);
-        int mouse_y = scene->surface->height2 - scene->mouse_y;
-        float mouse_z = 0;
-
-        glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
-                     &mouse_z);
-
-        vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
-        vec4 bounds = {0, 0, scene->surface->width2, scene->surface->height2};
-
-        glm_unproject(position, scene->gl_projection_view, bounds,
-                      scene->gl_mouse_world);
-
-        scene->gl_terrain_pick_step = 2;
-
-        scene->gl_terrain_pick_x =
-            FLOAT_TO_VERTEX(scene->gl_mouse_world[0]) / MAGIC_LOC;
-
-        scene->gl_terrain_pick_y =
-            FLOAT_TO_VERTEX(scene->gl_mouse_world[2]) / MAGIC_LOC;
-    }
-
-    for (int i = 0; i < scene->model_count; i++) {
-        GameModel *game_model = scene->models[i];
-
-        if (scene->mouse_picking_active && !game_model->unpickable) {
-            float time = game_model_gl_intersects(game_model,
-                                                  scene->gl_mouse_ray, ray_end);
-
-            if (time >= 0) {
-                if (game_model->autocommit) {
-                    scene->gl_terrain_walkable = 1;
-                } else {
-#ifndef RENDER_SW
-                    /* only pick if software is disabled, so we don't pick
-                     * twice */
-                    ModelTime model_time = {game_model, time};
-
-                    scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
-                        model_time;
-
-                    scene->gl_mouse_picked_count++;
-#endif
-                }
-            }
-        }
-
-        if (!game_model->gl_invisible) {
-            scene_gl_draw_game_model(scene, game_model);
-        }
-
-        game_model->gl_invisible = 0;
-    }
-
-#ifndef RENDER_SW
-    qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,
-          sizeof(ModelTime), scene_gl_model_time_compare);
-
-    for (int i = 0; i < scene->gl_mouse_picked_count; i++) {
-        scene->mouse_picked_models[scene->mouse_picked_count + i] =
-            scene->gl_mouse_picked_time[i].game_model;
-
-        scene->mouse_picked_faces[scene->mouse_picked_count + i] = -1;
-    }
-
-    scene->mouse_picked_count += scene->gl_mouse_picked_count;
-#endif
-
-    surface_gl_draw(scene->surface, 1);
+    scene_gl_render(scene);
 #endif
 
     scene->mouse_picking_active = 0;
@@ -4279,6 +4173,142 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->ebo_offset * sizeof(GLuint)));
+}
+
+void scene_gl_render(Scene *scene) {
+#ifndef RENDER_SW
+    /* if we're also rendering in software, this will already be done */
+    game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
+                           scene->camera_z, scene->camera_yaw,
+                           scene->camera_pitch, scene->camera_roll,
+                           scene->view_distance, scene->clip_near);
+
+    scene->visible_polygons_count = 0;
+
+    scene_initialise_polygons_2d(scene);
+
+    qsort(scene->visible_polygons, scene->visible_polygons_count,
+          sizeof(GamePolygon *), scene_polygon_depth_compare);
+
+    for (int i = 0; i < scene->visible_polygons_count; i++) {
+        GamePolygon *polygon = scene->visible_polygons[i];
+        scene_render_polygon_2d_face(scene, polygon->face);
+    }
+#endif
+
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    shader_use(&scene->game_model_shader);
+
+    shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
+
+    shader_set_int(&scene->game_model_shader, "fog_distance",
+                   scene->fog_z_distance);
+
+    shader_set_float(&scene->game_model_shader, "scroll_texture",
+                     scene->scroll_texture_position /
+                         (float)SCROLL_TEXTURE_SIZE);
+
+    scene->scroll_texture_position =
+        (scene->scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
+
+    scene->last_vao = 0;
+
+    vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
+                      VERTEX_TO_FLOAT(scene->camera_y),
+                      VERTEX_TO_FLOAT(scene->camera_z)};
+
+    vec3 ray_end = {0};
+    glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
+
+    /* draw the terrain first for potential mouse picking, since we can click
+     * through the unpickable models */
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (game_model->autocommit && !game_model->unpickable) {
+            scene_gl_draw_game_model(scene, game_model);
+            game_model->gl_invisible = 1;
+        }
+    }
+
+    if (scene->gl_terrain_pick_step == 1) {
+        int mouse_x = scene->mouse_x + (scene->surface->width2 / 2);
+        int mouse_y = scene->surface->height2 - scene->mouse_y;
+        float mouse_z = 0;
+
+        glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
+                     &mouse_z);
+
+        vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
+        vec4 bounds = {0, 0, scene->surface->width2, scene->surface->height2};
+
+        glm_unproject(position, scene->gl_projection_view, bounds,
+                      scene->gl_mouse_world);
+
+        scene->gl_terrain_pick_step = 2;
+
+        scene->gl_terrain_pick_x =
+            FLOAT_TO_VERTEX(scene->gl_mouse_world[0]) / MAGIC_LOC;
+
+        scene->gl_terrain_pick_y =
+            FLOAT_TO_VERTEX(scene->gl_mouse_world[2]) / MAGIC_LOC;
+    }
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (scene->mouse_picking_active && !game_model->unpickable) {
+            float time = game_model_gl_intersects(game_model,
+                                                  scene->gl_mouse_ray, ray_end);
+
+            if (time >= 0) {
+                if (game_model->autocommit) {
+                    scene->gl_terrain_walkable = 1;
+                } else {
+#ifndef RENDER_SW
+                    /* only pick if software is disabled, so we don't pick
+                     * twice */
+                    ModelTime model_time = {game_model, time};
+
+                    scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
+                        model_time;
+
+                    scene->gl_mouse_picked_count++;
+#endif
+                }
+            }
+        }
+
+        if (!game_model->gl_invisible) {
+            scene_gl_draw_game_model(scene, game_model);
+        }
+
+        game_model->gl_invisible = 0;
+    }
+
+#ifndef RENDER_SW
+    /* mousepicking is already done in software */
+    qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,
+          sizeof(ModelTime), scene_gl_model_time_compare);
+
+    for (int i = 0; i < scene->gl_mouse_picked_count; i++) {
+        scene->mouse_picked_models[scene->mouse_picked_count + i] =
+            scene->gl_mouse_picked_time[i].game_model;
+
+        scene->mouse_picked_faces[scene->mouse_picked_count + i] = -1;
+    }
+
+    scene->mouse_picked_count += scene->gl_mouse_picked_count;
+#endif
+
+    surface_gl_draw(scene->surface, 1);
 }
 
 void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
