@@ -2405,7 +2405,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     int vbo_offset = 0;
     int ebo_offset = 0;
 
-    world_gl_get_wall_model_offsets(mud->world, &vbo_offset, &ebo_offset);
+    scene_gl_get_wall_model_offsets(mud->scene, &vbo_offset, &ebo_offset);
 
     game_model->vbo_offset = vbo_offset;
     game_model->ebo_offset = ebo_offset;

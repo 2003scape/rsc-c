@@ -90,9 +90,6 @@ typedef struct World {
     GameModel **world_models_buffer;
     int world_models_offset;
 
-    int gl_wall_models_offset;
-
-    int gl_wall_objects_removed[WALL_OBJECTS_MAX];
 #endif
 } World;
 
@@ -148,6 +145,5 @@ void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
 void world_gl_create_world_models_buffer(World *world, int max_models);
 void world_gl_buffer_world_models(World *world);
 void world_gl_update_terrain_buffers(World *world);
-void world_gl_get_wall_model_offsets(World *world, int *vbo_offset, int *ebo_offset);
 #endif
 #endif

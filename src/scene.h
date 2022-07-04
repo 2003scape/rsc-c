@@ -144,6 +144,9 @@ typedef struct Scene {
     GLuint gl_wall_vbo;
     GLuint gl_wall_ebo;
 
+    int gl_wall_models_offset;
+    int gl_wall_objects_removed[WALL_OBJECTS_MAX];
+
     GLuint last_vao;
 
     float light_gradient[RAMP_SIZE];
@@ -155,8 +158,8 @@ typedef struct Scene {
 
     mat4 gl_inverse_projection;
     mat4 gl_inverse_view;
-    //mat4 gl_inverse_projection_view;
-    // TODO can these be combined?
+    // mat4 gl_inverse_projection_view;
+    //  TODO can these be combined?
 
     // TODO remove mouse_world
     vec3 gl_mouse_world;
@@ -225,9 +228,10 @@ void scene_set_sprite_translate_x(Scene *scene, int i, int n);
 void scene_set_mouse_loc(Scene *scene, int x, int y);
 void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
                       int clip_y, int width, int view_distance);
-void scene_polygons_intersect_sort(Scene *scene, int step, GamePolygon **polygons,
-                                   int count);
-int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start, int end);
+void scene_polygons_intersect_sort(Scene *scene, int step,
+                                   GamePolygon **polygons, int count);
+int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
+                         int end);
 void scene_set_frustum(Scene *scene, int x, int y, int z);
 void scene_render(Scene *scene);
 void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
@@ -263,6 +267,8 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 #ifdef RENDER_GL
 void scene_gl_update_camera(Scene *scene);
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model);
+void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
+                                     int *ebo_offset);
+void scene_gl_remove_wall_buffers(Scene *scene, GameModel *wall_object);
 #endif
-
 #endif

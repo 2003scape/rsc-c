@@ -30,12 +30,6 @@ void world_new(World *world, Scene *scene, Surface *surface) {
     world->surface = surface;
     world->player_alive = 0;
     world->base_media_sprite = 750;
-
-#ifdef RENDER_GL
-    game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
-                             &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
-                             WALL_OBJECTS_MAX * 6);
-#endif
 }
 
 int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
@@ -191,8 +185,6 @@ void world_remove_object2(World *world, int x, int y, int id) {
 }
 
 void world_remove_wall_object(World *world, int x, int y, int k, int id) {
-    printf("remove wall object\n");
-
     if (x < 0 || y < 0 || x >= 95 || y >= 95) {
         return;
     }
@@ -2290,12 +2282,5 @@ void world_gl_update_terrain_buffers(World *world) {
 
         game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
     }
-}
-
-void world_gl_get_wall_model_offsets(World *world, int *vbo_offset, int *ebo_offset) {
-    *vbo_offset = world->gl_wall_models_offset * 4;
-    *ebo_offset = world->gl_wall_models_offset * 6;
-
-    world->gl_wall_models_offset++;
 }
 #endif

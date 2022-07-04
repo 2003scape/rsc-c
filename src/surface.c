@@ -2611,8 +2611,8 @@ int surface_blend_alpha(int background_colour, int colour, int alpha) {
     return ((((colour & 0xff00ff) * alpha +
               (background_colour & 0xff00ff) * background_alpha) &
              -0xff0100) +
-            (((colour & 0xff00) * alpha +
-              (background_colour & 0xff00) * background_alpha) &
+            (((colour & 0x00ff00) * alpha +
+              (background_colour & 0x00ff00) * background_alpha) &
              0xff0000)) >>
            8;
 }

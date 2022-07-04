@@ -94,6 +94,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
 #ifdef RENDER_GL
+    game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
+                             &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
+                             WALL_OBJECTS_MAX * 6);
+
     scene->gl_sprite_depth = calloc(max_sprite_count, sizeof(float));
 
     shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
@@ -893,6 +897,12 @@ void scene_remove_model(Scene *scene, GameModel *model) {
             }
         }
     }
+
+#ifdef RENDER_GL
+    if (model->vao == scene->gl_wall_vao) {
+        scene_gl_remove_wall_buffers(scene, model);
+    }
+#endif
 }
 
 void scene_null_model(Scene *scene, GameModel *model) {
@@ -947,7 +957,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     {
         vec4 position = {
             VERTEX_TO_FLOAT(x),
-            //VERTEX_TO_FLOAT(y),
+            // VERTEX_TO_FLOAT(y),
             VERTEX_TO_FLOAT(y) - VERTEX_TO_FLOAT(height) / 2,
             VERTEX_TO_FLOAT(z),
             1.0,
@@ -1412,7 +1422,8 @@ void scene_render(Scene *scene) {
             int vx = game_model->vertex_view_x[face_0];
             int vy = game_model->vertex_view_y[face_0];
             int vz = game_model->project_vertex_z[face_0];
-            int width = (scene->sprite_width[face] << scene->view_distance) / vz;
+            int width =
+                (scene->sprite_width[face] << scene->view_distance) / vz;
             int h = (scene->sprite_height[face] << scene->view_distance) / vz;
             int skew_x = game_model->vertex_view_x[face_vertices[1]] - vx;
             int x = vx - (width / 2);
@@ -1425,9 +1436,9 @@ void scene_render(Scene *scene) {
 #endif
 
             surface_draw_entity_sprite(scene->surface, x + scene->base_x, y,
-                                          width, h, scene->sprite_id[face], skew_x,
-                                          (256 << scene->view_distance) / vz,
-                                          depth);
+                                       width, h, scene->sprite_id[face], skew_x,
+                                       (256 << scene->view_distance) / vz,
+                                       depth);
 
             if (scene->mouse_picking_active &&
                 scene->mouse_picked_count < MOUSE_PICKED_MAX) {
@@ -4182,7 +4193,7 @@ void scene_gl_update_camera(Scene *scene) {
 }
 
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
-    if (game_model->ebo_offset == -1/* || !game_model->visible*/) {
+    if (game_model->ebo_offset == -1 || !game_model->visible) {
         return;
     }
 
@@ -4208,7 +4219,8 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                             VERTEX_TO_FLOAT(game_model->light_direction_y),
                             VERTEX_TO_FLOAT(game_model->light_direction_z)};
 
-    shader_set_int(&scene->game_model_shader, "light_ambience", game_model->light_ambience);
+    shader_set_int(&scene->game_model_shader, "light_ambience",
+                   game_model->light_ambience);
 
     shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
 
@@ -4234,5 +4246,42 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->ebo_offset * sizeof(GLuint)));
+}
+
+void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
+                                     int *ebo_offset) {
+    int offset = -1;
+
+    for (int i = 0; i < WALL_OBJECTS_MAX; i++) {
+        if (scene->gl_wall_objects_removed[i] != 0) {
+            offset = scene->gl_wall_objects_removed[i];
+            scene->gl_wall_objects_removed[i] = 0;
+            break;
+        }
+    }
+
+    if (offset == -1) {
+        if (scene->gl_wall_models_offset + 1 >= WALL_OBJECTS_MAX) {
+            fprintf(stderr, "too many wall objects!\n");
+            exit(1);
+            return;
+        }
+
+        offset = scene->gl_wall_models_offset;
+        scene->gl_wall_models_offset++;
+    }
+
+    *vbo_offset = offset * 4;
+    *ebo_offset = offset * 6;
+}
+
+/* mark a previously-used wall-buffer as deleted to be re-used */
+void scene_gl_remove_wall_buffers(Scene *scene, GameModel *wall_object) {
+    for (int i = 0; i < WALL_OBJECTS_MAX; i++) {
+        if (scene->gl_wall_objects_removed[i] == 0) {
+            scene->gl_wall_objects_removed[i] = wall_object->vbo_offset / 4;
+            return;
+        }
+    }
 }
 #endif
