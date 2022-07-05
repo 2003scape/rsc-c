@@ -1228,8 +1228,6 @@ void game_model_dump(GameModel *game_model, int i) {
 #ifdef RENDER_GL
 void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
                               int vbo_length, int ebo_length) {
-    printf("creating vao\n");
-
     if (*vao) {
         glDeleteVertexArrays(1, vao);
         glDeleteBuffers(1, vbo);
@@ -1577,8 +1575,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
 /* calculate the length of the VBO and EBO arrays for a list of game models,
  * then populate them */
-void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
-                                 GameModel **game_models, int length) {
+void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo,
+                                 GLuint *ebo, GameModel **game_models,
+                                 int length) {
     int vertex_offset = 0;
     int ebo_offset = 0;
 

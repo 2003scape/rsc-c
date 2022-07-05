@@ -25,8 +25,8 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
     int x = mud->game_width / 2 - HBAR_WIDTH / 2;
     int y = mud->game_height - 4;
 
-    /*surface_draw_sprite_from3(mud->surface, x, y,
-                              mud->sprite_media + HBAR_SPRITE_OFFSET);*/
+    surface_draw_sprite_from3(mud->surface, x, y,
+                              mud->sprite_media + HBAR_SPRITE_OFFSET);
 
     y = mud->game_height + 6;
 

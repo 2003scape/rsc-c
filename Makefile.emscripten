@@ -2,9 +2,9 @@ CC = emcc
 #DEBUG = 1
 SRC = $(wildcard src/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -DREVISION_177 -s USE_SDL=2
+CFLAGS = -I ./cglm/include -DRENDER_GL -s USE_SDL=2 #-DREVISION_177 -s USE_SDL=2
 #CFLAGS = -s USE_SDL=2
-LDFLAGS = -lm -lSDL2
+LDFLAGS = -lm -lSDL2 -lGLEW -lGL
 
 ifdef DEBUG
 CFLAGS += -Wall -Wextra -pedantic -g
@@ -14,7 +14,8 @@ CFLAGS += -s -O3 -ffast-math #-fno-signed-zeros -freciprocal-math -ffp-contract=
 endif
 
 LDFLAGS += -s INITIAL_MEMORY=50MB -s USE_SDL=2 -s ASYNCIFY
-LDFLAGS += --preload-file ./cache --shell-file ./web/shell.html
+LDFLAGS += -s MAX_WEBGL_VERSION=2 -sFULL_ES2 -sFULL_ES3
+LDFLAGS += --preload-file ./cache #--shell-file ./web/shell.html
 
 mudclient.html: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)

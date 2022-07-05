@@ -91,7 +91,13 @@ void surface_new(Surface *surface, int width, int height, int limit,
         calloc(surface->width2 * surface->height2, sizeof(int32_t));
 
     /* coloured quads */
+#ifdef EMSCRIPTEN
+    shader_new(&surface->flat_shader, "./cache/flat.vs", "./cache/flat.fs");
+#else
     shader_new(&surface->flat_shader, "./flat.vs", "./flat.fs");
+#endif
+
+    shader_use(&surface->flat_shader);
 
     glGenVertexArrays(1, &surface->flat_vao);
     glBindVertexArray(surface->flat_vao);
@@ -223,8 +229,11 @@ void surface_gl_create_font_textures(Surface *surface) {
     for (int i = 0; i < FONT_COUNT; i++) {
         surface_gl_create_font_texture(font_raster, i, 0);
 
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH,
+        /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH,
                         FONT_TEXTURE_HEIGHT, 1, GL_BGRA, GL_UNSIGNED_BYTE,
+                        font_raster);*/
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, FONT_TEXTURE_WIDTH,
+                        FONT_TEXTURE_HEIGHT, 1, GL_RGBA, GL_UNSIGNED_BYTE,
                         font_raster);
 
         memset(font_raster, 0, font_area * sizeof(int32_t));
@@ -233,8 +242,11 @@ void surface_gl_create_font_textures(Surface *surface) {
     for (int i = 0; i < FONT_COUNT; i++) {
         surface_gl_create_font_texture(font_raster, i, 1);
 
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, FONT_COUNT + i,
+        /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, FONT_COUNT + i,
                         FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, font_raster);*/
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, FONT_COUNT + i,
+                        FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, 1, GL_RGBA,
                         GL_UNSIGNED_BYTE, font_raster);
 
         memset(font_raster, 0, font_area * sizeof(int32_t));
@@ -270,9 +282,14 @@ void surface_gl_create_circle_texture(Surface *surface) {
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->sprite_media_textures);
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
+    /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
                     surface->mud->sprite_item - surface->mud->sprite_media,
                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
+                    GL_UNSIGNED_BYTE, circle_pixels);*/
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0,
+                    surface->mud->sprite_item - surface->mud->sprite_media,
+                    MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_RGBA,
                     GL_UNSIGNED_BYTE, circle_pixels);
 
     free(circle_pixels);
@@ -807,7 +824,9 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 }
 
 void surface_gl_update_framebuffer(Surface *surface) {
-    glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
+    /*glReadPixels(0, 0, surface->width2, surface->height2, GL_BGRA,
+                 GL_UNSIGNED_BYTE, surface->screen_pixels_reversed);*/
+    glReadPixels(0, 0, surface->width2, surface->height2, GL_RGBA,
                  GL_UNSIGNED_BYTE, surface->screen_pixels_reversed);
 
     for (int x = 0; x < surface->width2; x++) {
@@ -824,8 +843,11 @@ void surface_gl_update_framebuffer(Surface *surface) {
 void surface_gl_update_framebuffer_texture(Surface *surface) {
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->framebuffer_textures);
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, surface->width2,
+    /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, surface->width2,
                     surface->height2, 1, GL_BGRA, GL_UNSIGNED_BYTE,
+                    surface->screen_pixels);*/
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, surface->width2,
+                    surface->height2, 1, GL_RGBA, GL_UNSIGNED_BYTE,
                     surface->screen_pixels);
 }
 
@@ -1724,8 +1746,11 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
         glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
 
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
+        /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
                         texture_width, texture_height, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, texture_pixels);*/
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
+                        texture_width, texture_height, 1, GL_RGBA,
                         GL_UNSIGNED_BYTE, texture_pixels);
 
         free(pixels);
@@ -1810,8 +1835,11 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index, texture_width,
+    /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index, texture_width,
                     texture_height, 1, GL_BGRA, GL_UNSIGNED_BYTE,
+                    texture_pixels);*/
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index, texture_width,
+                    texture_height, 1, GL_RGBA, GL_UNSIGNED_BYTE,
                     texture_pixels);
 
     free(texture_pixels);
@@ -1839,8 +1867,11 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
 
         int texture_index = surface_gl_sprite_texture_index(surface, sprite_id);
 
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
+        /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
                         MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_BGRA,
+                        GL_UNSIGNED_BYTE, texture_pixels);*/
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, texture_index,
+                        MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT, 1, GL_RGBA,
                         GL_UNSIGNED_BYTE, texture_pixels);
 
         free(texture_pixels);
@@ -2059,7 +2090,9 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_BGRA,
+    /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_BGRA,
+                    GL_UNSIGNED_BYTE, surface->surface_pixels[sprite_id]);*/
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_RGBA,
                     GL_UNSIGNED_BYTE, surface->surface_pixels[sprite_id]);
 #endif
 }

@@ -94,16 +94,16 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
 #ifdef RENDER_GL
-    game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
-                             &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
-                             WALL_OBJECTS_MAX * 6);
-
     scene->gl_sprite_depth = calloc(max_sprite_count, sizeof(float)); // TODO remove
 
     scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
 
+#ifdef EMSCRIPTEN
+    shader_new(&scene->game_model_shader, "./cache/game-model.vs", "./cache/game-model.fs");
+#else
     shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
+#endif
 
     for (int i = 0; i < RAMP_SIZE; i++) {
         int gradient_index = (RAMP_SIZE - 1) - i;
@@ -121,6 +121,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     }
 
     shader_use(&scene->game_model_shader);
+
+    game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
+                             &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
+                             WALL_OBJECTS_MAX * 6);
 
     shader_set_int(&scene->game_model_shader, "vertex_scale", VERTEX_SCALE);
 
@@ -3242,7 +3246,9 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
         }
     }
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, 128, 128, 1, GL_BGRA,
+    /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, 128, 128, 1, GL_BGRA,
+                    GL_UNSIGNED_BYTE, texture_raster);*/
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, 128, 128, 1, GL_RGBA,
                     GL_UNSIGNED_BYTE, texture_raster);
 
     free(texture_raster);
@@ -4106,9 +4112,7 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    //test_x = 37;
     float field_of_view = ((scene->surface->height2 - 13) * 0.09061f) + 5.53403f;
-    //field_of_view = 36.0f;
 
     glm_perspective(
         glm_rad(field_of_view),

@@ -129,7 +129,7 @@
 #define MOUSE_HISTORY_LENGTH 8192
 
 #define MUD_WIDTH (512)
-#define MUD_HEIGHT (346 * 2)
+#define MUD_HEIGHT (346)
 
 /* npc IDs */
 #define SHIFTY_MAN_ID 24

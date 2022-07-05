@@ -430,7 +430,7 @@ void mudclient_new(mudclient *mud) {
     mud->thread_sleep = 10;
     // mud->server = "192.168.100.103";
     mud->server = "127.0.0.1";
-    mud->port = 43594;
+    mud->port = 43595;
     // mud->server = "162.198.202.160"; /* openrsc preservation */
     // mud->port = 43596;
     // mud->port = 43496; /* websockets */
@@ -625,19 +625,25 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 #endif
 
 #ifdef RENDER_GL
+#ifdef EMSCRIPTEN
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+#else
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
+#endif
 
+#if 0
     // TODO make AA toggleable
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-
-    /* 2 is more than enough. couldn't tell a difference from 4 */
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
 
     glEnable(GL_MULTISAMPLE);
+#endif
 
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
