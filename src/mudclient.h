@@ -128,8 +128,8 @@
 
 #define MOUSE_HISTORY_LENGTH 8192
 
-#define MUD_WIDTH 512
-#define MUD_HEIGHT 346
+#define MUD_WIDTH (512)
+#define MUD_HEIGHT (346 * 2)
 
 /* npc IDs */
 #define SHIFTY_MAN_ID 24
@@ -222,8 +222,8 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
-extern int test_x;
-extern int test_y;
+extern float test_x;
+extern float test_y;
 extern int test_z;
 extern int test_yaw;
 extern int test_colour;

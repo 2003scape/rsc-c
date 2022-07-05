@@ -391,8 +391,12 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 /*int test_x = 520;
 int test_y = -106;
 int test_z = 750;*/
-int test_x = 0;
-int test_y = 0;
+//int test_x = 68;
+//float test_x = 37;
+//float test_y = 77;
+float test_x = 36.0f;
+float test_y = 76.750000;
+
 int test_z = 0;
 int test_yaw = 1;
 int test_colour = -1;
@@ -400,7 +404,7 @@ int test_fade = 0;
 float test_depth = 0;
 GameModel *test_model = NULL;
 
-#ifdef RENDER_GL
+#if 0
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id,
                                 GLenum severity, GLsizei length,
                                 const GLchar *message, const void *user_param) {
@@ -4686,13 +4690,13 @@ void mudclient_poll_events(mudclient *mud) {
             int mag = 1;
 
             if (code == 113) {
-                test_x -= mag;
+                test_x -= 0.25f;
             } else if (code == 97) {
-                test_x += mag;
+                test_x += 0.25f;
             } else if (code == 119) {
-                test_y -= mag;
+                test_y -= 0.25f;
             } else if (code == 115) {
-                test_y += mag;
+                test_y += 0.25f;
             } else if (code == 101) {
                 test_z -= mag;
             } else if (code == 100) {
@@ -4708,7 +4712,9 @@ void mudclient_poll_events(mudclient *mud) {
             }
 
             // printf("%d\n", code);
-            printf("%d %d %d\n", test_x, test_y, test_z);
+            //printf("%d %d %d\n", test_x, test_y, test_z);
+
+            printf("%f %f\n", test_x, test_y);
 
             break;
         }

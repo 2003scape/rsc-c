@@ -4090,7 +4090,7 @@ void scene_gl_update_camera(Scene *scene) {
     float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048);
 
     // TODO why 77?
-    float pitch = glm_rad(77) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
+    float pitch = glm_rad(76.5f) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
 
     vec3 front = {cos(yaw) * cos(pitch), pitch, sin(yaw) * cos(pitch)};
 
@@ -4106,11 +4106,13 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    float field_of_view = 37;
+    //test_x = 37;
+    float field_of_view = ((scene->surface->height2 - 13) * 0.09061f) + 5.53403f;
+    //field_of_view = 36.0f;
 
     glm_perspective(
         glm_rad(field_of_view),
-        (float)(scene->surface->width2) / (float)scene->surface->height2,
+        (float)(scene->surface->width2) / (float)(scene->surface->height2 - 13),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
@@ -4195,11 +4197,20 @@ void scene_gl_render(Scene *scene) {
         scene_render_polygon_2d_face(scene, polygon->face);
     }
 #endif
-
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
     glClear(GL_DEPTH_BUFFER_BIT);
+
+    //printf("%d %d\n", scene->surface->height2, scene->surface->width2);
+
+    /* for the message tab bar */
+    int offset_y = 13;
+
+    int screen_width = scene->surface->width2;
+    int screen_height = scene->surface->height2 - offset_y;
+
+    glViewport(0, offset_y, screen_width, screen_height);
 
     shader_use(&scene->game_model_shader);
 
@@ -4308,6 +4319,7 @@ void scene_gl_render(Scene *scene) {
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
 #endif
 
+    glViewport(0, 0, scene->surface->width2, scene->surface->height2);
     surface_gl_draw(scene->surface, 1);
 }
 
