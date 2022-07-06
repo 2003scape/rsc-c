@@ -6,22 +6,22 @@ void mudclient_draw_sleep(mudclient *mud) {
     if (((float)rand() / (float)RAND_MAX) <= 0.15) {
         surface_draw_string_centre(
             mud->surface, "ZZZ", ((float)rand() / (float)RAND_MAX) * 80,
-            ((float)rand() / (float)RAND_MAX) * mud->game_height, 5,
+            ((float)rand() / (float)RAND_MAX) * mud->surface->height2, 5,
             ((float)rand() / (float)RAND_MAX) * WHITE);
     }
 
     if (((float)rand() / (float)RAND_MAX) <= 0.15) {
         surface_draw_string_centre(
             mud->surface, "ZZZ",
-            mud->game_width - (((float)rand() / (float)RAND_MAX) * 80),
-            ((float)rand() / (float)RAND_MAX) * mud->game_height, 5,
+            mud->surface->width2 - (((float)rand() / (float)RAND_MAX) * 80),
+            ((float)rand() / (float)RAND_MAX) * mud->surface->height2, 5,
             ((float)rand() / (float)RAND_MAX) * WHITE);
     }
 
-    surface_draw_box(mud->surface, (mud->game_width / 2) - 100, 160, 200, 40,
+    surface_draw_box(mud->surface, (mud->surface->width2 / 2) - 100, 160, 200, 40,
                      BLACK);
 
-    int x = mud->game_width / 2;
+    int x = mud->surface->width2 / 2;
     int y = 50;
 
     surface_draw_string_centre(mud->surface, "You are sleeping", x, y, 7,

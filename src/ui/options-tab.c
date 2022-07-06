@@ -145,10 +145,10 @@ void mudclient_draw_change_password(mudclient *mud) {
 }
 
 void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
-    int ui_x = mud->game_width - OPTIONS_WIDTH - 3;
+    int ui_x = mud->surface->width2 - OPTIONS_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->game_width - UI_TABS_WIDTH - 3,
+    surface_draw_sprite_from3(mud->surface, mud->surface->width2 - UI_TABS_WIDTH - 3,
                               3, mud->sprite_media + 6);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y, OPTIONS_WIDTH, 65,

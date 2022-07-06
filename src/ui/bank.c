@@ -29,10 +29,9 @@ void mudclient_draw_bank(mudclient *mud) {
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
 
-        int mouse_x = mud->mouse_x - ((mud->game_width / 2) - (BANK_WIDTH / 2));
+        int mouse_x = mud->mouse_x - ((mud->surface->width2 / 2) - (BANK_WIDTH / 2));
 
-        int mouse_y =
-            mud->mouse_y - ((mud->game_height / 2) - (BANK_HEIGHT / 2));
+        int mouse_y = mud->mouse_y;
 
         if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < 408 && mouse_y < 280) {
             int slot_index = mud->bank_active_page * BANK_ITEMS_PER_PAGE;
@@ -318,8 +317,8 @@ void mudclient_draw_bank(mudclient *mud) {
         }
     }
 
-    int x = (mud->game_width / 2) - (BANK_WIDTH / 2);
-    int y = (mud->game_height / 2) - (BANK_HEIGHT / 2);
+    int x = (mud->surface->width2 / 2) - (BANK_WIDTH / 2);
+    int y = 0;
 
     surface_draw_box(mud->surface, x, y, 408, 12, TITLE_BAR_COLOUR);
     surface_draw_box_alpha(mud->surface, x, y + 12, 408, 17, GREY_98, 160);

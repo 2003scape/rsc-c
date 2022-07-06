@@ -409,7 +409,9 @@ int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id) {
         return ITEM_TEXTURE_WIDTH;
     }
 
-    // TODO font?
+    if (texture_array_id == surface->font_textures) {
+        return FONT_TEXTURE_WIDTH;
+    }
 
     if (texture_array_id == surface->framebuffer_textures) {
         return surface->width2;
@@ -434,6 +436,10 @@ int surface_gl_sprite_texture_height(Surface *surface,
 
     if (texture_array_id == surface->sprite_item_textures) {
         return ITEM_TEXTURE_HEIGHT;
+    }
+
+    if (texture_array_id == surface->font_textures) {
+        return FONT_TEXTURE_WIDTH;
     }
 
     if (texture_array_id == surface->framebuffer_textures) {
@@ -1603,18 +1609,16 @@ void surface_apply_login_filter(Surface *surface) {
 
     surface_fade_to_black(surface);
 
-    int game_width = surface->mud->game_width;
-
-    surface_draw_box(surface, 0, 0, game_width, 6, BLACK);
+    surface_draw_box(surface, 0, 0, surface->width2, 6, BLACK);
 
     for (int i = 6; i >= 1; i--) {
-        surface_draw_blur(surface, i, 0, i, game_width, 8);
+        surface_draw_blur(surface, i, 0, i, surface->width2, 8);
     }
 
-    surface_draw_box(surface, 0, 194, game_width, 20, BLACK);
+    surface_draw_box(surface, 0, 194, surface->width2, 20, BLACK);
 
     for (int i = 6; i >= 1; i--) {
-        surface_draw_blur(surface, i, 0, 194 - i, game_width, 8);
+        surface_draw_blur(surface, i, 0, 194 - i, surface->width2, 8);
     }
 }
 

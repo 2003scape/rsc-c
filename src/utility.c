@@ -486,6 +486,26 @@ float translate_gl_y(int y, int range) {
     return -translate_gl_coord(y, range);
 }
 
+void gl_add_array_texture(GLuint texture_array_id, int index,
+                          int width, int height, int32_t *pixels) {
+    /* webgl only supports RGBA. */
+    int8_t *byte_pixels = (int8_t*)pixels;
+
+    for (int i = 0; i < width * height * 4; i++) {
+        int b = byte_pixels[i];
+        int g = byte_pixels[i + 1];
+        int r = byte_pixels[i + 2];
+        int a = byte_pixels[i + 3];
+
+        pixels[i / 4] = (r << 24) | (g << 16) | (b << 8) | a;
+    }
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, width,
+                    height, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+}
+
 void rotate_point(int centre_x, int centre_y, float angle, int *point) {
     point[0] -= centre_x;
     point[1] -= centre_y;

@@ -4,7 +4,7 @@ void mudclient_create_login_panels(mudclient *mud) {
     mud->panel_login_welcome = malloc(sizeof(Panel));
     panel_new(mud->panel_login_welcome, mud->surface, 50);
 
-    int x = mud->game_width / 2;
+    int x = mud->surface->width2 / 2;
     int y = 40;
 
     if (!mud->members) {
@@ -268,7 +268,7 @@ void mudclient_reset_login_screen(mudclient *mud) {
     mud->npc_count = 0;
 }
 
-void mudclient_render_login_screen_viewports(mudclient *mud) {
+void mudclient_render_login_scene_sprites(mudclient *mud) {
     int plane = 0;
     int region_x = 50; // 49;
     int region_y = 50; // 47;
@@ -304,19 +304,19 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     surface_draw_sprite_from3(
         mud->surface,
-        (mud->game_width / 2) -
+        (mud->surface->width2 / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);
 
     /* TODO: resizable logo
     surface_sprite_clipping_from9(
            mud->surface,
-           (mud->game_width / 2) -
+           (mud->surface->width2 / 2) -
                (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
            15, 400, 120, mud->sprite_media + 10, 0, 0, 0, 0);*/
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
-                              mud->game_width, 200);
+                              mud->surface->width2, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
@@ -340,12 +340,12 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     surface_draw_sprite_from3(
         mud->surface,
-        (mud->game_width / 2) -
+        (mud->surface->width2 / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
-                              mud->game_width, 200);
+                              mud->surface->width2, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
@@ -395,12 +395,12 @@ void mudclient_render_login_screen_viewports(mudclient *mud) {
 
     surface_draw_sprite_from3(
         mud->surface,
-        (mud->game_width / 2) -
+        (mud->surface->width2 / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);
 
     surface_draw_sprite_from5(mud->surface, mud->sprite_media + 10, 0, 0,
-                              mud->game_width, 200);
+                              mud->surface->width2, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
@@ -475,8 +475,9 @@ void mudclient_draw_login_screens(mudclient *mud) {
     }
 
     /* blue bar */
-    surface_draw_sprite_from3(mud->surface, 0, mud->game_height - 4,
+    surface_draw_sprite_from3(mud->surface, 0, mud->surface->height2 - 16,
                               mud->sprite_media + 22);
+
 
     surface_draw(mud->surface);
 }

@@ -421,8 +421,6 @@ void mudclient_new(mudclient *mud) {
     // mud->interlace = 1;
     // mud->members = 1;
 
-    mud->applet_width = MUD_WIDTH;
-    mud->applet_height = MUD_HEIGHT;
     mud->target_fps = 20;
     mud->max_draw_time = 1000;
     mud->loading_step = 1;
@@ -430,12 +428,12 @@ void mudclient_new(mudclient *mud) {
     mud->thread_sleep = 10;
     // mud->server = "192.168.100.103";
     mud->server = "127.0.0.1";
-    mud->port = 43595;
+    mud->port = 43594;
     // mud->server = "162.198.202.160"; /* openrsc preservation */
     // mud->port = 43596;
     // mud->port = 43496; /* websockets */
-    mud->game_width = mud->applet_width;
-    mud->game_height = mud->applet_height - 12;
+    mud->game_width = MUD_WIDTH;
+    mud->game_height = MUD_HEIGHT - 12;
     mud->camera_angle = 1;
     mud->camera_rotation = 128;
     mud->camera_zoom = ZOOM_INDOORS;
@@ -475,10 +473,7 @@ void mudclient_new(mudclient *mud) {
     mud->bank_items_max = 48;
 }
 
-void mudclient_start_application(mudclient *mud, int width, int height,
-                                 char *title) {
-    mud->applet_width = width;
-    mud->applet_height = height;
+void mudclient_start_application(mudclient *mud, char *title) {
     mud->loading_step = 1;
 
 #ifdef WII
@@ -616,12 +611,13 @@ void mudclient_start_application(mudclient *mud, int width, int height,
 #ifdef RENDER_SW
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         width, height, SDL_WINDOW_SHOWN);
+                         mud->game_width, mud->game_height + 12, SDL_WINDOW_SHOWN);
 
     mud->screen = SDL_GetWindowSurface(mud->window);
 
-    mud->pixel_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000,
-                                              0x00ff00, 0x0000ff, 0);
+    mud->pixel_surface = SDL_CreateRGBSurface(0, mud->game_width,
+                                              mud->game_height + 12, 32,
+                                              0xff0000, 0x00ff00, 0x0000ff, 0);
 #endif
 
 #ifdef RENDER_GL
@@ -992,8 +988,8 @@ void mudclient_show_loading_progress(mudclient *mud, int percent, char *text) {
     SDL_FillRect(mud->pixel_surface, &texture_dest, 0x000000);
 
     SDL_Rect loading_dest = {0};
-    loading_dest.x = ((mud->applet_width - 281) / 2) + 2;
-    loading_dest.y = ((mud->applet_height - 148) / 2) + 76;
+    loading_dest.x = ((mud->game_width - 281) / 2) + 2;
+    loading_dest.y = ((mud->game_height - 136) / 2) + 76;
     loading_dest.w = (int)((percent / (float)100) * 277);
     loading_dest.h = 20;
 
@@ -1188,13 +1184,13 @@ void mudclient_load_jagex(mudclient *mud) {
 void mudclient_draw_loading_screen(mudclient *mud) {
 #if !defined(WII) && !defined(_3DS)
     SDL_Rect logo_dest = {0};
-    logo_dest.x = ((mud->applet_width - 281) / 2) - 18;
-    logo_dest.y = ((mud->applet_height - 148) / 2) - 14;
+    logo_dest.x = ((mud->game_width - 281) / 2) - 18;
+    logo_dest.y = ((mud->game_height - 136) / 2) - 14;
 
     SDL_BlitSurface(mud->logo_surface, NULL, mud->pixel_surface, &logo_dest);
 
     SDL_Rect loading_dest = {0};
-    loading_dest.x = ((mud->applet_width - 281) / 2);
+    loading_dest.x = ((mud->game_width - 281) / 2);
     loading_dest.y = logo_dest.y + 88;
     loading_dest.w = 281;
     loading_dest.h = 24;
@@ -2352,7 +2348,13 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_login_panels(mud);
     mudclient_create_appearance_panel(mud);
     mudclient_reset_login_screen(mud);
-    mudclient_render_login_screen_viewports(mud);
+    mudclient_render_login_scene_sprites(mud);
+
+#if !defined(WII) && !defined(_3DS)
+#ifdef RENDER_SW
+    SDL_SetWindowResizable(mud->window, 1);
+#endif
+#endif
 
     free(surface_texture_pixels);
     surface_texture_pixels = NULL;
@@ -4661,8 +4663,8 @@ void mudclient_poll_events(mudclient *mud) {
             int game_x = (touch.px - offset_x) * 2;
             int game_y = (touch.py - offset_y) * 2;
 
-            if (game_x < 0 || game_y < 0 || game_x > mud->applet_width ||
-                game_y > mud->applet_height) {
+            if (game_x < 0 || game_y < 0 || game_x > mud->game_width ||
+                game_y > (mud->game_height + 12)) {
                 return;
             }
 
@@ -4741,6 +4743,11 @@ void mudclient_poll_events(mudclient *mud) {
         case SDL_MOUSEBUTTONUP:
             mudclient_mouse_released(mud, event.button.x, event.button.y,
                                      event.button.button);
+            break;
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                printf("resized\n");
+            }
             break;
         }
     }
@@ -5205,8 +5212,8 @@ int main(int argc, char **argv) {
     /* END INAUTHENTIC COMMAND LINE ARGUMENTS */
 #endif
 
-    mudclient_start_application(mud, MUD_WIDTH, MUD_HEIGHT,
-                                "Runescape by Andrew Gower");
+    mudclient_start_application(mud, "Runescape by Andrew Gower");
+
 #ifdef _3DS
     linearFree(audio_buffer);
     ndspExit();

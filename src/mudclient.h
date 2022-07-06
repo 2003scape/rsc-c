@@ -327,8 +327,6 @@ typedef struct mudclient {
 #endif
 
     Options *options;
-    int applet_width;
-    int applet_height;
     int game_width;
     int game_height;
 
@@ -827,8 +825,7 @@ typedef struct mudclient {
 } mudclient;
 
 void mudclient_new(mudclient *mud);
-void mudclient_start_application(mudclient *mud, int width, int height,
-                                 char *title);
+void mudclient_start_application(mudclient *mud, char *title);
 
 /* TODO events.c */
 void mudclient_handle_key_press(mudclient *mud, int key_code);
