@@ -29,7 +29,7 @@ void mudclient_draw_bank(mudclient *mud) {
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
 
-        int mouse_x = mud->mouse_x - ((mud->surface->width2 / 2) - (BANK_WIDTH / 2));
+        int mouse_x = mud->mouse_x - ((mud->surface->width / 2) - (BANK_WIDTH / 2));
 
         int mouse_y = mud->mouse_y;
 
@@ -317,7 +317,7 @@ void mudclient_draw_bank(mudclient *mud) {
         }
     }
 
-    int x = (mud->surface->width2 / 2) - (BANK_WIDTH / 2);
+    int x = (mud->surface->width / 2) - (BANK_WIDTH / 2);
     int y = 0;
 
     surface_draw_box(mud->surface, x, y, 408, 12, TITLE_BAR_COLOUR);

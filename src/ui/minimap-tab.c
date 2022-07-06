@@ -11,10 +11,10 @@ void mudclient_draw_minimap_entity(mudclient *mud, int x, int y, int colour) {
 }
 
 void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
-    int ui_x = mud->surface->width2 - MINIMAP_WIDTH - 3;
+    int ui_x = mud->surface->width - MINIMAP_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width2 - UI_TABS_WIDTH - 3,
+    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
                               3, mud->sprite_media + MINIMAP_TAB_SPRITE_OFFSET);
 
     surface_draw_box(mud->surface, ui_x, ui_y, MINIMAP_WIDTH, MINIMAP_HEIGHT,
@@ -147,7 +147,7 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
                                 mud->sprite_media + 24,
                                 (mud->camera_rotation + 128) & 255, 128);
 
-    surface_set_bounds(mud->surface, 0, 0, mud->surface->width2, mud->surface->height2);
+    surface_set_bounds(mud->surface, 0, 0, mud->surface->width, mud->surface->height);
 
     if (!no_menus) {
         return;

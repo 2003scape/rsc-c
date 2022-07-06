@@ -3,10 +3,10 @@
 char *magic_tabs[] = {"Magic", "Prayers"};
 
 void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
-    int ui_x = mud->surface->width2 - MAGIC_WIDTH - 3;
+    int ui_x = mud->surface->width - MAGIC_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width2 - UI_TABS_WIDTH - 3,
+    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
                               3, mud->sprite_media + MAGIC_TAB_SPRITE_OFFSET);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + MAGIC_TAB_HEIGHT,

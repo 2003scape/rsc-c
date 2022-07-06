@@ -307,7 +307,7 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     /* blue bar */
-    surface_draw_sprite_from3(mud->surface, 0, mud->surface->height2 - 16,
+    surface_draw_sprite_from3(mud->surface, 0, mud->surface->height - 16,
                               mud->sprite_media + 22);
 
     surface_draw(mud->surface);

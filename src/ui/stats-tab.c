@@ -86,10 +86,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         height += STATS_LINE_BREAK;
     }
 
-    int ui_x = mud->surface->width2 - STATS_WIDTH - 3;
+    int ui_x = mud->surface->width - STATS_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width2 - UI_TABS_WIDTH - 3,
+    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
                               3, mud->sprite_media + STATS_TAB_SPRITE_OFFSET);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + STATS_TAB_HEIGHT,

@@ -22,13 +22,13 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
 }
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
-    int x = mud->surface->width2 / 2 - HBAR_WIDTH / 2;
-    int y = mud->surface->height2 - 16;
+    int x = mud->surface->width / 2 - HBAR_WIDTH / 2;
+    int y = mud->surface->height - 16;
 
     surface_draw_sprite_from3(mud->surface, x, y,
                               mud->sprite_media + HBAR_SPRITE_OFFSET);
 
-    y = mud->surface->height2 - 6;
+    y = mud->surface->height - 6;
 
     int text_colour = MESSAGE_TAB_PURPLE;
 
@@ -88,7 +88,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
-        int y = mud->surface->height2 - 30;
+        int y = mud->surface->height - 30;
 
         for (int i = 0; i < MESSAGE_HISTORY_LENGTH; i++) {
             if (mud->message_history_timeout[i] <= 0) {
@@ -134,10 +134,10 @@ void mudclient_send_chat_message(mudclient *mud, int8_t *encoded,
 }
 
 void mudclient_handle_message_tabs_input(mudclient *mud) {
-    int x = mud->surface->width2 / 2 - HBAR_WIDTH / 2;
+    int x = mud->surface->width / 2 - HBAR_WIDTH / 2;
     int mouse_x = mud->mouse_x - x;
 
-    if ((mud->mouse_y > mud->surface->height2 - 16)) {
+    if ((mud->mouse_y > mud->surface->height - 16)) {
         if (mouse_x > 15 && mouse_x < 96 && mud->last_mouse_button_down == 1) {
             mud->message_tab_selected = MESSAGE_TAB_ALL;
         }
@@ -184,7 +184,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
                        mud->mouse_scroll_delta);
 
     if (mud->message_tab_selected > 0 && mud->mouse_x >= 494 &&
-        mud->mouse_y >= mud->surface->height2 - 78) {
+        mud->mouse_y >= mud->surface->height - 78) {
         mud->last_mouse_button_down = 0;
     }
 

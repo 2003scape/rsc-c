@@ -79,11 +79,8 @@ typedef struct SurfaceGlContext {
 
 typedef struct Surface {
     int limit;
-    int width2;
-    int height2;
-    int area;
-    int width1;
-    int height1;
+    int width;
+    int height;
     int32_t *pixels;
     int32_t **surface_pixels; // TODO rename
     int8_t **sprite_colours_used;
@@ -95,47 +92,55 @@ typedef struct Surface {
     int8_t *sprite_translate;
     int *sprite_translate_x;
     int *sprite_translate_y;
-    int interlace;
-    int logged_in;
-    int *an_int_array_340;
-    int *an_int_array_341;
-    int *an_int_array_342;
-    int *an_int_array_343;
-    int *an_int_array_344;
-    int *an_int_array_345;
-    int an_int_array_340_length;
-    int bounds_top_y;
-    int bounds_bottom_y;
-    int bounds_top_x;
-    int bounds_bottom_x;
+
+    int8_t interlace;
+    int8_t logged_in;
+
+    /* arrays used for minimap sprite rotation */
+    int *rotations_0;
+    int *rotations_1;
+    int *rotations_2;
+    int *rotations_3;
+    int *rotations_4;
+    int *rotations_5;
+    int rotations_length;
+
+    /* used to prevent the minimap from drawing outside of the map UI, and to
+     * prevent software rendering from writing outside of the raster array */
+    int bounds_min_y;
+    int bounds_max_y;
+    int bounds_min_x;
+    int bounds_max_x;
+
     mudclient *mud;
 
 #ifdef RENDER_GL
-    int fade_to_black;
-    int has_faded;
+    int8_t gl_fade_to_black;
+    int8_t gl_has_faded;
 
-    Shader flat_shader;
-    GLuint flat_vao;
-    GLuint flat_vbo;
-    GLuint flat_ebo;
-    int flat_count;
+    Shader gl_flat_shader;
+    GLuint gl_flat_vao;
+    GLuint gl_flat_vbo;
+    GLuint gl_flat_ebo;
+    int gl_flat_count;
 
-    GLuint sprite_item_textures;
-    GLuint sprite_media_textures;
-    GLuint sprite_entity_textures;
-    GLuint map_textures;
-    GLuint font_textures;
-    GLuint framebuffer_textures;
+    /* texture arrays */
+    GLuint gl_sprite_item_textures;
+    GLuint gl_sprite_media_textures;
+    GLuint gl_sprite_entity_textures;
+    GLuint gl_map_textures;
+    GLuint gl_font_textures;
+    GLuint gl_framebuffer_textures;
 
     /* used for texture array and boundary changes */
     SurfaceGlContext gl_contexts[256];
 
     int gl_context_count;
 
-    int entity_sprite_indices[2000];
+    int gl_entity_sprite_indices[2000];
 
-    int32_t *screen_pixels_reversed;
-    int32_t *screen_pixels;
+    int32_t *gl_screen_pixels_reversed;
+    int32_t *gl_screen_pixels;
 #endif
 } Surface;
 
@@ -180,7 +185,7 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface);
 void surface_gl_draw(Surface *surface, int use_depth);
 #endif
 
-void surface_set_bounds(Surface *surface, int x1, int y1, int x2, int y2);
+void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x, int max_y);
 void surface_reset_bounds(Surface *surface);
 void surface_reset_draw(Surface *surface);
 void surface_draw(Surface *surface);

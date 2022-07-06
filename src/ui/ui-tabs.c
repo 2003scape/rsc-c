@@ -1,14 +1,14 @@
 #include "ui-tabs.h"
 
 void mudclient_set_active_ui_tab(mudclient *mud) {
-    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width2 - 35 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 &&
+    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width - 35 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 &&
         mud->mouse_y < 35) {
         mud->show_ui_tab = INVENTORY_TAB;
     }
 
-    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width2 - 35 - 33 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 33 &&
+    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width - 35 - 33 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 33 &&
         mud->mouse_y < 35) {
         mud->show_ui_tab = MAP_TAB;
 
@@ -19,39 +19,39 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
     }
 
-    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width2 - 35 - 66 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 66 &&
+    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width - 35 - 66 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 66 &&
         mud->mouse_y < 35) {
         mud->show_ui_tab = STATS_TAB;
     }
 
-    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width2 - 35 - 99 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 99 &&
+    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width - 35 - 99 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 99 &&
         mud->mouse_y < 35) {
         mud->show_ui_tab = MAGIC_TAB;
     }
 
-    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width2 - 35 - 132 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 132 &&
+    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width - 35 - 132 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 132 &&
         mud->mouse_y < 35) {
         mud->show_ui_tab = SOCIAL_TAB;
     }
 
-    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width2 - 35 - 165 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 165 &&
+    if (mud->show_ui_tab == 0 && mud->mouse_x >= mud->surface->width - 35 - 165 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 165 &&
         mud->mouse_y < 35) {
         mud->show_ui_tab = OPTIONS_TAB;
     }
 
-    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width2 - 35 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 &&
+    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width - 35 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 &&
         mud->mouse_y < 26) {
         mud->show_ui_tab = INVENTORY_TAB;
     }
 
     if (mud->show_ui_tab != 0 && mud->show_ui_tab != MAP_TAB &&
-        mud->mouse_x >= mud->surface->width2 - 35 - 33 && mud->mouse_y >= 3 &&
-        mud->mouse_x < mud->surface->width2 - 3 - 33 && mud->mouse_y < 26) {
+        mud->mouse_x >= mud->surface->width - 35 - 33 && mud->mouse_y >= 3 &&
+        mud->mouse_x < mud->surface->width - 3 - 33 && mud->mouse_y < 26) {
         mud->show_ui_tab = MAP_TAB;
 
         mud->minimap_random_rotation =
@@ -61,49 +61,49 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
     }
 
-    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width2 - 35 - 66 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 66 &&
+    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width - 35 - 66 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 66 &&
         mud->mouse_y < 26) {
         mud->show_ui_tab = STATS_TAB;
     }
 
-    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width2 - 35 - 99 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 99 &&
+    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width - 35 - 99 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 99 &&
         mud->mouse_y < 26) {
         mud->show_ui_tab = MAGIC_TAB;
     }
 
-    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width2 - 35 - 132 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 132 &&
+    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width - 35 - 132 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 132 &&
         mud->mouse_y < 26) {
         mud->show_ui_tab = SOCIAL_TAB;
     }
 
-    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width2 - 35 - 165 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width2 - 3 - 165 &&
+    if (mud->show_ui_tab != 0 && mud->mouse_x >= mud->surface->width - 35 - 165 &&
+        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 165 &&
         mud->mouse_y < 26) {
         mud->show_ui_tab = OPTIONS_TAB;
     }
 
     if (mud->show_ui_tab == INVENTORY_TAB &&
-        (mud->mouse_x < mud->surface->width2 - (INVENTORY_WIDTH + 3) ||
+        (mud->mouse_x < mud->surface->width - (INVENTORY_WIDTH + 3) ||
          mud->mouse_y > 36 + INVENTORY_HEIGHT)) {
         mud->show_ui_tab = 0;
     }
 
     if (mud->show_ui_tab == STATS_TAB &&
-        (mud->mouse_x < mud->surface->width2 - 199 || mud->mouse_y > 316)) {
+        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 316)) {
         mud->show_ui_tab = 0;
     }
 
     if ((mud->show_ui_tab == MAP_TAB || mud->show_ui_tab == MAGIC_TAB ||
          mud->show_ui_tab == 5) &&
-        (mud->mouse_x < mud->surface->width2 - 199 || mud->mouse_y > 240)) {
+        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 240)) {
         mud->show_ui_tab = 0;
     }
 
     if (mud->show_ui_tab == OPTIONS_TAB &&
-        (mud->mouse_x < mud->surface->width2 - 199 || mud->mouse_y > 311)) {
+        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 311)) {
         mud->show_ui_tab = 0;
     }
 }

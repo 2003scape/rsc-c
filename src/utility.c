@@ -1,9 +1,5 @@
 #include "utility.h"
 
-#if !defined(WII) && !defined(_3DS)
-#include <SDL2/SDL.h>
-#endif
-
 int sin_cos_512[512];
 int sin_cos_2048[2048];
 
@@ -472,38 +468,35 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
 }
 
 #ifdef RENDER_GL
-// TODO rename gl_x instead of x_gl
-float translate_gl_coord(int position, int range) {
+float gl_translate_coord(int position, int range) {
     float half = range / 2.0f;
     return (position - half) / half;
 }
 
-float translate_gl_x(int x, int range) {
-    return translate_gl_coord(x, range);
-}
+float gl_translate_x(int x, int range) { return gl_translate_coord(x, range); }
 
-float translate_gl_y(int y, int range) {
-    return -translate_gl_coord(y, range);
-}
+float gl_translate_y(int y, int range) { return -gl_translate_coord(y, range); }
 
-void gl_add_array_texture(GLuint texture_array_id, int index,
-                          int width, int height, int32_t *pixels) {
-    /* webgl only supports RGBA. */
-    int8_t *byte_pixels = (int8_t*)pixels;
+void gl_update_texture_array(GLuint texture_array_id, int index, int width,
+                             int height, int32_t *pixels, int convert_bgra) {
+    /* webgl only supports RGBA */
+    if (convert_bgra) {
+        uint8_t *byte_pixels = (uint8_t *)pixels;
 
-    for (int i = 0; i < width * height * 4; i++) {
-        int b = byte_pixels[i];
-        int g = byte_pixels[i + 1];
-        int r = byte_pixels[i + 2];
-        int a = byte_pixels[i + 3];
+        for (int i = 0; i < width * height * 4; i += 4) {
+            int b = byte_pixels[i];
+            int g = byte_pixels[i + 1];
+            int r = byte_pixels[i + 2];
+            int a = byte_pixels[i + 3];
 
-        pixels[i / 4] = (r << 24) | (g << 16) | (b << 8) | a;
+            pixels[i / 4] = (a << 24) | (b << 16) | (g << 8) | r;
+        }
     }
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, width,
-                    height, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, width, height, 1,
+                    GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 }
 
 void rotate_point(int centre_x, int centre_y, float angle, int *point) {

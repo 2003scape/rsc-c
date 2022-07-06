@@ -94,13 +94,15 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
 #ifdef RENDER_GL
-    scene->gl_sprite_depth = calloc(max_sprite_count, sizeof(float)); // TODO remove
+    scene->gl_sprite_depth =
+        calloc(max_sprite_count, sizeof(float)); // TODO remove
 
     scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
 
 #ifdef EMSCRIPTEN
-    shader_new(&scene->game_model_shader, "./cache/game-model.vs", "./cache/game-model.fs");
+    shader_new(&scene->game_model_shader, "./cache/game-model.vs",
+               "./cache/game-model.fs");
 #else
     shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
 #endif
@@ -978,26 +980,20 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 #endif
     vec4 projected_position = {0};
 
-    vec4 bottom_position = {
-        VERTEX_TO_FLOAT(x),
-        VERTEX_TO_FLOAT(y),
-        VERTEX_TO_FLOAT(z),
-        1.0
-    };
+    vec4 bottom_position = {VERTEX_TO_FLOAT(x), VERTEX_TO_FLOAT(y),
+                            VERTEX_TO_FLOAT(z), 1.0};
 
-    glm_mat4_mulv(scene->gl_projection_view, bottom_position, projected_position);
+    glm_mat4_mulv(scene->gl_projection_view, bottom_position,
+                  projected_position);
 
     scene->gl_sprite_depth_bottom[scene->sprite_count] =
         projected_position[2] / projected_position[3];
 
     glm_vec4_zero(projected_position);
 
-    vec4 top_position = {
-        VERTEX_TO_FLOAT(x),
-        VERTEX_TO_FLOAT(y) - (VERTEX_TO_FLOAT(height) * 0.75f),
-        VERTEX_TO_FLOAT(z),
-        1.0
-    };
+    vec4 top_position = {VERTEX_TO_FLOAT(x),
+                         VERTEX_TO_FLOAT(y) - (VERTEX_TO_FLOAT(height) * 0.75f),
+                         VERTEX_TO_FLOAT(z), 1.0};
 
     glm_mat4_mulv(scene->gl_projection_view, top_position, projected_position);
 
@@ -1036,8 +1032,8 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->gl_mouse_picked_count = 0;
 
     // TODO use inverse_projection_view
-    float gl_x = translate_gl_x(x, scene->surface->width2);
-    float gl_y = translate_gl_y(y, scene->surface->height2);
+    float gl_x = gl_translate_x(x, scene->surface->width);
+    float gl_y = gl_translate_y(y, scene->surface->height);
 
     vec4 clip = {gl_x, gl_y, -1.0f, 1.0f};
 
@@ -1262,8 +1258,7 @@ void scene_initialise_polygons_2d(Scene *scene) {
 
         if (view_x - (view_width / 2) <= scene->clip_x &&
             view_x + (view_width / 2) >= -scene->clip_x &&
-            view_y - view_height <= scene->clip_y &&
-            view_y >= -scene->clip_y) {
+            view_y - view_height <= scene->clip_y && view_y >= -scene->clip_y) {
 
             GamePolygon *polygon =
                 scene->visible_polygons[scene->visible_polygons_count];
@@ -1288,8 +1283,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
     int vy = scene->view->vertex_view_y[face_0];
     int vz = scene->view->project_vertex_z[face_0];
 
-    int width =
-        (scene->sprite_width[face] << scene->view_distance) / vz;
+    int width = (scene->sprite_width[face] << scene->view_distance) / vz;
 
     int h = (scene->sprite_height[face] << scene->view_distance) / vz;
     int skew_x = scene->view->vertex_view_x[face_vertices[1]] - vx;
@@ -1304,23 +1298,20 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
     depth_bottom = scene->gl_sprite_depth_bottom[face];
 #endif
 
-    surface_draw_entity_sprite(scene->surface, x + scene->base_x, y,
-                               width, h, scene->sprite_id[face], skew_x,
-                               (256 << scene->view_distance) / vz,
-                               depth_top, depth_bottom);
+    surface_draw_entity_sprite(
+        scene->surface, x + scene->base_x, y, width, h, scene->sprite_id[face],
+        skew_x, (256 << scene->view_distance) / vz, depth_top, depth_bottom);
 
     if (scene->mouse_picking_active &&
         scene->mouse_picked_count < MOUSE_PICKED_MAX) {
 
-        x += (scene->sprite_translate_x[face] << scene->view_distance) /
-             vz;
+        x += (scene->sprite_translate_x[face] << scene->view_distance) / vz;
 
         if (scene->mouse_y >= y && scene->mouse_y <= y + h &&
             scene->mouse_x >= x && scene->mouse_x <= x + width &&
             !scene->view->unpickable &&
             scene->view->is_local_player[face] == 0) {
-            scene->mouse_picked_models[scene->mouse_picked_count] =
-                scene->view;
+            scene->mouse_picked_models[scene->mouse_picked_count] = scene->view;
 
             scene->mouse_picked_faces[scene->mouse_picked_count] = face;
             scene->mouse_picked_count++;
@@ -3226,7 +3217,7 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
 
 #ifdef RENDER_GL
     int texture_width = is_128 ? 128 : 64;
-    int32_t *texture_raster = calloc(128 * 128, sizeof(int32_t));
+    int32_t *texture_pixels = calloc(128 * 128, sizeof(int32_t));
     int raster_position = 0;
 
     /* make all the textures 128x128. */
@@ -3239,20 +3230,17 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
                 palette[colours[sprite_y + sprite_x * texture_width] & 0xff];
 
             if (colour != MAGENTA) {
-                texture_raster[raster_position] = 0xff000000 + colour;
+                texture_pixels[raster_position] = 0xff000000 + colour;
             }
 
             raster_position++;
         }
     }
 
-    /*glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, 128, 128, 1, GL_BGRA,
-                    GL_UNSIGNED_BYTE, texture_raster);*/
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, 128, 128, 1, GL_RGBA,
-                    GL_UNSIGNED_BYTE, texture_raster);
+    gl_update_texture_array(scene->game_model_textures, id, 128, 128,
+                            texture_pixels, 1);
 
-    free(texture_raster);
-    texture_raster = NULL;
+    free(texture_pixels);
 #endif
 
     scene_prepare_texture(scene, id);
@@ -4112,11 +4100,11 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    float field_of_view = ((scene->surface->height2 - 13) * 0.09061f) + 5.53403f;
+    float field_of_view = ((scene->surface->height - 13) * 0.09061f) + 5.53403f;
 
     glm_perspective(
         glm_rad(field_of_view),
-        (float)(scene->surface->width2) / (float)(scene->surface->height2 - 13),
+        (float)(scene->surface->width) / (float)(scene->surface->height - 13),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
@@ -4185,9 +4173,9 @@ void scene_gl_render(Scene *scene) {
 #ifndef RENDER_SW
     /* if we're also rendering in software, this will already be done */
     game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
-                           scene->camera_z, scene->camera_yaw,
-                           scene->camera_pitch, scene->camera_roll,
-                           scene->view_distance, scene->clip_near);
+                            scene->camera_z, scene->camera_yaw,
+                            scene->camera_pitch, scene->camera_roll,
+                            scene->view_distance, scene->clip_near);
 
     scene->visible_polygons_count = 0;
 
@@ -4206,13 +4194,13 @@ void scene_gl_render(Scene *scene) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    //printf("%d %d\n", scene->surface->height2, scene->surface->width2);
+    // printf("%d %d\n", scene->surface->height, scene->surface->width);
 
     /* for the message tab bar */
     int offset_y = 13;
 
-    int screen_width = scene->surface->width2;
-    int screen_height = scene->surface->height2 - offset_y;
+    int screen_width = scene->surface->width;
+    int screen_height = scene->surface->height - offset_y;
 
     glViewport(0, offset_y, screen_width, screen_height);
 
@@ -4254,15 +4242,15 @@ void scene_gl_render(Scene *scene) {
     }
 
     if (scene->gl_terrain_pick_step == 1) {
-        int mouse_x = scene->mouse_x + (scene->surface->width2 / 2);
-        int mouse_y = scene->surface->height2 - scene->mouse_y;
+        int mouse_x = scene->mouse_x + (scene->surface->width / 2);
+        int mouse_y = scene->surface->height - scene->mouse_y;
         float mouse_z = 0;
 
         glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
                      &mouse_z);
 
         vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
-        vec4 bounds = {0, 0, scene->surface->width2, scene->surface->height2};
+        vec4 bounds = {0, 0, scene->surface->width, scene->surface->height};
 
         glm_unproject(position, scene->gl_projection_view, bounds,
                       scene->gl_mouse_world);
@@ -4323,7 +4311,7 @@ void scene_gl_render(Scene *scene) {
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
 #endif
 
-    glViewport(0, 0, scene->surface->width2, scene->surface->height2);
+    glViewport(0, 0, scene->surface->width, scene->surface->height);
     surface_gl_draw(scene->surface, 1);
 }
 

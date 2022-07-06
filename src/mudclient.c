@@ -433,7 +433,7 @@ void mudclient_new(mudclient *mud) {
     // mud->port = 43596;
     // mud->port = 43496; /* websockets */
     mud->game_width = MUD_WIDTH;
-    mud->game_height = MUD_HEIGHT - 12;
+    mud->game_height = MUD_HEIGHT;
     mud->camera_angle = 1;
     mud->camera_rotation = 128;
     mud->camera_zoom = ZOOM_INDOORS;
@@ -611,12 +611,12 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef RENDER_SW
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         mud->game_width, mud->game_height + 12, SDL_WINDOW_SHOWN);
+                         mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
 
     mud->screen = SDL_GetWindowSurface(mud->window);
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, mud->game_width,
-                                              mud->game_height + 12, 32,
+                                              mud->game_height, 32,
                                               0xff0000, 0x00ff00, 0x0000ff, 0);
 #endif
 
@@ -643,7 +643,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+                         mud->game_width, mud->game_height,
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 
@@ -663,7 +664,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, mud->game_width, mud->game_height);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     /* transparent textures */
@@ -989,7 +990,7 @@ void mudclient_show_loading_progress(mudclient *mud, int percent, char *text) {
 
     SDL_Rect loading_dest = {0};
     loading_dest.x = ((mud->game_width - 281) / 2) + 2;
-    loading_dest.y = ((mud->game_height - 136) / 2) + 76;
+    loading_dest.y = ((mud->game_height - 148) / 2) + 76;
     loading_dest.w = (int)((percent / (float)100) * 277);
     loading_dest.h = 20;
 
@@ -1185,7 +1186,7 @@ void mudclient_draw_loading_screen(mudclient *mud) {
 #if !defined(WII) && !defined(_3DS)
     SDL_Rect logo_dest = {0};
     logo_dest.x = ((mud->game_width - 281) / 2) - 18;
-    logo_dest.y = ((mud->game_height - 136) / 2) - 14;
+    logo_dest.y = ((mud->game_height - 148) / 2) - 14;
 
     SDL_BlitSurface(mud->logo_surface, NULL, mud->pixel_surface, &logo_dest);
 
@@ -1342,8 +1343,6 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 
     int i = 0;
 
-    int entity_sprite_index = 0;
-
     while (i < game_data_animation_count) {
     label0:;
         char *animation_name = game_data_animation_name[i];
@@ -1369,7 +1368,7 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 
         if (animation_dat != NULL) {
             for (int j = 0; j < 15; j++) {
-                mud->surface->entity_sprite_indices[animation_index + j] =
+                mud->surface->gl_entity_sprite_indices[animation_index + j] =
                     frame_count + j;
             }
 
@@ -1378,7 +1377,7 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
             if (game_data_animation_has_a[i]) {
                 for (int j = 0; j < 3; j++) {
                     mud->surface
-                        ->entity_sprite_indices[animation_index + 15 + j] =
+                        ->gl_entity_sprite_indices[animation_index + 15 + j] =
                         frame_count + j;
                 }
 
@@ -1388,7 +1387,7 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
             if (game_data_animation_has_f[i]) {
                 for (int j = 0; j < 9; j++) {
                     mud->surface
-                        ->entity_sprite_indices[animation_index + 18 + j] =
+                        ->gl_entity_sprite_indices[animation_index + 18 + j] =
                         frame_count + j;
                 }
 
@@ -1437,7 +1436,7 @@ void mudclient_load_entities(mudclient *mud) {
     int texture_array_length =
         mudclient_update_entity_sprite_indices(mud, entity_jag, entity_jag_mem);
 
-    surface_gl_create_texture_array(&mud->surface->sprite_entity_textures,
+    surface_gl_create_texture_array(&mud->surface->gl_sprite_entity_textures,
                                     ENTITY_TEXTURE_WIDTH, ENTITY_TEXTURE_HEIGHT,
                                     texture_array_length);
 #endif
@@ -2257,15 +2256,13 @@ void mudclient_start_game(mudclient *mud) {
 
     mud->surface = malloc(sizeof(Surface));
 
-    surface_new(mud->surface, mud->game_width, mud->game_height + 12, 4000,
-                mud);
+    surface_new(mud->surface, mud->game_width, mud->game_height, 4000, mud);
 
-    surface_set_bounds(mud->surface, 0, 0, mud->game_width,
-                       mud->game_height + 12);
+    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);
 
     panel_base_sprite_start = mud->sprite_util;
 
-    int x = mud->surface->width2 - 199;
+    int x = mud->surface->width - 199;
     int y = 36;
 
     mud->panel_quest_list = malloc(sizeof(Panel));
@@ -2301,8 +2298,10 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene = malloc(sizeof(Scene));
     scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
 
-    scene_set_bounds(mud->scene, mud->game_width / 2, mud->game_height / 2,
-                     mud->game_width / 2, mud->game_height / 2, mud->game_width,
+    int scene_height = mud->game_height - 12;
+
+    scene_set_bounds(mud->scene, mud->game_width / 2, scene_height / 2,
+                     mud->game_width / 2, scene_height / 2, mud->game_width,
                      9);
 
     mud->scene->clip_far_3d = 2400;
@@ -2457,8 +2456,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     }
 
     surface_draw_string_centre(mud->surface, "Loading... Please wait",
-                               mud->surface->width2 / 2,
-                               mud->surface->height2 / 2 + 19, 1, WHITE);
+                               mud->surface->width / 2,
+                               mud->surface->height / 2 + 19, 1, WHITE);
 
     mudclient_draw_chat_message_tabs(mud);
     surface_draw(mud->surface);
@@ -3981,8 +3980,8 @@ void mudclient_draw_game(mudclient *mud) {
         surface_fade_to_black(mud->surface);
 
         surface_draw_string_centre(mud->surface, "Oh dear! You are dead...",
-                                   mud->game_width / 2, mud->game_height / 2, 7,
-                                   RED);
+                                   mud->game_width / 2, (mud->game_height - 12) / 2,
+                                   7, RED);
 
         mudclient_draw_chat_message_tabs(mud);
         surface_draw(mud->surface);
@@ -4116,7 +4115,7 @@ void mudclient_draw_game(mudclient *mud) {
         sprintf(fps, "Fps: %d", mud->fps);
 
         surface_draw_string(mud->surface, fps, mud->game_width - 62 - offset_x,
-                            mud->game_height - 10, 1, YELLOW);
+                            mud->game_height - 22, 1, YELLOW);
     }
 
 #ifndef REVISION_177
@@ -4132,7 +4131,7 @@ void mudclient_draw_game(mudclient *mud) {
                 seconds);
 
         surface_draw_string_centre(mud->surface, formatted_update, 256,
-                                   mud->game_height - 7, 1, YELLOW);
+                                   mud->game_height - 19, 1, YELLOW);
     }
 #endif
 
@@ -4148,12 +4147,12 @@ void mudclient_draw_game(mudclient *mud) {
 
         if (mud->is_in_wild) {
             surface_draw_sprite_from3(mud->surface, mud->game_width - 59,
-                                      mud->game_height - 56,
+                                      mud->game_height - 68,
                                       mud->sprite_media + 13);
 
             surface_draw_string_centre(mud->surface, "Wilderness",
                                        mud->game_width - 47,
-                                       mud->game_height - 20, 1, YELLOW);
+                                       mud->game_height - 32, 1, YELLOW);
 
             int wilderness_level = 1 + (wilderness_depth / 6);
 
@@ -4162,7 +4161,7 @@ void mudclient_draw_game(mudclient *mud) {
 
             surface_draw_string_centre(mud->surface, formatted_level,
                                        mud->game_width - 47,
-                                       mud->game_height - 7, 1, YELLOW);
+                                       mud->game_height - 19, 1, YELLOW);
 
             if (mud->show_ui_wild_warn == 0) {
                 mud->show_ui_wild_warn = 2;
@@ -4179,7 +4178,7 @@ void mudclient_draw_game(mudclient *mud) {
 
     /* ui tabs */
     surface_draw_sprite_alpha_from4(mud->surface,
-                                    mud->surface->width2 - 3 - 197, 3,
+                                    mud->surface->width - 3 - 197, 3,
                                     mud->sprite_media, 128);
 
     mudclient_draw_ui(mud);
@@ -4664,7 +4663,7 @@ void mudclient_poll_events(mudclient *mud) {
             int game_y = (touch.py - offset_y) * 2;
 
             if (game_x < 0 || game_y < 0 || game_x > mud->game_width ||
-                game_y > (mud->game_height + 12)) {
+                game_y > mud->game_height) {
                 return;
             }
 

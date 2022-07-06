@@ -22,6 +22,15 @@
 #include <ogcsys.h>
 #endif
 
+#if !defined(WII) && !defined(_3DS)
+#include <SDL2/SDL.h>
+
+#ifdef RENDER_GL
+#include <GL/glew.h>
+#include <GL/glu.h>
+#endif
+#endif
+
 #include "bzip.h"
 
 /* for audio conversion */
@@ -89,9 +98,11 @@ void get_level_difference_colour(int level_difference, char *colour);
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
 
 #ifdef RENDER_GL
-float translate_gl_coord(int position, int range);
-float translate_gl_x(int x, int range);
-float translate_gl_y(int y, int range);
+float gl_translate_coord(int position, int range);
+float gl_translate_x(int x, int range);
+float gl_translate_y(int y, int range);
+void gl_update_texture_array(GLuint texture_array_id, int index,
+                          int width, int height, int32_t *pixels, int convert_bgra);
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
 #endif
 
