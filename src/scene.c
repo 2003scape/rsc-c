@@ -61,7 +61,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->clip_y = 192;
     scene->base_x = 256;
     scene->base_y = 256;
-    scene->view_distance = 8;
+    scene->view_distance = 9;
     scene->normal_magnitude = 4;
 
     scene->raster = surface->pixels;
@@ -94,9 +94,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
 #ifdef RENDER_GL
-    scene->gl_sprite_depth =
-        calloc(max_sprite_count, sizeof(float)); // TODO remove
-
     scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
 
@@ -673,6 +670,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -681,6 +679,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -689,6 +688,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -697,42 +697,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
-            j += l3;
-            k += i4;
 
-            j = (j & 0xfff) + (l2 & 0xc0000);
-            k4 = l2 >> 20;
-            l2 += i3;
-
-            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = colour;
-            }
-
-            k2++;
-            j += l3;
-            k += i4;
-
-            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = colour;
-            }
-
-            k2++;
-            j += l3;
-            k += i4;
-
-            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = colour;
-            }
-
-            k2++;
-            j += l3;
-            k += i4;
-
-            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
-                raster[k2] = colour;
-            }
-
-            k2++;
             j += l3;
             k += i4;
 
@@ -753,6 +718,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -761,6 +727,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -769,6 +736,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -781,6 +749,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -789,6 +758,7 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
             j += l3;
             k += i4;
 
@@ -797,6 +767,47 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
             }
 
             k2++;
+
+            j += l3;
+            k += i4;
+
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
+            }
+
+            k2++;
+
+            j += l3;
+            k += i4;
+
+            j = (j & 0xfff) + (l2 & 0xc0000);
+            k4 = l2 >> 20;
+            l2 += i3;
+
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
+            }
+
+            k2++;
+
+            j += l3;
+            k += i4;
+
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
+            }
+
+            k2++;
+
+            j += l3;
+            k += i4;
+
+            if ((colour = texture_pixels[(k & 0xfc0) + (j >> 6)] >> k4) != 0) {
+                raster[k2] = colour;
+            }
+
+            k2++;
+
             j += l3;
             k += i4;
 
@@ -1054,18 +1065,21 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
 #endif
 }
 
-void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
-                      int clip_y, int width, int view_distance) {
+void scene_set_bounds(Scene *scene, int width, int height) {
+    int base_x = width / 2;
+    int base_y = height / 2;
+    int clip_x = base_x;
+    int clip_y = base_y;
+
     scene->clip_x = clip_x;
     scene->clip_y = clip_y;
     scene->base_x = base_x;
     scene->base_y = base_y;
     scene->width = width;
-    scene->view_distance = view_distance;
 
     int scanlines_length = clip_y + base_y;
 
-    scene->scanlines = malloc(scanlines_length * sizeof(Scanline *));
+    scene->scanlines = calloc(scanlines_length, sizeof(Scanline *));
 
     for (int i = 0; i < scanlines_length; i++) {
         Scanline *scanline = calloc(1, sizeof(Scanline));
@@ -4212,11 +4226,11 @@ void scene_gl_render(Scene *scene) {
                    scene->fog_z_distance);
 
     shader_set_float(&scene->game_model_shader, "scroll_texture",
-                     scene->scroll_texture_position /
+                     scene->gl_scroll_texture_position /
                          (float)SCROLL_TEXTURE_SIZE);
 
-    scene->scroll_texture_position =
-        (scene->scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
+    scene->gl_scroll_texture_position =
+        (scene->gl_scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);

@@ -179,12 +179,10 @@ typedef struct Scene {
 
     int gl_mouse_picked_count;
 
-    float *gl_sprite_depth; // TODO remove
-
     float *gl_sprite_depth_bottom;
     float *gl_sprite_depth_top;
 
-    int scroll_texture_position;
+    int gl_scroll_texture_position;
 #endif
 } Scene;
 
@@ -223,15 +221,12 @@ void scene_null_model(Scene *scene, GameModel *model);
 void scene_dispose(Scene *scene);
 void scene_clear(Scene *scene);
 void scene_reduce_sprites(Scene *scene, int i);
-/*int scene_add_sprite(Scene *scene, int n, int x, int z, int y, int w, int h,
-                     int tag);*/
 int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
                      int width, int height, int tag);
 void scene_set_local_player(Scene *scene, int i);
 void scene_set_sprite_translate_x(Scene *scene, int i, int n);
 void scene_set_mouse_loc(Scene *scene, int x, int y);
-void scene_set_bounds(Scene *scene, int base_x, int base_y, int clip_x,
-                      int clip_y, int width, int view_distance);
+void scene_set_bounds(Scene *scene, int width, int height);
 void scene_polygons_intersect_sort(Scene *scene, int step,
                                    GamePolygon **polygons, int count);
 int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,

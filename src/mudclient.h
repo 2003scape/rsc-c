@@ -825,6 +825,7 @@ typedef struct mudclient {
 } mudclient;
 
 void mudclient_new(mudclient *mud);
+void mudclient_resize(mudclient *mud);
 void mudclient_start_application(mudclient *mud, char *title);
 
 /* TODO events.c */

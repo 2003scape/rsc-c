@@ -40,10 +40,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
     memset(surface, 0, sizeof(Surface));
 
     surface->limit = limit;
-    surface->bounds_max_y = height;
-    surface->bounds_max_x = width;
     surface->width = width;
     surface->height = height;
+    surface->bounds_max_x = width;
+    surface->bounds_max_y = height;
 
 #ifdef WII
     surface->pixels = calloc(width * height, sizeof(int32_t));
@@ -226,7 +226,6 @@ void surface_gl_create_font_textures(Surface *surface) {
     int32_t *font_raster = calloc(font_area, sizeof(int32_t));
 
     /* create two textures for shadow and non-shadow characters */
-
     for (int i = 0; i < FONT_COUNT; i++) {
         surface_gl_create_font_texture(font_raster, i, 0);
 

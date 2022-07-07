@@ -473,6 +473,19 @@ void mudclient_new(mudclient *mud) {
     mud->bank_items_max = 48;
 }
 
+void mudclient_resize(mudclient *mud) {
+    mud->screen = SDL_GetWindowSurface(mud->window);
+
+    mud->pixel_surface = SDL_CreateRGBSurface(0, mud->game_width,
+                                              mud->game_height, 32,
+                                              0xff0000, 0x00ff00, 0x0000ff, 0);
+
+    if (mud->surface != NULL) {
+        mud->surface->pixels = mud->pixel_surface->pixels;
+        mud->scene->raster = mud->surface->pixels;
+    }
+}
+
 void mudclient_start_application(mudclient *mud, char *title) {
     mud->loading_step = 1;
 
@@ -613,11 +626,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
 
-    mud->screen = SDL_GetWindowSurface(mud->window);
-
-    mud->pixel_surface = SDL_CreateRGBSurface(0, mud->game_width,
-                                              mud->game_height, 32,
-                                              0xff0000, 0x00ff00, 0x0000ff, 0);
+    mudclient_resize(mud);
 #endif
 
 #ifdef RENDER_GL
@@ -2298,11 +2307,7 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene = malloc(sizeof(Scene));
     scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
 
-    int scene_height = mud->game_height - 12;
-
-    scene_set_bounds(mud->scene, mud->game_width / 2, scene_height / 2,
-                     mud->game_width / 2, scene_height / 2, mud->game_width,
-                     9);
+    scene_set_bounds(mud->scene, mud->game_width, mud->game_height - 12);
 
     mud->scene->clip_far_3d = 2400;
     mud->scene->clip_far_2d = 2400;
@@ -4710,18 +4715,13 @@ void mudclient_poll_events(mudclient *mud) {
                 test_z += mag;
             } else if (code == 114) {
                 test_yaw += 1;
-
-                // printf("ambience: %d\n", test_yaw);
             } else if (code == 102) {
                 test_yaw -= 1;
-
-                // printf("ambience: %d\n", test_yaw);
             }
 
             // printf("%d\n", code);
             //printf("%d %d %d\n", test_x, test_y, test_z);
-
-            printf("%f %f\n", test_x, test_y);
+            //printf("%f %f\n", test_x, test_y);
 
             break;
         }
@@ -4745,7 +4745,38 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                printf("resized\n");
+                int new_width = 0;
+                int new_height = 0;
+
+                SDL_GetWindowSize(mud->window, &new_width, &new_height);
+
+                int old_height = mud->game_height - 12;
+
+                mud->game_width = new_width;
+                mud->game_height = new_height;
+
+                if (mud->surface != NULL) {
+                    mud->surface->width = new_width;
+                    mud->surface->height = new_height;
+
+                    surface_reset_bounds(mud->surface);
+                }
+
+                if (mud->scene != NULL) {
+                    int scanlines_length = (old_height / 2) * 2;
+
+                    for (int i = 0; i < scanlines_length; i++) {
+                        free(mud->scene->scanlines[i]);
+                        mud->scene->scanlines[i] = NULL;
+                    }
+
+                    free(mud->scene->scanlines);
+
+                    // TODO change 12 to bar height - 1
+                    scene_set_bounds(mud->scene, new_width, new_height - 12);
+                }
+
+                mudclient_resize(mud);
             }
             break;
         }
