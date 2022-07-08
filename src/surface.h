@@ -144,7 +144,6 @@ typedef struct Surface {
 #endif
 } Surface;
 
-int surface_rgb_to_int(int r, int g, int b);
 void create_font(int8_t *buffer, int id);
 
 void surface_new(Surface *surface, int width, int height, int limit,

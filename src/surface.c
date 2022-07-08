@@ -31,8 +31,6 @@ void init_surface_global() {
     surface_texture_pixels = calloc(32 * 1024, sizeof(int32_t));
 }
 
-int surface_rgb_to_int(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
-
 void create_font(int8_t *buffer, int id) { game_fonts[id] = buffer; }
 
 void surface_new(Surface *surface, int width, int height, int limit,

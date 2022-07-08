@@ -10,20 +10,41 @@ typedef struct Panel Panel;
 #include "utility.h"
 
 #define PANEL_TEXT 0
-#define CENTRE_TEXT 1
-#define GRADIENT_BG 2
-#define TEXT_LIST 4
-#define LIST_INPUT 5
-#define TEXT_INPUT 6
-#define I_TEXT_LIST 9
-#define BUTTON 10
-#define ROUND_BOX 11
-#define IMAGE 12
-#define CHECKBOX 14
+#define PANEL_CENTRE_TEXT 1
+#define PANEL_BOX 2
+#define PANEL_TEXT_LIST 4
+#define PANEL_LIST_INPUT 5
+#define PANEL_TEXT_INPUT 6
+#define PANEL_TEXT_LIST_INTERACTIVE 9
+#define PANEL_BUTTON 10
+#define PANEL_ROUNDED_BOX 11
+#define PANEL_SPRITE 12
+#define PANEL_CHECKBOX 14
 
-#define RED_MOD 114
-#define GREEN_MOD 114
-#define BLUE_MOD 176
+/* colour of scrollbar background gradients */
+#define PANEL_SCROLLBAR_TOP_COLOUR 0x7272b0
+#define PANEL_SCROLLBAR_BOTTOM_COLOUR 0x0e0e3e
+
+/* colour of the interactive scrub/handle in the scrollbar */
+#define PANEL_SCRUB_LEFT_COLOUR 0xc8d0e8
+#define PANEL_SCRUB_MIDDLE_COLOUR 0x6081b8
+#define PANEL_SCRUB_RIGHT_COLOUR 0x355f73
+
+#define PANEL_ROUNDED_BOX_OUT_COLOUR 0x758eab
+#define PANEL_ROUNDED_BOX_MIDDLE_COLOUR 0x627a9e
+#define PANEL_ROUNDED_BOX_IN_COLOUR 0x566488
+
+/* colour of the top of the gradient and the thick south/east lines */
+#define PANEL_BOX_TOP_COLOUR 0x545d78
+
+/* colour of the bottom of the gradient and the thick north/west lines */
+#define PANEL_BOX_BOTTOM_COLOUR 0x8792b3
+
+/* colour of the thin north/west lines */
+#define PANEL_BOX_TOP_LINE_COLOUR 0x617097
+
+/* colour of the thin south/east lines */
+#define PANEL_BOX_BOTTOM_LINE_COLOUR 0x586688
 
 extern int panel_base_sprite_start;
 extern int panel_text_list_entry_height_mod;
@@ -37,7 +58,6 @@ typedef struct Panel {
     int *control_list_entry_count;
     int *control_list_entry_mouse_button_down;
     int *control_list_entry_mouse_over;
-    int8_t a_boolean219;
     Surface *surface;
     int control_count;
     int max_controls;
@@ -57,23 +77,10 @@ typedef struct Panel {
     int mouse_button_down;
     int mouse_meta_button_held;
     int mouse_scroll_delta;
-    int colour_scrollbar_top;
-    int colour_scrollbar_bottom;
-    int colour_scrollbar_handle_left;
-    int colour_scrollbar_handle_mid;
-    int colour_scrollbar_handle_right;
-    int colour_rounded_box_out;
-    int colour_rounded_box_mid;
-    int colour_rounded_box_in;
-    int colour_box_top_n_bottom;
-    int colour_box_top_n_bottom2;
-    int colour_box_left_n_right2;
-    int colour_box_left_n_right;
     int focus_control_index;
 } Panel;
 
 void panel_new(Panel *panel, Surface *surface, int max);
-int panel_rgb_to_int_mod(int r, int g, int b);
 void panel_handle_mouse(Panel *panel, int x, int y, int last_button,
                         int is_down, int scroll_delta);
 int panel_is_clicked(Panel *panel, int control);
@@ -89,8 +96,7 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
                            int height, char *text, int text_size);
 void panel_draw_box(Panel *panel, int x, int y, int width, int height);
 void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height);
-void panel_draw_picture(Panel *panel, int x, int y, int id);
-void panel_draw_line_horiz(Panel *panel, int x, int y, int width);
+void panel_draw_sprite(Panel *panel, int x, int y, int id);
 void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, int text_size, char **list_entries,
                           int list_entry_count, int list_entry_position);

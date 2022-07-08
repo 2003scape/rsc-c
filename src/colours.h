@@ -6,6 +6,7 @@
 #define CYAN 0x00ffff
 #define GREEN 0x00ff00
 #define GREY_98 0x989898
+#define GREY_80 0x808080
 #define GREY_A0 0xa0a0a0
 #define GREY_B5 0xb5b5b5
 #define GREY_BE 0xbebebe

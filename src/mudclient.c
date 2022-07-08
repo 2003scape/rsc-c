@@ -474,6 +474,8 @@ void mudclient_new(mudclient *mud) {
 }
 
 void mudclient_resize(mudclient *mud) {
+    free(mud->pixel_surface);
+
     mud->screen = SDL_GetWindowSurface(mud->window);
 
     mud->pixel_surface = SDL_CreateRGBSurface(0, mud->game_width,
