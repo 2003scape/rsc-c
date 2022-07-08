@@ -253,62 +253,70 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
     surface_black_screen(mud->surface);
     panel_draw_panel(mud->panel_appearance);
 
-    int x = 256;
-    int y = 25;
+    int x = mud->surface->width / 2;
+    int y = 25 + (mud->surface->height / 2 - MUD_HEIGHT / 2);
+
+    // TODO support even smaller resolution
 
     surface_sprite_clipping_from6(
-        mud->surface, x - 32 - 55, y, 64, 102,
-        game_data_animation_number[2],
+        mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT,
+        game_data_animation_number[ANIMATION_INDEX_LEGS],
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_sprite_clipping_from9(
-        mud->surface, x - 32 - 55, y, 64, 102,
+        mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT,
         game_data_animation_number[mud->appearance_body_type],
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_sprite_clipping_from9(
-        mud->surface, x - 32 - 55, y, 64, 102,
+        mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT,
         game_data_animation_number[mud->appearance_head_type],
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_sprite_clipping_from6(
-        mud->surface, x - 32, y, 64, 102, game_data_animation_number[2] + 6,
+        mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT, game_data_animation_number[2] + 6,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_sprite_clipping_from9(
-        mud->surface, x - 32, y, 64, 102,
+        mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT,
         game_data_animation_number[mud->appearance_body_type] + 6,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_sprite_clipping_from9(
-        mud->surface, x - 32, y, 64, 102,
+        mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT,
         game_data_animation_number[mud->appearance_head_type] + 6,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_sprite_clipping_from6(
-        mud->surface, x - 32 + 55, y, 64, 102,
-        game_data_animation_number[2] + 12,
+        mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT, game_data_animation_number[2] + 12,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_sprite_clipping_from9(
-        mud->surface, x - 32 + 55, y, 64, 102,
+        mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT,
         game_data_animation_number[mud->appearance_body_type] + 12,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_sprite_clipping_from9(
-        mud->surface, x - 32 + 55, y, 64, 102,
+        mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
+        APPEARANCE_CHARACTER_HEIGHT,
         game_data_animation_number[mud->appearance_head_type] + 12,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
-    /* blue bar */
-    surface_draw_sprite_from3(mud->surface, 0, mud->surface->height - 16,
-                              mud->sprite_media + 22);
+    mudclient_draw_blue_bar(mud);
 
     surface_draw(mud->surface);
 }

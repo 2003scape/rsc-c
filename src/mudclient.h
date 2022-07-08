@@ -899,6 +899,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int skew_x, int ty, float depth_top, float depth_bottom);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int skew_x, int ty, float depth_top, float depth_bottom);
+void mudclient_draw_blue_bar(mudclient *mud);
 void mudclient_draw_ui(mudclient *mud);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);

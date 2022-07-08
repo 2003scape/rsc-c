@@ -474,7 +474,8 @@ void mudclient_new(mudclient *mud) {
 }
 
 void mudclient_resize(mudclient *mud) {
-    free(mud->pixel_surface);
+    SDL_FreeSurface(mud->screen);
+    SDL_FreeSurface(mud->pixel_surface);
 
     mud->screen = SDL_GetWindowSurface(mud->window);
 
@@ -485,6 +486,47 @@ void mudclient_resize(mudclient *mud) {
     if (mud->surface != NULL) {
         mud->surface->pixels = mud->pixel_surface->pixels;
         mud->scene->raster = mud->surface->pixels;
+    }
+
+    int full_offset_x = mud->game_width - MUD_WIDTH;
+    int full_offset_y = mud->game_height - MUD_HEIGHT;
+    int half_offset_x = (mud->game_width / 2) - (MUD_WIDTH / 2);
+    int half_offset_y = (mud->game_height / 2) - (MUD_HEIGHT / 2);
+
+    if (mud->panel_login_welcome != NULL) {
+        mud->panel_login_welcome->offset_x = half_offset_x;
+        mud->panel_login_welcome->offset_y = half_offset_y;
+    }
+
+    if (mud->panel_login_new_user != NULL) {
+        mud->panel_login_new_user->offset_x = half_offset_x;
+        mud->panel_login_new_user->offset_y = half_offset_y;
+    }
+
+    if (mud->panel_login_existing_user != NULL) {
+        mud->panel_login_existing_user->offset_x = half_offset_x;
+        mud->panel_login_existing_user->offset_y = half_offset_y;
+    }
+
+    if (mud->panel_appearance != NULL) {
+        mud->panel_appearance->offset_x = half_offset_x;
+        mud->panel_appearance->offset_y = half_offset_y;
+    }
+
+    if (mud->panel_message_tabs != NULL) {
+        mud->panel_message_tabs->offset_y = full_offset_y;
+    }
+
+    if (mud->panel_quest_list != NULL) {
+        mud->panel_quest_list->offset_x = full_offset_x;
+    }
+
+    if (mud->panel_magic != NULL) {
+        mud->panel_magic->offset_x = full_offset_x;
+    }
+
+    if (mud->panel_social_list != NULL) {
+        mud->panel_social_list->offset_x = full_offset_x;
     }
 }
 
@@ -780,25 +822,23 @@ void mudclient_start_application(mudclient *mud, char *title) {
 }
 
 void mudclient_handle_key_press(mudclient *mud, int key_code) {
-    if (mud->logged_in == 0) {
-        if (mud->login_screen == 0 && mud->panel_login_welcome) {
+    if (!mud->logged_in) {
+        if (mud->login_screen == LOGIN_STAGE_WELCOME && mud->panel_login_welcome) {
             panel_key_press(mud->panel_login_welcome, key_code);
         }
 
-        if (mud->login_screen == 1 && mud->panel_login_new_user) {
+        if (mud->login_screen == LOGIN_STAGE_NEW && mud->panel_login_new_user) {
             panel_key_press(mud->panel_login_new_user, key_code);
         }
 
-        if (mud->login_screen == 2 && mud->panel_login_existing_user) {
+        if (mud->login_screen == LOGIN_STAGE_EXISTING && mud->panel_login_existing_user) {
             panel_key_press(mud->panel_login_existing_user, key_code);
         }
 
         /*if (mud->login_screen == 3 && mud->panel_recover_user) {
             panel_key_press(mud->panel_recover_user, key_code);
         }*/
-    }
-
-    if (mud->logged_in == 1) {
+    } else {
         if (mud->show_appearance_change && mud->panel_appearance) {
             panel_key_press(mud->panel_appearance, key_code);
             return;
@@ -3650,6 +3690,20 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
     mudclient_draw_character_message(mud, npc, x, y, width);
     mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1);
+}
+
+void mudclient_draw_blue_bar(mudclient *mud) {
+    int bars = 1;
+
+    if (mud->surface->width > HBAR_WIDTH) {
+        bars += mud->surface->width / HBAR_WIDTH;
+    }
+
+    for (int i = 0; i < bars; i++) {
+        surface_draw_sprite_from3(mud->surface, i * HBAR_WIDTH,
+                                  mud->surface->height - 16,
+                                  mud->sprite_media + 22);
+    }
 }
 
 void mudclient_draw_ui(mudclient *mud) {

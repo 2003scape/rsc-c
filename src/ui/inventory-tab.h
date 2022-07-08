@@ -1,5 +1,5 @@
 #ifndef _H_INVENTORY_TAB
-#define  _H_INVENTORY_TAB
+#define _H_INVENTORY_TAB
 
 #include "../colours.h"
 #include "../mudclient.h"

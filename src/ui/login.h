@@ -8,6 +8,7 @@
 #define LOGIN_STAGE_NEW 1
 #define LOGIN_STAGE_EXISTING 2
 #define LOGIN_STAGE_REGISTER 3
+#define LOGIN_STAGE_RECOVER 3
 
 void mudclient_create_login_panels(mudclient *mud);
 void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1);

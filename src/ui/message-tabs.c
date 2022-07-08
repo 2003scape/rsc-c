@@ -22,11 +22,22 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
 }
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
-    int x = mud->surface->width / 2 - HBAR_WIDTH / 2;
+    int x = 0;
     int y = mud->surface->height - 16;
 
     surface_draw_sprite_from3(mud->surface, x, y,
                               mud->sprite_media + HBAR_SPRITE_OFFSET);
+
+    if (mud->surface->width > HBAR_WIDTH) {
+        for (int i = 0; i < mud->surface->width / HBAR_WIDTH; i++) {
+            surface_draw_sprite_from3(mud->surface, x + (HBAR_WIDTH * (i + 1)),
+                                      y + 4, mud->sprite_media + 22);
+        }
+
+        surface_draw_line_horizontal(mud->surface, 503, mud->surface->height - 14, mud->surface->width - 503, BLACK);
+
+        surface_draw_line_horizontal(mud->surface, 503, mud->surface->height - 13, mud->surface->width - 503, BLACK);
+    }
 
     y = mud->surface->height - 6;
 
@@ -134,7 +145,7 @@ void mudclient_send_chat_message(mudclient *mud, int8_t *encoded,
 }
 
 void mudclient_handle_message_tabs_input(mudclient *mud) {
-    int x = mud->surface->width / 2 - HBAR_WIDTH / 2;
+    int x = 0;
     int mouse_x = mud->mouse_x - x;
 
     if ((mud->mouse_y > mud->surface->height - 16)) {

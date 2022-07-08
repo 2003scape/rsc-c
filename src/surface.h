@@ -1,6 +1,7 @@
 #ifndef _H_SURFACE
 #define _H_SURFACE
 
+#include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>

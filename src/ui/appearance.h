@@ -22,6 +22,10 @@
 #define APPEARANCE_ACCEPT_WIDTH 200
 #define APPEARANCE_ACCEPT_HEIGHT 30
 
+/* size of the character preview */
+#define APPEARANCE_CHARACTER_WIDTH 64
+#define APPEARANCE_CHARACTER_HEIGHT 102
+
 struct appearance_buttons {
     int left;
     int right;

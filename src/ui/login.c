@@ -226,8 +226,8 @@ void mudclient_create_login_panels(mudclient *mud) {
     if (mud->options->account_management) {
         y += 30;
 
-        /*panel_add_button_background(mud->panel_login_existing_user, x + 154, y,
-                                    160, 25);
+        /*panel_add_button_background(mud->panel_login_existing_user, x + 154,
+        y, 160, 25);
 
         panel_add_text_centre(mud->panel_login_existing_user, x + 154, y,
                               "I've lost my password", 4, 0);
@@ -428,55 +428,91 @@ void mudclient_draw_login_screens(mudclient *mud) {
     int show_background = 0;
 
     if (mud->options->account_management) {
-        show_background = mud->login_screen == LOGIN_STAGE_WELCOME || mud->login_screen == LOGIN_STAGE_EXISTING;
+        show_background = mud->login_screen == LOGIN_STAGE_WELCOME ||
+                          mud->login_screen == LOGIN_STAGE_EXISTING;
     } else {
-        show_background = mud->login_screen >= LOGIN_STAGE_WELCOME && mud->login_screen <= LOGIN_STAGE_REGISTER;
+        show_background = mud->login_screen >= LOGIN_STAGE_WELCOME &&
+                          mud->login_screen <= LOGIN_STAGE_REGISTER;
     }
 
     if (show_background) {
+        int offset_x = (mud->game_width / 2) - (MUD_WIDTH / 2);
+        int offset_y = (mud->game_height / 2) - (MUD_HEIGHT / 2);
+
         int cycle = (mud->login_timer * 2) % 3072;
 
         if (cycle < 1024) {
-            surface_draw_sprite_from3(mud->surface, 0, 10, mud->sprite_logo);
+            surface_draw_sprite_from3(mud->surface, 0 + offset_x, 10 + offset_y,
+                                      mud->sprite_logo);
 
             if (cycle > 768) {
                 surface_draw_sprite_alpha_from4(
-                    mud->surface, 0, 10, mud->sprite_logo + 1, cycle - 768);
+                    mud->surface, 0 + offset_x, 10 + offset_y,
+                    mud->sprite_logo + 1, cycle - 768);
             }
         } else if (cycle < 2048) {
-            surface_draw_sprite_from3(mud->surface, 0, 10,
+            surface_draw_sprite_from3(mud->surface, 0 + offset_x, 10 + offset_y,
                                       mud->sprite_logo + 1);
 
             if (cycle > 1792) {
                 surface_draw_sprite_alpha_from4(
-                    mud->surface, 0, 10, mud->sprite_media + 10, cycle - 1792);
+                    mud->surface, 0 + offset_x, 10 + offset_y,
+                    mud->sprite_media + 10, cycle - 1792);
             }
         } else {
-            surface_draw_sprite_from3(mud->surface, 0, 10,
+            surface_draw_sprite_from3(mud->surface, 0 + offset_x, 10 + offset_y,
                                       mud->sprite_media + 10);
 
             if (cycle > 2816) {
-                surface_draw_sprite_alpha_from4(mud->surface, 0, 10,
-                                                mud->sprite_logo, cycle - 2816);
+                surface_draw_sprite_alpha_from4(mud->surface, 0 + offset_x,
+                                                10 + offset_y, mud->sprite_logo,
+                                                cycle - 2816);
             }
+        }
+
+        /* fade the left/right of the login scene if the width exceeds 512 */
+        if (offset_x > 0) {
+            int background_width = mud->surface->sprite_width[mud->sprite_logo];
+
+            int background_height =
+                mud->surface->sprite_height[mud->sprite_logo];
+
+            surface_draw_box_alpha(mud->surface, 0 + offset_x, 10 + offset_y, 2,
+                                   background_height, BLACK, 192);
+
+            surface_draw_box_alpha(mud->surface, 2 + offset_x, 10 + offset_y, 2,
+                                   background_height, BLACK, 128);
+
+            surface_draw_box_alpha(mud->surface, 4 + offset_x, 10 + offset_y, 2,
+                                   background_height, BLACK, 64);
+
+            surface_draw_box_alpha(
+                mud->surface, background_width - 2 + offset_x, 10 + offset_y, 2,
+                background_height, BLACK, 192);
+
+            surface_draw_box_alpha(
+                mud->surface, background_width - 4 + offset_x, 10 + offset_y, 2,
+                background_height, BLACK, 128);
+
+            surface_draw_box_alpha(
+                mud->surface, background_width - 6 + offset_x, 10 + offset_y, 2,
+                background_height, BLACK, 64);
         }
     }
 
     switch (mud->login_screen) {
-        case LOGIN_STAGE_WELCOME:
-            panel_draw_panel(mud->panel_login_welcome);
-            break;
-        case LOGIN_STAGE_NEW:
-            panel_draw_panel(mud->panel_login_new_user);
-            break;
-        case LOGIN_STAGE_EXISTING:
-            panel_draw_panel(mud->panel_login_existing_user);
-            break;
+    case LOGIN_STAGE_WELCOME:
+        panel_draw_panel(mud->panel_login_welcome);
+        break;
+    case LOGIN_STAGE_NEW:
+        panel_draw_panel(mud->panel_login_new_user);
+        break;
+    case LOGIN_STAGE_EXISTING:
+        panel_draw_panel(mud->panel_login_existing_user);
+        break;
     }
 
-    /* blue bar */
-    surface_draw_sprite_from3(mud->surface, 0, mud->surface->height - 16,
-                              mud->sprite_media + 22);
+    mudclient_draw_blue_bar(mud);
 
     surface_draw(mud->surface);
 }
@@ -486,14 +522,15 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
         mud->world_full_timeout--;
     }
 
-    if (mud->login_screen == 0) {
+    switch (mud->login_screen) {
+    case LOGIN_STAGE_WELCOME:
         panel_handle_mouse(mud->panel_login_welcome, mud->mouse_x, mud->mouse_y,
                            mud->last_mouse_button_down, mud->mouse_button_down,
                            mud->mouse_scroll_delta);
 
         if (panel_is_clicked(mud->panel_login_welcome,
                              mud->control_welcome_new_user)) {
-            mud->login_screen = 1;
+            mud->login_screen = LOGIN_STAGE_NEW;
 
             if (mud->options->account_management) {
                 panel_update_text(mud->panel_login_new_user,
@@ -518,7 +555,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
             }
         } else if (panel_is_clicked(mud->panel_login_welcome,
                                     mud->control_welcome_existing_user)) {
-            mud->login_screen = 2;
+            mud->login_screen = LOGIN_STAGE_EXISTING;
 
             panel_update_text(mud->panel_login_existing_user,
                               mud->control_login_status,
@@ -535,7 +572,8 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
 
             return;
         }
-    } else if (mud->login_screen == 1) {
+        return;
+    case LOGIN_STAGE_NEW:
         panel_handle_mouse(mud->panel_login_new_user, mud->mouse_x,
                            mud->mouse_y, mud->last_mouse_button_down,
                            mud->mouse_button_down, mud->mouse_scroll_delta);
@@ -630,7 +668,8 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                 mud->login_screen = 0;
             }
         }
-    } else if (mud->login_screen == 2) {
+        return;
+    case LOGIN_STAGE_EXISTING:
         panel_handle_mouse(mud->panel_login_existing_user, mud->mouse_x,
                            mud->mouse_y, mud->last_mouse_button_down,
                            mud->mouse_button_down, mud->mouse_scroll_delta);
@@ -672,5 +711,6 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
 
             // mudclient_recover_attempt(mud, mud->login_user);
         }*/
+        return;
     }
 }

@@ -6,6 +6,7 @@
 typedef struct Panel Panel;
 
 #include "colours.h"
+#include "mudclient.h"
 #include "surface.h"
 #include "utility.h"
 
@@ -78,6 +79,10 @@ typedef struct Panel {
     int mouse_meta_button_held;
     int mouse_scroll_delta;
     int focus_control_index;
+
+    /* used for resizable mode */
+    int offset_x;
+    int offset_y;
 } Panel;
 
 void panel_new(Panel *panel, Surface *surface, int max);

@@ -2452,6 +2452,8 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
 #endif
 }
 
+// surface_draw_sprite_scale_mask
+/* only works with palette sprites */
 void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id, int colour) {
 #ifdef RENDER_GL
@@ -3299,7 +3301,9 @@ void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
 #endif
 }
 
-/* this might be draw_sprite_scaled */
+// surface_draw_sprite_transform_mask
+/* applies scale, both grey and skin colour mask, skew/shear and flip. used for
+ * entity sprites */
 void surface_sprite_clipping_from9(Surface *surface, int x, int y,
                                    int draw_width, int draw_height,
                                    int sprite_id, int mask_colour,
@@ -3595,9 +3599,9 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
     for (int i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
             i += 4;
-        } else if (text[i] == '~' && i + 4 < text_length &&
-                   text[i + 4] == '~') {
-            i += 4;
+        } else if (text[i] == '~' && i + 5 < text_length &&
+                   text[i + 5] == '~') {
+            i += 5;
         } else {
             width += font_data[character_width[(unsigned)text[i]] + 7];
         }
@@ -3698,23 +3702,21 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
             }
 
             i += 4;
-        } else if (text[i] == '~' && i + 4 < text_length &&
-                   text[i + 4] == '~') {
-            char c = text[i + 1];
-            char c1 = text[i + 2];
-            char c2 = text[i + 3];
-
-            if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' &&
-                c2 <= '9') {
+        } else if (text[i] == '~' && i + 5 < text_length &&
+                   text[i + 5] == '~') {
+            // TODO check if the server ever sends ~XXX~ and support both
+            if (isdigit(text[i + 1]) && isdigit(text[i + 2]) &&
+                isdigit(text[i + 3]) && isdigit(text[i + 4])) {
                 int start = i + 1;
-                int end = i + 4;
-                char sliced[(end - start) + 1];
-                sliced[end - start] = '\0';
+                int end = i + 5;
+                int sliced_length = (end - start);
+                char sliced[sliced_length + 1];
+                memset(sliced, '\0', sliced_length);
                 strncpy(sliced, text + start, end - start);
                 x = atoi(sliced);
             }
 
-            i += 4;
+            i += 5;
         } else {
             int character_offset = character_width[(unsigned)text[i]];
             int draw_shadow = surface->logged_in && colour != 0;

@@ -160,10 +160,9 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
             char username[USERNAME_LENGTH + 1] = {0};
             decode_username(mud->friend_list_hashes[i], username);
 
-            char formatted_username[USERNAME_LENGTH + 30] = {0};
+            char formatted_username[USERNAME_LENGTH + 31] = {0};
 
-            sprintf(formatted_username, "%s%s~%d~@whi@Remove", colour, username,
-                    ui_x + 126);
+            sprintf(formatted_username, "%s%s~%04d~@whi@Remove", colour, username, ui_x + 126);
 
             panel_add_list_entry(mud->panel_social_list,
                                  mud->control_list_social, i,
