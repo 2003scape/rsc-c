@@ -9,10 +9,7 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->surface = surface;
     panel->max_controls = max;
 
-    panel->mouse_last_button_down = 0;
-
     panel->focus_control_index = -1;
-    panel->control_count = 0;
 
     panel->control_shown = calloc(max, sizeof(int8_t));
     panel->control_list_scrollbar_handle_dragged = calloc(max, sizeof(int8_t));
@@ -28,7 +25,7 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->control_type = calloc(max, sizeof(int));
     panel->control_width = calloc(max, sizeof(int));
     panel->control_height = calloc(max, sizeof(int));
-    panel->control_input_max_len = calloc(max, sizeof(int));
+    panel->control_input_max_length = calloc(max, sizeof(int));
     panel->control_text_size = calloc(max, sizeof(int));
     panel->control_text = calloc(max, sizeof(char *));
     panel->control_list_entries = calloc(max, sizeof(char **));
@@ -106,7 +103,7 @@ void panel_key_press(Panel *panel, int key) {
         }
 
         if (input_len <
-            panel->control_input_max_len[panel->focus_control_index]) {
+            panel->control_input_max_length[panel->focus_control_index]) {
 
             for (int i = 0; i < CHAR_SET_LENGTH; i++) {
                 if (key == (int)CHAR_SET[i]) {
@@ -160,13 +157,15 @@ void panel_draw_panel(Panel *panel) {
                            panel->control_width[i], panel->control_height[i]);
             break;
         case PANEL_TEXT_LIST:
+        case PANEL_TEXT_LIST_INTERACTIVE:
             panel_draw_text_list(
                 panel, i, panel->control_x[i] + panel->offset_x,
                 panel->control_y[i] + panel->offset_y, panel->control_width[i],
                 panel->control_height[i], panel->control_text_size[i],
                 panel->control_list_entries[i],
                 panel->control_list_entry_count[i],
-                panel->control_flash_text[i]);
+                panel->control_flash_text[i],
+                panel->control_type[i] == PANEL_TEXT_LIST_INTERACTIVE);
             break;
         case PANEL_LIST_INPUT:
         case PANEL_TEXT_INPUT:
@@ -176,15 +175,6 @@ void panel_draw_panel(Panel *panel) {
                 panel->control_height[i], panel->control_text[i],
                 panel->control_text_size[i]);
             break;
-        case PANEL_TEXT_LIST_INTERACTIVE:
-            panel_draw_text_list_interactive(
-                panel, i, panel->control_x[i] + panel->offset_x,
-                panel->control_y[i] + panel->offset_y, panel->control_width[i],
-                panel->control_height[i], panel->control_text_size[i],
-                panel->control_list_entries[i],
-                panel->control_list_entry_count[i],
-                panel->control_flash_text[i]);
-            break;
         case PANEL_ROUNDED_BOX:
             panel_draw_rounded_box(panel, panel->control_x[i] + panel->offset_x,
                                    panel->control_y[i] + panel->offset_y,
@@ -192,9 +182,10 @@ void panel_draw_panel(Panel *panel) {
                                    panel->control_height[i]);
             break;
         case PANEL_SPRITE:
-            panel_draw_sprite(panel, panel->control_x[i] + panel->offset_x,
-                              panel->control_y[i] + panel->offset_y,
-                              panel->control_text_size[i]);
+            surface_draw_sprite_from3(panel->surface,
+                                      panel->control_x[i] + panel->offset_x,
+                                      panel->control_y[i] + panel->offset_y,
+                                      panel->control_text_size[i]);
             break;
         case PANEL_CHECKBOX:
             panel_draw_checkbox(panel, i, panel->control_x[i] + panel->offset_x,
@@ -226,18 +217,20 @@ void panel_draw_checkbox(Panel *panel, int control, int x, int y, int width,
 
     if (panel->control_list_entry_mouse_button_down[control] == 1) {
         for (int i = 0; i < height; i++) {
-            surface_draw_line_horizontal(panel->surface, x + i, y + i, 1, 0);
+            surface_draw_line_horizontal(panel->surface, x + i, y + i, 1,
+                                         BLACK);
 
             surface_draw_line_horizontal(panel->surface, x + width - 1 - i,
-                                         y + i, 1, 0);
+                                         y + i, 1, BLACK);
         }
     }
 }
 
 void panel_draw_text(Panel *panel, int control, int x, int y, char *text,
                      int text_size) {
-    int y2 = y + (surface_text_height(text_size) / 3);
-    panel_draw_string(panel, control, x, y2, text, text_size);
+    y += (surface_text_height(text_size) / 3);
+
+    panel_draw_string(panel, control, x, y, text, text_size);
 }
 
 void panel_draw_string(Panel *panel, int control, int x, int y, char *text,
@@ -255,7 +248,7 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
                            int height, char *text, int text_size) {
     int text_length = strlen(text);
 
-    char display_text[text_length + 2]; // potential extra * if in focus
+    char display_text[text_length + 2]; /* potential extra * if in focus */
     memset(display_text, 0, text_length + 2);
 
     if (panel->control_mask_text[control]) {
@@ -289,8 +282,9 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
         display_text[text_length + 1] = '\0';
     }
 
-    int y2 = y + (surface_text_height(text_size) / 3);
-    panel_draw_string(panel, control, x, y2, display_text, text_size);
+    y += (surface_text_height(text_size) / 3);
+
+    panel_draw_string(panel, control, x, y, display_text, text_size);
 }
 
 void panel_draw_box(Panel *panel, int x, int y, int width, int height) {
@@ -363,21 +357,47 @@ void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height) {
                               5 + panel_base_sprite_start);
 }
 
-void panel_draw_sprite(Panel *panel, int x, int y, int id) {
-    surface_draw_sprite_from3(panel->surface, x, y, id);
+void panel_draw_scrollbar(Panel *panel, int x, int y, int width, int height,
+                          int scrub_y, int scrub_height) {
+    x += width - 12;
+
+    surface_draw_box_edge(panel->surface, x, y, 12, height, 0);
+
+    /* up arrow */
+    surface_draw_sprite_from3(panel->surface, x + 1, y + 1,
+                              panel_base_sprite_start);
+
+    /* down arrow */
+    surface_draw_sprite_from3(panel->surface, x + 1, y + height - 12,
+                              panel_base_sprite_start + 1);
+
+    surface_draw_line_horizontal(panel->surface, x, y + 13, 12, 0);
+    surface_draw_line_horizontal(panel->surface, x, y + height - 13, 12, 0);
+
+    surface_draw_gradient(panel->surface, x + 1, y + 14, 11, height - 27,
+                          PANEL_SCROLLBAR_TOP_COLOUR,
+                          PANEL_SCROLLBAR_BOTTOM_COLOUR);
+
+    surface_draw_box(panel->surface, x + 3, scrub_y + y + 14, 7, scrub_height,
+                     PANEL_SCRUB_MIDDLE_COLOUR);
+
+    surface_draw_line_vertical(panel->surface, x + 2, scrub_y + y + 14,
+                               scrub_height, PANEL_SCRUB_LEFT_COLOUR);
+
+    surface_draw_line_vertical(panel->surface, x + 2 + 8, scrub_y + y + 14,
+                               scrub_height, PANEL_SCRUB_RIGHT_COLOUR);
 }
 
 void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, int text_size, char **list_entries,
-                          int list_entry_count, int list_entry_position) {
+                          int list_entry_count, int list_entry_position,
+                          int is_interactive) {
     int displayed_entry_count = height / surface_text_height(text_size);
     int max_entries = list_entry_count - displayed_entry_count;
 
     if (list_entry_position > max_entries) {
         list_entry_position = max_entries;
-    }
-
-    if (list_entry_position < 0) {
+    } else if (list_entry_position < 0) {
         list_entry_position = 0;
     }
 
@@ -386,152 +406,15 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
     if (displayed_entry_count < list_entry_count) {
         int corner_top_right = x + width - 12;
 
-        int corner_bottom_left =
+        int scrub_height =
             ((height - 27) * displayed_entry_count) / list_entry_count;
 
-        if (corner_bottom_left < 6) {
-            corner_bottom_left = 6;
+        if (scrub_height < 6) {
+            scrub_height = 6;
         }
 
-        int j3 = ((height - 27 - corner_bottom_left) * list_entry_position) /
-                 max_entries;
-
-        if (panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
-            panel->mouse_x < x + width && panel->mouse_y > y &&
-            panel->mouse_y < y + height) {
-            list_entry_position += panel->mouse_scroll_delta;
-
-            if (list_entry_position < 0) {
-                list_entry_position = 0;
-            } else if (list_entry_position > max_entries) {
-                list_entry_position = max_entries;
-            }
-
-            panel->control_flash_text[control] = list_entry_position;
-        }
-
-        if (panel->mouse_button_down == 1 &&
-            panel->mouse_x >= corner_top_right &&
-            panel->mouse_x <= corner_top_right + 12) {
-            if (panel->mouse_y > y && panel->mouse_y < y + 12 &&
-                list_entry_position > 0) {
-                list_entry_position--;
-            }
-
-            if (panel->mouse_y > y + height - 12 &&
-                panel->mouse_y < y + height &&
-                list_entry_position <
-                    list_entry_count - displayed_entry_count) {
-                list_entry_position++;
-            }
-
-            panel->control_flash_text[control] = list_entry_position;
-        }
-
-        if (panel->mouse_button_down == 1 &&
-            ((panel->mouse_x >= corner_top_right &&
-              panel->mouse_x <= corner_top_right + 12) ||
-             (panel->mouse_x >= corner_top_right - 12 &&
-              panel->mouse_x <= corner_top_right + 24 &&
-              panel->control_list_scrollbar_handle_dragged[control]))) {
-            if (panel->mouse_y > y + 12 && panel->mouse_y < y + height - 12) {
-                panel->control_list_scrollbar_handle_dragged[control] = 1;
-
-                int l3 = panel->mouse_y - y - 12 - (corner_bottom_left / 2);
-
-                list_entry_position =
-                    ((l3 * list_entry_count) / (height - 24)) | 0;
-
-                if (list_entry_position > max_entries) {
-                    list_entry_position = max_entries;
-                }
-
-                if (list_entry_position < 0) {
-                    list_entry_position = 0;
-                }
-
-                panel->control_flash_text[control] = list_entry_position;
-            }
-        } else {
-            panel->control_list_scrollbar_handle_dragged[control] = 0;
-        }
-
-        j3 = ((height - 27 - corner_bottom_left) * list_entry_position) /
-             (list_entry_count - displayed_entry_count);
-
-        panel_draw_list_container(panel, x, y, width, height, j3,
-                                  corner_bottom_left);
-    }
-
-    int list_start_y =
-        height - displayed_entry_count * surface_text_height(text_size);
-
-    int list_y =
-        y + ((surface_text_height(text_size) * 5) / 6 + list_start_y / 2);
-
-    for (int i = list_entry_position; i < list_entry_count; i++) {
-        panel_draw_string(panel, control, x + 2, list_y, list_entries[i],
-                          text_size);
-
-        list_y +=
-            surface_text_height(text_size) - panel_text_list_entry_height_mod;
-
-        if (list_y >= y + height) {
-            return;
-        }
-    }
-}
-
-// TODO rename corners
-void panel_draw_list_container(Panel *panel, int x, int y, int width,
-                               int height, int corner1, int corner2) {
-    int x2 = x + width - 12;
-    surface_draw_box_edge(panel->surface, x2, y, 12, height, 0);
-
-    /* up arrow */
-    surface_draw_sprite_from3(panel->surface, x2 + 1, y + 1,
-                              panel_base_sprite_start);
-
-    /* down arrow */
-    surface_draw_sprite_from3(panel->surface, x2 + 1, y + height - 12,
-                              panel_base_sprite_start + 1);
-
-    surface_draw_line_horizontal(panel->surface, x2, y + 13, 12, 0);
-    surface_draw_line_horizontal(panel->surface, x2, y + height - 13, 12, 0);
-
-    surface_draw_gradient(panel->surface, x2 + 1, y + 14, 11, height - 27,
-                          PANEL_SCROLLBAR_TOP_COLOUR,
-                          PANEL_SCROLLBAR_BOTTOM_COLOUR);
-
-    surface_draw_box(panel->surface, x2 + 3, corner1 + y + 14, 7, corner2,
-                     PANEL_SCRUB_MIDDLE_COLOUR);
-
-    surface_draw_line_vertical(panel->surface, x2 + 2, corner1 + y + 14,
-                               corner2, PANEL_SCRUB_LEFT_COLOUR);
-
-    surface_draw_line_vertical(panel->surface, x2 + 2 + 8, corner1 + y + 14,
-                               corner2, PANEL_SCRUB_RIGHT_COLOUR);
-}
-
-void panel_draw_text_list_interactive(Panel *panel, int control, int x, int y,
-                                      int width, int height, int text_size,
-                                      char **list_entries, int list_entry_count,
-                                      int list_entry_position) {
-    int displayed_entry_count = height / surface_text_height(text_size);
-    int max_entries = list_entry_count - displayed_entry_count;
-
-    if (displayed_entry_count < list_entry_count) {
-        int corner_top_right = x + width - 12;
-
-        int corner_bottom_left =
-            ((height - 27) * displayed_entry_count) / list_entry_count;
-
-        if (corner_bottom_left < 6) {
-            corner_bottom_left = 6;
-        }
-
-        int j3 = ((height - 27 - corner_bottom_left) * list_entry_position) /
-                 max_entries;
+        int scrub_y =
+            ((height - 27 - scrub_height) * list_entry_position) / max_entries;
 
         if (panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
             panel->mouse_x < x + width && panel->mouse_y > y &&
@@ -569,13 +452,15 @@ void panel_draw_text_list_interactive(Panel *panel, int control, int x, int y,
         if (panel->mouse_button_down == 1 &&
             ((panel->mouse_x >= corner_top_right &&
               panel->mouse_x <= corner_top_right + 12) ||
+
              (panel->mouse_x >= corner_top_right - 12 &&
               panel->mouse_x <= corner_top_right + 24 &&
               panel->control_list_scrollbar_handle_dragged[control]))) {
+
             if (panel->mouse_y > y + 12 && panel->mouse_y < y + height - 12) {
                 panel->control_list_scrollbar_handle_dragged[control] = 1;
 
-                int l3 = panel->mouse_y - y - 12 - (corner_bottom_left / 2);
+                int l3 = panel->mouse_y - y - 12 - (scrub_height / 2);
 
                 list_entry_position = (l3 * list_entry_count) / (height - 24);
 
@@ -589,62 +474,67 @@ void panel_draw_text_list_interactive(Panel *panel, int control, int x, int y,
 
                 panel->control_flash_text[control] = list_entry_position;
             }
+
         } else {
             panel->control_list_scrollbar_handle_dragged[control] = 0;
         }
 
-        j3 = ((height - 27 - corner_bottom_left) * list_entry_position) /
-             max_entries;
+        scrub_y =
+            ((height - 27 - scrub_height) * list_entry_position) / max_entries;
 
-        panel_draw_list_container(panel, x, y, width, height, j3,
-                                  corner_bottom_left);
+        panel_draw_scrollbar(panel, x, y, width, height, scrub_y, scrub_height);
     } else {
         list_entry_position = 0;
         panel->control_flash_text[control] = 0;
     }
 
-    panel->control_list_entry_mouse_over[control] = -1;
+    if (is_interactive) {
+        panel->control_list_entry_mouse_over[control] = -1;
+    }
 
     int list_start_y =
         height - displayed_entry_count * surface_text_height(text_size);
 
-    int list_y = y + ((((surface_text_height(text_size) * 5) / 6) | 0) +
-                      list_start_y / 2);
+    int list_y =
+        y + (((surface_text_height(text_size) * 5) / 6) + list_start_y / 2);
 
     for (int i = list_entry_position; i < list_entry_count; i++) {
-        int text_colour;
+        if (is_interactive) {
+            int text_colour =
+                panel->control_use_alternative_colour[control] ? WHITE : BLACK;
 
-        if (panel->control_use_alternative_colour[control]) {
-            text_colour = WHITE;
+            if (panel->mouse_x >= x + 2 && panel->mouse_x <= x + width - 12 &&
+                panel->mouse_y - 2 <= list_y &&
+                panel->mouse_y - 2 > list_y - surface_text_height(text_size)) {
+                if (panel->control_use_alternative_colour[control]) {
+                    text_colour = GREY_80;
+                } else {
+                    text_colour = WHITE;
+                }
+
+                panel->control_list_entry_mouse_over[control] = i;
+
+                if (panel->mouse_last_button_down == 1) {
+                    panel->control_list_entry_mouse_button_down[control] = i;
+                    panel->control_clicked[control] = 1;
+                }
+            }
+
+            if (panel->control_list_entry_mouse_button_down[control] == i) {
+                text_colour = RED;
+            }
+
+            surface_draw_string(panel->surface, list_entries[i], x + 2, list_y,
+                                text_size, text_colour);
+
+            list_y += surface_text_height(text_size);
         } else {
-            text_colour = BLACK;
+            panel_draw_string(panel, control, x + 2, list_y, list_entries[i],
+                              text_size);
+
+            list_y += surface_text_height(text_size) -
+                      panel_text_list_entry_height_mod;
         }
-
-        if (panel->mouse_x >= x + 2 && panel->mouse_x <= x + width - 12 &&
-            panel->mouse_y - 2 <= list_y &&
-            panel->mouse_y - 2 > list_y - surface_text_height(text_size)) {
-            if (panel->control_use_alternative_colour[control]) {
-                text_colour = GREY_80;
-            } else {
-                text_colour = WHITE;
-            }
-
-            panel->control_list_entry_mouse_over[control] = i;
-
-            if (panel->mouse_last_button_down == 1) {
-                panel->control_list_entry_mouse_button_down[control] = i;
-                panel->control_clicked[control] = 1;
-            }
-        }
-
-        if (panel->control_list_entry_mouse_button_down[control] == i) {
-            text_colour = RED;
-        }
-
-        surface_draw_string(panel->surface, list_entries[i], x + 2, list_y,
-                            text_size, text_colour);
-
-        list_y += surface_text_height(text_size);
 
         if (list_y >= y + height) {
             return;
@@ -652,84 +542,68 @@ void panel_draw_text_list_interactive(Panel *panel, int control, int x, int y,
     }
 }
 
-// void panel_prepare_component(Panel *panel, int type, int x, int y)
-
-int panel_add_text(Panel *panel, int x, int y, char *text, int size, int flag) {
-    panel->control_type[panel->control_count] = PANEL_TEXT;
+int panel_prepare_component(Panel *panel, int type, int x, int y) {
+    panel->control_type[panel->control_count] = type;
     panel->control_shown[panel->control_count] = 1;
-    panel->control_text_size[panel->control_count] = size;
-    panel->control_use_alternative_colour[panel->control_count] = flag;
     panel->control_x[panel->control_count] = x;
     panel->control_y[panel->control_count] = y;
-    panel->control_text[panel->control_count] = text;
 
     return panel->control_count++;
+}
+
+int panel_add_text(Panel *panel, int x, int y, char *text, int size, int flag) {
+    panel->control_text_size[panel->control_count] = size;
+    panel->control_use_alternative_colour[panel->control_count] = flag;
+    panel->control_text[panel->control_count] = text;
+
+    return panel_prepare_component(panel, PANEL_TEXT, x, y);
 }
 
 int panel_add_text_centre(Panel *panel, int x, int y, char *text, int size,
                           int flag) {
-    panel->control_type[panel->control_count] = PANEL_CENTRE_TEXT;
-    panel->control_shown[panel->control_count] = 1;
     panel->control_text_size[panel->control_count] = size;
     panel->control_use_alternative_colour[panel->control_count] = flag;
-    panel->control_x[panel->control_count] = x;
-    panel->control_y[panel->control_count] = y;
     panel->control_text[panel->control_count] = text;
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_CENTRE_TEXT, x, y);
 }
 
 int panel_add_button_background(Panel *panel, int x, int y, int width,
                                 int height) {
-    panel->control_type[panel->control_count] = PANEL_BOX;
-    panel->control_shown[panel->control_count] = 1;
-    panel->control_x[panel->control_count] = x - (width / 2);
-    panel->control_y[panel->control_count] = y - (height / 2);
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_BOX, x - (width / 2),
+                                   y - (height / 2));
 }
 
 int panel_add_box_rounded(Panel *panel, int x, int y, int width, int height) {
-    panel->control_type[panel->control_count] = PANEL_ROUNDED_BOX;
-    panel->control_shown[panel->control_count] = 1;
-    panel->control_x[panel->control_count] = x - (width / 2);
-    panel->control_y[panel->control_count] = y - (height / 2);
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_ROUNDED_BOX, x - (width / 2),
+                                   y - (height / 2));
 }
 
 int panel_add_sprite(Panel *panel, int x, int y, int sprite_id) {
     int width = panel->surface->sprite_width[sprite_id];
     int height = panel->surface->sprite_height[sprite_id];
 
-    panel->control_type[panel->control_count] = PANEL_SPRITE;
-    panel->control_shown[panel->control_count] = 1;
-    panel->control_x[panel->control_count] = x - (width / 2);
-    panel->control_y[panel->control_count] = y - (height / 2);
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
     panel->control_text_size[panel->control_count] = sprite_id;
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_SPRITE, x - (width / 2),
+                                   y - (height / 2));
 }
 
 int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
                         int size, int max_length, int flag) {
-    panel->control_type[panel->control_count] = PANEL_TEXT_LIST;
-    panel->control_shown[panel->control_count] = 1;
-    panel->control_x[panel->control_count] = x;
-    panel->control_y[panel->control_count] = y;
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
     panel->control_use_alternative_colour[panel->control_count] = flag;
     panel->control_text_size[panel->control_count] = size;
-    panel->control_input_max_len[panel->control_count] = max_length;
-    panel->control_list_entry_count[panel->control_count] = 0;
-    panel->control_flash_text[panel->control_count] = 0;
+    panel->control_input_max_length[panel->control_count] = max_length;
 
     panel->control_list_entries[panel->control_count] =
         calloc(max_length, sizeof(char *));
@@ -739,59 +613,48 @@ int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
             calloc(128, sizeof(char));
     }
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_TEXT_LIST, x, y);
 }
 
 int panel_add_text_list_input(Panel *panel, int x, int y, int width, int height,
                               int size, int max_length, int flag, int flag1) {
-    panel->control_type[panel->control_count] = PANEL_LIST_INPUT;
-    panel->control_shown[panel->control_count] = 1;
     panel->control_mask_text[panel->control_count] = flag;
     panel->control_text_size[panel->control_count] = size;
     panel->control_use_alternative_colour[panel->control_count] = flag1;
-    panel->control_x[panel->control_count] = x;
-    panel->control_y[panel->control_count] = y;
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
-    panel->control_input_max_len[panel->control_count] = max_length;
+    panel->control_input_max_length[panel->control_count] = max_length;
 
     panel->control_text[panel->control_count] =
         calloc(max_length + 1, sizeof(char *));
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_LIST_INPUT, x, y);
 }
 
 int panel_add_text_input(Panel *panel, int x, int y, int width, int height,
                          int size, int max_length, int is_password, int flag1) {
-    panel->control_type[panel->control_count] = PANEL_TEXT_INPUT;
-    panel->control_shown[panel->control_count] = 1;
     panel->control_mask_text[panel->control_count] = is_password;
     panel->control_text_size[panel->control_count] = size;
     panel->control_use_alternative_colour[panel->control_count] = flag1;
-    panel->control_x[panel->control_count] = x;
-    panel->control_y[panel->control_count] = y;
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
-    panel->control_input_max_len[panel->control_count] = max_length;
+    panel->control_input_max_length[panel->control_count] = max_length;
 
     panel->control_text[panel->control_count] =
         calloc((max_length + 1), sizeof(char *));
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_TEXT_INPUT, x, y);
 }
 
 int panel_add_text_list_interactive(Panel *panel, int x, int y, int width,
                                     int height, int text_size, int max_length,
                                     int flag) {
-    panel->control_type[panel->control_count] = PANEL_TEXT_LIST_INTERACTIVE;
     panel->control_shown[panel->control_count] = 1;
     panel->control_text_size[panel->control_count] = text_size;
     panel->control_use_alternative_colour[panel->control_count] = flag;
-    panel->control_x[panel->control_count] = x;
-    panel->control_y[panel->control_count] = y;
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
-    panel->control_input_max_len[panel->control_count] = max_length;
+    panel->control_input_max_length[panel->control_count] = max_length;
 
     panel->control_list_entries[panel->control_count] =
         calloc(max_length + 1, sizeof(char *));
@@ -801,35 +664,25 @@ int panel_add_text_list_interactive(Panel *panel, int x, int y, int width,
             calloc(128, sizeof(char));
     }
 
-    panel->control_list_entry_count[panel->control_count] = 0;
-    panel->control_flash_text[panel->control_count] = 0;
     panel->control_list_entry_mouse_button_down[panel->control_count] = -1;
     panel->control_list_entry_mouse_over[panel->control_count] = -1;
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_TEXT_LIST_INTERACTIVE, x, y);
 }
 
 int panel_add_button(Panel *panel, int x, int y, int width, int height) {
-    panel->control_type[panel->control_count] = PANEL_BUTTON;
-    panel->control_shown[panel->control_count] = 1;
-    panel->control_x[panel->control_count] = x - (width / 2);
-    panel->control_y[panel->control_count] = y - (height / 2);
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_BUTTON, x - (width / 2),
+                                   y - (height / 2));
 }
 
 int panel_add_checkbox(Panel *panel, int x, int y, int width, int height) {
-    panel->control_type[panel->control_count] = PANEL_CHECKBOX;
-    panel->control_shown[panel->control_count] = 1;
-    panel->control_x[panel->control_count] = x;
-    panel->control_y[panel->control_count] = y;
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
-    panel->control_list_entry_mouse_button_down[panel->control_count] = 0;
 
-    return panel->control_count++;
+    return panel_prepare_component(panel, PANEL_CHECKBOX, x, y);
 }
 
 void panel_toggle_checkbox(Panel *panel, int control, int activated) {
@@ -865,7 +718,7 @@ void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
                                   int flash) {
     int index = panel->control_list_entry_count[control]++;
 
-    if (index >= panel->control_input_max_len[control]) {
+    if (index >= panel->control_input_max_length[control]) {
         index--;
 
         panel->control_list_entry_count[control]--;

@@ -68,8 +68,8 @@ typedef struct Panel {
     int *control_type;
     int *control_width;
     int *control_height;
-    int *control_input_max_len;
-    int *control_text_size;
+    int *control_input_max_length;
+    int *control_text_size; /* also used for sprite IDs */
     char **control_text;
     char ***control_list_entries;
     int mouse_x;
@@ -101,16 +101,13 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
                            int height, char *text, int text_size);
 void panel_draw_box(Panel *panel, int x, int y, int width, int height);
 void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height);
-void panel_draw_sprite(Panel *panel, int x, int y, int id);
 void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, int text_size, char **list_entries,
-                          int list_entry_count, int list_entry_position);
-void panel_draw_list_container(Panel *panel, int x, int y, int width,
-                               int height, int corner1, int corner2);
-void panel_draw_text_list_interactive(Panel *panel, int control, int x, int y,
-                                      int width, int height, int text_size,
-                                      char **list_entries, int list_entry_count,
-                                      int list_entry_position);
+                          int list_entry_count, int list_entry_position,
+                          int is_interactive);
+void panel_draw_scrollbar(Panel *panel, int x, int y, int width, int height,
+                          int scrub_y, int scrub_height);
+int panel_prepare_component(Panel *panel, int type, int x, int y);
 int panel_add_text(Panel *panel, int x, int y, char *text, int size, int flag);
 int panel_add_text_centre(Panel *panel, int x, int y, char *text, int size,
                           int flag);
