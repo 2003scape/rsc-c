@@ -341,6 +341,10 @@ typedef struct mudclient {
     int origin_mouse_x;
     int origin_rotation;
 
+    /* make it spin */
+    int origin_camera_ticks;
+    int camera_momentum;
+
     int mouse_scroll_delta;
     int mouse_action_timeout;
     int mouse_x;

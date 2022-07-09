@@ -783,9 +783,9 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
         circle_index,                                        //
 
         /* bottom right / southeast */
-        right_x, bottom_y, 0, //
-        r, g, b, a,           //
-        -1.0f, -1.0f, -1.0f,  //
+        right_x, bottom_y, 0,                              //
+        r, g, b, a,                                        //
+        -1.0f, -1.0f, -1.0f,                               //
         CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH,  //
         CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_HEIGHT, //
         circle_index,                                      //
@@ -806,11 +806,11 @@ void surface_gl_create_framebuffer(Surface *surface) {
     surface->gl_screen_pixels_reversed =
         calloc(surface->width * surface->height, sizeof(int32_t));
 
-#ifndef RENDER_SW
-    surface->gl_screen_pixels = surface->pixels;
-#else
+#ifdef RENDER_SW
     surface->gl_screen_pixels =
         calloc(surface->width * surface->height, sizeof(int32_t));
+#else
+    surface->gl_screen_pixels = surface->pixels;
 #endif
 
     surface->gl_last_screen_width = surface->width;
@@ -818,14 +818,16 @@ void surface_gl_create_framebuffer(Surface *surface) {
 
     surface_gl_create_texture_array(&surface->gl_framebuffer_textures,
                                     surface->width, surface->height, 1);
-
 }
 
 void surface_gl_update_framebuffer(Surface *surface) {
     if (surface->gl_last_screen_width != surface->width ||
         surface->gl_last_screen_height != surface->height) {
         free(surface->gl_screen_pixels_reversed);
+
+#ifdef RENDER_SW
         free(surface->gl_screen_pixels);
+#endif
 
         if (surface->gl_framebuffer_textures != 0) {
             glDeleteTextures(1, &surface->gl_framebuffer_textures);
@@ -1830,8 +1832,8 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
         }
     }
 
-    gl_update_texture_array(texture_array_id, 0, texture_width, texture_height,
-                            texture_pixels, 1);
+    gl_update_texture_array(texture_array_id, texture_index, texture_width,
+                            texture_height, texture_pixels, 1);
 
     free(texture_pixels);
 #endif

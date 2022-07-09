@@ -487,12 +487,15 @@ void mudclient_resize(mudclient *mud) {
     if (mud->surface != NULL) {
 #ifdef RENDER_SW
         mud->surface->pixels = mud->pixel_surface->pixels;
-#else
+#endif
+
+#ifdef RENDER_GL
         free(mud->surface->pixels);
 
         mud->surface->pixels =
             calloc(mud->game_width * mud->game_height, sizeof(int32_t));
 #endif
+
         mud->scene->raster = mud->surface->pixels;
     }
 
@@ -949,6 +952,13 @@ void mudclient_mouse_released(mudclient *mud, int x, int y, int button) {
 
     if (button == 2) {
         mud->middle_button_down = 0;
+
+        int tick_delta = get_ticks() - mud->origin_camera_ticks;;
+        int x_delta = mud->mouse_x - mud->origin_mouse_x;
+
+        if (tick_delta < 200) {
+            mud->camera_momentum = 2 * ((float)x_delta/(float)tick_delta);
+        }
     }
 }
 
@@ -1002,6 +1012,9 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
         mud->origin_mouse_x = mud->mouse_x;
+
+        mud->origin_camera_ticks = get_ticks();
+        mud->camera_momentum = 0;
         return;
     }
 
@@ -3104,6 +3117,11 @@ void mudclient_handle_game_input(mudclient *mud) {
         } else {
             mud->an_int_707 = 0;
         }
+    } else if (mud->camera_momentum != 0) {
+        int sign = mud->camera_momentum > 0 ? 1 : -1;
+
+        mud->camera_rotation += abs(mud->camera_momentum) * sign;
+        mud->camera_momentum -= 1 * sign;
     }
 
     if (mud->sleep_word_delay_timer > 20) {
