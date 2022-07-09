@@ -7,9 +7,22 @@
 #include "../packet-stream.h"
 #include "../utility.h"
 
+/* width and height of tab window */
 #define SOCIAL_WIDTH 196
 #define SOCIAL_HEIGHT 182
 #define SOCIAL_TAB_HEIGHT 24
+
+/* width of add friend/ignore dialog box */
+#define SOCIAL_DIALOG_ADD_WIDTH 300
+
+/* width of message friend dialog box */
+#define SOCIAL_DIALOG_MESSAGE_WIDTH 500
+
+/* height of add, ignore and message dialog boxes */
+#define SOCIAL_DIALOG_HEIGHT 70
+
+/* width and height of clickable cancel button */
+#define SOCIAL_CANCEL_SIZE 40
 
 #define SOCIAL_TAB_SPRITE_OFFSET 5
 
@@ -18,6 +31,10 @@
 #else
 #define FRIEND_ONLINE 255
 #endif
+
+#define SOCIAL_ADD_FRIEND 1
+#define SOCIAL_MESSAGE_FRIEND 2
+#define SOCIAL_ADD_IGNORE 3
 
 extern char *social_tabs[];
 

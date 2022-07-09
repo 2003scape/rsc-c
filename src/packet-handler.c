@@ -250,7 +250,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     int ignored = 0;
 
                     for (int i = 0; i < mud->ignore_list_count; i++) {
-                        if (mud->ignore_list[i] == player->hash) {
+                        if (mud->ignore_list[i] == player->encoded_username) {
                             ignored = 1;
                             break;
                         }
@@ -325,10 +325,10 @@ void mudclient_packet_tick(mudclient *mud) {
                     player->server_id = get_unsigned_short(data, offset);
                     offset += 2;
 
-                    player->hash = get_unsigned_long(data, offset);
+                    player->encoded_username = get_unsigned_long(data, offset);
                     offset += 8;
 
-                    decode_username(player->hash, player->name);
+                    decode_username(player->encoded_username, player->name);
 
                     int equipped_count = get_unsigned_byte(data[offset]);
                     offset++;
@@ -1133,7 +1133,7 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->friend_list_count = get_unsigned_byte(data[1]);
 
         for (int i = 0; i < mud->friend_list_count; i++) {
-            mud->friend_list_hashes[i] = get_unsigned_long(data, 2 + i * 9);
+            mud->friend_list[i] = get_unsigned_long(data, 2 + i * 9);
             mud->friend_list_online[i] = get_unsigned_byte(data[10 + i * 9]);
         }
 
@@ -1145,10 +1145,10 @@ void mudclient_packet_tick(mudclient *mud) {
         int world = data[9] & 0xff;
 
         for (int i = 0; i < mud->friend_list_count; i++) {
-            if (mud->friend_list_hashes[i] == encoded_username) {
+            if (mud->friend_list[i] == encoded_username) {
                 if (mud->friend_list_online[i] == 0 && world != 0) {
                     char username[USERNAME_LENGTH + 1] = {0};
-                    decode_username(mud->friend_list_hashes[i], username);
+                    decode_username(mud->friend_list[i], username);
 
                     char formatted[USERNAME_LENGTH + 20] = {0};
                     sprintf(formatted, "@pri@%s has logged in", username);
@@ -1158,7 +1158,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (mud->friend_list_online[i] != 0 && world == 0) {
                     char username[USERNAME_LENGTH + 1] = {0};
-                    decode_username(mud->friend_list_hashes[i], username);
+                    decode_username(mud->friend_list[i], username);
 
                     char formatted[USERNAME_LENGTH + 21] = {0};
                     sprintf(formatted, "@pri@%s has logged out", username);
@@ -1173,7 +1173,7 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-        mud->friend_list_hashes[mud->friend_list_count] = encoded_username;
+        mud->friend_list[mud->friend_list_count] = encoded_username;
         mud->friend_list_online[mud->friend_list_count] = world;
 
         mud->friend_list_count++;

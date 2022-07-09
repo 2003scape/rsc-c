@@ -10,8 +10,7 @@
 #define WAYPOINT_COUNT 10
 
 typedef struct GameCharacter {
-    // TODO rename this to encoded_name
-    int64_t hash;
+    int64_t encoded_username;
     char name[MAX_USER_LENGTH + 1];
     int server_index;
     int server_id;

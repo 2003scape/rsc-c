@@ -1,11 +1,6 @@
 #include "./minimap-tab.h"
 
 void mudclient_draw_minimap_entity(mudclient *mud, int x, int y, int colour) {
-    /*surface_set_pixel(mud->surface, x, y, colour);
-    surface_set_pixel(mud->surface, x - 1, y, colour);
-    surface_set_pixel(mud->surface, x + 1, y, colour);
-    surface_set_pixel(mud->surface, x, y - 1, colour);
-    surface_set_pixel(mud->surface, x, y + 1, colour);*/
     surface_draw_line_vertical(mud->surface, x, y - 1, 3, colour);
     surface_draw_line_horizontal(mud->surface, x - 1, y, 3, colour);
 }
@@ -14,16 +9,16 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - MINIMAP_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
-                              3, mud->sprite_media + MINIMAP_TAB_SPRITE_OFFSET);
+    surface_draw_sprite_from3(mud->surface,
+                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
+                              mud->sprite_media + MINIMAP_TAB_SPRITE_OFFSET);
 
     surface_draw_box(mud->surface, ui_x, ui_y, MINIMAP_WIDTH, MINIMAP_HEIGHT,
-                     0);
+                     BLACK);
 
     surface_set_bounds(mud->surface, ui_x, ui_y, ui_x + MINIMAP_WIDTH,
                        ui_y + MINIMAP_HEIGHT);
 
-    // TODO rename random2 to random_scale
     int scale = 192 + mud->minimap_random_scale;
     int rotation = (mud->camera_rotation + mud->minimap_random_rotation) & 0xff;
 
@@ -124,13 +119,11 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
         int player_colour = WHITE;
 
         for (int j = 0; j < mud->friend_list_count; j++) {
-            if (player->hash != mud->friend_list_hashes[j] ||
-                mud->friend_list_online[j] != 255) {
-                continue;
+            if (player->encoded_username == mud->friend_list[j] &&
+                mud->friend_list_online[j] == FRIEND_ONLINE) {
+                player_colour = GREEN;
+                break;
             }
-
-            player_colour = GREEN;
-            break;
         }
 
         mudclient_draw_minimap_entity(
@@ -147,7 +140,8 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
                                 mud->sprite_media + 24,
                                 (mud->camera_rotation + 128) & 255, 128);
 
-    surface_set_bounds(mud->surface, 0, 0, mud->surface->width, mud->surface->height);
+    surface_set_bounds(mud->surface, 0, 0, mud->surface->width,
+                       mud->surface->height);
 
     if (!no_menus) {
         return;
@@ -179,9 +173,9 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
         delta_x = mud->local_player->current_y - delta_x;
 
         if (mud->mouse_button_click == 1) {
-            mudclient_walk_to_action_source(
-                mud, mud->local_region_x, mud->local_region_y, delta_y / 128,
-                delta_x / 128, 0);
+            mudclient_walk_to_action_source(mud, mud->local_region_x,
+                                            mud->local_region_y, delta_y / 128,
+                                            delta_x / 128, 0);
 
             mud->mouse_button_click = 0;
         }

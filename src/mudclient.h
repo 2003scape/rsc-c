@@ -400,7 +400,7 @@ typedef struct mudclient {
     int message_index;
     int message_tokens[SOCIAL_LIST_MAX];
     int friend_list_count;
-    int64_t friend_list_hashes[SOCIAL_LIST_MAX * 2];
+    int64_t friend_list[SOCIAL_LIST_MAX * 2];
     int friend_list_online[SOCIAL_LIST_MAX * 2];
     int ignore_list_count;
     int64_t ignore_list[SOCIAL_LIST_MAX * 2];

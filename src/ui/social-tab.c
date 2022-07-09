@@ -17,9 +17,9 @@ void mudclient_sort_friends(mudclient *mud) {
                 mud->friend_list_online[i] = mud->friend_list_online[i + 1];
                 mud->friend_list_online[i + 1] = online_status;
 
-                int64_t encoded_username = mud->friend_list_hashes[i];
-                mud->friend_list_hashes[i] = mud->friend_list_hashes[i + 1];
-                mud->friend_list_hashes[i + 1] = encoded_username;
+                int64_t encoded_username = mud->friend_list[i];
+                mud->friend_list[i] = mud->friend_list[i + 1];
+                mud->friend_list[i + 1] = encoded_username;
 
                 flag = 1;
             }
@@ -35,7 +35,7 @@ void mudclient_add_friend(mudclient *mud, char *username) {
     packet_stream_send_packet(mud->packet_stream);
 
     for (int i = 0; i < mud->friend_list_count; i++) {
-        if (mud->friend_list_hashes[i] == encoded_username) {
+        if (mud->friend_list[i] == encoded_username) {
             return;
         }
     }
@@ -44,7 +44,7 @@ void mudclient_add_friend(mudclient *mud, char *username) {
         return;
     }
 
-    mud->friend_list_hashes[mud->friend_list_count] = encoded_username;
+    mud->friend_list[mud->friend_list_count] = encoded_username;
     mud->friend_list_online[mud->friend_list_count] = 0;
     mud->friend_list_count++;
 }
@@ -55,14 +55,14 @@ void mudclient_remove_friend(mudclient *mud, int64_t encoded_username) {
     packet_stream_send_packet(mud->packet_stream);
 
     for (int i = 0; i < mud->friend_list_count; i++) {
-        if (mud->friend_list_hashes[i] != encoded_username) {
+        if (mud->friend_list[i] != encoded_username) {
             continue;
         }
 
         mud->friend_list_count--;
 
         for (int j = i; j < mud->friend_list_count; j++) {
-            mud->friend_list_hashes[j] = mud->friend_list_hashes[j + 1];
+            mud->friend_list[j] = mud->friend_list[j + 1];
             mud->friend_list_online[j] = mud->friend_list_online[j + 1];
         }
 
@@ -132,8 +132,9 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - SOCIAL_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
-                              3, mud->sprite_media + SOCIAL_TAB_SPRITE_OFFSET);
+    surface_draw_sprite_from3(mud->surface,
+                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
+                              mud->sprite_media + SOCIAL_TAB_SPRITE_OFFSET);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + SOCIAL_TAB_HEIGHT,
                            SOCIAL_WIDTH, SOCIAL_HEIGHT - SOCIAL_TAB_HEIGHT,
@@ -158,11 +159,12 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
             }
 
             char username[USERNAME_LENGTH + 1] = {0};
-            decode_username(mud->friend_list_hashes[i], username);
+            decode_username(mud->friend_list[i], username);
 
             char formatted_username[USERNAME_LENGTH + 31] = {0};
 
-            sprintf(formatted_username, "%s%s~%04d~@whi@Remove", colour, username, ui_x + 126);
+            sprintf(formatted_username, "%s%s~%04d~@whi@Remove", colour,
+                    username, ui_x + 126);
 
             panel_add_list_entry(mud->panel_social_list,
                                  mud->control_list_social, i,
@@ -195,7 +197,7 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 
         if (friend_index >= 0 && mud->mouse_x < ui_x + 176) {
             char username[USERNAME_LENGTH + 1] = {0};
-            decode_username(mud->friend_list_hashes[friend_index], username);
+            decode_username(mud->friend_list[friend_index], username);
 
             if (mud->mouse_x > ui_x + 116) {
                 sprintf(formatted, "Click to remove %s", username);
@@ -277,7 +279,7 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
     int mouse_y = mud->mouse_y - ui_y;
 
     if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < SOCIAL_WIDTH &&
-        mouse_y < 182) {
+        mouse_y < SOCIAL_HEIGHT) {
         panel_handle_mouse(mud->panel_social_list, mouse_x + ui_x,
                            mouse_y + ui_y, mud->last_mouse_button_down,
                            mud->mouse_button_down, mud->mouse_scroll_delta);
@@ -303,13 +305,13 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 
             if (friend_index >= 0 && mouse_x < 176) {
                 if (mouse_x > 116) {
-                    mudclient_remove_friend(
-                        mud, mud->friend_list_hashes[friend_index]);
+                    mudclient_remove_friend(mud,
+                                            mud->friend_list[friend_index]);
                 } else if (mud->friend_list_online[friend_index] != 0) {
                     mud->show_dialog_social_input = 2;
 
                     mud->private_message_target =
-                        mud->friend_list_hashes[friend_index];
+                        mud->friend_list[friend_index];
 
                     memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
                     memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
@@ -342,55 +344,67 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 }
 
 void mudclient_draw_social_input(mudclient *mud) {
+    int add_dialog_x = mud->surface->width / 2 - SOCIAL_DIALOG_ADD_WIDTH / 2;
+
+    int message_dialog_x =
+        mud->surface->width / 2 - SOCIAL_DIALOG_MESSAGE_WIDTH / 2;
+
+    int cancel_offset_x = mud->surface->width / 2 - SOCIAL_CANCEL_SIZE / 2;
+    int cancel_offset_y = mud->surface->height / 2 + SOCIAL_CANCEL_SIZE / 2;
+
+    int y = 145 + (mud->surface->height / 2 - MUD_HEIGHT / 2);
+
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
 
-        if (mud->show_dialog_social_input == 1 &&
-            (mud->mouse_x < 106 || mud->mouse_y < 145 || mud->mouse_x > 406 ||
-             mud->mouse_y > 215)) {
+        if ((mud->show_dialog_social_input == SOCIAL_ADD_FRIEND ||
+             mud->show_dialog_social_input == SOCIAL_ADD_IGNORE) &&
+            (mud->mouse_x < add_dialog_x || mud->mouse_y < y ||
+             mud->mouse_x > add_dialog_x + SOCIAL_DIALOG_ADD_WIDTH ||
+             mud->mouse_y > y + SOCIAL_DIALOG_HEIGHT)) {
             mud->show_dialog_social_input = 0;
             return;
         }
 
-        if (mud->show_dialog_social_input == 2 &&
-            (mud->mouse_x < 6 || mud->mouse_y < 145 || mud->mouse_x > 506 ||
-             mud->mouse_y > 215)) {
+        if (mud->show_dialog_social_input == SOCIAL_MESSAGE_FRIEND &&
+            (mud->mouse_x < message_dialog_x || mud->mouse_y < y ||
+             mud->mouse_x > message_dialog_x + SOCIAL_DIALOG_MESSAGE_WIDTH ||
+             mud->mouse_y > y + SOCIAL_DIALOG_HEIGHT)) {
             mud->show_dialog_social_input = 0;
             return;
         }
 
-        if (mud->show_dialog_social_input == 3 &&
-            (mud->mouse_x < 106 || mud->mouse_y < 145 || mud->mouse_x > 406 ||
-             mud->mouse_y > 215)) {
-            mud->show_dialog_social_input = 0;
-            return;
-        }
-
-        if (mud->mouse_x > 236 && mud->mouse_x < 276 && mud->mouse_y > 193 &&
-            mud->mouse_y < 213) {
+        if (mud->mouse_x > cancel_offset_x &&
+            mud->mouse_x < cancel_offset_x + SOCIAL_CANCEL_SIZE &&
+            mud->mouse_y > cancel_offset_y &&
+            mud->mouse_y < cancel_offset_y + SOCIAL_CANCEL_SIZE) {
             mud->show_dialog_social_input = 0;
             return;
         }
     }
 
-    int y = 145;
+    switch (mud->show_dialog_social_input) {
+    case SOCIAL_ADD_FRIEND: {
+        surface_draw_box(mud->surface, add_dialog_x, y, SOCIAL_DIALOG_ADD_WIDTH,
+                         SOCIAL_DIALOG_HEIGHT, BLACK);
 
-    if (mud->show_dialog_social_input == 1) {
-        surface_draw_box(mud->surface, 106, y, 300, 70, BLACK);
-        surface_draw_box_edge(mud->surface, 106, y, 300, 70, WHITE);
+        surface_draw_box_edge(mud->surface, add_dialog_x, y,
+                              SOCIAL_DIALOG_ADD_WIDTH, SOCIAL_DIALOG_HEIGHT,
+                              WHITE);
+
         y += 20;
 
         surface_draw_string_centre(mud->surface,
-                                   "Enter name to add to friends list", 256, y,
-                                   4, WHITE);
+                                   "Enter name to add to friends list",
+                                   mud->surface->width / 2, y, 4, WHITE);
 
         y += 20;
 
         char formatted_current[INPUT_TEXT_LENGTH + 2] = {0};
         sprintf(formatted_current, "%s*", mud->input_text_current);
 
-        surface_draw_string_centre(mud->surface, formatted_current, 256, y, 4,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, formatted_current,
+                                   mud->surface->width / 2, y, 4, WHITE);
 
         char *username = mud->input_text_final;
         int username_length = strlen(username);
@@ -399,7 +413,7 @@ void mudclient_draw_social_input(mudclient *mud) {
             int64_t encoded_username = encode_username(username);
 
             if (username_length > 0 &&
-                encoded_username != mud->local_player->hash) {
+                encoded_username != mud->local_player->encoded_username) {
                 mudclient_add_friend(mud, username);
             }
 
@@ -408,9 +422,14 @@ void mudclient_draw_social_input(mudclient *mud) {
 
             mud->show_dialog_social_input = 0;
         }
-    } else if (mud->show_dialog_social_input == 2) {
-        surface_draw_box(mud->surface, 6, y, 500, 70, BLACK);
-        surface_draw_box_edge(mud->surface, 6, y, 500, 70, WHITE);
+        break;
+    }
+    case SOCIAL_MESSAGE_FRIEND: {
+        surface_draw_box(mud->surface, message_dialog_x, y,
+                         SOCIAL_DIALOG_MESSAGE_WIDTH, 70, BLACK);
+
+        surface_draw_box_edge(mud->surface, message_dialog_x, y,
+                              SOCIAL_DIALOG_MESSAGE_WIDTH, 70, WHITE);
 
         y += 20;
 
@@ -420,16 +439,16 @@ void mudclient_draw_social_input(mudclient *mud) {
         char formatted_message[USERNAME_LENGTH + 26] = {0};
         sprintf(formatted_message, "Enter message to send to %s", target_name);
 
-        surface_draw_string_centre(mud->surface, formatted_message, 256, y, 4,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, formatted_message,
+                                   mud->surface->width / 2, y, 4, WHITE);
 
         y += 20;
 
         char formatted_current[INPUT_PM_LENGTH + 2] = {0};
         sprintf(formatted_current, "%s*", mud->input_pm_current);
 
-        surface_draw_string_centre(mud->surface, formatted_current, 256, y, 4,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, formatted_current,
+                                   mud->surface->width / 2, y, 4, WHITE);
 
         char *message = mud->input_pm_final;
         int message_length = strlen(message);
@@ -443,8 +462,7 @@ void mudclient_draw_social_input(mudclient *mud) {
             char *decoded_message =
                 chat_message_decode(chat_message_encoded, 0, length);
 
-            /*
-            if (mud->options->word_filter) {
+            /*if (mud->options->word_filter) {
                 message = word_filter_filter(message);
             }*/
 
@@ -460,22 +478,28 @@ void mudclient_draw_social_input(mudclient *mud) {
             memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
             mud->show_dialog_social_input = 0;
         }
-    } else if (mud->show_dialog_social_input == 3) {
-        surface_draw_box(mud->surface, 106, y, 300, 70, BLACK);
-        surface_draw_box_edge(mud->surface, 106, y, 300, 70, WHITE);
+        break;
+    }
+    case SOCIAL_ADD_IGNORE: {
+        surface_draw_box(mud->surface, add_dialog_x, y, SOCIAL_DIALOG_ADD_WIDTH,
+                         70, BLACK);
+
+        surface_draw_box_edge(mud->surface, add_dialog_x, y,
+                              SOCIAL_DIALOG_ADD_WIDTH, 70, WHITE);
 
         y += 20;
 
-        surface_draw_string_centre(
-            mud->surface, "Enter name to add to ignore list", 256, y, 4, WHITE);
+        surface_draw_string_centre(mud->surface,
+                                   "Enter name to add to ignore list",
+                                   mud->surface->width / 2, y, 4, WHITE);
 
         y += 20;
 
         char formatted_current[INPUT_TEXT_LENGTH + 2] = {0};
         sprintf(formatted_current, "%s*", mud->input_text_current);
 
-        surface_draw_string_centre(mud->surface, formatted_current, 256, y, 4,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, formatted_current,
+                                   mud->surface->width / 2, y, 4, WHITE);
 
         char *username = mud->input_text_final;
         int username_length = strlen(username);
@@ -484,7 +508,7 @@ void mudclient_draw_social_input(mudclient *mud) {
             int64_t encoded_username = encode_username(username);
 
             if (username_length > 0 &&
-                encoded_username != mud->local_player->hash) {
+                encoded_username != mud->local_player->encoded_username) {
                 mudclient_add_ignore(mud, username);
             }
 
@@ -493,15 +517,19 @@ void mudclient_draw_social_input(mudclient *mud) {
 
             mud->show_dialog_social_input = 0;
         }
+        break;
+    }
     }
 
     int text_colour = WHITE;
 
-    if (mud->mouse_x > 236 && mud->mouse_x < 276 && mud->mouse_y > 193 &&
-        mud->mouse_y < 213) {
+    if (mud->mouse_x > cancel_offset_x &&
+        mud->mouse_x < cancel_offset_x + SOCIAL_CANCEL_SIZE &&
+        mud->mouse_y > cancel_offset_y &&
+        mud->mouse_y < cancel_offset_y + SOCIAL_CANCEL_SIZE) {
         text_colour = YELLOW;
     }
 
-    surface_draw_string_centre(mud->surface, "Cancel", 256, 208, 1,
-                               text_colour);
+    surface_draw_string_centre(mud->surface, "Cancel", mud->surface->width / 2,
+                               y + 23, 1, text_colour);
 }
