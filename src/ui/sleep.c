@@ -3,26 +3,46 @@
 void mudclient_draw_sleep(mudclient *mud) {
     surface_fade_to_black(mud->surface);
 
-    if (((float)rand() / (float)RAND_MAX) <= 0.15) {
+    int zzz_width = 80 + (mud->surface->width / 2 - MUD_WIDTH / 2);
+
+    /* make proportionally more ZZZ's as the area increases */
+    float zzz_frequency = 0.15f *
+                          (float)(mud->surface->width * mud->surface->height) /
+                          (float)(MUD_WIDTH * MUD_HEIGHT);
+
+    zzz_frequency = fmin(zzz_frequency, 1.0);
+
+    if (zzz_frequency > 1.0f) {
+        zzz_frequency = 1.0f;
+    }
+
+    if (((float)rand() / (float)RAND_MAX) <= zzz_frequency) {
         surface_draw_string_centre(
-            mud->surface, "ZZZ", ((float)rand() / (float)RAND_MAX) * 80,
+            mud->surface, "ZZZ", ((float)rand() / (float)RAND_MAX) * zzz_width,
             ((float)rand() / (float)RAND_MAX) * mud->surface->height, 5,
             ((float)rand() / (float)RAND_MAX) * WHITE);
     }
 
-    if (((float)rand() / (float)RAND_MAX) <= 0.15) {
+    zzz_frequency = 0.15f *
+                    (float)(mud->surface->width * mud->surface->height) /
+                    (float)(MUD_WIDTH * MUD_HEIGHT);
+
+    zzz_frequency = fmin(zzz_frequency, 1.0);
+
+    if (((float)rand() / (float)RAND_MAX) <= zzz_frequency) {
         surface_draw_string_centre(
             mud->surface, "ZZZ",
-            mud->surface->width - (((float)rand() / (float)RAND_MAX) * 80),
+            mud->surface->width -
+                (((float)rand() / (float)RAND_MAX) * zzz_width),
             ((float)rand() / (float)RAND_MAX) * mud->surface->height, 5,
             ((float)rand() / (float)RAND_MAX) * WHITE);
     }
 
-    surface_draw_box(mud->surface, (mud->surface->width / 2) - 100, 160, 200, 40,
-                     BLACK);
+    surface_draw_box(mud->surface, (mud->surface->width / 2) - 100, 160, 200,
+                     40, BLACK);
 
     int x = mud->surface->width / 2;
-    int y = 50;
+    int y = 50 + (mud->surface->height / 2) - (MUD_HEIGHT / 2);
 
     surface_draw_string_centre(mud->surface, "You are sleeping", x, y, 7,
                                YELLOW);
@@ -56,11 +76,11 @@ void mudclient_draw_sleep(mudclient *mud) {
     surface_draw_string_centre(mud->surface, formatted_input, x, y, 5, CYAN);
 
     if (mud->sleeping_status_text == NULL) {
-        surface_draw_sprite_from3(mud->surface, x - 127, 230,
+        surface_draw_sprite_from3(mud->surface, x - 127, y + 50,
                                   mud->sprite_texture + 1);
     } else {
         surface_draw_string_centre(mud->surface, mud->sleeping_status_text, x,
-                                   260, 5, RED);
+                                   y + 80, 5, RED);
     }
 
     y += 49;
@@ -84,6 +104,9 @@ void mudclient_draw_sleep(mudclient *mud) {
 }
 
 void mudclient_handle_sleep_input(mudclient *mud) {
+    int x = mud->surface->width / 2;
+    int y = 50 + (mud->surface->height / 2) - (MUD_HEIGHT / 2);
+
     if (strlen(mud->input_text_final) > 0) {
         if (strncasecmp(mud->input_text_final, "::lostcon", 9) == 0) {
             packet_stream_close(mud->packet_stream);
@@ -94,7 +117,6 @@ void mudclient_handle_sleep_input(mudclient *mud) {
             packet_stream_put_string(mud->packet_stream, mud->input_text_final);
 
 #ifndef REVISION_177
-            /* TODO confirm this isn't in 177 */
             if (!mud->sleep_word_delay) {
                 packet_stream_put_byte(mud->packet_stream, 0);
                 mud->sleep_word_delay = 1;
@@ -110,8 +132,9 @@ void mudclient_handle_sleep_input(mudclient *mud) {
         }
     }
 
-    if (mud->last_mouse_button_down == 1 && mud->mouse_y > 275 &&
-        mud->mouse_y < 310 && mud->mouse_x > 56 && mud->mouse_x < 456) {
+    if (mud->last_mouse_button_down == 1 && mud->mouse_y > y + 225 &&
+        mud->mouse_y < y + 260 && mud->mouse_x > x - 200 &&
+        mud->mouse_x < x + 200) {
         packet_stream_new_packet(mud->packet_stream, CLIENT_SLEEP_WORD);
         packet_stream_put_string(mud->packet_stream, "-null-");
 

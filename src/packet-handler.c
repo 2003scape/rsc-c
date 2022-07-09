@@ -27,6 +27,16 @@ void mudclient_packet_tick(mudclient *mud) {
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
+        /* TODO remove
+        SDL_SetWindowSize(mud->window, 512 * 2, 346 * 2);
+
+        {
+            SDL_Event test = {0};
+            test.type = SDL_WINDOWEVENT;
+            test.window.event = SDL_WINDOWEVENT_RESIZED;
+            SDL_PushEvent(&test);
+        }*/
+
         mud->loading_area = 1;
         mud->local_player_server_index = get_unsigned_short(data, 1);
         mud->plane_width = get_unsigned_short(data, 3);

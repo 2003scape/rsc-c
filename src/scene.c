@@ -44,32 +44,14 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->max_model_count = model_count;
     scene->max_sprite_count = max_sprite_count;
 
-    memset(scene->gradient_base, 0, RAMP_COUNT * sizeof(int));
-    memset(scene->gradient_ramps, 0, RAMP_COUNT * 256 * sizeof(int));
-
-    scene->model_count = 0;
     scene->clip_near = 5;
-    scene->clip_far_3d = 1000;
-    scene->clip_far_2d = 1000;
-    scene->fog_z_falloff = 20;
-    scene->fog_z_distance = 10;
-    scene->mouse_picking_active = 0;
-
-    scene->interlace = 0;
-    scene->width = 512; // TODO these shouldn't be constants
-    scene->clip_x = 256;
-    scene->clip_y = 192;
-    scene->base_x = 256;
-    scene->base_y = 256;
     scene->view_distance = 9;
     scene->normal_magnitude = 4;
 
     scene->raster = surface->pixels;
 
     scene->models = calloc(model_count, sizeof(GameModel *));
-
-    scene->visible_polygons_count = 0;
-    scene->visible_polygons = malloc(polygon_count * sizeof(GamePolygon *));
+    scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
         scene->visible_polygons[i] = malloc(sizeof(GamePolygon));
@@ -84,7 +66,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->view = view;
 
-    scene->sprite_count = 0;
     scene->sprite_id = calloc(max_sprite_count, sizeof(int));
     scene->sprite_width = calloc(max_sprite_count, sizeof(int));
     scene->sprite_height = calloc(max_sprite_count, sizeof(int));
@@ -4115,6 +4096,7 @@ void scene_gl_update_camera(Scene *scene) {
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
     float field_of_view = ((scene->surface->height - 13) * 0.09061f) + 5.53403f;
+    //float field_of_view = test_yaw;
 
     glm_perspective(
         glm_rad(field_of_view),

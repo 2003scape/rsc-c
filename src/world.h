@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-
-/* TODO remove */
 #include <stdlib.h>
 
 #ifdef RENDER_GL

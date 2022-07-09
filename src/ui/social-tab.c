@@ -175,7 +175,7 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 
             char formatted_username[USERNAME_LENGTH + 30] = {0};
 
-            sprintf(formatted_username, "@yel@%s~%d~@whi@Remove", username,
+            sprintf(formatted_username, "@yel@%s~%04d~@whi@Remove", username,
                     ui_x + 126);
 
             panel_add_list_entry(mud->panel_social_list,

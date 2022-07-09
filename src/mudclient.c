@@ -394,10 +394,13 @@ int test_z = 750;*/
 //int test_x = 68;
 //float test_x = 37;
 //float test_y = 77;
-float test_x = 36.0f;
-float test_y = 76.750000;
+//float test_x = 36.0f;
+//float test_y = 76.750000;
+int test_x = 0;
+int test_y = 0;
+//int test_z = -750;
+int test_z = -660;
 
-int test_z = 0;
 int test_yaw = 1;
 int test_colour = -1;
 int test_fade = 0;
@@ -934,7 +937,7 @@ void mudclient_mouse_released(mudclient *mud, int x, int y, int button) {
 
     mud->mouse_button_down = 0;
 
-    if (button == 1) {
+    if (button == 2) {
         mud->middle_button_down = 0;
     }
 }
@@ -3190,7 +3193,7 @@ void mudclient_handle_game_input(mudclient *mud) {
     if (!mud->settings_camera_auto && mud->options->middle_click_camera &&
         mud->middle_button_down) {
         mud->camera_rotation = (mud->origin_rotation +
-                                ((mud->mouse_x - mud->origin_mouse_x) / 2)) &
+                                ((mud->mouse_x - mud->origin_mouse_x) / 4)) &
                                0xff;
     }
 
@@ -4142,15 +4145,12 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance += 1400;
     }
 
-    // TODO remove
-    // mud->scene->clip_far_3d = 10000;
-    // mud->scene->fog_z_distance = 10000;
-
     int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
-                     912, mud->camera_rotation * 4, 0, (mud->camera_zoom * 2));
+                     912, (mud->camera_rotation * 4), 0,
+                     (mud->camera_zoom * 2));
 
     surface_black_screen(mud->surface);
 
@@ -4755,16 +4755,18 @@ void mudclient_poll_events(mudclient *mud) {
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_pressed(mud, code, char_code);
 
-            int mag = 1;
+            int mag = 5;
 
             if (code == 113) {
-                test_x -= 0.25f;
+                test_x -= mag;
+                mud->camera_rotation -= 1;
             } else if (code == 97) {
-                test_x += 0.25f;
+                test_x +=mag;
+                mud->camera_rotation += 1;
             } else if (code == 119) {
-                test_y -= 0.25f;
+                test_y -= mag;
             } else if (code == 115) {
-                test_y += 0.25f;
+                test_y += mag;
             } else if (code == 101) {
                 test_z -= mag;
             } else if (code == 100) {
@@ -4776,7 +4778,7 @@ void mudclient_poll_events(mudclient *mud) {
             }
 
             // printf("%d\n", code);
-            //printf("%d %d %d\n", test_x, test_y, test_z);
+            printf("%d %d %d\n", test_x, test_y, test_z);
             //printf("%f %f\n", test_x, test_y);
 
             break;

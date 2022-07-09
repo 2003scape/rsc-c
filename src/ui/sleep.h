@@ -1,5 +1,6 @@
 #ifndef _H_SLEEP
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
