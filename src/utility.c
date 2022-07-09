@@ -24,17 +24,6 @@ void init_utility_global() {
     }
 }
 
-void charrev(char *s, int l) {
-    int end = l - 1;
-
-    for (int i = 0; i < l / 2; i++) {
-        char t = s[i];
-        s[i] = s[end];
-        s[end] = t;
-        end--;
-    }
-}
-
 void strtrim(char *s) {
     char *p = s;
     int l = strlen(p);
@@ -195,28 +184,35 @@ void decode_username(int64_t encoded, char *decoded) {
         strcpy(decoded, "invalidName");
     }
 
-    int i = 0;
+    int length = 0;
 
     while (encoded != 0) {
         char char_code = (encoded % 37);
         encoded /= 37;
 
         if (char_code == 0) {
-            decoded[i++] = ' ';
+            decoded[length++] = ' ';
         } else if (char_code < 27) {
             if (encoded % 37 == 0) {
-                decoded[i++] = (char_code + 65 - 1);
+                decoded[length++] = (char_code + 65 - 1);
             } else {
-                decoded[i++] = (char_code + 97 - 1);
+                decoded[length++] = (char_code + 97 - 1);
             }
         } else {
-            decoded[i++] = (char_code + 48 - 27);
+            decoded[length++] = (char_code + 48 - 27);
         }
     }
 
-    charrev(decoded, i);
+    int end = length - 1;
 
-    decoded[i++] = '\0';
+    for (int i = 0; i < length / 2; i++) {
+        char temp = decoded[i];
+        decoded[i] = decoded[end];
+        decoded[end] = temp;
+        end--;
+    }
+
+    decoded[length++] = '\0';
 }
 
 static int32_t hash_file_name(char *file_name) {
@@ -457,8 +453,7 @@ void get_level_difference_colour(int level_difference, char *colour) {
 
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
     for (long i = 0; i < size; i++) {
-        uint16_t u_val = ~(*u_ptr);
-        u_ptr++;
+        uint16_t u_val = ~(*u_ptr++);
 
         short t = ((u_val & QUANT_MASK) << 3) + BIAS;
         t <<= ((unsigned)u_val & SEG_MASK) >> SEG_SHIFT;

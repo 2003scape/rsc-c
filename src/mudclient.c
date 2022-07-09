@@ -18,20 +18,19 @@ int character_animation_array[8][12] = {
     {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
      ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
      ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8,
-     ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND},
+     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_LEFT_HAND,
+     ANIMATION_INDEX_RIGHT_HAND},
 
     {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
      ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
      ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8,
-     ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND},
+     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_LEFT_HAND,
+     ANIMATION_INDEX_RIGHT_HAND},
 
     {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_LEGS,
      ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
      ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8,
-     ANIMATION_INDEX_RIGHT_HAND},
+     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_RIGHT_HAND},
 
     {ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND,
      ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY,
@@ -54,14 +53,13 @@ int character_animation_array[8][12] = {
     {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_RIGHT_HAND, ANIMATION_INDEX_LEGS,
      ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
      ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8,
-     ANIMATION_INDEX_LEFT_HAND},
+     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_LEFT_HAND},
 
     {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
      ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
      ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8,
-     ANIMATION_INDEX_RIGHT_HAND, ANIMATION_INDEX_LEFT_HAND}};
+     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_RIGHT_HAND,
+     ANIMATION_INDEX_LEFT_HAND}};
 
 int character_walk_model[] = {0, 1, 2, 1};
 int character_combat_model_array1[] = {0, 1, 2, 1, 0, 0, 0, 0};
@@ -391,14 +389,14 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 /*int test_x = 520;
 int test_y = -106;
 int test_z = 750;*/
-//int test_x = 68;
-//float test_x = 37;
-//float test_y = 77;
-//float test_x = 36.0f;
-//float test_y = 76.750000;
+// int test_x = 68;
+// float test_x = 37;
+// float test_y = 77;
+// float test_x = 36.0f;
+// float test_y = 76.750000;
 int test_x = 0;
 int test_y = 0;
-//int test_z = -750;
+// int test_z = -750;
 int test_z = -660;
 
 int test_yaw = 1;
@@ -482,12 +480,19 @@ void mudclient_resize(mudclient *mud) {
 
     mud->screen = SDL_GetWindowSurface(mud->window);
 
-    mud->pixel_surface = SDL_CreateRGBSurface(0, mud->game_width,
-                                              mud->game_height, 32,
-                                              0xff0000, 0x00ff00, 0x0000ff, 0);
+    mud->pixel_surface =
+        SDL_CreateRGBSurface(0, mud->game_width, mud->game_height, 32, 0xff0000,
+                             0x00ff00, 0x0000ff, 0);
 
     if (mud->surface != NULL) {
+#ifdef RENDER_SW
         mud->surface->pixels = mud->pixel_surface->pixels;
+#else
+        free(mud->surface->pixels);
+
+        mud->surface->pixels =
+            calloc(mud->game_width * mud->game_height, sizeof(int32_t));
+#endif
         mud->scene->raster = mud->surface->pixels;
     }
 
@@ -531,6 +536,10 @@ void mudclient_resize(mudclient *mud) {
     if (mud->panel_social_list != NULL) {
         mud->panel_social_list->offset_x = full_offset_x;
     }
+
+#ifdef RENDER_GL
+    glViewport(0, 0, mud->game_width, mud->game_height);
+#endif
 }
 
 void mudclient_start_application(mudclient *mud, char *title) {
@@ -689,7 +698,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
                         SDL_GL_CONTEXT_PROFILE_CORE);
 #endif
 
-#if 0
+#ifndef EMSCRIPTEN
     // TODO make AA toggleable
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
@@ -697,10 +706,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     glEnable(GL_MULTISAMPLE);
 #endif
 
-    mud->gl_window =
-        SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         mud->game_width, mud->game_height,
-                         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+    mud->gl_window = SDL_CreateWindow(
+        title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mud->game_width,
+        mud->game_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 
@@ -826,7 +834,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 void mudclient_handle_key_press(mudclient *mud, int key_code) {
     if (!mud->logged_in) {
-        if (mud->login_screen == LOGIN_STAGE_WELCOME && mud->panel_login_welcome) {
+        if (mud->login_screen == LOGIN_STAGE_WELCOME &&
+            mud->panel_login_welcome) {
             panel_key_press(mud->panel_login_welcome, key_code);
         }
 
@@ -834,7 +843,8 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             panel_key_press(mud->panel_login_new_user, key_code);
         }
 
-        if (mud->login_screen == LOGIN_STAGE_EXISTING && mud->panel_login_existing_user) {
+        if (mud->login_screen == LOGIN_STAGE_EXISTING &&
+            mud->panel_login_existing_user) {
             panel_key_press(mud->panel_login_existing_user, key_code);
         }
 
@@ -2403,6 +2413,10 @@ void mudclient_start_game(mudclient *mud) {
 #ifdef RENDER_SW
     SDL_SetWindowResizable(mud->window, 1);
 #endif
+
+#ifdef RENDER_GL
+    SDL_SetWindowResizable(mud->gl_window, 1);
+#endif
 #endif
 
     free(surface_texture_pixels);
@@ -3415,7 +3429,8 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 }
 
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int skew_x, int ty, float depth_top, float depth_bottom) {
+                           int id, int skew_x, int ty, float depth_top,
+                           float depth_bottom) {
     GameCharacter *player = mud->players[id];
 
     if (player->colour_bottom == 255) {
@@ -3475,63 +3490,58 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                 offset_y = -3;
 
                 j5 = i2 * 3 +
-                     character_walk_model[(2 + (player->step_count / 6)) %
-                                          4];
+                     character_walk_model[(2 + (player->step_count / 6)) % 4];
             } else if (animation_index == 4 && i2 == 2) {
                 offset_x = 0;
                 offset_y = -8;
 
                 j5 = i2 * 3 +
-                     character_walk_model[(2 + (player->step_count / 6)) %
-                                          4];
+                     character_walk_model[(2 + (player->step_count / 6)) % 4];
             } else if (animation_index == 4 && i2 == 3) {
                 offset_x = 26;
                 offset_y = -5;
 
                 j5 = i2 * 3 +
-                     character_walk_model[(2 + (player->step_count / 6)) %
-                                          4];
+                     character_walk_model[(2 + (player->step_count / 6)) % 4];
             } else if (animation_index == 3 && i2 == 1) {
                 offset_x = 22;
                 offset_y = 3;
 
                 j5 = i2 * 3 +
-                     character_walk_model[(2 + (player->step_count / 6)) %
-                                          4];
+                     character_walk_model[(2 + (player->step_count / 6)) % 4];
             } else if (animation_index == 3 && i2 == 2) {
                 offset_x = 0;
                 offset_y = 8;
 
                 j5 = i2 * 3 +
-                     character_walk_model[(2 + (player->step_count / 6)) %
-                                          4];
+                     character_walk_model[(2 + (player->step_count / 6)) % 4];
             } else if (animation_index == 3 && i2 == 3) {
                 offset_x = -26;
                 offset_y = 5;
 
                 j5 = i2 * 3 +
-                     character_walk_model[(2 + (player->step_count / 6)) %
-                                          4];
+                     character_walk_model[(2 + (player->step_count / 6)) % 4];
             }
         }
 
         if (i2 != 5 || game_data_animation_has_a[aimation_id] == 1) {
             int sprite_id = j5 + game_data_animation_number[aimation_id];
 
-            offset_x = (offset_x * width) /
-                       mud->surface->sprite_width_full[sprite_id];
+            offset_x =
+                (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
 
             offset_y = (offset_y * height) /
                        mud->surface->sprite_height_full[sprite_id];
 
             int clip_width =
                 (width * mud->surface->sprite_width_full[sprite_id]) /
-                mud->surface
-                    ->sprite_width_full[game_data_animation_number[aimation_id]];
+                mud->surface->sprite_width_full
+                    [game_data_animation_number[aimation_id]];
 
             offset_x -= (clip_width - width) / 2;
 
-            int animation_colour = game_data_animation_character_colour[aimation_id];
+            int animation_colour =
+                game_data_animation_character_colour[aimation_id];
             int skin_colour = player_skin_colours[player->colour_skin];
 
             if (animation_colour == 1) {
@@ -3549,8 +3559,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             depth_bottom -= 0.00002;
 
             surface_sprite_clipping_from9_depth(
-                mud->surface, x + offset_x, y + offset_y, clip_width,
-                height, sprite_id, animation_colour, skin_colour, skew_x, flip,
+                mud->surface, x + offset_x, y + offset_y, clip_width, height,
+                sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
         }
     }
@@ -3591,7 +3601,8 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int skew_x, int ty, float depth_top,
                         float depth_bottom) {
     GameCharacter *npc = mud->npcs[id];
-    int animation_order = (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
+    int animation_order =
+        (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
     int flip = 0;
     int i2 = animation_order;
 
@@ -3652,8 +3663,8 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
         if (i2 != 5 || game_data_animation_has_a[animation_id] == 1) {
             int sprite_id = k4 + game_data_animation_number[animation_id];
 
-            offset_x = (offset_x * width) /
-                       mud->surface->sprite_width_full[sprite_id];
+            offset_x =
+                (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
 
             offset_y = (offset_y * height) /
                        mud->surface->sprite_height_full[sprite_id];
@@ -3685,8 +3696,8 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
             depth_bottom -= 0.00002;
 
             surface_sprite_clipping_from9_depth(
-                mud->surface, x + offset_x, y + offset_y, clip_width,
-                height, sprite_id, animation_colour, skin_colour, skew_x, flip,
+                mud->surface, x + offset_x, y + offset_y, clip_width, height,
+                sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
         }
     }
@@ -4044,8 +4055,8 @@ void mudclient_draw_game(mudclient *mud) {
         surface_fade_to_black(mud->surface);
 
         surface_draw_string_centre(mud->surface, "Oh dear! You are dead...",
-                                   mud->game_width / 2, (mud->game_height - 12) / 2,
-                                   7, RED);
+                                   mud->game_width / 2,
+                                   (mud->game_height - 12) / 2, 7, RED);
 
         mudclient_draw_chat_message_tabs(mud);
         surface_draw(mud->surface);
@@ -4238,9 +4249,8 @@ void mudclient_draw_game(mudclient *mud) {
     mudclient_draw_chat_message_tabs_panel(mud);
 
     /* ui tabs */
-    surface_draw_sprite_alpha_from4(mud->surface,
-                                    mud->surface->width - 3 - 197, 3,
-                                    mud->sprite_media, 128);
+    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 3 - 197,
+                                    3, mud->sprite_media, 128);
 
     mudclient_draw_ui(mud);
 
@@ -4761,7 +4771,7 @@ void mudclient_poll_events(mudclient *mud) {
                 test_x -= mag;
                 mud->camera_rotation -= 1;
             } else if (code == 97) {
-                test_x +=mag;
+                test_x += mag;
                 mud->camera_rotation += 1;
             } else if (code == 119) {
                 test_y -= mag;
@@ -4779,7 +4789,7 @@ void mudclient_poll_events(mudclient *mud) {
 
             // printf("%d\n", code);
             printf("%d %d %d\n", test_x, test_y, test_z);
-            //printf("%f %f\n", test_x, test_y);
+            // printf("%f %f\n", test_x, test_y);
 
             break;
         }
@@ -4806,7 +4816,17 @@ void mudclient_poll_events(mudclient *mud) {
                 int new_width = 0;
                 int new_height = 0;
 
+#if defined(RENDER_GL) && defined(RENDER_SW)
+                if (event.window.windowID == SDL_GetWindowID(mud->window)) {
+                    SDL_GetWindowSize(mud->window, &new_width, &new_height);
+                } else {
+                    SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
+                }
+#elif defined(RENDER_GL)
+                SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
+#elif defined(RENDER_SW)
                 SDL_GetWindowSize(mud->window, &new_width, &new_height);
+#endif
 
                 int old_height = mud->game_height - 12;
 
@@ -4821,6 +4841,7 @@ void mudclient_poll_events(mudclient *mud) {
                 }
 
                 if (mud->scene != NULL) {
+#ifdef RENDER_SW
                     int scanlines_length = (old_height / 2) * 2;
 
                     for (int i = 0; i < scanlines_length; i++) {
@@ -4829,6 +4850,7 @@ void mudclient_poll_events(mudclient *mud) {
                     }
 
                     free(mud->scene->scanlines);
+#endif
 
                     // TODO change 12 to bar height - 1
                     scene_set_bounds(mud->scene, new_width, new_height - 12);
@@ -5021,7 +5043,8 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
     int mask = game_data_item_mask[id];
 
     surface_sprite_clipping_from9_depth(mud->surface, x, y, width, height,
-                                        picture, mask, 0, 0, 0, depth_top, depth_bottom);
+                                        picture, mask, 0, 0, 0, depth_top,
+                                        depth_bottom);
 }
 
 int mudclient_is_item_equipped(mudclient *mud, int id) {

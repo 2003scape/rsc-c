@@ -142,6 +142,8 @@ typedef struct Surface {
 
     int32_t *gl_screen_pixels_reversed;
     int32_t *gl_screen_pixels;
+    int gl_last_screen_width;
+    int gl_last_screen_height;
 #endif
 } Surface;
 
@@ -179,6 +181,7 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha);
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha);
+void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
 void surface_gl_buffer_framebuffer_quad(Surface *surface);

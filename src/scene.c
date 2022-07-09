@@ -1058,6 +1058,7 @@ void scene_set_bounds(Scene *scene, int width, int height) {
     scene->base_y = base_y;
     scene->width = width;
 
+#ifdef RENDER_SW
     int scanlines_length = clip_y + base_y;
 
     scene->scanlines = calloc(scanlines_length, sizeof(Scanline *));
@@ -1066,6 +1067,7 @@ void scene_set_bounds(Scene *scene, int width, int height) {
         Scanline *scanline = calloc(1, sizeof(Scanline));
         scene->scanlines[i] = scanline;
     }
+#endif
 }
 
 void scene_polygons_intersect_sort(Scene *scene, int step,
@@ -4189,8 +4191,6 @@ void scene_gl_render(Scene *scene) {
     glEnable(GL_DEPTH_TEST);
 
     glClear(GL_DEPTH_BUFFER_BIT);
-
-    // printf("%d %d\n", scene->surface->height, scene->surface->width);
 
     /* for the message tab bar */
     int offset_y = 13;

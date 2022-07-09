@@ -52,10 +52,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #endif
 
 #if !defined(WII) && !defined(_3DS)
-#ifndef RENDER_SW
-    surface->pixels = calloc(width * height, sizeof(int32_t));
-#else
+#ifdef RENDER_SW
     surface->pixels = mud->pixel_surface->pixels;
+#else
+    surface->pixels = calloc(width * height, sizeof(int32_t));
 #endif
 #endif
 
@@ -70,21 +70,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->sprite_translate_x = calloc(limit, sizeof(int));
     surface->sprite_translate_y = calloc(limit, sizeof(int));
 
-    surface->logged_in = 0;
-    surface->interlace = 0;
-
     surface->mud = mud;
 
 #ifdef RENDER_GL
-    // TODO only use one - maybe check if render_sw is set and use
-    // surface->pixels
-    // TODO put this into a function for resizable mode
-    surface->gl_screen_pixels_reversed =
-        calloc(surface->width * surface->height, sizeof(int32_t));
-
-    surface->gl_screen_pixels =
-        calloc(surface->width * surface->height, sizeof(int32_t));
-
+    surface_gl_create_framebuffer(surface);
     /* coloured quads */
 #ifdef EMSCRIPTEN
     shader_new(&surface->gl_flat_shader, "./cache/flat.vs", "./cache/flat.fs");
@@ -150,9 +139,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface_gl_create_texture_array(&surface->gl_font_textures,
                                     FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
                                     FONT_COUNT * 2);
-
-    surface_gl_create_texture_array(&surface->gl_framebuffer_textures,
-                                    surface->width, surface->height, 1);
 
     surface_gl_create_font_textures(surface);
     surface_gl_create_circle_texture(surface);
@@ -800,7 +786,7 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
         right_x, bottom_y, 0, //
         r, g, b, a,           //
         -1.0f, -1.0f, -1.0f,  //
-        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH,
+        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH,  //
         CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_HEIGHT, //
         circle_index,                                      //
 
@@ -816,7 +802,38 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                                 surface->gl_sprite_media_textures);
 }
 
+void surface_gl_create_framebuffer(Surface *surface) {
+    surface->gl_screen_pixels_reversed =
+        calloc(surface->width * surface->height, sizeof(int32_t));
+
+#ifndef RENDER_SW
+    surface->gl_screen_pixels = surface->pixels;
+#else
+    surface->gl_screen_pixels =
+        calloc(surface->width * surface->height, sizeof(int32_t));
+#endif
+
+    surface->gl_last_screen_width = surface->width;
+    surface->gl_last_screen_height = surface->height;
+
+    surface_gl_create_texture_array(&surface->gl_framebuffer_textures,
+                                    surface->width, surface->height, 1);
+
+}
+
 void surface_gl_update_framebuffer(Surface *surface) {
+    if (surface->gl_last_screen_width != surface->width ||
+        surface->gl_last_screen_height != surface->height) {
+        free(surface->gl_screen_pixels_reversed);
+        free(surface->gl_screen_pixels);
+
+        if (surface->gl_framebuffer_textures != 0) {
+            glDeleteTextures(1, &surface->gl_framebuffer_textures);
+        }
+
+        surface_gl_create_framebuffer(surface);
+    }
+
     glReadPixels(0, 0, surface->width, surface->height, GL_RGBA,
                  GL_UNSIGNED_BYTE, surface->gl_screen_pixels_reversed);
 

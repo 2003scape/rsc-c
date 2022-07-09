@@ -23,12 +23,6 @@ void mudclient_draw_sleep(mudclient *mud) {
             ((float)rand() / (float)RAND_MAX) * WHITE);
     }
 
-    zzz_frequency = 0.15f *
-                    (float)(mud->surface->width * mud->surface->height) /
-                    (float)(MUD_WIDTH * MUD_HEIGHT);
-
-    zzz_frequency = fmin(zzz_frequency, 1.0);
-
     if (((float)rand() / (float)RAND_MAX) <= zzz_frequency) {
         surface_draw_string_centre(
             mud->surface, "ZZZ",

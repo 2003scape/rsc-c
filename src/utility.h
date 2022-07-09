@@ -34,11 +34,11 @@
 #include "bzip.h"
 
 /* for audio conversion */
-#define SIGN_BIT (0x80)  /* Sign bit for a A-law byte.        */
-#define QUANT_MASK (0xf) /* Quantization field mask.          */
-#define SEG_SHIFT (4)    /* Left shift for segment number.    */
-#define SEG_MASK (0x70)  /* Segment field mask.               */
-#define BIAS (0x84)      /* Bias for linear code (for u-law). */
+#define SIGN_BIT 0x80  /* sign bit for a a-law byte */
+#define QUANT_MASK 0xf /* quantization field mask */
+#define SEG_SHIFT 4    /* left shift for segment number */
+#define SEG_MASK 0x70  /* segment field mask */
+#define BIAS 0x84      /* bias for linear code (for u-law) */
 
 #define MAX_USER_LENGTH 12
 #define MAX_CONFIRM_LENGTH 40
@@ -49,7 +49,6 @@
 89!\"£$%^&*()-_=+[{]};:'@#~,<.>/?\\| "*/
 
 /* disabled pound (£) */
-
 #define CHAR_SET                                                               \
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567\
 89!\"$%^&*()-_=+[{]};:'@#~,<.>/?\\| "
@@ -71,7 +70,6 @@ extern int sin_cos_2048[2048];
 extern int BITMASK[];
 
 void init_utility_global();
-void charrev(char *s, int l);
 void strtrim(char *s);
 
 int get_unsigned_byte(int8_t i);
@@ -101,8 +99,8 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
 float gl_translate_coord(int position, int range);
 float gl_translate_x(int x, int range);
 float gl_translate_y(int y, int range);
-void gl_update_texture_array(GLuint texture_array_id, int index,
-                          int width, int height, int32_t *pixels, int convert_bgra);
+void gl_update_texture_array(GLuint texture_array_id, int index, int width,
+                             int height, int32_t *pixels, int convert_bgra);
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
 #endif
 
