@@ -11,4 +11,5 @@ void options_new(Options *options) {
 
     options->middle_click_camera = 1;
     options->reset_compass = 1;
+    options->inventory_count = 1;
 }

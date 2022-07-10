@@ -953,11 +953,12 @@ void mudclient_mouse_released(mudclient *mud, int x, int y, int button) {
     if (button == 2) {
         mud->middle_button_down = 0;
 
-        int tick_delta = get_ticks() - mud->origin_camera_ticks;;
+        int tick_delta = get_ticks() - mud->origin_camera_ticks;
+        ;
         int x_delta = mud->mouse_x - mud->origin_mouse_x;
 
         if (tick_delta < 200) {
-            mud->camera_momentum = 2 * ((float)x_delta/(float)tick_delta);
+            mud->camera_momentum = 2 * ((float)x_delta / (float)tick_delta);
         }
     }
 }
@@ -3739,6 +3740,9 @@ void mudclient_draw_blue_bar(mudclient *mud) {
 }
 
 void mudclient_draw_ui(mudclient *mud) {
+    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 3 - 197,
+                                    3, mud->sprite_media, 128);
+
     if (mud->logout_timeout != 0) {
         mudclient_draw_logout(mud);
     } else if (mud->show_dialog_welcome) {
@@ -3804,6 +3808,37 @@ void mudclient_draw_ui(mudclient *mud) {
 #endif
             }
         }
+    }
+
+    if (mud->options->inventory_count) {
+        int x = mud->surface->width - 18;
+        int y = 24;
+
+        int count = mud->inventory_items_count;
+
+        char colour[6] = {0};
+
+        if (count == 30) {
+            strcpy(colour, "@red@");
+        } else if (count > 25) {
+            strcpy(colour, "@or3@");
+        } else if (count > 20) {
+            strcpy(colour, "@or2@");
+        } else if (count > 15) {
+            strcpy(colour, "@or1@");
+        } else if (count > 10) {
+            strcpy(colour, "@gr1@");
+        } else if (count > 5) {
+            strcpy(colour, "@gr2@");
+        } else {
+            strcpy(colour, "@gre@");
+        }
+
+        char formatted_count[17] = {0};
+        sprintf(formatted_count, "%s%d", colour, count);
+
+        surface_draw_string_centre(mud->surface, formatted_count, x, y, 4,
+                                   WHITE);
     }
 
     mud->mouse_button_click = 0;
@@ -4174,11 +4209,12 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance += 1400;
     }
 
-    int x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
-    int y = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
+    int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
+    int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
-    scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
-                     912, (mud->camera_rotation * 4), 0,
+    scene_set_camera(mud->scene, camera_x,
+                     -world_get_elevation(mud->world, camera_x, camera_z),
+                     camera_z, 912, (mud->camera_rotation * 4), 0,
                      (mud->camera_zoom * 2));
 
     surface_black_screen(mud->surface);
@@ -4265,10 +4301,6 @@ void mudclient_draw_game(mudclient *mud) {
     }
 
     mudclient_draw_chat_message_tabs_panel(mud);
-
-    /* ui tabs */
-    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 3 - 197,
-                                    3, mud->sprite_media, 128);
 
     mudclient_draw_ui(mud);
 
@@ -4783,14 +4815,12 @@ void mudclient_poll_events(mudclient *mud) {
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_pressed(mud, code, char_code);
 
-            int mag = 5;
+            int mag = 1;
 
             if (code == 113) {
                 test_x -= mag;
-                mud->camera_rotation -= 1;
             } else if (code == 97) {
                 test_x += mag;
-                mud->camera_rotation += 1;
             } else if (code == 119) {
                 test_y -= mag;
             } else if (code == 115) {
