@@ -952,13 +952,10 @@ void mudclient_mouse_released(mudclient *mud, int x, int y, int button) {
     if (button == 2) {
         mud->middle_button_down = 0;
 
-        int tick_delta = get_ticks() - mud->origin_camera_ticks;
-        ;
-        int x_delta = mud->mouse_x - mud->origin_mouse_x;
+        int tick_delta = get_ticks() - mud->last_mouse_sample_ticks;
+        int x_delta = mud->mouse_x - mud->last_mouse_sample_x;
 
-        if (tick_delta < 200) {
-            mud->camera_momentum = 2 * ((float)x_delta / (float)tick_delta);
-        }
+        mud->camera_momentum = 2 * ((float)x_delta / (float)tick_delta);
     }
 }
 
@@ -1013,7 +1010,9 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
         mud->origin_rotation = mud->camera_rotation;
         mud->origin_mouse_x = mud->mouse_x;
 
-        mud->origin_camera_ticks = get_ticks();
+        //mud->origin_camera_ticks = get_ticks();
+        mud->last_mouse_sample_ticks = get_ticks();
+        mud->last_mouse_sample_x = mud->mouse_x;
         mud->camera_momentum = 0;
         return;
     }
@@ -2995,19 +2994,28 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 #endif
 
+    if (mud->options->middle_click_camera && mud->middle_button_down) {
+        int ticks = get_ticks();
+
+        if (ticks - mud->last_mouse_sample_ticks >= 250) {
+            mud->last_mouse_sample_ticks = ticks;
+            mud->last_mouse_sample_x = mud->mouse_x;
+        }
+    }
+
     mudclient_packet_tick(mud);
 
     if (mud->logout_timeout > 0) {
         mud->logout_timeout--;
     }
 
-    /* Logg told me to disable this :)
-    if (mud->mouse_action_timeout > 4500 && mud->combat_timeout == 0 &&
+    if (mud->options->idle_logout && mud->mouse_action_timeout > 4500 &&
+        mud->combat_timeout == 0 &&
         mud->logout_timeout == 0) {
         mud->mouse_action_timeout -= 500;
         mudclient_send_logout(mud);
         return;
-    }*/
+    }
 
     if (mud->local_player->animation_current == 8 ||
         mud->local_player->animation_current == 9) {

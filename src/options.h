@@ -52,6 +52,9 @@ typedef struct Options {
 
     /* enable randomized camera movement and map rotation/scaling */
     int anti_macro;
+
+    /* log out when the mouse hasn't moved in a while */
+    int idle_logout;
 } Options;
 
 void options_new(Options *options);
