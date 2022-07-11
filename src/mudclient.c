@@ -394,12 +394,11 @@ int test_z = 750;*/
 // float test_y = 77;
 // float test_x = 36.0f;
 // float test_y = 76.750000;
-int test_x = 0;
-int test_y = 0;
-// int test_z = -750;
-int test_z = -660;
-
-int test_yaw = 1;
+//int test_x = 0;
+float test_x = 0.6370452f;
+float test_y = 1.571051;
+float test_z = 1.338493;
+int test_yaw = 0;
 int test_colour = -1;
 int test_fade = 0;
 float test_depth = 0;
@@ -609,7 +608,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->framebuffer_bottom =
         gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
 
-    // allocate buffer for SOC service (networking)
+    /* allocate buffer for SOC service (networking) */
     SOC_buffer = (u32 *)memalign(SOC_ALIGN, SOC_BUFFER_SIZE);
 
     if (SOC_buffer == NULL) {
@@ -3047,7 +3046,7 @@ void mudclient_handle_game_input(mudclient *mud) {
         mudclient_move_character(mud, mud->npcs[i]);
     }
 
-    if (mud->show_ui_tab != 2) {
+    if (mud->show_ui_tab != MAP_TAB) {
         if (an_int_346 > 0) {
             mud->sleep_word_delay_timer++;
         }
@@ -3321,15 +3320,16 @@ void mudclient_handle_inputs(mudclient *mud) {
     if (mud->camera_rotation_time > 500) {
         mud->camera_rotation_time = 0;
 
-        float r = (float)rand() / (float)RAND_MAX;
-        int roll = (int)(r * 4);
+        if (mud->options->anti_macro) {
+            int roll = (int)(((float)rand() / (float)RAND_MAX) * 4.0f);
 
-        if ((roll & 1) == 1) {
-            mud->camera_rotation_x += mud->camera_rotation_x_increment;
-        }
+            if ((roll & 1) == 1) {
+                mud->camera_rotation_x += mud->camera_rotation_x_increment;
+            }
 
-        if ((roll & 2) == 2) {
-            mud->camera_rotation_y += mud->camera_rotation_y_increment;
+            if ((roll & 2) == 2) {
+                mud->camera_rotation_y += mud->camera_rotation_y_increment;
+            }
         }
     }
 
@@ -3811,7 +3811,7 @@ void mudclient_draw_ui(mudclient *mud) {
     }
 
     if (mud->options->inventory_count) {
-        int x = mud->surface->width - 18;
+        int x = mud->surface->width - 19;
         int y = 24;
 
         int count = mud->inventory_items_count;
@@ -3837,9 +3837,10 @@ void mudclient_draw_ui(mudclient *mud) {
         char formatted_count[17] = {0};
         sprintf(formatted_count, "%s%d", colour, count);
 
-        surface_draw_string_centre(mud->surface, formatted_count, x, y, 4,
+        surface_draw_string_centre(mud->surface, formatted_count, x, y, 3,
                                    WHITE);
     }
+
 
     mud->mouse_button_click = 0;
 }
@@ -4818,17 +4819,17 @@ void mudclient_poll_events(mudclient *mud) {
             int mag = 1;
 
             if (code == 113) {
-                test_x -= mag;
+                test_x -= 0.001;
             } else if (code == 97) {
-                test_x += mag;
+                test_x += 0.001;
             } else if (code == 119) {
-                test_y -= mag;
+                //test_y -= 0.001;
             } else if (code == 115) {
-                test_y += mag;
+                //test_y += 0.001;
             } else if (code == 101) {
-                test_z -= mag;
+                //test_z -= 0.001;
             } else if (code == 100) {
-                test_z += mag;
+                //test_z += 0.001;
             } else if (code == 114) {
                 test_yaw += 1;
             } else if (code == 102) {
@@ -4836,7 +4837,8 @@ void mudclient_poll_events(mudclient *mud) {
             }
 
             // printf("%d\n", code);
-            printf("%d %d %d\n", test_x, test_y, test_z);
+            printf("fov: %f, yaw: %f, pitch %f \n", test_x, test_y, test_z);
+            //printf("%d %d %d %d\n", test_x, test_y, test_z, test_yaw);
             // printf("%f %f\n", test_x, test_y);
 
             break;
@@ -4902,6 +4904,8 @@ void mudclient_poll_events(mudclient *mud) {
 
                     // TODO change 12 to bar height - 1
                     scene_set_bounds(mud->scene, new_width, new_height - 12);
+
+                    printf("height %d\n", mud->scene->base_y * 2);
                 }
 
                 mudclient_resize(mud);

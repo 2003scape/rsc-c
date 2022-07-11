@@ -7,6 +7,7 @@ int scene_frustum_min_y = 0;
 int scene_frustum_far_z = 0;
 int scene_frustum_near_z = 0;
 int64_t scene_texture_count_loaded = 0;
+float fov = 0;
 
 int scene_polygon_depth_compare(const void *a, const void *b) {
     GamePolygon *polygon_a = (*(GamePolygon **)a);
@@ -1325,12 +1326,12 @@ void scene_render(Scene *scene) {
     int frustum_y =
         (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
 
-    scene_frustum_max_x = 0;
-    scene_frustum_min_x = 0;
-    scene_frustum_max_y = 0;
-    scene_frustum_min_y = 0;
-    scene_frustum_far_z = 0;
-    scene_frustum_near_z = 0;
+    scene_frustum_max_x = 0; // right
+    scene_frustum_min_x = 0; // left
+    scene_frustum_max_y = 0; // top
+    scene_frustum_min_y = 0; // bottom
+    scene_frustum_far_z = 0; // far
+    scene_frustum_near_z = 0; // near
 
     scene_set_frustum(scene, -frustum_x, -frustum_y, scene->clip_far_3d);
     scene_set_frustum(scene, -frustum_x, frustum_y, scene->clip_far_3d);
@@ -4078,10 +4079,10 @@ void scene_gl_update_camera(Scene *scene) {
     vec3 camera_front = {0.0, 0.0, -1.0};
     vec3 camera_up = {0.0, -1.0, 0.0};
 
-    float yaw = glm_rad(90) + TABLE_TO_RADIANS(scene->camera_pitch, 2048);
+    float yaw = test_y + TABLE_TO_RADIANS(scene->camera_pitch, 2048);
 
     // TODO why 77?
-    float pitch = glm_rad(76.5f) - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
+    float pitch = test_z - TABLE_TO_RADIANS(scene->camera_yaw, 2048);
 
     vec3 front = {cos(yaw) * cos(pitch), pitch, sin(yaw) * cos(pitch)};
 
@@ -4097,13 +4098,17 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    float field_of_view = ((scene->surface->height - 13) * 0.09061f) + 5.53403f;
-    //float field_of_view = test_yaw;
+    float x = (float)(scene->surface->height - 13) / 1000.0f;
+
+    //float fov_test = (-0.1608f * powf(x, 3)) - (0.3012f * powf(x, 2)) + (2.0150f * x) - 0.030f;
+    float fov_test = (-0.1608132078 * powf(x, 3)) - (0.3012063997 * powf(x, 2)) + (2.0149949882 * x) - 0.0030409762;
 
     glm_perspective(
-        glm_rad(field_of_view),
+        fov_test,
         (float)(scene->surface->width) / (float)(scene->surface->height - 13),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+
+    //glm_mat4_print(scene->gl_projection, stdout);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 

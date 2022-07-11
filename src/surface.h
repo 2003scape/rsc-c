@@ -47,14 +47,16 @@
 #include <3ds.h>
 #endif
 
+#define SLEEP_WIDTH 255
+#define SLEEP_HEIGHT 40
+
+// TODO #define FONT_12PT_BOLD etc
+
 typedef struct Surface Surface;
 
 #include "colours.h"
 #include "mudclient.h"
 #include "utility.h"
-
-#define SLEEP_WIDTH 255
-#define SLEEP_HEIGHT 40
 
 extern int an_int_346;
 extern int an_int_347;

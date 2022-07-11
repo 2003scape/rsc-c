@@ -49,6 +49,9 @@ typedef struct Options {
     /* allow dragging the scrollbar after you've clicked it but are no longer
      * hovering over it */
     int off_handle_scroll_drag;
+
+    /* enable randomized camera movement and map rotation/scaling */
+    int anti_macro;
 } Options;
 
 void options_new(Options *options);
