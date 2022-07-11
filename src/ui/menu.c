@@ -800,9 +800,10 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         4;
 
                     int player_level =
-                        (mud->player_stat_base[0] + mud->player_stat_base[1] +
-                         mud->player_stat_base[2] + mud->player_stat_base[3] +
-                         27) /
+                        (mud->player_skill_base[SKILL_ATTACK] +
+                         mud->player_skill_base[SKILL_DEFENSE] +
+                         mud->player_skill_base[SKILL_STRENGTH] +
+                         mud->player_skill_base[SKILL_HITS] + 27) /
                         4;
 
                     level_difference = player_level - npc_level;

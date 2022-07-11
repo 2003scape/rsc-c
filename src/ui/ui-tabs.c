@@ -95,14 +95,32 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
         mud->show_ui_tab = 0;
     }
 
+    int is_dragging_scrollbar = 0;
+
+    if (mud->options->off_handle_scroll_drag) {
+        is_dragging_scrollbar =
+            mud->panel_quests->control_list_scrollbar_handle_dragged
+                [mud->control_list_quest];
+    }
+
     if (mud->show_ui_tab == STATS_TAB &&
-        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 316)) {
+        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 316) &&
+        !is_dragging_scrollbar) {
         mud->show_ui_tab = 0;
+    }
+
+    if (mud->options->off_handle_scroll_drag) {
+        is_dragging_scrollbar =
+            mud->panel_magic->control_list_scrollbar_handle_dragged
+                [mud->control_list_magic] ||
+            mud->panel_social_list->control_list_scrollbar_handle_dragged
+                [mud->control_list_social];
     }
 
     if ((mud->show_ui_tab == MAP_TAB || mud->show_ui_tab == MAGIC_TAB ||
          mud->show_ui_tab == SOCIAL_TAB) &&
-        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 240)) {
+        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 240) &&
+        !is_dragging_scrollbar) {
         mud->show_ui_tab = 0;
     }
 

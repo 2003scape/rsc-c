@@ -89,8 +89,9 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - STATS_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
-                              3, mud->sprite_media + STATS_TAB_SPRITE_OFFSET);
+    surface_draw_sprite_from3(mud->surface,
+                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
+                              mud->sprite_media + STATS_TAB_SPRITE_OFFSET);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + STATS_TAB_HEIGHT,
                            STATS_WIDTH, height - STATS_TAB_HEIGHT, GREY_DC,
@@ -102,7 +103,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     surface_draw_tabs(mud->surface, ui_x, ui_y, STATS_WIDTH, STATS_TAB_HEIGHT,
                       stats_tabs, 2, mud->ui_tab_stats_sub_tab);
 
-    // the handler for the stats tab
+    /* the handler for the skills/equipment tab */
     if (mud->ui_tab_stats_sub_tab == 0) {
         int y = ui_y + 36;
         int selected_skill = -1;
@@ -112,12 +113,12 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
         y += STATS_LINE_BREAK + 1;
 
-        // draw two columns with each skill name and current/base levels
+        /* draw two columns with each skill name and current/base levels */
         for (int i = 0; i < 9; i++) {
             total_experience += mud->player_experience[i];
             total_experience += mud->player_experience[i + 9];
 
-            // left column
+            /* left column */
             int text_colour = WHITE;
 
             if (mud->mouse_x > ui_x + 3 && mud->mouse_y >= y - 11 &&
@@ -126,17 +127,17 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 selected_skill = i;
             }
 
-            // longest skill name (10), @yel@ (4), two skills 3 each (6),
-            // colon (1), slash (1)
+            /* longest skill name (10), @yel@ (4), two skills 3 each (6), colon
+             * (1), slash (1) */
             char formatted_skill[23] = {0};
 
             sprintf(formatted_skill, "%s:@yel@%d/%d", short_skill_names[i],
-                    mud->player_stat_current[i], mud->player_stat_base[i]);
+                    mud->player_skill_current[i], mud->player_skill_base[i]);
 
             surface_draw_string(mud->surface, formatted_skill, ui_x + 5, y, 1,
                                 text_colour);
 
-            // right column
+            /* right column */
             text_colour = WHITE;
 
             if (mud->mouse_x >= ui_x + 90 && mud->mouse_y >= y - 13 - 11 &&
@@ -146,8 +147,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             }
 
             sprintf(formatted_skill, "%s:@yel@%d/%d", short_skill_names[i + 9],
-                    mud->player_stat_current[i + 9],
-                    mud->player_stat_base[i + 9]);
+                    mud->player_skill_current[i + 9],
+                    mud->player_skill_base[i + 9]);
 
             surface_draw_string(mud->surface, formatted_skill,
                                 ui_x + (STATS_WIDTH / 2) - 5,
@@ -157,6 +158,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         }
 
         char formatted_quest_points[30] = {0};
+
         sprintf(formatted_quest_points, "Quest Points:@yel@%d",
                 mud->player_quest_points);
 
@@ -181,7 +183,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         y += STATS_LINE_BREAK;
 
         for (int i = 0; i < 3; i++) {
-            // longest stat name (11) + 5 + 11
+            /* longest stat name (11) + 5 + 11 */
             char formatted_stat[28] = {0};
 
             sprintf(formatted_stat, "%s:@yel@%d", equipment_stat_names[i],
@@ -208,7 +210,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                                      BLACK);
 
         if (selected_skill != -1) {
-            // longest skill (11) + 6 + 1
+            /* longest skill (11) + 6 + 1 */
             char formatted_skill[18] = {0};
             sprintf(formatted_skill, "%s skill", skill_names[selected_skill]);
 
@@ -260,7 +262,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             int total_level = 0;
 
             for (int i = 0; i < skills_length; i++) {
-                total_level += mud->player_stat_base[i];
+                total_level += mud->player_skill_base[i];
             }
 
             char formatted_total[24] = {0};
@@ -282,7 +284,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
             char formatted_combat[25] = {0};
 
-            sprintf(formatted_combat, "Combat level: %d", mud->local_player->level);
+            sprintf(formatted_combat, "Combat level: %d",
+                    mud->local_player->level);
 
             surface_draw_string(mud->surface, formatted_combat, ui_x + 5, y, 1,
                                 WHITE);
@@ -290,10 +293,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             y += STATS_LINE_BREAK;
         }
     } else if (mud->ui_tab_stats_sub_tab == 1) {
-        // the handler for the quests tab
-        panel_clear_list(mud->panel_quest_list, mud->control_list_quest);
+        /* the handler for the quests tab */
+        panel_clear_list(mud->panel_quests, mud->control_list_quest);
 
-        panel_add_list_entry(mud->panel_quest_list, mud->control_list_quest, 0,
+        panel_add_list_entry(mud->panel_quests, mud->control_list_quest, 0,
                              "@whi@Quest-list (green=completed)");
 
         for (int i = 0; i < quests_length; i++) {
@@ -303,11 +306,11 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             sprintf(coloured_quest, "%s%s",
                     mud->quest_complete[i] ? "@gre@" : "@red@", quest_name);
 
-            panel_add_list_entry(mud->panel_quest_list, mud->control_list_quest,
+            panel_add_list_entry(mud->panel_quests, mud->control_list_quest,
                                  i + 1, coloured_quest);
         }
 
-        panel_draw_panel(mud->panel_quest_list);
+        panel_draw_panel(mud->panel_quests);
     }
 
     if (!no_menus) {
@@ -317,12 +320,15 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     int mouse_x = mud->mouse_x - ui_x;
     int mouse_y = mud->mouse_y - ui_y;
 
-    // handle clicking of stats and quest tab, and the scroll wheel for the
-    // quest list
-    if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < STATS_WIDTH &&
-        mouse_y < height) {
+    /* handle clicking of stats and quest tab, and the scroll wheel for the
+     * quest list */
+    int is_within_x = mud->options->off_handle_scroll_drag
+                          ? 1
+                          : mouse_x >= 0 && mouse_x < STATS_WIDTH;
+
+    if (is_within_x && mouse_y >= 0 && mouse_y < height) {
         if (mud->ui_tab_stats_sub_tab == 1) {
-            panel_handle_mouse(mud->panel_quest_list, mouse_x + ui_x,
+            panel_handle_mouse(mud->panel_quests, mouse_x + ui_x,
                                mouse_y + ui_y, mud->last_mouse_button_down,
                                mud->mouse_button_down, mud->mouse_scroll_delta);
         }

@@ -6,8 +6,9 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - MAGIC_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
-                              3, mud->sprite_media + MAGIC_TAB_SPRITE_OFFSET);
+    surface_draw_sprite_from3(mud->surface,
+                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
+                              mud->sprite_media + MAGIC_TAB_SPRITE_OFFSET);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + MAGIC_TAB_HEIGHT,
                            MAGIC_WIDTH, MAGIC_HEIGHT - MAGIC_TAB_HEIGHT,
@@ -22,7 +23,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     if (mud->ui_tab_magic_sub_tab == 0) {
         panel_clear_list(mud->panel_magic, mud->control_list_magic);
 
-        int magic_level = mud->player_stat_current[6];
+        int magic_level = mud->player_skill_current[SKILL_MAGIC];
 
         for (int i = 0; i < game_data_spell_count; i++) {
             char colour_prefix[6] = "@yel@";
@@ -109,7 +110,8 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
         for (int i = 0; i < game_data_prayer_count; i++) {
             char colour_prefix[6] = "@whi@";
 
-            if (game_data_prayer_level[i] > mud->player_stat_base[5]) {
+            if (game_data_prayer_level[i] >
+                mud->player_skill_base[SKILL_PRAYER]) {
                 strcpy(colour_prefix, "@bla@");
             }
 
@@ -166,103 +168,108 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     int mouse_x = mud->mouse_x - ui_x;
     int mouse_y = mud->mouse_y - ui_y;
 
-    if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < 196 && mouse_y < 182) {
-        panel_handle_mouse(mud->panel_magic, mouse_x + ui_x, mouse_y + ui_y,
-                           mud->last_mouse_button_down, mud->mouse_button_down,
-                           mud->mouse_scroll_delta);
+    int is_within_x = mud->options->off_handle_scroll_drag
+                          ? 1
+                          : mouse_x >= 0 && mouse_x < MAGIC_WIDTH;
 
-        if (mouse_y <= MAGIC_TAB_HEIGHT && mud->mouse_button_click == 1) {
-            if (mouse_x < (MAGIC_WIDTH / 2) && mud->ui_tab_magic_sub_tab == 1) {
-                mud->ui_tab_magic_sub_tab = 0;
-                panel_reset_list_props(mud->panel_magic,
-                                       mud->control_list_magic);
-            } else if (mouse_x > (MAGIC_WIDTH / 2) &&
-                       mud->ui_tab_magic_sub_tab == 0) {
-                mud->ui_tab_magic_sub_tab = 1;
-                panel_reset_list_props(mud->panel_magic,
-                                       mud->control_list_magic);
-            }
-        }
-
-        if (mud->mouse_button_click == 1 && mud->ui_tab_magic_sub_tab == 0) {
-            int spell_index = panel_get_list_entry_index(
-                mud->panel_magic, mud->control_list_magic);
-
-            if (spell_index != -1) {
-                int magic_level = mud->player_stat_current[6];
-
-                if (game_data_spell_level[spell_index] > magic_level) {
-                    mudclient_show_message(
-                        mud,
-                        "Your magic ability is not high enough for this spell",
-                        3);
-                } else {
-                    int i = 0;
-
-                    for (i = 0; i < game_data_spell_runes_required[spell_index];
-                         i++) {
-                        int reagant_id =
-                            game_data_spell_runes_id[spell_index][i];
-
-                        if (mudclient_has_inventory_item(
-                                mud, reagant_id,
-                                game_data_spell_runes_count[spell_index][i])) {
-                            continue;
-                        }
-
-                        mudclient_show_message(
-                            mud,
-                            "You don't have all the reagents you need for this "
-                            "spell",
-                            3);
-
-                        i = -1;
-                        break;
-                    }
-
-                    if (i == game_data_spell_runes_required[spell_index]) {
-                        mud->selected_spell = spell_index;
-                        mud->selected_item_inventory_index = -1;
-                    }
-                }
-            }
-        }
-
-        if (mud->mouse_button_click == 1 && mud->ui_tab_magic_sub_tab == 1) {
-            int prayer_index = panel_get_list_entry_index(
-                mud->panel_magic, mud->control_list_magic);
-
-            if (prayer_index != -1) {
-                int prayer_level = mud->player_stat_base[5];
-
-                if (game_data_prayer_level[prayer_index] > prayer_level) {
-                    mudclient_show_message(mud,
-                                           "Your prayer ability is not high "
-                                           "enough for this prayer",
-                                           3);
-                } else if (mud->player_stat_current[5] == 0) {
-                    mudclient_show_message(mud,
-                                           "You have run out of prayer points. "
-                                           "return to a church to recharge",
-                                           3);
-                } else if (mud->prayer_on[prayer_index]) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_PRAYER_OFF);
-                    packet_stream_put_byte(mud->packet_stream, prayer_index);
-                    packet_stream_send_packet(mud->packet_stream);
-                    mud->prayer_on[prayer_index] = 0;
-                    // mudclient_play_sound_file(mud, "prayeroff");
-                } else {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_PRAYER_ON);
-                    packet_stream_put_byte(mud->packet_stream, prayer_index);
-                    packet_stream_send_packet(mud->packet_stream);
-                    mud->prayer_on[prayer_index] = 1;
-                    // mudclient_play_sound_file(mud, "prayeron");
-                }
-            }
-        }
-
-        mud->mouse_button_click = 0;
+    if (!is_within_x || !(mouse_y >= 0 && mouse_y < MAGIC_HEIGHT)) {
+        return;
     }
+
+    panel_handle_mouse(mud->panel_magic, mouse_x + ui_x, mouse_y + ui_y,
+                       mud->last_mouse_button_down, mud->mouse_button_down,
+                       mud->mouse_scroll_delta);
+
+    if (mouse_y <= MAGIC_TAB_HEIGHT && mud->mouse_button_click == 1) {
+        if (mouse_x < (MAGIC_WIDTH / 2) && mud->ui_tab_magic_sub_tab == 1) {
+            mud->ui_tab_magic_sub_tab = 0;
+            panel_reset_list(mud->panel_magic, mud->control_list_magic);
+        } else if (mouse_x > (MAGIC_WIDTH / 2) &&
+                   mud->ui_tab_magic_sub_tab == 0) {
+            mud->ui_tab_magic_sub_tab = 1;
+            panel_reset_list(mud->panel_magic, mud->control_list_magic);
+        }
+    }
+
+    if (mud->mouse_button_click != 1) {
+        return;
+    }
+
+    if (mud->ui_tab_magic_sub_tab == 0) {
+        int spell_index = panel_get_list_entry_index(mud->panel_magic,
+                                                     mud->control_list_magic);
+
+        if (spell_index != -1) {
+            int magic_level = mud->player_skill_current[SKILL_MAGIC];
+
+            if (game_data_spell_level[spell_index] > magic_level) {
+                mudclient_show_message(
+                    mud, "Your magic ability is not high enough for this spell",
+                    MESSAGE_TYPE_GAME);
+            } else {
+                int i = 0;
+
+                for (i = 0; i < game_data_spell_runes_required[spell_index];
+                     i++) {
+                    int reagant_id = game_data_spell_runes_id[spell_index][i];
+
+                    if (mudclient_has_inventory_item(
+                            mud, reagant_id,
+                            game_data_spell_runes_count[spell_index][i])) {
+                        continue;
+                    }
+
+                    mudclient_show_message(mud,
+                                           "You don't have all the reagents "
+                                           "you need for this spell",
+                                           MESSAGE_TYPE_GAME);
+
+                    i = -1;
+                    break;
+                }
+
+                if (i == game_data_spell_runes_required[spell_index]) {
+                    mud->selected_spell = spell_index;
+                    mud->selected_item_inventory_index = -1;
+                }
+            }
+        }
+    } else if (mud->ui_tab_magic_sub_tab == 1) {
+        int prayer_index = panel_get_list_entry_index(mud->panel_magic,
+                                                      mud->control_list_magic);
+
+        if (prayer_index != -1) {
+            int prayer_level = mud->player_skill_base[SKILL_PRAYER];
+
+            if (game_data_prayer_level[prayer_index] > prayer_level) {
+                mudclient_show_message(mud,
+                                       "Your prayer ability is not high enough "
+                                       "for this prayer",
+                                       MESSAGE_TYPE_GAME);
+            } else if (mud->player_skill_current[SKILL_PRAYER] == 0) {
+                mudclient_show_message(mud,
+                                       "You have run out of prayer points. "
+                                       "return to a church to recharge",
+                                       MESSAGE_TYPE_GAME);
+            } else if (mud->prayer_on[prayer_index]) {
+                packet_stream_new_packet(mud->packet_stream, CLIENT_PRAYER_OFF);
+                packet_stream_put_byte(mud->packet_stream, prayer_index);
+                packet_stream_send_packet(mud->packet_stream);
+
+                mud->prayer_on[prayer_index] = 0;
+
+                mudclient_play_sound(mud, "prayeroff");
+            } else {
+                packet_stream_new_packet(mud->packet_stream, CLIENT_PRAYER_ON);
+                packet_stream_put_byte(mud->packet_stream, prayer_index);
+                packet_stream_send_packet(mud->packet_stream);
+
+                mud->prayer_on[prayer_index] = 1;
+
+                mudclient_play_sound(mud, "prayeron");
+            }
+        }
+    }
+
+    mud->mouse_button_click = 0;
 }

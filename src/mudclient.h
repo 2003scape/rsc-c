@@ -185,6 +185,14 @@
 #define ANIMATION_INDEX_NECK 10 /* amulets */
 #define ANIMATION_INDEX_CAPE 11
 
+/* skill IDs */
+#define SKILL_ATTACK 0
+#define SKILL_DEFENSE 1
+#define SKILL_STRENGTH 2
+#define SKILL_HITS 3
+#define SKILL_PRAYER 5
+#define SKILL_MAGIC 6
+
 typedef struct mudclient mudclient;
 
 #include "bzip.h"
@@ -471,6 +479,12 @@ typedef struct mudclient {
     int control_login_cancel;
     int control_login_recover;
 
+    int login_screen;
+    char login_user[USERNAME_LENGTH + 1];
+    char login_pass[PASSWORD_LENGTH + 1];
+    char *login_prompt;
+    char login_user_disp[USERNAME_LENGTH + 3];
+
 #ifdef REVISION_177
     int session_id;
 #else
@@ -478,11 +492,6 @@ typedef struct mudclient {
 #endif
 
     int logged_in;
-    int login_screen;
-    char login_user[USERNAME_LENGTH + 1];
-    char login_pass[PASSWORD_LENGTH + 1];
-    char *login_prompt;
-    char login_user_disp[USERNAME_LENGTH + 3];
 
     /* ./ui/message-tabs.c */
     Panel *panel_message_tabs;
@@ -678,12 +687,12 @@ typedef struct mudclient {
     char *selected_item_name;
 
     /* ./ui/stats-tab.c */
-    Panel *panel_quest_list;
+    Panel *panel_quests;
     int control_list_quest;
     int8_t *quest_complete;
     int ui_tab_stats_sub_tab;
-    int player_stat_current[PLAYER_STAT_COUNT];
-    int player_stat_base[PLAYER_STAT_COUNT];
+    int player_skill_current[PLAYER_STAT_COUNT];
+    int player_skill_base[PLAYER_STAT_COUNT];
     int player_experience[PLAYER_STAT_COUNT];
     int player_quest_points;
     int stat_fatigue;

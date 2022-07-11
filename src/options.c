@@ -9,9 +9,10 @@ void options_new(Options *options) {
     options->fps_counter = 0;
     options->retry_login_on_disconnect = 1;
 
+    options->mouse_wheel = 1;
     options->middle_click_camera = 1;
     options->reset_compass = 1;
     options->inventory_count = 1;
-
     options->anti_macro = 0;
+    options->off_handle_scroll_drag = 1;
 }

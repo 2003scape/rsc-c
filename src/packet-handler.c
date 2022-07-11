@@ -285,8 +285,8 @@ void mudclient_packet_tick(mudclient *mud) {
                     player->combat_timer = 200;
 
                     if (player == mud->local_player) {
-                        mud->player_stat_current[3] = current;
-                        mud->player_stat_base[3] = max;
+                        mud->player_skill_current[SKILL_HITS] = current;
+                        mud->player_skill_base[SKILL_HITS] = max;
                         mud->show_dialog_welcome = 0;
                         mud->show_dialog_server_message = 0;
                     }
@@ -1080,11 +1080,11 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         for (int i = 0; i < skills_length; i++) {
-            mud->player_stat_current[i] = get_unsigned_byte(data[offset++]);
+            mud->player_skill_current[i] = get_unsigned_byte(data[offset++]);
         }
 
         for (int i = 0; i < skills_length; i++) {
-            mud->player_stat_base[i] = get_unsigned_byte(data[offset++]);
+            mud->player_skill_base[i] = get_unsigned_byte(data[offset++]);
         }
 
         for (int i = 0; i < skills_length; i++) {
@@ -1111,10 +1111,10 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
         int skill_index = data[offset++] & 0xff;
 
-        mud->player_stat_current[skill_index] =
+        mud->player_skill_current[skill_index] =
             get_unsigned_byte(data[offset++]);
 
-        mud->player_stat_base[skill_index] = get_unsigned_byte(data[offset++]);
+        mud->player_skill_base[skill_index] = get_unsigned_byte(data[offset++]);
 
         mud->player_experience[skill_index] = get_unsigned_int(data, offset);
         break;

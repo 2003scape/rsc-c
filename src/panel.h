@@ -129,7 +129,7 @@ int panel_add_checkbox(Panel *panel, int x, int y, int width, int height);
 void panel_toggle_checkbox(Panel *panel, int control, int activated);
 int panel_is_activated(Panel *panel, int control);
 void panel_clear_list(Panel *panel, int control);
-void panel_reset_list_props(Panel *panel, int control);
+void panel_reset_list(Panel *panel, int control);
 void panel_add_list_entry(Panel *panel, int control, int index, char *text);
 void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
                                   int flash);

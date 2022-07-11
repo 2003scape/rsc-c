@@ -527,8 +527,8 @@ void mudclient_resize(mudclient *mud) {
         mud->panel_message_tabs->offset_y = full_offset_y;
     }
 
-    if (mud->panel_quest_list != NULL) {
-        mud->panel_quest_list->offset_x = full_offset_x;
+    if (mud->panel_quests != NULL) {
+        mud->panel_quests->offset_x = full_offset_x;
     }
 
     if (mud->panel_magic != NULL) {
@@ -2342,11 +2342,11 @@ void mudclient_start_game(mudclient *mud) {
     int x = mud->surface->width - 199;
     int y = 36;
 
-    mud->panel_quest_list = malloc(sizeof(Panel));
-    panel_new(mud->panel_quest_list, mud->surface, 5);
+    mud->panel_quests = malloc(sizeof(Panel));
+    panel_new(mud->panel_quests, mud->surface, 5);
 
     mud->control_list_quest = panel_add_text_list_interactive(
-        mud->panel_quest_list, x, y + 24, 196, 251, 1, 500, 1);
+        mud->panel_quests, x, y + 24, 196, 251, 1, 500, 1);
 
     mud->panel_magic = malloc(sizeof(Panel));
     panel_new(mud->panel_magic, mud->surface, 5);
@@ -3811,7 +3811,7 @@ void mudclient_draw_ui(mudclient *mud) {
     }
 
     if (mud->options->inventory_count) {
-        int x = mud->surface->width - 19;
+        int x = mud->surface->width - 17;
         int y = 24;
 
         int count = mud->inventory_items_count;

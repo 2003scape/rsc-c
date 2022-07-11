@@ -4,6 +4,7 @@
 #include "../colours.h"
 #include "../mudclient.h"
 #include "../packet-stream.h"
+#include "./message-tabs.h"
 
 #define MAGIC_HEIGHT 182
 #define MAGIC_WIDTH 196

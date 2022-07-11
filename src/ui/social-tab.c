@@ -278,69 +278,74 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
     int mouse_x = mud->mouse_x - ui_x;
     int mouse_y = mud->mouse_y - ui_y;
 
-    if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < SOCIAL_WIDTH &&
-        mouse_y < SOCIAL_HEIGHT) {
-        panel_handle_mouse(mud->panel_social_list, mouse_x + ui_x,
-                           mouse_y + ui_y, mud->last_mouse_button_down,
-                           mud->mouse_button_down, mud->mouse_scroll_delta);
+    int is_within_x = mud->options->off_handle_scroll_drag
+                          ? 1
+                          : mouse_x >= 0 && mouse_x < SOCIAL_WIDTH;
 
-        if (mouse_y <= SOCIAL_TAB_HEIGHT && mud->mouse_button_click == 1) {
-            if (mouse_x < (SOCIAL_WIDTH / 2) &&
-                mud->ui_tab_social_sub_tab == 1) {
-                mud->ui_tab_social_sub_tab = 0;
-                panel_reset_list_props(mud->panel_social_list,
-                                       mud->control_list_social);
-            } else if (mouse_x > (SOCIAL_WIDTH / 2) &&
-                       mud->ui_tab_social_sub_tab == 0) {
-                mud->ui_tab_social_sub_tab = 1;
-
-                panel_reset_list_props(mud->panel_social_list,
-                                       mud->control_list_social);
-            }
-        }
-
-        if (mud->mouse_button_click == 1 && mud->ui_tab_social_sub_tab == 0) {
-            int friend_index = panel_get_list_entry_index(
-                mud->panel_social_list, mud->control_list_social);
-
-            if (friend_index >= 0 && mouse_x < 176) {
-                if (mouse_x > 116) {
-                    mudclient_remove_friend(mud,
-                                            mud->friend_list[friend_index]);
-                } else if (mud->friend_list_online[friend_index] != 0) {
-                    mud->show_dialog_social_input = 2;
-
-                    mud->private_message_target =
-                        mud->friend_list[friend_index];
-
-                    memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
-                    memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
-                }
-            }
-        }
-
-        if (mud->mouse_button_click == 1 && mud->ui_tab_social_sub_tab == 1) {
-            int ignore_index = panel_get_list_entry_index(
-                mud->panel_social_list, mud->control_list_social);
-
-            if (ignore_index >= 0 && mouse_x < 176 && mouse_x > 116) {
-                mudclient_remove_ignore(mud, mud->ignore_list[ignore_index]);
-            }
-        }
-
-        if (mouse_y > 166 && mud->mouse_button_click == 1) {
-            memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH);
-            memset(mud->input_text_final, '\0', INPUT_TEXT_LENGTH);
-
-            if (mud->ui_tab_social_sub_tab == 0) {
-                mud->show_dialog_social_input = 1;
-            } else if (mud->ui_tab_social_sub_tab == 1) {
-                mud->show_dialog_social_input = 3;
-            }
-        }
-
-        mud->mouse_button_click = 0;
+    if (!is_within_x || !(mouse_y >= 0 && mouse_y < SOCIAL_HEIGHT)) {
+        return;
     }
+
+    panel_handle_mouse(mud->panel_social_list, mouse_x + ui_x,
+                       mouse_y + ui_y, mud->last_mouse_button_down,
+                       mud->mouse_button_down, mud->mouse_scroll_delta);
+
+    if (mouse_y <= SOCIAL_TAB_HEIGHT && mud->mouse_button_click == 1) {
+        if (mouse_x < (SOCIAL_WIDTH / 2) &&
+            mud->ui_tab_social_sub_tab == 1) {
+            mud->ui_tab_social_sub_tab = 0;
+            panel_reset_list(mud->panel_social_list,
+                                   mud->control_list_social);
+        } else if (mouse_x > (SOCIAL_WIDTH / 2) &&
+                   mud->ui_tab_social_sub_tab == 0) {
+            mud->ui_tab_social_sub_tab = 1;
+
+            panel_reset_list(mud->panel_social_list,
+                                   mud->control_list_social);
+        }
+    }
+
+    if (mud->mouse_button_click == 1 && mud->ui_tab_social_sub_tab == 0) {
+        int friend_index = panel_get_list_entry_index(
+            mud->panel_social_list, mud->control_list_social);
+
+        if (friend_index >= 0 && mouse_x < 176) {
+            if (mouse_x > 116) {
+                mudclient_remove_friend(mud,
+                                        mud->friend_list[friend_index]);
+            } else if (mud->friend_list_online[friend_index] != 0) {
+                mud->show_dialog_social_input = 2;
+
+                mud->private_message_target =
+                    mud->friend_list[friend_index];
+
+                memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
+                memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
+            }
+        }
+    }
+
+    if (mud->mouse_button_click == 1 && mud->ui_tab_social_sub_tab == 1) {
+        int ignore_index = panel_get_list_entry_index(
+            mud->panel_social_list, mud->control_list_social);
+
+        if (ignore_index >= 0 && mouse_x < 176 && mouse_x > 116) {
+            mudclient_remove_ignore(mud, mud->ignore_list[ignore_index]);
+        }
+    }
+
+    if (mouse_y > 166 && mud->mouse_button_click == 1) {
+        memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH);
+        memset(mud->input_text_final, '\0', INPUT_TEXT_LENGTH);
+
+        if (mud->ui_tab_social_sub_tab == 0) {
+            mud->show_dialog_social_input = 1;
+        } else if (mud->ui_tab_social_sub_tab == 1) {
+            mud->show_dialog_social_input = 3;
+        }
+    }
+
+    mud->mouse_button_click = 0;
 }
 
 void mudclient_draw_social_input(mudclient *mud) {

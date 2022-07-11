@@ -239,12 +239,12 @@ void mudclient_create_login_panels(mudclient *mud) {
 
 void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1) {
 
-    if (mud->login_screen == 1) {
+    if (mud->login_screen == LOGIN_STAGE_NEW) {
         sprintf(login_screen_status, "%s %s", s, s1);
 
         panel_update_text(mud->panel_login_new_user,
                           mud->control_register_status, login_screen_status);
-    } else if (mud->login_screen == 2) {
+    } else if (mud->login_screen == LOGIN_STAGE_EXISTING) {
         sprintf(login_screen_status, "%s %s", s, s1);
 
         panel_update_text(mud->panel_login_existing_user,
@@ -257,13 +257,15 @@ void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1) {
 
 void mudclient_reset_login_screen(mudclient *mud) {
     mud->logged_in = 0;
-    mud->login_screen = 0;
+    mud->login_screen = LOGIN_STAGE_WELCOME;
 
     memset(mud->login_user, '\0', USERNAME_LENGTH + 1);
     memset(mud->login_pass, '\0', PASSWORD_LENGTH + 1);
 
     mud->login_prompt = "Please enter a username:";
+
     sprintf(mud->login_user_disp, "*%s*", mud->login_user);
+
     mud->player_count = 0;
     mud->npc_count = 0;
 }
@@ -477,26 +479,19 @@ void mudclient_draw_login_screens(mudclient *mud) {
             int background_height =
                 mud->surface->sprite_height[mud->sprite_logo];
 
-            surface_draw_box_alpha(mud->surface, 0 + offset_x, 10 + offset_y, 2,
-                                   background_height, BLACK, 192);
+            for (int i = 0; i < 3; i++) {
+                int alpha = 192 - (i * 64);
 
-            surface_draw_box_alpha(mud->surface, 2 + offset_x, 10 + offset_y, 2,
-                                   background_height, BLACK, 128);
+                /* left */
+                surface_draw_box_alpha(mud->surface, (i * 2) + offset_x,
+                                       10 + offset_y, 2, background_height,
+                                       BLACK, alpha);
 
-            surface_draw_box_alpha(mud->surface, 4 + offset_x, 10 + offset_y, 2,
-                                   background_height, BLACK, 64);
-
-            surface_draw_box_alpha(
-                mud->surface, background_width - 2 + offset_x, 10 + offset_y, 2,
-                background_height, BLACK, 192);
-
-            surface_draw_box_alpha(
-                mud->surface, background_width - 4 + offset_x, 10 + offset_y, 2,
-                background_height, BLACK, 128);
-
-            surface_draw_box_alpha(
-                mud->surface, background_width - 6 + offset_x, 10 + offset_y, 2,
-                background_height, BLACK, 64);
+                /* right */
+                surface_draw_box_alpha(
+                    mud->surface, background_width - (i * 2) + offset_x,
+                    10 + offset_y, 2, background_height, BLACK, alpha);
+            }
         }
     }
 

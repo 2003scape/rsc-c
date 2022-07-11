@@ -449,15 +449,26 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         }
 
         /* handle the thumb/middle section dragging of the scrollbar */
-        if (panel->mouse_button_down == 1 &&
-            ((panel->mouse_x >= corner_top_right &&
-              panel->mouse_x <= corner_top_right + 12) ||
+        if (panel->mouse_button_down == 1) {
+            /* mouse is within the handle */
+            int is_within_x = (panel->mouse_x >= corner_top_right &&
+                               panel->mouse_x <= corner_top_right + 12);
 
-             (panel->mouse_x >= corner_top_right - 12 &&
-              panel->mouse_x <= corner_top_right + 24 &&
-              panel->control_list_scrollbar_handle_dragged[control]))) {
+            /* clicked and are holding down */
+            int is_dragging =
+                panel->control_list_scrollbar_handle_dragged[control];
 
-            if (panel->mouse_y > y + 12 && panel->mouse_y < y + height - 12) {
+            int off_handle_scroll_drag =
+                panel->surface->mud->options->off_handle_scroll_drag;
+
+            if (!off_handle_scroll_drag) {
+                is_dragging =
+                    is_dragging && (panel->mouse_x >= corner_top_right - 12 &&
+                                    panel->mouse_x <= corner_top_right + 24);
+            }
+
+            if ((is_within_x || is_dragging) &&
+                panel->mouse_y > y + 12 && panel->mouse_y < y + height - 12) {
                 panel->control_list_scrollbar_handle_dragged[control] = 1;
 
                 int l3 = panel->mouse_y - y - 12 - (scrub_height / 2);
@@ -466,15 +477,12 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
 
                 if (list_entry_position < 0) {
                     list_entry_position = 0;
-                }
-
-                if (list_entry_position > max_entries) {
+                } else if (list_entry_position > max_entries) {
                     list_entry_position = max_entries;
                 }
 
                 panel->control_flash_text[control] = list_entry_position;
             }
-
         } else {
             panel->control_list_scrollbar_handle_dragged[control] = 0;
         }
@@ -697,7 +705,7 @@ void panel_clear_list(Panel *panel, int control) {
     panel->control_list_entry_count[control] = 0;
 }
 
-void panel_reset_list_props(Panel *panel, int control) {
+void panel_reset_list(Panel *panel, int control) {
     panel->control_flash_text[control] = 0;
     panel->control_list_entry_mouse_over[control] = -1;
 }
