@@ -3738,7 +3738,7 @@ void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
             i += 5;
         } else {
             int character_offset = character_width[(unsigned)text[i]];
-            int draw_shadow = surface->logged_in && colour != 0;
+            int draw_shadow = surface->draw_string_shadow && colour != 0;
 
 #ifdef RENDER_GL
             surface_gl_buffer_character(surface, text[i], x, y, colour, font,

@@ -394,7 +394,7 @@ int test_z = 750;*/
 // float test_y = 77;
 // float test_x = 36.0f;
 // float test_y = 76.750000;
-//int test_x = 0;
+// int test_x = 0;
 float test_x = 0.6370452f;
 float test_y = 1.571051;
 float test_z = 1.338493;
@@ -909,11 +909,69 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             mud->input_pm_current[pm_length] = char_code;
             mud->input_pm_current[pm_length + 1] = '\0';
         }
+
+        if (mud->options->offer_x &&
+            (char_code == ' ' || char_code == ',' || char_code == '.' ||
+             tolower(char_code) == 'k' || tolower(char_code) == 'm' ||
+             isdigit(char_code))) {
+            int digits_length = 0;
+            int has_suffix = 0;
+
+            while (mud->input_digits_current[digits_length]) {
+                char digit_char = mud->input_digits_current[digits_length];
+
+                if (tolower(digit_char) == 'k' || tolower(digit_char) == 'm') {
+                    has_suffix = 1;
+                    break;
+                }
+
+                digits_length++;
+            }
+
+            if (!has_suffix && digits_length < INPUT_DIGITS_LENGTH) {
+                mud->input_digits_current[digits_length] = char_code;
+                mud->input_digits_current[digits_length + 1] = '\0';
+            }
+        }
     }
 
     if (code == K_ENTER) {
         strcpy(mud->input_text_final, mud->input_text_current);
         strcpy(mud->input_pm_final, mud->input_pm_current);
+
+        if (mud->options->offer_x) {
+            char filtered_digits[INPUT_DIGITS_LENGTH + 1] = {0};
+            int filtered_length = 0;
+            char digits_suffix = '\0';
+            int has_decimal = 0;
+
+            for (int i = 0; i < strlen(mud->input_digits_current); i++) {
+                char digit_char = mud->input_digits_current[i];
+
+                if (isdigit(digit_char)) {
+                    filtered_digits[filtered_length++] = digit_char;
+                } else if (tolower(digit_char) == 'k' ||
+                           tolower(digit_char) == 'm') {
+                    digits_suffix = digit_char;
+                } else if (!has_decimal && digit_char == '.') {
+                    filtered_digits[filtered_length++] = digit_char;
+                    has_decimal = 1;
+                }
+            }
+
+            int scale = 1;
+
+            if (digits_suffix == 'k') {
+                scale = 1000;
+            } else if (digits_suffix == 'm') {
+                scale = 1000000;
+            }
+
+            mud->input_digits_final =
+                (int)(atof(filtered_digits) * (float)scale);
+
+            memset(mud->input_digits_current, '\0', INPUT_DIGITS_LENGTH + 1);
+        }
     } else if (code == K_BACKSPACE) {
         int current_length = strlen(mud->input_text_current);
 
@@ -925,6 +983,14 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
         if (pm_length > 0) {
             mud->input_pm_current[pm_length - 1] = '\0';
+        }
+
+        if (mud->options->offer_x) {
+            int digits_length = strlen(mud->input_digits_current);
+
+            if (digits_length > 0) {
+                mud->input_digits_current[digits_length - 1] = '\0';
+            }
         }
     }
 }
@@ -1010,7 +1076,7 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
         mud->origin_rotation = mud->camera_rotation;
         mud->origin_mouse_x = mud->mouse_x;
 
-        //mud->origin_camera_ticks = get_ticks();
+        // mud->origin_camera_ticks = get_ticks();
         mud->last_mouse_sample_ticks = get_ticks();
         mud->last_mouse_sample_x = mud->mouse_x;
         mud->camera_momentum = 0;
@@ -3010,8 +3076,7 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 
     if (mud->options->idle_logout && mud->mouse_action_timeout > 4500 &&
-        mud->combat_timeout == 0 &&
-        mud->logout_timeout == 0) {
+        mud->combat_timeout == 0 && mud->logout_timeout == 0) {
         mud->mouse_action_timeout -= 500;
         mudclient_send_logout(mud);
         return;
@@ -3849,7 +3914,6 @@ void mudclient_draw_ui(mudclient *mud) {
                                    WHITE);
     }
 
-
     mud->mouse_button_click = 0;
 }
 
@@ -4303,17 +4367,16 @@ void mudclient_draw_game(mudclient *mud) {
             }
         }
 
-        if (mud->show_ui_wild_warn == 0 && wilderness_depth > -10 &&
-            wilderness_depth <= 0) {
+        if (mud->options->wilderness_warning && mud->show_ui_wild_warn == 0 &&
+            wilderness_depth > -10 && wilderness_depth <= 0) {
             mud->show_ui_wild_warn = 1;
         }
     }
 
     mudclient_draw_chat_message_tabs_panel(mud);
-
     mudclient_draw_ui(mud);
 
-    mud->surface->logged_in = 0;
+    mud->surface->draw_string_shadow = 0;
 
     mudclient_draw_chat_message_tabs(mud);
 
@@ -4332,10 +4395,10 @@ void mudclient_draw(mudclient *mud) {
 #endif
 
     if (mud->logged_in == 0) {
-        mud->surface->logged_in = 0;
+        mud->surface->draw_string_shadow = 0;
         mudclient_draw_login_screens(mud);
     } else if (mud->logged_in == 1) {
-        mud->surface->logged_in = 1;
+        mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
     }
 
@@ -4831,13 +4894,13 @@ void mudclient_poll_events(mudclient *mud) {
             } else if (code == 97) {
                 test_x += 0.001;
             } else if (code == 119) {
-                //test_y -= 0.001;
+                // test_y -= 0.001;
             } else if (code == 115) {
-                //test_y += 0.001;
+                // test_y += 0.001;
             } else if (code == 101) {
-                //test_z -= 0.001;
+                // test_z -= 0.001;
             } else if (code == 100) {
-                //test_z += 0.001;
+                // test_z += 0.001;
             } else if (code == 114) {
                 test_yaw += 1;
             } else if (code == 102) {
@@ -4846,8 +4909,8 @@ void mudclient_poll_events(mudclient *mud) {
 
             // printf("%d\n", code);
             printf("fov: %f, yaw: %f, pitch %f \n", test_x, test_y, test_z);
-            //printf("%d %d %d %d\n", test_x, test_y, test_z, test_yaw);
-            // printf("%f %f\n", test_x, test_y);
+            // printf("%d %d %d %d\n", test_x, test_y, test_z, test_yaw);
+            //  printf("%f %f\n", test_x, test_y);
 
             break;
         }
@@ -5097,6 +5160,7 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
     }
 }
 
+// TODO draw_ground_item
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
                          int id, float depth_top, float depth_bottom) {
     int picture = game_data_item_picture[id] + mud->sprite_item;

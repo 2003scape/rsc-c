@@ -18,6 +18,11 @@
 #define BANK_MAGIC_DEPOSIT 0x87654321
 #define BANK_MAGIC_WITHDRAW 0x12345678
 
+#define BANK_OFFER_WITHDRAW 1
+#define BANK_OFFER_DEPOSIT 2
+
+void mudclient_bank_withdraw(mudclient *mud, int item_id, int amount);
+void mudclient_bank_deposit(mudclient *mud, int item_id, int amount);
 void mudclient_draw_bank(mudclient *mud);
 
 #endif

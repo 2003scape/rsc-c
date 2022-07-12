@@ -55,6 +55,12 @@ typedef struct Options {
 
     /* log out when the mouse hasn't moved in a while */
     int idle_logout;
+
+    /* display the warning dialog near the wilderness border */
+    int wilderness_warning;
+
+    /* allow inputting item amounts */
+    int offer_x;
 } Options;
 
 void options_new(Options *options);

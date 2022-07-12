@@ -97,7 +97,7 @@ typedef struct Surface {
     int *sprite_translate_y;
 
     int8_t interlace;
-    int8_t logged_in;
+    int8_t draw_string_shadow;
 
     /* arrays used for minimap sprite rotation */
     int *rotations_0;

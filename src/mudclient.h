@@ -95,6 +95,7 @@
 
 #define INPUT_TEXT_LENGTH 20
 #define INPUT_PM_LENGTH 80
+#define INPUT_DIGITS_LENGTH 14 /* 2,147,483,647m */
 
 #define USERNAME_LENGTH 20
 #define PASSWORD_LENGTH 20
@@ -220,6 +221,7 @@ typedef struct mudclient mudclient;
 #include "ui/logout.h"
 #include "ui/menu.h"
 #include "ui/message-tabs.h"
+#include "ui/offer-x.h"
 #include "ui/option-menu.h"
 #include "ui/server-message.h"
 #include "ui/shop.h"
@@ -399,6 +401,10 @@ typedef struct mudclient {
     /* used for private messaging */
     char input_pm_current[INPUT_PM_LENGTH + 1];
     char input_pm_final[INPUT_PM_LENGTH + 1];
+
+    /* used for item amounts */
+    char input_digits_current[INPUT_DIGITS_LENGTH + 1];
+    int input_digits_final;
 
     int max_read_tries;
     int world_full_timeout;
@@ -775,6 +781,7 @@ typedef struct mudclient {
     int bank_active_page;
     int bank_selected_item_slot;
     int bank_selected_item;
+    int bank_offer_type;
 
     /* ./ui/shop.c */
     int show_dialog_shop;
@@ -836,6 +843,9 @@ typedef struct mudclient {
 
     /* TODO should we combine the trade/duel item arrays + props? they're never
      * simultaneous */
+
+    /* ./ui/offer-x.c */
+    int show_dialog_offer_x;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
