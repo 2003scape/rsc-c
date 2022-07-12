@@ -9,5 +9,6 @@
 #define OFFER_X_CANCEL_SIZE 40
 
 void mudclient_draw_offer_x(mudclient *mud);
+void mudclient_handle_offer_x_input(mudclient *mud);
 
 #endif

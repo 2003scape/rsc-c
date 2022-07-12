@@ -11,7 +11,7 @@ void mudclient_draw_offer_x(mudclient *mud) {
                      OFFER_X_HEIGHT, BLACK);
 
     surface_draw_box_edge(mud->surface, dialog_x, dialog_y, OFFER_X_WIDTH,
-                          OFFER_X_HEIGHT, BLACK);
+                          OFFER_X_HEIGHT, WHITE);
 
     int x = mud->surface->width / 2;
     int y = dialog_y + 20;
@@ -36,4 +36,17 @@ void mudclient_draw_offer_x(mudclient *mud) {
 
     surface_draw_string_centre(mud->surface, "Cancel", x, y + 23, 1,
                                text_colour);
+}
+
+void mudclient_handle_offer_x_input(mudclient *mud) {
+    int cancel_offset_x = mud->surface->width / 2 - OFFER_X_CANCEL_SIZE / 2;
+    int cancel_offset_y = mud->surface->height / 2 + OFFER_X_CANCEL_SIZE / 2;
+
+    if (mud->mouse_button_down == 1 && mud->mouse_x > cancel_offset_x &&
+        mud->mouse_x < cancel_offset_x + OFFER_X_CANCEL_SIZE &&
+        mud->mouse_y > cancel_offset_y &&
+        mud->mouse_y < cancel_offset_y + OFFER_X_CANCEL_SIZE) {
+        memset(mud->input_digits_current, '\0', INPUT_DIGITS_LENGTH + 1);
+        mud->show_dialog_offer_x = 0;
+    }
 }

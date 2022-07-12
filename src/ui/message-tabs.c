@@ -34,9 +34,13 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
                                       y + 4, mud->sprite_media + 22);
         }
 
-        surface_draw_line_horizontal(mud->surface, 503, mud->surface->height - 14, mud->surface->width - 503, BLACK);
+        surface_draw_line_horizontal(mud->surface, 503,
+                                     mud->surface->height - 14,
+                                     mud->surface->width - 503, BLACK);
 
-        surface_draw_line_horizontal(mud->surface, 503, mud->surface->height - 13, mud->surface->width - 503, BLACK);
+        surface_draw_line_horizontal(mud->surface, 503,
+                                     mud->surface->height - 13,
+                                     mud->surface->width - 503, BLACK);
     }
 
     y = mud->surface->height - 6;

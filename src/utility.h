@@ -55,6 +55,12 @@
 
 #define CHAR_SET_LENGTH 94
 
+#define IS_DIGIT_SEPARATOR(char_code)                                          \
+    (char_code == ' ' || char_code == ',' || char_code == '.')
+
+#define IS_DIGIT_SUFFIX(char_code)                                             \
+    (tolower(char_code) == 'k' || tolower(char_code) == 'm')
+
 #ifdef RENDER_GL
 /* convert sin_cos_x array index to radians */
 #define TABLE_TO_RADIANS(i, length) ((i / (length / 8.0f)) * (M_PI / 2))

@@ -1,13 +1,57 @@
 #include "bank.h"
 
 void mudclient_bank_withdraw(mudclient *mud, int item_id, int amount) {
+    packet_stream_new_packet(mud->packet_stream, CLIENT_BANK_WITHDRAW);
+    packet_stream_put_short(mud->packet_stream, item_id);
+    packet_stream_put_short(mud->packet_stream, amount);
+
+#ifndef REVISION_177
+    packet_stream_put_int(mud->packet_stream, BANK_MAGIC_WITHDRAW);
+#endif
+
+    packet_stream_send_packet(mud->packet_stream);
+}
+
+void mudclient_bank_deposit(mudclient *mud, int item_id, int amount) {
+    packet_stream_new_packet(mud->packet_stream, CLIENT_BANK_DEPOSIT);
+    packet_stream_put_short(mud->packet_stream, item_id);
+    packet_stream_put_short(mud->packet_stream, amount);
+
+#ifndef REVISION_177
+    packet_stream_put_int(mud->packet_stream, BANK_MAGIC_DEPOSIT);
+#endif
+
+    packet_stream_send_packet(mud->packet_stream);
 }
 
 void mudclient_draw_bank(mudclient *mud) {
-    if (mud->input_digits_final != 0) {
-        // OK
+    if (mud->input_digits_final > 0) {
+        if (mud->bank_offer_type == BANK_OFFER_WITHDRAW) {
+            int max_amount = mud->bank_items_count[mud->bank_offer_item];
+
+            if (mud->input_digits_final > max_amount) {
+                mudclient_show_message(mud, "You don't have that many!",
+                                       MESSAGE_TYPE_GAME);
+            } else {
+                mudclient_bank_withdraw(
+                    mud, mud->bank_items[mud->bank_selected_item_slot],
+                    mud->input_digits_final);
+            }
+        } else if (mud->bank_offer_type == BANK_OFFER_DEPOSIT) {
+            int max_amount =
+                mudclient_get_inventory_count(mud, mud->bank_offer_item);
+
+            if (mud->input_digits_final > max_amount) {
+                mudclient_show_message(mud, "You don't have that many!",
+                                       MESSAGE_TYPE_GAME);
+            } else {
+                mudclient_bank_deposit(mud, mud->bank_offer_item,
+                                       mud->input_digits_final);
+            }
+        }
 
         mud->show_dialog_offer_x = 0;
+        mud->input_digits_final = 0;
     }
 
     if (mud->bank_active_page > 0 &&
@@ -15,11 +59,13 @@ void mudclient_draw_bank(mudclient *mud) {
         mud->bank_active_page = 0;
     }
 
-    if (mud->bank_active_page > 1 && mud->bank_item_count <= (BANK_ITEMS_PER_PAGE * 2)) {
+    if (mud->bank_active_page > 1 &&
+        mud->bank_item_count <= (BANK_ITEMS_PER_PAGE * 2)) {
         mud->bank_active_page = 1;
     }
 
-    if (mud->bank_active_page > 2 && mud->bank_item_count <= (BANK_ITEMS_PER_PAGE * 3)) {
+    if (mud->bank_active_page > 2 &&
+        mud->bank_item_count <= (BANK_ITEMS_PER_PAGE * 3)) {
         mud->bank_active_page = 2;
     }
 
@@ -95,36 +141,14 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 238 &&
                     mud->mouse_x < mouse_x + 250 &&
                     mud->mouse_y <= mouse_y + 249) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_WITHDRAW);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, 1);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_WITHDRAW);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_withdraw(mud, item_id, 1);
                 }
 
                 if (bank_count >= 5 && mud->mouse_x >= mouse_x + 250 &&
                     mud->mouse_y >= mouse_y + 238 &&
                     mud->mouse_x < mouse_x + 280 &&
                     mud->mouse_y <= mouse_y + 249) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_WITHDRAW);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, 5);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_WITHDRAW);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_withdraw(mud, item_id, 5);
                 }
 
                 int ui_amount = mud->options->offer_x ? 10 : 25;
@@ -133,18 +157,7 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 238 &&
                     mud->mouse_x < mouse_x + 305 &&
                     mud->mouse_y <= mouse_y + 249) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_WITHDRAW);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, ui_amount);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_WITHDRAW);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_withdraw(mud, item_id, ui_amount);
                 }
 
                 ui_amount = mud->options->offer_x ? 50 : 100;
@@ -153,18 +166,7 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 238 &&
                     mud->mouse_x < mouse_x + 335 &&
                     mud->mouse_y <= mouse_y + 249) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_WITHDRAW);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, ui_amount);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_WITHDRAW);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_withdraw(mud, item_id, ui_amount);
                 }
 
                 ui_amount = mud->options->offer_x ? 2 : 500;
@@ -175,21 +177,11 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y <= mouse_y + 249) {
                     if (mud->options->offer_x) {
                         mud->bank_offer_type = BANK_OFFER_WITHDRAW;
+                        mud->bank_offer_item = mud->bank_selected_item_slot;
                         mud->show_dialog_offer_x = 1;
                         mud->panel_message_tabs->focus_control_index = -1;
                     } else {
-                        packet_stream_new_packet(mud->packet_stream,
-                                                 CLIENT_BANK_WITHDRAW);
-
-                        packet_stream_put_short(mud->packet_stream, item_id);
-                        packet_stream_put_short(mud->packet_stream, 500);
-
-#ifndef REVISION_177
-                        packet_stream_put_int(mud->packet_stream,
-                                              BANK_MAGIC_WITHDRAW);
-#endif
-
-                        packet_stream_send_packet(mud->packet_stream);
+                        mudclient_bank_withdraw(mud, item_id, ui_amount);
                     }
                 }
 
@@ -199,23 +191,7 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 238 &&
                     mud->mouse_x < mouse_x + 400 &&
                     mud->mouse_y <= mouse_y + 249) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_WITHDRAW);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-
-                    if (mud->options->offer_x) {
-                        packet_stream_put_short(mud->packet_stream, bank_count);
-                    } else {
-                        packet_stream_put_short(mud->packet_stream, ui_amount);
-                    }
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_WITHDRAW);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_withdraw(mud, item_id, ui_amount);
                 }
 
                 int inventory_count =
@@ -225,36 +201,14 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 263 &&
                     mud->mouse_x < mouse_x + 250 &&
                     mud->mouse_y <= mouse_y + 274) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_DEPOSIT);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, 1);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_DEPOSIT);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_deposit(mud, item_id, 1);
                 }
 
                 if (inventory_count >= 5 && mud->mouse_x >= mouse_x + 250 &&
                     mud->mouse_y >= mouse_y + 263 &&
                     mud->mouse_x < mouse_x + 280 &&
                     mud->mouse_y <= mouse_y + 274) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_DEPOSIT);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, 5);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_DEPOSIT);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_deposit(mud, item_id, 5);
                 }
 
                 ui_amount = mud->options->offer_x ? 10 : 25;
@@ -264,18 +218,7 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 263 &&
                     mud->mouse_x < mouse_x + 305 &&
                     mud->mouse_y <= mouse_y + 274) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_DEPOSIT);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, ui_amount);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_DEPOSIT);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_deposit(mud, item_id, ui_amount);
                 }
 
                 ui_amount = mud->options->offer_x ? 50 : 100;
@@ -285,18 +228,7 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 263 &&
                     mud->mouse_x < mouse_x + 335 &&
                     mud->mouse_y <= mouse_y + 274) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_DEPOSIT);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, ui_amount);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_DEPOSIT);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_deposit(mud, item_id, ui_amount);
                 }
 
                 ui_amount = mud->options->offer_x ? 2 : 500;
@@ -306,45 +238,24 @@ void mudclient_draw_bank(mudclient *mud) {
                     mud->mouse_y >= mouse_y + 263 &&
                     mud->mouse_x < mouse_x + 368 &&
                     mud->mouse_y <= mouse_y + 274) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_DEPOSIT);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-                    packet_stream_put_short(mud->packet_stream, 500);
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_DEPOSIT);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    if (mud->options->offer_x) {
+                        mud->bank_offer_type = BANK_OFFER_DEPOSIT;
+                        mud->bank_offer_item = item_id;
+                        mud->show_dialog_offer_x = 1;
+                        mud->panel_message_tabs->focus_control_index = -1;
+                    } else {
+                        mudclient_bank_deposit(mud, item_id, ui_amount);
+                    }
                 }
 
-                ui_amount = mud->options->offer_x ? 2 : 2500;
+                ui_amount = mud->options->offer_x ? bank_count : 2500;
 
                 if (inventory_count >= ui_amount &&
                     mud->mouse_x >= mouse_x + 370 &&
                     mud->mouse_y >= mouse_y + 263 &&
                     mud->mouse_x < mouse_x + 400 &&
                     mud->mouse_y <= mouse_y + 274) {
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_BANK_DEPOSIT);
-
-                    packet_stream_put_short(mud->packet_stream, item_id);
-
-                    if (mud->options->offer_x) {
-                        packet_stream_put_short(mud->packet_stream,
-                                                inventory_count);
-                    } else {
-                        packet_stream_put_short(mud->packet_stream, 2500);
-                    }
-
-#ifndef REVISION_177
-                    packet_stream_put_int(mud->packet_stream,
-                                          BANK_MAGIC_DEPOSIT);
-#endif
-
-                    packet_stream_send_packet(mud->packet_stream);
+                    mudclient_bank_deposit(mud, item_id, ui_amount);
                 }
             }
         } else if (mud->bank_item_count > BANK_ITEMS_PER_PAGE &&
@@ -726,5 +637,6 @@ void mudclient_draw_bank(mudclient *mud) {
 
     if (mud->show_dialog_offer_x) {
         mudclient_draw_offer_x(mud);
+        mudclient_handle_offer_x_input(mud);
     }
 }

@@ -911,26 +911,35 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         }
 
         if (mud->options->offer_x &&
-            (char_code == ' ' || char_code == ',' || char_code == '.' ||
-             tolower(char_code) == 'k' || tolower(char_code) == 'm' ||
+            (IS_DIGIT_SEPARATOR(char_code) || IS_DIGIT_SUFFIX(char_code) ||
              isdigit(char_code))) {
-            int digits_length = 0;
-            int has_suffix = 0;
+            int digits_length = strlen(mud->input_digits_current);
 
-            while (mud->input_digits_current[digits_length]) {
-                char digit_char = mud->input_digits_current[digits_length];
+            if (digits_length < INPUT_DIGITS_LENGTH) {
+                int add_digit_char = 1;
 
-                if (tolower(digit_char) == 'k' || tolower(digit_char) == 'm') {
-                    has_suffix = 1;
-                    break;
+                if (digits_length > 0) {
+                    int last_digit_char =
+                        mud->input_digits_current[digits_length - 1];
+
+                    /* only one suffix */
+                    if (IS_DIGIT_SUFFIX(last_digit_char)) {
+                        add_digit_char = 0;
+                    } else {
+                        /* don't allow consecutive decimals or separators */
+                        add_digit_char = !(IS_DIGIT_SEPARATOR(char_code) &&
+                                           IS_DIGIT_SEPARATOR(last_digit_char));
+                    }
+                } else {
+                    /* don't allow separators or suffixes as first characters */
+                    add_digit_char = !IS_DIGIT_SUFFIX(char_code) &&
+                                     !IS_DIGIT_SEPARATOR(char_code);
                 }
 
-                digits_length++;
-            }
-
-            if (!has_suffix && digits_length < INPUT_DIGITS_LENGTH) {
-                mud->input_digits_current[digits_length] = char_code;
-                mud->input_digits_current[digits_length + 1] = '\0';
+                if (add_digit_char) {
+                    mud->input_digits_current[digits_length] = char_code;
+                    mud->input_digits_current[digits_length + 1] = '\0';
+                }
             }
         }
     }
@@ -4372,6 +4381,11 @@ void mudclient_draw_game(mudclient *mud) {
             mud->show_ui_wild_warn = 1;
         }
     }
+
+    if (!mud->show_dialog_offer_x) {
+        panel_set_focus(mud->panel_message_tabs, mud->control_text_list_all);
+    }
+
 
     mudclient_draw_chat_message_tabs_panel(mud);
     mudclient_draw_ui(mud);
