@@ -148,6 +148,7 @@
 #define CLAW_SPELL_ID 1142
 
 /* item IDs */
+#define COINS_ID 10
 #define FIRE_RUNE_ID 31
 #define FIRE_STAFF_ID 197
 #define FIRE_BATTLESTAFF_ID 615

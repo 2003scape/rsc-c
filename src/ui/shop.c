@@ -4,24 +4,27 @@ void mudclient_draw_shop(mudclient *mud) {
     int x = (mud->game_width / 2) - (SHOP_WIDTH / 2);
     int y = (mud->game_height / 2) - (SHOP_HEIGHT / 2) - 6;
 
+    printf("%d %d\n", SHOP_WIDTH, SHOP_HEIGHT);
+
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
 
         int mouse_x = mud->mouse_x - x;
         int mouse_y = mud->mouse_y - y;
 
-        if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < 408 && mouse_y < 246) {
+        if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < SHOP_WIDTH &&
+            mouse_y < SHOP_HEIGHT) {
             int item_index = 0;
 
-            for (int row = 0; row < 5; row++) {
-                for (int col = 0; col < 8; col++) {
-                    int slot_x = 7 + col * SHOP_SLOT_WIDTH;
-                    int slot_y = 28 + row * SHOP_SLOT_HEIGHT;
+            for (int row = 0; row < SHOP_ROWS; row++) {
+                for (int column = 0; column < SHOP_COLUMNS; column++) {
+                    int slot_x = 7 + column * ITEM_GRID_SLOT_WIDTH;
+                    int slot_y = 28 + row * ITEM_GRID_SLOT_HEIGHT;
 
                     if (mouse_x > slot_x &&
-                        mouse_x < slot_x + SHOP_SLOT_WIDTH &&
+                        mouse_x < slot_x + ITEM_GRID_SLOT_WIDTH &&
                         mouse_y > slot_y &&
-                        mouse_y < slot_y + SHOP_SLOT_HEIGHT &&
+                        mouse_y < slot_y + ITEM_GRID_SLOT_HEIGHT &&
                         mud->shop_items[item_index] != -1) {
                         mud->shop_selected_item_index = item_index;
                         mud->shop_selected_item_type =
@@ -38,8 +41,8 @@ void mudclient_draw_shop(mudclient *mud) {
                 if (item_id != -1) {
                     if (mud->shop_items_count[mud->shop_selected_item_index] >
                             0 &&
-                        mouse_x > 298 && mouse_y >= 204 && mouse_x < 408 &&
-                        mouse_y <= 215) {
+                        mouse_x > 298 && mouse_y >= 204 &&
+                        mouse_x < SHOP_WIDTH && mouse_y <= 215) {
                         int price_mod = mud->shop_buy_price_mod +
                                         mud->shop_items_price
                                             [mud->shop_selected_item_index];
@@ -98,99 +101,52 @@ void mudclient_draw_shop(mudclient *mud) {
         }
     }
 
-    surface_draw_box(mud->surface, x, y, 408, 12,
-                     TITLE_BAR_COLOUR);
+    surface_draw_box(mud->surface, x, y, SHOP_WIDTH, 12, TITLE_BAR_COLOUR);
+    surface_draw_box_alpha(mud->surface, x, y + 12, SHOP_WIDTH, 17, GREY_98,
+                           160);
+    surface_draw_box_alpha(mud->surface, x, y + 29, 8, 170, GREY_98, 160);
+    surface_draw_box_alpha(mud->surface, x + 399, y + 29, 9, 170, GREY_98, 160);
+    surface_draw_box_alpha(mud->surface, x, y + 199, SHOP_WIDTH, 47, GREY_98,
+                           160);
 
-    surface_draw_box_alpha(mud->surface, x, y + 12, 408, 17,
-                           GREY_98, 160);
-
-    surface_draw_box_alpha(mud->surface, x, y + 29, 8, 170,
-                           GREY_98, 160);
-
-    surface_draw_box_alpha(mud->surface, x + 399, y + 29, 9, 170,
-                           GREY_98, 160);
-
-    surface_draw_box_alpha(mud->surface, x, y + 199, 408, 47,
-                           GREY_98, 160);
-
-    surface_draw_string(mud->surface, "Buying and selling items", x + 1,
-                        y + 10, 1, WHITE);
+    surface_draw_string(mud->surface, "Buying and selling items", x + 1, y + 10,
+                        1, WHITE);
 
     int text_colour = WHITE;
 
     if (mud->mouse_x > x + 320 && mud->mouse_y >= y &&
-        mud->mouse_x < x + 408 && mud->mouse_y < y + 12) {
+        mud->mouse_x < x + SHOP_WIDTH && mud->mouse_y < y + 12) {
         text_colour = RED;
     }
 
-    surface_draw_string_right(mud->surface, "Close window", x + 406,
-                              y + 10, 1, text_colour);
+    surface_draw_string_right(mud->surface, "Close window", x + 406, y + 10, 1,
+                              text_colour);
 
-    surface_draw_string(mud->surface, "Shops stock in green", x + 2,
-                        y + 24, 1, GREEN);
+    surface_draw_string(mud->surface, "Shops stock in green", x + 2, y + 24, 1,
+                        GREEN);
 
-    surface_draw_string(mud->surface, "Number you own in blue", x + 135,
-                        y + 24, 1, CYAN);
+    surface_draw_string(mud->surface, "Number you own in blue", x + 135, y + 24,
+                        1, CYAN);
 
     char formatted_money[26] = {0};
 
     sprintf(formatted_money, "Your money: %dgp",
             mudclient_get_inventory_count(mud, COINS_ID));
 
-    surface_draw_string(mud->surface, formatted_money, x + 280,
-                        y + 24, 1, YELLOW);
+    surface_draw_string(mud->surface, formatted_money, x + 280, y + 24, 1,
+                        YELLOW);
 
-    int item_index = 0;
+    surface_draw_item_grid(mud->surface, x + 7, y + 28, SHOP_ROWS, SHOP_COLUMNS,
+                           mud->shop_items, mud->shop_items_count,
+                           SHOP_ROWS * SHOP_COLUMNS,
+                           mud->shop_selected_item_index);
 
-    for (int row = 0; row < 5; row++) {
-        for (int col = 0; col < 8; col++) {
-            int slot_x = x + 7 + col * SHOP_SLOT_WIDTH;
-            int slot_y = y + 28 + row * SHOP_SLOT_HEIGHT;
-
-            int slot_colour =
-                mud->shop_selected_item_index == item_index ? RED : GREY_D0;
-
-            surface_draw_box_alpha(mud->surface, slot_x, slot_y,
-                                   SHOP_SLOT_WIDTH, SHOP_SLOT_HEIGHT,
-                                   slot_colour, 160);
-
-            surface_draw_box_edge(mud->surface, slot_x, slot_y, 50, 35, BLACK);
-
-            int item_id = mud->shop_items[item_index];
-
-            if (mud->shop_items[item_index] != -1) {
-                surface_sprite_clipping_from9(
-                    mud->surface, slot_x, slot_y, SHOP_SLOT_WIDTH - 1,
-                    SHOP_SLOT_HEIGHT - 2,
-                    mud->sprite_item + game_data_item_picture[item_id],
-                    game_data_item_mask[item_id], 0, 0, 0);
-
-                char formatted_amount[12] = {0};
-
-                sprintf(formatted_amount, "%d",
-                        mud->shop_items_count[item_index]);
-
-                surface_draw_string(mud->surface, formatted_amount, slot_x + 1,
-                                    slot_y + 10, 1, GREEN);
-
-                sprintf(formatted_amount, "%d",
-                        mudclient_get_inventory_count(mud, item_id));
-
-                surface_draw_string_right(mud->surface, formatted_amount,
-                                          slot_x + 47, slot_y + 10, 1, CYAN);
-            }
-
-            item_index++;
-        }
-    }
-
-    surface_draw_line_horizontal(mud->surface, x + 5, y + 222,
-                                 398, 0);
+    surface_draw_line_horizontal(mud->surface, x + 5, y + 222, 398, 0);
 
     if (mud->shop_selected_item_index == -1) {
         surface_draw_string_centre(mud->surface,
-                                   "Select an object to buy or sell",
-                                   x + 204, y + 214, 3, YELLOW);
+                                   "Select an object to buy or sell", x + 204,
+                                   y + 214, 3, YELLOW);
 
         return;
     }
@@ -217,21 +173,18 @@ void mudclient_draw_shop(mudclient *mud) {
             sprintf(formatted_buy, "Buy a new %s for %dgp", item_name,
                     item_price);
 
-            surface_draw_string(mud->surface, formatted_buy, x + 2,
-                                y + 214, 1, YELLOW);
+            surface_draw_string(mud->surface, formatted_buy, x + 2, y + 214, 1,
+                                YELLOW);
 
             text_colour = WHITE;
 
-            if (mud->mouse_x > x + 298 &&
-                mud->mouse_y >= y + 204 &&
-                mud->mouse_x < x + 408 &&
-                mud->mouse_y <= y + 215) {
+            if (mud->mouse_x > x + 298 && mud->mouse_y >= y + 204 &&
+                mud->mouse_x < x + SHOP_WIDTH && mud->mouse_y <= y + 215) {
                 text_colour = RED;
             }
 
             surface_draw_string_right(mud->surface, "Click here to buy",
-                                      x + 405, y + 214, 3,
-                                      text_colour);
+                                      x + 405, y + 214, 3, text_colour);
         } else {
             surface_draw_string_centre(
                 mud->surface, "This item is not currently available to buy",
@@ -257,20 +210,18 @@ void mudclient_draw_shop(mudclient *mud) {
             sprintf(formatted_sell, "Sell your %s for %dgp", item_name,
                     item_price);
 
-            surface_draw_string_right(mud->surface, formatted_sell,
-                                      x + 405, y + 239, 1,
-                                      YELLOW);
+            surface_draw_string_right(mud->surface, formatted_sell, x + 405,
+                                      y + 239, 1, YELLOW);
 
             text_colour = WHITE;
 
             if (mud->mouse_x > x + 2 && mud->mouse_y >= y + 229 &&
-                mud->mouse_x < x + 112 &&
-                mud->mouse_y <= y + 240) {
+                mud->mouse_x < x + 112 && mud->mouse_y <= y + 240) {
                 text_colour = RED;
             }
 
-            surface_draw_string(mud->surface, "Click here to sell",
-                                x + 2, y + 239, 3, text_colour);
+            surface_draw_string(mud->surface, "Click here to sell", x + 2,
+                                y + 239, 3, text_colour);
 
             return;
         }

@@ -3910,6 +3910,7 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     surface_draw_line_horizontal(surface, x, y + height, width, BLACK);
 }
 
+/* used in bank and shop */
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int columns, int *items, int *items_count,
                             int items_length, int selected) {
