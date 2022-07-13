@@ -941,6 +941,7 @@ void mudclient_change_password(mudclient *mud, char *old_password,
                                char *new_password);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
+void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
 
 #ifdef _3DS

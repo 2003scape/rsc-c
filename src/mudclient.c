@@ -1,5 +1,12 @@
 #include "mudclient.h"
 
+#ifdef EMSCRIPTEN
+mudclient *global_mud = NULL;
+
+EM_JS(int, get_canvas_width, (), { return canvas.width; });
+EM_JS(int, get_canvas_height, (), { return canvas.height; });
+#endif
+
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
@@ -428,7 +435,7 @@ void mudclient_new(mudclient *mud) {
     mud->thread_sleep = 10;
     // mud->server = "192.168.100.103";
     mud->server = "127.0.0.1";
-    mud->port = 43594;
+    mud->port = 43595;
     // mud->server = "162.198.202.160"; /* openrsc preservation */
     // mud->port = 43596;
     // mud->port = 43496; /* websockets */
@@ -4397,6 +4404,13 @@ void mudclient_draw_game(mudclient *mud) {
 }
 
 void mudclient_draw(mudclient *mud) {
+#ifdef EMSCRIPTEN
+    if (get_canvas_width() != mud->game_width ||
+        get_canvas_height() != mud->game_height) {
+        mudclient_on_resize(mud);
+    }
+#endif
+
     if (mud->error_loading_data) {
         /* TODO draw error */
         // printf("ERROR LOADING DATA\n");
@@ -4436,6 +4450,63 @@ void mudclient_draw(mudclient *mud) {
 #ifdef RENDER_GL
     SDL_GL_SwapWindow(mud->gl_window);
 #endif
+}
+
+void mudclient_on_resize(mudclient *mud) {
+    int new_width = 0;
+    int new_height = 0;
+
+#ifdef EMSCRIPTEN
+    new_width = get_canvas_width();
+    new_height = get_canvas_height();
+#ifdef RENDER_SW
+    SDL_SetWindowSize(mud->window, new_width, new_height);
+#elif RENDER_GL
+    SDL_SetWindowSize(mud->gl_window, new_width, new_height);
+#endif
+#elif defined(RENDER_GL) && defined(RENDER_SW)
+    if (event.window.windowID == SDL_GetWindowID(mud->window)) {
+        SDL_GetWindowSize(mud->window, &new_width, &new_height);
+    } else {
+        SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
+    }
+#elif defined(RENDER_GL)
+    SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
+#elif defined(RENDER_SW)
+    SDL_GetWindowSize(mud->window, &new_width, &new_height);
+#endif
+
+    int old_height = mud->game_height - 12;
+
+    mud->game_width = new_width;
+    mud->game_height = new_height;
+
+    if (mud->surface != NULL) {
+        mud->surface->width = new_width;
+        mud->surface->height = new_height;
+
+        surface_reset_bounds(mud->surface);
+    }
+
+    if (mud->scene != NULL) {
+#ifdef RENDER_SW
+        int scanlines_length = (old_height / 2) * 2;
+
+        for (int i = 0; i < scanlines_length; i++) {
+            free(mud->scene->scanlines[i]);
+            mud->scene->scanlines[i] = NULL;
+        }
+
+        free(mud->scene->scanlines);
+#endif
+
+        // TODO change 12 to bar height - 1
+        scene_set_bounds(mud->scene, new_width, new_height - 12);
+
+        printf("height %d\n", mud->scene->base_y * 2);
+    }
+
+    mudclient_resize(mud);
 }
 
 void mudclient_poll_events(mudclient *mud) {
@@ -4947,52 +5018,7 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                int new_width = 0;
-                int new_height = 0;
-
-#if defined(RENDER_GL) && defined(RENDER_SW)
-                if (event.window.windowID == SDL_GetWindowID(mud->window)) {
-                    SDL_GetWindowSize(mud->window, &new_width, &new_height);
-                } else {
-                    SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
-                }
-#elif defined(RENDER_GL)
-                SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
-#elif defined(RENDER_SW)
-                SDL_GetWindowSize(mud->window, &new_width, &new_height);
-#endif
-
-                int old_height = mud->game_height - 12;
-
-                mud->game_width = new_width;
-                mud->game_height = new_height;
-
-                if (mud->surface != NULL) {
-                    mud->surface->width = new_width;
-                    mud->surface->height = new_height;
-
-                    surface_reset_bounds(mud->surface);
-                }
-
-                if (mud->scene != NULL) {
-#ifdef RENDER_SW
-                    int scanlines_length = (old_height / 2) * 2;
-
-                    for (int i = 0; i < scanlines_length; i++) {
-                        free(mud->scene->scanlines[i]);
-                        mud->scene->scanlines[i] = NULL;
-                    }
-
-                    free(mud->scene->scanlines);
-#endif
-
-                    // TODO change 12 to bar height - 1
-                    scene_set_bounds(mud->scene, new_width, new_height - 12);
-
-                    printf("height %d\n", mud->scene->base_y * 2);
-                }
-
-                mudclient_resize(mud);
+                mudclient_on_resize(mud);
             }
             break;
         }
@@ -5434,6 +5460,11 @@ int main(int argc, char **argv) {
     init_stats_tab_global();
 
     mudclient *mud = malloc(sizeof(mudclient));
+
+#ifdef EMSCRIPTEN
+    global_mud = mud;
+#endif
+
     mudclient_new(mud);
 
     if (argc > 1 && strcmp(argv[1], "members") == 0) {

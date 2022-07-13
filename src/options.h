@@ -67,6 +67,12 @@ typedef struct Options {
 
     /* add filtering to the bank */
     int bank_search;
+
+    /* adds item totals to the bank */
+    int bank_totals;
+
+    /* adds a deposit-all from inventory to the bank */
+    int bank_deposit_all;
 } Options;
 
 void options_new(Options *options);
