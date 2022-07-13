@@ -64,6 +64,9 @@ typedef struct Options {
 
     /* add another button to perform the last offer x amount */
     int last_offer_x;
+
+    /* add filtering to the bank */
+    int bank_search;
 } Options;
 
 void options_new(Options *options);

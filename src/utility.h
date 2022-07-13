@@ -76,7 +76,9 @@ extern int sin_cos_2048[2048];
 extern int BITMASK[];
 
 void init_utility_global();
+
 void strtrim(char *s);
+void strtolower(char *s);
 
 int get_unsigned_byte(int8_t i);
 int get_unsigned_short(int8_t *buffer, int offset);

@@ -27,16 +27,6 @@ void mudclient_packet_tick(mudclient *mud) {
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
-        /* TODO remove
-        SDL_SetWindowSize(mud->window, 512 * 2, 346 * 2);
-
-        {
-            SDL_Event test = {0};
-            test.type = SDL_WINDOWEVENT;
-            test.window.event = SDL_WINDOWEVENT_RESIZED;
-            SDL_PushEvent(&test);
-        }*/
-
         mud->loading_area = 1;
         mud->local_player_server_index = get_unsigned_short(data, 1);
         mud->plane_width = get_unsigned_short(data, 3);
@@ -137,18 +127,6 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if ((sprite & 12) == 12) {
                         offset += 2;
-
-                        /* this causes flashing in combat and GameCharacter
-                         * instances are re-used anyway
-                        for (int j = 0; j < PLAYERS_MAX; j++) {
-                            if (player == mud->players[j]) {
-                                mud->players[j] = NULL;
-                            }
-                        }
-
-                        mud->player_server[player->server_index] = NULL;
-                        // mud->players[i] = NULL;
-                        free(player);*/
                         continue;
                     }
 
@@ -211,7 +189,6 @@ void mudclient_packet_tick(mudclient *mud) {
             }
 
             packet_stream_send_packet(mud->packet_stream);
-            // player_count = 0;
         }
         break;
     }
@@ -574,17 +551,6 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if ((sprite & 12) == 12) {
                         offset += 2;
-
-                        /* TODO we need a different way to free NPCs - or not,
-                         * add_npc looks like it can re-use existing objects
-                        for (int j = 0; j < NPCS_MAX; j++) {
-                            if (npc == mud->npcs[j]) {
-                                mud->npcs[j] = NULL;
-                            }
-                        }
-
-                        mud->npcs_server[npc->server_index] = NULL;
-                        free(npc);*/
                         continue;
                     }
 
@@ -1319,6 +1285,10 @@ void mudclient_packet_tick(mudclient *mud) {
         }
 
         mudclient_update_bank_items(mud);
+
+        if (mud->options->bank_search) {
+            memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
+        }
         break;
     }
     case SERVER_BANK_CLOSE: {
@@ -1327,9 +1297,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_BANK_UPDATE: {
         int offset = 1;
-
         int item_index = data[offset++] & 0xff;
-
         int item = get_unsigned_short(data, offset);
         offset += 2;
 
@@ -1364,7 +1332,6 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->show_dialog_shop = 1;
 
         int offset = 1;
-
         int new_item_count = data[offset++] & 0xff;
         int is_general = data[offset++];
 
@@ -1380,7 +1347,6 @@ void mudclient_packet_tick(mudclient *mud) {
             offset += 2;
 
             mud->shop_items_count[i] = get_unsigned_short(data, offset);
-
             offset += 2;
 
             mud->shop_items_price[i] = data[offset++];

@@ -4097,15 +4097,15 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    float x = (float)(scene->surface->height - 13) / 1000.0f;
+    float scaled_scene_height = (float)(scene->surface->height - 13) / 1000.0f;
 
     /* no idea, i just used cubic regression */
-    float fov_test = (-0.1608132078 * powf(x, 3)) -
-                     (0.3012063997 * powf(x, 2)) + (2.0149949882 * x) -
-                     0.0030409762;
+    float fov = (-0.1608132078 * powf(scaled_scene_height, 3)) -
+                (0.3012063997 * powf(scaled_scene_height, 2)) +
+                (2.0149949882 * scaled_scene_height) - 0.0030409762;
 
     glm_perspective(
-        fov_test,
+        fov,
         (float)(scene->surface->width) / (float)(scene->surface->height - 13),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
 

@@ -4,8 +4,6 @@ void mudclient_draw_shop(mudclient *mud) {
     int x = (mud->game_width / 2) - (SHOP_WIDTH / 2);
     int y = (mud->game_height / 2) - (SHOP_HEIGHT / 2) - 6;
 
-    printf("%d %d\n", SHOP_WIDTH, SHOP_HEIGHT);
-
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
 

@@ -863,6 +863,7 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             mud->show_change_password_step == 0 &&
             mud->show_dialog_social_input == 0 &&
             mud->show_dialog_offer_x == 0 &&
+            !(mud->options->bank_search && mud->show_dialog_bank) &&
             /*mud->show_dialog_report_abuse_step == 0 &&*/
             !mud->is_sleeping &&
             mud->panel_message_tabs) {

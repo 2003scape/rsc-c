@@ -40,6 +40,12 @@ void strtrim(char *s) {
     memmove(s, p, l + 1);
 }
 
+void strtolower(char *s) {
+    for(int i = 0; s[i]; i++){
+        s[i] = tolower(s[i]);
+    }
+}
+
 int get_unsigned_byte(int8_t i) { return i & 0xff; }
 
 int get_unsigned_short(int8_t *buffer, int offset) {

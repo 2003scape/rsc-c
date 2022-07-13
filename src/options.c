@@ -18,4 +18,5 @@ void options_new(Options *options) {
     options->off_handle_scroll_drag = 1;
     //options->offer_x = 1;
     //options->last_offer_x = 1;
+    options->bank_search = 1;
 }
