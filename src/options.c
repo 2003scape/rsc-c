@@ -16,5 +16,6 @@ void options_new(Options *options) {
     options->inventory_count = 1;
     options->anti_macro = 0;
     options->off_handle_scroll_drag = 1;
-    options->offer_x = 1;
+    //options->offer_x = 1;
+    //options->last_offer_x = 1;
 }

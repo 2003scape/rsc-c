@@ -215,6 +215,7 @@ void mudclient_draw_trade(mudclient *mud) {
         if (i < 5) {
             surface_draw_line_vertical(mud->surface, dialog_x + 8 + i * 49,
                                        dialog_y + 30, 103, BLACK);
+
             surface_draw_line_vertical(mud->surface, dialog_x + 8 + i * 49,
                                        dialog_y + 155, 103, BLACK);
         }

@@ -61,6 +61,7 @@ typedef struct Options {
 
     /* allow inputting item amounts */
     int offer_x;
+    int last_offer_x;
 } Options;
 
 void options_new(Options *options);

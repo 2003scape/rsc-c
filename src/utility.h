@@ -100,6 +100,7 @@ int get_ticks();
 void delay_ticks(int ticks);
 void get_level_difference_colour(int level_difference, char *colour);
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
+void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands, char *dest);
 
 #ifdef RENDER_GL
 float gl_translate_coord(int position, int range);

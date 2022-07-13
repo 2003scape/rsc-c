@@ -859,10 +859,13 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             return;
         }
 
-        if (mud->show_change_password_step == 0 &&
+        if (
+            mud->show_change_password_step == 0 &&
             mud->show_dialog_social_input == 0 &&
+            mud->show_dialog_offer_x == 0 &&
             /*mud->show_dialog_report_abuse_step == 0 &&*/
-            !mud->is_sleeping && mud->panel_message_tabs) {
+            !mud->is_sleeping &&
+            mud->panel_message_tabs) {
             panel_key_press(mud->panel_message_tabs, key_code);
         }
 
@@ -4381,11 +4384,6 @@ void mudclient_draw_game(mudclient *mud) {
             mud->show_ui_wild_warn = 1;
         }
     }
-
-    if (!mud->show_dialog_offer_x) {
-        panel_set_focus(mud->panel_message_tabs, mud->control_text_list_all);
-    }
-
 
     mudclient_draw_chat_message_tabs_panel(mud);
     mudclient_draw_ui(mud);

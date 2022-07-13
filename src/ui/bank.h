@@ -21,8 +21,10 @@
 #define BANK_OFFER_WITHDRAW 1
 #define BANK_OFFER_DEPOSIT 2
 
-void mudclient_bank_withdraw(mudclient *mud, int item_id, int amount);
-void mudclient_bank_deposit(mudclient *mud, int item_id, int amount);
+void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
+                                int opcode);
+void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
+                                 int y);
 void mudclient_draw_bank(mudclient *mud);
 
 #endif
