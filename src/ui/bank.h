@@ -7,11 +7,10 @@
 #include "../packet-stream.h"
 #include "../surface.h"
 
-#define BANK_SLOT_WIDTH 49
-#define BANK_SLOT_HEIGHT 34
-
 #define BANK_WIDTH 408
 #define BANK_HEIGHT 334
+
+#define BANK_PAGE_BUTTON_WIDTH 65
 
 #define BANK_ITEMS_PER_PAGE 48
 
@@ -24,7 +23,7 @@
 void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
                                 int opcode);
 void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
-                                 int y);
+                                 int y, int transaction_opcode);
 void mudclient_draw_bank(mudclient *mud);
 
 #endif

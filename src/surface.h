@@ -50,6 +50,9 @@
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
+#define ITEM_GRID_SLOT_WIDTH 49
+#define ITEM_GRID_SLOT_HEIGHT 34
+
 // TODO #define FONT_12PT_BOLD etc
 
 typedef struct Surface Surface;
@@ -171,12 +174,13 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id);
 void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
                                      int texture_index, int mask_colour,
                                      int skin_colour, int alpha, int width,
-                                     int height, int (*points)[2], float depth_top,
-                                     float depth_bottom);
+                                     int height, int (*points)[2],
+                                     float depth_top, float depth_bottom);
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
-                              int flip, int rotation, float depth_top, float depth_bottom);
+                              int flip, int rotation, float depth_top,
+                              float depth_bottom);
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
                                  int colour, int font_id, int draw_shadow);
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
@@ -190,7 +194,8 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface);
 void surface_gl_draw(Surface *surface, int use_depth);
 #endif
 
-void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x, int max_y);
+void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,
+                        int max_y);
 void surface_reset_bounds(Surface *surface);
 void surface_reset_draw(Surface *surface);
 void surface_draw(Surface *surface);
@@ -211,7 +216,8 @@ void surface_draw_line_horizontal_software(Surface *surface, int x, int y,
                                            int width, int colour);
 void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
                                   int colour);
-void surface_draw_line_vertical_software(Surface *surface, int x, int y, int height, int colour);
+void surface_draw_line_vertical_software(Surface *surface, int x, int y,
+                                         int height, int colour);
 void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
                                 int colour);
 void surface_draw_box_edge(Surface *surface, int x, int y, int width,
@@ -283,9 +289,10 @@ void surface_draw_minimap(int32_t *dest, int32_t *src, int j, int k, int l,
 void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
                                     int l, int i1, int j1, int k1, int l1);
 void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
-                                   int draw_width, int draw_height,
-                                   int sprite_id, int mask_colour,
-                                   int skin_colour, int skew_x, int flip);
+                                            int draw_width, int draw_height,
+                                            int sprite_id, int mask_colour,
+                                            int skin_colour, int skew_x,
+                                            int flip);
 void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
                                          int draw_width, int draw_height,
                                          int sprite_id, int mask_colour,
@@ -334,5 +341,8 @@ int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
+void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
+                            int columns, int *items, int *items_count,
+                            int items_length, int selected);
 
 #endif

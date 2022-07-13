@@ -3909,3 +3909,50 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
 
     surface_draw_line_horizontal(surface, x, y + height, width, BLACK);
 }
+
+void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
+                            int columns, int *items, int *items_count,
+                            int items_length, int selected) {
+    int item_index = 0;
+
+    for (int row = 0; row < rows; row++) {
+        for (int column = 0; column < columns; column++) {
+            int slot_x = x + column * ITEM_GRID_SLOT_WIDTH;
+            int slot_y = y + row * ITEM_GRID_SLOT_HEIGHT;
+            int slot_colour = selected == item_index ? RED : GREY_D0;
+
+            surface_draw_box_alpha(surface, slot_x, slot_y,
+                                   ITEM_GRID_SLOT_WIDTH, ITEM_GRID_SLOT_HEIGHT,
+                                   slot_colour, 160);
+
+            surface_draw_box_edge(surface, slot_x, slot_y,
+                                  ITEM_GRID_SLOT_WIDTH + 1,
+                                  ITEM_GRID_SLOT_HEIGHT + 1, BLACK);
+
+            int item_id = items[item_index];
+
+            if (item_index < items_length && item_id != -1) {
+                surface_sprite_clipping_from9(
+                    surface, slot_x, slot_y, ITEM_GRID_SLOT_WIDTH - 1,
+                    ITEM_GRID_SLOT_HEIGHT - 2,
+                    surface->mud->sprite_item + game_data_item_picture[item_id],
+                    game_data_item_mask[item_id], 0, 0, 0);
+
+                char formatted_amount[12] = {0};
+
+                sprintf(formatted_amount, "%d", items_count[item_index]);
+
+                surface_draw_string(surface, formatted_amount, slot_x + 1,
+                                    slot_y + 10, 1, GREEN);
+
+                sprintf(formatted_amount, "%d",
+                        mudclient_get_inventory_count(surface->mud, item_id));
+
+                surface_draw_string_right(surface, formatted_amount,
+                                          slot_x + 47, slot_y + 29, 1, CYAN);
+            }
+
+            item_index++;
+        }
+    }
+}
