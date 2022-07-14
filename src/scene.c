@@ -80,10 +80,11 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
 
 #ifdef EMSCRIPTEN
+    shader_new(&scene->game_model_shader, "./cache/game-model.webgl.vs",
+               "./cache/game-model.webgl.fs");
+#else
     shader_new(&scene->game_model_shader, "./cache/game-model.vs",
                "./cache/game-model.fs");
-#else
-    shader_new(&scene->game_model_shader, "./game-model.vs", "./game-model.fs");
 #endif
 
     for (int i = 0; i < RAMP_SIZE; i++) {
@@ -107,7 +108,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
                              &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
                              WALL_OBJECTS_MAX * 6);
 
-    shader_set_int(&scene->game_model_shader, "vertex_scale", VERTEX_SCALE);
+    shader_set_float(&scene->game_model_shader, "vertex_scale", (float)VERTEX_SCALE);
 
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
                            scene->light_gradient, RAMP_SIZE);
@@ -3228,7 +3229,8 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
                 palette[colours[sprite_y + sprite_x * texture_width] & 0xff];
 
             if (colour != MAGENTA) {
-                texture_pixels[raster_position] = 0xff000000 + (colour & 0xf8f8ff);
+                texture_pixels[raster_position] =
+                    0xff000000 + (colour & 0xf8f8ff);
             }
 
             raster_position++;
@@ -4151,11 +4153,11 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         shader_set_vec3(&scene->game_model_shader, "light_direction",
                         light_direction);
 
-        shader_set_int(&scene->game_model_shader, "light_diffuse",
-                       game_model->light_diffuse);
+        shader_set_float(&scene->game_model_shader, "light_diffuse",
+                       (float)game_model->light_diffuse);
 
-        shader_set_int(&scene->game_model_shader, "light_direction_magnitude",
-                       game_model->light_direction_magnitude);
+        shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
+                       (float)game_model->light_direction_magnitude);
     }
 
     glCullFace(GL_BACK);

@@ -1,18 +1,21 @@
-#version 330 core
+#version 300 es
+
+precision mediump float;
+
 out vec4 fragment_colour;
 
 in vec4 vertex_colour;
 in vec3 vertex_skin_colour;
 in vec3 vertex_texture_position;
 
-uniform sampler2DArray textures;
+uniform mediump sampler2DArray textures;
 
 uniform bool interlace;
 
-uniform int bounds_min_x;
-uniform int bounds_max_x;
-uniform int bounds_min_y;
-uniform int bounds_max_y;
+uniform float bounds_min_x;
+uniform float bounds_max_x;
+uniform float bounds_min_y;
+uniform float bounds_max_y;
 
 void main() {
     if (interlace && int(gl_FragCoord.y) % 2 == 0) {
@@ -24,7 +27,7 @@ void main() {
         discard;
     }
 
-    if (vertex_texture_position.z > -1) {
+    if (vertex_texture_position.z > -1.0f) {
         vec4 texture_colour = texture(textures, vertex_texture_position);
 
         /* sprite pixel is not transparent */

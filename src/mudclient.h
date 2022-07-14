@@ -870,7 +870,6 @@ void mudclient_reset_timings(mudclient *mud);
 void mudclient_start(mudclient *mud);
 void mudclient_stop(mudclient *mud);
 
-/* TODO loader.c */
 void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent);
@@ -971,5 +970,4 @@ void mudclient_walk_to_wall_object(mudclient *mud, int dest_x, int dest_y,
 void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
                               int id);
 int main(int argc, char **argv);
-
 #endif

@@ -1,8 +1,6 @@
 #include "mudclient.h"
 
 #ifdef EMSCRIPTEN
-mudclient *global_mud = NULL;
-
 EM_JS(int, get_canvas_width, (), { return canvas.width; });
 EM_JS(int, get_canvas_height, (), { return canvas.height; });
 #endif
@@ -5460,11 +5458,6 @@ int main(int argc, char **argv) {
     init_stats_tab_global();
 
     mudclient *mud = malloc(sizeof(mudclient));
-
-#ifdef EMSCRIPTEN
-    global_mud = mud;
-#endif
-
     mudclient_new(mud);
 
     if (argc > 1 && strcmp(argv[1], "members") == 0) {

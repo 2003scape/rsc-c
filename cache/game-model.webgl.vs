@@ -1,4 +1,4 @@
-#version 330 core
+#version 300 es
 
 #define FOUNTAIN_ID 17
 #define RAMP_SIZE 256
@@ -15,7 +15,7 @@ layout(location = 6) in vec3 back_texture_position;
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
 
-uniform int vertex_scale;
+uniform float vertex_scale;
 
 uniform float scroll_texture;
 
@@ -31,8 +31,8 @@ uniform bool unlit;
 
 uniform int light_ambience;
 uniform vec3 light_direction;
-uniform int light_diffuse;
-uniform int light_direction_magnitude;
+uniform float light_diffuse;
+uniform float light_direction_magnitude;
 
 uniform bool cull_front;
 
@@ -41,7 +41,7 @@ void main() {
 
     int face_intensity = int(lighting.x);
     int vertex_intensity = int(lighting.y);
-    int normal_magnitude = int(normal.w);
+    float normal_magnitude = normal.w;
     int intensity = 0;
 
     if (unlit) {
@@ -53,7 +53,8 @@ void main() {
     } else {
         vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 
-        int divisor = (light_diffuse * light_direction_magnitude) / RAMP_SIZE;
+        float divisor =
+            (light_diffuse * light_direction_magnitude) / float(RAMP_SIZE);
 
         intensity = int(
             dot(model_normal * vertex_scale, light_direction * vertex_scale) /
@@ -74,7 +75,7 @@ void main() {
 
     bool foggy = false;
 
-    if (gl_Position.z > (fog_distance / float(vertex_scale))) {
+    if (gl_Position.z > (float(fog_distance) / vertex_scale)) {
         gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
         foggy = true;
     }
@@ -85,14 +86,15 @@ void main() {
         gradient_index = 0;
     }
 
-    float lightness = 1;
+    float lightness = 1.0f;
 
-    if (vertex_texture_position.z > -1) {
-        // TODO light_gradient looks ok here too.
-        lightness = foggy ? light_gradient[gradient_index] : texture_light_gradient[gradient_index];
-        //lightness = light_gradient[gradient_index];
+    if (vertex_texture_position.z > -1.0f) {
+        lightness = foggy ? light_gradient[gradient_index]
+                          : texture_light_gradient[gradient_index];
 
-        if (vertex_texture_position.z == FOUNTAIN_ID) {
+        // lightness = light_gradient[gradient_index];
+
+        if (vertex_texture_position.z == float(FOUNTAIN_ID)) {
             vertex_texture_position.y -= scroll_texture;
         }
     } else {

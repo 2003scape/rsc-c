@@ -74,11 +74,13 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
 #ifdef RENDER_GL
     surface_gl_create_framebuffer(surface);
+
     /* coloured quads */
 #ifdef EMSCRIPTEN
-    shader_new(&surface->gl_flat_shader, "./cache/flat.vs", "./cache/flat.fs");
+    shader_new(&surface->gl_flat_shader, "./cache/flat.webgl.vs",
+               "./cache/flat.webgl.fs");
 #else
-    shader_new(&surface->gl_flat_shader, "./flat.vs", "./flat.fs");
+    shader_new(&surface->gl_flat_shader, "./cache/flat.vs", "./cache/flat.fs");
 #endif
 
     shader_use(&surface->gl_flat_shader);
@@ -889,17 +891,17 @@ void surface_gl_draw(Surface *surface, int use_depth) {
 
         int interlace = surface->interlace;
 
-        shader_set_int(&surface->gl_flat_shader, "bounds_min_x",
-                       context->min_x);
+        shader_set_float(&surface->gl_flat_shader, "bounds_min_x",
+                       (float)context->min_x);
 
-        shader_set_int(&surface->gl_flat_shader, "bounds_max_x",
-                       context->max_x);
+        shader_set_float(&surface->gl_flat_shader, "bounds_max_x",
+                       (float)context->max_x);
 
-        shader_set_int(&surface->gl_flat_shader, "bounds_min_y",
-                       surface->height - context->min_y);
+        shader_set_float(&surface->gl_flat_shader, "bounds_min_y",
+                       (float)(surface->height - context->min_y));
 
-        shader_set_int(&surface->gl_flat_shader, "bounds_max_y",
-                       surface->height - context->max_y);
+        shader_set_float(&surface->gl_flat_shader, "bounds_max_y",
+                       (float)(surface->height - context->max_y));
 
         GLuint texture_array_id = context->texture_id;
 

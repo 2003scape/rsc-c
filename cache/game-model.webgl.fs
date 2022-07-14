@@ -1,30 +1,32 @@
-#version 330 core
+#version 300 es
+
+precision mediump float;
+
 out vec4 fragment_colour;
 
 in vec4 vertex_colour;
 in vec3 vertex_texture_position;
 
-uniform sampler2DArray textures;
+uniform mediump sampler2DArray textures;
 
 uniform bool interlace;
 
 void main() {
-    /* why not :) */
     if (interlace && int(gl_FragCoord.y) % 2 == 0) {
         discard;
     }
 
-    if (vertex_texture_position.z > -1) {
+    if (vertex_texture_position.z > -1.0f) {
         fragment_colour = texture(textures, vertex_texture_position);
 
-        if (vertex_colour.x > -1) {
+        if (vertex_colour.x > -1.0f) {
             fragment_colour *= vertex_colour;
         }
     } else {
         fragment_colour = vertex_colour;
     }
 
-    if (fragment_colour.w <= 0.0) {
+    if (fragment_colour.w <= 0.0f) {
         discard;
     }
 
