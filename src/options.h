@@ -12,7 +12,7 @@ typedef struct Options {
      * enabled) */
     int mouse_wheel;
 
-    /* click the compas to face north */
+    /* click the compass to face north */
     int reset_compass;
 
     /* show roofs unless inside buildings */
@@ -68,11 +68,23 @@ typedef struct Options {
     /* add filtering to the bank */
     int bank_search;
 
-    /* adds item totals to the bank */
-    int bank_totals;
+    /* adds capacity to the bank */
+    int bank_capacity;
+
+    /* adds total high alchemy value to the bank */
+    int bank_value;
 
     /* adds a deposit-all from inventory to the bank */
     int bank_deposit_all;
+
+    /* expand bank item grid with client height */
+    int bank_expand;
+
+    /* use a scrollbar instead of bank pages */
+    int bank_scroll;
+
+    /* escape clears input */
+    int escape_clear;
 } Options;
 
 void options_new(Options *options);

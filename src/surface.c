@@ -286,8 +286,8 @@ void surface_gl_reset_context(Surface *surface) {
 
 void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
                                  GLuint texture_array_id) {
-    if (surface->gl_context_count >= 256) {
-        fprintf(stderr, "too many texture switches!\n");
+    if (surface->gl_context_count >= FLAT_MAX_CONTEXTS) {
+        fprintf(stderr, "too many context (texture/boundary) switches!\n");
         return;
     }
 
@@ -318,7 +318,7 @@ void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
         context->max_x == surface->bounds_max_x &&
         context->min_y == surface->bounds_min_y &&
         context->max_y == surface->bounds_max_y &&
-        context->texture_id == texture_array_id) {
+        (context->texture_id == texture_array_id || texture_array_id == 0 && context->texture_id != surface->gl_font_textures)) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];

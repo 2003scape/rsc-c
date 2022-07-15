@@ -74,6 +74,7 @@
 #define K_F1 112
 #define K_ENTER 13
 #define K_BACKSPACE 8
+#define K_ESCAPE 27
 
 #ifdef REVISION_177
 #define VERSION 177

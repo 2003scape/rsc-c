@@ -433,7 +433,7 @@ void mudclient_new(mudclient *mud) {
     mud->thread_sleep = 10;
     // mud->server = "192.168.100.103";
     mud->server = "127.0.0.1";
-    mud->port = 43595;
+    mud->port = 43594;
     // mud->server = "162.198.202.160"; /* openrsc preservation */
     // mud->port = 43596;
     // mud->port = 43496; /* websockets */
@@ -864,14 +864,12 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             return;
         }
 
-        if (
-            mud->show_change_password_step == 0 &&
+        if (mud->show_change_password_step == 0 &&
             mud->show_dialog_social_input == 0 &&
             mud->show_dialog_offer_x == 0 &&
             !(mud->options->bank_search && mud->show_dialog_bank) &&
             /*mud->show_dialog_report_abuse_step == 0 &&*/
-            !mud->is_sleeping &&
-            mud->panel_message_tabs) {
+            !mud->is_sleeping && mud->panel_message_tabs) {
             panel_key_press(mud->panel_message_tabs, key_code);
         }
 
@@ -890,6 +888,10 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             mud->key_right = 1;
         } else if (code == K_F1) {
             mud->interlace = !mud->interlace;
+        } else if (mud->options->escape_clear && code == K_ESCAPE) {
+            memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
+            memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
+            memset(mud->input_digits_current, '\0', INPUT_DIGITS_LENGTH + 1);
         }
     } else {
         mudclient_handle_key_press(mud, char_code);
@@ -905,18 +907,20 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
     }
 
     if (found_text) {
-        int current_length = strlen(mud->input_text_current);
+        if (!mud->show_dialog_offer_x) {
+            int current_length = strlen(mud->input_text_current);
 
-        if (current_length < INPUT_TEXT_LENGTH) {
-            mud->input_text_current[current_length] = char_code;
-            mud->input_text_current[current_length + 1] = '\0';
-        }
+            if (current_length < INPUT_TEXT_LENGTH) {
+                mud->input_text_current[current_length] = char_code;
+                mud->input_text_current[current_length + 1] = '\0';
+            }
 
-        int pm_length = strlen(mud->input_pm_current);
+            int pm_length = strlen(mud->input_pm_current);
 
-        if (pm_length < INPUT_PM_LENGTH) {
-            mud->input_pm_current[pm_length] = char_code;
-            mud->input_pm_current[pm_length + 1] = '\0';
+            if (pm_length < INPUT_PM_LENGTH) {
+                mud->input_pm_current[pm_length] = char_code;
+                mud->input_pm_current[pm_length + 1] = '\0';
+            }
         }
 
         if (mud->options->offer_x &&
@@ -5011,7 +5015,8 @@ void mudclient_poll_events(mudclient *mud) {
         }
         case SDL_MOUSEMOTION:
             // TODO: (for off-screen middle click)
-            // event = new MouseEvent('mousemove', { buttons: 0, clientX: 1177, clientY: 267, layerX: 0, layerY: 0 })
+            // event = new MouseEvent('mousemove', { buttons: 0, clientX: 1177,
+            // clientY: 267, layerX: 0, layerY: 0 })
             // canvas.dispatchEvent(event);
             mudclient_mouse_moved(mud, event.motion.x, event.motion.y);
             break;

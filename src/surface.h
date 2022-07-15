@@ -14,6 +14,7 @@
 #include "shader.h"
 
 #define FLAT_QUAD_COUNT 2048
+#define FLAT_MAX_CONTEXTS 1024
 
 #define ITEM_TEXTURE_WIDTH 48
 #define ITEM_TEXTURE_HEIGHT 32
@@ -139,7 +140,7 @@ typedef struct Surface {
     GLuint gl_framebuffer_textures;
 
     /* used for texture array and boundary changes */
-    SurfaceGlContext gl_contexts[256];
+    SurfaceGlContext gl_contexts[FLAT_MAX_CONTEXTS];
 
     int gl_context_count;
 

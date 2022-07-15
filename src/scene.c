@@ -4269,11 +4269,12 @@ void scene_gl_render(Scene *scene) {
         for (int i = 0; i < terrain_picked_length; i++) {
             GameModel *game_model = terrain_picked[i];
 
-            mat4 view_model = {0};
-            glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
-
             mat4 projection_view_model = {0};
-            glm_mat4_mul(scene->gl_projection, view_model,
+
+            glm_mat4_mul(scene->gl_view, game_model->transform,
+                         projection_view_model);
+
+            glm_mat4_mul(scene->gl_projection, projection_view_model,
                          projection_view_model);
 
             shader_set_mat4(&scene->game_model_pick_shader,
@@ -4296,8 +4297,6 @@ void scene_gl_render(Scene *scene) {
         scene->gl_terrain_pick_step = 2;
         scene->gl_pick_face_tag = (pick_colour[1] << 8) + pick_colour[0];
 
-        printf("%d %d %d\n", pick_colour[0], pick_colour[1], pick_colour[2]);
-
         shader_use(&scene->game_model_shader);
 
         glEnable(GL_CULL_FACE);
@@ -4317,6 +4316,12 @@ void scene_gl_render(Scene *scene) {
     if (scene->gl_terrain_pick_step == 1) {
         int mouse_x = scene->mouse_x + (scene->surface->width / 2);
         int mouse_y = scene->surface->height - scene->mouse_y;
+
+        /* we discard every even row, so there's no depth data either */
+        if (scene->interlace && mouse_y % 2 == 0) {
+            mouse_y -= 1;
+        }
+
         float mouse_z = 0;
 
         glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,

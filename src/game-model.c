@@ -1703,11 +1703,13 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
             GLfloat vertex_z =
                 VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
 
-            GLfloat vertex[] = {                              /* vertex */
-                                vertex_x, vertex_y, vertex_z, //
+            GLfloat vertex[] = {
+                /* vertex */
+                vertex_x, vertex_y, vertex_z, //
 
-                                /* face tag */
-                                face_tag_r, face_tag_g};
+                /* face tag */
+                face_tag_r, face_tag_g //
+            };
 
             glBufferSubData(GL_ARRAY_BUFFER,
                             ((*vertex_offset) + j) * 5 * sizeof(GLfloat),

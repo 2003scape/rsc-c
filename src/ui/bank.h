@@ -8,11 +8,11 @@
 #include "../surface.h"
 
 #define BANK_WIDTH 408
-#define BANK_HEIGHT 334
+
+#define BANK_COLUMNS 8
+#define BANK_ROWS 6
 
 #define BANK_PAGE_BUTTON_WIDTH 65
-
-#define BANK_ITEMS_PER_PAGE 48
 
 #define BANK_MAGIC_DEPOSIT 0x87654321
 #define BANK_MAGIC_WITHDRAW 0x12345678
