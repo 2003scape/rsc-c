@@ -225,34 +225,34 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
 
     if (direction == 0) {
         surface_draw_line_horizontal_software(world->surface, line_x, line_y, 3,
-                                     colour_1);
+                                              colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 1, 2,
-                                     colour_1);
+        surface_draw_line_horizontal_software(world->surface, line_x,
+                                              line_y + 1, 2, colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 2, 1,
-                                     colour_1);
+        surface_draw_line_horizontal_software(world->surface, line_x,
+                                              line_y + 2, 1, colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 2, line_y + 1, 1,
-                                     colour_2);
+        surface_draw_line_horizontal_software(world->surface, line_x + 2,
+                                              line_y + 1, 1, colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 1, line_y + 2, 2,
-                                     colour_2);
+        surface_draw_line_horizontal_software(world->surface, line_x + 1,
+                                              line_y + 2, 2, colour_2);
     } else if (direction == 1) {
         surface_draw_line_horizontal_software(world->surface, line_x, line_y, 3,
-                                     colour_2);
+                                              colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 1, line_y + 1, 2,
-                                     colour_2);
+        surface_draw_line_horizontal_software(world->surface, line_x + 1,
+                                              line_y + 1, 2, colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 2, line_y + 2, 1,
-                                     colour_2);
+        surface_draw_line_horizontal_software(world->surface, line_x + 2,
+                                              line_y + 2, 1, colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 1, 1,
-                                     colour_1);
+        surface_draw_line_horizontal_software(world->surface, line_x,
+                                              line_y + 1, 1, colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x, line_y + 2, 2,
-                                     colour_1);
+        surface_draw_line_horizontal_software(world->surface, line_x,
+                                              line_y + 2, 2, colour_1);
     }
 }
 
@@ -1192,7 +1192,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
+                        game_model->face_tag[tile_face] =
+                            TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                             fill_front);
@@ -1238,7 +1239,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
+                        game_model->face_tag[tile_face] =
+                            TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                             fill_front);
@@ -1282,7 +1284,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
+                        game_model->face_tag[tile_face] =
+                            TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                             fill_front);
@@ -1326,7 +1329,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world->local_x[tile_face] = r_x;
                         world->local_y[tile_face] = r_y;
 
-                        game_model->face_tag[tile_face] = TILE_FACE_TAG + tile_face;
+                        game_model->face_tag[tile_face] =
+                            TILE_FACE_TAG + tile_face;
 
                         world_draw_map_tile(world, r_x, r_y, 0, face_fill,
                                             face_fill);
@@ -1385,8 +1389,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_draw_line_horizontal_software(world->surface, r_x * 3,
-                                                 r_y * 3, 3, colour);
+                    surface_draw_line_horizontal_software(
+                        world->surface, r_x * 3, r_y * 3, 3, colour);
                 }
             }
 
@@ -1407,8 +1411,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_draw_line_vertical_software(world->surface, r_x * 3, r_y * 3,
-                                               3, colour);
+                    surface_draw_line_vertical_software(world->surface, r_x * 3,
+                                                        r_y * 3, 3, colour);
                 }
             }
 

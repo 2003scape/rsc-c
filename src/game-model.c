@@ -113,11 +113,11 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
         }
 
         // TODO remove
-        //game_model->face_fill_front[i] = -32768;
-        //game_model->face_fill_back[i] = -32768;
-        //game_model->face_fill_back[i] = -801;
-        //game_model->face_fill_front[i] = 8;
-        //game_model->face_fill_back[i] = 8;
+        // game_model->face_fill_front[i] = -32768;
+        // game_model->face_fill_back[i] = -32768;
+        // game_model->face_fill_back[i] = -801;
+        // game_model->face_fill_front[i] = 8;
+        // game_model->face_fill_back[i] = 8;
     }
 
     for (int i = 0; i < num_faces; i++) {
@@ -341,11 +341,11 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 
     // TODO remove
-    //game_model->face_fill_front[game_model->num_faces] = -32768;
-    //game_model->face_fill_back[game_model->num_faces] = -32768;
-    //game_model->face_fill_back[game_model->num_faces] = -801;
-    //game_model->face_fill_front[game_model->num_faces] = 8;
-    //game_model->face_fill_back[game_model->num_faces] = 8;
+    // game_model->face_fill_front[game_model->num_faces] = -32768;
+    // game_model->face_fill_back[game_model->num_faces] = -32768;
+    // game_model->face_fill_back[game_model->num_faces] = -801;
+    // game_model->face_fill_front[game_model->num_faces] = 8;
+    // game_model->face_fill_back[game_model->num_faces] = 8;
 
     return game_model->num_faces++;
 }
@@ -424,10 +424,10 @@ void game_model_copy_lighting(GameModel *game_model, GameModel *model,
     int *dest_vertices = malloc(num_vertices * sizeof(int));
 
     for (int i = 0; i < num_vertices; i++) {
-        int vertex = game_model_vertex_at(
-            model, game_model->vertex_x[src_vertices[i]],
-            game_model->vertex_y[src_vertices[i]],
-            game_model->vertex_z[src_vertices[i]]);
+        int vertex =
+            game_model_vertex_at(model, game_model->vertex_x[src_vertices[i]],
+                                 game_model->vertex_y[src_vertices[i]],
+                                 game_model->vertex_z[src_vertices[i]]);
 
         dest_vertices[i] = vertex;
 
@@ -907,8 +907,8 @@ void game_model_apply(GameModel *game_model) {
 }
 
 void game_model_project_view(GameModel *game_model, int camera_x, int camera_y,
-                        int camera_z, int camera_pitch, int camera_roll,
-                        int camera_yaw, int view_distance, int clip_near) {
+                             int camera_z, int camera_pitch, int camera_roll,
+                             int camera_yaw, int view_distance, int clip_near) {
     int yaw_sin = 0;
     int yaw_cos = 0;
     int pitch_sin = 0;
@@ -986,7 +986,9 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
     game_model->visible = 1;
 
 #ifdef RENDER_SW
-    game_model_project_view(game_model, camera_x, camera_y, camera_z, camera_pitch, camera_roll, camera_yaw, view_distance, clip_near);
+    game_model_project_view(game_model, camera_x, camera_y, camera_z,
+                            camera_pitch, camera_roll, camera_yaw,
+                            view_distance, clip_near);
 #endif
 }
 
@@ -1479,11 +1481,14 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         for (int j = 0; j < face_num_vertices; j++) {
             int vertex_index = face_vertices[j];
 
-            GLfloat vertex_x = VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
+            GLfloat vertex_x =
+                VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
 
-            GLfloat vertex_y = VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
+            GLfloat vertex_y =
+                VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
 
-            GLfloat vertex_z = VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
+            GLfloat vertex_z =
+                VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
 
             vec3 normal = {0};
             int normal_magnitude = 1;
@@ -1500,9 +1505,8 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 normal[2] = VERTEX_TO_FLOAT(face_normal_z[i]);
             }
 
-            int vertex_intensity =
-                game_model->vertex_intensity[vertex_index] +
-                game_model->vertex_ambience[vertex_index];
+            int vertex_intensity = game_model->vertex_intensity[vertex_index] +
+                                   game_model->vertex_ambience[vertex_index];
 
             GLfloat front_texture_x = -1.0f;
             GLfloat front_texture_y = -1.0f;
@@ -1573,25 +1577,32 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
     free(vertex_normal_magnitude);
 }
 
-/* calculate the length of the VBO and EBO arrays for a list of game models,
- * then populate them */
-void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo,
-                                 GLuint *ebo, GameModel **game_models,
-                                 int length) {
-    int vertex_offset = 0;
-    int ebo_offset = 0;
-
+void game_model_get_vertex_ebo_lengths(GameModel **game_models, int length,
+                                       int *vertex_length, int *ebo_length) {
     for (int i = 0; i < length; i++) {
         GameModel *game_model = game_models[i];
 
+        game_model->ebo_length = 0;
+
         for (int j = 0; j < game_model->num_faces; j++) {
             int face_num_vertices = game_model->face_num_vertices[j];
-            vertex_offset += face_num_vertices;
+            *vertex_length += face_num_vertices;
             game_model->ebo_length += (face_num_vertices - 2) * 3;
         }
 
-        ebo_offset += game_model->ebo_length;
+        *ebo_length += game_model->ebo_length;
     }
+}
+
+/* calculate the length of the VBO and EBO arrays for a list of game models,
+ * then populate them */
+void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                                 GameModel **game_models, int length) {
+    int vertex_offset = 0;
+    int ebo_offset = 0;
+
+    game_model_get_vertex_ebo_lengths(game_models, length, &vertex_offset,
+                                      &ebo_offset);
 
     game_model_gl_create_vao(vao, vbo, ebo, vertex_offset, ebo_offset);
 
@@ -1606,9 +1617,118 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo,
         game_model->ebo_offset = ebo_offset;
 
         game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
-
     }
 }
+
+#ifdef EMSCRIPTEN
+void game_model_gl_create_pick_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                                   int vbo_length, int ebo_length) {
+    if (*vao) {
+        glDeleteVertexArrays(1, vao);
+        glDeleteBuffers(1, vbo);
+        glDeleteBuffers(1, ebo);
+    }
+
+    glGenVertexArrays(1, vao);
+    glBindVertexArray(*vao);
+
+    glGenBuffers(1, vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 5, NULL,
+                 GL_DYNAMIC_DRAW);
+
+    /* vertex { x, y, z } */
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          (void *)0);
+
+    glEnableVertexAttribArray(0);
+
+    /* colour { r, g } */
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          (void *)(3 * sizeof(GLfloat)));
+
+    glEnableVertexAttribArray(1);
+
+    glGenBuffers(1, ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
+                 GL_DYNAMIC_DRAW);
+}
+
+void game_model_gl_buffer_pick_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                                      GameModel **game_models, int length) {
+    int vertex_offset = 0;
+    int ebo_offset = 0;
+
+    game_model_get_vertex_ebo_lengths(game_models, length, &vertex_offset,
+                                      &ebo_offset);
+
+    game_model_gl_create_pick_vao(vao, vbo, ebo, vertex_offset, ebo_offset);
+
+    vertex_offset = 0;
+    ebo_offset = 0;
+
+    for (int i = 0; i < length; i++) {
+        GameModel *game_model = game_models[i];
+
+        game_model->gl_pick_vbo_offset = vertex_offset;
+        game_model->gl_pick_ebo_offset = ebo_offset;
+
+        game_model_gl_buffer_pick_arrays(game_model, &vertex_offset,
+                                         &ebo_offset);
+    }
+}
+
+void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
+                                      int *ebo_offset) {
+    for (int i = 0; i < game_model->num_faces; i++) {
+        int *face_vertices = game_model->face_vertices[i];
+        int face_num_vertices = game_model->face_num_vertices[i];
+
+        int face_tag = game_model->face_tag[i] - TILE_FACE_TAG;
+        float face_tag_r = (face_tag & 0xff) / 255.0f;
+        float face_tag_g = ((face_tag >> 8) & 0xff) / 255.0f;
+
+        for (int j = 0; j < face_num_vertices; j++) {
+            int vertex_index = face_vertices[j];
+
+            GLfloat vertex_x =
+                VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
+
+            GLfloat vertex_y =
+                VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
+
+            GLfloat vertex_z =
+                VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
+
+            GLfloat vertex[] = {                              /* vertex */
+                                vertex_x, vertex_y, vertex_z, //
+
+                                /* face tag */
+                                face_tag_r, face_tag_g};
+
+            glBufferSubData(GL_ARRAY_BUFFER,
+                            ((*vertex_offset) + j) * 5 * sizeof(GLfloat),
+                            5 * sizeof(GLfloat), vertex);
+        }
+
+        for (int j = 0; j < face_num_vertices - 2; j++) {
+            GLuint indices[] = {(*vertex_offset), (*vertex_offset) + j + 1,
+                                (*vertex_offset) + j + 2};
+
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
+                            (*ebo_offset) * sizeof(GLuint), sizeof(indices),
+                            indices);
+
+            (*ebo_offset) += 3;
+        }
+
+        (*vertex_offset) += face_num_vertices;
+    }
+}
+#endif
 
 float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
                                vec3 ray_position) {
@@ -1624,14 +1744,14 @@ float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
     float min_vertex_z = VERTEX_TO_FLOAT(game_model->z1);
     float max_vertex_z = VERTEX_TO_FLOAT(game_model->z2);
 
-    t[1] = (min_vertex_x - ray_position[0])/ray_direction[0];
-    t[2] = (max_vertex_x - ray_position[0])/ray_direction[0];
+    t[1] = (min_vertex_x - ray_position[0]) / ray_direction[0];
+    t[2] = (max_vertex_x - ray_position[0]) / ray_direction[0];
 
-    t[3] = (min_vertex_y - ray_position[1])/ray_direction[1];
-    t[4] = (max_vertex_y - ray_position[1])/ray_direction[1];
+    t[3] = (min_vertex_y - ray_position[1]) / ray_direction[1];
+    t[4] = (max_vertex_y - ray_position[1]) / ray_direction[1];
 
-    t[5] = (min_vertex_z - ray_position[2])/ray_direction[2];
-    t[6] = (max_vertex_z - ray_position[2])/ray_direction[2];
+    t[5] = (min_vertex_z - ray_position[2]) / ray_direction[2];
+    t[6] = (max_vertex_z - ray_position[2]) / ray_direction[2];
 
     t[7] = fmax(fmax(fmin(t[1], t[2]), fmin(t[3], t[4])), fmin(t[5], t[6]));
     t[8] = fmin(fmin(fmax(t[1], t[2]), fmax(t[3], t[4])), fmax(t[5], t[6]));

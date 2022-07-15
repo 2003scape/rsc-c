@@ -705,19 +705,19 @@ void mudclient_start_application(mudclient *mud, char *title) {
                         SDL_GL_CONTEXT_PROFILE_CORE);
 #endif
 
-#ifndef EMSCRIPTEN
-    // TODO make AA toggleable
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
-
-    glEnable(GL_MULTISAMPLE);
-#endif
-
     mud->gl_window = SDL_CreateWindow(
         title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mud->game_width,
         mud->game_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
+
+#ifndef EMSCRIPTEN
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
+
+    // TODO make AA toggleable
+    glEnable(GL_MULTISAMPLE);
+#endif
 
     if (!context) {
         fprintf(stderr, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
@@ -3391,10 +3391,16 @@ void mudclient_handle_inputs(mudclient *mud) {
             mud->gl_is_walking = 0;
             mud->scene->gl_terrain_pick_step = 0;
 
+#ifdef EMSCRIPTEN
+            int x = mud->world->local_x[mud->scene->gl_pick_face_tag];
+            int y = mud->world->local_y[mud->scene->gl_pick_face_tag];
+#else
+            int x = mud->scene->gl_terrain_pick_x;
+            int y = mud->scene->gl_terrain_pick_y;
+#endif
+
             mudclient_walk_to_action_source(mud, mud->local_region_x,
-                                            mud->local_region_y,
-                                            mud->scene->gl_terrain_pick_x,
-                                            mud->scene->gl_terrain_pick_y, 0);
+                                            mud->local_region_y, x, y, 0);
 
             if (mud->mouse_click_x_step == -24) {
                 mud->mouse_click_x_step = 24;
@@ -5004,6 +5010,9 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
         case SDL_MOUSEMOTION:
+            // TODO: (for off-screen middle click)
+            // event = new MouseEvent('mousemove', { buttons: 0, clientX: 1177, clientY: 267, layerX: 0, layerY: 0 })
+            // canvas.dispatchEvent(event);
             mudclient_mouse_moved(mud, event.motion.x, event.motion.y);
             break;
         case SDL_MOUSEBUTTONDOWN:

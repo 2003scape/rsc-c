@@ -115,6 +115,11 @@ typedef struct GameModel {
     int ebo_offset;
     int ebo_length;
 
+#ifdef EMSCRIPTEN
+    int gl_pick_vbo_offset;
+    int gl_pick_ebo_offset;
+#endif
+
     mat4 transform;
 
     int gl_invisible;
@@ -167,20 +172,17 @@ void game_model_get_face_normals(GameModel *game_model, int *vertex_x,
                                  int *vertex_y, int *vertex_z,
                                  int *face_normal_x, int *face_normal_y,
                                  int *face_normal_z, int reset_scale);
-void game_model_get_vertex_normals(GameModel *game_model,
-        int *face_normal_x,
-        int *face_normal_y,
-        int *face_normal_z,
-        int *normal_x,
-        int *normal_y, int *normal_z,
-        int *normal_magnitude);
+void game_model_get_vertex_normals(GameModel *game_model, int *face_normal_x,
+                                   int *face_normal_y, int *face_normal_z,
+                                   int *normal_x, int *normal_y, int *normal_z,
+                                   int *normal_magnitude);
 void game_model_light(GameModel *game_model);
 void game_model_relight(GameModel *game_model);
 void game_model_reset_transform(GameModel *game_model);
 void game_model_apply(GameModel *game_model);
 void game_model_project_view(GameModel *game_model, int camera_x, int camera_y,
-                        int camera_z, int camera_pitch, int camera_roll,
-                        int camera_yaw, int view_distance, int clip_near);
+                             int camera_z, int camera_pitch, int camera_roll,
+                             int camera_yaw, int view_distance, int clip_near);
 void game_model_project(GameModel *game_model, int camera_x, int camera_y,
                         int camera_z, int camera_pitch, int camera_roll,
                         int camera_yaw, int view_distance, int clip_near);
@@ -197,12 +199,23 @@ void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
                               int vbo_length, int ebo_length);
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
                               int face_num_vertices, GLfloat *us, GLfloat *vs);
-void game_model_gl_decode_face_fill(int face_fill, float *r, float *g,
-                                    float *b, float *a, float *texture_index);
+void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b,
+                                    float *a, float *texture_index);
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
+void game_model_get_vertex_ebo_lengths(GameModel **game_models, int length,
+                                       int *vertex_length, int *ebo_length);
 void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
                                  GameModel **game_models, int length);
-float game_model_gl_intersects(GameModel *game_model, vec3 ray_start, vec3 ray_end);
+#ifdef EMSCRIPTEN
+void game_model_gl_create_pick_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                                   int vbo_length, int ebo_length);
+void game_model_gl_buffer_pick_arrays(GameModel *game_model,
+                                      int *vertex_offset, int *ebo_offset);
+void game_model_gl_buffer_pick_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                                      GameModel **game_models, int length);
+#endif
+float game_model_gl_intersects(GameModel *game_model, vec3 ray_start,
+                               vec3 ray_end);
 #endif
 #endif

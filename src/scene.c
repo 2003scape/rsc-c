@@ -82,6 +82,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #ifdef EMSCRIPTEN
     shader_new(&scene->game_model_shader, "./cache/game-model.webgl.vs",
                "./cache/game-model.webgl.fs");
+
+    shader_new(&scene->game_model_pick_shader, "./cache/pick.webgl.vs",
+               "./cache/game-model.webgl.fs");
 #else
     shader_new(&scene->game_model_shader, "./cache/game-model.vs",
                "./cache/game-model.fs");
@@ -108,7 +111,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
                              &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
                              WALL_OBJECTS_MAX * 6);
 
-    shader_set_float(&scene->game_model_shader, "vertex_scale", (float)VERTEX_SCALE);
+    shader_set_float(&scene->game_model_shader, "vertex_scale",
+                     (float)VERTEX_SCALE);
 
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
                            scene->light_gradient, RAMP_SIZE);
@@ -4154,10 +4158,10 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                         light_direction);
 
         shader_set_float(&scene->game_model_shader, "light_diffuse",
-                       (float)game_model->light_diffuse);
+                         (float)game_model->light_diffuse);
 
         shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
-                       (float)game_model->light_direction_magnitude);
+                         (float)game_model->light_direction_magnitude);
     }
 
     glCullFace(GL_BACK);
@@ -4232,6 +4236,73 @@ void scene_gl_render(Scene *scene) {
     vec3 ray_end = {0};
     glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
 
+#ifndef RENDER_SW
+#ifdef EMSCRIPTEN
+    /* webgl does not support depth buffer reading :( */
+    if (scene->gl_terrain_pick_step == 1) {
+        GameModel *terrain_picked[4] = {0};
+        int terrain_picked_length = 0;
+
+        for (int i = 0; i < scene->model_count; i++) {
+            GameModel *game_model = scene->models[i];
+
+            if (!game_model->autocommit || game_model->unpickable) {
+                continue;
+            }
+
+            float time = game_model_gl_intersects(game_model,
+                                                  scene->gl_mouse_ray, ray_end);
+
+            if (time >= 0 && terrain_picked_length < 4) {
+                terrain_picked[terrain_picked_length++] = game_model;
+            }
+        }
+
+        glDisable(GL_CULL_FACE);
+
+        shader_use(&scene->game_model_pick_shader);
+
+        game_model_gl_buffer_pick_models(
+            &scene->gl_pick_vao, &scene->gl_pick_vbo, &scene->gl_pick_ebo,
+            terrain_picked, terrain_picked_length);
+
+        for (int i = 0; i < terrain_picked_length; i++) {
+            GameModel *game_model = terrain_picked[i];
+
+            mat4 view_model = {0};
+            glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
+
+            mat4 projection_view_model = {0};
+            glm_mat4_mul(scene->gl_projection, view_model,
+                         projection_view_model);
+
+            shader_set_mat4(&scene->game_model_pick_shader,
+                            "projection_view_model", projection_view_model);
+
+            glDrawElements(
+                GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
+                (void *)(game_model->gl_pick_ebo_offset * sizeof(GLuint)));
+        }
+
+        int mouse_x = scene->mouse_x + (scene->surface->width / 2);
+        int mouse_y = scene->surface->height - scene->mouse_y;
+        uint8_t pick_colour[4] = {0};
+
+        glReadPixels(mouse_x, mouse_y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
+                     pick_colour);
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        scene->gl_terrain_pick_step = 2;
+        scene->gl_pick_face_tag = (pick_colour[1] << 8) + pick_colour[0];
+
+        printf("%d %d %d\n", pick_colour[0], pick_colour[1], pick_colour[2]);
+
+        shader_use(&scene->game_model_shader);
+
+        glEnable(GL_CULL_FACE);
+    }
+#else
     /* draw the terrain first for potential mouse picking, since we can click
      * through the unpickable models */
     for (int i = 0; i < scene->model_count; i++) {
@@ -4265,6 +4336,8 @@ void scene_gl_render(Scene *scene) {
         scene->gl_terrain_pick_y =
             FLOAT_TO_VERTEX(scene->gl_mouse_world[2]) / MAGIC_LOC;
     }
+#endif
+#endif
 
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];

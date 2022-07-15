@@ -131,6 +131,16 @@ typedef struct Scene {
 #ifdef RENDER_GL
     Shader game_model_shader;
 
+#ifdef EMSCRIPTEN
+    Shader game_model_pick_shader;
+
+    GLuint gl_pick_vao;
+    GLuint gl_pick_vbo;
+    GLuint gl_pick_ebo;
+
+    int gl_pick_face_tag;
+#endif
+
     GLuint game_model_vao;
     GLuint game_model_vbo;
     GLuint game_model_ebo;

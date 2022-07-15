@@ -1254,21 +1254,6 @@ void mudclient_create_right_click_menu(mudclient *mud) {
             mud->menu_item_y[mud->menu_items_count] =
                 mud->world->local_y[selected_face];
 
-            /*printf("walk: %d %d\n",
-                   mud->world->local_x[selected_face],
-                   mud->world->local_y[selected_face]);
-
-            printf("mouse world: %d %d\n",
-               (int)(mud->scene->gl_mouse_world[0] * 100) / 128,
-               (int)(mud->scene->gl_mouse_world[2] * 100) / 128
-            );*/
-
-            /*printf("mouse world: %f %f %f\n",
-                mud->scene->gl_mouse_world[0] * 100.0f,
-                mud->scene->gl_mouse_world[1]* 100.0f,
-                mud->scene->gl_mouse_world[2]* 100.0f
-            );*/
-
             mud->menu_items_count++;
         }
     }
