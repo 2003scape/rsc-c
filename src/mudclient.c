@@ -304,6 +304,9 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     case SDL_SCANCODE_F1:
         *code = K_F1;
         break;
+    case SDL_SCANCODE_ESCAPE:
+        *code = K_ESCAPE;
+        break;
     /*case SDL_SCANCODE_RETURN:
         *code = K_ENTER;
         break;
@@ -4999,7 +5002,6 @@ void mudclient_poll_events(mudclient *mud) {
                 test_yaw -= 1;
             }
 
-            // printf("%d\n", code);
             printf("fov: %f, yaw: %f, pitch %f \n", test_x, test_y, test_z);
             // printf("%d %d %d %d\n", test_x, test_y, test_z, test_yaw);
             //  printf("%f %f\n", test_x, test_y);

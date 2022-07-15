@@ -787,6 +787,7 @@ typedef struct mudclient {
     int bank_offer_type;
     int bank_last_deposit_offer;
     int bank_last_withdraw_offer;
+    int bank_scroll_row;
 
     /* ./ui/shop.c */
     int show_dialog_shop;

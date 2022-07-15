@@ -22,15 +22,6 @@ typedef struct Panel Panel;
 #define PANEL_SPRITE 12
 #define PANEL_CHECKBOX 14
 
-/* colour of scrollbar background gradients */
-#define PANEL_SCROLLBAR_TOP_COLOUR 0x7272b0
-#define PANEL_SCROLLBAR_BOTTOM_COLOUR 0x0e0e3e
-
-/* colour of the interactive scrub/handle in the scrollbar */
-#define PANEL_SCRUB_LEFT_COLOUR 0xc8d0e8
-#define PANEL_SCRUB_MIDDLE_COLOUR 0x6081b8
-#define PANEL_SCRUB_RIGHT_COLOUR 0x355f73
-
 #define PANEL_ROUNDED_BOX_OUT_COLOUR 0x758eab
 #define PANEL_ROUNDED_BOX_MIDDLE_COLOUR 0x627a9e
 #define PANEL_ROUNDED_BOX_IN_COLOUR 0x566488
@@ -105,8 +96,6 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, int text_size, char **list_entries,
                           int list_entry_count, int list_entry_position,
                           int is_interactive);
-void panel_draw_scrollbar(Panel *panel, int x, int y, int width, int height,
-                          int scrub_y, int scrub_height);
 int panel_prepare_component(Panel *panel, int type, int x, int y);
 int panel_add_text(Panel *panel, int x, int y, char *text, int size, int flag);
 int panel_add_text_centre(Panel *panel, int x, int y, char *text, int size,

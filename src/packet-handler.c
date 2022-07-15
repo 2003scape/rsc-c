@@ -1286,8 +1286,11 @@ void mudclient_packet_tick(mudclient *mud) {
 
         mudclient_update_bank_items(mud);
 
+        mud->bank_scroll_row = 10; // TODO remove
+
         if (mud->options->bank_search) {
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
+            memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
         }
         break;
     }

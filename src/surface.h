@@ -54,6 +54,15 @@
 #define ITEM_GRID_SLOT_WIDTH 49
 #define ITEM_GRID_SLOT_HEIGHT 34
 
+/* colour of scrollbar background gradients */
+#define SCROLLBAR_TOP_COLOUR 0x7272b0
+#define SCROLLBAR_BOTTOM_COLOUR 0x0e0e3e
+
+/* colour of the interactive scrub/handle in the scrollbar */
+#define SCRUB_LEFT_COLOUR 0xc8d0e8
+#define SCRUB_MIDDLE_COLOUR 0x6081b8
+#define SCRUB_RIGHT_COLOUR 0x355f73
+
 // TODO #define FONT_12PT_BOLD etc
 
 typedef struct Surface Surface;
@@ -345,5 +354,7 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int columns, int *items, int *items_count,
                             int items_length, int selected);
+void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
+                            int height, int scrub_y, int scrub_height);
 
 #endif

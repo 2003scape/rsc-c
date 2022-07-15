@@ -318,7 +318,9 @@ void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
         context->max_x == surface->bounds_max_x &&
         context->min_y == surface->bounds_min_y &&
         context->max_y == surface->bounds_max_y &&
-        (context->texture_id == texture_array_id || texture_array_id == 0 && context->texture_id != surface->gl_font_textures)) {
+        (context->texture_id == texture_array_id ||
+         texture_array_id == 0 &&
+             context->texture_id != surface->gl_font_textures)) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];
@@ -892,16 +894,16 @@ void surface_gl_draw(Surface *surface, int use_depth) {
         int interlace = surface->interlace;
 
         shader_set_float(&surface->gl_flat_shader, "bounds_min_x",
-                       (float)context->min_x);
+                         (float)context->min_x);
 
         shader_set_float(&surface->gl_flat_shader, "bounds_max_x",
-                       (float)context->max_x);
+                         (float)context->max_x);
 
         shader_set_float(&surface->gl_flat_shader, "bounds_min_y",
-                       (float)(surface->height - context->min_y));
+                         (float)(surface->height - context->min_y));
 
         shader_set_float(&surface->gl_flat_shader, "bounds_max_y",
-                       (float)(surface->height - context->max_y));
+                         (float)(surface->height - context->max_y));
 
         GLuint texture_array_id = context->texture_id;
 
@@ -3958,4 +3960,34 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
             item_index++;
         }
     }
+}
+
+void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
+                            int height, int scrub_y, int scrub_height) {
+    x += width - 12;
+
+    surface_draw_box_edge(surface, x, y, 12, height, 0);
+
+    /* up arrow */
+    surface_draw_sprite_from3(surface, x + 1, y + 1, surface->mud->sprite_util);
+
+    /* down arrow */
+    surface_draw_sprite_from3(surface, x + 1, y + height - 12,
+                              surface->mud->sprite_util + 1);
+
+    surface_draw_line_horizontal(surface, x, y + 13, 12, 0);
+    surface_draw_line_horizontal(surface, x, y + height - 13, 12, 0);
+
+    surface_draw_gradient(surface, x + 1, y + 14, 11, height - 27,
+                          SCROLLBAR_TOP_COLOUR,
+                          SCROLLBAR_BOTTOM_COLOUR);
+
+    surface_draw_box(surface, x + 3, scrub_y + y + 14, 7, scrub_height,
+                     SCRUB_MIDDLE_COLOUR);
+
+    surface_draw_line_vertical(surface, x + 2, scrub_y + y + 14, scrub_height,
+                               SCRUB_LEFT_COLOUR);
+
+    surface_draw_line_vertical(surface, x + 2 + 8, scrub_y + y + 14,
+                               scrub_height, SCRUB_RIGHT_COLOUR);
 }

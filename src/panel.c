@@ -357,37 +357,6 @@ void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height) {
                               5 + panel_base_sprite_start);
 }
 
-void panel_draw_scrollbar(Panel *panel, int x, int y, int width, int height,
-                          int scrub_y, int scrub_height) {
-    x += width - 12;
-
-    surface_draw_box_edge(panel->surface, x, y, 12, height, 0);
-
-    /* up arrow */
-    surface_draw_sprite_from3(panel->surface, x + 1, y + 1,
-                              panel_base_sprite_start);
-
-    /* down arrow */
-    surface_draw_sprite_from3(panel->surface, x + 1, y + height - 12,
-                              panel_base_sprite_start + 1);
-
-    surface_draw_line_horizontal(panel->surface, x, y + 13, 12, 0);
-    surface_draw_line_horizontal(panel->surface, x, y + height - 13, 12, 0);
-
-    surface_draw_gradient(panel->surface, x + 1, y + 14, 11, height - 27,
-                          PANEL_SCROLLBAR_TOP_COLOUR,
-                          PANEL_SCROLLBAR_BOTTOM_COLOUR);
-
-    surface_draw_box(panel->surface, x + 3, scrub_y + y + 14, 7, scrub_height,
-                     PANEL_SCRUB_MIDDLE_COLOUR);
-
-    surface_draw_line_vertical(panel->surface, x + 2, scrub_y + y + 14,
-                               scrub_height, PANEL_SCRUB_LEFT_COLOUR);
-
-    surface_draw_line_vertical(panel->surface, x + 2 + 8, scrub_y + y + 14,
-                               scrub_height, PANEL_SCRUB_RIGHT_COLOUR);
-}
-
 void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, int text_size, char **list_entries,
                           int list_entry_count, int list_entry_position,
@@ -490,7 +459,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         scrub_y =
             ((height - 27 - scrub_height) * list_entry_position) / max_entries;
 
-        panel_draw_scrollbar(panel, x, y, width, height, scrub_y, scrub_height);
+        surface_draw_scrollbar(panel->surface, x, y, width, height, scrub_y, scrub_height);
     } else {
         list_entry_position = 0;
         panel->control_flash_text[control] = 0;
