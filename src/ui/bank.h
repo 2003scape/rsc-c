@@ -20,6 +20,9 @@
 #define BANK_OFFER_WITHDRAW 1
 #define BANK_OFFER_DEPOSIT 2
 
+/* milliseconds before scrolling using the buttons */
+#define BANK_SCROLL_SPEED 120
+
 void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
                                 int opcode);
 void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,

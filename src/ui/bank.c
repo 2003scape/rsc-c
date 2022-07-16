@@ -119,7 +119,7 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
 
     offset_x += 33 - (show_last_offer_x ? 17 : 0);
 
-    if (show_last_offer_x && last_x != 0) {
+    if (show_last_offer_x && last_x != 0 && amount >= last_x) {
         text_colour = WHITE;
 
         if (mud->mouse_x >= x + offset_x && mud->mouse_y >= y &&
@@ -346,6 +346,7 @@ void mudclient_draw_bank(mudclient *mud) {
 
         bank_item_count = prefix_match_length + contains_match_length;
 
+        // TODO test with pages
         /*if (bank_item_count > items_per_page) {
             bank_item_count = items_per_page;
         }*/
@@ -353,6 +354,12 @@ void mudclient_draw_bank(mudclient *mud) {
 
     int bank_scroll = mud->options->bank_scroll &&
                       bank_item_count > visible_rows * BANK_COLUMNS;
+
+    int max_scroll_height = item_grid_height - 28;
+    int total_rows = ceil(bank_item_count / (float)BANK_COLUMNS);
+
+    int scrub_height =
+        max_scroll_height / ((float)total_rows / (float)visible_rows);
 
     int bank_width = BANK_WIDTH;
 
@@ -396,6 +403,10 @@ void mudclient_draw_bank(mudclient *mud) {
         mud->input_digits_final = 0;
     }
 
+    if (bank_scroll && mud->bank_scroll_row > total_rows) {
+        mud->bank_scroll_row = 0;
+    }
+
     if (active_page > 0 && bank_item_count <= items_per_page) {
         mud->bank_active_page = 0;
     }
@@ -427,6 +438,43 @@ void mudclient_draw_bank(mudclient *mud) {
         item_id = bank_items[mud->bank_selected_item_slot];
     }
 
+    if (bank_scroll && mud->mouse_button_down != 0 &&
+        get_ticks() - mud->bank_last_scroll > BANK_SCROLL_SPEED) {
+        /* up arrow */
+        if (mud->bank_scroll_row > 0 && mud->mouse_x > ui_x + 400 &&
+            mud->mouse_x < ui_x + 421 && mud->mouse_y > ui_y + 28 &&
+            mud->mouse_y < ui_y + 43) {
+            mud->bank_scroll_row -= 1;
+            mud->bank_last_scroll = get_ticks();
+        }
+
+        /* scrub area */
+        if (mud->mouse_x > ui_x + 400 &&
+            mud->mouse_x < ui_x + 421 && mud->mouse_y > ui_y + 43 &&
+            mud->mouse_y < ui_y + item_grid_height + 15) {
+            int scrub_y = mud->mouse_y - (ui_y + 43) - (scrub_height / 2);
+
+            int scroll_row = (scrub_y / (float)max_scroll_height) * total_rows;
+
+            if (scroll_row < 0) {
+                scroll_row = 0;
+            } else if (scroll_row > total_rows - visible_rows) {
+                scroll_row = total_rows - visible_rows;
+            }
+
+            mud->bank_scroll_row = scroll_row;
+        }
+
+        /* down arrow */
+        if (mud->bank_scroll_row < (total_rows - visible_rows) &&
+            mud->mouse_x > ui_x + 400 && mud->mouse_x < ui_x + 421 &&
+            mud->mouse_y > ui_y + item_grid_height + 15 &&
+            mud->mouse_y < ui_y + item_grid_height + 30) {
+            mud->bank_scroll_row += 1;
+            mud->bank_last_scroll = get_ticks();
+        }
+    }
+
     if (mud->mouse_button_click != 0) {
         int bank_count = bank_items_count[mud->bank_selected_item_slot];
 
@@ -447,13 +495,6 @@ void mudclient_draw_bank(mudclient *mud) {
             mudclient_handle_bank_amounts_input(
                 mud, inventory_count, mud->bank_last_deposit_offer, ui_x + 220,
                 ui_y + item_grid_height + 59, CLIENT_BANK_DEPOSIT);
-        }
-
-        if (bank_scroll) {
-            if (mud->mouse_x >= ui_x + 400 && mud->mouse_x <= ui_x + 421 &&
-                mud->mouse_y >= ui_y + 28 && mud->mouse_y <= ui_y + 42) {
-                mud->bank_scroll_row -= 1;
-            }
         }
 
         mud->mouse_button_click = 0;
@@ -611,13 +652,6 @@ void mudclient_draw_bank(mudclient *mud) {
                            mud->bank_selected_item_slot - bank_item_offset);
 
     if (bank_scroll) {
-        int total_rows = ceil(bank_item_count / (float)BANK_COLUMNS);
-
-        int max_scroll_height = item_grid_height - 28;
-
-        int scrub_height =
-            max_scroll_height / ((float)total_rows / (float)visible_rows);
-
         int scrub_y = ((float)mud->bank_scroll_row / (float)total_rows) *
                       (float)max_scroll_height;
 
@@ -629,7 +663,7 @@ void mudclient_draw_bank(mudclient *mud) {
                                    item_grid_height + 1, BLACK);
 
         surface_draw_line_horizontal(mud->surface, ui_x + 404,
-                                     ui_y + +28 + item_grid_height, 12, BLACK);
+                                     ui_y + 28 + item_grid_height, 12, BLACK);
     }
 
     surface_draw_box_alpha(mud->surface, ui_x,
