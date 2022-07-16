@@ -4,12 +4,18 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
                                 int opcode) {
     packet_stream_new_packet(mud->packet_stream, opcode);
     packet_stream_put_short(mud->packet_stream, item_id);
+
+    int is_withdraw = opcode == CLIENT_BANK_WITHDRAW;
+
+    if (is_withdraw && game_data_item_stackable[item_id] != 0 &&
+        amount + mud->inventory_items_count > INVENTORY_ITEMS_MAX) {
+        amount = INVENTORY_ITEMS_MAX - mud->inventory_items_count;
+    }
+
     packet_stream_put_short(mud->packet_stream, amount);
 
 #ifndef REVISION_177
-    packet_stream_put_int(mud->packet_stream, opcode == CLIENT_BANK_WITHDRAW
-                                                  ? BANK_MAGIC_WITHDRAW
-                                                  : BANK_MAGIC_DEPOSIT);
+    packet_stream_put_int(mud->packet_stream, is_withdraw ? BANK_MAGIC_WITHDRAW : BANK_MAGIC_DEPOSIT);
 #endif
 
     packet_stream_send_packet(mud->packet_stream);
@@ -438,43 +444,6 @@ void mudclient_draw_bank(mudclient *mud) {
         item_id = bank_items[mud->bank_selected_item_slot];
     }
 
-    if (bank_scroll && mud->mouse_button_down != 0 &&
-        get_ticks() - mud->bank_last_scroll > BANK_SCROLL_SPEED) {
-        /* up arrow */
-        if (mud->bank_scroll_row > 0 && mud->mouse_x > ui_x + 400 &&
-            mud->mouse_x < ui_x + 421 && mud->mouse_y > ui_y + 28 &&
-            mud->mouse_y < ui_y + 43) {
-            mud->bank_scroll_row -= 1;
-            mud->bank_last_scroll = get_ticks();
-        }
-
-        /* scrub area */
-        if (mud->mouse_x > ui_x + 400 &&
-            mud->mouse_x < ui_x + 421 && mud->mouse_y > ui_y + 43 &&
-            mud->mouse_y < ui_y + item_grid_height + 15) {
-            int scrub_y = mud->mouse_y - (ui_y + 43) - (scrub_height / 2);
-
-            int scroll_row = (scrub_y / (float)max_scroll_height) * total_rows;
-
-            if (scroll_row < 0) {
-                scroll_row = 0;
-            } else if (scroll_row > total_rows - visible_rows) {
-                scroll_row = total_rows - visible_rows;
-            }
-
-            mud->bank_scroll_row = scroll_row;
-        }
-
-        /* down arrow */
-        if (mud->bank_scroll_row < (total_rows - visible_rows) &&
-            mud->mouse_x > ui_x + 400 && mud->mouse_x < ui_x + 421 &&
-            mud->mouse_y > ui_y + item_grid_height + 15 &&
-            mud->mouse_y < ui_y + item_grid_height + 30) {
-            mud->bank_scroll_row += 1;
-            mud->bank_last_scroll = get_ticks();
-        }
-    }
-
     if (mud->mouse_button_click != 0) {
         int bank_count = bank_items_count[mud->bank_selected_item_slot];
 
@@ -555,6 +524,57 @@ void mudclient_draw_bank(mudclient *mud) {
             mud->show_dialog_bank = 0;
             mud->show_dialog_offer_x = 0;
             return;
+        }
+    }
+
+    if (bank_scroll) {
+        if (mud->mouse_button_down != 0 &&
+            get_ticks() - mud->bank_last_scroll > BANK_SCROLL_SPEED) {
+            /* up arrow */
+            if (mud->bank_scroll_row > 0 && mud->mouse_x > ui_x + 400 &&
+                mud->mouse_x < ui_x + 421 && mud->mouse_y > ui_y + 28 &&
+                mud->mouse_y < ui_y + 43) {
+                mud->bank_scroll_row -= 1;
+                mud->bank_last_scroll = get_ticks();
+            }
+
+            /* scrub area */
+            int is_dragging = mud->bank_handle_dragged;
+
+            if (!mud->options->off_handle_scroll_drag) {
+                is_dragging = is_dragging && mud->mouse_x >= ui_x + 388 &&
+                              mud->mouse_x <= ui_x + 433;
+            }
+
+            if ((is_dragging ||
+                 (mud->mouse_x > ui_x + 400 && mud->mouse_x < ui_x + 421)) &&
+                mud->mouse_y > ui_y + 43 &&
+                mud->mouse_y < ui_y + item_grid_height + 15) {
+                int scrub_y = mud->mouse_y - (ui_y + 43) - (scrub_height / 2);
+
+                int scroll_row =
+                    (scrub_y / (float)max_scroll_height) * total_rows;
+
+                if (scroll_row < 0) {
+                    scroll_row = 0;
+                } else if (scroll_row > total_rows - visible_rows) {
+                    scroll_row = total_rows - visible_rows;
+                }
+
+                mud->bank_scroll_row = scroll_row;
+                mud->bank_handle_dragged = 1;
+            }
+
+            /* down arrow */
+            if (mud->bank_scroll_row < (total_rows - visible_rows) &&
+                mud->mouse_x > ui_x + 400 && mud->mouse_x < ui_x + 421 &&
+                mud->mouse_y > ui_y + item_grid_height + 15 &&
+                mud->mouse_y < ui_y + item_grid_height + 30) {
+                mud->bank_scroll_row += 1;
+                mud->bank_last_scroll = get_ticks();
+            }
+        } else {
+            mud->bank_handle_dragged = 0;
         }
     }
 
