@@ -790,6 +790,7 @@ typedef struct mudclient {
     int bank_scroll_row;
     int bank_last_scroll;
     int8_t bank_handle_dragged;
+    int bank_visible_rows;
 
     /* ./ui/shop.c */
     int show_dialog_shop;
@@ -854,6 +855,8 @@ typedef struct mudclient {
 
     /* ./ui/offer-x.c */
     int show_dialog_offer_x;
+    int offer_id;
+    int offer_max;
 } mudclient;
 
 void mudclient_new(mudclient *mud);

@@ -4,8 +4,8 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - INVENTORY_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
-                              3,
+    surface_draw_sprite_from3(mud->surface,
+                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
                               mud->sprite_media + INVENTORY_TAB_SPRITE_OFFSET);
 
     /* item slots */
@@ -80,101 +80,110 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     char formatted_item_name[strlen(item_name) + 6];
     sprintf(formatted_item_name, "@lre@%s", item_name);
 
-    if (mud->selected_spell >= 0) {
-        if (game_data_spell_type[mud->selected_spell] == 3) {
-            sprintf(mud->menu_item_text1[mud->menu_items_count], "Cast %s on",
-                    game_data_spell_name[mud->selected_spell]);
+    if (mud->show_dialog_bank) {
+        int item_amount = mudclient_get_inventory_count(mud, item_id);
 
-            strcpy(mud->menu_item_text2[mud->menu_items_count],
-                   formatted_item_name);
-
-            mud->menu_type[mud->menu_items_count] = MENU_CAST_INVITEM;
-            mud->menu_index[mud->menu_items_count] = item_index;
-
-            mud->menu_source_index[mud->menu_items_count] = mud->selected_spell;
-            mud->menu_items_count++;
-
-            return;
-        }
+        mudclient_add_bank_menus(mud, MENU_BANK_DEPOSIT, item_id, item_amount,
+                                 formatted_item_name);
     } else {
-        if (mud->selected_item_inventory_index >= 0) {
-            sprintf(mud->menu_item_text1[mud->menu_items_count],
-                    "Use %s with:", mud->selected_item_name);
+        if (mud->selected_spell >= 0) {
+            if (game_data_spell_type[mud->selected_spell] == 3) {
+                sprintf(mud->menu_item_text1[mud->menu_items_count],
+                        "Cast %s on",
+                        game_data_spell_name[mud->selected_spell]);
+
+                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                       formatted_item_name);
+
+                mud->menu_type[mud->menu_items_count] = MENU_CAST_INVITEM;
+                mud->menu_index[mud->menu_items_count] = item_index;
+
+                mud->menu_source_index[mud->menu_items_count] =
+                    mud->selected_spell;
+                mud->menu_items_count++;
+
+                return;
+            }
+        } else {
+            if (mud->selected_item_inventory_index >= 0) {
+                sprintf(mud->menu_item_text1[mud->menu_items_count],
+                        "Use %s with:", mud->selected_item_name);
+
+                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                       formatted_item_name);
+
+                mud->menu_type[mud->menu_items_count] = MENU_USEWITH_INVITEM;
+                mud->menu_index[mud->menu_items_count] = item_index;
+
+                mud->menu_source_index[mud->menu_items_count] =
+                    mud->selected_item_inventory_index;
+
+                mud->menu_items_count++;
+
+                return;
+            }
+
+            if (mud->inventory_equipped[item_index] == 1) {
+                strcpy(mud->menu_item_text1[mud->menu_items_count], "Remove");
+
+                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                       formatted_item_name);
+
+                mud->menu_type[mud->menu_items_count] = MENU_INV_UNEQUIP;
+                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items_count++;
+            } else if (game_data_item_wearable[item_id] != 0) {
+                int is_wield = (game_data_item_wearable[item_id] & 24);
+
+                strcpy(mud->menu_item_text1[mud->menu_items_count],
+                       is_wield ? "Wield" : "Wear");
+
+                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                       formatted_item_name);
+
+                mud->menu_type[mud->menu_items_count] = MENU_INV_WEAR;
+                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items_count++;
+            }
+
+            if (strlen(game_data_item_command[item_id]) > 0) {
+                strcpy(mud->menu_item_text1[mud->menu_items_count],
+                       game_data_item_command[item_id]);
+
+                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                       formatted_item_name);
+
+                mud->menu_type[mud->menu_items_count] = MENU_INV_COMMAND;
+                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items_count++;
+            }
+
+            strcpy(mud->menu_item_text1[mud->menu_items_count], "Use");
 
             strcpy(mud->menu_item_text2[mud->menu_items_count],
                    formatted_item_name);
 
-            mud->menu_type[mud->menu_items_count] = MENU_USEWITH_INVITEM;
+            mud->menu_type[mud->menu_items_count] = MENU_INV_USE;
             mud->menu_index[mud->menu_items_count] = item_index;
-
-            mud->menu_source_index[mud->menu_items_count] =
-                mud->selected_item_inventory_index;
-
             mud->menu_items_count++;
 
-            return;
+            strcpy(mud->menu_item_text1[mud->menu_items_count], "Drop");
+
+            strcpy(mud->menu_item_text2[mud->menu_items_count],
+                   formatted_item_name);
+
+            mud->menu_type[mud->menu_items_count] = MENU_INV_DROP;
+            mud->menu_index[mud->menu_items_count] = item_index;
+            mud->menu_items_count++;
+
+            strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
+
+            strcpy(mud->menu_item_text2[mud->menu_items_count],
+                   formatted_item_name);
+
+            mud->menu_type[mud->menu_items_count] = MENU_INV_EXAMINE;
+            mud->menu_index[mud->menu_items_count] = item_id;
+            mud->menu_items_count++;
         }
-
-        if (mud->inventory_equipped[item_index] == 1) {
-            strcpy(mud->menu_item_text1[mud->menu_items_count], "Remove");
-
-            strcpy(mud->menu_item_text2[mud->menu_items_count],
-                   formatted_item_name);
-
-            mud->menu_type[mud->menu_items_count] = MENU_INV_UNEQUIP;
-            mud->menu_index[mud->menu_items_count] = item_index;
-            mud->menu_items_count++;
-        } else if (game_data_item_wearable[item_id] != 0) {
-            int is_wield = (game_data_item_wearable[item_id] & 24);
-
-            strcpy(mud->menu_item_text1[mud->menu_items_count],
-                   is_wield ? "Wield" : "Wear");
-
-            strcpy(mud->menu_item_text2[mud->menu_items_count],
-                   formatted_item_name);
-
-            mud->menu_type[mud->menu_items_count] = MENU_INV_WEAR;
-            mud->menu_index[mud->menu_items_count] = item_index;
-            mud->menu_items_count++;
-        }
-
-        if (strlen(game_data_item_command[item_id]) > 0) {
-            strcpy(mud->menu_item_text1[mud->menu_items_count],
-                   game_data_item_command[item_id]);
-
-            strcpy(mud->menu_item_text2[mud->menu_items_count],
-                   formatted_item_name);
-
-            mud->menu_type[mud->menu_items_count] = MENU_INV_COMMAND;
-            mud->menu_index[mud->menu_items_count] = item_index;
-            mud->menu_items_count++;
-        }
-
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Use");
-
-        strcpy(mud->menu_item_text2[mud->menu_items_count],
-               formatted_item_name);
-
-        mud->menu_type[mud->menu_items_count] = MENU_INV_USE;
-        mud->menu_index[mud->menu_items_count] = item_index;
-        mud->menu_items_count++;
-
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Drop");
-
-        strcpy(mud->menu_item_text2[mud->menu_items_count],
-               formatted_item_name);
-
-        mud->menu_type[mud->menu_items_count] = MENU_INV_DROP;
-        mud->menu_index[mud->menu_items_count] = item_index;
-        mud->menu_items_count++;
-
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
-
-        strcpy(mud->menu_item_text2[mud->menu_items_count],
-               formatted_item_name);
-
-        mud->menu_type[mud->menu_items_count] = MENU_INV_EXAMINE;
-        mud->menu_index[mud->menu_items_count] = item_id;
-        mud->menu_items_count++;
     }
 }

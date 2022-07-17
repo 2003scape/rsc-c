@@ -48,5 +48,6 @@ void mudclient_handle_offer_x_input(mudclient *mud) {
         mud->mouse_y < cancel_offset_y + OFFER_X_CANCEL_SIZE) {
         memset(mud->input_digits_current, '\0', INPUT_DIGITS_LENGTH + 1);
         mud->show_dialog_offer_x = 0;
+        mud->mouse_button_click = 0;
     }
 }

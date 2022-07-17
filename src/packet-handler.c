@@ -1265,6 +1265,11 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_BANK_OPEN: {
         mud->show_dialog_bank = 1;
+        mud->bank_scroll_row = 0;
+
+        if (mud->options->bank_menus) {
+            mud->show_right_click_menu = 0;
+        }
 
         int offset = 1;
 

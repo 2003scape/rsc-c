@@ -372,6 +372,25 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
 
         mud->selected_spell = -1;
         break;
+    case MENU_BANK_WITHDRAW:
+    case MENU_BANK_DEPOSIT: {
+        int is_withdraw = menu_type == MENU_BANK_WITHDRAW;
+
+        if (menu_target_index < 0) {
+            mud->bank_offer_type =
+                is_withdraw ? BANK_OFFER_WITHDRAW : BANK_OFFER_DEPOSIT;
+
+            mud->offer_id = menu_index;
+            mud->offer_max = abs(menu_target_index);
+
+            mud->show_dialog_offer_x = 1;
+        } else {
+            mudclient_bank_transaction(mud, menu_index, menu_target_index,
+                                       is_withdraw ? CLIENT_BANK_WITHDRAW
+                                                   : CLIENT_BANK_DEPOSIT);
+        }
+        break;
+    }
     case MENU_CANCEL:
         mud->selected_item_inventory_index = -1;
         mud->selected_spell = -1;
@@ -1289,8 +1308,10 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
         return;
     }
 
+    /* make it a bit darker for the bank interface */
     surface_draw_box_alpha(mud->surface, mud->menu_x, mud->menu_y,
-                           mud->menu_width, mud->menu_height, GREY_D0, 160);
+                           mud->menu_width, mud->menu_height, GREY_D0,
+                           160 + (mud->show_dialog_bank ? 40 : 0));
 
     surface_draw_string(mud->surface, "Choose option", mud->menu_x + 2,
                         mud->menu_y + 12, 1, CYAN);

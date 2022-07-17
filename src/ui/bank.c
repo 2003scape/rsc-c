@@ -20,6 +20,29 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
 #endif
 
     packet_stream_send_packet(mud->packet_stream);
+
+    /* select the item if it isn't already */
+    if (mud->bank_selected_item != item_id) {
+        memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
+        memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
+
+        for (int i = 0; i < mud->bank_item_count; i++) {
+            int bank_item_id = mud->bank_items[i];
+
+            if (bank_item_id == item_id) {
+                mud->bank_selected_item_slot = i;
+                mud->bank_selected_item = item_id;
+                break;
+            }
+        }
+    }
+
+    int item_row = mud->bank_selected_item_slot / BANK_COLUMNS;
+
+    if (item_row < mud->bank_scroll_row ||
+        item_row > mud->bank_scroll_row + mud->bank_visible_rows) {
+        mud->bank_scroll_row = item_row;
+    }
 }
 
 void mudclient_add_bank_menu(mudclient *mud, int type, int item_id, int amount,
@@ -41,7 +64,9 @@ void mudclient_add_bank_menus(mudclient *mud, int type, int item_id,
     char formatted[21] = {0};
     sprintf(formatted, "%s-%d", type_string, 1);
 
-    mudclient_add_bank_menu(mud, type, item_id, 1, formatted, item_name);
+    if (item_amount >= 1) {
+        mudclient_add_bank_menu(mud, type, item_id, 1, formatted, item_name);
+    }
 
     if (item_amount >= 5) {
         sprintf(formatted, "%s-%d", type_string, 5);
@@ -62,7 +87,8 @@ void mudclient_add_bank_menus(mudclient *mud, int type, int item_id,
         int last_x = is_withdraw ? mud->bank_last_withdraw_offer
                                  : mud->bank_last_deposit_offer;
 
-        if (last_x != 0 && item_amount >= last_x) {
+        if (last_x != 0 && last_x != 1 && last_x != 5 && last_x != 10 &&
+            last_x != 50 && item_amount >= last_x) {
             sprintf(formatted, "%s-%d", type_string, last_x);
 
             mudclient_add_bank_menu(mud, type, item_id, last_x, formatted,
@@ -72,8 +98,24 @@ void mudclient_add_bank_menus(mudclient *mud, int type, int item_id,
 
     if (mud->options->offer_x && item_amount > 1) {
         sprintf(formatted, "%s-X", type_string);
-        mudclient_add_bank_menu(mud, type, item_id, -1, formatted, item_name);
+
+        mudclient_add_bank_menu(mud, type, item_id, -item_amount, formatted,
+                                item_name);
     }
+
+    strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
+    strcpy(mud->menu_item_text2[mud->menu_items_count], item_name);
+
+    mud->menu_type[mud->menu_items_count] = MENU_INV_EXAMINE;
+    mud->menu_index[mud->menu_items_count] = item_id;
+
+    mud->menu_items_count++;
+
+    strcpy(mud->menu_item_text1[mud->menu_items_count], "Cancel");
+    strcpy(mud->menu_item_text2[mud->menu_items_count], "");
+
+    mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
+    mud->menu_items_count++;
 }
 
 void mudclient_draw_bank_page(mudclient *mud, int x, int y, int page,
@@ -270,6 +312,9 @@ void mudclient_handle_bank_amounts_input(mudclient *mud, int amount, int last_x,
                                        ? BANK_OFFER_WITHDRAW
                                        : BANK_OFFER_DEPOSIT;
 
+            mud->offer_id = item_id;
+            mud->offer_max = amount;
+
             mud->show_dialog_offer_x = 1;
         } else {
             mudclient_bank_transaction(mud, item_id, ui_amount,
@@ -299,8 +344,6 @@ void mudclient_handle_bank_amounts_input(mudclient *mud, int amount, int last_x,
 }
 
 void mudclient_draw_bank(mudclient *mud) {
-    // mudclient_draw_ui_tab_inventory(mud, 1);
-
     int visible_rows =
         mud->options->bank_expand
             ? (mud->surface->height - 142) / ITEM_GRID_SLOT_HEIGHT
@@ -311,6 +354,8 @@ void mudclient_draw_bank(mudclient *mud) {
     } else if (visible_rows < 6) {
         visible_rows = 6;
     }
+
+    mud->bank_visible_rows = visible_rows;
 
     int item_grid_height = visible_rows * ITEM_GRID_SLOT_HEIGHT;
     int bank_height = item_grid_height + 130;
@@ -340,6 +385,7 @@ void mudclient_draw_bank(mudclient *mud) {
     int *bank_items_count = mud->bank_items_count;
 
     if (mud->options->bank_search && strlen(mud->input_pm_current) > 0) {
+        /* clear on enter */
         if (strlen(mud->input_pm_final)) {
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
             memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
@@ -411,8 +457,8 @@ void mudclient_draw_bank(mudclient *mud) {
         }*/
     }
 
-    int bank_scroll = mud->options->bank_scroll &&
-                      bank_item_count > visible_rows * BANK_COLUMNS;
+    int show_bank_scroll = mud->options->bank_scroll &&
+                           bank_item_count > visible_rows * BANK_COLUMNS;
 
     int max_scroll_height = item_grid_height - 28;
     int total_rows = ceil(bank_item_count / (float)BANK_COLUMNS);
@@ -422,11 +468,25 @@ void mudclient_draw_bank(mudclient *mud) {
 
     int bank_width = BANK_WIDTH;
 
-    if (bank_scroll) {
+    if (show_bank_scroll) {
         bank_width += 13;
     }
 
-    int ui_x = (mud->surface->width / 2) - (bank_width / 2);
+    int show_inventory =
+        mud->options->bank_inventory &&
+        mud->surface->width > INVENTORY_WIDTH + bank_width + 15;
+
+    if (show_inventory) {
+        mudclient_draw_ui_tab_inventory(mud, !mud->show_right_click_menu &&
+                                                 !mud->show_dialog_offer_x);
+    }
+
+    int contain_width = show_inventory && mud->surface->width <
+                                              INVENTORY_WIDTH + bank_width + 265
+                            ? mud->surface->width - INVENTORY_WIDTH - 4
+                            : mud->surface->width;
+
+    int ui_x = (contain_width / 2) - (bank_width / 2);
     int ui_y = ((mud->surface->height - 6) / 2) - (bank_height / 2);
 
     /* the title bar makes it hard to see */
@@ -435,30 +495,19 @@ void mudclient_draw_bank(mudclient *mud) {
     }
 
     if (mud->input_digits_final > 0) {
-        if (mud->bank_offer_type == BANK_OFFER_WITHDRAW) {
-            int max_amount = bank_items_count[mud->bank_selected_item_slot];
+        if (mud->input_digits_final > mud->offer_max) {
+            mudclient_show_message(mud, "You don't have that many!",
+                                   MESSAGE_TYPE_GAME);
+        } else {
+            int is_withdraw = mud->bank_offer_type == BANK_OFFER_WITHDRAW;
 
-            if (mud->input_digits_final > max_amount) {
-                mudclient_show_message(mud, "You don't have that many!",
-                                       MESSAGE_TYPE_GAME);
-            } else {
-                mudclient_bank_transaction(
-                    mud, bank_items[mud->bank_selected_item_slot],
-                    mud->input_digits_final, CLIENT_BANK_WITHDRAW);
+            mudclient_bank_transaction(
+                mud, mud->offer_id, mud->input_digits_final,
+                is_withdraw ? CLIENT_BANK_WITHDRAW : CLIENT_BANK_DEPOSIT);
 
+            if (is_withdraw) {
                 mud->bank_last_withdraw_offer = mud->input_digits_final;
-            }
-        } else if (mud->bank_offer_type == BANK_OFFER_DEPOSIT) {
-            int item_id = bank_items[mud->bank_selected_item_slot];
-            int max_amount = mudclient_get_inventory_count(mud, item_id);
-
-            if (mud->input_digits_final > max_amount) {
-                mudclient_show_message(mud, "You don't have that many!",
-                                       MESSAGE_TYPE_GAME);
             } else {
-                mudclient_bank_transaction(
-                    mud, item_id, mud->input_digits_final, CLIENT_BANK_DEPOSIT);
-
                 mud->bank_last_deposit_offer = mud->input_digits_final;
             }
         }
@@ -467,7 +516,7 @@ void mudclient_draw_bank(mudclient *mud) {
         mud->input_digits_final = 0;
     }
 
-    if (bank_scroll && mud->bank_scroll_row > total_rows) {
+    if (show_bank_scroll && mud->bank_scroll_row > total_rows) {
         mud->bank_scroll_row = 0;
     }
 
@@ -506,8 +555,10 @@ void mudclient_draw_bank(mudclient *mud) {
     int mouse_y = mud->mouse_y - ui_y;
     int mouse_handled = 0;
 
-    if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < bank_width &&
-        mouse_y < item_grid_height + 76) {
+    if (mud->show_dialog_offer_x) {
+        mouse_handled = 1;
+    } else if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < bank_width &&
+               mouse_y < item_grid_height + 76) {
         mouse_handled = 1;
         int slot_index = bank_item_offset;
 
@@ -531,6 +582,12 @@ void mudclient_draw_bank(mudclient *mud) {
                                            : mud->mouse_button_click != 0;
 
                     if (!mud->show_dialog_offer_x && clicked_slot) {
+                        /* only withdraw if they click an item that's already
+                         * selected */
+                        if (mud->bank_selected_item != selected_item_id) {
+                            mud->mouse_button_click = 0;
+                        }
+
                         mud->bank_selected_item = selected_item_id;
                         mud->bank_selected_item_slot = slot_index;
                     }
@@ -547,28 +604,6 @@ void mudclient_draw_bank(mudclient *mud) {
                         mudclient_add_bank_menus(mud, MENU_BANK_WITHDRAW,
                                                  selected_item_id, item_amount,
                                                  formatted_item_name);
-
-                        strcpy(mud->menu_item_text1[mud->menu_items_count],
-                               "Examine");
-
-                        strcpy(mud->menu_item_text2[mud->menu_items_count],
-                               formatted_item_name);
-
-                        mud->menu_type[mud->menu_items_count] =
-                            MENU_INV_EXAMINE;
-
-                        mud->menu_index[mud->menu_items_count] =
-                            selected_item_id;
-
-                        mud->menu_items_count++;
-
-                        strcpy(mud->menu_item_text1[mud->menu_items_count],
-                               "Cancel");
-
-                        strcpy(mud->menu_item_text2[mud->menu_items_count], "");
-
-                        mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
-                        mud->menu_items_count++;
                     }
                 }
 
@@ -577,7 +612,11 @@ void mudclient_draw_bank(mudclient *mud) {
         }
     }
 
-    if (!mud->show_right_click_menu && mud->mouse_button_click != 0) {
+    int mouse_in_inventory =
+        show_inventory && mud->mouse_x > mud->surface->width - INVENTORY_WIDTH;
+
+    if (!mud->show_right_click_menu && mud->mouse_button_click != 0 &&
+        !mouse_in_inventory) {
         int bank_count = bank_items_count[mud->bank_selected_item_slot];
 
         if (!mud->options->bank_unstackble_withdraw &&
@@ -608,21 +647,23 @@ void mudclient_draw_bank(mudclient *mud) {
         }
 
         if (!mouse_handled) {
-            if (!bank_scroll && bank_item_count > items_per_page &&
+            if (!show_bank_scroll && bank_item_count > items_per_page &&
                 mouse_x >= page_offset_x &&
                 mouse_x <= page_offset_x + page_width && mouse_y <= 12) {
                 mud->bank_active_page = 0;
-            } else if (!bank_scroll && bank_item_count > items_per_page &&
+            } else if (!show_bank_scroll && bank_item_count > items_per_page &&
                        mouse_x >= (page_offset_x + page_width) &&
                        mouse_x <= (page_offset_x + page_width * 2) &&
                        mouse_y <= 12) {
                 mud->bank_active_page = 1;
-            } else if (!bank_scroll && bank_item_count > items_per_page * 2 &&
+            } else if (!show_bank_scroll &&
+                       bank_item_count > items_per_page * 2 &&
                        mouse_x >= (page_offset_x + page_width * 2) &&
                        mouse_x <= (page_offset_x + page_width * 3) &&
                        mouse_y <= 12) {
                 mud->bank_active_page = 2;
-            } else if (!bank_scroll && bank_item_count > items_per_page * 3 &&
+            } else if (!show_bank_scroll &&
+                       bank_item_count > items_per_page * 3 &&
                        mouse_x >= (page_offset_x + page_width * 3) &&
                        mouse_x <= (page_offset_x + page_width * 4) &&
                        mouse_y <= 12) {
@@ -637,7 +678,7 @@ void mudclient_draw_bank(mudclient *mud) {
         }
     }
 
-    if (bank_scroll) {
+    if (show_bank_scroll) {
         if (mud->mouse_button_down != 0 &&
             get_ticks() - mud->bank_last_scroll > BANK_SCROLL_SPEED) {
             /* up arrow */
@@ -665,12 +706,6 @@ void mudclient_draw_bank(mudclient *mud) {
                 int scroll_row =
                     (scrub_y / (float)max_scroll_height) * total_rows;
 
-                if (scroll_row < 0) {
-                    scroll_row = 0;
-                } else if (scroll_row > total_rows - visible_rows) {
-                    scroll_row = total_rows - visible_rows;
-                }
-
                 mud->bank_scroll_row = scroll_row;
                 mud->bank_handle_dragged = 1;
             }
@@ -685,6 +720,12 @@ void mudclient_draw_bank(mudclient *mud) {
             }
         } else {
             mud->bank_handle_dragged = 0;
+        }
+
+        if (mud->bank_scroll_row < 0) {
+            mud->bank_scroll_row = 0;
+        } else if (mud->bank_scroll_row > total_rows - visible_rows) {
+            mud->bank_scroll_row = total_rows - visible_rows;
         }
     }
 
@@ -704,7 +745,7 @@ void mudclient_draw_bank(mudclient *mud) {
     surface_draw_string(mud->surface, bank_title, ui_x + 1, ui_y + 10, 1,
                         WHITE);
 
-    if (!bank_scroll) {
+    if (!show_bank_scroll) {
         if (bank_item_count > items_per_page) {
             mudclient_draw_bank_page(mud, ui_x + page_offset_x, ui_y, 1,
                                      page_width);
@@ -781,7 +822,7 @@ void mudclient_draw_bank(mudclient *mud) {
                            bank_item_count - bank_item_offset,
                            mud->bank_selected_item_slot - bank_item_offset);
 
-    if (bank_scroll) {
+    if (show_bank_scroll) {
         int scrub_y = ((float)mud->bank_scroll_row / (float)total_rows) *
                       (float)max_scroll_height;
 
@@ -818,14 +859,6 @@ void mudclient_draw_bank(mudclient *mud) {
 
         surface_draw_string(mud->surface, formatted_search, ui_x + 2,
                             ui_y + item_grid_height + 93, 1, WHITE);
-    }
-
-    if (mud->bank_selected_item_slot == -1) {
-        surface_draw_string_centre(
-            mud->surface, "Select an object to withdraw or deposit", ui_x + 204,
-            ui_y + item_grid_height + 44, 3, YELLOW);
-
-        return;
     }
 
     if (item_id != -1) {
@@ -865,6 +898,10 @@ void mudclient_draw_bank(mudclient *mud) {
                 mud, inventory_count, mud->bank_last_deposit_offer, ui_x + 220,
                 ui_y + item_grid_height + 59);
         }
+    } else {
+        surface_draw_string_centre(
+            mud->surface, "Select an object to withdraw or deposit", ui_x + 204,
+            ui_y + item_grid_height + 44, 3, YELLOW);
     }
 
     if (mud->show_dialog_offer_x) {
