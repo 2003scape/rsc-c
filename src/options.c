@@ -19,11 +19,15 @@ void options_new(Options *options) {
 
     options->offer_x = 1;
     options->last_offer_x = 1;
+
+    options->bank_unstackble_withdraw = 1;
     options->bank_search = 1;
     options->bank_capacity = 1;
     options->bank_value = 1;
     options->bank_expand = 1;
     options->bank_scroll = 1;
+    options->bank_menus = 1;
+    options->bank_inventory = 1;
 
     options->escape_clear = 1;
 }

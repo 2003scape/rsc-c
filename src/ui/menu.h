@@ -4,6 +4,8 @@
 #include "../mudclient.h"
 #include "../packet-stream.h"
 
+/* number determines priority in the menu */
+
 #define MENU_CAST_GROUNDITEM 200
 #define MENU_USEWITH_GROUNDITEM 210
 #define MENU_GROUNDITEM_TAKE 220
@@ -49,6 +51,10 @@
 #define MENU_CAST_GROUND 900
 #define MENU_WALK 920
 #define MENU_CAST_SELF 1000
+
+#define MENU_BANK_WITHDRAW 601
+#define MENU_BANK_DEPOSIT 602
+
 #define MENU_CANCEL 4000
 
 void mudclient_menu_item_click(mudclient *mud, int i);

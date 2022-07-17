@@ -65,6 +65,9 @@ typedef struct Options {
     /* add another button to perform the last offer x amount */
     int last_offer_x;
 
+    /* withdraw multiple unstackable items */
+    int bank_unstackble_withdraw;
+
     /* add filtering to the bank */
     int bank_search;
 
@@ -82,6 +85,12 @@ typedef struct Options {
 
     /* use a scrollbar instead of bank pages */
     int bank_scroll;
+
+    /* adds right click menus to bank items */
+    int bank_menus;
+
+    /* shows the inventory along with the bank interface given enough width */
+    int bank_inventory;
 
     /* escape clears input */
     int escape_clear;

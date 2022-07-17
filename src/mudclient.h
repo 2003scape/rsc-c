@@ -672,7 +672,7 @@ typedef struct mudclient {
     int minimap_random_scale;
 
     /* ./ui/menu.c */
-    int show_right_click_menu;
+    int8_t show_right_click_menu;
     int menu_items_count;
     int menu_indices[MENU_MAX];
     int menu_item_x[MENU_MAX];

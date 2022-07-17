@@ -3847,6 +3847,8 @@ void mudclient_draw_ui(mudclient *mud) {
     surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 3 - 197,
                                     3, mud->sprite_media, 128);
 
+    int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
+
     if (mud->logout_timeout != 0) {
         mudclient_draw_logout(mud);
     } else if (mud->show_dialog_welcome) {
@@ -3856,7 +3858,19 @@ void mudclient_draw_ui(mudclient *mud) {
     } else if (mud->show_ui_wild_warn == 1) {
         mudclient_draw_wilderness_warning(mud);
     } else if (mud->show_dialog_bank && mud->combat_timeout == 0) {
+        if (no_menus) {
+            mud->menu_items_count = 0;
+        }
+
         mudclient_draw_bank(mud);
+
+        if (mud->options->bank_menus) {
+            if (mud->show_right_click_menu) {
+                mudclient_draw_right_click_menu(mud);
+            } else {
+                mudclient_create_top_mouse_menu(mud);
+            }
+        }
     } else if (mud->show_dialog_shop && mud->combat_timeout == 0) {
         mudclient_draw_shop(mud);
     } else if (mud->show_dialog_trade_confirm) {
@@ -3886,8 +3900,6 @@ void mudclient_draw_ui(mudclient *mud) {
         }
 
         mudclient_set_active_ui_tab(mud);
-
-        int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
 
         if (no_menus) {
             mud->menu_items_count = 0;

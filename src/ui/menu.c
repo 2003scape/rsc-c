@@ -383,7 +383,7 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
     if (mud->selected_spell >= 0 || mud->selected_item_inventory_index >= 0) {
         strcpy(mud->menu_item_text1[mud->menu_items_count], "Cancel");
         strcpy(mud->menu_item_text2[mud->menu_items_count], "");
-        mud->menu_type[mud->menu_items_count] = 4000;
+        mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
         mud->menu_items_count++;
     }
 
@@ -391,6 +391,7 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
         mud->menu_indices[i] = i;
     }
 
+    /* sort */
     for (int flag = 0; !flag;) {
         flag = 1;
 
@@ -468,6 +469,7 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
         if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 2) ||
             (mud->settings_mouse_button_one && mud->mouse_button_click == 1)) {
+
             mud->menu_height = (mud->menu_items_count + 1) * 15;
             mud->menu_width = surface_text_width("Choose option", 1) + 5;
 
