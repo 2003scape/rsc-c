@@ -92,6 +92,9 @@ typedef struct Options {
     /* shows the inventory along with the bank interface given enough width */
     int bank_inventory;
 
+    /* maintain the selected bank slot when items change position */
+    int bank_maintain_slot;
+
     /* escape clears input */
     int escape_clear;
 } Options;

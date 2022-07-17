@@ -25,9 +25,10 @@ void options_new(Options *options) {
     options->bank_capacity = 1;
     options->bank_value = 1;
     options->bank_expand = 1;
-    options->bank_scroll = 1;
+    //options->bank_scroll = 1;
     options->bank_menus = 1;
     options->bank_inventory = 1;
+    options->bank_maintain_slot = 1;
 
     options->escape_clear = 1;
 }

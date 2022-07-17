@@ -479,6 +479,9 @@ void mudclient_new(mudclient *mud) {
 
     /* set by the server to 192 on p2p servers */
     mud->bank_items_max = 48;
+
+    mud->bank_selected_item_slot = -1;
+    mud->bank_selected_item = -2;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -4526,7 +4529,7 @@ void mudclient_on_resize(mudclient *mud) {
         // TODO change 12 to bar height - 1
         scene_set_bounds(mud->scene, new_width, new_height - 12);
 
-        printf("height %d\n", mud->scene->base_y * 2);
+        printf("height %d\n", mud->game_height);
     }
 
     mudclient_resize(mud);
