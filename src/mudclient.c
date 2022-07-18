@@ -3510,47 +3510,48 @@ void mudclient_draw_character_message(mudclient *mud, GameCharacter *character,
 
 void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
                                      int x, int y, int ty, int width,
-                                     int height, int is_npc) {
-    if (character->animation_current == 8 ||
-        character->animation_current == 9 || character->combat_timer != 0) {
-        if (character->combat_timer > 0) {
-            int offset_x = x;
+                                     int height, int is_npc, float depth) {
+    if (character->animation_current != 8 &&
+        character->animation_current != 9 && character->combat_timer == 0) {
+        return;
+    }
 
-            if (character->animation_current == 8) {
-                offset_x -= (20 * ty) / 100;
-            } else if (character->animation_current == 9) {
-                offset_x += (20 * ty) / 100;
-            }
+    if (character->combat_timer > 0) {
+        int offset_x = x;
 
-            int missing =
-                (character->health_current * 30) / character->health_max;
-
-            mud->health_bar_x[mud->health_bar_count] = offset_x + (width / 2);
-            mud->health_bar_y[mud->health_bar_count] = y;
-            mud->health_bar_missing[mud->health_bar_count++] = missing;
+        if (character->animation_current == 8) {
+            offset_x -= (20 * ty) / 100;
+        } else if (character->animation_current == 9) {
+            offset_x += (20 * ty) / 100;
         }
 
-        if (character->combat_timer > 150) {
-            int offset_x = x;
+        int missing = (character->health_current * 30) / character->health_max;
 
-            if (character->animation_current == 8) {
-                offset_x -= (10 * ty) / 100;
-            } else if (character->animation_current == 9) {
-                offset_x += (10 * ty) / 100;
-            }
+        mud->health_bar_x[mud->health_bar_count] = offset_x + (width / 2);
+        mud->health_bar_y[mud->health_bar_count] = y;
+        mud->health_bar_missing[mud->health_bar_count++] = missing;
+    }
 
-            surface_draw_sprite_from3(
-                mud->surface, (offset_x + (width / 2)) - 12,
-                (y + (height / 2)) - 12,
-                mud->sprite_media + 11 + (is_npc ? 1 : 0));
+    if (character->combat_timer > 150) {
+        int offset_x = x;
 
-            char damage_string[12] = {0};
-            sprintf(damage_string, "%d", character->damage_taken);
-
-            surface_draw_string_centre(mud->surface, damage_string,
-                                       (offset_x + (width / 2)) - 1,
-                                       y + (height / 2) + 5, 3, WHITE);
+        if (character->animation_current == 8) {
+            offset_x -= (10 * ty) / 100;
+        } else if (character->animation_current == 9) {
+            offset_x += (10 * ty) / 100;
         }
+
+        surface_draw_sprite_from3_depth(
+            mud->surface, (offset_x + (width / 2)) - 12,
+            (y + (height / 2)) - 12, mud->sprite_media + 11 + (is_npc ? 1 : 0),
+            depth, depth);
+
+        char damage_string[12] = {0};
+        sprintf(damage_string, "%d", character->damage_taken);
+
+        surface_draw_string_centre_depth(
+            mud->surface, damage_string, (offset_x + (width / 2)) - 1,
+            y + (height / 2) + 5, 3, WHITE, depth - 0.00001f);
     }
 }
 
@@ -3681,8 +3682,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             }
 
             /* fixes draw ordering */
-            depth_top -= 0.00002;
-            depth_bottom -= 0.00002;
+            depth_top -= 0.00001f;
+            depth_bottom -= 0.00001f;
 
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
@@ -3702,8 +3703,11 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             player->bubble_item;
     }
 
-    // TODO depth too
-    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0);
+    float damage_depth =
+        (depth_top + depth_bottom) / 2 - (0.00001f * ANIMATION_COUNT);
+
+    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
+                                    damage_depth);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
@@ -3727,8 +3731,10 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int skew_x, int ty, float depth_top,
                         float depth_bottom) {
     GameCharacter *npc = mud->npcs[id];
+
     int animation_order =
         (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
+
     int flip = 0;
     int i2 = animation_order;
 
@@ -3777,6 +3783,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
         if (animation_id < 0) {
             continue;
         }
+
         int offset_x = 0;
         int offset_y = 0;
         int k4 = j2;
@@ -3818,8 +3825,8 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 skin_colour = game_data_npc_colour_skin[npc->npc_id];
             }
 
-            depth_top -= 0.00002;
-            depth_bottom -= 0.00002;
+            depth_top -= 0.00001f;
+            depth_bottom -= 0.00001f;
 
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
@@ -3829,7 +3836,12 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     }
 
     mudclient_draw_character_message(mud, npc, x, y, width);
-    mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1);
+
+    float damage_depth =
+        (depth_top + depth_bottom) / 2 - (0.00001f * ANIMATION_COUNT);
+
+    mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1,
+                                    damage_depth);
 }
 
 void mudclient_draw_blue_bar(mudclient *mud) {
@@ -4172,8 +4184,6 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         }
     }
 
-    // TODO uncomment
-
     for (int i = 0; i < mud->npc_count; i++) {
         GameCharacter *npc = mud->npcs[i];
 
@@ -4214,11 +4224,11 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int type = mud->teleport_bubble_type[i];
         int height = type == 0 ? 256 : 64;
 
-        /*scene_add_sprite(mud->scene, 50000 + i, x,
+        scene_add_sprite(mud->scene, 50000 + i, x,
                          -world_get_elevation(mud->world, x, y), y, 128, height,
                          i + 50000);
 
-        mud->scene_sprite_count++;*/
+        mud->scene_sprite_count++;
     }
 }
 
@@ -5209,7 +5219,7 @@ void mudclient_run(mudclient *mud) {
 }
 
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
-                                    int height, int id) {
+                                    int height, int id, float depth) {
     int type = mud->teleport_bubble_type[id];
     int time = mud->teleport_bubble_time[id];
 
@@ -5218,13 +5228,13 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
         int colour = BLUE + time * 5 * 256;
 
         surface_draw_circle(mud->surface, x + (width / 2), y + (height / 2),
-                            20 + time * 2, colour, 255 - time * 5);
+                            20 + time * 2, colour, 255 - time * 5, depth);
     } else if (type == 1) {
         /* red bubble used for telegrab */
         int colour = RED + time * 5 * 256;
 
         surface_draw_circle(mud->surface, x + (width / 2), y + (height / 2),
-                            10 + time, colour, 255 - time * 5);
+                            10 + time, colour, 255 - time * 5, depth);
     }
 }
 

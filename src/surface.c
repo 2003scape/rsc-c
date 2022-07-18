@@ -624,7 +624,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 }
 
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
-                                 int colour, int font_id, int draw_shadow) {
+                                 int colour, int font_id, int draw_shadow, float depth) {
     if (character == ' ') {
         return;
     }
@@ -680,28 +680,28 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
 
     GLfloat char_quad[] = {
         /* top left / northwest */
-        left_x, top_y, 0,     //
+        left_x, top_y, depth, //
         r, g, b, 1.0f,        //
         -1.0f, -1.0f, -1.0f,  //
         texture_x, texture_y, //
         font_id,              //
 
         /* top right / northeast */
-        right_x, top_y, 0,                    //
+        right_x, top_y, depth,                //
         r, g, b, 1.0f,                        //
         -1.0f, -1.0f, -1.0f,                  //
         texture_x + texture_width, texture_y, //
         font_id,                              //
 
         /* bottom right / southeast */
-        right_x, bottom_y, 0,                                  //
+        right_x, bottom_y, depth,                              //
         r, g, b, 1.0f,                                         //
         -1.0f, -1.0f, -1.0f,                                   //
         texture_x + texture_width, texture_y + texture_height, //
         font_id,                                               //
 
         /* bottom left / southwest */
-        left_x, bottom_y, 0,                   //
+        left_x, bottom_y, depth,               //
         r, g, b, 1.0f,                         //
         -1.0f, -1.0f, -1.0f,                   //
         texture_x, texture_y + texture_height, //
@@ -753,7 +753,7 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
 }
 
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
-                              int colour, int alpha) {
+                              int colour, int alpha, float depth) {
     int diameter = radius * 2;
 
     x -= radius;
@@ -773,21 +773,21 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 
     GLfloat circle_quad[] = {
         /* top left / northwest */
-        left_x, top_y, 0,    //
-        r, g, b, a,          //
-        -1.0f, -1.0f, -1.0f, //
-        0, 0,                //
-        circle_index,        //
+        left_x, top_y, depth, //
+        r, g, b, a,           //
+        -1.0f, -1.0f, -1.0f,  //
+        0, 0,                 //
+        circle_index,         //
 
         /* top right / northeast */
-        right_x, top_y, 0,                                   //
+        right_x, top_y, depth,                               //
         r, g, b, a,                                          //
         -1.0f, -1.0f, -1.0f,                                 //
         CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH, 0, //
         circle_index,                                        //
 
         /* bottom right / southeast */
-        right_x, bottom_y, 0,                              //
+        right_x, bottom_y, depth,                          //
         r, g, b, a,                                        //
         -1.0f, -1.0f, -1.0f,                               //
         CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH,  //
@@ -795,7 +795,7 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
         circle_index,                                      //
 
         /* bottom left / southwest */
-        left_x, bottom_y, 0,                                  //
+        left_x, bottom_y, depth,                              //
         r, g, b, a,                                           //
         -1.0f, -1.0f, -1.0f,                                  //
         0, CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_HEIGHT, //
@@ -1200,9 +1200,9 @@ void surface_draw_circle_software(Surface *surface, int x, int y, int radius,
 }
 
 void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
-                         int alpha) {
+                         int alpha, float depth) {
 #ifdef RENDER_GL
-    surface_gl_buffer_circle(surface, x, y, radius, colour, alpha);
+    surface_gl_buffer_circle(surface, x, y, radius, colour, alpha, depth);
 #endif
 
 #ifdef RENDER_SW
@@ -2175,6 +2175,19 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
 #endif
 }
 
+void surface_draw_sprite_from3_depth(Surface *surface, int x, int y,
+                                     int sprite_id, float depth_top,
+                                     float depth_bottom) {
+#ifdef RENDER_GL
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
+                             0, depth_top, depth_bottom);
+#endif
+
+#ifdef RENDER_SW
+    surface_draw_sprite_from3_software(surface, x, y, sprite_id);
+#endif
+}
+
 void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id) {
     int sprite_width = surface->sprite_width[sprite_id];
@@ -2265,7 +2278,7 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 float depth_top, float depth_bottom) {
     if (sprite_id >= 50000) {
         mudclient_draw_teleport_bubble(surface->mud, x, y, width, height,
-                                       sprite_id - 50000);
+                                       sprite_id - 50000, (depth_top + depth_bottom) / 2 - (0.00001f * ANIMATION_COUNT));
 
         return;
     }
@@ -3306,6 +3319,26 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
     }
 }
 
+// surface_draw_sprite_transform_mask
+/* applies scale, both grey and skin colour mask, skew/shear and flip. used for
+ * entity sprites */
+void surface_sprite_clipping_from9(Surface *surface, int x, int y,
+                                   int draw_width, int draw_height,
+                                   int sprite_id, int mask_colour,
+                                   int skin_colour, int skew_x, int flip) {
+#ifdef RENDER_GL
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, draw_width, draw_height,
+                             skew_x, mask_colour, skin_colour, 255, flip, 0, 0,
+                             0);
+#endif
+
+#ifdef RENDER_SW
+    surface_sprite_clipping_from9_software(surface, x, y, draw_width,
+                                           draw_height, sprite_id, mask_colour,
+                                           skin_colour, skew_x, flip);
+#endif
+}
+
 void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
                                          int draw_width, int draw_height,
                                          int sprite_id, int mask_colour,
@@ -3324,25 +3357,6 @@ void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
 #endif
 }
 
-// surface_draw_sprite_transform_mask
-/* applies scale, both grey and skin colour mask, skew/shear and flip. used for
- * entity sprites */
-void surface_sprite_clipping_from9(Surface *surface, int x, int y,
-                                   int draw_width, int draw_height,
-                                   int sprite_id, int mask_colour,
-                                   int skin_colour, int skew_x, int flip) {
-#ifdef RENDER_GL
-    surface_sprite_clipping_from9_depth(surface, x, y, draw_width, draw_height,
-                                        sprite_id, mask_colour, skin_colour,
-                                        skew_x, flip, 0, 0);
-#endif
-
-#ifdef RENDER_SW
-    surface_sprite_clipping_from9_software(surface, x, y, draw_width,
-                                           draw_height, sprite_id, mask_colour,
-                                           skin_colour, skew_x, flip);
-#endif
-}
 
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
                                             int32_t *src, int j, int k,
@@ -3598,175 +3612,6 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
     }
 }
 
-void surface_draw_string_right(Surface *surface, char *text, int x, int y,
-                               int font, int colour) {
-    surface_draw_string(surface, text, x - surface_text_width(text, font), y,
-                        font, colour);
-}
-
-void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
-                                int font, int colour) {
-    surface_draw_string(surface, text,
-                        x - (int)(surface_text_width(text, font) / 2), y, font,
-                        colour);
-}
-
-void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
-                            int font, int colour, int max) {
-    int width = 0;
-    int8_t *font_data = game_fonts[font];
-    int start = 0;
-    int end = 0;
-    int text_length = strlen(text);
-
-    for (int i = 0; i < text_length; i++) {
-        if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
-            i += 4;
-        } else if (text[i] == '~' && i + 5 < text_length &&
-                   text[i + 5] == '~') {
-            i += 5;
-        } else {
-            width += font_data[character_width[(unsigned)text[i]] + 7];
-        }
-
-        if (text[i] == ' ') {
-            end = i;
-        } else if (text[i] == '%') {
-            end = i;
-            width = 1000;
-        }
-
-        if (width > max) {
-            if (end <= start) {
-                end = i;
-            }
-
-            char sliced[(end - start) + 1];
-            memset(sliced, '\0', (end - start) + 1);
-            strncpy(sliced, text + start, end - start);
-            surface_draw_string_centre(surface, sliced, x, y, font, colour);
-
-            width = 0;
-            start = i = end + 1;
-
-            y += surface_text_height(font);
-        }
-    }
-
-    if (width > 0) {
-        char sliced[(text_length - start) + 1];
-        memset(sliced, '\0', (text_length - start) + 1);
-        strncpy(sliced, text + start, text_length - start);
-        surface_draw_string_centre(surface, sliced, x, y, font, colour);
-    }
-}
-
-void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
-                         int colour) {
-    int8_t *font_data = game_fonts[font];
-    int text_length = strlen(text);
-
-    for (int i = 0; i < text_length; i++) {
-        if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
-            int start = i + 1;
-            int end = i + 4;
-
-            char sliced[(end - start) + 1];
-            memset(sliced, '\0', (end - start) + 1);
-
-            strncpy(sliced, text + start, end - start);
-
-            {
-                int j = 0;
-
-                while (sliced[j]) {
-                    sliced[j] = tolower(sliced[j]);
-                    j++;
-                }
-            }
-
-            if (strcmp(sliced, "red") == 0) {
-                colour = STRING_RED;
-            } else if (strcmp(sliced, "lre") == 0) {
-                colour = STRING_LRE;
-            } else if (strcmp(sliced, "yel") == 0) {
-                colour = STRING_YEL;
-            } else if (strcmp(sliced, "gre") == 0) {
-                colour = STRING_GRE;
-            } else if (strcmp(sliced, "blu") == 0) {
-                colour = STRING_BLU;
-            } else if (strcmp(sliced, "cya") == 0) {
-                colour = STRING_CYA;
-            } else if (strcmp(sliced, "mag") == 0) {
-                colour = STRING_MAG;
-            } else if (strcmp(sliced, "whi") == 0) {
-                colour = STRING_WHI;
-            } else if (strcmp(sliced, "bla") == 0) {
-                colour = STRING_BLA;
-            } else if (strcmp(sliced, "dre") == 0) {
-                colour = STRING_DRE;
-            } else if (strcmp(sliced, "ora") == 0) {
-                colour = STRING_ORA;
-            } else if (strcmp(sliced, "ran") == 0) {
-                colour =
-                    (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
-            } else if (strcmp(sliced, "or1") == 0) {
-                colour = STRING_OR1;
-            } else if (strcmp(sliced, "or2") == 0) {
-                colour = STRING_OR2;
-            } else if (strcmp(sliced, "or3") == 0) {
-                colour = STRING_OR3;
-            } else if (strcmp(sliced, "gr1") == 0) {
-                colour = STRING_GR1;
-            } else if (strcmp(sliced, "gr2") == 0) {
-                colour = STRING_GR2;
-            } else if (strcmp(sliced, "gr3") == 0) {
-                colour = STRING_GR3;
-            }
-
-            i += 4;
-        } else if (text[i] == '~' && i + 5 < text_length &&
-                   text[i + 5] == '~') {
-            // TODO check if the server ever sends ~XXX~ and support both
-            if (isdigit(text[i + 1]) && isdigit(text[i + 2]) &&
-                isdigit(text[i + 3]) && isdigit(text[i + 4])) {
-                int start = i + 1;
-                int end = i + 5;
-                int sliced_length = (end - start);
-                char sliced[sliced_length + 1];
-                memset(sliced, '\0', sliced_length);
-                strncpy(sliced, text + start, end - start);
-                x = atoi(sliced);
-            }
-
-            i += 5;
-        } else {
-            int character_offset = character_width[(unsigned)text[i]];
-            int draw_shadow = surface->draw_string_shadow && colour != 0;
-
-#ifdef RENDER_GL
-            surface_gl_buffer_character(surface, text[i], x, y, colour, font,
-                                        draw_shadow);
-#endif
-
-#ifdef RENDER_SW
-            if (draw_shadow) {
-                surface_draw_character(surface, character_offset, x + 1, y,
-                                       BLACK, font_data);
-
-                surface_draw_character(surface, character_offset, x, y + 1,
-                                       BLACK, font_data);
-            }
-
-            surface_draw_character(surface, character_offset, x, y, colour,
-                                   font_data);
-#endif
-
-            x += font_data[character_offset + 7];
-        }
-    }
-}
-
 void surface_draw_character(Surface *surface, int character_offset, int x,
                             int y, int colour, int8_t *font_data) {
 #ifdef RENDER_SW
@@ -3837,6 +3682,179 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
 
         dest_pos += dest_offset;
         font_pos += font_data_offset;
+    }
+}
+
+void surface_draw_string_depth(Surface *surface, char *text, int x, int y, int font,
+                         int colour, float depth) {
+    int8_t *font_data = game_fonts[font];
+    int text_length = strlen(text);
+
+    for (int i = 0; i < text_length; i++) {
+        if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
+            int start = i + 1;
+            int end = i + 4;
+
+            char sliced[(end - start) + 1];
+            memset(sliced, '\0', (end - start) + 1);
+
+            strncpy(sliced, text + start, end - start);
+            strtolower(sliced);
+
+            if (strcmp(sliced, "red") == 0) {
+                colour = STRING_RED;
+            } else if (strcmp(sliced, "lre") == 0) {
+                colour = STRING_LRE;
+            } else if (strcmp(sliced, "yel") == 0) {
+                colour = STRING_YEL;
+            } else if (strcmp(sliced, "gre") == 0) {
+                colour = STRING_GRE;
+            } else if (strcmp(sliced, "blu") == 0) {
+                colour = STRING_BLU;
+            } else if (strcmp(sliced, "cya") == 0) {
+                colour = STRING_CYA;
+            } else if (strcmp(sliced, "mag") == 0) {
+                colour = STRING_MAG;
+            } else if (strcmp(sliced, "whi") == 0) {
+                colour = STRING_WHI;
+            } else if (strcmp(sliced, "bla") == 0) {
+                colour = STRING_BLA;
+            } else if (strcmp(sliced, "dre") == 0) {
+                colour = STRING_DRE;
+            } else if (strcmp(sliced, "ora") == 0) {
+                colour = STRING_ORA;
+            } else if (strcmp(sliced, "ran") == 0) {
+                colour =
+                    (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+            } else if (strcmp(sliced, "or1") == 0) {
+                colour = STRING_OR1;
+            } else if (strcmp(sliced, "or2") == 0) {
+                colour = STRING_OR2;
+            } else if (strcmp(sliced, "or3") == 0) {
+                colour = STRING_OR3;
+            } else if (strcmp(sliced, "gr1") == 0) {
+                colour = STRING_GR1;
+            } else if (strcmp(sliced, "gr2") == 0) {
+                colour = STRING_GR2;
+            } else if (strcmp(sliced, "gr3") == 0) {
+                colour = STRING_GR3;
+            }
+
+            i += 4;
+        } else if (text[i] == '~' && i + 5 < text_length &&
+                   text[i + 5] == '~') {
+            // TODO check if the server ever sends ~XXX~ and support both
+            if (isdigit(text[i + 1]) && isdigit(text[i + 2]) &&
+                isdigit(text[i + 3]) && isdigit(text[i + 4])) {
+                int start = i + 1;
+                int end = i + 5;
+                int sliced_length = (end - start);
+                char sliced[sliced_length + 1];
+                memset(sliced, '\0', sliced_length);
+                strncpy(sliced, text + start, end - start);
+                x = atoi(sliced);
+            }
+
+            i += 5;
+        } else {
+            int character_offset = character_width[(unsigned)text[i]];
+            int draw_shadow = surface->draw_string_shadow && colour != 0;
+
+#ifdef RENDER_GL
+            surface_gl_buffer_character(surface, text[i], x, y, colour, font,
+                                        draw_shadow, depth);
+#endif
+
+#ifdef RENDER_SW
+            if (draw_shadow) {
+                surface_draw_character(surface, character_offset, x + 1, y,
+                                       BLACK, font_data);
+
+                surface_draw_character(surface, character_offset, x, y + 1,
+                                       BLACK, font_data);
+            }
+
+            surface_draw_character(surface, character_offset, x, y, colour,
+                                   font_data);
+#endif
+
+            x += font_data[character_offset + 7];
+        }
+    }
+}
+
+void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
+                         int colour) {
+    surface_draw_string_depth(surface, text, x, y, font, colour, 0);
+}
+
+void surface_draw_string_right(Surface *surface, char *text, int x, int y,
+                               int font, int colour) {
+    surface_draw_string(surface, text, x - surface_text_width(text, font), y,
+                        font, colour);
+}
+
+void surface_draw_string_centre_depth(Surface *surface, char *text, int x, int y,
+                                int font, int colour, float depth) {
+    surface_draw_string_depth(surface, text,
+                        x - (int)(surface_text_width(text, font) / 2), y, font,
+                        colour, depth);
+}
+
+void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
+                                int font, int colour) {
+    surface_draw_string(surface, text,
+                        x - (int)(surface_text_width(text, font) / 2), y, font,
+                        colour);
+}
+
+void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
+                            int font, int colour, int max) {
+    int width = 0;
+    int8_t *font_data = game_fonts[font];
+    int start = 0;
+    int end = 0;
+    int text_length = strlen(text);
+
+    for (int i = 0; i < text_length; i++) {
+        if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
+            i += 4;
+        } else if (text[i] == '~' && i + 5 < text_length &&
+                   text[i + 5] == '~') {
+            i += 5;
+        } else {
+            width += font_data[character_width[(unsigned)text[i]] + 7];
+        }
+
+        if (text[i] == ' ') {
+            end = i;
+        } else if (text[i] == '%') {
+            end = i;
+            width = 1000;
+        }
+
+        if (width > max) {
+            if (end <= start) {
+                end = i;
+            }
+
+            char sliced[(end - start) + 1];
+            memset(sliced, '\0', (end - start) + 1);
+            strncpy(sliced, text + start, end - start);
+            surface_draw_string_centre(surface, sliced, x, y, font, colour);
+
+            width = 0;
+            start = i = end + 1;
+
+            y += surface_text_height(font);
+        }
+    }
+
+    if (width > 0) {
+        char sliced[(text_length - start) + 1];
+        memset(sliced, '\0', (text_length - start) + 1);
+        strncpy(sliced, text + start, text_length - start);
+        surface_draw_string_centre(surface, sliced, x, y, font, colour);
     }
 }
 
@@ -3979,8 +3997,7 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
     surface_draw_line_horizontal(surface, x, y + height - 13, 12, 0);
 
     surface_draw_gradient(surface, x + 1, y + 14, 11, height - 27,
-                          SCROLLBAR_TOP_COLOUR,
-                          SCROLLBAR_BOTTOM_COLOUR);
+                          SCROLLBAR_TOP_COLOUR, SCROLLBAR_BOTTOM_COLOUR);
 
     surface_draw_box(surface, x + 3, scrub_y + y + 14, 7, scrub_height,
                      SCRUB_MIDDLE_COLOUR);

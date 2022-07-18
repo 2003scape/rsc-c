@@ -133,7 +133,7 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
 
     /* player */
     surface_draw_circle(mud->surface, ui_x + (MINIMAP_WIDTH / 2),
-                        ui_y + (MINIMAP_HEIGHT / 2), 2, WHITE, 255);
+                        ui_y + (MINIMAP_HEIGHT / 2), 2, WHITE, 255, 0);
 
     /* compass */
     surface_draw_minimap_sprite(mud->surface, ui_x + 19, ui_y + 19,

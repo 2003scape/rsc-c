@@ -41,11 +41,17 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
         }
     }
 
-    int item_row = mud->bank_selected_item_slot / BANK_COLUMNS;
+    /* scroll or switch to selected item page */
+    if (mud->options->bank_scroll) {
+        int item_row = mud->bank_selected_item_slot / BANK_COLUMNS;
 
-    if (item_row < mud->bank_scroll_row ||
-        item_row > mud->bank_scroll_row + mud->bank_visible_rows) {
-        mud->bank_scroll_row = item_row;
+        if (item_row < mud->bank_scroll_row ||
+            item_row > mud->bank_scroll_row + mud->bank_visible_rows) {
+            mud->bank_scroll_row = item_row;
+        }
+    } else {
+        int items_per_page = mud->bank_visible_rows * BANK_COLUMNS;
+        mud->bank_active_page = mud->bank_selected_item_slot / items_per_page;
     }
 }
 
@@ -580,6 +586,7 @@ void mudclient_draw_bank(mudclient *mud) {
     } else if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < bank_width &&
                mouse_y < item_grid_height + 76) {
         mouse_handled = 1;
+
         int slot_index = bank_item_offset;
 
         for (int row = 0; row < visible_rows; row++) {

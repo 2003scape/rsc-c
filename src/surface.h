@@ -192,11 +192,11 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int flip, int rotation, float depth_top,
                               float depth_bottom);
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
-                                 int colour, int font_id, int draw_shadow);
+                                 int colour, int font_id, int draw_shadow, float depth);
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha);
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
-                              int colour, int alpha);
+                              int colour, int alpha, float depth);
 void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
@@ -213,7 +213,7 @@ void surface_black_screen(Surface *surface);
 void surface_draw_circle_software(Surface *surface, int x, int y, int radius,
                                   int colour, int alpha);
 void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
-                         int alpha);
+                         int alpha, float depth);
 void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
                             int height, int colour, int alpha);
 void surface_draw_gradient(Surface *surface, int x, int y, int width,
@@ -257,6 +257,7 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
 void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
                                         int sprite_id);
 void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id);
+void surface_draw_sprite_from3_depth(Surface *surface, int x, int y, int sprite_id, float depth_top, float depth_bottom);
 void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id);
 void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
@@ -303,14 +304,14 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
                                             int sprite_id, int mask_colour,
                                             int skin_colour, int skew_x,
                                             int flip);
+void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
+                                   int sprite_id, int colour1, int colour2,
+                                   int skew_x, int flag);
 void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
                                          int draw_width, int draw_height,
                                          int sprite_id, int mask_colour,
                                          int skin_colour, int skew_x, int flip,
                                          float depth_top, float depth_bottom);
-void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
-                                   int sprite_id, int colour1, int colour2,
-                                   int skew_x, int flag);
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
                                             int32_t *src, int j, int k,
                                             int dest_pos, int i1, int j1,
@@ -333,19 +334,23 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
                                             int l, int i1, int j1, int k1,
                                             int l1, int i2, int j2, int k2,
                                             int l2, int i3, int j3);
+void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
+                         int font_pos, int dest_pos, int width, int height,
+                         int dest_offset, int font_data_offset);
+void surface_draw_character(Surface *surface, int font_offset, int x, int y,
+                            int colour, int8_t *font_data);
+void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
+                         int colour);
+void surface_draw_string_depth(Surface *surface, char *text, int x, int y, int font,
+                         int colour, float depth);
 void surface_draw_string_right(Surface *surface, char *text, int x, int y,
                                int font, int colour);
+void surface_draw_string_centre_depth(Surface *surface, char *text, int x, int y,
+                                int font, int colour, float depth);
 void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
                                 int font, int colour);
 void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
                             int font, int colour, int max);
-void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
-                         int colour);
-void surface_draw_character(Surface *surface, int font_offset, int x, int y,
-                            int colour, int8_t *font_data);
-void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
-                         int font_pos, int dest_pos, int width, int height,
-                         int dest_offset, int font_data_offset);
 int surface_text_height(int font_id);
 int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
