@@ -961,25 +961,10 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
 #ifdef RENDER_GL
-#if 0
-        vec4 position = {
-            VERTEX_TO_FLOAT(x),
-            // VERTEX_TO_FLOAT(y),
-            VERTEX_TO_FLOAT(y) - VERTEX_TO_FLOAT(height) / 2,
-            VERTEX_TO_FLOAT(z),
-            1.0,
-        };
-
-        vec4 projected_position = {0};
-        glm_mat4_mulv(scene->gl_projection_view, position, projected_position);
-
-        scene->gl_sprite_depth[scene->sprite_count] =
-            projected_position[2] / projected_position[3];
-#endif
     vec4 projected_position = {0};
 
     vec4 bottom_position = {VERTEX_TO_FLOAT(x), VERTEX_TO_FLOAT(y),
-                            VERTEX_TO_FLOAT(z), 1.0};
+                            VERTEX_TO_FLOAT(z), 1.0f};
 
     glm_mat4_mulv(scene->gl_projection_view, bottom_position,
                   projected_position);
@@ -991,12 +976,24 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
     vec4 top_position = {VERTEX_TO_FLOAT(x),
                          VERTEX_TO_FLOAT(y) - (VERTEX_TO_FLOAT(height) * 0.75f),
-                         VERTEX_TO_FLOAT(z), 1.0};
+                         VERTEX_TO_FLOAT(z), 1.0f};
 
     glm_mat4_mulv(scene->gl_projection_view, top_position, projected_position);
 
     scene->gl_sprite_depth_top[scene->sprite_count] =
         projected_position[2] / projected_position[3];
+
+    /* check for overlapping entities and adjust depth so it's on top */
+    for (int i = 0; i < scene->sprite_count; i++) {
+        if (scene->sprite_x[i] == scene->sprite_x[scene->sprite_count] &&
+            scene->sprite_y[i] == scene->sprite_y[scene->sprite_count]) {
+            scene->gl_sprite_depth_bottom[scene->sprite_count] -=
+                0.00004f * ANIMATION_COUNT;
+            scene->gl_sprite_depth_top[scene->sprite_count] -=
+                0.00004f * ANIMATION_COUNT;
+            break;
+        }
+    }
 #endif
 
     int *vertices = calloc(2, sizeof(int));
@@ -4189,8 +4186,8 @@ void scene_gl_render(Scene *scene) {
 
     scene_initialise_polygons_2d(scene);
 
-    qsort(scene->visible_polygons, scene->visible_polygons_count,
-          sizeof(GamePolygon *), scene_polygon_depth_compare);
+    /*qsort(scene->visible_polygons, scene->visible_polygons_count,
+          sizeof(GamePolygon *), scene_polygon_depth_compare);*/
 
     for (int i = 0; i < scene->visible_polygons_count; i++) {
         GamePolygon *polygon = scene->visible_polygons[i];

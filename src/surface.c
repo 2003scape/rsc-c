@@ -624,7 +624,8 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 }
 
 void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
-                                 int colour, int font_id, int draw_shadow, float depth) {
+                                 int colour, int font_id, int draw_shadow,
+                                 float depth) {
     if (character == ' ') {
         return;
     }
@@ -2277,8 +2278,9 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
     if (sprite_id >= 50000) {
-        mudclient_draw_teleport_bubble(surface->mud, x, y, width, height,
-                                       sprite_id - 50000, (depth_top + depth_bottom) / 2 - (0.00001f * ANIMATION_COUNT));
+        mudclient_draw_teleport_bubble(
+            surface->mud, x, y, width, height, sprite_id - 50000,
+            (depth_top + depth_bottom) / 2 - (0.00002f * ANIMATION_COUNT));
 
         return;
     }
@@ -3357,7 +3359,6 @@ void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
 #endif
 }
 
-
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
                                             int32_t *src, int j, int k,
                                             int dest_pos, int width, int height,
@@ -3685,8 +3686,8 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
     }
 }
 
-void surface_draw_string_depth(Surface *surface, char *text, int x, int y, int font,
-                         int colour, float depth) {
+void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
+                               int font, int colour, float depth) {
     int8_t *font_data = game_fonts[font];
     int text_length = strlen(text);
 
@@ -3794,11 +3795,12 @@ void surface_draw_string_right(Surface *surface, char *text, int x, int y,
                         font, colour);
 }
 
-void surface_draw_string_centre_depth(Surface *surface, char *text, int x, int y,
-                                int font, int colour, float depth) {
+void surface_draw_string_centre_depth(Surface *surface, char *text, int x,
+                                      int y, int font, int colour,
+                                      float depth) {
     surface_draw_string_depth(surface, text,
-                        x - (int)(surface_text_width(text, font) / 2), y, font,
-                        colour, depth);
+                              x - (int)(surface_text_width(text, font) / 2), y,
+                              font, colour, depth);
 }
 
 void surface_draw_string_centre(Surface *surface, char *text, int x, int y,

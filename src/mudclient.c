@@ -3551,7 +3551,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 
         surface_draw_string_centre_depth(
             mud->surface, damage_string, (offset_x + (width / 2)) - 1,
-            y + (height / 2) + 5, 3, WHITE, depth - 0.00001f);
+            y + (height / 2) + 5, 3, WHITE, depth - 0.00004f);
     }
 }
 
@@ -3682,8 +3682,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             }
 
             /* fixes draw ordering */
-            depth_top -= 0.00001f;
-            depth_bottom -= 0.00001f;
+            depth_top -= 0.00004f;
+            depth_bottom -= 0.00004f;
 
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
@@ -3704,7 +3704,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     }
 
     float damage_depth =
-        (depth_top + depth_bottom) / 2 - (0.00001f * ANIMATION_COUNT);
+        (depth_top + depth_bottom) / 2 - (0.00004f * ANIMATION_COUNT);
 
     mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
                                     damage_depth);
@@ -3825,8 +3825,8 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 skin_colour = game_data_npc_colour_skin[npc->npc_id];
             }
 
-            depth_top -= 0.00001f;
-            depth_bottom -= 0.00001f;
+            depth_top -= 0.00004f;
+            depth_bottom -= 0.00004f;
 
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
@@ -3838,7 +3838,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     mudclient_draw_character_message(mud, npc, x, y, width);
 
     float damage_depth =
-        (depth_top + depth_bottom) / 2 - (0.00001f * ANIMATION_COUNT);
+        (depth_top + depth_bottom) / 2 - (0.00004f * ANIMATION_COUNT);
 
     mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1,
                                     damage_depth);
