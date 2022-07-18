@@ -49,4 +49,8 @@ void main() {
     } else {
         fragment_colour = vertex_colour;
     }
+
+    if (fragment_colour.w <= 0.0) {
+        discard;
+    }
 }
