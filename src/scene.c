@@ -103,6 +103,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         /* thanks jorsa */
         scene->texture_light_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
+
+        /*scene->texture_light_gradient[gradient_index] =
+            0.074708f * powf(15.844317f, ((float)i / 255.0f));*/
     }
 
     shader_use(&scene->game_model_shader);
@@ -984,11 +987,13 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
         projected_position[2] / projected_position[3];
 
     /* check for overlapping entities and adjust depth so it's on top */
+    // TODO do this after depth sorting
     for (int i = 0; i < scene->sprite_count; i++) {
         if (scene->sprite_x[i] == scene->sprite_x[scene->sprite_count] &&
             scene->sprite_y[i] == scene->sprite_y[scene->sprite_count]) {
             scene->gl_sprite_depth_bottom[scene->sprite_count] -=
                 0.00004f * ANIMATION_COUNT;
+
             scene->gl_sprite_depth_top[scene->sprite_count] -=
                 0.00004f * ANIMATION_COUNT;
             break;
