@@ -1,7 +1,5 @@
 #version 330 core
 
-#define PHONG_ENABLED 1
-
 #define FOUNTAIN_ID 17
 #define RAMP_SIZE 256
 #define USE_GOURAUD 12345678
@@ -75,16 +73,15 @@ void main() {
 
     foggy = 0;
 
-    if (gl_Position.z > (fog_distance / float(vertex_scale))) {
+    if (gl_Position.z > (float(fog_distance) / vertex_scale)) {
         gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
         foggy = 1;
     }
 
     vertex_gradient_index = float(gradient_index) / float(RAMP_SIZE);
 
-    if (vertex_texture_position.z > -1) {
-        if (vertex_texture_position.z == FOUNTAIN_ID) {
-            vertex_texture_position.y -= scroll_texture;
-        }
+    if (vertex_texture_position.z > -1.0f &&
+        vertex_texture_position.z == FOUNTAIN_ID) {
+        vertex_texture_position.y -= scroll_texture;
     }
 }

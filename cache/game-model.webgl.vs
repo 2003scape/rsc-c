@@ -14,6 +14,8 @@ layout(location = 6) in vec3 back_texture_position;
 
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
+out float vertex_gradient_index;
+flat out int foggy;
 
 uniform float vertex_scale;
 
@@ -21,14 +23,10 @@ uniform float scroll_texture;
 
 uniform int fog_distance;
 
-uniform float light_gradient[RAMP_SIZE];
-uniform float texture_light_gradient[RAMP_SIZE];
-
 uniform mat4 model;
 uniform mat4 projection_view_model;
 
 uniform bool unlit;
-
 uniform int light_ambience;
 uniform vec3 light_direction;
 uniform float light_diffuse;
@@ -73,33 +71,18 @@ void main() {
         vertex_texture_position = front_texture_position;
     }
 
-    bool foggy = false;
+    foggy = 0;
 
     if (gl_Position.z > (float(fog_distance) / vertex_scale)) {
         gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
-        foggy = true;
+        foggy = 1;
     }
 
-    if (gradient_index > (RAMP_SIZE - 1)) {
-        gradient_index = (RAMP_SIZE - 1);
-    } else if (gradient_index < 0) {
-        gradient_index = 0;
-    }
-
-    float lightness = 1.0f;
+    vertex_gradient_index = float(gradient_index) / float(RAMP_SIZE);
 
     if (vertex_texture_position.z > -1.0f) {
-        lightness = foggy ? light_gradient[gradient_index]
-                          : texture_light_gradient[gradient_index];
-
-        // lightness = light_gradient[gradient_index];
-
-        if (vertex_texture_position.z == float(FOUNTAIN_ID)) {
+        if (vertex_texture_position.z == FOUNTAIN_ID) {
             vertex_texture_position.y -= scroll_texture;
         }
-    } else {
-        lightness = light_gradient[gradient_index];
     }
-
-    vertex_colour = vec4(vec3(vertex_colour) * lightness, vertex_colour.w);
 }
