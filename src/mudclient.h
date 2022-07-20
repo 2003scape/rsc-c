@@ -723,6 +723,8 @@ typedef struct mudclient {
 
 #ifdef RENDER_GL
     int gl_is_walking;
+    int gl_mouse_x;
+    int gl_mouse_y;
 #endif
 
     int walk_path_x[PATH_STEPS_MAX];
@@ -976,5 +978,6 @@ void mudclient_walk_to_wall_object(mudclient *mud, int dest_x, int dest_y,
                                    int direction);
 void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
                               int id);
+int mudclient_is_ui_scaled(mudclient *mud);
 int main(int argc, char **argv);
 #endif

@@ -95,8 +95,11 @@ typedef struct Options {
     /* maintain the selected bank slot when items change position */
     int bank_maintain_slot;
 
-    /* escape clears input */
+    /* escape key clears input */
     int escape_clear;
+
+    /* double the UI size */
+    int ui_scale;
 } Options;
 
 void options_new(Options *options);

@@ -150,6 +150,14 @@ void surface_new(Surface *surface, int width, int height, int limit,
 }
 
 #ifdef RENDER_GL
+float surface_gl_translate_x(Surface *surface, int x) {
+    return gl_translate_x(x, surface->width);
+}
+
+float surface_gl_translate_y(Surface *surface, int y) {
+    return gl_translate_y(y, surface->height);
+}
+
 void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
                                      int height, int length) {
     glGenTextures(1, texture_array_id);
@@ -497,8 +505,8 @@ void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
 
     GLfloat textured_quad[] = {
         /* top left / northwest */
-        gl_translate_x(points[0][0], surface->width),
-        gl_translate_y(points[0][1], surface->height), //
+        surface_gl_translate_x(surface, points[0][0]),
+        surface_gl_translate_y(surface, points[0][1]), //
         depth_top,                                     //
         mask_r, mask_g, mask_b, mask_a,                //
         skin_r, skin_g, skin_b,                        //
@@ -506,8 +514,8 @@ void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
         texture_index,                                 //
 
         /* top right / northeast */
-        gl_translate_x(points[1][0], surface->width),
-        gl_translate_y(points[1][1], surface->height), //
+        surface_gl_translate_x(surface, points[1][0]),
+        surface_gl_translate_y(surface, points[1][1]), //
         depth_top,                                     //
         mask_r, mask_g, mask_b, mask_a,                //
         skin_r, skin_g, skin_b,                        //
@@ -515,8 +523,8 @@ void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
         texture_index,                                 //
 
         /* bottom right / southeast */
-        gl_translate_x(points[2][0], surface->width),
-        gl_translate_y(points[2][1], surface->height),  //
+        surface_gl_translate_x(surface, points[2][0]),
+        surface_gl_translate_y(surface, points[2][1]),  //
         depth_bottom,                                   //
         mask_r, mask_g, mask_b, mask_a,                 //
         skin_r, skin_g, skin_b,                         //
@@ -524,8 +532,8 @@ void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
         texture_index,                                  //
 
         /* bottom left / southwest */
-        gl_translate_x(points[3][0], surface->width),
-        gl_translate_y(points[3][1], surface->height), //
+        surface_gl_translate_x(surface, points[3][0]),
+        surface_gl_translate_y(surface, points[3][1]), //
         depth_bottom,                                  //
         mask_r, mask_g, mask_b, mask_a,                //
         skin_r, skin_g, skin_b,                        //
@@ -657,10 +665,10 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
     x += font_data[character_offset + 5];
     y -= font_data[character_offset + 6];
 
-    GLfloat left_x = gl_translate_x(x, surface->width);
-    GLfloat right_x = gl_translate_x(x + width, surface->width);
-    GLfloat top_y = gl_translate_y(y, surface->height);
-    GLfloat bottom_y = gl_translate_y(y + height, surface->height);
+    GLfloat left_x = surface_gl_translate_x(surface, x);
+    GLfloat right_x = surface_gl_translate_x(surface, x + width);
+    GLfloat top_y = surface_gl_translate_y(surface, y);
+    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
 
     GLfloat r = ((colour >> 16) & 0xff) / 255.0f;
     GLfloat g = ((colour >> 8) & 0xff) / 255.0f;
@@ -719,10 +727,10 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
     float blue_f = (colour & 0xff) / 255.0f;
     float alpha_f = alpha / 255.0f;
 
-    GLfloat left_x = gl_translate_x(x, surface->width);
-    GLfloat right_x = gl_translate_x(x + width, surface->width);
-    GLfloat top_y = gl_translate_y(y, surface->height);
-    GLfloat bottom_y = gl_translate_y(y + height, surface->height);
+    GLfloat left_x = surface_gl_translate_x(surface, x);
+    GLfloat right_x = surface_gl_translate_x(surface, x + width);
+    GLfloat top_y = surface_gl_translate_y(surface, y);
+    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
 
     GLfloat box_quad[] = {
         /* top left / northwest */
@@ -760,10 +768,10 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
     x -= radius;
     y -= radius;
 
-    GLfloat left_x = gl_translate_x(x, surface->width);
-    GLfloat right_x = gl_translate_x(x + diameter, surface->width);
-    GLfloat top_y = gl_translate_y(y, surface->height);
-    GLfloat bottom_y = gl_translate_y(y + diameter, surface->height);
+    GLfloat left_x = surface_gl_translate_x(surface, x);
+    GLfloat right_x = surface_gl_translate_x(surface, x + diameter);
+    GLfloat top_y = surface_gl_translate_y(surface, y);
+    GLfloat bottom_y = surface_gl_translate_y(surface, y + diameter);
 
     float r = ((colour >> 16) & 0xff) / 255.0f;
     float g = ((colour >> 8) & 0xff) / 255.0f;
@@ -884,6 +892,13 @@ void surface_gl_draw(Surface *surface, int use_depth) {
     }
 
     shader_use(&surface->gl_flat_shader);
+
+    if (!use_depth) {
+        shader_set_int(&surface->gl_flat_shader, "ui_scale", mudclient_is_ui_scaled(surface->mud));
+    } else {
+        shader_set_int(&surface->gl_flat_shader, "ui_scale", 0);
+    }
+
     glBindVertexArray(surface->gl_flat_vao);
     glActiveTexture(GL_TEXTURE0);
 
@@ -1294,10 +1309,10 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
     int top_blue = colour_top & 0xff;
 
 #ifdef RENDER_GL
-    GLfloat left_x = gl_translate_x(x, surface->width);
-    GLfloat right_x = gl_translate_x(x + width, surface->width);
-    GLfloat top_y = gl_translate_y(y, surface->height);
-    GLfloat bottom_y = gl_translate_y(y + height, surface->height);
+    GLfloat left_x = surface_gl_translate_x(surface, x);
+    GLfloat right_x = surface_gl_translate_x(surface, x + width);
+    GLfloat top_y = surface_gl_translate_y(surface, y);
+    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
 
     GLfloat gradient_quad[] = {
         /* top left / northwest */

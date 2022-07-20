@@ -193,6 +193,8 @@ typedef struct Scene {
     float *gl_sprite_depth_top;
 
     int gl_scroll_texture_position;
+
+    int gl_height;
 #endif
 } Scene;
 

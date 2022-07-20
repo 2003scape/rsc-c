@@ -509,10 +509,10 @@ void mudclient_resize(mudclient *mud) {
         mud->scene->raster = mud->surface->pixels;
     }
 
-    int full_offset_x = mud->game_width - MUD_WIDTH;
-    int full_offset_y = mud->game_height - MUD_HEIGHT;
-    int half_offset_x = (mud->game_width / 2) - (MUD_WIDTH / 2);
-    int half_offset_y = (mud->game_height / 2) - (MUD_HEIGHT / 2);
+    int full_offset_x = mud->surface->width - MUD_WIDTH;
+    int full_offset_y = mud->surface->height - MUD_HEIGHT;
+    int half_offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
+    int half_offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
 
     if (mud->panel_login_welcome != NULL) {
         mud->panel_login_welcome->offset_x = half_offset_x;
@@ -1034,6 +1034,17 @@ void mudclient_key_released(mudclient *mud, int code) {
 void mudclient_mouse_moved(mudclient *mud, int x, int y) {
     mud->mouse_x = x;
     mud->mouse_y = y;
+
+#ifdef RENDER_GL
+    mud->gl_mouse_x = x;
+    mud->gl_mouse_y = y;
+#endif
+
+    if (mudclient_is_ui_scaled(mud)) {
+        mud->mouse_x /= 2;
+        mud->mouse_y /= 2;
+    }
+
     mud->mouse_action_timeout = 0;
 }
 
@@ -1041,13 +1052,23 @@ void mudclient_mouse_released(mudclient *mud, int x, int y, int button) {
     mud->mouse_x = x;
     mud->mouse_y = y;
 
+#ifdef RENDER_GL
+    mud->gl_mouse_x = x;
+    mud->gl_mouse_y = y;
+#endif
+
+    if (mudclient_is_ui_scaled(mud)) {
+        mud->mouse_x /= 2;
+        mud->mouse_y /= 2;
+    }
+
     mud->mouse_button_down = 0;
 
     if (button == 2) {
         mud->middle_button_down = 0;
 
         int tick_delta = get_ticks() - mud->last_mouse_sample_ticks;
-        int x_delta = mud->mouse_x - mud->last_mouse_sample_x;
+        int x_delta = x - mud->last_mouse_sample_x;
 
         mud->camera_momentum = 2 * ((float)x_delta / (float)tick_delta);
     }
@@ -1099,14 +1120,23 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
     mud->mouse_x = x;
     mud->mouse_y = y;
 
+#ifdef RENDER_GL
+    mud->gl_mouse_x = x;
+    mud->gl_mouse_y = y;
+#endif
+
+    if (mudclient_is_ui_scaled(mud)) {
+        mud->mouse_x /= 2;
+        mud->mouse_y /= 2;
+    }
+
     if (mud->options->middle_click_camera && button == 2) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
-        mud->origin_mouse_x = mud->mouse_x;
+        mud->origin_mouse_x = x;
 
-        // mud->origin_camera_ticks = get_ticks();
         mud->last_mouse_sample_ticks = get_ticks();
-        mud->last_mouse_sample_x = mud->mouse_x;
+        mud->last_mouse_sample_x = x;
         mud->camera_momentum = 0;
         return;
     }
@@ -3093,6 +3123,13 @@ void mudclient_handle_game_input(mudclient *mud) {
 
         if (ticks - mud->last_mouse_sample_ticks >= 250) {
             mud->last_mouse_sample_ticks = ticks;
+
+            int mouse_x = mud->mouse_x;
+
+#ifdef RENDER_GL
+            mouse_x = mud->gl_mouse_x;
+#endif
+
             mud->last_mouse_sample_x = mud->mouse_x;
         }
     }
@@ -3273,7 +3310,11 @@ void mudclient_handle_game_input(mudclient *mud) {
         mud->mouse_button_click = 2;
     }
 
+#ifdef RENDER_GL
+    scene_set_mouse_loc(mud->scene, mud->gl_mouse_x, mud->gl_mouse_y);
+#else
     scene_set_mouse_loc(mud->scene, mud->mouse_x, mud->mouse_y);
+#endif
 
     mud->last_mouse_button_down = 0;
 
@@ -3323,11 +3364,16 @@ void mudclient_handle_game_input(mudclient *mud) {
         mud->camera_rotation = (mud->camera_rotation - 2) & 0xff;
     }
 
+    int mouse_x = mud->mouse_x;
+
+#ifdef RENDER_GL
+    mouse_x = mud->gl_mouse_x;
+#endif
+
     if (!mud->settings_camera_auto && mud->options->middle_click_camera &&
         mud->middle_button_down) {
         mud->camera_rotation = (mud->origin_rotation +
-                                ((mud->mouse_x - mud->origin_mouse_x) / 4)) &
-                               0xff;
+                                ((mouse_x - mud->origin_mouse_x) / 4)) & 0xff;
     }
 
     if (mud->options->zoom_camera) {
@@ -4518,8 +4564,13 @@ void mudclient_on_resize(mudclient *mud) {
     mud->game_height = new_height;
 
     if (mud->surface != NULL) {
-        mud->surface->width = new_width;
-        mud->surface->height = new_height;
+        if (mudclient_is_ui_scaled(mud)) {
+            mud->surface->width = new_width / 2;
+            mud->surface->height = new_height / 2;
+        } else {
+            mud->surface->width = new_width;
+            mud->surface->height = new_height;
+        }
 
         surface_reset_bounds(mud->surface);
     }
@@ -5055,6 +5106,9 @@ void mudclient_poll_events(mudclient *mud) {
             mudclient_mouse_released(mud, event.button.x, event.button.y,
                                      event.button.button);
             break;
+        case SDL_MOUSEWHEEL:
+            mud->mouse_scroll_delta = event.wheel.y * -1;
+            break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 mudclient_on_resize(mud);
@@ -5483,6 +5537,10 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
         mudclient_walk_to(mud, mud->local_region_x, mud->local_region_y, x, y,
                           (x + width) - 1, (y + height) - 1, 1, 1, 1);
     }
+}
+
+int mudclient_is_ui_scaled(mudclient *mud) {
+    return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) && mud->game_height >= (MUD_HEIGHT * 2);
 }
 
 int main(int argc, char **argv) {

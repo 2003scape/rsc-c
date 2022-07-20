@@ -1032,8 +1032,8 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->gl_mouse_picked_count = 0;
 
     // TODO use inverse_projection_view
-    float gl_x = gl_translate_x(x, scene->surface->width);
-    float gl_y = gl_translate_y(y, scene->surface->height);
+    float gl_x = gl_translate_x(x, scene->width);
+    float gl_y = gl_translate_y(y, scene->gl_height);
 
     vec4 clip = {gl_x, gl_y, -1.0f, 1.0f};
 
@@ -1075,6 +1075,10 @@ void scene_set_bounds(Scene *scene, int width, int height) {
         Scanline *scanline = calloc(1, sizeof(Scanline));
         scene->scanlines[i] = scanline;
     }
+#endif
+
+#ifdef RENDER_GL
+    scene->gl_height = height;
 #endif
 }
 
@@ -4105,7 +4109,7 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    float scaled_scene_height = (float)(scene->surface->height - 13) / 1000.0f;
+    float scaled_scene_height = (float)(scene->gl_height - 1) / 1000.0f;
 
     /* no idea, i just used cubic regression */
     float fov = (-0.1608132078 * powf(scaled_scene_height, 3)) -
@@ -4114,7 +4118,7 @@ void scene_gl_update_camera(Scene *scene) {
 
     glm_perspective(
         fov,
-        (float)(scene->surface->width) / (float)(scene->surface->height - 13),
+        (float)(scene->width) / (float)(scene->gl_height - 1),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
@@ -4180,6 +4184,15 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 }
 
 void scene_gl_render(Scene *scene) {
+    int scene_height = scene->gl_height - 1;
+
+    int old_width = scene->surface->width;
+    int old_height = scene->surface->height;
+
+    scene->surface->width = scene->width;
+    scene->surface->height = scene_height + 13;
+
+    surface_reset_bounds(scene->surface);
 #ifndef RENDER_SW
     /* if we're also rendering in software, this will already be done */
     game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
@@ -4204,13 +4217,9 @@ void scene_gl_render(Scene *scene) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    /* for the message tab bar */
     int offset_y = 13;
 
-    int screen_width = scene->surface->width;
-    int screen_height = scene->surface->height - offset_y;
-
-    glViewport(0, offset_y, screen_width, screen_height);
+    glViewport(0, offset_y, scene->width, scene_height);
 
     shader_use(&scene->game_model_shader);
 
@@ -4392,9 +4401,18 @@ void scene_gl_render(Scene *scene) {
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
 #endif
+    glViewport(0, 0, scene->width, scene_height + 13);
 
-    glViewport(0, 0, scene->surface->width, scene->surface->height);
     surface_gl_draw(scene->surface, 1);
+
+    scene->surface->width = old_width;
+    scene->surface->height = old_height;
+
+    surface_reset_bounds(scene->surface);
+
+    glViewport(0, 0,
+               scene->surface->mud->game_width,
+               scene->surface->mud->game_height);
 }
 
 void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,

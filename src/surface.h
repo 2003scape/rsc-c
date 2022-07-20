@@ -168,6 +168,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
 
 #ifdef RENDER_GL
+float surface_gl_translate_x(Surface *surface, int x);
+float surface_gl_translate_y(Surface *surface, int y);
 void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
                                      int height, int length);
 void surface_gl_create_font_texture(int32_t *dest, int font_id,

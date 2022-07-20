@@ -438,8 +438,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
     }
 
     if (show_background) {
-        int offset_x = (mud->game_width / 2) - (MUD_WIDTH / 2);
-        int offset_y = (mud->game_height / 2) - (MUD_HEIGHT / 2);
+        int offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
+        int offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
 
         int cycle = (mud->login_timer * 2) % 3072;
 

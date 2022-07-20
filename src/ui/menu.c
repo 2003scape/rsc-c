@@ -521,12 +521,12 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
                 mud->menu_y = 0;
             }
 
-            if (mud->menu_x + mud->menu_width > mud->game_width - 2) {
-                mud->menu_x = mud->game_width - 2 - mud->menu_width;
+            if (mud->menu_x + mud->menu_width > mud->surface->width - 2) {
+                mud->menu_x = mud->surface->width - 2 - mud->menu_width;
             }
 
-            if (mud->menu_y + mud->menu_height > mud->game_height - 31) {
-                mud->menu_y = mud->game_height - 31 - mud->menu_height;
+            if (mud->menu_y + mud->menu_height > mud->surface->height - 31) {
+                mud->menu_y = mud->surface->height - 31 - mud->menu_height;
             }
 
             mud->mouse_button_click = 0;
