@@ -987,15 +987,18 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
         projected_position[2] / projected_position[3];
 
     /* check for overlapping entities and adjust depth so it's on top */
-    // TODO do this after depth sorting
     for (int i = 0; i < scene->sprite_count; i++) {
         if (scene->sprite_x[i] == scene->sprite_x[scene->sprite_count] &&
             scene->sprite_y[i] == scene->sprite_y[scene->sprite_count]) {
-            scene->gl_sprite_depth_bottom[scene->sprite_count] -=
-                0.00004f * ANIMATION_COUNT;
 
-            scene->gl_sprite_depth_top[scene->sprite_count] -=
-                0.00004f * ANIMATION_COUNT;
+            if (scene->visible_polygons[i]->depth >=
+                scene->visible_polygons[scene->sprite_count]->depth) {
+                scene->gl_sprite_depth_bottom[i] *= 0.9999f;
+                scene->gl_sprite_depth_top[i] *= 0.9999f;
+            } else {
+                scene->gl_sprite_depth_bottom[scene->sprite_count] *= 0.9999f;
+                scene->gl_sprite_depth_top[scene->sprite_count] *= 0.9999f;
+            }
             break;
         }
     }
@@ -4116,10 +4119,9 @@ void scene_gl_update_camera(Scene *scene) {
                 (0.3012063997 * powf(scaled_scene_height, 2)) +
                 (2.0149949882 * scaled_scene_height) - 0.0030409762;
 
-    glm_perspective(
-        fov,
-        (float)(scene->width) / (float)(scene->gl_height - 1),
-        VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+    glm_perspective(fov, (float)(scene->width) / (float)(scene->gl_height - 1),
+                    VERTEX_TO_FLOAT(scene->clip_near), clip_far,
+                    scene->gl_projection);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 
@@ -4410,8 +4412,7 @@ void scene_gl_render(Scene *scene) {
 
     surface_reset_bounds(scene->surface);
 
-    glViewport(0, 0,
-               scene->surface->mud->game_width,
+    glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);
 }
 

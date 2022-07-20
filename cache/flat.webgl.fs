@@ -22,8 +22,16 @@ void main() {
         discard;
     }
 
-    if (gl_FragCoord.x < bounds_min_x || gl_FragCoord.x > bounds_max_x ||
-        gl_FragCoord.y > bounds_min_y || gl_FragCoord.y < bounds_max_y) {
+    float frag_x = gl_FragCoord.x;
+    float frag_y = gl_FragCoord.y;
+
+    if (ui_scale) {
+        frag_x /= 2.0f;
+        frag_y /= 2.0f;
+    }
+
+    if (frag_x < bounds_min_x || frag_x > bounds_max_x ||
+        frag_y > bounds_min_y || frag_y < bounds_max_y) {
         discard;
     }
 

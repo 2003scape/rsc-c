@@ -507,47 +507,47 @@ void mudclient_resize(mudclient *mud) {
 #endif
 
         mud->scene->raster = mud->surface->pixels;
-    }
 
-    int full_offset_x = mud->surface->width - MUD_WIDTH;
-    int full_offset_y = mud->surface->height - MUD_HEIGHT;
-    int half_offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
-    int half_offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
+        int full_offset_x = mud->surface->width - MUD_WIDTH;
+        int full_offset_y = mud->surface->height - MUD_HEIGHT;
+        int half_offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
+        int half_offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
 
-    if (mud->panel_login_welcome != NULL) {
-        mud->panel_login_welcome->offset_x = half_offset_x;
-        mud->panel_login_welcome->offset_y = half_offset_y;
-    }
+        if (mud->panel_login_welcome != NULL) {
+            mud->panel_login_welcome->offset_x = half_offset_x;
+            mud->panel_login_welcome->offset_y = half_offset_y;
+        }
 
-    if (mud->panel_login_new_user != NULL) {
-        mud->panel_login_new_user->offset_x = half_offset_x;
-        mud->panel_login_new_user->offset_y = half_offset_y;
-    }
+        if (mud->panel_login_new_user != NULL) {
+            mud->panel_login_new_user->offset_x = half_offset_x;
+            mud->panel_login_new_user->offset_y = half_offset_y;
+        }
 
-    if (mud->panel_login_existing_user != NULL) {
-        mud->panel_login_existing_user->offset_x = half_offset_x;
-        mud->panel_login_existing_user->offset_y = half_offset_y;
-    }
+        if (mud->panel_login_existing_user != NULL) {
+            mud->panel_login_existing_user->offset_x = half_offset_x;
+            mud->panel_login_existing_user->offset_y = half_offset_y;
+        }
 
-    if (mud->panel_appearance != NULL) {
-        mud->panel_appearance->offset_x = half_offset_x;
-        mud->panel_appearance->offset_y = half_offset_y;
-    }
+        if (mud->panel_appearance != NULL) {
+            mud->panel_appearance->offset_x = half_offset_x;
+            mud->panel_appearance->offset_y = half_offset_y;
+        }
 
-    if (mud->panel_message_tabs != NULL) {
-        mud->panel_message_tabs->offset_y = full_offset_y;
-    }
+        if (mud->panel_message_tabs != NULL) {
+            mud->panel_message_tabs->offset_y = full_offset_y;
+        }
 
-    if (mud->panel_quests != NULL) {
-        mud->panel_quests->offset_x = full_offset_x;
-    }
+        if (mud->panel_quests != NULL) {
+            mud->panel_quests->offset_x = full_offset_x;
+        }
 
-    if (mud->panel_magic != NULL) {
-        mud->panel_magic->offset_x = full_offset_x;
-    }
+        if (mud->panel_magic != NULL) {
+            mud->panel_magic->offset_x = full_offset_x;
+        }
 
-    if (mud->panel_social_list != NULL) {
-        mud->panel_social_list->offset_x = full_offset_x;
+        if (mud->panel_social_list != NULL) {
+            mud->panel_social_list->offset_x = full_offset_x;
+        }
     }
 
 #ifdef RENDER_GL
@@ -3130,7 +3130,7 @@ void mudclient_handle_game_input(mudclient *mud) {
             mouse_x = mud->gl_mouse_x;
 #endif
 
-            mud->last_mouse_sample_x = mud->mouse_x;
+            mud->last_mouse_sample_x = mouse_x;
         }
     }
 

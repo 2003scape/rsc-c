@@ -375,7 +375,11 @@ void mudclient_draw_bank(mudclient *mud) {
     mud->bank_visible_rows = visible_rows;
 
     int item_grid_height = visible_rows * ITEM_GRID_SLOT_HEIGHT;
-    int bank_height = item_grid_height + 130;
+    int bank_height = item_grid_height + 76;
+
+    /*if (mud->options->bank_search) {
+        bank_height += 24;
+    }*/
 
     int page_offset_x = 50;
     int page_width = BANK_PAGE_BUTTON_WIDTH;
@@ -503,11 +507,11 @@ void mudclient_draw_bank(mudclient *mud) {
                             : mud->surface->width;
 
     int ui_x = (contain_width / 2) - (bank_width / 2);
-    int ui_y = ((mud->surface->height - 6) / 2) - (bank_height / 2);
+    int ui_y = (mud->surface->height / 2) - (bank_height / 2) - 30;
 
     /* the title bar makes it hard to see */
     if (ui_y < 18 && mud->options->bank_menus) {
-        ui_y += 16;
+        ui_y = 18;
     }
 
     if (mud->input_digits_final > 0) {
