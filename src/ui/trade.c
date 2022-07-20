@@ -7,8 +7,8 @@ void mudclient_draw_trade_items(mudclient *mud, int x, int y, int *trade_items,
                            trade_item_count, -1, 0);
 
     for (int i = 0; i < trade_item_count; i++) {
-        int slot_x = x + 1 + (i % 4) * ITEM_GRID_SLOT_WIDTH;
-        int slot_y = y + 1 + (i / 4) * ITEM_GRID_SLOT_HEIGHT;
+        int slot_x = x + 1 + (i % TRADE_OFFER_COLUMNS) * ITEM_GRID_SLOT_WIDTH;
+        int slot_y = y + 1 + (i / TRADE_OFFER_COLUMNS) * ITEM_GRID_SLOT_HEIGHT;
 
         if (mud->mouse_x > slot_x &&
             mud->mouse_x < slot_x + (ITEM_GRID_SLOT_WIDTH - 1) &&
@@ -58,18 +58,23 @@ void mudclient_draw_trade(mudclient *mud) {
         mud->mouse_item_count_increment = 1;
     }
 
-    int dialog_x = 22;
-    int dialog_y = 36;
+    int dialog_x = mud->surface->width / 2 - TRADE_WIDTH / 2;         // 22
+    int dialog_y = (mud->surface->height / 2 - TRADE_HEIGHT / 2) + 2; // 36
 
     if (mud->mouse_item_count_increment > 0) {
         int mouse_x = mud->mouse_x - dialog_x;
         int mouse_y = mud->mouse_y - dialog_y;
 
-        if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < 468 && mouse_y < 262) {
-            if (mouse_x > 216 && mouse_y > 30 && mouse_x < 462 &&
-                mouse_y < 235) {
-                int slot = ((mouse_x - 217) / ITEM_GRID_SLOT_WIDTH) +
-                           ((mouse_y - 31) / ITEM_GRID_SLOT_HEIGHT) * 5;
+        if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < TRADE_WIDTH &&
+            mouse_y < TRADE_HEIGHT - 12) {
+            if (mouse_x > TRADE_INVENTORY_X && mouse_y > TRADE_INVENTORY_Y &&
+                mouse_x < TRADE_INVENTORY_X + TRADE_INVENTORY_WIDTH + 1 &&
+                mouse_y < TRADE_INVENTORY_Y + TRADE_INVENTORY_HEIGHT + 1) {
+                int slot =
+                    ((mouse_x - (TRADE_INVENTORY_X + 1)) /
+                     ITEM_GRID_SLOT_WIDTH) +
+                    ((mouse_y - (TRADE_INVENTORY_Y + 1)) / ITEM_GRID_SLOT_HEIGHT) *
+                        TRADE_INVENTORY_COLUMNS;
 
                 if (slot >= 0 && slot < mud->inventory_items_count) {
                     int send_update = 0;
@@ -133,15 +138,20 @@ void mudclient_draw_trade(mudclient *mud) {
                         }
 
                         packet_stream_send_packet(mud->packet_stream);
+
                         mud->trade_recipient_accepted = 0;
                         mud->trade_accepted = 0;
                     }
                 }
             }
 
-            if (mouse_x > 8 && mouse_y > 30 && mouse_x < 205 && mouse_y < 133) {
-                int item_index = ((mouse_x - 9) / ITEM_GRID_SLOT_WIDTH) +
-                                 ((mouse_y - 31) / ITEM_GRID_SLOT_HEIGHT) * 4;
+            if (mouse_x > TRADE_OFFER_X && mouse_y > TRADE_OFFER_Y &&
+                mouse_x < TRADE_OFFER_X + TRADE_OFFER_WIDTH + 1 &&
+                mouse_y < TRADE_OFFER_Y + TRADE_OFFER_HEIGHT + 1) {
+                int item_index =
+                    ((mouse_x - (TRADE_OFFER_X + 1)) / ITEM_GRID_SLOT_WIDTH) +
+                    ((mouse_y - (TRADE_OFFER_Y + 1)) / ITEM_GRID_SLOT_HEIGHT) *
+                        TRADE_OFFER_COLUMNS;
 
                 if (item_index >= 0 && item_index < mud->trade_item_count) {
                     int item_type = mud->trade_items[item_index];
@@ -159,6 +169,7 @@ void mudclient_draw_trade(mudclient *mud) {
                         for (int j = item_index; j < mud->trade_item_count;
                              j++) {
                             mud->trade_items[j] = mud->trade_items[j + 1];
+
                             mud->trade_items_count[j] =
                                 mud->trade_items_count[j + 1];
                         }
@@ -185,28 +196,28 @@ void mudclient_draw_trade(mudclient *mud) {
                 }
             }
 
-            if (mouse_x >= 217 && mouse_y >= 238 && mouse_x <= 286 &&
-                mouse_y <= 259) {
-                mud->trade_accepted = 1;
+            if (mouse_y >= TRADE_BUTTON_Y &&
+                mouse_y <= TRADE_BUTTON_Y + TRADE_BUTTON_HEIGHT) {
+                if (mouse_x >= TRADE_ACCEPT_X &&
+                    mouse_x <= TRADE_ACCEPT_X + TRADE_BUTTON_WIDTH) {
+                    mud->trade_accepted = 1;
 
-                packet_stream_new_packet(mud->packet_stream,
-                                         CLIENT_TRADE_ACCEPT);
+                    packet_stream_new_packet(mud->packet_stream,
+                                             CLIENT_TRADE_ACCEPT);
 
-                packet_stream_send_packet(mud->packet_stream);
-            }
+                    packet_stream_send_packet(mud->packet_stream);
+                } else if (mouse_x >= TRADE_DECLINE_X &&
+                           mouse_x < TRADE_DECLINE_X + TRADE_BUTTON_WIDTH) {
+                    mud->show_dialog_trade = 0;
 
-            if (mouse_x >= 394 && mouse_y >= 238 && mouse_x < 463 &&
-                mouse_y < 259) {
-                mud->show_dialog_trade = 0;
+                    packet_stream_new_packet(mud->packet_stream,
+                                             CLIENT_TRADE_DECLINE);
 
-                packet_stream_new_packet(mud->packet_stream,
-                                         CLIENT_TRADE_DECLINE);
-
-                packet_stream_send_packet(mud->packet_stream);
+                    packet_stream_send_packet(mud->packet_stream);
+                }
             }
         } else if (mud->mouse_button_click != 0) {
             mud->show_dialog_trade = 0;
-
             packet_stream_new_packet(mud->packet_stream, CLIENT_TRADE_DECLINE);
             packet_stream_send_packet(mud->packet_stream);
         }
@@ -240,8 +251,8 @@ void mudclient_draw_trade(mudclient *mud) {
     surface_draw_box_alpha(mud->surface, dialog_x + 8, dialog_y + 258, 197, 20,
                            GREY_98, 160);
 
-    surface_draw_box_alpha(mud->surface, dialog_x + 216, dialog_y + 235, 246,
-                           43, GREY_98, 160);
+    surface_draw_box_alpha(mud->surface, dialog_x + TRADE_INVENTORY_X,
+                           dialog_y + 235, 246, 43, GREY_98, 160);
 
     char formatted_with[USERNAME_LENGTH + 15] = {0};
     sprintf(formatted_with, "Trading with: %s", mud->trade_recipient_name);
@@ -249,55 +260,61 @@ void mudclient_draw_trade(mudclient *mud) {
     surface_draw_string(mud->surface, formatted_with, dialog_x + 1,
                         dialog_y + 10, 1, WHITE);
 
-    surface_draw_string(mud->surface, "Your Offer", dialog_x + 9, dialog_y + 27,
-                        4, WHITE);
+    surface_draw_string(mud->surface, "Your Offer", dialog_x + (TRADE_OFFER_X + 1),
+                        dialog_y + (TRADE_OFFER_Y - 3), 4, WHITE);
 
-    surface_draw_string(mud->surface, "Opponent's Offer", dialog_x + 9,
-                        dialog_y + 152, 4, WHITE);
+    surface_draw_string(mud->surface, "Opponent's Offer",
+                        dialog_x + (TRADE_OFFER_X + 1),
+                        dialog_y + (TRADE_OPPONENT_OFFER_Y - 3), 4, WHITE);
 
-    surface_draw_string(mud->surface, "Your Inventory", dialog_x + 216,
-                        dialog_y + 27, 4, WHITE);
+    surface_draw_string(mud->surface, "Your Inventory",
+                        dialog_x + TRADE_INVENTORY_X,
+                        dialog_y + (TRADE_INVENTORY_Y - 3), 4, WHITE);
 
-    surface_draw_sprite_from3(mud->surface, dialog_x + 394, dialog_y + 238,
+    surface_draw_sprite_from3(mud->surface, dialog_x + TRADE_DECLINE_X,
+                              dialog_y + TRADE_BUTTON_Y,
                               mud->sprite_media + 26);
 
     if (mud->trade_recipient_accepted) {
         surface_draw_string_centre(mud->surface, "Other player", dialog_x + 341,
-                                   dialog_y + 246, 1, WHITE);
+                                   dialog_y + TRADE_BUTTON_Y + 8, 1, WHITE);
 
         surface_draw_string_centre(mud->surface, "has accepted", dialog_x + 341,
-                                   dialog_y + 256, 1, WHITE);
+                                   dialog_y + TRADE_BUTTON_Y + 18, 1, WHITE);
     }
 
     if (mud->trade_accepted) {
         surface_draw_string_centre(mud->surface, "Waiting for",
-                                   dialog_x + 217 + 35, dialog_y + 246, 1,
-                                   WHITE);
+                                   dialog_x + TRADE_ACCEPT_X + 35,
+                                   dialog_y + TRADE_BUTTON_Y + 8, 1, WHITE);
 
         surface_draw_string_centre(mud->surface, "other player",
-                                   dialog_x + 217 + 35, dialog_y + 256, 1,
-                                   WHITE);
+                                   dialog_x + TRADE_ACCEPT_X + 35,
+                                   dialog_y + TRADE_BUTTON_Y + 18, 1, WHITE);
     } else {
-        surface_draw_sprite_from3(mud->surface, dialog_x + 217, dialog_y + 238,
+        surface_draw_sprite_from3(mud->surface, dialog_x + TRADE_ACCEPT_X,
+                                  dialog_y + TRADE_BUTTON_Y,
                                   mud->sprite_media + 25);
     }
 
     /* our inventory */
-    surface_draw_item_grid(mud->surface, dialog_x + 216, dialog_y + 30, 6, 5,
-                           mud->inventory_item_id,
-                           mud->inventory_item_stack_count,
-                           mud->inventory_items_count, -1, 0);
+    surface_draw_item_grid(
+        mud->surface, dialog_x + TRADE_INVENTORY_X, dialog_y + TRADE_INVENTORY_Y,
+        TRADE_INVENTORY_ROWS, TRADE_INVENTORY_COLUMNS, mud->inventory_item_id,
+        mud->inventory_item_stack_count, mud->inventory_items_count, -1, 0);
 
     /* our offer */
-    mudclient_draw_trade_items(mud, dialog_x + 8, dialog_y + 30,
+    mudclient_draw_trade_items(mud, dialog_x + TRADE_OFFER_X, dialog_y + TRADE_OFFER_Y,
                                mud->trade_items, mud->trade_items_count,
                                mud->trade_item_count);
 
     /* recipient's offer */
     mudclient_draw_trade_items(
-        mud, dialog_x + 8, dialog_y + 155, mud->trade_recipient_items,
-        mud->trade_recipient_items_count, mud->trade_recipient_item_count);
+        mud, dialog_x + TRADE_OFFER_X, dialog_y + TRADE_OPPONENT_OFFER_Y,
+        mud->trade_recipient_items, mud->trade_recipient_items_count,
+        mud->trade_recipient_item_count);
 
+    /* highlighted item */
     if (mud->trade_selected_item != -1) {
         char *item_name = game_data_item_name[mud->trade_selected_item];
 
@@ -313,14 +330,14 @@ void mudclient_draw_trade(mudclient *mud) {
 }
 
 void mudclient_draw_trade_confirm(mudclient *mud) {
-    int dialog_x = 22;
-    int dialog_y = 36;
+    int dialog_x = mud->surface->width / 2 - TRADE_WIDTH / 2;         // 22
+    int dialog_y = (mud->surface->height / 2 - TRADE_HEIGHT / 2) + 4; // 36
 
-    surface_draw_box(mud->surface, dialog_x, dialog_y, 468, 16,
+    surface_draw_box(mud->surface, dialog_x, dialog_y, TRADE_WIDTH, 16,
                      TITLE_BAR_COLOUR);
 
-    surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 16, 468, 246,
-                           GREY_98, 160);
+    surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 16, TRADE_WIDTH,
+                           246, GREY_98, 160);
 
     char username[USERNAME_LENGTH + 1] = {0};
     decode_username(mud->trade_recipient_confirm_hash, username);
@@ -345,9 +362,10 @@ void mudclient_draw_trade_confirm(mudclient *mud) {
                                "In return you will receive:", dialog_x + 351,
                                dialog_y + 30, 1, YELLOW);
 
-    mudclient_draw_trade_items_confirm(
-        mud, dialog_x + 351, dialog_y + 42, mud->trade_confirm_items,
-        mud->trade_confirm_items_count, mud->trade_confirm_item_count);
+    mudclient_draw_trade_items_confirm(mud, dialog_x + 351, dialog_y + 42,
+                                       mud->trade_recipient_confirm_items,
+                                       mud->trade_recipient_confirm_items_count,
+                                       mud->trade_recipient_confirm_item_count);
 
     surface_draw_string_centre(mud->surface,
                                "Are you sure you want to do this?",
@@ -364,10 +382,12 @@ void mudclient_draw_trade_confirm(mudclient *mud) {
 
     if (!mud->trade_confirm_accepted) {
         surface_draw_sprite_from3(mud->surface, dialog_x + 118 - 35,
-                                  dialog_y + 238, mud->sprite_media + 25);
+                                  dialog_y + TRADE_BUTTON_Y,
+                                  mud->sprite_media + 25);
 
         surface_draw_sprite_from3(mud->surface, dialog_x + 352 - 35,
-                                  dialog_y + 238, mud->sprite_media + 26);
+                                  dialog_y + TRADE_BUTTON_Y,
+                                  mud->sprite_media + 26);
     } else {
         surface_draw_string_centre(mud->surface, "Waiting for other player...",
                                    dialog_x + 234, dialog_y + 250, 1, YELLOW);
@@ -375,7 +395,8 @@ void mudclient_draw_trade_confirm(mudclient *mud) {
 
     if (mud->mouse_button_click == 1) {
         if (mud->mouse_x < dialog_x || mud->mouse_y < dialog_y ||
-            mud->mouse_x > dialog_x + 468 || mud->mouse_y > dialog_y + 262) {
+            mud->mouse_x > dialog_x + TRADE_WIDTH ||
+            mud->mouse_y > dialog_y + 262) {
             mud->show_dialog_trade_confirm = 0;
             packet_stream_new_packet(mud->packet_stream, CLIENT_TRADE_DECLINE);
             packet_stream_send_packet(mud->packet_stream);
