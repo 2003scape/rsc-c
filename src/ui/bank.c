@@ -849,7 +849,7 @@ void mudclient_draw_bank(mudclient *mud) {
                            BANK_COLUMNS, bank_items + bank_item_offset,
                            bank_items_count + bank_item_offset,
                            bank_item_count - bank_item_offset,
-                           mud->bank_selected_item_slot - bank_item_offset);
+                           mud->bank_selected_item_slot - bank_item_offset, 1);
 
     if (show_bank_scroll) {
         int scrub_y = ((float)mud->bank_scroll_row / (float)total_rows) *

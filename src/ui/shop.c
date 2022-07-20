@@ -137,7 +137,7 @@ void mudclient_draw_shop(mudclient *mud) {
     surface_draw_item_grid(mud->surface, x + 7, y + 28, SHOP_ROWS, SHOP_COLUMNS,
                            mud->shop_items, mud->shop_items_count,
                            SHOP_ROWS * SHOP_COLUMNS,
-                           mud->shop_selected_item_index);
+                           mud->shop_selected_item_index, 1);
 
     surface_draw_line_horizontal(mud->surface, x + 5, y + 222, 398, 0);
 

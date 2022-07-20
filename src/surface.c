@@ -894,7 +894,8 @@ void surface_gl_draw(Surface *surface, int use_depth) {
     shader_use(&surface->gl_flat_shader);
 
     if (!use_depth) {
-        shader_set_int(&surface->gl_flat_shader, "ui_scale", mudclient_is_ui_scaled(surface->mud));
+        shader_set_int(&surface->gl_flat_shader, "ui_scale",
+                       mudclient_is_ui_scaled(surface->mud));
     } else {
         shader_set_int(&surface->gl_flat_shader, "ui_scale", 0);
     }
@@ -3952,7 +3953,31 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
 /* used in bank and shop */
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int columns, int *items, int *items_count,
-                            int items_length, int selected) {
+                            int items_length, int selected,
+                            int show_inventory_count) {
+    if (selected == -1) {
+        int box_width = (columns * ITEM_GRID_SLOT_WIDTH);
+        int box_height = (rows * ITEM_GRID_SLOT_HEIGHT);
+
+        surface_draw_box_alpha(surface, x + 1, y + 1, box_width - 1,
+                               box_height - 1, GREY_D0, 160);
+
+        surface_draw_box_edge(surface, x, y, box_width + 1, box_height + 1,
+                              BLACK);
+
+        for (int row = 1; row < rows; row++) {
+            surface_draw_line_horizontal(surface, x,
+                                         y + (row * ITEM_GRID_SLOT_HEIGHT),
+                                         box_width, BLACK);
+        }
+
+        for (int column = 1; column < columns; column++) {
+            surface_draw_line_vertical(surface,
+                                       x + (column * ITEM_GRID_SLOT_WIDTH), y,
+                                       box_height, BLACK);
+        }
+    }
+
     int item_index = 0;
 
     for (int row = 0; row < rows; row++) {
@@ -3960,36 +3985,52 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
             int slot_x = x + column * ITEM_GRID_SLOT_WIDTH;
             int slot_y = y + row * ITEM_GRID_SLOT_HEIGHT;
             int slot_colour = selected == item_index ? RED : GREY_D0;
+            int offset_x = !show_inventory_count ? 1 : 0;
+            int offset_y = !show_inventory_count ? 1 : 0;
 
-            surface_draw_box_alpha(surface, slot_x, slot_y,
-                                   ITEM_GRID_SLOT_WIDTH, ITEM_GRID_SLOT_HEIGHT,
-                                   slot_colour, 160);
+            if (selected > -1) {
+                surface_draw_box_alpha(surface, slot_x, slot_y,
+                                       ITEM_GRID_SLOT_WIDTH,
+                                       ITEM_GRID_SLOT_HEIGHT, slot_colour, 160);
 
-            surface_draw_box_edge(surface, slot_x, slot_y,
-                                  ITEM_GRID_SLOT_WIDTH + 1,
-                                  ITEM_GRID_SLOT_HEIGHT + 1, BLACK);
+                surface_draw_box_edge(surface, slot_x, slot_y,
+                                      ITEM_GRID_SLOT_WIDTH + 1,
+                                      ITEM_GRID_SLOT_HEIGHT + 1, BLACK);
+            }
 
             int item_id = items[item_index];
 
             if (item_index < items_length && item_id != -1) {
                 surface_sprite_clipping_from9(
-                    surface, slot_x, slot_y, ITEM_GRID_SLOT_WIDTH - 1,
-                    ITEM_GRID_SLOT_HEIGHT - 2,
+                    surface, slot_x + offset_x, slot_y + offset_y,
+                    ITEM_GRID_SLOT_WIDTH - 1, ITEM_GRID_SLOT_HEIGHT - 2,
                     surface->mud->sprite_item + game_data_item_picture[item_id],
                     game_data_item_mask[item_id], 0, 0, 0);
 
-                char formatted_amount[12] = {0};
+                int item_count = items_count[item_index];
 
-                sprintf(formatted_amount, "%d", items_count[item_index]);
+                if (show_inventory_count) {
+                    char formatted_amount[12] = {0};
+                    sprintf(formatted_amount, "%d", item_count);
 
-                surface_draw_string(surface, formatted_amount, slot_x + 1,
-                                    slot_y + 10, 1, GREEN);
+                    surface_draw_string(surface, formatted_amount, slot_x + 1,
+                                        slot_y + 10, 1, GREEN);
 
-                sprintf(formatted_amount, "%d",
+                    sprintf(
+                        formatted_amount, "%d",
                         mudclient_get_inventory_count(surface->mud, item_id));
 
-                surface_draw_string_right(surface, formatted_amount,
-                                          slot_x + 47, slot_y + 29, 1, CYAN);
+                    surface_draw_string_right(surface, formatted_amount,
+                                              slot_x + 47, slot_y + 29, 1,
+                                              CYAN);
+                } else if (game_data_item_stackable[item_id] == 0) {
+                    char formatted_amount[12] = {0};
+                    sprintf(formatted_amount, "%d", items_count[item_index]);
+
+                    surface_draw_string(surface, formatted_amount,
+                                        slot_x + 1 + offset_x,
+                                        slot_y + 10 + offset_x, 1, YELLOW);
+                }
             }
 
             item_index++;
