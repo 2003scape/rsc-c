@@ -708,6 +708,10 @@ void mudclient_draw_bank(mudclient *mud) {
     }
 
     if (show_bank_scroll && !mud->show_right_click_menu && !mud->show_dialog_offer_x) {
+        if (mud->mouse_scroll_delta != 0) {
+            mud->bank_scroll_row -= mud->mouse_scroll_delta * -1;
+        }
+
         if (mud->mouse_button_down != 0 &&
             get_ticks() - mud->bank_last_scroll > BANK_SCROLL_SPEED) {
             /* up arrow */

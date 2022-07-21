@@ -301,6 +301,21 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     case SDL_SCANCODE_RIGHT:
         *code = K_RIGHT;
         break;
+    case SDL_SCANCODE_UP:
+        *code = K_UP;
+        break;
+    case SDL_SCANCODE_DOWN:
+        *code = K_DOWN;
+        break;
+    case SDL_SCANCODE_PAGEUP:
+        *code = K_PAGE_UP;
+        break;
+    case SDL_SCANCODE_PAGEDOWN:
+        *code = K_PAGE_DOWN;
+        break;
+    case SDL_SCANCODE_HOME:
+        *code = K_HOME;
+        break;
     case SDL_SCANCODE_F1:
         *code = K_F1;
         break;
@@ -309,12 +324,6 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
         break;
     /*case SDL_SCANCODE_RETURN:
         *code = K_ENTER;
-        break;
-    case SDL_SCANCODE_UP:
-        *code = 38;
-        break;
-    case SDL_SCANCODE_DOWN:
-        *code = 40;
         break;*/
     default:
         *char_code = keysym->sym;
@@ -444,13 +453,14 @@ void mudclient_new(mudclient *mud) {
     mud->game_height = MUD_HEIGHT;
     mud->camera_angle = 1;
     mud->camera_rotation = 128;
-    mud->camera_zoom = ZOOM_INDOORS;
     mud->camera_rotation_x_increment = 2;
     mud->camera_rotation_y_increment = 2;
     mud->last_height_offset = -1;
 
     mud->options = malloc(sizeof(Options));
     options_new(mud->options);
+
+    mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
     for (int i = 0; i < MESSAGE_HISTORY_LENGTH; i++) {
         memset(mud->message_history[i], '\0', 255);
@@ -709,6 +719,12 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
+
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
+
+    // TODO make AA toggleable
+    glEnable(GL_MULTISAMPLE);
 #endif
 
     mud->gl_window = SDL_CreateWindow(
@@ -716,14 +732,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
         mud->game_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
-
-#ifndef EMSCRIPTEN
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
-
-    // TODO make AA toggleable
-    glEnable(GL_MULTISAMPLE);
-#endif
 
     if (!context) {
         fprintf(stderr, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
@@ -892,6 +900,16 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             mud->key_left = 1;
         } else if (code == K_RIGHT) {
             mud->key_right = 1;
+        } else if (code == K_UP) {
+            mud->key_up = 1;
+        } else if (code == K_DOWN) {
+            mud->key_down = 1;
+        } else if (code == K_PAGE_UP) {
+            mud->key_page_up = 1;
+        } else if (code == K_PAGE_DOWN) {
+            mud->key_page_down = 1;
+        } else if (code == K_HOME) {
+            mud->key_home = 1;
         } else if (code == K_F1) {
             mud->interlace = !mud->interlace;
         } else if (mud->options->escape_clear && code == K_ESCAPE) {
@@ -1028,6 +1046,16 @@ void mudclient_key_released(mudclient *mud, int code) {
         mud->key_left = 0;
     } else if (code == K_RIGHT) {
         mud->key_right = 0;
+    } else if (code == K_UP) {
+        mud->key_up = 0;
+    } else if (code == K_DOWN) {
+        mud->key_down = 0;
+    } else if (code == K_PAGE_UP) {
+        mud->key_page_up = 0;
+    } else if (code == K_PAGE_DOWN) {
+        mud->key_page_down = 0;
+    } else if (code == K_HOME) {
+        mud->key_home = 0;
     }
 }
 
@@ -3111,6 +3139,34 @@ void mudclient_auto_rotate_camera(mudclient *mud) {
     }
 }
 
+void mudclient_handle_camera_zoom(mudclient *mud) {
+    if (mud->key_up) {
+        mud->camera_zoom -= 16;
+    } else if (mud->key_down) {
+        mud->camera_zoom += 16;
+    } else if (mud->key_page_up) {
+        mud->camera_zoom = ZOOM_MIN;
+    } else if (mud->key_page_down) {
+        mud->camera_zoom = ZOOM_MAX;
+    } else if (mud->key_home) {
+        mud->camera_zoom = ZOOM_OUTDOORS;
+    }
+
+    if (mud->mouse_scroll_delta != 0 &&
+        (mud->show_ui_tab == 0 || mud->show_ui_tab == MAP_TAB) &&
+        !(mud->message_tab_selected != MESSAGE_TAB_ALL &&
+          mud->mouse_y > mud->surface->height - 64)) {
+
+        mud->camera_zoom += mud->mouse_scroll_delta * 24;
+    }
+
+    if (mud->camera_zoom > ZOOM_MAX) {
+        mud->camera_zoom = ZOOM_MAX;
+    } else if (mud->camera_zoom < ZOOM_MIN) {
+        mud->camera_zoom = ZOOM_MIN;
+    }
+}
+
 void mudclient_handle_game_input(mudclient *mud) {
 #ifndef REVISION_177
     if (mud->system_update > 1) {
@@ -3372,12 +3428,13 @@ void mudclient_handle_game_input(mudclient *mud) {
 
     if (!mud->settings_camera_auto && mud->options->middle_click_camera &&
         mud->middle_button_down) {
-        mud->camera_rotation = (mud->origin_rotation +
-                                ((mouse_x - mud->origin_mouse_x) / 4)) & 0xff;
+        mud->camera_rotation =
+            (mud->origin_rotation + ((mouse_x - mud->origin_mouse_x) / 4)) &
+            0xff;
     }
 
     if (mud->options->zoom_camera) {
-        // mudclient_handle_camera_zoom(mud);
+        mudclient_handle_camera_zoom(mud);
     } else {
         if (mud->fog_of_war && mud->camera_zoom > ZOOM_INDOORS) {
             mud->camera_zoom -= 4;
@@ -4329,6 +4386,7 @@ void mudclient_draw_game(mudclient *mud) {
                     mud->scene,
                     mud->world->roof_models[mud->last_height_offset][i]);
 
+                // TODO redundant check here i think
                 if (mud->last_height_offset == 0) {
                     scene_add_model(mud->scene, mud->world->wall_models[1][i]);
                     scene_add_model(mud->scene, mud->world->roof_models[1][i]);
@@ -4366,22 +4424,23 @@ void mudclient_draw_game(mudclient *mud) {
         mudclient_auto_rotate_camera(mud);
     }
 
-    if (!mud->interlace) {
+    if (mud->camera_zoom > ZOOM_OUTDOORS) {
+        int clip_far =
+            (int)((2400.0f / ZOOM_OUTDOORS) * (float)mud->camera_zoom);
+
+        mud->scene->clip_far_3d = clip_far;
+        mud->scene->clip_far_2d = clip_far;
+        mud->scene->fog_z_distance = clip_far - 100;
+    } else {
         mud->scene->clip_far_3d = 2400;
         mud->scene->clip_far_2d = 2400;
-        mud->scene->fog_z_falloff = 1;
         mud->scene->fog_z_distance = 2300;
-    } else {
-        mud->scene->clip_far_3d = 2200;
-        mud->scene->clip_far_2d = 2200;
-        mud->scene->fog_z_falloff = 1;
-        mud->scene->fog_z_distance = 2100;
     }
 
-    if (mud->camera_zoom > ZOOM_OUTDOORS) {
-        mud->scene->clip_far_3d += 1400;
-        mud->scene->clip_far_2d += 1400;
-        mud->scene->fog_z_distance += 1400;
+    if (mud->interlace) {
+        mud->scene->clip_far_3d -= 200;
+        mud->scene->clip_far_2d -= 200;
+        mud->scene->fog_z_distance -= 200;
     }
 
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
@@ -4415,7 +4474,8 @@ void mudclient_draw_game(mudclient *mud) {
         char fps[17] = {0};
         sprintf(fps, "Fps: %d", mud->fps);
 
-        surface_draw_string(mud->surface, fps, mud->game_width - 62 - offset_x,
+        surface_draw_string(mud->surface, fps,
+                            mud->surface->width - 62 - offset_x,
                             mud->game_height - 22, 1, YELLOW);
     }
 
@@ -5540,7 +5600,8 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
 }
 
 int mudclient_is_ui_scaled(mudclient *mud) {
-    return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) && mud->game_height >= (MUD_HEIGHT * 2);
+    return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) &&
+           mud->game_height >= (MUD_HEIGHT * 2);
 }
 
 int main(int argc, char **argv) {

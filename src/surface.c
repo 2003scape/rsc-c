@@ -3955,7 +3955,9 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int columns, int *items, int *items_count,
                             int items_length, int selected,
                             int show_inventory_count) {
-    if (selected == -1) {
+    int is_selected_visible = selected >= 0 && selected <= items_length;
+
+    if (!is_selected_visible) {
         int box_width = (columns * ITEM_GRID_SLOT_WIDTH);
         int box_height = (rows * ITEM_GRID_SLOT_HEIGHT);
 
@@ -3985,10 +3987,10 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
             int slot_x = x + column * ITEM_GRID_SLOT_WIDTH;
             int slot_y = y + row * ITEM_GRID_SLOT_HEIGHT;
             int slot_colour = selected == item_index ? RED : GREY_D0;
-            int offset_x = !show_inventory_count ? 1 : 0;
-            int offset_y = !show_inventory_count ? 1 : 0;
+            int offset_x = show_inventory_count ? 0 : 1;
+            int offset_y = show_inventory_count ? 0 : 1;
 
-            if (selected > -1) {
+            if (is_selected_visible) {
                 surface_draw_box_alpha(surface, slot_x, slot_y,
                                        ITEM_GRID_SLOT_WIDTH,
                                        ITEM_GRID_SLOT_HEIGHT, slot_colour, 160);

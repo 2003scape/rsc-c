@@ -4119,6 +4119,9 @@ void scene_gl_update_camera(Scene *scene) {
                 (0.3012063997 * powf(scaled_scene_height, 2)) +
                 (2.0149949882 * scaled_scene_height) - 0.0030409762;
 
+    //fov = 0.628614;
+    //printf("%f\n", fov);
+
     glm_perspective(fov, (float)(scene->width) / (float)(scene->gl_height - 1),
                     VERTEX_TO_FLOAT(scene->clip_near), clip_far,
                     scene->gl_projection);
@@ -4195,6 +4198,7 @@ void scene_gl_render(Scene *scene) {
     scene->surface->height = scene_height + 13;
 
     surface_reset_bounds(scene->surface);
+
 #ifndef RENDER_SW
     /* if we're also rendering in software, this will already be done */
     game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
@@ -4214,6 +4218,7 @@ void scene_gl_render(Scene *scene) {
         scene_render_polygon_2d_face(scene, polygon->face);
     }
 #endif
+
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 

@@ -71,6 +71,11 @@
 
 #define K_LEFT 37
 #define K_RIGHT 39
+#define K_UP 38
+#define K_DOWN 40
+#define K_PAGE_UP 33
+#define K_PAGE_DOWN 34
+#define K_HOME 36
 #define K_F1 112
 #define K_ENTER 13
 #define K_BACKSPACE 8
@@ -345,6 +350,11 @@ typedef struct mudclient {
 
     int8_t key_left;
     int8_t key_right;
+    int8_t key_up;
+    int8_t key_down;
+    int8_t key_page_up;
+    int8_t key_page_down;
+    int8_t key_home;
 
     /* for middle-click camera */
     int8_t middle_button_down;
@@ -611,6 +621,7 @@ typedef struct mudclient {
     int camera_auto_rotate_player_x;
     int camera_auto_rotate_player_y;
     int an_int_707;
+    int camera_desired_zoom;
 
     int8_t is_in_wild;
     int loading_area;
@@ -923,6 +934,7 @@ void mudclient_close_connection(mudclient *mud);
 void mudclient_move_character(mudclient *mud, GameCharacter *character);
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
 void mudclient_auto_rotate_camera(mudclient *mud);
+void mudclient_handle_camera_zoom(mudclient *mud);
 void mudclient_handle_game_input(mudclient *mud);
 void mudclient_handle_inputs(mudclient *mud);
 void mudclient_update_object_animation(mudclient *mud, int object_index,

@@ -70,11 +70,11 @@ void mudclient_draw_trade(mudclient *mud) {
             if (mouse_x > TRADE_INVENTORY_X && mouse_y > TRADE_INVENTORY_Y &&
                 mouse_x < TRADE_INVENTORY_X + TRADE_INVENTORY_WIDTH + 1 &&
                 mouse_y < TRADE_INVENTORY_Y + TRADE_INVENTORY_HEIGHT + 1) {
-                int slot =
-                    ((mouse_x - (TRADE_INVENTORY_X + 1)) /
-                     ITEM_GRID_SLOT_WIDTH) +
-                    ((mouse_y - (TRADE_INVENTORY_Y + 1)) / ITEM_GRID_SLOT_HEIGHT) *
-                        TRADE_INVENTORY_COLUMNS;
+                int slot = ((mouse_x - (TRADE_INVENTORY_X + 1)) /
+                            ITEM_GRID_SLOT_WIDTH) +
+                           ((mouse_y - (TRADE_INVENTORY_Y + 1)) /
+                            ITEM_GRID_SLOT_HEIGHT) *
+                               TRADE_INVENTORY_COLUMNS;
 
                 if (slot >= 0 && slot < mud->inventory_items_count) {
                     int send_update = 0;
@@ -260,7 +260,8 @@ void mudclient_draw_trade(mudclient *mud) {
     surface_draw_string(mud->surface, formatted_with, dialog_x + 1,
                         dialog_y + 10, 1, WHITE);
 
-    surface_draw_string(mud->surface, "Your Offer", dialog_x + (TRADE_OFFER_X + 1),
+    surface_draw_string(mud->surface, "Your Offer",
+                        dialog_x + (TRADE_OFFER_X + 1),
                         dialog_y + (TRADE_OFFER_Y - 3), 4, WHITE);
 
     surface_draw_string(mud->surface, "Opponent's Offer",
@@ -298,15 +299,16 @@ void mudclient_draw_trade(mudclient *mud) {
     }
 
     /* our inventory */
-    surface_draw_item_grid(
-        mud->surface, dialog_x + TRADE_INVENTORY_X, dialog_y + TRADE_INVENTORY_Y,
-        TRADE_INVENTORY_ROWS, TRADE_INVENTORY_COLUMNS, mud->inventory_item_id,
-        mud->inventory_item_stack_count, mud->inventory_items_count, -1, 0);
+    surface_draw_item_grid(mud->surface, dialog_x + TRADE_INVENTORY_X,
+                           dialog_y + TRADE_INVENTORY_Y, TRADE_INVENTORY_ROWS,
+                           TRADE_INVENTORY_COLUMNS, mud->inventory_item_id,
+                           mud->inventory_item_stack_count,
+                           mud->inventory_items_count, -1, 0);
 
     /* our offer */
-    mudclient_draw_trade_items(mud, dialog_x + TRADE_OFFER_X, dialog_y + TRADE_OFFER_Y,
-                               mud->trade_items, mud->trade_items_count,
-                               mud->trade_item_count);
+    mudclient_draw_trade_items(mud, dialog_x + TRADE_OFFER_X,
+                               dialog_y + TRADE_OFFER_Y, mud->trade_items,
+                               mud->trade_items_count, mud->trade_item_count);
 
     /* recipient's offer */
     mudclient_draw_trade_items(
@@ -325,7 +327,7 @@ void mudclient_draw_trade(mudclient *mud) {
         sprintf(formatted_item, "%s: @whi@%s", item_name, description);
 
         surface_draw_string(mud->surface, formatted_item, dialog_x + 8,
-                            dialog_y + 273, 1, YELLOW);
+                            dialog_y + TRADE_HEIGHT - 5, 1, YELLOW);
     }
 }
 
