@@ -55,6 +55,8 @@
 #define MENU_BANK_WITHDRAW 601
 #define MENU_BANK_DEPOSIT 602
 
+#define MENU_MAP_LOOK 101
+
 #define MENU_CANCEL 4000
 
 void mudclient_menu_item_click(mudclient *mud, int i);

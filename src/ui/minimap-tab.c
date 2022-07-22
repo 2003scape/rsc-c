@@ -150,10 +150,35 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     int mouse_x = mud->mouse_x - ui_x;
     int mouse_y = mud->mouse_y - ui_y;
 
-    if (mud->options->reset_compass && mud->mouse_button_click == 1 &&
-        mouse_x > 0 && mouse_x <= 32 && mouse_y > 0 && mouse_y <= 32) {
-        mud->camera_rotation = 128;
-        mud->mouse_button_click = 0;
+    if (mud->options->reset_compass && mouse_x > 0 && mouse_x <= 32 && mouse_y > 0 && mouse_y <= 32) {
+        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
+        strcpy(mud->menu_item_text2[mud->menu_items_count], "North");
+        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
+        mud->menu_index[mud->menu_items_count] = 128;
+        mud->menu_items_count++;
+
+        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
+        strcpy(mud->menu_item_text2[mud->menu_items_count], "East");
+        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
+        mud->menu_index[mud->menu_items_count] = 192;
+        mud->menu_items_count++;
+
+        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
+        strcpy(mud->menu_item_text2[mud->menu_items_count], "South");
+        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
+        mud->menu_index[mud->menu_items_count] = 0;
+        mud->menu_items_count++;
+
+        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
+        strcpy(mud->menu_item_text2[mud->menu_items_count], "West");
+        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
+        mud->menu_index[mud->menu_items_count] = 64;
+        mud->menu_items_count++;
+
+        strcpy(mud->menu_item_text1[mud->menu_items_count], "Cancel");
+        strcpy(mud->menu_item_text2[mud->menu_items_count], "");
+        mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
+        mud->menu_items_count++;
         return;
     }
 

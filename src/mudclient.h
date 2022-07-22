@@ -240,8 +240,8 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
-extern float test_x;
-extern float test_y;
+extern int test_x;
+extern int test_y;
 extern float test_z;
 extern int test_yaw;
 extern int test_colour;

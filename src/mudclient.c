@@ -403,18 +403,16 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 }
 #endif
 
-/*int test_x = 520;
-int test_y = -106;
-int test_z = 750;*/
-// int test_x = 68;
+int test_x = 0;
+int test_y = 0;
 // float test_x = 37;
 // float test_y = 77;
 // float test_x = 36.0f;
 // float test_y = 76.750000;
 // int test_x = 0;
-float test_x = 0.6370452f;
+/*float test_x = 0.6370452f;
 float test_y = 1.571051;
-float test_z = 1.338493;
+float test_z = 1.338493;*/
 int test_yaw = 0;
 int test_colour = -1;
 int test_fade = 0;
@@ -5121,13 +5119,21 @@ void mudclient_poll_events(mudclient *mud) {
             int mag = 1;
 
             if (code == 113) {
-                test_x -= 0.001;
+                test_x -= 1;
+
+                //mud->scene->view_distance -= 1;
             } else if (code == 97) {
-                test_x += 0.001;
+                test_x += 1;
+
+                //mud->scene->view_distance += 1;
             } else if (code == 119) {
-                // test_y -= 0.001;
+                test_y -= 1;
+
+                //mud->scene->clip_y -= 1;
             } else if (code == 115) {
-                // test_y += 0.001;
+                test_y += 1;
+
+                //mud->scene->clip_y += 1;
             } else if (code == 101) {
                 // test_z -= 0.001;
             } else if (code == 100) {
@@ -5138,7 +5144,7 @@ void mudclient_poll_events(mudclient *mud) {
                 test_yaw -= 1;
             }
 
-            printf("fov: %f, yaw: %f, pitch %f \n", test_x, test_y, test_z);
+            printf("%d %d\n", mud->scene->base_y, mud->scene->clip_y);
             // printf("%d %d %d %d\n", test_x, test_y, test_z, test_yaw);
             //  printf("%f %f\n", test_x, test_y);
 

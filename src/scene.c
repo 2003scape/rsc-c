@@ -1296,11 +1296,10 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
     int vz = scene->view->project_vertex_z[face_0];
 
     int width = (scene->sprite_width[face] << scene->view_distance) / vz;
-
-    int h = (scene->sprite_height[face] << scene->view_distance) / vz;
+    int height = (scene->sprite_height[face] << scene->view_distance) / vz;
     int skew_x = scene->view->vertex_view_x[face_vertices[1]] - vx;
     int x = vx - (width / 2);
-    int y = scene->base_y + vy - h;
+    int y = scene->base_y + vy - height;
 
     float depth_top = 0;
     float depth_bottom = 0;
@@ -1311,7 +1310,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 #endif
 
     surface_draw_entity_sprite(
-        scene->surface, x + scene->base_x, y, width, h, scene->sprite_id[face],
+        scene->surface, x + scene->base_x, y, width, height, scene->sprite_id[face],
         skew_x, (256 << scene->view_distance) / vz, depth_top, depth_bottom);
 
     if (scene->mouse_picking_active &&
@@ -1319,7 +1318,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 
         x += (scene->sprite_translate_x[face] << scene->view_distance) / vz;
 
-        if (scene->mouse_y >= y && scene->mouse_y <= y + h &&
+        if (scene->mouse_y >= y && scene->mouse_y <= y + height &&
             scene->mouse_x >= x && scene->mouse_x <= x + width &&
             !scene->view->unpickable &&
             scene->view->is_local_player[face] == 0) {
@@ -1334,6 +1333,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 void scene_render(Scene *scene) {
     scene->interlace = scene->surface->interlace;
 
+#if 1
     int frustum_x =
         (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
 
@@ -1362,6 +1362,7 @@ void scene_render(Scene *scene) {
     scene_frustum_min_y += scene->camera_y;
     scene_frustum_far_z += scene->camera_z;
     scene_frustum_near_z += scene->camera_z;
+#endif
 
     scene->models[scene->model_count] = scene->view;
     scene->view->transform_state = GAME_MODEL_TRANSFORM_RESET;

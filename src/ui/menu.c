@@ -391,6 +391,10 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         }
         break;
     }
+    case MENU_MAP_FACE: {
+        mud->camera_rotation = menu_index;
+        break;
+    }
     case MENU_CANCEL:
         mud->selected_item_inventory_index = -1;
         mud->selected_spell = -1;
