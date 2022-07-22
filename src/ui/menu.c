@@ -391,6 +391,23 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         }
         break;
     }
+    case MENU_TRANSACTION_OFFER: {
+        if (menu_target_index < 0) {
+        } else if (mud->show_dialog_trade) {
+            mudclient_offer_trade_item(mud, menu_index, menu_target_index);
+        } else if (mud->show_dialog_duel) {
+            //mudclient_offer_trade_item(mud, item_id, mud->mouse_item_count_increment);
+        }
+        break;
+    }
+    case MENU_TRANSACTION_REMOVE: {
+        if (menu_target_index < 0) {
+        } else if (mud->show_dialog_trade) {
+            mudclient_remove_trade_item(mud, menu_index, menu_target_index);
+        } else if (mud->show_dialog_duel) {
+        }
+        break;
+    }
     case MENU_MAP_LOOK: {
         mud->camera_rotation = menu_index;
         break;
@@ -1312,10 +1329,12 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
         return;
     }
 
-    /* make it a bit darker for the bank interface */
+    /* make it a bit darker for the item interfaces */
+    int is_dark_menu = mud->show_dialog_bank || mud->show_dialog_trade || mud->show_dialog_duel;
+
     surface_draw_box_alpha(mud->surface, mud->menu_x, mud->menu_y,
                            mud->menu_width, mud->menu_height, GREY_D0,
-                           160 + (mud->show_dialog_bank ? 40 : 0));
+                           160 + (is_dark_menu ? 40 : 0));
 
     surface_draw_string(mud->surface, "Choose option", mud->menu_x + 2,
                         mud->menu_y + 12, 1, CYAN);

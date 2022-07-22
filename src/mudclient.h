@@ -621,7 +621,6 @@ typedef struct mudclient {
     int camera_auto_rotate_player_x;
     int camera_auto_rotate_player_y;
     int an_int_707;
-    int camera_desired_zoom;
 
     int8_t is_in_wild;
     int loading_area;

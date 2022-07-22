@@ -4281,6 +4281,8 @@ void scene_gl_render(Scene *scene) {
 
         shader_use(&scene->game_model_pick_shader);
 
+        shader_set_int("interlace", scene->interlace);
+
         game_model_gl_buffer_pick_models(
             &scene->gl_pick_vao, &scene->gl_pick_vbo, &scene->gl_pick_ebo,
             terrain_picked, terrain_picked_length);

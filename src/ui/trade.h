@@ -58,6 +58,8 @@ void mudclient_draw_trade_items_confirm(mudclient *mud, int x, int y,
                                         int *trade_confirm_items,
                                         int *trade_confirm_items_count,
                                         int trade_confirm_item_count);
+void mudclient_offer_trade_item(mudclient *mud, int item_id, int item_amount);
+void mudclient_remove_trade_item(mudclient *mud, int item_id, int item_amount);
 void mudclient_draw_trade(mudclient *mud);
 void mudclient_draw_trade_confirm(mudclient *mud);
 
