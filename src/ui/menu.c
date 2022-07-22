@@ -391,7 +391,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         }
         break;
     }
-    case MENU_MAP_FACE: {
+    case MENU_MAP_LOOK: {
         mud->camera_rotation = menu_index;
         break;
     }

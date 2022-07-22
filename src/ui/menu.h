@@ -55,6 +55,11 @@
 #define MENU_BANK_WITHDRAW 601
 #define MENU_BANK_DEPOSIT 602
 
+/* trade and duel */
+#define MENU_TRANSACTION_OFFER 603
+#define MENU_TRANSACTION_REMOVE 604
+
+/* compass directions */
 #define MENU_MAP_LOOK 101
 
 #define MENU_CANCEL 4000

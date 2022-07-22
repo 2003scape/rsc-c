@@ -83,8 +83,8 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     if (mud->show_dialog_bank) {
         int item_amount = mudclient_get_inventory_count(mud, item_id);
 
-        mudclient_add_bank_menus(mud, MENU_BANK_DEPOSIT, item_id, item_amount,
-                                 formatted_item_name);
+        mudclient_add_offer_menus(mud, "Deposit", MENU_BANK_DEPOSIT, item_id, item_amount,
+                                 formatted_item_name, mud->bank_last_deposit_offer);
     } else {
         if (mud->selected_spell >= 0) {
             if (game_data_spell_type[mud->selected_spell] == 3) {

@@ -54,33 +54,47 @@ void mudclient_draw_trade_items_confirm(mudclient *mud, int x, int y,
 void mudclient_draw_trade(mudclient *mud) {
     mud->trade_selected_item = -1;
 
-    if (mud->mouse_button_click != 0 && mud->mouse_item_count_increment == 0) {
+    if (!mud->options->trade_menus && mud->mouse_button_click != 0 &&
+        mud->mouse_item_count_increment == 0) {
         mud->mouse_item_count_increment = 1;
     }
 
     int dialog_x = mud->surface->width / 2 - TRADE_WIDTH / 2;         // 22
     int dialog_y = (mud->surface->height / 2 - TRADE_HEIGHT / 2) + 2; // 36
 
-    if (mud->mouse_item_count_increment > 0) {
-        int mouse_x = mud->mouse_x - dialog_x;
-        int mouse_y = mud->mouse_y - dialog_y;
+    int mouse_x = mud->mouse_x - dialog_x;
+    int mouse_y = mud->mouse_y - dialog_y;
 
-        if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < TRADE_WIDTH &&
-            mouse_y < TRADE_HEIGHT - 12) {
-            if (mouse_x > TRADE_INVENTORY_X && mouse_y > TRADE_INVENTORY_Y &&
-                mouse_x < TRADE_INVENTORY_X + TRADE_INVENTORY_WIDTH + 1 &&
-                mouse_y < TRADE_INVENTORY_Y + TRADE_INVENTORY_HEIGHT + 1) {
-                int slot = ((mouse_x - (TRADE_INVENTORY_X + 1)) /
-                            ITEM_GRID_SLOT_WIDTH) +
-                           ((mouse_y - (TRADE_INVENTORY_Y + 1)) /
-                            ITEM_GRID_SLOT_HEIGHT) *
-                               TRADE_INVENTORY_COLUMNS;
+    if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < TRADE_WIDTH &&
+        mouse_y < TRADE_HEIGHT - 12) {
+        /* handle inventory */
+        if (mouse_x > TRADE_INVENTORY_X && mouse_y > TRADE_INVENTORY_Y &&
+            mouse_x < TRADE_INVENTORY_X + TRADE_INVENTORY_WIDTH + 1 &&
+            mouse_y < TRADE_INVENTORY_Y + TRADE_INVENTORY_HEIGHT + 1) {
+            int slot =
+                ((mouse_x - (TRADE_INVENTORY_X + 1)) / ITEM_GRID_SLOT_WIDTH) +
+                ((mouse_y - (TRADE_INVENTORY_Y + 1)) / ITEM_GRID_SLOT_HEIGHT) *
+                    TRADE_INVENTORY_COLUMNS;
 
-                if (slot >= 0 && slot < mud->inventory_items_count) {
+            if (slot >= 0 && slot < mud->inventory_items_count) {
+                int item_id = mud->inventory_item_id[slot];
+
+                if (mud->options->trade_menus && !mud->show_right_click_menu) {
+                    char *item_name = game_data_item_name[item_id];
+
+                    char formatted_item_name[strlen(item_name) + 6];
+                    sprintf(formatted_item_name, "@lre@%s", item_name);
+
+                    int item_amount =
+                        mudclient_get_inventory_count(mud, item_id);
+
+                    mudclient_add_offer_menus(mud, "Offer",
+                                              MENU_TRANSACTION_OFFER, item_id,
+                                              item_amount, formatted_item_name,
+                                              mud->trade_last_offer);
+                } else if (mud->mouse_item_count_increment > 0) {
                     int send_update = 0;
                     int item_count_add = 0;
-
-                    int item_id = mud->inventory_item_id[slot];
 
                     for (int i = 0; i < mud->trade_item_count; i++) {
                         if (mud->trade_items[i] == item_id) {
@@ -142,89 +156,97 @@ void mudclient_draw_trade(mudclient *mud) {
                         mud->trade_recipient_accepted = 0;
                         mud->trade_accepted = 0;
                     }
+
+                    mud->mouse_button_click = 0;
                 }
             }
-
-            if (mouse_x > TRADE_OFFER_X && mouse_y > TRADE_OFFER_Y &&
-                mouse_x < TRADE_OFFER_X + TRADE_OFFER_WIDTH + 1 &&
-                mouse_y < TRADE_OFFER_Y + TRADE_OFFER_HEIGHT + 1) {
-                int item_index =
-                    ((mouse_x - (TRADE_OFFER_X + 1)) / ITEM_GRID_SLOT_WIDTH) +
-                    ((mouse_y - (TRADE_OFFER_Y + 1)) / ITEM_GRID_SLOT_HEIGHT) *
-                        TRADE_OFFER_COLUMNS;
-
-                if (item_index >= 0 && item_index < mud->trade_item_count) {
-                    int item_type = mud->trade_items[item_index];
-
-                    for (int i = 0; i < mud->mouse_item_count_increment; i++) {
-                        if (game_data_item_stackable[item_type] == 0 &&
-                            mud->trade_items_count[item_index] > 1) {
-                            mud->trade_items_count[item_index]--;
-                            continue;
-                        }
-
-                        mud->trade_item_count--;
-                        mud->mouse_button_down_time = 0;
-
-                        for (int j = item_index; j < mud->trade_item_count;
-                             j++) {
-                            mud->trade_items[j] = mud->trade_items[j + 1];
-
-                            mud->trade_items_count[j] =
-                                mud->trade_items_count[j + 1];
-                        }
-
-                        break;
-                    }
-
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_TRADE_ITEM_UPDATE);
-
-                    packet_stream_put_byte(mud->packet_stream,
-                                           mud->trade_item_count);
-
-                    for (int i = 0; i < mud->trade_item_count; i++) {
-                        packet_stream_put_short(mud->packet_stream,
-                                                mud->trade_items[i]);
-                        packet_stream_put_int(mud->packet_stream,
-                                              mud->trade_items_count[i]);
-                    }
-
-                    packet_stream_send_packet(mud->packet_stream);
-                    mud->trade_recipient_accepted = 0;
-                    mud->trade_accepted = 0;
-                }
-            }
-
-            if (mouse_y >= TRADE_BUTTON_Y &&
-                mouse_y <= TRADE_BUTTON_Y + TRADE_BUTTON_HEIGHT) {
-                if (mouse_x >= TRADE_ACCEPT_X &&
-                    mouse_x <= TRADE_ACCEPT_X + TRADE_BUTTON_WIDTH) {
-                    mud->trade_accepted = 1;
-
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_TRADE_ACCEPT);
-
-                    packet_stream_send_packet(mud->packet_stream);
-                } else if (mouse_x >= TRADE_DECLINE_X &&
-                           mouse_x < TRADE_DECLINE_X + TRADE_BUTTON_WIDTH) {
-                    mud->show_dialog_trade = 0;
-
-                    packet_stream_new_packet(mud->packet_stream,
-                                             CLIENT_TRADE_DECLINE);
-
-                    packet_stream_send_packet(mud->packet_stream);
-                }
-            }
-        } else if (mud->mouse_button_click != 0) {
-            mud->show_dialog_trade = 0;
-            packet_stream_new_packet(mud->packet_stream, CLIENT_TRADE_DECLINE);
-            packet_stream_send_packet(mud->packet_stream);
         }
 
+        int slot = ((mouse_x - (TRADE_OFFER_X + 1)) / ITEM_GRID_SLOT_WIDTH) +
+                   ((mouse_y - (TRADE_OFFER_Y + 1)) / ITEM_GRID_SLOT_HEIGHT) *
+                       TRADE_OFFER_COLUMNS;
+
+        int is_selected = mouse_x > TRADE_OFFER_X && mouse_y > TRADE_OFFER_Y &&
+                          mouse_x < TRADE_OFFER_X + TRADE_OFFER_WIDTH + 1 &&
+                          mouse_y < TRADE_OFFER_Y + TRADE_OFFER_HEIGHT + 1;
+
+        int item_id = is_selected ? mud->trade_items[slot] : -1;
+
+        /* handle offer */
+        if (mud->mouse_item_count_increment > 0 && is_selected) {
+            if (slot >= 0 && slot < mud->trade_item_count) {
+                for (int i = 0; i < mud->mouse_item_count_increment; i++) {
+                    if (game_data_item_stackable[item_id] == 0 &&
+                        mud->trade_items_count[slot] > 1) {
+                        mud->trade_items_count[slot]--;
+                        continue;
+                    }
+
+                    mud->trade_item_count--;
+                    mud->mouse_button_down_time = 0;
+
+                    for (int j = slot; j < mud->trade_item_count; j++) {
+                        mud->trade_items[j] = mud->trade_items[j + 1];
+
+                        mud->trade_items_count[j] =
+                            mud->trade_items_count[j + 1];
+                    }
+
+                    break;
+                }
+
+                packet_stream_new_packet(mud->packet_stream,
+                                         CLIENT_TRADE_ITEM_UPDATE);
+
+                packet_stream_put_byte(mud->packet_stream,
+                                       mud->trade_item_count);
+
+                for (int i = 0; i < mud->trade_item_count; i++) {
+                    packet_stream_put_short(mud->packet_stream,
+                                            mud->trade_items[i]);
+                    packet_stream_put_int(mud->packet_stream,
+                                          mud->trade_items_count[i]);
+                }
+
+                packet_stream_send_packet(mud->packet_stream);
+                mud->trade_recipient_accepted = 0;
+                mud->trade_accepted = 0;
+            }
+
+            mud->mouse_button_click = 0;
+        }
+
+        /* handle accept buttons */
+        if (mud->mouse_button_click != 0 && mouse_y >= TRADE_BUTTON_Y &&
+            mouse_y <= TRADE_BUTTON_Y + TRADE_BUTTON_HEIGHT) {
+            if (mouse_x >= TRADE_ACCEPT_X &&
+                mouse_x <= TRADE_ACCEPT_X + TRADE_BUTTON_WIDTH) {
+                mud->trade_accepted = 1;
+
+                packet_stream_new_packet(mud->packet_stream,
+                                         CLIENT_TRADE_ACCEPT);
+
+                packet_stream_send_packet(mud->packet_stream);
+            } else if (mouse_x >= TRADE_DECLINE_X &&
+                       mouse_x < TRADE_DECLINE_X + TRADE_BUTTON_WIDTH) {
+                mud->show_dialog_trade = 0;
+
+                packet_stream_new_packet(mud->packet_stream,
+                                         CLIENT_TRADE_DECLINE);
+
+                packet_stream_send_packet(mud->packet_stream);
+            }
+
+            mud->mouse_button_click = 0;
+        }
+    } else if (mud->mouse_button_click != 0) {
+        mud->show_dialog_trade = 0;
+        packet_stream_new_packet(mud->packet_stream, CLIENT_TRADE_DECLINE);
+        packet_stream_send_packet(mud->packet_stream);
         mud->mouse_button_click = 0;
-        mud->mouse_item_count_increment = 0;
     }
+
+    mud->mouse_item_count_increment = 0;
 
     if (!mud->show_dialog_trade) {
         return;

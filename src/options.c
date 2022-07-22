@@ -33,6 +33,8 @@ void options_new(Options *options) {
     options->bank_inventory = 1;
     options->bank_maintain_slot = 1;
 
+    options->trade_menus = 1;
+
     options->escape_clear = 1;
 
     options->ui_scale = 1;

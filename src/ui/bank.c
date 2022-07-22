@@ -55,86 +55,6 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
     }
 }
 
-void mudclient_add_bank_menu(mudclient *mud, int type, int item_id, int amount,
-                             char *display_amount, char *item_name) {
-    strcpy(mud->menu_item_text1[mud->menu_items_count], display_amount);
-    strcpy(mud->menu_item_text2[mud->menu_items_count], item_name);
-
-    mud->menu_type[mud->menu_items_count] = type;
-    mud->menu_index[mud->menu_items_count] = item_id;
-    mud->menu_target_index[mud->menu_items_count] = amount;
-    mud->menu_items_count++;
-}
-
-void mudclient_add_bank_menus(mudclient *mud, int type, int item_id,
-                              int item_amount, char *item_name) {
-    int is_withdraw = type == MENU_BANK_WITHDRAW;
-    char *type_string = is_withdraw ? "Withdraw" : "Deposit";
-
-    char formatted[21] = {0};
-    sprintf(formatted, "%s-%d", type_string, 1);
-
-    if (item_amount >= 1) {
-        mudclient_add_bank_menu(mud, type, item_id, 1, formatted, item_name);
-    }
-
-    if (item_amount >= 5) {
-        sprintf(formatted, "%s-%d", type_string, 5);
-        mudclient_add_bank_menu(mud, type, item_id, 5, formatted, item_name);
-    }
-
-    if (item_amount >= 10) {
-        sprintf(formatted, "%s-%d", type_string, 10);
-        mudclient_add_bank_menu(mud, type, item_id, 10, formatted, item_name);
-    }
-
-    if (item_amount >= 50) {
-        sprintf(formatted, "%s-%d", type_string, 50);
-        mudclient_add_bank_menu(mud, type, item_id, 50, formatted, item_name);
-    }
-
-    if (mud->options->offer_x && mud->options->last_offer_x) {
-        int last_x = is_withdraw ? mud->bank_last_withdraw_offer
-                                 : mud->bank_last_deposit_offer;
-
-        /* don't add the last-x if it's already one of the other menu options */
-        if (last_x != 0 && last_x != 1 && last_x != 5 && last_x != 10 &&
-            last_x != 50 && item_amount >= last_x) {
-            sprintf(formatted, "%s-%d", type_string, last_x);
-
-            mudclient_add_bank_menu(mud, type, item_id, last_x, formatted,
-                                    item_name);
-        }
-    }
-
-    if (mud->options->offer_x && item_amount > 1) {
-        sprintf(formatted, "%s-X", type_string);
-
-        mudclient_add_bank_menu(mud, type, item_id, -item_amount, formatted,
-                                item_name);
-    }
-
-    if (mud->options->offer_x && item_amount >= 1) {
-        sprintf(formatted, "%s-All", type_string);
-
-        mudclient_add_bank_menu(mud, type, item_id, item_amount, formatted,
-                                item_name);
-    }
-
-    strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
-    strcpy(mud->menu_item_text2[mud->menu_items_count], item_name);
-
-    mud->menu_type[mud->menu_items_count] = MENU_INV_EXAMINE;
-    mud->menu_index[mud->menu_items_count] = item_id;
-    mud->menu_items_count++;
-
-    strcpy(mud->menu_item_text1[mud->menu_items_count], "Cancel");
-    strcpy(mud->menu_item_text2[mud->menu_items_count], "");
-
-    mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
-    mud->menu_items_count++;
-}
-
 void mudclient_draw_bank_page(mudclient *mud, int x, int y, int page,
                               int width) {
     int text_colour = WHITE;
@@ -632,9 +552,9 @@ void mudclient_draw_bank(mudclient *mud) {
 
                         int item_amount = bank_items_count[slot_index];
 
-                        mudclient_add_bank_menus(mud, MENU_BANK_WITHDRAW,
+                        mudclient_add_offer_menus(mud, "Withdraw", MENU_BANK_WITHDRAW,
                                                  selected_item_id, item_amount,
-                                                 formatted_item_name);
+                                                 formatted_item_name, mud->bank_last_withdraw_offer);
                     }
                 }
 

@@ -3,6 +3,7 @@
 
 #include "../colours.h"
 #include "../mudclient.h"
+#include "offer-x.h"
 
 #define INVENTORY_SLOT_WIDTH 49
 #define INVENTORY_SLOT_HEIGHT 34

@@ -3965,6 +3965,10 @@ void mudclient_draw_ui(mudclient *mud) {
 
     int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
 
+    if (no_menus) {
+        mud->menu_items_count = 0;
+    }
+
     if (mud->logout_timeout != 0) {
         mudclient_draw_logout(mud);
     } else if (mud->show_dialog_welcome) {
@@ -3974,9 +3978,9 @@ void mudclient_draw_ui(mudclient *mud) {
     } else if (mud->show_ui_wild_warn == 1) {
         mudclient_draw_wilderness_warning(mud);
     } else if (mud->show_dialog_bank && mud->combat_timeout == 0) {
-        if (no_menus) {
+        /*if (no_menus) {
             mud->menu_items_count = 0;
-        }
+        }*/
 
         mudclient_draw_bank(mud);
 
@@ -3993,6 +3997,14 @@ void mudclient_draw_ui(mudclient *mud) {
         mudclient_draw_trade_confirm(mud);
     } else if (mud->show_dialog_trade) {
         mudclient_draw_trade(mud);
+
+        if (mud->options->trade_menus) {
+            if (mud->show_right_click_menu) {
+                mudclient_draw_right_click_menu(mud);
+            } else {
+                mudclient_create_top_mouse_menu(mud);
+            }
+        }
     } else if (mud->show_dialog_duel_confirm) {
         mudclient_draw_duel_confirm(mud);
     } else if (mud->show_dialog_duel) {
@@ -4017,9 +4029,9 @@ void mudclient_draw_ui(mudclient *mud) {
 
         mudclient_set_active_ui_tab(mud);
 
-        if (no_menus) {
+        /*if (no_menus) {
             mud->menu_items_count = 0;
-        }
+        }*/
 
         if (mud->show_ui_tab == 0 && no_menus) {
             mudclient_create_right_click_menu(mud);
@@ -5120,19 +5132,15 @@ void mudclient_poll_events(mudclient *mud) {
 
             if (code == 113) {
                 test_x -= 1;
-
                 //mud->scene->view_distance -= 1;
             } else if (code == 97) {
                 test_x += 1;
-
                 //mud->scene->view_distance += 1;
             } else if (code == 119) {
                 test_y -= 1;
-
                 //mud->scene->clip_y -= 1;
             } else if (code == 115) {
                 test_y += 1;
-
                 //mud->scene->clip_y += 1;
             } else if (code == 101) {
                 // test_z -= 0.001;
@@ -5145,8 +5153,6 @@ void mudclient_poll_events(mudclient *mud) {
             }
 
             printf("%d %d\n", mud->scene->base_y, mud->scene->clip_y);
-            // printf("%d %d %d %d\n", test_x, test_y, test_z, test_yaw);
-            //  printf("%f %f\n", test_x, test_y);
 
             break;
         }

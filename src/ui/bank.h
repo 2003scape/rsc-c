@@ -6,6 +6,7 @@
 #include "../mudclient.h"
 #include "../packet-stream.h"
 #include "../surface.h"
+#include "offer-x.h"
 
 #define BANK_WIDTH 408
 
@@ -25,8 +26,6 @@
 
 void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
                                 int opcode);
-void mudclient_add_bank_menu(mudclient *mud, int type, int item_id,
-                             int amount, char *display_amount, char *item_name);
 void mudclient_add_bank_menus(mudclient *mud, int type, int item_id,
                               int item_amount, char *item_name);
 void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,

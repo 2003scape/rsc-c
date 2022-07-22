@@ -95,6 +95,9 @@ typedef struct Options {
     /* maintain the selected bank slot when items change position */
     int bank_maintain_slot;
 
+    /* adds right click menus to trades */
+    int trade_menus;
+
     /* escape key clears input */
     int escape_clear;
 

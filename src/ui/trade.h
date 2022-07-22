@@ -7,6 +7,7 @@
 #include "../surface.h"
 #include "../utility.h"
 #include "message-tabs.h"
+#include "offer-x.h"
 
 /* yours and opponents items offer grid */
 #define TRADE_OFFER_ROWS 3
