@@ -174,11 +174,13 @@ void mudclient_remove_trade_item(mudclient *mud, int item_id, int item_amount) {
         int new_index = 0;
 
         for (int i = 0; i < mud->trade_item_count; i++) {
-            if (mud->trade_items[i] != -1) {
-                new_items[new_index] = mud->trade_items[i];
-                new_items_count[new_index] = mud->trade_items_count[i];
-                new_index++;
+            if (mud->trade_items[i] == -1) {
+                continue;
             }
+
+            new_items[new_index] = mud->trade_items[i];
+            new_items_count[new_index] = mud->trade_items_count[i];
+            new_index++;
         }
 
         memcpy(mud->trade_items, new_items, sizeof(int) * new_count);
@@ -235,6 +237,26 @@ void mudclient_remove_trade_item(mudclient *mud, int item_id, int item_amount) {
 }
 
 void mudclient_draw_trade(mudclient *mud) {
+    if (mud->input_digits_final > 0) {
+        if (mud->input_digits_final > mud->offer_max) {
+            mudclient_show_message(mud, "You don't have that many!",
+                                   MESSAGE_TYPE_GAME);
+        } else {
+            if (mud->trade_offer_type == TRADE_OFFER_OFFER) {
+                mudclient_offer_trade_item(mud, mud->offer_id,
+                                           mud->input_digits_final);
+            } else {
+                mudclient_remove_trade_item(mud, mud->offer_id,
+                                            mud->input_digits_final);
+            }
+
+            mud->trade_last_offer = mud->input_digits_final;
+        }
+
+        mud->show_dialog_offer_x = 0;
+        mud->input_digits_final = 0;
+    }
+
     mud->trade_selected_item = -1;
 
     if (!mud->options->trade_menus && mud->mouse_button_click != 0 &&
@@ -309,9 +331,9 @@ void mudclient_draw_trade(mudclient *mud) {
                             if (game_data_item_stackable[item_id] == 0) {
                                 item_amount = mud->trade_items_count[i];
                                 break;
-                            } else {
-                                item_amount++;
                             }
+
+                            item_amount++;
                         }
                     }
 
@@ -462,6 +484,11 @@ void mudclient_draw_trade(mudclient *mud) {
 
         surface_draw_string(mud->surface, formatted_item, dialog_x + 8,
                             dialog_y + TRADE_HEIGHT - 5, 1, YELLOW);
+    }
+
+    if (mud->show_dialog_offer_x) {
+        mudclient_draw_offer_x(mud);
+        mudclient_handle_offer_x_input(mud);
     }
 }
 

@@ -393,18 +393,27 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
     }
     case MENU_TRANSACTION_OFFER: {
         if (menu_target_index < 0) {
+            mud->trade_offer_type = TRADE_OFFER_OFFER;
+            mud->offer_id = menu_index;
+            mud->offer_max = abs(menu_target_index);
+            mud->show_dialog_offer_x = 1;
         } else if (mud->show_dialog_trade) {
             mudclient_offer_trade_item(mud, menu_index, menu_target_index);
         } else if (mud->show_dialog_duel) {
-            //mudclient_offer_trade_item(mud, item_id, mud->mouse_item_count_increment);
+            // TODO
         }
         break;
     }
     case MENU_TRANSACTION_REMOVE: {
         if (menu_target_index < 0) {
+            mud->trade_offer_type = TRADE_OFFER_REMOVE;
+            mud->offer_id = menu_index;
+            mud->offer_max = abs(menu_target_index);
+            mud->show_dialog_offer_x = 1;
         } else if (mud->show_dialog_trade) {
             mudclient_remove_trade_item(mud, menu_index, menu_target_index);
         } else if (mud->show_dialog_duel) {
+            // TODO
         }
         break;
     }

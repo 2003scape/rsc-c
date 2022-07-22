@@ -827,6 +827,7 @@ typedef struct mudclient {
     int trade_recipient_items_count[TRADE_ITEMS_MAX];
     int trade_selected_item;
     int trade_last_offer;
+    int trade_offer_type;
 
     int show_dialog_trade_confirm;
     int64_t trade_recipient_confirm_hash;
