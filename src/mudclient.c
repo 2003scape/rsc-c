@@ -4659,6 +4659,7 @@ void mudclient_on_resize(mudclient *mud) {
 
         // TODO change 12 to bar height - 1
         scene_set_bounds(mud->scene, new_width, new_height - 12);
+        mud->scene->view_distance = (int)(float)mud->game_height * (512.0f / (float)MUD_HEIGHT );
 
         printf("height %d\n", mud->game_height);
     }
@@ -5152,7 +5153,7 @@ void mudclient_poll_events(mudclient *mud) {
                 test_yaw -= 1;
             }
 
-            printf("%d %d\n", mud->scene->base_y, mud->scene->clip_y);
+            printf("vd=%d\n", mud->scene->view_distance);
 
             break;
         }

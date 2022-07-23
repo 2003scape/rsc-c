@@ -46,7 +46,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->max_sprite_count = max_sprite_count;
 
     scene->clip_near = 5;
-    scene->view_distance = 9;
+    //scene->view_distance = 9;
+    scene->view_distance = 512;
     scene->normal_magnitude = 4;
 
     scene->raster = surface->pixels;
@@ -1263,10 +1264,12 @@ void scene_initialise_polygons_2d(Scene *scene) {
         int view_y = scene->view->vertex_view_y[face_vertex_index];
 
         int view_width =
-            (scene->sprite_width[face] << scene->view_distance) / view_z;
+            //(scene->sprite_width[face] << scene->view_distance) / view_z;
+            (scene->sprite_width[face] * scene->view_distance) / view_z;
 
         int view_height =
-            (scene->sprite_height[face] << scene->view_distance) / view_z;
+            //(scene->sprite_height[face] << scene->view_distance) / view_z;
+            (scene->sprite_height[face] * scene->view_distance) / view_z;
 
         if (view_x - (view_width / 2) <= scene->clip_x &&
             view_x + (view_width / 2) >= -scene->clip_x &&
@@ -1291,15 +1294,17 @@ void scene_initialise_polygons_2d(Scene *scene) {
 void scene_render_polygon_2d_face(Scene *scene, int face) {
     int *face_vertices = scene->view->face_vertices[face];
     int face_0 = face_vertices[0];
-    int vx = scene->view->vertex_view_x[face_0];
-    int vy = scene->view->vertex_view_y[face_0];
-    int vz = scene->view->project_vertex_z[face_0];
+    int view_x = scene->view->vertex_view_x[face_0];
+    int view_y = scene->view->vertex_view_y[face_0];
+    int poject_z = scene->view->project_vertex_z[face_0];
 
-    int width = (scene->sprite_width[face] << scene->view_distance) / vz;
-    int height = (scene->sprite_height[face] << scene->view_distance) / vz;
-    int skew_x = scene->view->vertex_view_x[face_vertices[1]] - vx;
-    int x = vx - (width / 2);
-    int y = scene->base_y + vy - height;
+    //int width = (scene->sprite_width[face] << scene->view_distance) / vz;
+    int width = (scene->sprite_width[face] * scene->view_distance) / poject_z;
+    //int height = (scene->sprite_height[face] << scene->view_distance) / vz;
+    int height = (scene->sprite_height[face] * scene->view_distance) / poject_z;
+    int skew_x = scene->view->vertex_view_x[face_vertices[1]] - view_x;
+    int x = view_x - (width / 2);
+    int y = scene->base_y + view_y - height;
 
     float depth_top = 0;
     float depth_bottom = 0;
@@ -1309,14 +1314,18 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
     depth_bottom = scene->gl_sprite_depth_bottom[face];
 #endif
 
+    /*surface_draw_entity_sprite(
+        scene->surface, x + scene->base_x, y, width, height, scene->sprite_id[face],
+        skew_x, (256 << scene->view_distance) / poject_z, depth_top, depth_bottom);*/
     surface_draw_entity_sprite(
         scene->surface, x + scene->base_x, y, width, height, scene->sprite_id[face],
-        skew_x, (256 << scene->view_distance) / vz, depth_top, depth_bottom);
+        skew_x, (256 * scene->view_distance) / poject_z, depth_top, depth_bottom);
 
     if (scene->mouse_picking_active &&
         scene->mouse_picked_count < MOUSE_PICKED_MAX) {
 
-        x += (scene->sprite_translate_x[face] << scene->view_distance) / vz;
+        //x += (scene->sprite_translate_x[face] << scene->view_distance) / poject_z;
+        x += (scene->sprite_translate_x[face] * scene->view_distance) / poject_z;
 
         if (scene->mouse_y >= y && scene->mouse_y <= y + height &&
             scene->mouse_x >= x && scene->mouse_x <= x + width &&
@@ -1333,12 +1342,13 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 void scene_render(Scene *scene) {
     scene->interlace = scene->surface->interlace;
 
-#if 1
     int frustum_x =
-        (scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
+        //(scene->clip_x * scene->clip_far_3d) >> scene->view_distance;
+        (scene->clip_x * scene->clip_far_3d) / scene->view_distance;
 
     int frustum_y =
-        (scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
+        //(scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
+        (scene->clip_y * scene->clip_far_3d) / scene->view_distance;
 
     scene_frustum_max_x = 0;  // right
     scene_frustum_min_x = 0;  // left
@@ -1362,7 +1372,6 @@ void scene_render(Scene *scene) {
     scene_frustum_min_y += scene->camera_y;
     scene_frustum_far_z += scene->camera_z;
     scene_frustum_near_z += scene->camera_z;
-#endif
 
     scene->models[scene->model_count] = scene->view;
     scene->view->transform_state = GAME_MODEL_TRANSFORM_RESET;
@@ -1593,10 +1602,12 @@ void scene_render(Scene *scene) {
                                 k7;
 
                         scene->plane_x[k8] =
-                            (i5 << scene->view_distance) / scene->clip_near;
+                            //(i5 << scene->view_distance) / scene->clip_near;
+                            (i5 * scene->view_distance) / scene->clip_near;
 
                         scene->plane_y[k8] =
-                            (j6 << scene->view_distance) / scene->clip_near;
+                            //(j6 << scene->view_distance) / scene->clip_near;
+                            (j6 * scene->view_distance) / scene->clip_near;
 
                         scene->vertex_shade[k8] = vertex_shade;
                         k8++;
@@ -1638,10 +1649,12 @@ void scene_render(Scene *scene) {
                                 l7;
 
                         scene->plane_x[k8] =
-                            (j5 << scene->view_distance) / scene->clip_near;
+                            //(j5 << scene->view_distance) / scene->clip_near;
+                            (j5 * scene->view_distance) / scene->clip_near;
 
                         scene->plane_y[k8] =
-                            (k6 << scene->view_distance) / scene->clip_near;
+                            //(k6 << scene->view_distance) / scene->clip_near;
+                            (k6 * scene->view_distance) / scene->clip_near;
 
                         scene->vertex_shade[k8] = vertex_shade;
                         k8++;
@@ -2341,26 +2354,37 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
         int j7 = vertices_y[num_vertices] - vertex_y;
         int k8 = vertices_z[num_vertices] - vertex_z;
 
+        /* texture mapping (UVs) */
         if (scene->texture_dimension[face_fill] == 1) {
+            /* normal calculations */
             int l9 = (i6 * vertex_y - j7 * vertex_x) << 12;
 
             int k10 = (j7 * vertex_z - k8 * vertex_y)
-                      << (5 - scene->view_distance + 7 + 4);
+                      //<< (-scene->view_distance + 16);
+                      << 7;
 
             int i11 = (k8 * vertex_x - i6 * vertex_z)
-                      << (5 - scene->view_distance + 7);
+                      //<< (-scene->view_distance + 12);
+                      //* 8;
+                      << 3;
 
             int k11 = (i3 * vertex_y - k3 * vertex_x) << 12;
 
             int i12 = (k3 * vertex_z - i4 * vertex_y)
-                      << (5 - scene->view_distance + 7 + 4);
+                      //<< (-scene->view_distance + 16);
+                      //* 128;
+                      << 7;
 
             int k12 = (i4 * vertex_x - i3 * vertex_z)
-                      << (5 - scene->view_distance + 7);
+                      //<< (-scene->view_distance + 12);
+                      //* 8;
+                      << 3;
 
             int i13 = (k3 * i6 - i3 * j7) << 5;
-            int k13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
-            int i14 = (i3 * k8 - i4 * i6) >> (scene->view_distance - 5);
+            //int k13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
+            int k13 = (i4 * j7 - k3 * k8); // 5 - 9 + 4 = 0
+            //int i14 = (i3 * k8 - i4 * i6) >> (scene->view_distance - 5);
+            int i14 = (i3 * k8 - i4 * i6) >> 4;
             int k14 = k10 >> 4;
             int i15 = i12 >> 4;
             int k15 = k13 >> 4;
@@ -2382,7 +2406,7 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
                     i17 += k16;
                 }
 
-                i11 <<= 1;
+                i11 <<= 1; // * 2
                 k12 <<= 1;
                 i14 <<= 1;
                 k16 <<= 1;
@@ -2476,22 +2500,32 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
         int i10 = (i6 * vertex_y - j7 * vertex_x) << 11;
 
         int l10 = (j7 * vertex_z - k8 * vertex_y)
-                  << (5 - scene->view_distance + 6 + 4);
+                  //<< (5 - scene->view_distance + 6 + 4);
+                  //* 128;
+                  << 6;
 
         int j11 = (k8 * vertex_x - i6 * vertex_z)
-                  << (5 - scene->view_distance + 6);
+                  //<< (5 - scene->view_distance + 6);
+                  //* 4;
+                  << 2;
 
         int l11 = (i3 * vertex_y - k3 * vertex_x) << 11;
 
         int j12 = (k3 * vertex_z - i4 * vertex_y)
-                  << (5 - scene->view_distance + 6 + 4);
+                  //<< (5 - scene->view_distance + 6 + 4);
+                  //* 64;
+                  << 6;
 
         int l12 = (i4 * vertex_x - i3 * vertex_z)
-                  << (5 - scene->view_distance + 6);
+                  //<< (5 - scene->view_distance + 6);
+                  //* 4;
+                  << 2;
 
         int j13 = (k3 * i6 - i3 * j7) << 5;
-        int l13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
-        int j14 = (i3 * k8 - i4 * i6) >> (scene->view_distance - 5);
+        //int l13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
+        int l13 = (i4 * j7 - k3 * k8);
+        //int j14 = (i3 * k8 - i4 * i6) / 16;
+        int j14 = (i3 * k8 - i4 * i6) >> 4;
         int l14 = l10 >> 4;
         int j15 = j12 >> 4;
         int l15 = l13 >> 4;
@@ -4120,7 +4154,8 @@ void scene_gl_update_camera(Scene *scene) {
                 (0.3012063997 * powf(scaled_scene_height, 2)) +
                 (2.0149949882 * scaled_scene_height) - 0.0030409762;
 
-    //fov = 0.628614;
+    //0.67578125
+    fov = 0.628614;
     //printf("%f\n", fov);
 
     glm_perspective(fov, (float)(scene->width) / (float)(scene->gl_height - 1),

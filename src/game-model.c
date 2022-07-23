@@ -955,11 +955,15 @@ void game_model_project_view(GameModel *game_model, int camera_x, int camera_y,
         }
 
         if (z >= clip_near) {
-            game_model->vertex_view_x[i] = (int)((x << view_distance) / z);
-            game_model->vertex_view_y[i] = (int)((y << view_distance) / z);
+            //game_model->vertex_view_x[i] = (int)((x << view_distance) / z);
+            //game_model->vertex_view_y[i] = (int)((y << view_distance) / z);
+            game_model->vertex_view_x[i] = (int)((x * view_distance) / z);
+            game_model->vertex_view_y[i] = (int)((y * view_distance) / z);
         } else {
-            game_model->vertex_view_x[i] = x << view_distance;
-            game_model->vertex_view_y[i] = y << view_distance;
+            //game_model->vertex_view_x[i] = x << view_distance;
+            //game_model->vertex_view_y[i] = y << view_distance;
+            game_model->vertex_view_x[i] = x * view_distance;
+            game_model->vertex_view_y[i] = y * view_distance;
         }
 
         game_model->project_vertex_x[i] = x;
