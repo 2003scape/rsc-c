@@ -3835,8 +3835,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             player->bubble_item;
     }
 
-    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
-(depth_top + depth_bottom) / 2);
+    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0, depth_top);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
@@ -3964,7 +3963,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     mudclient_draw_character_message(mud, npc, x, y, width);
 
     mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1,
-                                    (depth_top + depth_bottom) / 2);
+                                    depth_top);
 }
 
 void mudclient_draw_blue_bar(mudclient *mud) {
@@ -4143,6 +4142,11 @@ void mudclient_draw_overhead(mudclient *mud) {
 
         mud->received_message_y[i] = y;
 
+        if (mudclient_is_ui_scaled(mud)) {
+            x /= 2;
+            y /= 2;
+        }
+
         surface_draw_paragraph(mud->surface, mud->received_messages[i], x, y, 1,
                                YELLOW, 300);
     }
@@ -4151,6 +4155,12 @@ void mudclient_draw_overhead(mudclient *mud) {
         int x = mud->action_bubble_x[i];
         int y = mud->action_bubble_y[i];
         int scale = mud->action_bubble_scale[i];
+
+        if (mudclient_is_ui_scaled(mud)) {
+            x /= 2;
+            y /= 2;
+            scale /= 2;
+        }
         int id = mud->action_bubble_item[i];
         int scale_x = (39 * scale) / 100;
         int scale_y = (27 * scale) / 100;
@@ -4161,9 +4171,12 @@ void mudclient_draw_overhead(mudclient *mud) {
         int scale_x_clip = (36 * scale) / 100;
         int scale_y_clip = (24 * scale) / 100;
 
+        int final_x = x - (scale_x_clip / 2);
+        int final_y = (y - scale_y + (scale_y / 2)) - (scale_y_clip / 2);
+
         surface_sprite_clipping_from9(
-            mud->surface, x - (scale_x_clip / 2),
-            (y - scale_y + (scale_y / 2)) - (scale_y_clip / 2), scale_x_clip,
+            mud->surface, final_x,
+            final_y, scale_x_clip,
             scale_y_clip, game_data_item_picture[id] + mud->sprite_item,
             game_data_item_mask[id], 0, 0, 0);
     }
@@ -4172,6 +4185,11 @@ void mudclient_draw_overhead(mudclient *mud) {
         int x = mud->health_bar_x[i];
         int y = mud->health_bar_y[i];
         int missing = mud->health_bar_missing[i];
+
+        if (mudclient_is_ui_scaled(mud)) {
+            x /= 2;
+            y /= 2;
+        }
 
         surface_draw_box_alpha(mud->surface, x - 15, y - 3, missing, 5, GREEN,
                                192);
@@ -5639,6 +5657,10 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
 }
 
 int mudclient_is_ui_scaled(mudclient *mud) {
+#ifdef RENDER_SW
+    return 0;
+#endif
+
     return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) &&
            mud->game_height >= (MUD_HEIGHT * 2);
 }
