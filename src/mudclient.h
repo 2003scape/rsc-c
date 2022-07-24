@@ -961,6 +961,9 @@ void mudclient_registration_login(mudclient *mud);
 void mudclient_register(mudclient *mud, char *username, char *password);
 void mudclient_change_password(mudclient *mud, char *old_password,
                                char *new_password);
+#ifdef RENDER_GL
+void mudclient_update_fov(mudclient *mud);
+#endif
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
 void mudclient_on_resize(mudclient *mud);

@@ -195,6 +195,7 @@ typedef struct Scene {
     int gl_scroll_texture_position;
 
     int gl_height;
+    float gl_fov;
 #endif
 } Scene;
 

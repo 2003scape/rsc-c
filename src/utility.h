@@ -63,7 +63,7 @@
 
 #ifdef RENDER_GL
 /* convert sin_cos_x array index to radians */
-#define TABLE_TO_RADIANS(i, length) ((i / (length / 8.0f)) * (M_PI / 2))
+#define TABLE_TO_RADIANS(i, length) (((i) / ((length) / 8.0f)) * (M_PI / 2))
 
 /* convert integer vertices to floats and vice versa */
 #define VERTEX_SCALE 100

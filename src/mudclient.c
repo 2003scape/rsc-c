@@ -2463,6 +2463,33 @@ void mudclient_change_password(mudclient *mud, char *old_password,
     packet_stream_flush_packet(mud->packet_stream);
 }
 
+#ifdef RENDER_GL
+void mudclient_update_fov(mudclient *mud) {
+    if (mud->options->field_of_view) {
+        mud->scene->gl_fov = glm_rad(mud->options->field_of_view / 10.0f);
+        //−413.982160x3+1797.753500x2−2723.515757x+1616.481141
+
+        int view_distance = (-413.982160f * pow(mud->scene->gl_fov, 3)) +
+                             (1797.753500f * pow(mud->scene->gl_fov, 2)) -
+                             (2723.515757f * mud->scene->gl_fov) +
+                             1616.481141f;
+
+        printf("%d\n", view_distance);
+
+        mud->scene->view_distance = mud->game_height * ((float)view_distance / (float)MUD_HEIGHT);
+    } else {
+        float scaled_scene_height = (float)(mud->scene->gl_height - 1) / 1000.0f;
+
+        /* no idea, i just used cubic regression */
+        mud->scene->gl_fov = (-0.1608132078 * powf(scaled_scene_height, 3)) -
+                    (0.3012063997 * powf(scaled_scene_height, 2)) +
+                    (2.0149949882 * scaled_scene_height) - 0.0030409762;
+
+        mud->scene->view_distance = 512;
+    }
+}
+#endif
+
 void mudclient_start_game(mudclient *mud) {
     mudclient_load_game_config(mud);
 
@@ -2530,6 +2557,8 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene->clip_far_2d = 2400;
     mud->scene->fog_z_falloff = 1;
     mud->scene->fog_z_distance = 2300;
+
+    mudclient_update_fov(mud);
 
     // scene_set_light_from3(mud->scene, -50, -10, -50);
 
@@ -4659,7 +4688,11 @@ void mudclient_on_resize(mudclient *mud) {
 
         // TODO change 12 to bar height - 1
         scene_set_bounds(mud->scene, new_width, new_height - 12);
-        mud->scene->view_distance = (int)(float)mud->game_height * (512.0f / (float)MUD_HEIGHT );
+
+#ifdef RENDER_GL
+        mudclient_update_fov(mud);
+        //printf("%f\n", mud->scene->gl_fov);
+#endif
 
         printf("height %d\n", mud->game_height);
     }
@@ -5133,10 +5166,10 @@ void mudclient_poll_events(mudclient *mud) {
 
             if (code == 113) {
                 test_x -= 1;
-                //mud->scene->view_distance -= 1;
+                mud->scene->view_distance -= 0;
             } else if (code == 97) {
                 test_x += 1;
-                //mud->scene->view_distance += 1;
+                mud->scene->view_distance += 0;
             } else if (code == 119) {
                 test_y -= 1;
                 //mud->scene->clip_y -= 1;

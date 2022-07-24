@@ -101,8 +101,12 @@ typedef struct Options {
     /* escape key clears input */
     int escape_clear;
 
-    /* double the UI size */
+    /* double the UI size (gl only) */
     int ui_scale;
+
+    /* change the field of view. scales with height by default and in software.
+     * about 36 degrees on the original height of 346 */
+    int field_of_view;
 } Options;
 
 void options_new(Options *options);
