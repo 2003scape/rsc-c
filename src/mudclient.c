@@ -750,6 +750,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     glViewport(0, 0, mud->game_width, mud->game_height);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+    /* when two vertices have the same depth, the last one gets drawn rather
+     * than the first one. used for entity quads */
+    glDepthFunc(GL_LEQUAL);
+
     /* transparent textures */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2467,23 +2471,24 @@ void mudclient_change_password(mudclient *mud, char *old_password,
 void mudclient_update_fov(mudclient *mud) {
     if (mud->options->field_of_view) {
         mud->scene->gl_fov = glm_rad(mud->options->field_of_view / 10.0f);
-        //−413.982160x3+1797.753500x2−2723.515757x+1616.481141
 
-        int view_distance = (-413.982160f * pow(mud->scene->gl_fov, 3)) +
-                             (1797.753500f * pow(mud->scene->gl_fov, 2)) -
-                             (2723.515757f * mud->scene->gl_fov) +
-                             1616.481141f;
+        int view_distance = roundf((-254.452344f * pow(mud->scene->gl_fov, 3)) +
+                            (1142.234460f * pow(mud->scene->gl_fov, 2)) -
+                            (1901.194134f * mud->scene->gl_fov) + 1318.230265f);
 
-        printf("%d\n", view_distance);
+        printf("fov=%f, vd=%d\n", mud->scene->gl_fov, view_distance);
 
-        mud->scene->view_distance = mud->game_height * ((float)view_distance / (float)MUD_HEIGHT);
+        mud->scene->view_distance =
+            roundf((float)mud->game_height * ((float)view_distance / (float)MUD_HEIGHT));
     } else {
-        float scaled_scene_height = (float)(mud->scene->gl_height - 1) / 1000.0f;
+        float scaled_scene_height =
+            (float)(mud->scene->gl_height - 1) / 1000.0f;
 
         /* no idea, i just used cubic regression */
         mud->scene->gl_fov = (-0.1608132078 * powf(scaled_scene_height, 3)) -
-                    (0.3012063997 * powf(scaled_scene_height, 2)) +
-                    (2.0149949882 * scaled_scene_height) - 0.0030409762;
+                             (0.3012063997 * powf(scaled_scene_height, 2)) +
+                             (2.0149949882 * scaled_scene_height) -
+                             0.0030409762;
 
         mud->scene->view_distance = 512;
     }
@@ -3182,7 +3187,8 @@ void mudclient_handle_camera_zoom(mudclient *mud) {
     if (mud->mouse_scroll_delta != 0 &&
         (mud->show_ui_tab == 0 || mud->show_ui_tab == MAP_TAB) &&
         !(mud->message_tab_selected != MESSAGE_TAB_ALL &&
-          mud->mouse_y > mud->surface->height - 64)) {
+          mud->mouse_y > mud->surface->height - 64) &&
+        !mud->show_dialog_bank) {
 
         mud->camera_zoom += mud->mouse_scroll_delta * 24;
     }
@@ -3811,10 +3817,6 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                     player_top_bottom_colours[player->colour_bottom];
             }
 
-            /* fixes draw ordering */
-            depth_top -= 0.00004f;
-            depth_bottom -= 0.00004f;
-
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
@@ -3833,11 +3835,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             player->bubble_item;
     }
 
-    float damage_depth =
-        (depth_top + depth_bottom) / 2 - (0.00004f * ANIMATION_COUNT);
-
     mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
-                                    damage_depth);
+(depth_top + depth_bottom) / 2);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
@@ -3955,9 +3954,6 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 skin_colour = game_data_npc_colour_skin[npc->npc_id];
             }
 
-            depth_top -= 0.00004f;
-            depth_bottom -= 0.00004f;
-
             surface_sprite_clipping_from9_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
@@ -3967,11 +3963,8 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
     mudclient_draw_character_message(mud, npc, x, y, width);
 
-    float damage_depth =
-        (depth_top + depth_bottom) / 2 - (0.00004f * ANIMATION_COUNT);
-
     mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1,
-                                    damage_depth);
+                                    (depth_top + depth_bottom) / 2);
 }
 
 void mudclient_draw_blue_bar(mudclient *mud) {
@@ -4691,7 +4684,7 @@ void mudclient_on_resize(mudclient *mud) {
 
 #ifdef RENDER_GL
         mudclient_update_fov(mud);
-        //printf("%f\n", mud->scene->gl_fov);
+        // printf("%f\n", mud->scene->gl_fov);
 #endif
 
         printf("height %d\n", mud->game_height);
@@ -5172,10 +5165,10 @@ void mudclient_poll_events(mudclient *mud) {
                 mud->scene->view_distance += 0;
             } else if (code == 119) {
                 test_y -= 1;
-                //mud->scene->clip_y -= 1;
+                // mud->scene->clip_y -= 1;
             } else if (code == 115) {
                 test_y += 1;
-                //mud->scene->clip_y += 1;
+                // mud->scene->clip_y += 1;
             } else if (code == 101) {
                 // test_z -= 0.001;
             } else if (code == 100) {

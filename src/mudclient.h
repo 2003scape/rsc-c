@@ -895,20 +895,16 @@ void mudclient_stop(mudclient *mud);
 void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent);
-
 #if !defined(WII) && !defined(_3DS)
 SDL_Surface *mudclient_parse_tga(mudclient *mud, int8_t *buffer);
 #endif
-
 void mudclient_load_jagex(mudclient *mud);
 void mudclient_load_game_config(mudclient *mud);
 void mudclient_load_media(mudclient *mud);
-
 #ifdef RENDER_GL
 int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
                                      int8_t *entity_jag_mem);
 #endif
-
 void mudclient_load_entities(mudclient *mud);
 void mudclient_load_textures(mudclient *mud);
 void mudclient_load_models(mudclient *mud);
@@ -968,11 +964,9 @@ void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
 void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
-
 #ifdef _3DS
 void mudclient_flush_audio(mudclient *mud);
 #endif
-
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
