@@ -6,6 +6,7 @@
 #include "../mudclient.h"
 #include "../packet-stream.h"
 #include "../surface.h"
+#include "confirm.h"
 
 #define CHANGE_PASSWORD_HEIGHT 60
 #define CHANGE_PASSWORD_WIDTH 300

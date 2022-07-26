@@ -3228,6 +3228,10 @@ void mudclient_handle_game_input(mudclient *mud) {
 
     mudclient_packet_tick(mud);
 
+    if (mud->show_dialog_confirm) {
+        mudclient_handle_confirm_input(mud);
+    }
+
     if (mud->logout_timeout > 0) {
         mud->logout_timeout--;
     }
@@ -3993,7 +3997,9 @@ void mudclient_draw_ui(mudclient *mud) {
         mud->menu_items_count = 0;
     }
 
-    if (mud->logout_timeout != 0) {
+    if (mud->show_dialog_confirm) {
+        mudclient_draw_confirm(mud);
+    } else if (mud->logout_timeout != 0) {
         mudclient_draw_logout(mud);
     } else if (mud->show_dialog_welcome) {
         mudclient_draw_welcome(mud);
@@ -4572,7 +4578,7 @@ void mudclient_draw_game(mudclient *mud) {
 
             int wilderness_level = 1 + (wilderness_depth / 6);
 
-            char formatted_level[19];
+            char formatted_level[19] = {0};
             sprintf(formatted_level, "Level: %d", wilderness_level);
 
             surface_draw_string_centre(mud->surface, formatted_level,
@@ -4592,10 +4598,6 @@ void mudclient_draw_game(mudclient *mud) {
 
     mudclient_draw_chat_message_tabs_panel(mud);
     mudclient_draw_ui(mud);
-
-    if (mud->show_dialog_confirm) {
-        mudclient_draw_confirm(mud);
-    }
 
     mud->surface->draw_string_shadow = 0;
 

@@ -522,6 +522,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
                 mud->confirm_text_bottom = "and teleport to Lumbridge?";
 
+                mud->confirm_type = CONFIRM_TUTORIAL;
                 mud->show_dialog_confirm = 1;
             }
 

@@ -49,3 +49,37 @@ void mudclient_draw_confirm(mudclient *mud) {
     surface_draw_string_centre(mud->surface, "OK", ok_x, button_y, 1,
                                text_colour);
 }
+
+void mudclient_handle_confirm_input(mudclient *mud) {
+    if (mud->last_mouse_button_down == 0) {
+        return;
+    }
+
+    int dialog_x = mud->surface->width / 2 - CONFIRM_DIALOG_WIDTH / 2;
+    int dialog_y = mud->surface->height / 2 - CONFIRM_DIALOG_HEIGHT / 2;
+    int cancel_x = dialog_x + (CONFIRM_DIALOG_WIDTH / 2 - CONFIRM_BUTTON_SIZE);
+    int ok_x = cancel_x + (CONFIRM_BUTTON_SIZE * 2);
+    int button_y = dialog_y + CONFIRM_DIALOG_HEIGHT - 15;
+
+    if (mud->mouse_x < dialog_x ||
+        mud->mouse_x > dialog_x + CONFIRM_DIALOG_WIDTH ||
+        mud->mouse_y < dialog_y ||
+        mud->mouse_y > dialog_y + CONFIRM_DIALOG_HEIGHT ||
+        (mud->mouse_x >= cancel_x - (CONFIRM_BUTTON_SIZE / 2) &&
+         mud->mouse_x <= cancel_x + (CONFIRM_BUTTON_SIZE / 2) &&
+         mud->mouse_y >= button_y - (CONFIRM_BUTTON_SIZE / 2) &&
+         mud->mouse_y <= button_y + (CONFIRM_BUTTON_SIZE / 2))) {
+    } else if (mud->mouse_x >= ok_x - (CONFIRM_BUTTON_SIZE / 2) &&
+               mud->mouse_x <= ok_x + (CONFIRM_BUTTON_SIZE / 2) &&
+               mud->mouse_y >= button_y - (CONFIRM_BUTTON_SIZE / 2) &&
+               mud->mouse_y <= button_y + (CONFIRM_BUTTON_SIZE / 2)) {
+        switch (mud->confirm_type) {
+            case CONFIRM_TUTORIAL:
+                mudclient_send_command_string(mud, "skiptutorial");
+                break;
+        }
+    }
+
+    mud->show_dialog_confirm = 0;
+    mud->last_mouse_button_down = 0;
+}

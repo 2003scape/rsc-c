@@ -878,7 +878,7 @@ typedef struct mudclient {
     int show_dialog_confirm;
     char *confirm_text_top;
     char *confirm_text_bottom;
-    int8_t has_confirmed;
+    int confirm_type;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
