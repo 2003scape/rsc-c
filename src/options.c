@@ -38,5 +38,10 @@ void options_new(Options *options) {
     options->escape_clear = 1;
 
     options->ui_scale = 1;
-    options->field_of_view = 460;
+    options->field_of_view = 0;
+
+    options->thick_walls = 0;
+
+    options->show_additional_options = 1;
+    options->skip_tutorial = 1;
 }

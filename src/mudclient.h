@@ -224,6 +224,7 @@ typedef struct mudclient mudclient;
 #include "ui/appearance.h"
 #include "ui/bank.h"
 #include "ui/combat-style.h"
+#include "ui/confirm.h"
 #include "ui/duel.h"
 #include "ui/login.h"
 #include "ui/logout.h"
@@ -628,19 +629,19 @@ typedef struct mudclient {
     int plane_height;
     int plane_index;
     int plane_multiplier;
+    int region_x;
     int region_y;
     int local_region_x;
     int local_region_y;
-    int region_x;
-
-    /* ./ui/wilderness-warning.c */
-    int show_ui_wild_warn;
 
     int last_height_offset;
     int local_lower_x;
     int local_lower_y;
     int local_upper_x;
     int local_upper_y;
+
+    /* ./ui/wilderness-warning.c */
+    int show_ui_wild_warn;
 
     /* oh dear you are dead */
     int death_screen_timeout;
@@ -756,7 +757,7 @@ typedef struct mudclient {
     int control_appearance_bottom_right;
     int control_appearance_accept;
 
-    int show_appearance_change;
+    int8_t show_appearance_change;
     int appearance_head_type;
     int appearance_head_gender;
     int appearance_body_type;
@@ -766,12 +767,12 @@ typedef struct mudclient {
     int appearance_bottom_colour;
 
     /* ./ui/option-menu.c */
-    int show_option_menu;
+    int8_t show_option_menu;
     int option_menu_count;
     char option_menu_entry[5][255];
 
     /* ./ui/welcome.c */
-    int show_dialog_welcome;
+    int8_t show_dialog_welcome;
     int welcome_screen_already_shown;
     int welcome_last_ip;
     int welcome_days_ago;
@@ -780,12 +781,12 @@ typedef struct mudclient {
     char *welcome_last_ip_string;
 
     /* ./ui/server-message.c */
-    int show_dialog_server_message;
+    int8_t show_dialog_server_message;
     int server_message_box_top;
     char server_message[1024];
 
     /* ./ui/bank.c */
-    int show_dialog_bank;
+    int8_t show_dialog_bank;
     int new_bank_item_count;
     int new_bank_items[BANK_ITEMS_MAX];
     int new_bank_items_count[BANK_ITEMS_MAX];
@@ -805,7 +806,7 @@ typedef struct mudclient {
     int bank_visible_rows;
 
     /* ./ui/shop.c */
-    int show_dialog_shop;
+    int8_t show_dialog_shop;
     int shop_items[SHOP_ITEMS_MAX];
     int shop_items_count[SHOP_ITEMS_MAX];
     int shop_items_price[SHOP_ITEMS_MAX];
@@ -815,7 +816,7 @@ typedef struct mudclient {
     int shop_sell_price_mod;
 
     /* ./ui/trade.c */
-    int show_dialog_trade;
+    int8_t show_dialog_trade;
     int trade_item_count;
     int trade_items[TRADE_ITEMS_MAX];
     int trade_items_count[TRADE_ITEMS_MAX];
@@ -829,7 +830,7 @@ typedef struct mudclient {
     int trade_last_offer;
     int trade_offer_type;
 
-    int show_dialog_trade_confirm;
+    int8_t show_dialog_trade_confirm;
     int64_t trade_recipient_confirm_hash;
     int trade_confirm_item_count;
     int trade_confirm_items[TRADE_ITEMS_MAX];
@@ -840,7 +841,7 @@ typedef struct mudclient {
     int trade_confirm_accepted;
 
     /* ./ui/duel.c */
-    int show_dialog_duel;
+    int8_t show_dialog_duel;
     int duel_option_retreat;
     int duel_option_magic;
     int duel_option_prayer;
@@ -872,6 +873,12 @@ typedef struct mudclient {
     int show_dialog_offer_x;
     int offer_id;
     int offer_max;
+
+    /* ./ui/confirm.c */
+    int show_dialog_confirm;
+    char *confirm_text_top;
+    char *confirm_text_bottom;
+    int8_t has_confirmed;
 } mudclient;
 
 void mudclient_new(mudclient *mud);

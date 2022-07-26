@@ -87,8 +87,9 @@ typedef struct World {
     /* dynamically generated terrain, wall and roof models */
     GameModel **world_models_buffer;
     int world_models_offset;
-
 #endif
+
+    int8_t thick_walls;
 } World;
 
 void world_new(World *world, Scene *scene, Surface *surface);

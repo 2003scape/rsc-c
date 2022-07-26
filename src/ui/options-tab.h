@@ -11,12 +11,10 @@
 #define CHANGE_PASSWORD_WIDTH 300
 
 #define OPTIONS_WIDTH 196
-#define OPTIONS_HEIGHT 295
 #define OPTIONS_LINE_BREAK 15
 
 void mudclient_send_privacy_settings(mudclient *mud, int chat, int private_chat,
                                      int trade, int duel);
-
 void mudclient_draw_change_password(mudclient *mud);
 void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus);
 

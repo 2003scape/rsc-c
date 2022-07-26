@@ -2563,13 +2563,16 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene->fog_z_falloff = 1;
     mud->scene->fog_z_distance = 2300;
 
+#ifdef RENDER_GL
     mudclient_update_fov(mud);
+#endif
 
     // scene_set_light_from3(mud->scene, -50, -10, -50);
 
     mud->world = malloc(sizeof(World));
     world_new(mud->world, mud->scene, mud->surface);
 
+    mud->world->thick_walls = mud->options->thick_walls;
     mud->world->base_media_sprite = mud->sprite_media;
 
     mudclient_load_textures(mud);
@@ -3687,7 +3690,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 
         surface_draw_string_centre_depth(
             mud->surface, damage_string, (offset_x + (width / 2)) - 1,
-            y + (height / 2) + 5, 3, WHITE, depth - 0.00004f);
+            y + (height / 2) + 5, 3, WHITE, depth);
     }
 }
 
@@ -4043,8 +4046,10 @@ void mudclient_draw_ui(mudclient *mud) {
             mudclient_draw_option_menu(mud);
         }
 
-        if (mud->local_player->animation_current == 8 ||
-            mud->local_player->animation_current == 9) {
+        int is_in_combat = mud->local_player->animation_current == 8 ||
+            mud->local_player->animation_current == 9;
+
+        if (is_in_combat) {
             mudclient_draw_combat_style(mud);
         }
 
@@ -4390,8 +4395,8 @@ void mudclient_draw_game(mudclient *mud) {
         surface_fade_to_black(mud->surface);
 
         surface_draw_string_centre(mud->surface, "Oh dear! You are dead...",
-                                   mud->game_width / 2,
-                                   (mud->game_height - 12) / 2, 7, RED);
+                                   mud->surface->width / 2,
+                                   (mud->surface->height - 12) / 2, 7, RED);
 
         mudclient_draw_chat_message_tabs(mud);
         surface_draw(mud->surface);
@@ -4557,13 +4562,13 @@ void mudclient_draw_game(mudclient *mud) {
         mud->is_in_wild = wilderness_depth > 0;
 
         if (mud->is_in_wild) {
-            surface_draw_sprite_from3(mud->surface, mud->game_width - 59,
-                                      mud->game_height - 68,
+            surface_draw_sprite_from3(mud->surface, mud->surface->width - 59,
+                                      mud->surface->height - 68,
                                       mud->sprite_media + 13);
 
             surface_draw_string_centre(mud->surface, "Wilderness",
-                                       mud->game_width - 47,
-                                       mud->game_height - 32, 1, YELLOW);
+                                       mud->surface->width - 47,
+                                       mud->surface->height - 32, 1, YELLOW);
 
             int wilderness_level = 1 + (wilderness_depth / 6);
 
@@ -4571,8 +4576,8 @@ void mudclient_draw_game(mudclient *mud) {
             sprintf(formatted_level, "Level: %d", wilderness_level);
 
             surface_draw_string_centre(mud->surface, formatted_level,
-                                       mud->game_width - 47,
-                                       mud->game_height - 19, 1, YELLOW);
+                                       mud->surface->width - 47,
+                                       mud->surface->height - 19, 1, YELLOW);
 
             if (mud->show_ui_wild_warn == 0) {
                 mud->show_ui_wild_warn = 2;
@@ -4587,6 +4592,10 @@ void mudclient_draw_game(mudclient *mud) {
 
     mudclient_draw_chat_message_tabs_panel(mud);
     mudclient_draw_ui(mud);
+
+    if (mud->show_dialog_confirm) {
+        mudclient_draw_confirm(mud);
+    }
 
     mud->surface->draw_string_shadow = 0;
 

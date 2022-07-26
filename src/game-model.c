@@ -313,6 +313,10 @@ int game_model_vertex_at(GameModel *game_model, int x, int y, int z) {
         }
     }
 
+    if (game_model->num_vertices >= game_model->max_verts) {
+        printf("oh no %d\n", game_model->num_vertices);
+    }
+
     return game_model_create_vertex(game_model, x, y, z);
 }
 

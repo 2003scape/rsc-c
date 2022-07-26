@@ -18,8 +18,8 @@ void init_world_global() {
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 192] = rgb(96 - (int)((double)i * 1.5),
-                                       REGION_SIZE + (int)((double)i * 1.5), 0);
+        terrain_colours[i + 192] =
+            rgb(96 - (int)((double)i * 1.5), 48 + (int)((double)i * 1.5), 0);
     }
 }
 
@@ -1341,8 +1341,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
         game_model_set_light_from6(game_model, 1, 40, 48, -50, -10, -50);
 
-        // game_model_dump(game_model, 123);
-
         game_model_split(world->parent_model, world->terrain_models, 1536, 1536,
                          8, 64, 233, 0);
 
@@ -1364,7 +1362,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
+    // game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
     game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+
+    printf("wtf: %d\n", world->parent_model->max_verts);
 
     int colour = 0x606060;
 
@@ -1469,7 +1470,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     game_model_set_light_from6(world->parent_model, 0, 60, 24, -50, -10, -50);
 
     game_model_split(world->parent_model, world->wall_models[plane], 1536, 1536,
-                     8, 64, 338, 1);
+                     8, 64, 338 + 100, 1);
+
+    /* add walls */
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_add_model(world->scene, world->wall_models[plane][i]);
@@ -1479,8 +1482,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             world->wall_models[plane][i];
 #endif
     }
-
-    /* create walls */
 
     for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -2071,16 +2072,46 @@ void world_add_models(World *world, GameModel **models) {
 /* create wall face */
 void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
                        int x1, int y1, int x2, int y2) {
+#if 0
+    // printf("test %d %d\n", x1 * TILE_SIZE, y1 * TILE_SIZE);
+    int height = game_data_wall_object_height[wall_object_id];
+    printf("test %d %d\n", world->terrain_height_local[x1][y1], height);
+    GameModel *test = game_model_copy(world->surface->mud->game_models[131]);
+    test->unlit = 1;
+
+    int y = -((world->terrain_height_local[x1][y1] +
+               world->terrain_height_local[x1][y1]) /
+              2);
+
+    game_model_translate(test, ((x1 + x2) / 2) * TILE_SIZE, y,
+                         ((y1 + y2) / 2) * TILE_SIZE);
+    scene_add_model(world->scene, test);
+#endif
+
+#if 1
+    int thick_walls = world->thick_walls;
+
     world_method425(world, x1, y1, 40);
     world_method425(world, x2, y2, 40);
 
     int height = game_data_wall_object_height[wall_object_id];
     int front = game_data_wall_object_texture_front[wall_object_id];
     int back = game_data_wall_object_texture_back[wall_object_id];
+
     int vertex_x1 = x1 * TILE_SIZE;
     int vertex_y1 = y1 * TILE_SIZE;
     int vertex_x2 = x2 * TILE_SIZE;
     int vertex_y2 = y2 * TILE_SIZE;
+
+    if (thick_walls) {
+        int delta_x = (y1 - y2) * 32;
+        vertex_x1 += delta_x;
+        vertex_x2 += delta_x;
+
+        int delta_y = (x1 - x2) * 32;
+        vertex_y1 -= delta_y;
+        vertex_y2 -= delta_y;
+    }
 
     int *vertices = malloc(4 * sizeof(int));
 
@@ -2098,14 +2129,66 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
     vertices[3] = game_model_vertex_at(
         game_model, vertex_x2, -world->terrain_height_local[x2][y2], vertex_y2);
 
-    int wall_face =
-        game_model_create_face(game_model, 4, vertices, front, back);
+    int wall_face = game_model_create_face(game_model, 4, vertices, front,
+                                           thick_walls ? COLOUR_TRANSPARENT : back);
 
     if (game_data_wall_object_invisible[wall_object_id] == 5) {
         game_model->face_tag[wall_face] = 30000 + wall_object_id;
     } else {
         game_model->face_tag[wall_face] = 0;
     }
+
+    if (thick_walls) {
+        int *parallel_vertices = malloc(4 * sizeof(int));
+
+        int parallel_vertex_x1 = x1 * TILE_SIZE;
+        int parallel_vertex_y1 = y1 * TILE_SIZE;
+        int parallel_vertex_x2 = x2 * TILE_SIZE;
+        int parallel_vertex_y2 = y2 * TILE_SIZE;
+
+        int delta_x = (y1 - y2) * 32;
+        parallel_vertex_x1 -= delta_x;
+        parallel_vertex_x2 -= delta_x;
+
+        int delta_y = (x1 - x2) * 32;
+        parallel_vertex_y1 += delta_y;
+        parallel_vertex_y2 += delta_y;
+
+        parallel_vertices[0] = game_model_vertex_at(
+            game_model, parallel_vertex_x1,
+            -world->terrain_height_local[x1][y1], parallel_vertex_y1);
+
+        parallel_vertices[1] = game_model_vertex_at(
+            game_model, parallel_vertex_x1,
+            -world->terrain_height_local[x1][y1] - height, parallel_vertex_y1);
+
+        parallel_vertices[2] = game_model_vertex_at(
+            game_model, parallel_vertex_x2,
+            -world->terrain_height_local[x2][y2] - height, parallel_vertex_y2);
+
+        parallel_vertices[3] = game_model_vertex_at(
+            game_model, parallel_vertex_x2,
+            -world->terrain_height_local[x2][y2], parallel_vertex_y2);
+
+        int parallel_wall_face = game_model_create_face(
+            game_model, 4, parallel_vertices, COLOUR_TRANSPARENT, back);
+
+        if (game_data_wall_object_invisible[wall_object_id] == 5) {
+            game_model->face_tag[parallel_wall_face] = 30000 + wall_object_id;
+        } else {
+            game_model->face_tag[parallel_wall_face] = 0;
+        }
+
+        int *top_vertices = malloc(4);
+        top_vertices[0] = vertices[1];
+        top_vertices[1] = parallel_vertices[1];
+        top_vertices[2] = parallel_vertices[2];
+        top_vertices[3] = vertices[2];
+
+        int top_wall_face =
+            game_model_create_face(game_model, 4, top_vertices, -7400, -7400);
+    }
+#endif
 }
 
 int world_get_terrain_height(World *world, int x, int y) {

@@ -2295,8 +2295,7 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 float depth_top, float depth_bottom) {
     if (sprite_id >= 50000) {
         mudclient_draw_teleport_bubble(
-            surface->mud, x, y, width, height, sprite_id - 50000,
-            (depth_top + depth_bottom) / 2 - (0.00002f * ANIMATION_COUNT));
+            surface->mud, x, y, width, height, sprite_id - 50000, depth_top);
 
         return;
     }
@@ -3841,7 +3840,8 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
                    text[i + 5] == '~') {
             i += 5;
         } else {
-            width += font_data[character_width[(unsigned)text[i]] + 7];
+            unsigned int character_index = (unsigned)text[i];
+            width += font_data[character_width[character_index] + 7];
         }
 
         if (text[i] == ' ') {

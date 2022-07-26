@@ -125,7 +125,9 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
     }
 
     if (mud->show_ui_tab == OPTIONS_TAB &&
-        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 311)) {
+        (mud->mouse_x < mud->surface->width - 199 ||
+         mud->mouse_y >
+             311 + (mud->options->show_additional_options ? 15 : 0))) {
         mud->show_ui_tab = 0;
     }
 }

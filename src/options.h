@@ -89,7 +89,7 @@ typedef struct Options {
     /* adds right click menus to bank items */
     int bank_menus;
 
-    /* shows the inventory along with the bank interface given enough width */
+    /* shows the inventory along with the bank interface, given enough width */
     int bank_inventory;
 
     /* maintain the selected bank slot when items change position */
@@ -107,6 +107,15 @@ typedef struct Options {
     /* change the field of view. scales with height by default and in software.
      * about 36 degrees on the original height of 346 */
     int field_of_view;
+
+    /* experimental thick walls support (requires restart) */
+    int thick_walls;
+
+    /* show "Additional options" in the options UI tab */
+    int show_additional_options;
+
+    /* show "Skip the tutorial" when the player is on Tutorial Island */
+    int skip_tutorial;
 } Options;
 
 void options_new(Options *options);

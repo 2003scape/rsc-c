@@ -11,8 +11,10 @@ void mudclient_send_privacy_settings(mudclient *mud, int chat, int private_chat,
 }
 
 void mudclient_draw_change_password(mudclient *mud) {
-    int dialog_x = 106;
-    int dialog_y = 150;
+    int dialog_x = (mud->surface->width / 2) - (CHANGE_PASSWORD_WIDTH / 2);
+
+    int dialog_y =
+        (mud->surface->height / 2) - (CHANGE_PASSWORD_HEIGHT / 2) + 7;
 
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
@@ -31,13 +33,13 @@ void mudclient_draw_change_password(mudclient *mud) {
     surface_draw_box_edge(mud->surface, dialog_x, dialog_y,
                           CHANGE_PASSWORD_WIDTH, CHANGE_PASSWORD_HEIGHT, WHITE);
 
+    int x = mud->surface->width / 2;
     int y = dialog_y + 22;
     char password_input[PASSWORD_LENGTH + 2] = {0};
 
     if (mud->show_change_password_step == 6) {
-        surface_draw_string_centre(mud->surface,
-                                   "Please enter your current password", 256, y,
-                                   4, WHITE);
+        surface_draw_string_centre(
+            mud->surface, "Please enter your current password", x, y, 4, WHITE);
 
         y += 25;
 
@@ -49,7 +51,7 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         password_input[current_length] = '*';
 
-        surface_draw_string_centre(mud->surface, password_input, 256, y, 4,
+        surface_draw_string_centre(mud->surface, password_input, x, y, 4,
                                    WHITE);
 
         if (strlen(mud->input_text_final) > 0) {
@@ -60,7 +62,7 @@ void mudclient_draw_change_password(mudclient *mud) {
         }
     } else if (mud->show_change_password_step == 1) {
         surface_draw_string_centre(
-            mud->surface, "Please enter your new password", 256, y, 4, WHITE);
+            mud->surface, "Please enter your new password", x, y, 4, WHITE);
 
         y += 25;
 
@@ -72,7 +74,7 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         password_input[current_length] = '*';
 
-        surface_draw_string_centre(mud->surface, password_input, 256, y, 4,
+        surface_draw_string_centre(mud->surface, password_input, x, y, 4,
                                    WHITE);
 
         if (strlen(mud->input_text_final) > 0) {
@@ -88,7 +90,7 @@ void mudclient_draw_change_password(mudclient *mud) {
         }
     } else if (mud->show_change_password_step == 2) {
         surface_draw_string_centre(
-            mud->surface, "Enter password again to confirm", 256, y, 4, WHITE);
+            mud->surface, "Enter password again to confirm", x, y, 4, WHITE);
 
         y += 25;
 
@@ -100,7 +102,7 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         password_input[current_length] = '*';
 
-        surface_draw_string_centre(mud->surface, password_input, 256, y, 4,
+        surface_draw_string_centre(mud->surface, password_input, x, y, 4,
                                    WHITE);
 
         if (strlen(mud->input_text_final) > 0) {
@@ -117,29 +119,28 @@ void mudclient_draw_change_password(mudclient *mud) {
     } else {
         if (mud->show_change_password_step == 3) {
             surface_draw_string_centre(mud->surface, "Passwords do not match!",
-                                       256, y, 4, WHITE);
+                                       x, y, 4, WHITE);
 
             y += 25;
 
             surface_draw_string_centre(mud->surface, "Press any key to close",
-                                       256, y, 4, WHITE);
+                                       x, y, 4, WHITE);
         } else if (mud->show_change_password_step == 4) {
-            surface_draw_string_centre(mud->surface,
-                                       "Ok, your request has been sent", 256, y,
-                                       4, WHITE);
+            surface_draw_string_centre(
+                mud->surface, "Ok, your request has been sent", x, y, 4, WHITE);
 
             y += 25;
 
             surface_draw_string_centre(mud->surface, "Press any key to close",
-                                       256, y, 4, WHITE);
+                                       x, y, 4, WHITE);
         } else if (mud->show_change_password_step == 5) {
-            surface_draw_string_centre(mud->surface, "Password must be at", 256,
+            surface_draw_string_centre(mud->surface, "Password must be at", x,
                                        y, 4, WHITE);
 
             y += 25;
 
-            surface_draw_string_centre(mud->surface, "least 5 letters long",
-                                       256, y, 4, WHITE);
+            surface_draw_string_centre(mud->surface, "least 5 letters long", x,
+                                       y, 4, WHITE);
         }
     }
 }
@@ -148,11 +149,24 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - OPTIONS_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
-                              3, mud->sprite_media + 6);
+    int player_x = mud->region_x + mud->local_region_x;
+    int player_y = mud->region_y + mud->local_region_y;
 
-    surface_draw_box_alpha(mud->surface, ui_x, ui_y, OPTIONS_WIDTH, 65,
-                           GREY_B5, 160);
+    int show_skip_tutorial =
+        mud->options->skip_tutorial && (player_x >= 190 && player_x <= 240 &&
+                                        player_y >= 720 && player_y <= 770);
+
+    surface_draw_sprite_from3(mud->surface,
+                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
+                              mud->sprite_media + 6);
+
+    surface_draw_box_alpha(
+        mud->surface, ui_x, ui_y, OPTIONS_WIDTH,
+        65 + (mud->options->show_additional_options ? 15 : 0), GREY_B5, 160);
+
+    if (mud->options->show_additional_options) {
+        ui_y += 15;
+    }
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + 65, OPTIONS_WIDTH, 65,
                            GREY_C9, 160);
@@ -160,8 +174,12 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + 130, OPTIONS_WIDTH, 95,
                            GREY_B5, 160);
 
-    surface_draw_box_alpha(mud->surface, ui_x, ui_y + 225, OPTIONS_WIDTH, 40,
-                           GREY_C9, 160);
+    surface_draw_box_alpha(mud->surface, ui_x, ui_y + 225, OPTIONS_WIDTH,
+                           40 + (show_skip_tutorial ? 15 : 0), GREY_C9, 160);
+
+    if (mud->options->show_additional_options) {
+        ui_y -= 15;
+    }
 
     int x = ui_x + 3;
     int y = ui_y + OPTIONS_LINE_BREAK;
@@ -195,6 +213,20 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
     }
 
     y += OPTIONS_LINE_BREAK;
+
+    if (mud->options->show_additional_options) {
+        int text_colour = WHITE;
+
+        if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
+            mud->mouse_y > y - 12 && mud->mouse_y < y + 4) {
+            text_colour = YELLOW;
+        }
+
+        surface_draw_string(mud->surface, "Additional options...", x, y, 1,
+                            text_colour);
+
+        y += OPTIONS_LINE_BREAK;
+    }
 
     if (mud->options->account_management) {
         y += 5;
@@ -302,12 +334,26 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
     y += OPTIONS_LINE_BREAK + 5;
 
+    int text_colour = WHITE;
+
+    if (show_skip_tutorial) {
+        if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
+            mud->mouse_y > y - 12 && mud->mouse_y < y + 4) {
+            text_colour = YELLOW;
+        }
+
+        surface_draw_string(mud->surface, "Skip the tutorial", x, y, 1,
+                            text_colour);
+
+        y += OPTIONS_LINE_BREAK + 5;
+    }
+
     surface_draw_string(mud->surface, "Always logout when you finish", x, y, 1,
                         BLACK);
 
     y += OPTIONS_LINE_BREAK;
 
-    int text_colour = WHITE;
+    text_colour = WHITE;
 
     if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
         mud->mouse_y > y - 12 && mud->mouse_y < y + 4) {
@@ -324,7 +370,18 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
     int mouse_x = mud->mouse_x - ui_x;
     int mouse_y = mud->mouse_y - ui_y;
 
-    if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < 196 && mouse_y < 265) {
+    int options_height = 265;
+
+    if (mud->options->show_additional_options) {
+        options_height += 15;
+    }
+
+    if (show_skip_tutorial) {
+        options_height += 15;
+    }
+
+    if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < 196 &&
+        mouse_y < options_height) {
         int x = ui_x + 3;
         int y = ui_y + 30;
 
@@ -371,8 +428,20 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             packet_stream_send_packet(mud->packet_stream);
         }
 
+        y += OPTIONS_LINE_BREAK;
+
+        if (mud->options->show_additional_options) {
+            if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
+                mud->mouse_y > y - 12 && mud->mouse_y < y + 4 &&
+                mud->mouse_button_click == 1) {
+                printf("additional options\n");
+            }
+
+            y += OPTIONS_LINE_BREAK;
+        }
+
         if (mud->options->account_management) {
-            y += OPTIONS_LINE_BREAK + 20;
+            y += OPTIONS_LINE_BREAK + 5;
 
             if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
                 mud->mouse_y > y - 12 && mud->mouse_y < y + 4 &&
@@ -381,8 +450,6 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
                 mud->input_text_current[0] = '\0';
                 mud->input_text_final[0] = '\0';
             }
-
-            y += OPTIONS_LINE_BREAK;
 
             /*
             if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
@@ -395,9 +462,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             }
             */
 
-            y += OPTIONS_LINE_BREAK * 2;
+            y += OPTIONS_LINE_BREAK * 3;
         } else {
-            y += OPTIONS_LINE_BREAK * 5;
+            y += OPTIONS_LINE_BREAK * 4;
         }
 
         int has_changed_setting = 0;
@@ -444,6 +511,21 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             mudclient_send_privacy_settings(
                 mud, mud->settings_block_chat, mud->settings_block_private,
                 mud->settings_block_trade, mud->settings_block_duel);
+        }
+
+        if (show_skip_tutorial) {
+            if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
+                mud->mouse_y > y - 12 && mud->mouse_y < y + 4 &&
+                mud->mouse_button_click == 1) {
+                mud->confirm_text_top =
+                    "Are you sure you wish to skip the tutorial";
+
+                mud->confirm_text_bottom = "and teleport to Lumbridge?";
+
+                mud->show_dialog_confirm = 1;
+            }
+
+            y += OPTIONS_LINE_BREAK + 5;
         }
 
         y += OPTIONS_LINE_BREAK + 5;
