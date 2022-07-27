@@ -6,6 +6,38 @@ void mudclient_draw_option_menu(mudclient *mud) {
     int ui_x = 6;
     int ui_y = 0;
 
+    if (mud->options->option_numbers) {
+        int index = -1;
+
+        if (mud->key_1) {
+            index = 0;
+        } else if (mud->key_2) {
+            index = 1;
+        } else if (mud->key_3) {
+            index = 2;
+        } else if (mud->key_4) {
+            index = 3;
+        } else if (mud->key_5) {
+            index = 4;
+        }
+
+        if (index != -1) {
+            packet_stream_new_packet(mud->packet_stream, CLIENT_CHOOSE_OPTION);
+            packet_stream_put_byte(mud->packet_stream, index);
+            packet_stream_send_packet(mud->packet_stream);
+
+            mud->show_option_menu = 0;
+
+            mud->key_1 = 0;
+            mud->key_2 = 0;
+            mud->key_3 = 0;
+            mud->key_4 = 0;
+            mud->key_4 = 0;
+
+            return;
+        }
+    }
+
     if (mud->mouse_button_click != 0) {
         for (int i = 0; i < mud->option_menu_count; i++) {
             if (mud->mouse_x < ui_x - 6 ||

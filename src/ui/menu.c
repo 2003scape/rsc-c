@@ -202,10 +202,45 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mudclient_show_message(mud, formatted_drop, MESSAGE_TYPE_BOR);
         break;
     }
-    case MENU_INV_EXAMINE:
+    case MENU_INV_EXAMINE: {
         mudclient_show_message(mud, game_data_item_description[menu_index],
                                MESSAGE_TYPE_GAME);
+
+        if (mud->options->condense_item_amounts) {
+            char *item_name = game_data_item_name[menu_index];
+
+            if (mud->show_dialog_bank) {
+                for (int j = 0; j < mud->bank_item_count; j++) {
+                    int bank_count = mud->bank_items_count[j];
+
+                    if (mud->bank_items[j] == menu_index && bank_count >= 100000) {
+                        char formatted_amount[strlen(item_name) + 17];
+
+                        sprintf(formatted_amount, "Total %s in bank: %d",
+                                item_name, bank_count);
+
+                        mudclient_show_message(mud, formatted_amount,
+                                               MESSAGE_TYPE_GAME);
+                        break;
+                    }
+                }
+            }
+
+            int inventory_amount =
+                mudclient_get_inventory_count(mud, menu_index);
+
+            if (inventory_amount >= 100000) {
+                char formatted_amount[strlen(item_name) + 33];
+
+                sprintf(formatted_amount, "Total %s in inventory: %d",
+                        item_name, inventory_amount);
+
+                mudclient_show_message(mud, formatted_amount,
+                                       MESSAGE_TYPE_GAME);
+            }
+        }
         break;
+    }
     case MENU_CAST_NPC: {
         int x = (menu_x - 64) / MAGIC_LOC;
         int y = (menu_y - 64) / MAGIC_LOC;
@@ -1339,7 +1374,8 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
     }
 
     /* make it a bit darker for the item interfaces */
-    int is_dark_menu = mud->show_dialog_bank || mud->show_dialog_trade || mud->show_dialog_duel;
+    int is_dark_menu = mud->show_dialog_bank || mud->show_dialog_trade ||
+                       mud->show_dialog_duel;
 
     surface_draw_box_alpha(mud->surface, mud->menu_x, mud->menu_y,
                            mud->menu_width, mud->menu_height, GREY_D0,

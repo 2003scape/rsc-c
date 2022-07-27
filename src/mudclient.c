@@ -322,15 +322,35 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     case SDL_SCANCODE_ESCAPE:
         *code = K_ESCAPE;
         break;
-    case SDL_SCANCODE_TAB:
-        *code = K_TAB;
-        break;
     /*case SDL_SCANCODE_RETURN:
         *code = K_ENTER;
         break;*/
     default:
         *char_code = keysym->sym;
-        *code = *char_code;
+
+        switch (keysym->scancode) {
+        case SDL_SCANCODE_TAB:
+            *code = K_TAB;
+            break;
+        case SDL_SCANCODE_1:
+            *code = K_1;
+            break;
+        case SDL_SCANCODE_2:
+            *code = K_2;
+            break;
+        case SDL_SCANCODE_3:
+            *code = K_3;
+            break;
+        case SDL_SCANCODE_4:
+            *code = K_4;
+            break;
+        case SDL_SCANCODE_5:
+            *code = K_5;
+            break;
+        default:
+            *code = *char_code;
+            break;
+        }
 
         if (keysym->mod & KMOD_SHIFT) {
             if (*char_code >= 'a' && *char_code <= 'z') {
@@ -889,7 +909,14 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             !(mud->options->bank_search && mud->show_dialog_bank) &&
             /*mud->show_dialog_report_abuse_step == 0 &&*/
             !mud->is_sleeping && mud->panel_message_tabs) {
-            panel_key_press(mud->panel_message_tabs, key_code);
+
+            int is_option_number = mud->options->option_numbers &&
+                                   mud->show_option_menu && key_code >= '1' &&
+                                   key_code <= '5';
+
+            if (!is_option_number) {
+                panel_key_press(mud->panel_message_tabs, key_code);
+            }
         }
 
         if (mud->show_change_password_step == 3 ||
@@ -921,7 +948,9 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
             memset(mud->input_digits_current, '\0', INPUT_DIGITS_LENGTH + 1);
-        } else if (code == K_TAB) {
+        }
+    } else {
+        if (code == K_TAB) {
             mud->key_tab = 1;
         } else if (code == K_1) {
             mud->key_1 = 1;
@@ -934,7 +963,7 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         } else if (code == K_5) {
             mud->key_5 = 1;
         }
-    } else {
+
         mudclient_handle_key_press(mud, char_code);
     }
 

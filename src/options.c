@@ -38,6 +38,7 @@ void options_new(Options *options) {
 
     options->condense_item_amounts = 1;
     options->tab_respond = 1;
+    options->option_numbers = 1;
 
     options->ui_scale = 1;
     options->field_of_view = 0;

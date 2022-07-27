@@ -107,6 +107,9 @@ typedef struct Options {
     /* respond to the last PM with tab */
     int tab_respond;
 
+    /* use numbers on keyboard to select game options */
+    int option_numbers;
+
     /* double the UI size (gl only) */
     int ui_scale;
 
