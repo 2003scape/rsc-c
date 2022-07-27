@@ -4013,21 +4013,21 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
                 if (show_inventory_count) {
                     char formatted_amount[12] = {0};
-                    sprintf(formatted_amount, "%d", item_count);
+
+                    mudclient_format_item_amount(surface->mud, item_count, formatted_amount);
 
                     surface_draw_string(surface, formatted_amount, slot_x + 1,
                                         slot_y + 10, 1, GREEN);
 
-                    sprintf(
-                        formatted_amount, "%d",
-                        mudclient_get_inventory_count(surface->mud, item_id));
+                    mudclient_format_item_amount(surface->mud, mudclient_get_inventory_count(surface->mud, item_id), formatted_amount);
 
                     surface_draw_string_right(surface, formatted_amount,
                                               slot_x + 47, slot_y + 29, 1,
                                               CYAN);
                 } else if (game_data_item_stackable[item_id] == 0) {
                     char formatted_amount[12] = {0};
-                    sprintf(formatted_amount, "%d", items_count[item_index]);
+
+                    mudclient_format_item_amount(surface->mud, item_count, formatted_amount);
 
                     surface_draw_string(surface, formatted_amount,
                                         slot_x + 1 + offset_x,

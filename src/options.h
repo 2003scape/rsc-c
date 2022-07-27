@@ -50,6 +50,9 @@ typedef struct Options {
      * hovering over it */
     int off_handle_scroll_drag;
 
+    /* escape key clears input */
+    int escape_clear;
+
     /* enable randomized camera movement and map rotation/scaling */
     int anti_macro;
 
@@ -98,8 +101,11 @@ typedef struct Options {
     /* adds right click menus to trades */
     int trade_menus;
 
-    /* escape key clears input */
-    int escape_clear;
+    /* condenses item amounts with K and M and add their amounts to examine */
+    int condense_item_amounts;
+
+    /* respond to the last PM with tab */
+    int tab_respond;
 
     /* double the UI size (gl only) */
     int ui_scale;

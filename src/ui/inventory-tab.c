@@ -33,7 +33,8 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
                 INVENTORY_SLOT_HEIGHT - 2, sprite_id, sprite_mask, 0, 0, 0);
 
             char formatted_amount[12] = {0};
-            sprintf(formatted_amount, "%d", mud->inventory_item_stack_count[i]);
+
+            mudclient_format_item_amount(mud, mud->inventory_item_stack_count[i], formatted_amount);
 
             if (game_data_item_stackable[mud->inventory_item_id[i]] == 0) {
                 surface_draw_string(mud->surface, formatted_amount, slot_x + 1,

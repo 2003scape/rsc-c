@@ -80,6 +80,12 @@
 #define K_ENTER 13
 #define K_BACKSPACE 8
 #define K_ESCAPE 27
+#define K_TAB 9
+#define K_1 49
+#define K_2 50
+#define K_3 51
+#define K_4 52
+#define K_5 53
 
 #ifdef REVISION_177
 #define VERSION 177
@@ -356,6 +362,12 @@ typedef struct mudclient {
     int8_t key_page_up;
     int8_t key_page_down;
     int8_t key_home;
+    int8_t key_tab;
+    int8_t key_1;
+    int8_t key_2;
+    int8_t key_3;
+    int8_t key_4;
+    int8_t key_5;
 
     /* for middle-click camera */
     int8_t middle_button_down;
@@ -997,5 +1009,6 @@ void mudclient_walk_to_wall_object(mudclient *mud, int dest_x, int dest_y,
 void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
                               int id);
 int mudclient_is_ui_scaled(mudclient *mud);
+void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest);
 int main(int argc, char **argv);
 #endif

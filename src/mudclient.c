@@ -322,6 +322,9 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     case SDL_SCANCODE_ESCAPE:
         *code = K_ESCAPE;
         break;
+    case SDL_SCANCODE_TAB:
+        *code = K_TAB;
+        break;
     /*case SDL_SCANCODE_RETURN:
         *code = K_ENTER;
         break;*/
@@ -918,6 +921,18 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
             memset(mud->input_digits_current, '\0', INPUT_DIGITS_LENGTH + 1);
+        } else if (code == K_TAB) {
+            mud->key_tab = 1;
+        } else if (code == K_1) {
+            mud->key_1 = 1;
+        } else if (code == K_2) {
+            mud->key_2 = 1;
+        } else if (code == K_3) {
+            mud->key_3 = 1;
+        } else if (code == K_4) {
+            mud->key_4 = 1;
+        } else if (code == K_5) {
+            mud->key_5 = 1;
         }
     } else {
         mudclient_handle_key_press(mud, char_code);
@@ -1058,6 +1073,18 @@ void mudclient_key_released(mudclient *mud, int code) {
         mud->key_page_down = 0;
     } else if (code == K_HOME) {
         mud->key_home = 0;
+    } else if (code == K_TAB) {
+        mud->key_tab = 0;
+    } else if (code == K_1) {
+        mud->key_1 = 0;
+    } else if (code == K_2) {
+        mud->key_2 = 0;
+    } else if (code == K_3) {
+        mud->key_3 = 0;
+    } else if (code == K_4) {
+        mud->key_4 = 0;
+    } else if (code == K_5) {
+        mud->key_5 = 0;
     }
 }
 
@@ -2472,14 +2499,16 @@ void mudclient_update_fov(mudclient *mud) {
     if (mud->options->field_of_view) {
         mud->scene->gl_fov = glm_rad(mud->options->field_of_view / 10.0f);
 
-        int view_distance = roundf((-254.452344f * pow(mud->scene->gl_fov, 3)) +
-                            (1142.234460f * pow(mud->scene->gl_fov, 2)) -
-                            (1901.194134f * mud->scene->gl_fov) + 1318.230265f);
+        int view_distance =
+            roundf((-254.452344f * pow(mud->scene->gl_fov, 3)) +
+                   (1142.234460f * pow(mud->scene->gl_fov, 2)) -
+                   (1901.194134f * mud->scene->gl_fov) + 1318.230265f);
 
         printf("fov=%f, vd=%d\n", mud->scene->gl_fov, view_distance);
 
         mud->scene->view_distance =
-            roundf((float)mud->game_height * ((float)view_distance / (float)MUD_HEIGHT));
+            roundf((float)mud->game_height *
+                   ((float)view_distance / (float)MUD_HEIGHT));
     } else {
         float scaled_scene_height =
             (float)(mud->scene->gl_height - 1) / 1000.0f;
@@ -3210,6 +3239,26 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 #endif
 
+    if (mud->options->tab_respond && mud->key_tab) {
+        if (mud->private_message_target != 0) {
+            int is_online = 0;
+
+            for (int i = 0; i < mud->friend_list_count; i++) {
+                if (mud->friend_list[i] == mud->private_message_target &&
+                    mud->friend_list_online[i] > 0) {
+                    is_online = 1;
+                    break;
+                }
+            }
+
+            if (is_online) {
+                mud->show_dialog_social_input = SOCIAL_MESSAGE_FRIEND;
+            }
+        }
+
+        mud->key_tab = 0;
+    }
+
     if (mud->options->middle_click_camera && mud->middle_button_down) {
         int ticks = get_ticks();
 
@@ -3692,9 +3741,9 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
         char damage_string[12] = {0};
         sprintf(damage_string, "%d", character->damage_taken);
 
-        surface_draw_string_centre_depth(
-            mud->surface, damage_string, (offset_x + (width / 2)) - 1,
-            y + (height / 2) + 5, 3, WHITE, depth);
+        surface_draw_string_centre_depth(mud->surface, damage_string,
+                                         (offset_x + (width / 2)) - 1,
+                                         y + (height / 2) + 5, 3, WHITE, depth);
     }
 }
 
@@ -3829,6 +3878,10 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
         }
+
+        // TODO mudclient_get_layer_depth() which changes on zoom
+        // depth_top -= 0.00003f;
+        // depth_bottom -= 0.00003f;
     }
 
     mudclient_draw_character_message(mud, player, x, y, width);
@@ -3842,7 +3895,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             player->bubble_item;
     }
 
-    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0, depth_top);
+    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
+                                    depth_top);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
@@ -4053,7 +4107,7 @@ void mudclient_draw_ui(mudclient *mud) {
         }
 
         int is_in_combat = mud->local_player->animation_current == 8 ||
-            mud->local_player->animation_current == 9;
+                           mud->local_player->animation_current == 9;
 
         if (is_in_combat) {
             mudclient_draw_combat_style(mud);
@@ -4186,9 +4240,8 @@ void mudclient_draw_overhead(mudclient *mud) {
         int final_y = (y - scale_y + (scale_y / 2)) - (scale_y_clip / 2);
 
         surface_sprite_clipping_from9(
-            mud->surface, final_x,
-            final_y, scale_x_clip,
-            scale_y_clip, game_data_item_picture[id] + mud->sprite_item,
+            mud->surface, final_x, final_y, scale_x_clip, scale_y_clip,
+            game_data_item_picture[id] + mud->sprite_item,
             game_data_item_mask[id], 0, 0, 0);
     }
 
@@ -5208,7 +5261,7 @@ void mudclient_poll_events(mudclient *mud) {
                 test_yaw -= 1;
             }
 
-            printf("vd=%d\n", mud->scene->view_distance);
+            // printf("vd=%d\n", mud->scene->view_distance);
 
             break;
         }
@@ -5674,6 +5727,14 @@ int mudclient_is_ui_scaled(mudclient *mud) {
 
     return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) &&
            mud->game_height >= (MUD_HEIGHT * 2);
+}
+
+void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest) {
+    if (mud->options->condense_item_amounts) {
+        format_amount_suffix(item_amount, 1, 0, dest);
+    } else {
+        sprintf(dest, "%d", item_amount);
+    }
 }
 
 int main(int argc, char **argv) {

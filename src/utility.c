@@ -41,7 +41,7 @@ void strtrim(char *s) {
 }
 
 void strtolower(char *s) {
-    for(int i = 0; s[i]; i++){
+    for (int i = 0; s[i]; i++) {
         s[i] = tolower(s[i]);
     }
 }
@@ -468,11 +468,12 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
     }
 }
 
-void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands, char *dest) {
-    if (amount > 10000000) {
+void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
+                          char *dest) {
+    if (amount >= 10000000) {
         sprintf(dest, "%s%dM", use_colour ? "@gre@" : "",
                 (int)round((float)amount / 1000000.0f));
-    } else if (amount > (convert_ten_thousands ? 10000 : 100000)) {
+    } else if (amount >= (convert_ten_thousands ? 10000 : 100000)) {
         sprintf(dest, "%s%dK", use_colour ? "@whi@" : "",
                 (int)round((float)amount / 1000.0f));
     } else {

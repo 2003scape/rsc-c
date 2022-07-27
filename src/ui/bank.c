@@ -13,17 +13,30 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
         }
     }
 
-    packet_stream_new_packet(mud->packet_stream, opcode);
-    packet_stream_put_short(mud->packet_stream, item_id);
+    /* TODO should probably queue if over the packet buffer length */
+    int total_packets = (int)ceil((float)amount / 32767.0f);
 
-    packet_stream_put_short(mud->packet_stream, amount);
+    for (int i = 0; i < total_packets; i++) {
+        packet_stream_new_packet(mud->packet_stream, opcode);
+        packet_stream_put_short(mud->packet_stream, item_id);
+
+        int send_amount = amount;
+
+        if (send_amount > 32767) {
+            send_amount = 32767;
+            amount -= 32767;
+        }
+
+        packet_stream_put_short(mud->packet_stream, send_amount);
 
 #ifndef REVISION_177
-    packet_stream_put_int(mud->packet_stream, is_withdraw ? BANK_MAGIC_WITHDRAW
-                                                          : BANK_MAGIC_DEPOSIT);
+        packet_stream_put_int(mud->packet_stream, is_withdraw
+                                                      ? BANK_MAGIC_WITHDRAW
+                                                      : BANK_MAGIC_DEPOSIT);
 #endif
 
-    packet_stream_send_packet(mud->packet_stream);
+        packet_stream_send_packet(mud->packet_stream);
+    }
 
     /* select the item if it isn't already */
     if (mud->bank_selected_item != item_id) {
@@ -552,9 +565,10 @@ void mudclient_draw_bank(mudclient *mud) {
 
                         int item_amount = bank_items_count[slot_index];
 
-                        mudclient_add_offer_menus(mud, "Withdraw", MENU_BANK_WITHDRAW,
-                                                 selected_item_id, item_amount,
-                                                 formatted_item_name, mud->bank_last_withdraw_offer);
+                        mudclient_add_offer_menus(
+                            mud, "Withdraw", MENU_BANK_WITHDRAW,
+                            selected_item_id, item_amount, formatted_item_name,
+                            mud->bank_last_withdraw_offer);
                     }
                 }
 
@@ -627,7 +641,8 @@ void mudclient_draw_bank(mudclient *mud) {
         }
     }
 
-    if (show_bank_scroll && !mud->show_right_click_menu && !mud->show_dialog_offer_x) {
+    if (show_bank_scroll && !mud->show_right_click_menu &&
+        !mud->show_dialog_offer_x) {
         if (mud->mouse_scroll_delta != 0) {
             mud->bank_scroll_row -= mud->mouse_scroll_delta * -1;
         }
