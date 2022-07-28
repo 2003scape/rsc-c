@@ -4012,7 +4012,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                 int item_count = items_count[item_index];
 
                 if (show_inventory_count) {
-                    char formatted_amount[12] = {0};
+                    char formatted_amount[15] = {0};
 
                     mudclient_format_item_amount(surface->mud, item_count, formatted_amount);
 
@@ -4025,7 +4025,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                                               slot_x + 47, slot_y + 29, 1,
                                               CYAN);
                 } else if (game_data_item_stackable[item_id] == 0) {
-                    char formatted_amount[12] = {0};
+                    char formatted_amount[15] = {0};
 
                     mudclient_format_item_amount(surface->mud, item_count, formatted_amount);
 

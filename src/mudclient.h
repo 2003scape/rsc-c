@@ -1009,6 +1009,7 @@ void mudclient_walk_to_wall_object(mudclient *mud, int dest_x, int dest_y,
 void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
                               int id);
 int mudclient_is_ui_scaled(mudclient *mud);
+void mudclient_format_number_commas(mudclient *mud, int number, char *dest);
 void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest);
 int main(int argc, char **argv);
 #endif

@@ -213,13 +213,19 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
                 for (int j = 0; j < mud->bank_item_count; j++) {
                     int bank_count = mud->bank_items_count[j];
 
-                    if (mud->bank_items[j] == menu_index && bank_count >= 100000) {
-                        char formatted_amount[strlen(item_name) + 17];
+                    if (mud->bank_items[j] == menu_index &&
+                        bank_count >= 100000) {
+                        char formatted_amount[15] = {0};
 
-                        sprintf(formatted_amount, "Total %s in bank: %d",
-                                item_name, bank_count);
+                        mudclient_format_number_commas(mud, bank_count,
+                                                       formatted_amount);
 
-                        mudclient_show_message(mud, formatted_amount,
+                        char formatted_total[strlen(item_name) + 31];
+
+                        sprintf(formatted_total, "Total %s in bank: %s",
+                                item_name, formatted_amount);
+
+                        mudclient_show_message(mud, formatted_total,
                                                MESSAGE_TYPE_GAME);
                         break;
                     }
@@ -230,13 +236,17 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
                 mudclient_get_inventory_count(mud, menu_index);
 
             if (inventory_amount >= 100000) {
-                char formatted_amount[strlen(item_name) + 33];
+                char formatted_amount[15] = {0};
 
-                sprintf(formatted_amount, "Total %s in inventory: %d",
-                        item_name, inventory_amount);
+                mudclient_format_number_commas(mud, inventory_amount,
+                                               formatted_amount);
 
-                mudclient_show_message(mud, formatted_amount,
-                                       MESSAGE_TYPE_GAME);
+                char formatted_total[strlen(item_name) + 36];
+
+                sprintf(formatted_total, "Total %s in inventory: %s", item_name,
+                        formatted_amount);
+
+                mudclient_show_message(mud, formatted_total, MESSAGE_TYPE_GAME);
             }
         }
         break;

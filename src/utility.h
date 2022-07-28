@@ -66,7 +66,7 @@
 #define TABLE_TO_RADIANS(i, length) (((i) / ((length) / 8.0f)) * (M_PI / 2))
 
 /* convert integer vertices to floats and vice versa */
-#define VERTEX_SCALE 100
+#define VERTEX_SCALE 1000
 #define VERTEX_TO_FLOAT(vertex) (vertex / (float)VERTEX_SCALE)
 #define FLOAT_TO_VERTEX(f) (int)(f * VERTEX_SCALE)
 #endif
@@ -102,7 +102,9 @@ int get_ticks();
 void delay_ticks(int ticks);
 void get_level_difference_colour(int level_difference, char *colour);
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
-void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands, char *dest);
+void format_number_commas(int number, char *dest);
+void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
+                          int use_commas, char *dest);
 
 #ifdef RENDER_GL
 float gl_translate_coord(int position, int range);

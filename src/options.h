@@ -4,22 +4,33 @@
 #include <string.h>
 
 typedef struct Options {
-    /* hold down middle click and move the mouse to rotate the camera (only when
-     * camera is type manual) */
-    int middle_click_camera;
+    /* support account registration, password changes and recovery within the
+     * client */
+    int account_management;
 
-    /* scroll panel lists and chatbox with the mouse wheel (and camera if zoom
-     * enabled) */
-    int mouse_wheel;
+    /* enable randomized camera movement and map rotation/scaling */
+    int anti_macro;
 
-    /* click the compass to face north */
-    int reset_compass;
+    /* log out when the mouse hasn't moved in a while */
+    int idle_logout;
+
+    /* retry logins when the server disconnects */
+    int retry_login_on_disconnect;
+
+    /* show "Additional options" in the options UI tab */
+    int show_additional_options;
+
+    /* show "Skip the tutorial" when the player is on Tutorial Island */
+    int skip_tutorial;
+
+    /* display an "Fps: X" counter at the bottom right of the screen */
+    int fps_counter;
 
     /* show roofs unless inside buildings */
     int show_roofs;
 
-    /* use arrow keys (and mouse wheel if enabled) to zoom in and out */
-    int zoom_camera;
+    /* adds a menu with different directions to face to the minimap compass */
+    int reset_compass;
 
     /* show the remaining experience until next level in skills tab */
     int remaining_experience;
@@ -30,34 +41,11 @@ typedef struct Options {
     /* show a count of inventory items on the UI */
     int inventory_count;
 
-    /* censor chat and private messages */
-    int word_filter;
+    /* condenses item amounts with K and M and add their amounts to examine */
+    int condense_item_amounts;
 
-    /* support account registration, password changes and recovery within the
-     * client */
-    int account_management;
-
-    /* display an "Fps: X" counter at the bottom right of the screen */
-    int fps_counter;
-
-    /* retry logins when the server disconnects */
-    int retry_login_on_disconnect;
-
-    // TODO
-    int mobile;
-
-    /* allow dragging the scrollbar after you've clicked it but are no longer
-     * hovering over it */
-    int off_handle_scroll_drag;
-
-    /* escape key clears input */
-    int escape_clear;
-
-    /* enable randomized camera movement and map rotation/scaling */
-    int anti_macro;
-
-    /* log out when the mouse hasn't moved in a while */
-    int idle_logout;
+    /* format large numbers with commas */
+    int number_commas;
 
     /* display the warning dialog near the wilderness border */
     int wilderness_warning;
@@ -101,8 +89,23 @@ typedef struct Options {
     /* adds right click menus to trades */
     int trade_menus;
 
-    /* condenses item amounts with K and M and add their amounts to examine */
-    int condense_item_amounts;
+    /* allow dragging the scrollbar after you've clicked it but are no longer
+     * hovering over it */
+    int off_handle_scroll_drag;
+
+    /* scroll panel lists and chatbox with the mouse wheel (and camera if zoom
+     * enabled) */
+    int mouse_wheel;
+
+    /* hold down middle click and move the mouse to rotate the camera (only when
+     * camera is type manual) */
+    int middle_click_camera;
+
+    /* use arrow keys (and mouse wheel if enabled) to zoom in and out */
+    int zoom_camera;
+
+    /* escape key clears input */
+    int escape_clear;
 
     /* respond to the last PM with tab */
     int tab_respond;
@@ -120,11 +123,11 @@ typedef struct Options {
     /* experimental thick walls support (requires restart) */
     int thick_walls;
 
-    /* show "Additional options" in the options UI tab */
-    int show_additional_options;
+    /* TODO: censor chat and private messages */
+    //int word_filter;
 
-    /* show "Skip the tutorial" when the player is on Tutorial Island */
-    int skip_tutorial;
+    /* TODO: adjust input and layout for mobile-friendliness */
+    //int mobile;
 } Options;
 
 void options_new(Options *options);

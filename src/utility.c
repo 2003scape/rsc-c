@@ -468,17 +468,42 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr) {
     }
 }
 
-void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
-                          char *dest) {
-    if (amount >= 10000000) {
-        sprintf(dest, "%s%dM", use_colour ? "@gre@" : "",
-                (int)round((float)amount / 1000000.0f));
-    } else if (amount >= (convert_ten_thousands ? 10000 : 100000)) {
-        sprintf(dest, "%s%dK", use_colour ? "@whi@" : "",
-                (int)round((float)amount / 1000.0f));
+void format_number_commas(int number, char *dest) {
+    if (number < 1000) {
+        sprintf(dest, "%d", number);
     } else {
-        sprintf(dest, "%d", amount);
+        format_number_commas(number / 1000, dest);
+        sprintf(dest+strlen(dest), ",%03d", number % 1000);
     }
+}
+
+void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
+                          int use_commas, char *dest) {
+    float scale = 1.0f;
+    char colour[6] = {0};
+    char suffix = '\0';
+
+    if (amount >= 10000000) {
+        scale = 1000000.0f;
+        strcpy(colour, "@gre@");
+        suffix = 'M';
+    } else if (amount >= (convert_ten_thousands ? 10000 : 100000)) {
+        scale = 1000.0f;
+        strcpy(colour, "@whi@");
+        suffix = 'K';
+    }
+
+    amount = round((float)amount / scale);
+
+    char formatted_amount[15] = {0};
+
+    if (use_commas) {
+        format_number_commas(amount, formatted_amount);
+    } else {
+        sprintf(formatted_amount, "%d", amount);
+    }
+
+    sprintf(dest, "%s%s%c", use_colour ? colour : "", formatted_amount, suffix);
 }
 
 #ifdef RENDER_GL

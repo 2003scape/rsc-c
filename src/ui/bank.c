@@ -181,7 +181,7 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
         }
 
         char formatted[255] = {0};
-        format_amount_suffix(last_x, 0, 1, formatted);
+        format_amount_suffix(last_x, 0, 1, 0, formatted);
 
         surface_draw_string(mud->surface, formatted, x + offset_x + 2, y + 10,
                             1, text_colour);
@@ -771,16 +771,19 @@ void mudclient_draw_bank(mudclient *mud) {
             }
         }
 
-        char formatted_money[26] = {0};
+        char formatted_money[30] = {0};
 
         if (total_value < 0) {
             sprintf(formatted_money, "Total value: a lot!");
         } else {
-            sprintf(formatted_money, "Total value: %dgp", total_value);
+            char formatted_amount[15] = {0};
+            mudclient_format_number_commas(mud, total_value, formatted_amount);
+            sprintf(formatted_money, "Total value: %sgp", formatted_amount);
         }
 
         surface_draw_string_centre(mud->surface, formatted_money,
-                                   ui_x + (bank_width / 2) + 12, ui_y + 24, 1,
+                                   ui_x + (bank_width / 2) + 12, ui_y + 24,
+                                   total_value >= 10000000 ? 0 : 1,
                                    YELLOW);
     }
 

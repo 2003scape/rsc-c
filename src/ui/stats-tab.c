@@ -80,10 +80,10 @@ void init_stats_tab_global() {
 void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     int height = STATS_HEIGHT;
 
-    if (mud->ui_tab_stats_sub_tab == 0 &&
-        (mud->options->total_experience ||
-         mud->options->remaining_experience)) {
+    if (mud->options->total_experience || mud->options->remaining_experience) {
         height += STATS_LINE_BREAK;
+
+        mud->panel_quests->control_height[mud->control_list_quest] = 251 + STATS_LINE_BREAK;
     }
 
     int ui_x = mud->surface->width - STATS_WIDTH - 3;
@@ -209,6 +209,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         surface_draw_line_horizontal(mud->surface, ui_x, y - 15, STATS_WIDTH,
                                      BLACK);
 
+        char formatted_number[15] = {0};
+
         if (selected_skill != -1) {
             /* longest skill (11) + 6 + 1 */
             char formatted_skill[18] = {0};
@@ -230,16 +232,20 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
             int total_xp = mud->player_experience[selected_skill];
 
-            char formatted_xp[22] = {0};
-            sprintf(formatted_xp, "Total xp: %d", total_xp / 4);
+            mudclient_format_number_commas(mud, total_xp / 4, formatted_number);
+
+            char formatted_xp[25] = {0};
+            sprintf(formatted_xp, "Total xp: %s", formatted_number);
 
             surface_draw_string(mud->surface, formatted_xp, ui_x + 5, y, 1,
                                 WHITE);
 
             y += STATS_LINE_BREAK;
 
-            char formatted_next[27] = {0};
-            sprintf(formatted_next, "Next level at: %d", next_level_at / 4);
+            mudclient_format_number_commas(mud, next_level_at / 4, formatted_number);
+
+            char formatted_next[30] = {0};
+            sprintf(formatted_next, "Next level at: %s", formatted_number);
 
             surface_draw_string(mud->surface, formatted_next, ui_x + 5, y, 1,
                                 WHITE);
@@ -247,8 +253,9 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             if (mud->options->remaining_experience) {
                 y += STATS_LINE_BREAK;
 
-                sprintf(formatted_next, "Remaining xp: %d",
-                        (next_level_at - total_xp) / 4);
+                mudclient_format_number_commas(mud, (next_level_at - total_xp) / 4, formatted_number);
+
+                sprintf(formatted_next, "Remaining xp: %s", formatted_number);
 
                 surface_draw_string(mud->surface, formatted_next, ui_x + 5, y,
                                     1, WHITE);
@@ -265,8 +272,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 total_level += mud->player_skill_base[i];
             }
 
-            char formatted_total[24] = {0};
-            sprintf(formatted_total, "Skill total: %d", total_level);
+            mudclient_format_number_commas(mud, total_level, formatted_number);
+
+            char formatted_total[28] = {0};
+            sprintf(formatted_total, "Skill total: %s", formatted_number);
 
             surface_draw_string(mud->surface, formatted_total, ui_x + 5, y, 1,
                                 WHITE);
@@ -274,7 +283,9 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             y += STATS_LINE_BREAK;
 
             if (mud->options->total_experience) {
-                sprintf(formatted_total, "Total xp: %d", total_experience);
+                mudclient_format_number_commas(mud, total_experience, formatted_number);
+
+                sprintf(formatted_total, "Total xp: %s", formatted_number);
 
                 surface_draw_string(mud->surface, formatted_total, ui_x + 5, y,
                                     1, WHITE);

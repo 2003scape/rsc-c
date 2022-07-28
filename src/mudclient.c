@@ -2533,8 +2533,6 @@ void mudclient_update_fov(mudclient *mud) {
                    (1142.234460f * pow(mud->scene->gl_fov, 2)) -
                    (1901.194134f * mud->scene->gl_fov) + 1318.230265f);
 
-        printf("fov=%f, vd=%d\n", mud->scene->gl_fov, view_distance);
-
         mud->scene->view_distance =
             roundf((float)mud->game_height *
                    ((float)view_distance / (float)MUD_HEIGHT));
@@ -5758,11 +5756,20 @@ int mudclient_is_ui_scaled(mudclient *mud) {
            mud->game_height >= (MUD_HEIGHT * 2);
 }
 
+void mudclient_format_number_commas(mudclient *mud, int number, char *dest) {
+    if (mud->options->number_commas) {
+        format_number_commas(number, dest);
+    } else {
+        sprintf(dest, "%d", number);
+    }
+}
+
 void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest) {
     if (mud->options->condense_item_amounts) {
-        format_amount_suffix(item_amount, 1, 0, dest);
+        format_amount_suffix(item_amount, 1, 0, mud->options->number_commas,
+                             dest);
     } else {
-        sprintf(dest, "%d", item_amount);
+        mudclient_format_number_commas(mud, item_amount, dest);
     }
 }
 

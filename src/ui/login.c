@@ -271,6 +271,12 @@ void mudclient_reset_login_screen(mudclient *mud) {
 }
 
 void mudclient_render_login_scene_sprites(mudclient *mud) {
+#ifdef RENDER_GL
+    int old_fov = mud->options->field_of_view;
+    mud->options->field_of_view = 0;
+    mudclient_update_fov(mud);
+#endif
+
     int plane = 0;
     int region_x = 50; // 49;
     int region_y = 50; // 47;
@@ -419,6 +425,11 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     }
 
     mud->scene->model_count = 0;
+
+#ifdef RENDER_GL
+    mud->options->field_of_view = old_fov;
+    mudclient_update_fov(mud);
+#endif
 }
 
 void mudclient_draw_login_screens(mudclient *mud) {
