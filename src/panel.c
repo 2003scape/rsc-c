@@ -266,15 +266,23 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
             panel->focus_control_index = control;
         }
     } else if (panel->control_type[control] == PANEL_TEXT_INPUT) {
+        /* not original, but none of the original text inputs used alternative
+         * colour */
+        int is_centred = !panel->control_use_alternative_colour[control];
+        int min_x = is_centred ? x - (width / 2) : x;
+        int max_x = is_centred ? x + (width / 2) : x + width;
+
         if (panel->mouse_last_button_down == 1 &&
-            panel->mouse_x >= x - (width / 2) &&
+            panel->mouse_x >= min_x &&
             panel->mouse_y >= y - (height / 2) &&
-            panel->mouse_x <= x + width / 2 &&
+            panel->mouse_x <= max_x &&
             panel->mouse_y <= y + (height / 2)) {
             panel->focus_control_index = control;
         }
 
-        x -= surface_text_width(display_text, text_size) / 2;
+        if (is_centred) {
+            x -= surface_text_width(display_text, text_size) / 2;
+        }
     }
 
     if (panel->focus_control_index == control) {

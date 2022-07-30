@@ -227,6 +227,7 @@ typedef struct mudclient mudclient;
 #include "version.h"
 #include "world.h"
 
+#include "ui/additional-options.h"
 #include "ui/appearance.h"
 #include "ui/bank.h"
 #include "ui/combat-style.h"
@@ -878,9 +879,6 @@ typedef struct mudclient {
     int duel_opponent_confirm_items_count[DUEL_ITEMS_MAX];
     int duel_confirm_accepted;
 
-    /* TODO should we combine the trade/duel item arrays + props? they're never
-     * simultaneous */
-
     /* ./ui/offer-x.c */
     int show_dialog_offer_x;
     int offer_id;
@@ -891,13 +889,18 @@ typedef struct mudclient {
     char *confirm_text_top;
     char *confirm_text_bottom;
     int confirm_type;
+
+    /* ./ui/additional-options.c */
+    int show_additional_options;
+    Panel *panel_connection_options;
+    int control_options_server;
+    int control_options_port;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
 void mudclient_resize(mudclient *mud);
 void mudclient_start_application(mudclient *mud, char *title);
 
-/* TODO events.c */
 void mudclient_handle_key_press(mudclient *mud, int key_code);
 void mudclient_key_pressed(mudclient *mud, int code, int char_code);
 void mudclient_key_released(mudclient *mud, int code);

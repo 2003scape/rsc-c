@@ -265,6 +265,7 @@ void mudclient_handle_bank_amounts_input(mudclient *mud, int amount, int last_x,
             mud->offer_id = item_id;
             mud->offer_max = amount;
 
+            mud->input_digits_final = 0;
             mud->show_dialog_offer_x = 1;
         } else {
             mudclient_bank_transaction(mud, item_id, ui_amount,

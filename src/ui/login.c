@@ -520,10 +520,18 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
+    if (mud->show_additional_options) {
+        mudclient_draw_additional_options(mud);
+    }
+
     surface_draw(mud->surface);
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {
+    if (mud->show_additional_options) {
+        mudclient_handle_additional_options_input(mud);
+    }
+
     if (mud->world_full_timeout > 0) {
         mud->world_full_timeout--;
     }

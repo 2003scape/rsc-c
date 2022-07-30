@@ -202,7 +202,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mudclient_show_message(mud, formatted_drop, MESSAGE_TYPE_BOR);
         break;
     }
-    case MENU_INV_EXAMINE: {
+    case MENU_INV_EXAMINE:
         mudclient_show_message(mud, game_data_item_description[menu_index],
                                MESSAGE_TYPE_GAME);
 
@@ -250,7 +250,6 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
             }
         }
         break;
-    }
     case MENU_CAST_NPC: {
         int x = (menu_x - 64) / MAGIC_LOC;
         int y = (menu_y - 64) / MAGIC_LOC;
@@ -428,6 +427,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
             mud->offer_id = menu_index;
             mud->offer_max = abs(menu_target_index);
 
+            mud->input_digits_final = 0;
             mud->show_dialog_offer_x = 1;
         } else {
             mudclient_bank_transaction(mud, menu_index, menu_target_index,
@@ -441,6 +441,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
             mud->trade_offer_type = TRADE_OFFER_OFFER;
             mud->offer_id = menu_index;
             mud->offer_max = abs(menu_target_index);
+            mud->input_digits_final = 0;
             mud->show_dialog_offer_x = 1;
         } else if (mud->show_dialog_trade) {
             mudclient_offer_trade_item(mud, menu_index, menu_target_index);
@@ -454,6 +455,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
             mud->trade_offer_type = TRADE_OFFER_REMOVE;
             mud->offer_id = menu_index;
             mud->offer_max = abs(menu_target_index);
+            mud->input_digits_final = 0;
             mud->show_dialog_offer_x = 1;
         } else if (mud->show_dialog_trade) {
             mudclient_remove_trade_item(mud, menu_index, menu_target_index);

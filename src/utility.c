@@ -473,7 +473,7 @@ void format_number_commas(int number, char *dest) {
         sprintf(dest, "%d", number);
     } else {
         format_number_commas(number / 1000, dest);
-        sprintf(dest+strlen(dest), ",%03d", number % 1000);
+        sprintf(dest + strlen(dest), ",%03d", number % 1000);
     }
 }
 
@@ -493,7 +493,7 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
         suffix = 'K';
     }
 
-    amount = round((float)amount / scale);
+    amount = floorf((float)amount / scale);
 
     char formatted_amount[15] = {0};
 

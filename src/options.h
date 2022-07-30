@@ -44,6 +44,9 @@ typedef struct Options {
     /* condenses item amounts with K and M and add their amounts to examine */
     int condense_item_amounts;
 
+    /* also draw which item a certificate is associated with */
+    int certificate_items;
+
     /* format large numbers with commas */
     int number_commas;
 

@@ -237,7 +237,7 @@ void mudclient_remove_trade_item(mudclient *mud, int item_id, int item_amount) {
 }
 
 void mudclient_draw_trade(mudclient *mud) {
-    if (mud->input_digits_final > 0) {
+    if (mud->show_dialog_offer_x && mud->input_digits_final > 0) {
         if (mud->input_digits_final > mud->offer_max) {
             mudclient_show_message(mud, "You don't have that many!",
                                    MESSAGE_TYPE_GAME);
@@ -253,8 +253,8 @@ void mudclient_draw_trade(mudclient *mud) {
             mud->trade_last_offer = mud->input_digits_final;
         }
 
-        mud->show_dialog_offer_x = 0;
         mud->input_digits_final = 0;
+        mud->show_dialog_offer_x = 0;
     }
 
     mud->trade_selected_item = -1;
@@ -386,11 +386,11 @@ void mudclient_draw_trade(mudclient *mud) {
         return;
     }
 
-    surface_draw_box(mud->surface, dialog_x, dialog_y, 468, 12,
+    surface_draw_box(mud->surface, dialog_x, dialog_y, TRADE_WIDTH, 12,
                      TITLE_BAR_COLOUR);
 
-    surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 12, 468, 18,
-                           GREY_98, 160);
+    surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 12, TRADE_WIDTH,
+                           18, GREY_98, 160);
 
     surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 30, 8, 248,
                            GREY_98, 160);
@@ -474,13 +474,46 @@ void mudclient_draw_trade(mudclient *mud) {
 
     /* highlighted item */
     if (mud->trade_selected_item != -1) {
+        char formatted_amount[18] = {0};
+
+        if (mud->options->condense_item_amounts) {
+            int is_opponent = mouse_y >= TRADE_OPPONENT_OFFER_Y;
+            int trade_item_count = is_opponent ? mud->trade_recipient_item_count
+                                               : mud->trade_item_count;
+            int *trade_items =
+                is_opponent ? mud->trade_recipient_items : mud->trade_items;
+
+            int *trade_items_count = is_opponent
+                                         ? mud->trade_recipient_items_count
+                                         : mud->trade_items_count;
+
+            int item_amount = 0;
+
+            for (int i = 0; i < trade_item_count; i++) {
+                if (trade_items[i] == mud->trade_selected_item) {
+                    item_amount = trade_items_count[i];
+                    break;
+                }
+            }
+
+            if (item_amount >= 100000) {
+                char formatted_commas[15] = {0};
+
+                mudclient_format_number_commas(mud, item_amount,
+                                               formatted_commas);
+
+                sprintf(formatted_amount, " (%s)", formatted_commas);
+            }
+        }
+
         char *item_name = game_data_item_name[mud->trade_selected_item];
 
         char *description =
             game_data_item_description[mud->trade_selected_item];
 
-        char formatted_item[strlen(item_name) + strlen(description) + 8];
-        sprintf(formatted_item, "%s: @whi@%s", item_name, description);
+        char formatted_item[strlen(item_name) + strlen(description) + 25];
+        sprintf(formatted_item, "%s: @whi@%s%s", item_name, description,
+                formatted_amount);
 
         surface_draw_string(mud->surface, formatted_item, dialog_x + 8,
                             dialog_y + TRADE_HEIGHT - 5, 1, YELLOW);

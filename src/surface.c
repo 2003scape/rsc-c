@@ -884,6 +884,16 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface) {
                                     surface->height, points, 0, 0);
 }
 
+float surface_gl_get_layer_depth(Surface *surface) {
+    float min_depth = 0.00002f;
+    float max_depth = 0.00008f;
+
+    float zoom_scale = 1.0f - ((surface->mud->camera_zoom - ZOOM_MIN) /
+                               (float)(ZOOM_MAX - ZOOM_MIN));
+
+    return (zoom_scale * (max_depth - min_depth)) + min_depth;
+}
+
 void surface_gl_draw(Surface *surface, int use_depth) {
     glDisable(GL_CULL_FACE);
 
@@ -2294,8 +2304,8 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
     if (sprite_id >= 50000) {
-        mudclient_draw_teleport_bubble(
-            surface->mud, x, y, width, height, sprite_id - 50000, depth_top);
+        mudclient_draw_teleport_bubble(surface->mud, x, y, width, height,
+                                       sprite_id - 50000, depth_top);
 
         return;
     }
@@ -4014,12 +4024,16 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                 if (show_inventory_count) {
                     char formatted_amount[15] = {0};
 
-                    mudclient_format_item_amount(surface->mud, item_count, formatted_amount);
+                    mudclient_format_item_amount(surface->mud, item_count,
+                                                 formatted_amount);
 
                     surface_draw_string(surface, formatted_amount, slot_x + 1,
                                         slot_y + 10, 1, GREEN);
 
-                    mudclient_format_item_amount(surface->mud, mudclient_get_inventory_count(surface->mud, item_id), formatted_amount);
+                    mudclient_format_item_amount(
+                        surface->mud,
+                        mudclient_get_inventory_count(surface->mud, item_id),
+                        formatted_amount);
 
                     surface_draw_string_right(surface, formatted_amount,
                                               slot_x + 47, slot_y + 29, 1,
@@ -4027,7 +4041,8 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                 } else if (game_data_item_stackable[item_id] == 0) {
                     char formatted_amount[15] = {0};
 
-                    mudclient_format_item_amount(surface->mud, item_count, formatted_amount);
+                    mudclient_format_item_amount(surface->mud, item_count,
+                                                 formatted_amount);
 
                     surface_draw_string(surface, formatted_amount,
                                         slot_x + 1 + offset_x,

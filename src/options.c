@@ -19,6 +19,7 @@ void options_new(Options *options) {
     options->total_experience = 1;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
+    options->certificate_items = 1;
     options->number_commas = 1;
     options->wilderness_warning = 1;
 
@@ -48,5 +49,5 @@ void options_new(Options *options) {
 
     /* gl */
     options->ui_scale = 1;
-    options->field_of_view = 450;
+    options->field_of_view = 0;
 }

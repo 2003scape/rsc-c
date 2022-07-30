@@ -1443,6 +1443,10 @@ void mudclient_packet_tick(mudclient *mud) {
             offset += 4;
         }
 
+        /*mud->trade_recipient_item_count = 1;
+        mud->trade_recipient_items[0] = 10;
+        mud->trade_recipient_items_count[0] = 100000;*/
+
         mud->trade_recipient_accepted = 0;
         mud->trade_accepted = 0;
         break;

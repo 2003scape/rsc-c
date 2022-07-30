@@ -513,6 +513,8 @@ void mudclient_new(mudclient *mud) {
 
     mud->bank_selected_item_slot = -1;
     mud->bank_selected_item = -2;
+
+    //mud->show_additional_options = 1;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -879,6 +881,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
 }
 
 void mudclient_handle_key_press(mudclient *mud, int key_code) {
+    if (mud->show_additional_options) {
+        panel_key_press(mud->panel_connection_options, key_code);
+        return;
+    }
+
     if (!mud->logged_in) {
         if (mud->login_screen == LOGIN_STAGE_WELCOME &&
             mud->panel_login_welcome) {
@@ -2661,6 +2668,7 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_message_tabs_panel(mud);
     mudclient_create_login_panels(mud);
     mudclient_create_appearance_panel(mud);
+    mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
     mudclient_render_login_scene_sprites(mud);
 
@@ -3816,6 +3824,10 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         j2 = i2 * 3 + character_combat_model_array2[(mud->login_timer / 6) % 8];
     }
 
+#ifdef RENDER_GL
+    float layer_depth = surface_gl_get_layer_depth(mud->surface);
+#endif
+
     for (int i = 0; i < ANIMATION_COUNT; i++) {
         int animation_index = character_animation_array[animation_order][i];
         int aimation_id = player->equipped_item[animation_index] - 1;
@@ -3906,9 +3918,10 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                 depth_top, depth_bottom);
         }
 
-        // TODO mudclient_get_layer_depth() which changes on zoom
-        // depth_top -= 0.00003f;
-        // depth_bottom -= 0.00003f;
+#ifdef RENDER_GL
+        depth_top -= layer_depth;
+        depth_bottom -= layer_depth;
+#endif
     }
 
     mudclient_draw_character_message(mud, player, x, y, width);
@@ -3922,8 +3935,13 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             player->bubble_item;
     }
 
-    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
-                                    depth_top);
+    float damage_depth = 0.0f;
+
+#ifdef RENDER_GL
+    damage_depth = ((depth_bottom + depth_top) / 2) - layer_depth;
+#endif
+
+    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0, damage_depth);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
@@ -3992,6 +4010,10 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                   8];
     }
 
+#ifdef RENDER_GL
+    float layer_depth = surface_gl_get_layer_depth(mud->surface);
+#endif
+
     for (int i = 0; i < ANIMATION_COUNT; i++) {
         int animation_index = character_animation_array[animation_order][i];
         int animation_id = game_data_npc_sprite[npc->npc_id][animation_index];
@@ -4046,12 +4068,23 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
         }
+
+#ifdef RENDER_GL
+        depth_top -= layer_depth;
+        depth_bottom -= layer_depth;
+#endif
     }
 
     mudclient_draw_character_message(mud, npc, x, y, width);
 
+    float damage_depth = 0.0f;
+
+#ifdef RENDER_GL
+    damage_depth = ((depth_bottom + depth_top) / 2) - layer_depth;
+#endif
+
     mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1,
-                                    depth_top);
+                                    damage_depth);
 }
 
 void mudclient_draw_blue_bar(mudclient *mud) {
