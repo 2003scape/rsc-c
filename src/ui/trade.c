@@ -512,6 +512,7 @@ void mudclient_draw_trade(mudclient *mud) {
             game_data_item_description[mud->trade_selected_item];
 
         char formatted_item[strlen(item_name) + strlen(description) + 25];
+
         sprintf(formatted_item, "%s: @whi@%s%s", item_name, description,
                 formatted_amount);
 

@@ -150,7 +150,8 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     int mouse_x = mud->mouse_x - ui_x;
     int mouse_y = mud->mouse_y - ui_y;
 
-    if (mud->options->reset_compass && mouse_x > 0 && mouse_x <= 32 && mouse_y > 0 && mouse_y <= 32) {
+    if (mud->options->compass_menu && mouse_x > 0 && mouse_x <= 32 &&
+        mouse_y > 0 && mouse_y <= 32) {
         strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
         strcpy(mud->menu_item_text2[mud->menu_items_count], "North");
         mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;

@@ -23,7 +23,7 @@
 #endif
 
 #ifdef REVISION_177
-#include "bn.h"
+#include "lib/bn.h"
 #endif
 
 #define PACKET_BUFFER_LENGTH 5000

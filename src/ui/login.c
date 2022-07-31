@@ -530,6 +530,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
 void mudclient_handle_login_screen_input(mudclient *mud) {
     if (mud->show_additional_options) {
         mudclient_handle_additional_options_input(mud);
+        return;
     }
 
     if (mud->world_full_timeout > 0) {

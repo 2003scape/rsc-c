@@ -210,12 +210,12 @@
 
 typedef struct mudclient mudclient;
 
-#include "bzip.h"
 #include "chat-message.h"
 #include "client-opcodes.h"
 #include "colours.h"
 #include "game-character.h"
 #include "game-model.h"
+#include "lib/bzip.h"
 #include "options.h"
 #include "packet-handler.h"
 #include "packet-stream.h"
@@ -892,9 +892,23 @@ typedef struct mudclient {
 
     /* ./ui/additional-options.c */
     int show_additional_options;
+    int options_tab;
+
     Panel *panel_connection_options;
-    int control_options_server;
-    int control_options_port;
+    void *connection_options[10];
+    int connection_option_types[10];
+
+    Panel *panel_control_options;
+    void *control_options[10];
+    int control_option_types[10];
+
+    Panel *panel_display_options;
+    void *display_options[50];
+    int display_option_types[50];
+
+    Panel *panel_bank_options;
+    void *bank_options[50];
+    int bank_option_types[50];
 } mudclient;
 
 void mudclient_new(mudclient *mud);

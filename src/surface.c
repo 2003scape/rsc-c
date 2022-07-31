@@ -3967,27 +3967,12 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int show_inventory_count) {
     int is_selected_visible = selected >= 0 && selected <= items_length;
 
-    if (!is_selected_visible) {
-        int box_width = (columns * ITEM_GRID_SLOT_WIDTH);
-        int box_height = (rows * ITEM_GRID_SLOT_HEIGHT);
+    int box_width = (columns * ITEM_GRID_SLOT_WIDTH);
+    int box_height = (rows * ITEM_GRID_SLOT_HEIGHT);
 
+    if (!is_selected_visible) {
         surface_draw_box_alpha(surface, x + 1, y + 1, box_width - 1,
                                box_height - 1, GREY_D0, 160);
-
-        surface_draw_box_edge(surface, x, y, box_width + 1, box_height + 1,
-                              BLACK);
-
-        for (int row = 1; row < rows; row++) {
-            surface_draw_line_horizontal(surface, x,
-                                         y + (row * ITEM_GRID_SLOT_HEIGHT),
-                                         box_width, BLACK);
-        }
-
-        for (int column = 1; column < columns; column++) {
-            surface_draw_line_vertical(surface,
-                                       x + (column * ITEM_GRID_SLOT_WIDTH), y,
-                                       box_height, BLACK);
-        }
     }
 
     int item_index = 0;
@@ -4004,10 +3989,6 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                 surface_draw_box_alpha(surface, slot_x, slot_y,
                                        ITEM_GRID_SLOT_WIDTH,
                                        ITEM_GRID_SLOT_HEIGHT, slot_colour, 160);
-
-                surface_draw_box_edge(surface, slot_x, slot_y,
-                                      ITEM_GRID_SLOT_WIDTH + 1,
-                                      ITEM_GRID_SLOT_HEIGHT + 1, BLACK);
             }
 
             int item_id = items[item_index];
@@ -4053,6 +4034,22 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
             item_index++;
         }
     }
+
+    surface_draw_box_edge(surface, x, y, box_width + 1, box_height + 1,
+                          BLACK);
+
+    for (int row = 1; row < rows; row++) {
+        surface_draw_line_horizontal(surface, x,
+                                     y + (row * ITEM_GRID_SLOT_HEIGHT),
+                                     box_width, BLACK);
+    }
+
+    for (int column = 1; column < columns; column++) {
+        surface_draw_line_vertical(surface,
+                                   x + (column * ITEM_GRID_SLOT_WIDTH), y,
+                                   box_height, BLACK);
+    }
+
 }
 
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,

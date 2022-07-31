@@ -4,6 +4,16 @@
 #include <string.h>
 
 typedef struct Options {
+    char *server;
+    int port;
+    int members;
+    int interlace;
+    int display_fps;
+
+    /* for login screen */
+    int remember_username;
+    int remember_password;
+
     /* support account registration, password changes and recovery within the
      * client */
     int account_management;
@@ -26,11 +36,17 @@ typedef struct Options {
     /* display an "Fps: X" counter at the bottom right of the screen */
     int fps_counter;
 
+    /* format large numbers with commas */
+    int number_commas;
+
     /* show roofs unless inside buildings */
     int show_roofs;
 
     /* adds a menu with different directions to face to the minimap compass */
-    int reset_compass;
+    int compass_menu;
+
+    /* adds right click menus to trades */
+    int trade_menus;
 
     /* show the remaining experience until next level in skills tab */
     int remaining_experience;
@@ -46,12 +62,6 @@ typedef struct Options {
 
     /* also draw which item a certificate is associated with */
     int certificate_items;
-
-    /* format large numbers with commas */
-    int number_commas;
-
-    /* display the warning dialog near the wilderness border */
-    int wilderness_warning;
 
     /* allow inputting item amounts */
     int offer_x;
@@ -89,12 +99,15 @@ typedef struct Options {
     /* maintain the selected bank slot when items change position */
     int bank_maintain_slot;
 
-    /* adds right click menus to trades */
-    int trade_menus;
+    /* display the warning dialog near the wilderness border */
+    int wilderness_warning;
 
     /* allow dragging the scrollbar after you've clicked it but are no longer
      * hovering over it */
     int off_handle_scroll_drag;
+
+    /* escape key clears input */
+    int escape_clear;
 
     /* scroll panel lists and chatbox with the mouse wheel (and camera if zoom
      * enabled) */
@@ -106,9 +119,6 @@ typedef struct Options {
 
     /* use arrow keys (and mouse wheel if enabled) to zoom in and out */
     int zoom_camera;
-
-    /* escape key clears input */
-    int escape_clear;
 
     /* respond to the last PM with tab */
     int tab_respond;
@@ -131,6 +141,10 @@ typedef struct Options {
 
     /* TODO: adjust input and layout for mobile-friendliness */
     //int mobile;
+
+    /* if remember username/password is enabled */
+    char username[20];
+    char password[20];
 } Options;
 
 void options_new(Options *options);

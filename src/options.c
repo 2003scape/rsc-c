@@ -11,17 +11,17 @@ void options_new(Options *options) {
     options->show_additional_options = 1;
     options->skip_tutorial = 1;
 
-    /* interface */
+    /* display */
     options->fps_counter = 0;
+    options->number_commas = 1;
     options->show_roofs = 1;
-    options->reset_compass = 1;
+    options->compass_menu = 1;
+    options->trade_menus = 1;
     options->remaining_experience = 1;
     options->total_experience = 1;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
     options->certificate_items = 1;
-    options->number_commas = 1;
-    options->wilderness_warning = 1;
 
     options->offer_x = 1;
     options->last_offer_x = 1;
@@ -36,14 +36,14 @@ void options_new(Options *options) {
     options->bank_inventory = 1;
     options->bank_maintain_slot = 1;
 
-    options->trade_menus = 1;
+    options->wilderness_warning = 1;
 
     /* controls */
     options->off_handle_scroll_drag = 1;
+    options->escape_clear = 1;
     options->mouse_wheel = 1;
     options->middle_click_camera = 1;
     options->zoom_camera = 1;
-    options->escape_clear = 1;
     options->tab_respond = 1;
     options->option_numbers = 1;
 

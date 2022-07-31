@@ -1,9 +1,9 @@
 #CC = clang
 DEBUG = 1
 #RENDER_GL = 1 TODO
-SRC = $(wildcard src/*.c src/ui/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -I ./cglm/include -DRENDER_GL -DRENDER_SW #-DREVISION_177
+CFLAGS = -I ./cglm/include -DRENDER_GL #-DRENDER_GL #-DRENDER_GL #-DRENDER_SW #-DREVISION_177
 LDFLAGS = -lm -lSDL2 -lGLEW -lGL
 
 ifdef DEBUG
@@ -18,5 +18,5 @@ mudclient: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f src/*.o src/ui/*.o
+	rm -f src/*.o src/lib/*.o src/ui/*.o
 	rm -f mudclient

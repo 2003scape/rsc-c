@@ -514,7 +514,7 @@ void mudclient_new(mudclient *mud) {
     mud->bank_selected_item_slot = -1;
     mud->bank_selected_item = -2;
 
-    //mud->show_additional_options = 1;
+    mud->show_additional_options = 1;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -882,7 +882,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 void mudclient_handle_key_press(mudclient *mud, int key_code) {
     if (mud->show_additional_options) {
-        panel_key_press(mud->panel_connection_options, key_code);
+        Panel *panel = mudclient_get_active_option_panel(mud);
+        panel_key_press(panel, key_code);
         return;
     }
 

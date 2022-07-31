@@ -31,7 +31,7 @@
 #endif
 #endif
 
-#include "bzip.h"
+#include "lib/bzip.h"
 
 /* for audio conversion */
 #define SIGN_BIT 0x80  /* sign bit for a a-law byte */
