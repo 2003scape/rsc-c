@@ -418,7 +418,7 @@ typedef struct mudclient {
     int max_draw_time;
     int thread_sleep;
 
-    /* F1 mode - only render every second scanline */
+    // TODO move to options
     int8_t interlace;
 
     /* used for username boxes */

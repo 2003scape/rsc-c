@@ -581,6 +581,26 @@ void mudclient_resize(mudclient *mud) {
         if (mud->panel_social_list != NULL) {
             mud->panel_social_list->offset_x = full_offset_x;
         }
+
+        if (mud->panel_connection_options != NULL) {
+            mud->panel_connection_options->offset_x = half_offset_x;
+            mud->panel_connection_options->offset_y = half_offset_y;
+        }
+
+        if (mud->panel_control_options != NULL) {
+            mud->panel_control_options->offset_x = half_offset_x;
+            mud->panel_control_options->offset_y = half_offset_y;
+        }
+
+        if (mud->panel_display_options != NULL) {
+            mud->panel_display_options->offset_x = half_offset_x;
+            mud->panel_display_options->offset_y = half_offset_y;
+        }
+
+        if (mud->panel_bank_options != NULL) {
+            mud->panel_bank_options->offset_x = half_offset_x;
+            mud->panel_bank_options->offset_y = half_offset_y;
+        }
     }
 
 #ifdef RENDER_GL
@@ -4643,7 +4663,7 @@ void mudclient_draw_game(mudclient *mud) {
             mud->sprite_media + 18 + ((24 + mud->mouse_click_x_step) / 6));
     }
 
-    if (mud->options->fps_counter) {
+    if (mud->options->display_fps) {
         int offset_x = mud->is_in_wild ? 70 : 0;
 
         char fps[17] = {0};
