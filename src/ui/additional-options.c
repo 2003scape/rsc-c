@@ -220,9 +220,9 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
-        "@whi@Trade menus: ", mud->options->trade_menus, x, y);
+        "@whi@Transaction menus: ", mud->options->transaction_menus, x, y);
 
-    mud->display_options[control] = &mud->options->trade_menus;
+    mud->display_options[control] = &mud->options->transaction_menus;
     mud->display_option_types[control] = 2;
 
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;

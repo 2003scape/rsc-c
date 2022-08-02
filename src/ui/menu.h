@@ -1,10 +1,7 @@
 #ifndef _H_MENU
 
-#include "../colours.h"
 #include "../mudclient.h"
-#include "../packet-stream.h"
-#include "bank.h"
-#include "trade.h"
+#include "transaction.h"
 
 /* number determines priority in the menu */
 

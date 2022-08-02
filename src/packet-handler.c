@@ -1407,132 +1407,115 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->show_dialog_shop = 0;
         break;
     }
-    case SERVER_TRADE_OPEN: {
-        int player_index = get_unsigned_short(data, 1);
-
-        if (mud->player_server[player_index] != NULL) {
-            strcpy(mud->trade_recipient_name,
-                   mud->player_server[player_index]->name);
-        }
-
-        mud->show_dialog_trade = 1;
-        mud->trade_recipient_accepted = 0;
-        mud->trade_accepted = 0;
-        mud->trade_item_count = 0;
-        mud->trade_recipient_item_count = 0;
-        break;
-    }
-    case SERVER_TRADE_CLOSE: {
-        mud->show_dialog_trade = 0;
-        mud->show_dialog_trade_confirm = 0;
-        break;
-    }
-    case SERVER_TRADE_ITEMS: {
-        mud->trade_recipient_item_count = data[1] & 0xff;
-
-        int offset = 2;
-
-        for (int i = 0; i < mud->trade_recipient_item_count; i++) {
-            mud->trade_recipient_items[i] = get_unsigned_short(data, offset);
-
-            offset += 2;
-
-            mud->trade_recipient_items_count[i] =
-                get_unsigned_int(data, offset);
-
-            offset += 4;
-        }
-
-        /*mud->trade_recipient_item_count = 1;
-        mud->trade_recipient_items[0] = 10;
-        mud->trade_recipient_items_count[0] = 100000;*/
-
-        mud->trade_recipient_accepted = 0;
-        mud->trade_accepted = 0;
-        break;
-    }
-    case SERVER_TRADE_RECIPIENT_STATUS: {
-        mud->trade_recipient_accepted = data[1];
-        break;
-    }
-    case SERVER_TRADE_STATUS: {
-        mud->trade_accepted = data[1];
-        break;
-    }
-    case SERVER_TRADE_CONFIRM_OPEN: {
-        mud->show_dialog_trade_confirm = 1;
-        mud->trade_confirm_accepted = 0;
-        mud->show_dialog_trade = 0;
-
-        int offset = 1;
-
-        mud->trade_recipient_confirm_hash = get_unsigned_long(data, offset);
-        offset += 8;
-
-        mud->trade_recipient_confirm_item_count = data[offset++] & 0xff;
-
-        for (int i = 0; i < mud->trade_recipient_confirm_item_count; i++) {
-            mud->trade_recipient_confirm_items[i] =
-                get_unsigned_short(data, offset);
-
-            offset += 2;
-
-            mud->trade_recipient_confirm_items_count[i] =
-                get_unsigned_int(data, offset);
-
-            offset += 4;
-        }
-
-        mud->trade_confirm_item_count = data[offset++] & 0xff;
-
-        for (int i = 0; i < mud->trade_confirm_item_count; i++) {
-            mud->trade_confirm_items[i] = get_unsigned_short(data, offset);
-            offset += 2;
-
-            mud->trade_confirm_items_count[i] = get_unsigned_int(data, offset);
-            offset += 4;
-        }
-        break;
-    }
+    case SERVER_TRADE_OPEN:
     case SERVER_DUEL_OPEN: {
         int player_index = get_unsigned_short(data, 1);
 
         if (mud->player_server[player_index] != NULL) {
-            strcpy(mud->duel_opponent_name,
+            strcpy(mud->transaction_recipient_name,
                    mud->player_server[player_index]->name);
         }
 
-        mud->show_dialog_duel = 1;
-        mud->duel_item_count = 0;
-        mud->duel_opponent_item_count = 0;
-        mud->duel_opponent_accepted = 0;
-        mud->duel_accepted = 0;
-        mud->duel_option_retreat = 0;
-        mud->duel_option_magic = 0;
-        mud->duel_option_prayer = 0;
-        mud->duel_option_weapons = 0;
+        int is_trade = opcode == SERVER_TRADE_OPEN;
+
+        mud->show_dialog_trade = is_trade;
+
+        mud->transaction_recipient_accepted = 0;
+        mud->transaction_accepted = 0;
+        mud->transaction_item_count = 0;
+        mud->transaction_recipient_item_count = 0;
+
+        if (!is_trade) {
+            mud->show_dialog_duel = 1;
+            mud->duel_option_retreat = 0;
+            mud->duel_option_magic = 0;
+            mud->duel_option_prayer = 0;
+            mud->duel_option_weapons = 0;
+        }
         break;
     }
+    case SERVER_TRADE_CLOSE:
     case SERVER_DUEL_CLOSE: {
+        mud->show_dialog_trade = 0;
+        mud->show_dialog_trade_confirm = 0;
+
         mud->show_dialog_duel = 0;
         mud->show_dialog_duel_confirm = 0;
         break;
     }
-    case SERVER_DUEL_UPDATE: {
-        mud->duel_opponent_item_count = data[1] & 0xff;
+    case SERVER_TRADE_ITEMS:
+    case SERVER_DUEL_ITEMS: {
+        mud->transaction_recipient_item_count = data[1] & 0xff;
 
         int offset = 2;
 
-        for (int i = 0; i < mud->duel_opponent_item_count; i++) {
-            mud->duel_opponent_items[i] = get_unsigned_short(data, offset);
+        for (int i = 0; i < mud->transaction_recipient_item_count; i++) {
+            mud->transaction_recipient_items[i] = get_unsigned_short(data, offset);
+
             offset += 2;
 
-            mud->duel_opponent_items_count[i] = get_unsigned_int(data, offset);
+            mud->transaction_recipient_items_count[i] =
+                get_unsigned_int(data, offset);
+
             offset += 4;
         }
 
-        mud->duel_opponent_accepted = 0;
-        mud->duel_accepted = 0;
+        // TODO remove
+        /*mud->transaction_recipient_item_count = 1;
+        mud->transaction_recipient_items[0] = 10;
+        mud->transaction_recipient_items_count[0] = 100000;*/
+
+        mud->transaction_recipient_accepted = 0;
+        mud->transaction_accepted = 0;
+        break;
+    }
+    case SERVER_TRADE_RECIPIENT_ACCEPTED:
+    case SERVER_DUEL_RECIPIENT_ACCEPTED: {
+        mud->transaction_recipient_accepted = data[1];
+        break;
+    }
+    case SERVER_TRADE_ACCEPTED:
+    case SERVER_DUEL_ACCEPTED: {
+        mud->transaction_accepted = data[1];
+        break;
+    }
+    case SERVER_TRADE_CONFIRM_OPEN:
+    case SERVER_DUEL_CONFIRM_OPEN: {
+        mud->show_dialog_trade_confirm = 1;
+        mud->transaction_confirm_accepted = 0;
+        mud->show_dialog_trade = 0;
+
+        int offset = 1;
+
+        mud->transaction_recipient_confirm_name= get_unsigned_long(data, offset);
+
+        offset += 8;
+
+        mud->transaction_recipient_confirm_item_count = data[offset++] & 0xff;
+
+        for (int i = 0; i < mud->transaction_recipient_confirm_item_count; i++) {
+            mud->transaction_recipient_confirm_items[i] =
+                get_unsigned_short(data, offset);
+
+            offset += 2;
+
+            mud->transaction_recipient_confirm_items_count[i] =
+                get_unsigned_int(data, offset);
+
+            offset += 4;
+        }
+
+        mud->transaction_confirm_item_count = data[offset++] & 0xff;
+
+        for (int i = 0; i < mud->transaction_confirm_item_count; i++) {
+            mud->transaction_confirm_items[i] = get_unsigned_short(data, offset);
+
+            offset += 2;
+
+            mud->transaction_confirm_items_count[i] = get_unsigned_int(data, offset);
+
+            offset += 4;
+        }
         break;
     }
     case SERVER_DUEL_SETTINGS: {
@@ -1540,54 +1523,9 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->duel_option_magic = data[2] & 0xff;
         mud->duel_option_prayer = data[3] & 0xff;
         mud->duel_option_weapons = data[4] & 0xff;
-        mud->duel_opponent_accepted = 0;
-        mud->duel_accepted = 0;
-        break;
-    }
-    case SERVER_DUEL_OPPONENT_ACCEPTED: {
-        mud->duel_opponent_accepted = 1;
-        break;
-    }
-    case SERVER_DUEL_ACCEPTED: {
-        mud->duel_accepted = 1;
-        break;
-    }
-    case SERVER_DUEL_CONFIRM_OPEN: {
-        mud->show_dialog_duel_confirm = 1;
-        mud->duel_accepted = 0;
-        mud->show_dialog_duel = 0;
 
-        int offset = 1;
-
-        mud->duel_opponent_confirm_hash = get_unsigned_long(data, offset);
-        offset += 8;
-
-        mud->duel_confirm_item_count = data[offset++] & 0xff;
-
-        for (int i = 0; i < mud->duel_confirm_item_count; i++) {
-            mud->duel_opponent_confirm_items[i] =
-                get_unsigned_short(data, offset);
-
-            offset += 2;
-
-            mud->duel_opponent_items_count[i] = get_unsigned_int(data, offset);
-            offset += 4;
-        }
-
-        mud->duel_confirm_item_count = data[offset++] & 0xff;
-
-        for (int i = 0; i < mud->duel_item_count; i++) {
-            mud->duel_confirm_items[i] = get_unsigned_short(data, offset);
-            offset += 2;
-
-            mud->duel_confirm_items_count[i] = get_unsigned_int(data, offset);
-            offset += 4;
-        }
-
-        mud->duel_option_retreat = data[offset++] & 0xff;
-        mud->duel_option_magic = data[offset++] & 0xff;
-        mud->duel_option_prayer = data[offset++] & 0xff;
-        mud->duel_option_weapons = data[offset++] & 0xff;
+        mud->transaction_recipient_accepted = 0;
+        mud->transaction_accepted = 0;
         break;
     }
     case SERVER_PRAYER_STATUS: {

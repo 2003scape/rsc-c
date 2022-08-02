@@ -12,11 +12,11 @@ void options_new(Options *options) {
     options->skip_tutorial = 1;
 
     /* display */
-    options->fps_counter = 0;
+    options->display_fps = 0;
     options->number_commas = 1;
     options->show_roofs = 1;
     options->compass_menu = 1;
-    options->trade_menus = 1;
+    options->transaction_menus = 1;
     options->remaining_experience = 1;
     options->total_experience = 1;
     options->inventory_count = 0;
@@ -49,5 +49,5 @@ void options_new(Options *options) {
 
     /* gl */
     options->ui_scale = 1;
-    options->field_of_view = 0;
+    options->field_of_view = 360;
 }

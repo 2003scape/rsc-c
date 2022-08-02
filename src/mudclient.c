@@ -456,9 +456,6 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id,
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
 
-    // mud->interlace = 1;
-    // mud->members = 1;
-
     mud->target_fps = 20;
     mud->max_draw_time = 1000;
     mud->loading_step = 1;
@@ -514,7 +511,10 @@ void mudclient_new(mudclient *mud) {
     mud->bank_selected_item_slot = -1;
     mud->bank_selected_item = -2;
 
-    mud->show_additional_options = 1;
+    //mud->show_additional_options = 1;
+    //mud->show_dialog_trade = 1;
+    //mud->show_dialog_duel = 1;
+    //mud->show_dialog_duel_confirm = 1;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -4163,7 +4163,7 @@ void mudclient_draw_ui(mudclient *mud) {
     } else if (mud->show_dialog_trade) {
         mudclient_draw_trade(mud);
 
-        if (mud->options->trade_menus) {
+        if (mud->options->transaction_menus) {
             if (mud->show_right_click_menu) {
                 mudclient_draw_right_click_menu(mud);
             } else {

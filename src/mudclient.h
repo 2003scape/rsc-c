@@ -828,56 +828,41 @@ typedef struct mudclient {
     int shop_buy_price_mod;
     int shop_sell_price_mod;
 
+    /* ./ui/transaction.c */
+    int transaction_item_count;
+    int transaction_items[TRADE_ITEMS_MAX];
+    int transaction_items_count[TRADE_ITEMS_MAX];
+    int transaction_recipient_accepted;
+    int transaction_accepted;
+    char transaction_recipient_name[USERNAME_LENGTH + 1];
+    int transaction_recipient_item_count;
+    int transaction_recipient_items[TRADE_ITEMS_MAX];
+    int transaction_recipient_items_count[TRADE_ITEMS_MAX];
+    int transaction_selected_item;
+    int transaction_last_offer;
+    int transaction_offer_type;
+
+    int64_t transaction_recipient_confirm_name;
+    int transaction_confirm_item_count;
+    int transaction_confirm_items[TRADE_ITEMS_MAX];
+    int transaction_confirm_items_count[TRADE_ITEMS_MAX];
+    int transaction_recipient_confirm_item_count;
+    int transaction_recipient_confirm_items[TRADE_ITEMS_MAX];
+    int transaction_recipient_confirm_items_count[TRADE_ITEMS_MAX];
+    int transaction_confirm_accepted;
+
     /* ./ui/trade.c */
     int8_t show_dialog_trade;
-    int trade_item_count;
-    int trade_items[TRADE_ITEMS_MAX];
-    int trade_items_count[TRADE_ITEMS_MAX];
-    int trade_recipient_accepted;
-    int trade_accepted;
-    char trade_recipient_name[USERNAME_LENGTH + 1];
-    int trade_recipient_item_count;
-    int trade_recipient_items[TRADE_ITEMS_MAX];
-    int trade_recipient_items_count[TRADE_ITEMS_MAX];
-    int trade_selected_item;
-    int trade_last_offer;
-    int trade_offer_type;
-
     int8_t show_dialog_trade_confirm;
-    int64_t trade_recipient_confirm_hash;
-    int trade_confirm_item_count;
-    int trade_confirm_items[TRADE_ITEMS_MAX];
-    int trade_confirm_items_count[TRADE_ITEMS_MAX];
-    int trade_recipient_confirm_item_count;
-    int trade_recipient_confirm_items[TRADE_ITEMS_MAX];
-    int trade_recipient_confirm_items_count[TRADE_ITEMS_MAX];
-    int trade_confirm_accepted;
 
     /* ./ui/duel.c */
     int8_t show_dialog_duel;
-    int duel_option_retreat;
-    int duel_option_magic;
-    int duel_option_prayer;
-    int duel_option_weapons;
-    int duel_item_count;
-    int duel_items[DUEL_ITEMS_MAX];
-    int duel_items_count[DUEL_ITEMS_MAX];
-    int duel_opponent_accepted;
-    int duel_accepted;
-    char duel_opponent_name[USERNAME_LENGTH + 1];
-    int duel_opponent_item_count;
-    int duel_opponent_items[DUEL_ITEMS_MAX];
-    int duel_opponent_items_count[DUEL_ITEMS_MAX];
+    int8_t show_dialog_duel_confirm;
 
-    int show_dialog_duel_confirm;
-    int64_t duel_opponent_confirm_hash;
-    int duel_confirm_item_count;
-    int duel_confirm_items[DUEL_ITEMS_MAX];
-    int duel_confirm_items_count[DUEL_ITEMS_MAX];
-    int duel_opponent_confirm_item_count;
-    int duel_opponent_confirm_items[DUEL_ITEMS_MAX];
-    int duel_opponent_confirm_items_count[DUEL_ITEMS_MAX];
-    int duel_confirm_accepted;
+    int8_t duel_option_retreat;
+    int8_t duel_option_magic;
+    int8_t duel_option_prayer;
+    int8_t duel_option_weapons;
 
     /* ./ui/offer-x.c */
     int show_dialog_offer_x;

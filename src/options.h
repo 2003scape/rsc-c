@@ -51,8 +51,6 @@ typedef struct Options {
     char *server;
     int port;
 
-    // TODO RSA
-
     /* disable registration and load sounds, P2P landscape and items (requires
      * restart) */
     int members;
@@ -102,8 +100,8 @@ typedef struct Options {
     /* adds a menu with different directions to face to the minimap compass */
     int compass_menu;
 
-    /* adds right click menus to trades */
-    int trade_menus;
+    /* adds right click menus to trades and duels */
+    int transaction_menus;
 
     /* show the remaining experience until next level in skills tab */
     int remaining_experience;
@@ -165,10 +163,6 @@ typedef struct Options {
     /* TODO: adjust input and layout for mobile-friendliness */
     // int mobile;
 
-    /* credentials if remember username/password is enabled */
-    char username[20];
-    char password[20];
-
     /* presets without UI configuration in additional options: */
     /* support account registration, password changes and recovery within the
      * client */
@@ -195,6 +189,14 @@ typedef struct Options {
 
     /* experimental thick walls support (requires restart) */
     int thick_walls;
+
+    /* credentials if remember username/password is enabled */
+    char username[20];
+    char password[20];
+
+    /* for login credential encryption on login */
+    char rsa_exponent[512];
+    char rsa_modulus[512];
 } Options;
 
 void options_new(Options *options);

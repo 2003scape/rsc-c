@@ -215,7 +215,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             } else if (strncasecmp(message + 2, "lostcon", 7) == 0) {
                 // mudclient_lost_connection(mud);
             } else if (strncasecmp(message + 2, "displayfps", 10) == 0) {
-                mud->options->fps_counter = !mud->options->fps_counter;
+                mud->options->display_fps = !mud->options->display_fps;
             } else {
                 mudclient_send_command_string(mud, message + 2);
             }
