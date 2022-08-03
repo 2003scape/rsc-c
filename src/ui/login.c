@@ -7,7 +7,7 @@ void mudclient_create_login_panels(mudclient *mud) {
     int x = mud->surface->width / 2;
     int y = 40;
 
-    if (!mud->members) {
+    if (!mud->options->members) {
         panel_add_text_centre(mud->panel_login_welcome, x, 200 + y,
                               "Click on an option", 5, 1);
 

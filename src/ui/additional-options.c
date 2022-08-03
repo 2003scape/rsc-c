@@ -45,7 +45,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     panel_new(mud->panel_connection_options, mud->surface, 10);
 
     int control = mudclient_add_option_panel_string(
-        mud->panel_connection_options, "@whi@Server: ", mud->server, 15, x, y);
+        mud->panel_connection_options, "@whi@Server: ", mud->options->server, 15, x, y);
 
     mud->connection_options[control] = &mud->options->server;
     mud->connection_option_types[control] = 0;
@@ -53,7 +53,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += 20;
 
     char formatted_digits[12] = {0};
-    sprintf(formatted_digits, "%d", mud->port);
+    sprintf(formatted_digits, "%d", mud->options->port);
 
     control = mudclient_add_option_panel_string(mud->panel_connection_options,
                                                 "@whi@Port: ", formatted_digits,
@@ -65,7 +65,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += 20;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_connection_options, "@whi@Members: ", mud->members, x, y);
+        mud->panel_connection_options, "@whi@Members: ", mud->options->members, x, y);
 
     mud->connection_options[control] = &mud->options->members;
     mud->connection_option_types[control] = 2;

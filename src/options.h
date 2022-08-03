@@ -1,6 +1,7 @@
 #ifndef _H_OPTIONS
 #define _H_OPTIONS
 
+#include <stdio.h>
 #include <string.h>
 
 #include "lib/ini.h"
@@ -44,11 +45,51 @@
      "; Format large numbers with commas\n"                                    \
      "number_commas = %d\n"                                                    \
      "; Show roofs unless inside buildings\n"                                  \
-     "show_roofs= %d\n")
+     "show_roofs = %d\n"                                                       \
+     "; Adds a menu with different directions to face to the minimap "         \
+     "compass\n"                                                               \
+     "compass_menu = %d\n"                                                     \
+     "; Adds right click menus to trades and duels\n"                          \
+     "transaction_menus = %d\n"                                                \
+     "; Show the remaining experience until next level in skills tab\n"        \
+     "remaining_experience = %d\n"                                             \
+     "; Show your total experience in the skills tab\n"                        \
+     "total_experience = %d\n"                                                 \
+     "; Show a count of inventory items on the UI\n"                           \
+     "inventory_count = %d\n"                                                  \
+     "; Condenses item amounts with K and M and add their amounts to "         \
+     "examine\n"                                                               \
+     "condense_item_amounts = %d\n"                                            \
+     "; Also draw which item a certificate is associated with\n"               \
+     "certificate_items = %d\n"                                                \
+     "; Allow inputting item amounts\n"                                        \
+     "offer_x = %d\n"                                                          \
+     "; Add another button to perform the last offer x amount\n"               \
+     "last_offer_x = %d\n"                                                     \
+     "; Display the warning dialog near the wilderness border\n"               \
+     "wilderness_warning = %d\n\n"                                               \
+                                                                               \
+     "; Add filtering to the bank\n"                                           \
+     "bank_search = %d\n"                                                      \
+     "; Adds capacity to the bank\n"                                           \
+     "bank_capacity = %d\n"                                                    \
+     "; Adds total high alchemy value to the bank\n"                           \
+     "bank_value = %d\n"                                                       \
+     "; Expand bank item grid with client height\n"                            \
+     "bank_expand = %d\n"                                                      \
+     "; Use a scrollbar instead of bank pages\n"                               \
+     "bank_scroll = %d\n"                                                      \
+     "; Adds right click menus to bank items\n"                                \
+     "bank_menus = %d\n"                                                       \
+     "; Shows the inventory along with the bank interface, given enough "      \
+     "width\n"                                                                 \
+     "bank_inventory = %d\n"                                                   \
+     "; Maintain the selected bank slot when items change position\n"          \
+     "bank_maintain_slot = %d\n")
 
 typedef struct Options {
     /* configurable options: */
-    char *server;
+    char server[16];
     int port;
 
     /* disable registration and load sounds, P2P landscape and items (requires
@@ -124,6 +165,9 @@ typedef struct Options {
     /* add another button to perform the last offer x amount */
     int last_offer_x;
 
+    /* display the warning dialog near the wilderness border */
+    int wilderness_warning;
+
     /* withdraw multiple unstackable items */
     int bank_unstackble_withdraw;
 
@@ -153,9 +197,6 @@ typedef struct Options {
 
     /* maintain the selected bank slot when items change position */
     int bank_maintain_slot;
-
-    /* display the warning dialog near the wilderness border */
-    int wilderness_warning;
 
     /* TODO: censor chat and private messages */
     // int word_filter;

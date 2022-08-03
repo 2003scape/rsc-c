@@ -419,7 +419,7 @@ typedef struct mudclient {
     int thread_sleep;
 
     // TODO move to options
-    int8_t interlace;
+    //int8_t interlace;
 
     /* used for username boxes */
     char input_text_current[INPUT_TEXT_LENGTH + 1];
@@ -461,9 +461,9 @@ typedef struct mudclient {
     int8_t settings_mouse_button_one;
     int8_t settings_sound_disabled;
 
-    int8_t members;
-    char *server;
-    int port;
+    //int8_t members;
+    //char *server;
+    //int port;
 
     PacketStream *packet_stream;
     int packet_last_read;

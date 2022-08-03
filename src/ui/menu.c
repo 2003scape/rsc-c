@@ -752,7 +752,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             mud->players[index]->server_index;
 
                         mud->menu_items_count++;
-                    } else if (mud->members) {
+                    } else if (mud->options->members) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                "Duel with");
 

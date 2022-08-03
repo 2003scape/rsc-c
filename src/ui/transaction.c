@@ -366,9 +366,9 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                        mouse_x <
                            TRANSACTION_DECLINE_X + TRANSACTION_BUTTON_WIDTH) {
                 mud->show_dialog_trade = 0;
+                mud->show_dialog_duel = 0;
 
                 packet_stream_new_packet(mud->packet_stream, decline_opcode);
-
                 packet_stream_send_packet(mud->packet_stream);
             }
 
@@ -376,8 +376,11 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
         }
     } else if (mud->mouse_button_click != 0) {
         mud->show_dialog_trade = 0;
+        mud->show_dialog_duel= 0;
+
         packet_stream_new_packet(mud->packet_stream, decline_opcode);
         packet_stream_send_packet(mud->packet_stream);
+
         mud->mouse_button_click = 0;
     }
 
@@ -656,6 +659,7 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x, int dialog
             mud->mouse_x > dialog_x + TRANSACTION_WIDTH ||
             mud->mouse_y > dialog_y + 262) {
             mud->show_dialog_trade_confirm = 0;
+            mud->show_dialog_duel_confirm = 0;
 
             /* this is accurate! */
             packet_stream_new_packet(mud->packet_stream, CLIENT_TRADE_DECLINE);
@@ -680,6 +684,7 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x, int dialog
             mud->mouse_y >= dialog_y + 238 &&
             mud->mouse_y <= dialog_y + 238 + 21) {
             mud->show_dialog_trade_confirm = 0;
+            mud->show_dialog_duel_confirm = 0;
 
             packet_stream_new_packet(mud->packet_stream,
                                      is_trade ? CLIENT_TRADE_DECLINE

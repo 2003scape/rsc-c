@@ -205,7 +205,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
     y += OPTIONS_LINE_BREAK;
 
-    if (mud->members) {
+    if (mud->options->members) {
         sprintf(settings_string, "Sound effects - %s",
                 (mud->settings_sound_disabled ? "@red@off" : "@gre@on"));
 
@@ -324,7 +324,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
     y += OPTIONS_LINE_BREAK;
 
-    if (mud->members) {
+    if (mud->options->members) {
         sprintf(settings_string, "Block duel requests: %s",
                 (!mud->settings_block_duel ? "@red@<off>" : "@gre@<on>"));
 
@@ -415,7 +415,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
         y += OPTIONS_LINE_BREAK;
 
-        if (mud->members && mud->mouse_x > x &&
+        if (mud->options->members && mud->mouse_x > x &&
             mud->mouse_x < x + OPTIONS_WIDTH && mud->mouse_y > y - 12 &&
             mud->mouse_y < y + 4 && mud->mouse_button_click == 1) {
             mud->settings_sound_disabled = !mud->settings_sound_disabled;
@@ -498,7 +498,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
         y += OPTIONS_LINE_BREAK;
 
-        if (mud->members && mud->mouse_x > x &&
+        if (mud->options->members && mud->mouse_x > x &&
             mud->mouse_x < x + OPTIONS_WIDTH && mud->mouse_y > y - 12 &&
             mud->mouse_y < y + 4 && mud->mouse_button_click == 1) {
             mud->settings_block_duel = 1 - mud->settings_block_duel;

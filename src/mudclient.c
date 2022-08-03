@@ -461,12 +461,11 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    // mud->server = "192.168.100.103";
-    mud->server = "127.0.0.1";
-    mud->port = 43594;
-    // mud->server = "162.198.202.160"; /* openrsc preservation */
-    // mud->port = 43596;
-    // mud->port = 43496; /* websockets */
+    // mud->options->server = "192.168.100.103";
+    //mud->options->server = "127.0.0.1";
+    // mud->options->server = "162.198.202.160"; /* openrsc preservation */
+    // mud->options->port = 43596;
+    // mud->options->port = 43496; /* websockets */
     mud->game_width = MUD_WIDTH;
     mud->game_height = MUD_HEIGHT;
     mud->camera_angle = 1;
@@ -477,6 +476,11 @@ void mudclient_new(mudclient *mud) {
 
     mud->options = malloc(sizeof(Options));
     options_new(mud->options);
+
+    strcpy(mud->options->server, "127.0.0.1");
+    mud->options->port = 43594;
+
+    options_save(mud->options);
 
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
@@ -717,7 +721,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #if !defined(WII) && !defined(_3DS)
     int init = SDL_INIT_VIDEO;
 
-    if (mud->members) {
+    if (mud->options->members) {
         init |= SDL_INIT_AUDIO;
     }
 
@@ -726,7 +730,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 
-    if (mud->members) {
+    if (mud->options->members) {
         SDL_AudioSpec wanted_audio;
 
         wanted_audio.freq = SAMPLE_RATE;
@@ -834,13 +838,13 @@ void mudclient_start_application(mudclient *mud, char *title) {
         if (button_down) {
             if (mouse_x >= 62 && mouse_x <= 250 && mouse_y >= 128 &&
                 mouse_y <= 230) {
-                mud->members = 0;
+                mud->options->members = 0;
 
                 mudclient_run(mud);
                 break;
             } else if (mouse_x >= 404 && mouse_x <= 576 && mouse_y >= 132 &&
                        mouse_y <= 232) {
-                mud->members = 1;
+                mud->options->members = 1;
 
                 mudclient_run(mud);
                 break;
@@ -878,7 +882,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
             gspWaitForVBlank();
 
-            mud->members = 0;
+            mud->options->members = 0;
             mudclient_run(mud);
             break;
         } else if (touch.px >= 200 && touch.py >= 38 && touch.px <= 290 &&
@@ -888,7 +892,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
             gspWaitForVBlank();
 
-            mud->members = 1;
+            mud->options->members = 1;
             mudclient_run(mud);
             break;
         }
@@ -971,7 +975,7 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         } else if (code == K_HOME) {
             mud->key_home = 1;
         } else if (code == K_F1) {
-            mud->interlace = !mud->interlace;
+            mud->options->interlace = !mud->options->interlace;
         } else if (mud->options->escape_clear && code == K_ESCAPE) {
             memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
@@ -1536,7 +1540,7 @@ void mudclient_load_game_config(mudclient *mud) {
         return;
     }
 
-    game_data_load_data(config_jag, mud->members);
+    game_data_load_data(config_jag, mud->options->members);
     free(config_jag);
 
     /*int8_t *filter_jag = mudclient_read_data_file(mud, "filter" FILTER ".jag",
@@ -1676,7 +1680,7 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 
         int8_t *animation_dat = load_data(file_name, 0, entity_jag);
 
-        if (animation_dat == NULL && mud->members) {
+        if (animation_dat == NULL && mud->options->members) {
             animation_dat = load_data(file_name, 0, entity_jag_mem);
         }
 
@@ -1734,7 +1738,7 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *entity_jag_mem = NULL;
     int8_t *index_dat_mem = NULL;
 
-    if (mud->members) {
+    if (mud->options->members) {
         entity_jag_mem = mudclient_read_data_file(mud, "entity" ENTITY ".mem",
                                                   "member graphics", 45);
 
@@ -1780,7 +1784,7 @@ void mudclient_load_entities(mudclient *mud) {
         int8_t *animation_dat = load_data(file_name, 0, entity_jag);
         int8_t *animation_index_dat = index_dat;
 
-        if (animation_dat == NULL && mud->members) {
+        if (animation_dat == NULL && mud->options->members) {
             animation_dat = load_data(file_name, 0, entity_jag_mem);
             animation_index_dat = index_dat_mem;
         }
@@ -1797,7 +1801,7 @@ void mudclient_load_entities(mudclient *mud) {
                 int8_t *a_dat = load_data(file_name, 0, entity_jag);
                 int8_t *a_index_dat = index_dat;
 
-                if (a_dat == NULL && mud->members) {
+                if (a_dat == NULL && mud->options->members) {
                     a_dat = load_data(file_name, 0, entity_jag_mem);
                     a_index_dat = index_dat_mem;
                 }
@@ -1814,7 +1818,7 @@ void mudclient_load_entities(mudclient *mud) {
                 int8_t *f_dat = load_data(file_name, 0, entity_jag);
                 int8_t *f_index_dat = index_dat;
 
-                if (f_dat == NULL && mud->members) {
+                if (f_dat == NULL && mud->options->members) {
                     f_dat = load_data(file_name, 0, entity_jag_mem);
                     f_index_dat = index_dat_mem;
                 }
@@ -1992,7 +1996,7 @@ void mudclient_load_maps(mudclient *mud) {
     mud->world->map_pack =
         mudclient_read_data_file(mud, "maps" MAPS ".jag", "map", 70);
 
-    if (mud->members) {
+    if (mud->options->members) {
         mud->world->member_map_pack = mudclient_read_data_file(
             mud, "maps" MAPS ".mem", "members map", 75);
     }
@@ -2000,7 +2004,7 @@ void mudclient_load_maps(mudclient *mud) {
     mud->world->landscape_pack =
         mudclient_read_data_file(mud, "land" MAPS ".jag", "landscape", 80);
 
-    if (mud->members) {
+    if (mud->options->members) {
         mud->world->member_landscape_pack = mudclient_read_data_file(
             mud, "land" MAPS ".mem", "members landscape", 85);
     }
@@ -2677,7 +2681,7 @@ void mudclient_start_game(mudclient *mud) {
         return;
     }
 
-    if (mud->members) {
+    if (mud->options->members) {
         mudclient_load_sounds(mud);
     }
 
@@ -4601,7 +4605,7 @@ void mudclient_draw_game(mudclient *mud) {
 
     surface_black_screen(mud->surface);
 
-    mud->surface->interlace = mud->interlace;
+    mud->surface->interlace = mud->options->interlace;
 
     /* flickering lights in dungeons */
     if (mud->last_height_offset == 3) {
@@ -4632,7 +4636,7 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance = 2300;
     }
 
-    if (mud->interlace) {
+    if (mud->options->interlace) {
         mud->scene->clip_far_3d -= 200;
         mud->scene->clip_far_2d -= 200;
         mud->scene->fog_z_distance -= 200;
@@ -5508,7 +5512,7 @@ void mudclient_run(mudclient *mud) {
 
                 if (mud->interlace_timer > 25) {
                     mud->interlace_timer = 0;
-                    mud->interlace = 1;
+                    mud->options->interlace = 1;
                 }
 
                 break;
@@ -5650,7 +5654,7 @@ void mudclient_send_logout(mudclient *mud) {
 }
 
 void mudclient_play_sound(mudclient *mud, char *name) {
-    if (!mud->members || mud->settings_sound_disabled) {
+    if (!mud->options->members || mud->settings_sound_disabled) {
         return;
     }
 
@@ -5844,15 +5848,15 @@ int main(int argc, char **argv) {
     mudclient_new(mud);
 
     if (argc > 1 && strcmp(argv[1], "members") == 0) {
-        mud->members = 1;
+        mud->options->members = 1;
     }
 
     if (argc > 2) {
-        mud->server = argv[2];
+        strcpy(mud->options->server, argv[2]);
     }
 
     if (argc > 3) {
-        mud->port = atoi(argv[3]);
+        mud->options->port = atoi(argv[3]);
     }
 
 #ifdef REVISION_177

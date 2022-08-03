@@ -4,9 +4,6 @@
 #include <string.h>
 
 #include "../mudclient.h"
-#include "../packet-stream.h"
-#include "../panel.h"
-#include "../surface.h"
 
 /* size of -> sprite */
 #define APPEARANCE_ARROW_SIZE 20

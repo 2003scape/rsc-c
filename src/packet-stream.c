@@ -81,7 +81,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     struct sockaddr_in server_addr = {0};
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(mud->port);
+    server_addr.sin_port = htons(mud->options->port);
 
 #ifdef WIN32
     WSADATA wsa_data;
@@ -92,13 +92,13 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         exit(1);
     }
 
-    ret = InetPton(AF_INET, mud->server, &server_addr.sin_addr);
+    ret = InetPton(AF_INET, mud->options->server, &server_addr.sin_addr);
 #else
-    ret = inet_aton(mud->server, &server_addr.sin_addr);
+    ret = inet_aton(mud->options->server, &server_addr.sin_addr);
 #endif
 
     if (ret == 0) {
-        fprintf(stderr, "inet_aton(%s) error: %d\n", mud->server, ret);
+        fprintf(stderr, "inet_aton(%s) error: %d\n", mud->options->server, ret);
         exit(1);
     }
 

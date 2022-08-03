@@ -70,17 +70,8 @@ void mudclient_draw_duel(mudclient *mud) {
     surface_draw_box_alpha(mud->surface, dialog_x + 8, dialog_y + 215, 197, 43,
                            GREY_D0, 160);
 
-    surface_draw_line_horizontal(mud->surface, dialog_x + 8, dialog_y + 215,
-                                 197, BLACK);
-
-    surface_draw_line_horizontal(mud->surface, dialog_x + 8, dialog_y + 257,
-                                 197, BLACK);
-
-    surface_draw_line_vertical(mud->surface, dialog_x + 8, dialog_y + 215, 43,
-                               BLACK);
-
-    surface_draw_line_vertical(mud->surface, dialog_x + 204, dialog_y + 215, 43,
-                               BLACK);
+    surface_draw_box_edge(mud->surface, dialog_x + 8, dialog_y + 215, 197, 43,
+                          BLACK);
 
     surface_draw_string(mud->surface, "Duel Options", dialog_x + 9,
                         dialog_y + 212, 4, WHITE);

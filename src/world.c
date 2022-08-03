@@ -2104,11 +2104,11 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
     int vertex_y2 = y2 * TILE_SIZE;
 
     if (thick_walls) {
-        int delta_x = (y1 - y2) * 32;
+        int delta_x = (y1 - y2) * 8;
         vertex_x1 += delta_x;
         vertex_x2 += delta_x;
 
-        int delta_y = (x1 - x2) * 32;
+        int delta_y = (x1 - x2) * 8;
         vertex_y1 -= delta_y;
         vertex_y2 -= delta_y;
     }
@@ -2146,11 +2146,11 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         int parallel_vertex_x2 = x2 * TILE_SIZE;
         int parallel_vertex_y2 = y2 * TILE_SIZE;
 
-        int delta_x = (y1 - y2) * 32;
+        int delta_x = (y1 - y2) * 8;
         parallel_vertex_x1 -= delta_x;
         parallel_vertex_x2 -= delta_x;
 
-        int delta_y = (x1 - x2) * 32;
+        int delta_y = (x1 - x2) * 8;
         parallel_vertex_y1 += delta_y;
         parallel_vertex_y2 += delta_y;
 

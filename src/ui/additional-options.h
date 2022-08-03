@@ -2,7 +2,6 @@
 #define _H_ADDITIONAL_OPTIONS
 
 #include "../mudclient.h"
-#include "../surface.h"
 
 #define ADDITIONAL_OPTIONS_WIDTH 348
 #define ADDITIONAL_OPTIONS_HEIGHT 218
