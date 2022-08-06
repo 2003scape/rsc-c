@@ -2133,7 +2133,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
                                            thick_walls ? COLOUR_TRANSPARENT : back);
 
     if (game_data_wall_object_invisible[wall_object_id] == 5) {
-        game_model->face_tag[wall_face] = 30000 + wall_object_id;
+        game_model->face_tag[wall_face] = WALL_FACE_TAG + wall_object_id;
     } else {
         game_model->face_tag[wall_face] = 0;
     }
@@ -2174,7 +2174,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
             game_model, 4, parallel_vertices, COLOUR_TRANSPARENT, back);
 
         if (game_data_wall_object_invisible[wall_object_id] == 5) {
-            game_model->face_tag[parallel_wall_face] = 30000 + wall_object_id;
+            game_model->face_tag[parallel_wall_face] = WALL_FACE_TAG + wall_object_id;
         } else {
             game_model->face_tag[parallel_wall_face] = 0;
         }
@@ -2185,8 +2185,8 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         top_vertices[2] = parallel_vertices[2];
         top_vertices[3] = vertices[2];
 
-        int top_wall_face =
-            game_model_create_face(game_model, 4, top_vertices, -7400, -7400);
+        //int top_wall_face =
+        game_model_create_face(game_model, 4, top_vertices, -7400, -7400);
     }
 #endif
 }
@@ -2334,6 +2334,10 @@ void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
     if (world->terrain_height_local[x2][y2] < PLANE_HEIGHT) {
         world->terrain_height_local[x2][y2] += PLANE_HEIGHT + height;
     }
+}
+
+int world_is_under_roof(World *world, int x, int y) {
+    return world->object_adjacency[x / 128][y / 128] & 128;
 }
 
 #ifdef RENDER_GL

@@ -426,7 +426,7 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 }
 #endif
 
-int test_x = 0;
+int test_x = 1;
 int test_y = 0;
 // float test_x = 37;
 // float test_y = 77;
@@ -461,11 +461,10 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    // mud->options->server = "192.168.100.103";
-    //mud->options->server = "127.0.0.1";
-    // mud->options->server = "162.198.202.160"; /* openrsc preservation */
-    // mud->options->port = 43596;
-    // mud->options->port = 43496; /* websockets */
+    // mud->options->server = "127.0.0.1";
+    //  mud->options->server = "162.198.202.160"; /* openrsc preservation */
+    //  mud->options->port = 43596;
+    //  mud->options->port = 43496; /* websockets */
     mud->game_width = MUD_WIDTH;
     mud->game_height = MUD_HEIGHT;
     mud->camera_angle = 1;
@@ -480,7 +479,9 @@ void mudclient_new(mudclient *mud) {
     strcpy(mud->options->server, "127.0.0.1");
     mud->options->port = 43594;
 
-    options_save(mud->options);
+    options_load(mud->options);
+
+    // options_save(mud->options);
 
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
@@ -515,10 +516,10 @@ void mudclient_new(mudclient *mud) {
     mud->bank_selected_item_slot = -1;
     mud->bank_selected_item = -2;
 
-    //mud->show_additional_options = 1;
-    //mud->show_dialog_trade = 1;
-    //mud->show_dialog_duel = 1;
-    //mud->show_dialog_duel_confirm = 1;
+    // mud->show_additional_options = 1;
+    // mud->show_dialog_trade = 1;
+    // mud->show_dialog_duel = 1;
+    // mud->show_dialog_duel_confirm = 1;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -976,6 +977,16 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             mud->key_home = 1;
         } else if (code == K_F1) {
             mud->options->interlace = !mud->options->interlace;
+
+            for (int i = 0; i < mud->panel_display_options->control_count;
+                 i++) {
+                if ((int *)mud->display_options[i] ==
+                    &mud->options->interlace) {
+                    panel_toggle_checkbox(mud->panel_display_options, i,
+                                          mud->options->interlace);
+                    break;
+                }
+            }
         } else if (mud->options->escape_clear && code == K_ESCAPE) {
             memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
@@ -1068,8 +1079,9 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             int filtered_length = 0;
             char digits_suffix = '\0';
             int has_decimal = 0;
+            int digits_length = strlen(mud->input_digits_current);
 
-            for (int i = 0; i < strlen(mud->input_digits_current); i++) {
+            for (int i = 0; i < digits_length; i++) {
                 char digit_char = mud->input_digits_current[i];
 
                 if (isdigit(digit_char)) {
@@ -2561,13 +2573,13 @@ void mudclient_update_fov(mudclient *mud) {
         mud->scene->gl_fov = glm_rad(mud->options->field_of_view / 10.0f);
 
         int view_distance =
-            roundf((-254.452344f * pow(mud->scene->gl_fov, 3)) +
-                   (1142.234460f * pow(mud->scene->gl_fov, 2)) -
-                   (1901.194134f * mud->scene->gl_fov) + 1318.230265f);
+            round((-254.452344 * pow(mud->scene->gl_fov, 3)) +
+                  (1142.234460 * pow(mud->scene->gl_fov, 2)) -
+                  (1901.194134 * mud->scene->gl_fov) + 1318.230265);
 
         mud->scene->view_distance =
-            roundf((float)mud->game_height *
-                   ((float)view_distance / (float)MUD_HEIGHT));
+            round((float)mud->scene->gl_height *
+                  ((float)view_distance / (float)(MUD_HEIGHT - 12)));
     } else {
         float scaled_scene_height =
             (float)(mud->scene->gl_height - 1) / 1000.0f;
@@ -3646,6 +3658,10 @@ void mudclient_handle_inputs(mudclient *mud) {
         mud->mouse_action_timeout = 0;
         mudclient_handle_login_screen_input(mud);
     } else if (mud->logged_in == 1) {
+        if (mud->show_additional_options) {
+            mudclient_handle_additional_options_input(mud);
+        }
+
         mud->mouse_action_timeout++;
 
 #if defined(RENDER_GL) && !defined(RENDER_SW)
@@ -3807,6 +3823,22 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
     }
 }
 
+int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
+                               int animation_index) {
+#ifdef RENDER_GL
+    /* lmao sorry */
+    return (mud->options->show_roofs &&
+            (animation_index == ANIMATION_INDEX_HEAD ||
+             animation_index == ANIMATION_INDEX_HEAD_OVERLAY) &&
+            !world_is_under_roof(mud->world, mud->local_player->current_x,
+                                 mud->local_player->current_y) &&
+            world_is_under_roof(mud->world, character->current_x,
+                                character->current_y));
+#else
+    return 0;
+#endif
+}
+
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int skew_x, int ty, float depth_top,
                            float depth_bottom) {
@@ -3858,6 +3890,10 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         int aimation_id = player->equipped_item[animation_index] - 1;
 
         if (aimation_id < 0) {
+            continue;
+        }
+
+        if (mudclient_should_chop_head(mud, player, animation_index)) {
             continue;
         }
 
@@ -3963,10 +3999,11 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     float damage_depth = 0.0f;
 
 #ifdef RENDER_GL
-    damage_depth = ((depth_bottom + depth_top) / 2) - layer_depth;
+    damage_depth = ((depth_bottom + depth_top) / 2) - (layer_depth * 1.25f);
 #endif
 
-    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0, damage_depth);
+    mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
+                                    damage_depth);
 
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
@@ -4044,6 +4081,10 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
         int animation_id = game_data_npc_sprite[npc->npc_id][animation_index];
 
         if (animation_id < 0) {
+            continue;
+        }
+
+        if (mudclient_should_chop_head(mud, npc, animation_index)) {
             continue;
         }
 
@@ -4136,7 +4177,9 @@ void mudclient_draw_ui(mudclient *mud) {
         mud->menu_items_count = 0;
     }
 
-    if (mud->show_dialog_confirm) {
+    if (mud->show_additional_options) {
+        mudclient_draw_additional_options(mud);
+    } else if (mud->show_dialog_confirm) {
         mudclient_draw_confirm(mud);
     } else if (mud->logout_timeout != 0) {
         mudclient_draw_logout(mud);
@@ -4421,7 +4464,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
             int elevation = -world_get_elevation(mud->world, x, y);
 
             int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation,
-                                             y, 145, 220, i + 10000);
+                                             y, 145, 220, i + PLAYER_FACE_TAG);
 
             mud->scene_sprite_count++;
 
@@ -4494,10 +4537,10 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int elevation = -world_get_elevation(mud->world, x, y);
 
         // TODO put this in a function
-        int sprite_id =
-            scene_add_sprite(mud->scene, 20000 + i, x, elevation, y,
-                             game_data_npc_width[npc->npc_id],
-                             game_data_npc_height[npc->npc_id], i + 30000);
+        int sprite_id = scene_add_sprite(mud->scene, 20000 + i, x, elevation, y,
+                                         game_data_npc_width[npc->npc_id],
+                                         game_data_npc_height[npc->npc_id],
+                                         i + NPC_FACE_TAG);
 
         mud->scene_sprite_count++;
 
@@ -4512,12 +4555,12 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int x = mud->ground_item_x[i] * MAGIC_LOC + 64;
         int y = mud->ground_item_y[i] * MAGIC_LOC + 64;
 
-        scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
+        /*scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
                          -world_get_elevation(mud->world, x, y) -
                              mud->ground_item_z[i],
-                         y, 96, 64, i + 20000);
+                         y, 96, 64, i + GROUND_ITEM_FACE_TAG);
 
-        mud->scene_sprite_count++;
+        mud->scene_sprite_count++;*/
     }
 
     for (int i = 0; i < mud->teleport_bubble_count; i++) {
@@ -4577,21 +4620,19 @@ void mudclient_draw_game(mudclient *mud) {
             mud->fog_of_war = 1;
 
             if (mud->last_height_offset == 0 &&
-                (mud->world
-                     ->object_adjacency[mud->local_player->current_x / 128]
-                                       [mud->local_player->current_y / 128] &
-                 128) == 0) {
+                !world_is_under_roof(mud->world, mud->local_player->current_x,
+                                     mud->local_player->current_y)) {
                 scene_add_model(
                     mud->scene,
                     mud->world->roof_models[mud->last_height_offset][i]);
 
                 // TODO redundant check here i think
-                if (mud->last_height_offset == 0) {
-                    scene_add_model(mud->scene, mud->world->wall_models[1][i]);
-                    scene_add_model(mud->scene, mud->world->roof_models[1][i]);
-                    scene_add_model(mud->scene, mud->world->wall_models[2][i]);
-                    scene_add_model(mud->scene, mud->world->roof_models[2][i]);
-                }
+                // if (mud->last_height_offset == 0) {
+                scene_add_model(mud->scene, mud->world->wall_models[1][i]);
+                scene_add_model(mud->scene, mud->world->roof_models[1][i]);
+                scene_add_model(mud->scene, mud->world->wall_models[2][i]);
+                scene_add_model(mud->scene, mud->world->roof_models[2][i]);
+                //}
 
                 mud->fog_of_war = 0;
             }
@@ -4668,7 +4709,7 @@ void mudclient_draw_game(mudclient *mud) {
     }
 
     if (mud->options->display_fps) {
-        int offset_x = mud->is_in_wild ? 70 : 0;
+        int offset_x = mud->is_in_wilderness ? 70 : 0;
 
         char fps[17] = {0};
         sprintf(fps, "Fps: %d", mud->fps);
@@ -4696,16 +4737,11 @@ void mudclient_draw_game(mudclient *mud) {
 #endif
 
     if (!mud->loading_area) {
-        int wilderness_depth =
-            2203 - (mud->local_region_y + mud->plane_height + mud->region_y);
+        int wilderness_depth = mudclient_get_wilderness_depth(mud);
 
-        if (mud->local_region_x + mud->plane_width + mud->region_x >= 2640) {
-            wilderness_depth = -50;
-        }
+        mud->is_in_wilderness = wilderness_depth > 0;
 
-        mud->is_in_wild = wilderness_depth > 0;
-
-        if (mud->is_in_wild) {
+        if (mud->is_in_wilderness) {
             surface_draw_sprite_from3(mud->surface, mud->surface->width - 59,
                                       mud->surface->height - 68,
                                       mud->sprite_media + 13);
@@ -4854,7 +4890,7 @@ void mudclient_on_resize(mudclient *mud) {
         // printf("%f\n", mud->scene->gl_fov);
 #endif
 
-        printf("height %d\n", mud->game_height);
+        // printf("height %d\n", mud->game_height);
     }
 
     mudclient_resize(mud);
@@ -5346,6 +5382,8 @@ void mudclient_poll_events(mudclient *mud) {
                 test_yaw -= 1;
             }
 
+            printf("%d %d\n", test_x, test_y);
+
             // printf("vd=%d\n", mud->scene->view_distance);
 
             break;
@@ -5806,12 +5844,12 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
 }
 
 int mudclient_is_ui_scaled(mudclient *mud) {
-#ifdef RENDER_SW
-    return 0;
-#endif
-
+#ifdef RENDER_GL
     return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) &&
            mud->game_height >= (MUD_HEIGHT * 2);
+#else
+    return 0;
+#endif
 }
 
 void mudclient_format_number_commas(mudclient *mud, int number, char *dest) {
@@ -5829,6 +5867,17 @@ void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest) {
     } else {
         mudclient_format_number_commas(mud, item_amount, dest);
     }
+}
+
+int mudclient_get_wilderness_depth(mudclient *mud) {
+    int wilderness_depth =
+        2203 - (mud->local_region_y + mud->plane_height + mud->region_y);
+
+    if (mud->local_region_x + mud->plane_width + mud->region_x >= 2640) {
+        wilderness_depth = -50;
+    }
+
+    return wilderness_depth;
 }
 
 int main(int argc, char **argv) {

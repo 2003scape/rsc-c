@@ -67,9 +67,7 @@
 
 typedef struct Surface Surface;
 
-#include "colours.h"
 #include "mudclient.h"
-#include "utility.h"
 
 extern int an_int_346;
 extern int an_int_347;

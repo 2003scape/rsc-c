@@ -33,6 +33,13 @@ int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
 }
 
 void mudclient_create_options_panel(mudclient *mud) {
+    for (int i = 0; i < 50; i++) {
+        mud->connection_option_types[i] = -1;
+        mud->control_option_types[i] = -1;
+        mud->display_option_types[i] = -1;
+        mud->bank_option_types[i] = -1;
+    }
+
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
     int ui_y = mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
     int x = ui_x + 4;
@@ -42,10 +49,11 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     /* connection */
     mud->panel_connection_options = malloc(sizeof(Panel));
-    panel_new(mud->panel_connection_options, mud->surface, 10);
+    panel_new(mud->panel_connection_options, mud->surface, 50);
 
     int control = mudclient_add_option_panel_string(
-        mud->panel_connection_options, "@whi@Server: ", mud->options->server, 15, x, y);
+        mud->panel_connection_options, "@whi@Server: ", mud->options->server,
+        15, x, y);
 
     mud->connection_options[control] = &mud->options->server;
     mud->connection_option_types[control] = 0;
@@ -65,7 +73,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += 20;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_connection_options, "@whi@Members: ", mud->options->members, x, y);
+        mud->panel_connection_options, "@whi@Members: ", mud->options->members,
+        x, y);
 
     mud->connection_options[control] = &mud->options->members;
     mud->connection_option_types[control] = 2;
@@ -99,10 +108,9 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     /* controls */
     y = ui_y + 20 + 24 + 4;
-    y += 30;
 
     mud->panel_control_options = malloc(sizeof(Panel));
-    panel_new(mud->panel_control_options, mud->surface, 10);
+    panel_new(mud->panel_control_options, mud->surface, 50);
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_control_options,
@@ -147,7 +155,45 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->control_options[control] = &mud->options->option_numbers;
     mud->control_option_types[control] = 2;
 
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_control_options,
+        "@whi@Compass menu: ", mud->options->compass_menu, x, y);
+
+    mud->control_options[control] = &mud->options->compass_menu;
+    mud->control_option_types[control] = 2;
+
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_control_options,
+        "@whi@Transaction menus: ", mud->options->transaction_menus, x, y);
+
+    mud->control_options[control] = &mud->options->transaction_menus;
+    mud->control_option_types[control] = 2;
+
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_control_options, "@whi@Offer-X: ", mud->options->offer_x, x,
+        y);
+
+    mud->control_options[control] = &mud->options->offer_x;
+    mud->control_option_types[control] = 2;
+
+    x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
+    y = ui_y + 20 + 24 + 4;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_control_options,
+        "@whi@Last Offer-X: ", mud->options->last_offer_x, x, y);
+
+    mud->control_options[control] = &mud->options->last_offer_x;
+    mud->control_option_types[control] = 2;
+
     /* display */
+    x = ui_x + 4;
     y = ui_y + 20 + 24 + 4;
 
     mud->panel_display_options = malloc(sizeof(Panel));
@@ -193,15 +239,6 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
-        "@whi@Number commas: ", mud->options->number_commas, x, y);
-
-    mud->display_options[control] = &mud->options->number_commas;
-    mud->display_option_types[control] = 2;
-
-    y += 20;
-
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_display_options,
         "@whi@Show roofs: ", mud->options->show_roofs, x, y);
 
     mud->display_options[control] = &mud->options->show_roofs;
@@ -211,22 +248,12 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
-        "@whi@Compass menu: ", mud->options->compass_menu, x, y);
+        "@whi@Number commas: ", mud->options->number_commas, x, y);
 
-    mud->display_options[control] = &mud->options->compass_menu;
+    mud->display_options[control] = &mud->options->number_commas;
     mud->display_option_types[control] = 2;
 
     y += 20;
-
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_display_options,
-        "@whi@Transaction menus: ", mud->options->transaction_menus, x, y);
-
-    mud->display_options[control] = &mud->options->transaction_menus;
-    mud->display_option_types[control] = 2;
-
-    x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
-    y = ui_y + 20 + 24 + 4;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -244,7 +271,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->total_experience;
     mud->display_option_types[control] = 2;
 
-    y += 20;
+    x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
+    y = ui_y + 20 + 24 + 4;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -274,24 +302,6 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += 20;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_display_options, "@whi@Offer-X: ", mud->options->offer_x, x,
-        y);
-
-    mud->display_options[control] = &mud->options->offer_x;
-    mud->display_option_types[control] = 2;
-
-    y += 20;
-
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_display_options,
-        "@whi@Last Offer-X: ", mud->options->last_offer_x, x, y);
-
-    mud->display_options[control] = &mud->options->last_offer_x;
-    mud->display_option_types[control] = 2;
-
-    y += 20;
-
-    control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
         "@whi@Wilderness warning: ", mud->options->wilderness_warning, x, y);
 
@@ -307,7 +317,8 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_bank_options,
-        "@whi@Always multi-withdraw: ", mud->options->bank_unstackble_withdraw, x, y);
+        "@whi@Always multi-withdraw: ", mud->options->bank_unstackble_withdraw,
+        x, y);
 
     mud->bank_options[control] = &mud->options->bank_unstackble_withdraw;
     mud->bank_option_types[control] = 2;
@@ -369,8 +380,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += 20;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_bank_options,
-        "@whi@Bank menus: ", mud->options->bank_menus, x, y);
+        mud->panel_bank_options, "@whi@Bank menus: ", mud->options->bank_menus,
+        x, y);
 
     mud->bank_options[control] = &mud->options->bank_menus;
     mud->bank_option_types[control] = 2;
@@ -398,17 +409,34 @@ void mudclient_create_options_panel(mudclient *mud) {
 Panel *mudclient_get_active_option_panel(mudclient *mud) {
     Panel *panel = NULL;
 
-    if (mud->options_tab == 0) {
+    if (mud->options_tab == ADDITIONAL_OPTIONS_CONNECTION) {
         panel = mud->panel_connection_options;
-    } else if (mud->options_tab == 1) {
+    } else if (mud->options_tab == ADDITIONAL_OPTIONS_CONTROL) {
         panel = mud->panel_control_options;
-    } else if (mud->options_tab == 2) {
+    } else if (mud->options_tab == ADDITIONAL_OPTIONS_DISPLAY) {
         panel = mud->panel_display_options;
-    } else if (mud->options_tab == 3) {
+    } else if (mud->options_tab == ADDITIONAL_OPTIONS_BANK) {
         panel = mud->panel_bank_options;
     }
 
     return panel;
+}
+
+void mudclient_get_active_options(mudclient *mud, void ***options,
+                                  int **option_types) {
+    if (mud->options_tab == ADDITIONAL_OPTIONS_CONNECTION) {
+        *options = mud->connection_options;
+        *option_types = mud->connection_option_types;
+    } else if (mud->options_tab == ADDITIONAL_OPTIONS_CONTROL) {
+        *options = mud->control_options;
+        *option_types = mud->control_option_types;
+    } else if (mud->options_tab == ADDITIONAL_OPTIONS_DISPLAY) {
+        *options = mud->display_options;
+        *option_types = mud->display_option_types;
+    } else if (mud->options_tab == ADDITIONAL_OPTIONS_BANK) {
+        *options = mud->bank_options;
+        *option_types = mud->bank_option_types;
+    }
 }
 
 void mudclient_draw_additional_options(mudclient *mud) {
@@ -450,9 +478,18 @@ void mudclient_draw_additional_options(mudclient *mud) {
     surface_draw_string(mud->surface, "Reset to: default / vanilla", ui_x + 4,
                         ui_y + ADDITIONAL_OPTIONS_HEIGHT - 5, 1, WHITE);
 
+    text_colour = WHITE;
+
+    if (mud->mouse_x > ui_x + ADDITIONAL_OPTIONS_WIDTH - 90 &&
+        mud->mouse_y >= ui_y + ADDITIONAL_OPTIONS_HEIGHT - 12 &&
+        mud->mouse_x < ui_x + ADDITIONAL_OPTIONS_WIDTH &&
+        mud->mouse_y < ui_y + ADDITIONAL_OPTIONS_HEIGHT) {
+        text_colour = RED;
+    }
+
     surface_draw_string(mud->surface, "Save and close",
-                        ui_x + ADDITIONAL_OPTIONS_WIDTH - 88,
-                        ui_y + ADDITIONAL_OPTIONS_HEIGHT - 5, 1, WHITE);
+                        ui_x + ADDITIONAL_OPTIONS_WIDTH - 90,
+                        ui_y + ADDITIONAL_OPTIONS_HEIGHT - 5, 1, text_colour);
 
     Panel *panel = mudclient_get_active_option_panel(mud);
 
@@ -467,17 +504,6 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
     int ui_y = mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
 
-    if (mud->last_mouse_button_down == 1) {
-        /* tabs */
-        if (mud->mouse_x >= ui_x &&
-            mud->mouse_x <= ui_x + ADDITIONAL_OPTIONS_WIDTH &&
-            mud->mouse_y >= ui_y + 12 &&
-            mud->mouse_y <= ui_y + 12 + OPTIONS_TAB_HEIGHT) {
-            mud->options_tab =
-                (mud->mouse_x - ui_x) / (ADDITIONAL_OPTIONS_WIDTH / 4);
-        }
-    }
-
     Panel *panel = mudclient_get_active_option_panel(mud);
 
     if (panel != NULL) {
@@ -485,4 +511,49 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
                            mud->last_mouse_button_down, mud->mouse_button_down,
                            mud->mouse_scroll_delta);
     }
+
+    if (mud->last_mouse_button_down == 1) {
+        /* close window */
+        if (mud->mouse_x > ui_x + ADDITIONAL_OPTIONS_WIDTH - 88 &&
+            mud->mouse_y >= ui_y &&
+            mud->mouse_x < ui_x + ADDITIONAL_OPTIONS_WIDTH &&
+            mud->mouse_y < ui_y + 12) {
+            mud->show_additional_options = 0;
+        }
+
+        /* tabs */
+        if (mud->mouse_x >= ui_x &&
+            mud->mouse_x < ui_x + ADDITIONAL_OPTIONS_WIDTH &&
+            mud->mouse_y >= ui_y + 12 &&
+            mud->mouse_y <= ui_y + 12 + OPTIONS_TAB_HEIGHT) {
+            mud->options_tab =
+                (mud->mouse_x - ui_x) / (ADDITIONAL_OPTIONS_WIDTH / 4);
+        }
+
+        /* save and close */
+        if (mud->mouse_x > ui_x + ADDITIONAL_OPTIONS_WIDTH - 90 &&
+            mud->mouse_y >= ui_y + ADDITIONAL_OPTIONS_HEIGHT - 12 &&
+            mud->mouse_x < ui_x + ADDITIONAL_OPTIONS_WIDTH &&
+            mud->mouse_y < ui_y + ADDITIONAL_OPTIONS_HEIGHT) {
+            options_save(mud->options);
+            mud->show_additional_options = 0;
+        }
+
+        if (panel != NULL) {
+            // printf("\n---\n");
+
+            void **options = NULL;
+            int *option_types = NULL;
+
+            mudclient_get_active_options(mud, &options, &option_types);
+
+            for (int i = 0; i < panel->control_count; i++) {
+                if (option_types[i] == 2) {
+                    *(int *)options[i] = panel_is_activated(panel, i);
+                }
+            }
+        }
+    }
+
+    mud->last_mouse_button_down = 0;
 }

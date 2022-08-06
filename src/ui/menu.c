@@ -615,13 +615,63 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
     }
 }
 
-void mudclient_create_right_click_menu(mudclient *mud) {
-    int wilderness_depth =
-        2203 - (mud->local_region_y + mud->plane_height + mud->region_y);
+void mudclient_menu_add_ground_item(mudclient *mud, int index) {
+    if (mud->selected_spell >= 0) {
+        if (game_data_spell_type[mud->selected_spell] == 3) {
+            sprintf(mud->menu_item_text1[mud->menu_items_count], "Cast %s on",
+                    game_data_spell_name[mud->selected_spell]);
 
-    if (mud->local_region_x + mud->plane_width + mud->region_x >= 2640) {
-        wilderness_depth = -50;
+            sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
+                    game_data_item_name[mud->ground_item_id[index]]);
+
+            mud->menu_type[mud->menu_items_count] = MENU_CAST_GROUNDITEM;
+            mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
+            mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
+            mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
+            mud->menu_source_index[mud->menu_items_count] = mud->selected_spell;
+            mud->menu_items_count++;
+        }
+    } else if (mud->selected_item_inventory_index >= 0) {
+        sprintf(mud->menu_item_text1[mud->menu_items_count], "Use %s with",
+                mud->selected_item_name);
+
+        sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
+                game_data_item_name[mud->ground_item_id[index]]);
+
+        mud->menu_type[mud->menu_items_count] = MENU_USEWITH_GROUNDITEM;
+        mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
+        mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
+        mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
+
+        mud->menu_source_index[mud->menu_items_count] =
+            mud->selected_item_inventory_index;
+
+        mud->menu_items_count++;
+    } else {
+        strcpy(mud->menu_item_text1[mud->menu_items_count], "Take");
+
+        sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
+                game_data_item_name[mud->ground_item_id[index]]);
+
+        mud->menu_type[mud->menu_items_count] = MENU_GROUNDITEM_TAKE;
+        mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
+        mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
+        mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
+        mud->menu_items_count++;
+
+        strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
+
+        sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
+                game_data_item_name[mud->ground_item_id[index]]);
+
+        mud->menu_type[mud->menu_items_count] = MENU_GROUNDITEM_EXAMINE;
+        mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
+        mud->menu_items_count++;
     }
+}
+
+void mudclient_create_right_click_menu(mudclient *mud) {
+    int wilderness_depth = mudclient_get_wilderness_depth(mud);
 
     int selected_face = -1;
 
@@ -631,6 +681,10 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
     for (int i = 0; i < mud->wall_object_count; i++) {
         mud->wall_object_already_in_menu[i] = 0;
+    }
+
+    for (int i = 0; i < mud->ground_item_count; i++) {
+        mud->ground_item_already_in_menu[i] = 0;
     }
 
     int picked_count = mud->scene->mouse_picked_count;
@@ -802,94 +856,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     mud->menu_items_count++;
                 }
             } else if (type == 2) {
-                if (mud->selected_spell >= 0) {
-                    if (game_data_spell_type[mud->selected_spell] == 3) {
-                        sprintf(mud->menu_item_text1[mud->menu_items_count],
-                                "Cast %s on",
-                                game_data_spell_name[mud->selected_spell]);
-
-                        sprintf(
-                            mud->menu_item_text2[mud->menu_items_count],
-                            "@lre@%s",
-                            game_data_item_name[mud->ground_item_id[index]]);
-
-                        mud->menu_type[mud->menu_items_count] =
-                            MENU_CAST_GROUNDITEM;
-
-                        mud->menu_item_x[mud->menu_items_count] =
-                            mud->ground_item_x[index];
-
-                        mud->menu_item_y[mud->menu_items_count] =
-                            mud->ground_item_y[index];
-
-                        mud->menu_index[mud->menu_items_count] =
-                            mud->ground_item_id[index];
-
-                        mud->menu_source_index[mud->menu_items_count] =
-                            mud->selected_spell;
-
-                        mud->menu_items_count++;
-                    }
-                } else if (mud->selected_item_inventory_index >= 0) {
-                    sprintf(mud->menu_item_text1[mud->menu_items_count],
-                            "Use %s with", mud->selected_item_name);
-
-                    sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@lre@%s",
-                            game_data_item_name[mud->ground_item_id[index]]);
-
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_USEWITH_GROUNDITEM;
-
-                    mud->menu_item_x[mud->menu_items_count] =
-                        mud->ground_item_x[index];
-
-                    mud->menu_item_y[mud->menu_items_count] =
-                        mud->ground_item_y[index];
-
-                    mud->menu_index[mud->menu_items_count] =
-                        mud->ground_item_id[index];
-
-                    mud->menu_source_index[mud->menu_items_count] =
-                        mud->selected_item_inventory_index;
-
-                    mud->menu_items_count++;
-                } else {
-                    strcpy(mud->menu_item_text1[mud->menu_items_count], "Take");
-
-                    sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@lre@%s",
-                            game_data_item_name[mud->ground_item_id[index]]);
-
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_GROUNDITEM_TAKE;
-
-                    mud->menu_item_x[mud->menu_items_count] =
-                        mud->ground_item_x[index];
-
-                    mud->menu_item_y[mud->menu_items_count] =
-                        mud->ground_item_y[index];
-
-                    mud->menu_index[mud->menu_items_count] =
-                        mud->ground_item_id[index];
-
-                    mud->menu_items_count++;
-
-                    strcpy(mud->menu_item_text1[mud->menu_items_count],
-                           "Examine");
-
-                    sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@lre@%s",
-                            game_data_item_name[mud->ground_item_id[index]]);
-
-                    mud->menu_type[mud->menu_items_count] =
-                        MENU_GROUNDITEM_EXAMINE;
-
-                    mud->menu_index[mud->menu_items_count] =
-                        mud->ground_item_id[index];
-
-                    mud->menu_items_count++;
-                }
+                mudclient_menu_add_ground_item(mud, index);
             } else if (type == 3) {
                 char level_text[26] = {0};
                 int level_difference = -1;
@@ -1052,6 +1019,13 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                     mud->menu_items_count++;
                 }
+            }
+        } else if (game_model && game_model->key >= 20000) {
+            int index = game_model->key - 20000;
+
+            if (!mud->ground_item_already_in_menu[index]) {
+                mudclient_menu_add_ground_item(mud, index);
+                mud->ground_item_already_in_menu[index] = 1;
             }
         } else if (game_model && game_model->key >= 10000) {
             int index = game_model->key - 10000;

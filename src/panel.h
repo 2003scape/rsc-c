@@ -48,7 +48,7 @@ typedef struct Panel {
     int8_t *control_clicked;
     int *control_flash_text;
     int *control_list_entry_count;
-    int *control_list_entry_mouse_button_down;
+    int *control_activated;
     int *control_list_entry_mouse_over;
     Surface *surface;
     int control_count;

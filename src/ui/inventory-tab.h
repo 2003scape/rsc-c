@@ -1,9 +1,7 @@
 #ifndef _H_INVENTORY_TAB
 #define _H_INVENTORY_TAB
 
-#include "../colours.h"
 #include "../mudclient.h"
-#include "offer-x.h"
 
 #define INVENTORY_SLOT_WIDTH 49
 #define INVENTORY_SLOT_HEIGHT 34

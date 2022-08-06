@@ -18,7 +18,7 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->control_use_alternative_colour = calloc(max, sizeof(int8_t));
     panel->control_flash_text = calloc(max, sizeof(int));
     panel->control_list_entry_count = calloc(max, sizeof(int));
-    panel->control_list_entry_mouse_button_down = calloc(max, sizeof(int));
+    panel->control_activated = calloc(max, sizeof(int));
     panel->control_list_entry_mouse_over = calloc(max, sizeof(int));
     panel->control_x = calloc(max, sizeof(int));
     panel->control_y = calloc(max, sizeof(int));
@@ -58,8 +58,7 @@ void panel_handle_mouse(Panel *panel, int x, int y, int last_button,
                 if (control_type == PANEL_BUTTON) {
                     panel->control_clicked[i] = 1;
                 } else if (control_type == PANEL_CHECKBOX) {
-                    panel->control_list_entry_mouse_button_down[i] =
-                        1 - panel->control_list_entry_mouse_button_down[i];
+                    panel->control_activated[i] = 1 - panel->control_activated[i];
                 }
             }
         }
@@ -215,7 +214,7 @@ void panel_draw_checkbox(Panel *panel, int control, int x, int y, int width,
     surface_draw_line_vertical(panel->surface, x + width - 1, y, height,
                                PANEL_BOX_TOP_COLOUR);
 
-    if (panel->control_list_entry_mouse_button_down[control] == 1) {
+    if (panel->control_activated[control] == 1) {
         for (int i = 0; i < height; i++) {
             surface_draw_line_horizontal(panel->surface, x + i, y + i, 1,
                                          BLACK);
@@ -500,12 +499,12 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                 panel->control_list_entry_mouse_over[control] = i;
 
                 if (panel->mouse_last_button_down == 1) {
-                    panel->control_list_entry_mouse_button_down[control] = i;
+                    panel->control_activated[control] = i;
                     panel->control_clicked[control] = 1;
                 }
             }
 
-            if (panel->control_list_entry_mouse_button_down[control] == i) {
+            if (panel->control_activated[control] == i) {
                 text_colour = RED;
             }
 
@@ -649,7 +648,7 @@ int panel_add_text_list_interactive(Panel *panel, int x, int y, int width,
             calloc(128, sizeof(char));
     }
 
-    panel->control_list_entry_mouse_button_down[panel->control_count] = -1;
+    panel->control_activated[panel->control_count] = -1;
     panel->control_list_entry_mouse_over[panel->control_count] = -1;
 
     return panel_prepare_component(panel, PANEL_TEXT_LIST_INTERACTIVE, x, y);
@@ -671,11 +670,11 @@ int panel_add_checkbox(Panel *panel, int x, int y, int width, int height) {
 }
 
 void panel_toggle_checkbox(Panel *panel, int control, int activated) {
-    panel->control_list_entry_mouse_button_down[control] = activated;
+    panel->control_activated[control] = activated;
 }
 
 int panel_is_activated(Panel *panel, int control) {
-    return panel->control_list_entry_mouse_button_down[control] != 0;
+    return panel->control_activated[control] != 0;
 }
 
 void panel_clear_list(Panel *panel, int control) {

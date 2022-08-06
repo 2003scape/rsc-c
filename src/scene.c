@@ -987,6 +987,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->gl_sprite_depth_top[scene->sprite_count] =
         projected_position[2] / projected_position[3];
 
+    // TODO use layer depth?
     /* check for overlapping entities and adjust depth so it's on top */
     for (int i = 0; i < scene->sprite_count; i++) {
         if (scene->sprite_x[i] == scene->sprite_x[scene->sprite_count] &&
@@ -1059,6 +1060,8 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
 }
 
 void scene_set_bounds(Scene *scene, int width, int height) {
+    printf("scene height %d\n", height);
+
     int base_x = width / 2;
     int base_y = height / 2;
     int clip_x = base_x;
@@ -1296,12 +1299,14 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
     int face_0 = face_vertices[0];
     int view_x = scene->view->vertex_view_x[face_0];
     int view_y = scene->view->vertex_view_y[face_0];
-    int poject_z = scene->view->project_vertex_z[face_0];
+    int project_z = scene->view->project_vertex_z[face_0];
 
     //int width = (scene->sprite_width[face] << scene->view_distance) / vz;
-    int width = (scene->sprite_width[face] * scene->view_distance) / poject_z;
+    int width = (scene->sprite_width[face] * scene->view_distance) / project_z;
     //int height = (scene->sprite_height[face] << scene->view_distance) / vz;
-    int height = (scene->sprite_height[face] * scene->view_distance) / poject_z;
+
+    int height = (scene->sprite_height[face] * scene->view_distance) / project_z;
+
     int skew_x = scene->view->vertex_view_x[face_vertices[1]] - view_x;
     int x = view_x - (width / 2);
     int y = scene->base_y + view_y - height;
@@ -1316,16 +1321,16 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 
     /*surface_draw_entity_sprite(
         scene->surface, x + scene->base_x, y, width, height, scene->sprite_id[face],
-        skew_x, (256 << scene->view_distance) / poject_z, depth_top, depth_bottom);*/
+        skew_x, (256 << scene->view_distance) / project_z, depth_top, depth_bottom);*/
     surface_draw_entity_sprite(
         scene->surface, x + scene->base_x, y, width, height, scene->sprite_id[face],
-        skew_x, (256 * scene->view_distance) / poject_z, depth_top, depth_bottom);
+        skew_x, (256 * scene->view_distance) / project_z, depth_top, depth_bottom);
 
     if (scene->mouse_picking_active &&
         scene->mouse_picked_count < MOUSE_PICKED_MAX) {
 
-        //x += (scene->sprite_translate_x[face] << scene->view_distance) / poject_z;
-        x += (scene->sprite_translate_x[face] * scene->view_distance) / poject_z;
+        //x += (scene->sprite_translate_x[face] << scene->view_distance) / project_z;
+        x += (scene->sprite_translate_x[face] * scene->view_distance) / project_z;
 
         if (scene->mouse_y >= y && scene->mouse_y <= y + height &&
             scene->mouse_x >= x && scene->mouse_x <= x + width &&
@@ -4224,7 +4229,7 @@ void scene_gl_render(Scene *scene) {
     int old_height = scene->surface->height;
 
     scene->surface->width = scene->width;
-    scene->surface->height = scene_height + 13;
+    scene->surface->height = scene_height + 12;
 
     surface_reset_bounds(scene->surface);
 
@@ -4439,7 +4444,7 @@ void scene_gl_render(Scene *scene) {
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
 #endif
-    glViewport(0, 0, scene->width, scene_height + 13);
+    glViewport(0, 1, scene->width, scene_height + 12);
 
     surface_gl_draw(scene->surface, 1);
 

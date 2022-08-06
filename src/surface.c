@@ -885,13 +885,23 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface) {
 }
 
 float surface_gl_get_layer_depth(Surface *surface) {
-    float min_depth = 0.00002f;
+    //return (-0.00875 * surface->mud->camera_zoom + 11.9375) / 100000.0;
+    float min_depth = 0.00001f;
     float max_depth = 0.00008f;
 
     float zoom_scale = 1.0f - ((surface->mud->camera_zoom - ZOOM_MIN) /
-                               (float)(ZOOM_MAX - ZOOM_MIN));
+                               //(float)(ZOOM_MAX - ZOOM_MIN));
+                               800.0f);
 
-    return (zoom_scale * (max_depth - min_depth)) + min_depth;
+    float depth = (zoom_scale * (max_depth - min_depth)) + min_depth;
+
+    if (depth < 0.0f) {
+        return min_depth / 2;
+    }
+
+    //printf("%d %f\n", surface->mud->camera_zoom, depth * 100000);
+
+    return depth;
 }
 
 void surface_gl_draw(Surface *surface, int use_depth) {

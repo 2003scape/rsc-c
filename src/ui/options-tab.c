@@ -434,7 +434,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
                 mud->mouse_y > y - 12 && mud->mouse_y < y + 4 &&
                 mud->mouse_button_click == 1) {
-                printf("additional options\n");
+                mud->show_additional_options = 1;
             }
 
             y += OPTIONS_LINE_BREAK;

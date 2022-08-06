@@ -94,7 +94,7 @@
 #endif
 
 #define ZOOM_MIN 450
-#define ZOOM_MAX 1250
+#define ZOOM_MAX 2250 // old 1250
 #define ZOOM_INDOORS 550
 #define ZOOM_OUTDOORS 750
 
@@ -214,6 +214,7 @@ typedef struct mudclient mudclient;
 #include "client-opcodes.h"
 #include "colours.h"
 #include "game-character.h"
+#include "game-data.h"
 #include "game-model.h"
 #include "lib/bzip.h"
 #include "options.h"
@@ -559,7 +560,7 @@ typedef struct mudclient {
     int object_y[OBJECTS_MAX];
     int object_id[OBJECTS_MAX];
     int object_direction[OBJECTS_MAX];
-    int object_already_in_menu[OBJECTS_MAX];
+    int8_t object_already_in_menu[OBJECTS_MAX];
 
     int wall_object_count;
     GameModel *wall_object_model[WALL_OBJECTS_MAX];
@@ -567,7 +568,7 @@ typedef struct mudclient {
     int wall_object_y[WALL_OBJECTS_MAX];
     int wall_object_id[WALL_OBJECTS_MAX];
     int wall_object_direction[WALL_OBJECTS_MAX];
-    int wall_object_already_in_menu[WALL_OBJECTS_MAX];
+    int8_t wall_object_already_in_menu[WALL_OBJECTS_MAX];
 
     int player_server_indexes[PLAYERS_MAX];
     GameCharacter *player_server[PLAYERS_SERVER_MAX];
@@ -595,6 +596,9 @@ typedef struct mudclient {
     int ground_item_y[GROUND_ITEMS_MAX];
     int ground_item_z[GROUND_ITEMS_MAX];
     int ground_item_id[GROUND_ITEMS_MAX];
+    // TODO toggleable
+    GameModel *ground_item_model[GROUND_ITEMS_MAX];
+    int8_t ground_item_already_in_menu[GROUND_ITEMS_MAX];
 
     /* ./ui/sleep.c */
     int8_t is_sleeping;
@@ -636,7 +640,7 @@ typedef struct mudclient {
     int camera_auto_rotate_player_y;
     int an_int_707;
 
-    int8_t is_in_wild;
+    int8_t is_in_wilderness;
     int loading_area;
     int plane_width;
     int plane_height;
@@ -880,12 +884,12 @@ typedef struct mudclient {
     int options_tab;
 
     Panel *panel_connection_options;
-    void *connection_options[10];
-    int connection_option_types[10];
+    void *connection_options[50];
+    int connection_option_types[50];
 
     Panel *panel_control_options;
-    void *control_options[10];
-    int control_option_types[10];
+    void *control_options[50];
+    int control_option_types[50];
 
     Panel *panel_display_options;
     void *display_options[50];
@@ -962,6 +966,8 @@ void mudclient_draw_character_message(mudclient *mud, GameCharacter *character,
 void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
                                      int x, int y, int ty, int width,
                                      int height, int is_npc, float depth);
+int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
+                               int animation_index);
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int skew_x, int ty, float depth_top, float depth_bottom);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
@@ -1013,5 +1019,6 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
 int mudclient_is_ui_scaled(mudclient *mud);
 void mudclient_format_number_commas(mudclient *mud, int number, char *dest);
 void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest);
+int mudclient_get_wilderness_depth(mudclient *mud);
 int main(int argc, char **argv);
 #endif

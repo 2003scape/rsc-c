@@ -56,36 +56,41 @@ void options_new(Options *options) {
 }
 
 void options_save(Options *options) {
-    FILE *ini_file = fopen("./settings.ini", "w");
+    FILE *ini_file = fopen("./options.ini", "w");
 
     fprintf(ini_file, OPTIONS_INI_TEMPLATE,
             options->server,                //
             options->port,                  //
             options->members,               //
+            options->rsa_exponent,          //
+            options->rsa_modulus,           //
             options->idle_logout,           //
             options->remember_username,     //
             options->remember_password,     //
+            options->username,              //
+            options->password,              //
                                             //
             options->mouse_wheel,           //
             options->middle_click_camera,   //
             options->zoom_camera,           //
             options->tab_respond,           //
             options->option_numbers,        //
+            options->compass_menu,          //
+            options->transaction_menus,     //
+            options->offer_x,               //
+            options->last_offer_x,          //
                                             //
             options->interlace,             //
             options->display_fps,           //
             options->ui_scale,              //
-            options->number_commas,         //
+            options->field_of_view,         //
             options->show_roofs,            //
-            options->compass_menu,          // move to controls?
-            options->transaction_menus,     // move to controls?
+            options->number_commas,         //
             options->remaining_experience,  //
             options->total_experience,      //
             options->inventory_count,       //
             options->condense_item_amounts, //
             options->certificate_items,     //
-            options->offer_x,               // move to controls?
-            options->last_offer_x,          // remove from UI?
             options->wilderness_warning,    //
                                             //
             options->bank_search,           //
@@ -95,7 +100,52 @@ void options_save(Options *options) {
             options->bank_scroll,           //
             options->bank_menus,            //
             options->bank_inventory,        //
-            options->bank_maintain_slot);   //
+            options->bank_maintain_slot     //
+    );
 }
 
-void options_load(Options *options) {}
+void options_load(Options *options) {
+    ini_t *options_ini = ini_load("options.ini");
+
+    if (options_ini == NULL) {
+        return;
+    }
+
+    /* connection */
+    OPTION_INI_STR("server", options->server, 15);
+    OPTION_INI_INT("port", options->port, 0, 1);
+    OPTION_INI_INT("members", options->members, 0, 1);
+    OPTION_INI_STR("rsa_exponent", options->rsa_exponent, 512);
+    OPTION_INI_STR("rsa_modulus", options->rsa_modulus, 512);
+    OPTION_INI_INT("idle_logout", options->idle_logout, 0, 1);
+    OPTION_INI_INT("remember_username", options->remember_username, 0, 1);
+    OPTION_INI_INT("remember_password", options->remember_password, 0, 1);
+
+    /* controls */
+    OPTION_INI_INT("mouse_wheel", options->mouse_wheel, 0, 1);
+    OPTION_INI_INT("middle_click_camera", options->middle_click_camera, 0, 1);
+    OPTION_INI_INT("zoom_camera", options->zoom_camera, 0, 1);
+    OPTION_INI_INT("tab_respond", options->tab_respond, 0, 1);
+    OPTION_INI_INT("option_numbers", options->option_numbers, 0, 1);
+    OPTION_INI_INT("compass_menu", options->compass_menu, 0, 1);
+    OPTION_INI_INT("transaction_menus", options->transaction_menus, 0, 1);
+    OPTION_INI_INT("offer_x", options->offer_x, 0, 1);
+    OPTION_INI_INT("last_offer_x", options->last_offer_x, 0, 1);
+
+    /* display */
+    OPTION_INI_INT("interlace", options->interlace, 0, 1);
+    OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
+    OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);
+    OPTION_INI_INT("field_of_view", options->field_of_view, 0, 1);
+    OPTION_INI_INT("show_roofs", options->show_roofs, 0, 1);
+    OPTION_INI_INT("number_commas", options->number_commas, 0, 1);
+    OPTION_INI_INT("remaining_experience", options->remaining_experience, 0, 1);
+    OPTION_INI_INT("total_experience", options->total_experience, 0, 1);
+    OPTION_INI_INT("inventory_count", options->inventory_count, 0, 1);
+    OPTION_INI_INT("condense_item_amounts", options->condense_item_amounts, 0,
+                   1);
+    OPTION_INI_INT("certificate_items", options->certificate_items, 0, 1);
+    OPTION_INI_INT("wilderness_warning", options->wilderness_warning, 0, 1);
+
+    ini_free(options_ini);
+}

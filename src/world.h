@@ -16,11 +16,7 @@
 
 typedef struct World World;
 
-#include "game-data.h"
-#include "game-model.h"
 #include "mudclient.h"
-#include "scene.h"
-#include "surface.h"
 
 #define COLOUR_TRANSPARENT 12345678
 
@@ -48,8 +44,6 @@ typedef struct World World;
 /* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
 #define BRIDGE_TILE_DECORATION 12
 
-#define TILE_FACE_TAG 200000
-
 extern int terrain_colours[TERRAIN_COLOUR_COUNT];
 
 void init_world_global();
@@ -57,7 +51,7 @@ void init_world_global();
 typedef struct World {
     Scene *scene;
     Surface *surface;
-    int player_alive;
+    int8_t player_alive;
     int base_media_sprite;
     int8_t *landscape_pack;
     int8_t *map_pack;
@@ -139,6 +133,7 @@ void world_remove_object(World *world, int x, int y, int id);
 int world_has_neighbouring_roof(World *world, int x, int y);
 void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
                              int x2, int y2);
+int world_is_under_roof(World *world, int x, int y);
 
 #ifdef RENDER_GL
 void world_gl_create_world_models_buffer(World *world, int max_models);

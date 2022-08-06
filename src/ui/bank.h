@@ -1,12 +1,7 @@
 #ifndef _H_BANK
 #define _H_BANK
 
-#include "../client-opcodes.h"
-#include "../colours.h"
 #include "../mudclient.h"
-#include "../packet-stream.h"
-#include "../surface.h"
-#include "offer-x.h"
 
 #define BANK_WIDTH 408
 
