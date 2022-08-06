@@ -473,9 +473,25 @@ void mudclient_draw_additional_options(mudclient *mud) {
 
     surface_draw_line_horizontal(mud->surface, ui_x + 8,
                                  ui_y + ADDITIONAL_OPTIONS_HEIGHT - 20,
-                                 ADDITIONAL_OPTIONS_WIDTH - 8, BLACK);
+                                 ADDITIONAL_OPTIONS_WIDTH - 16, BLACK);
 
-    surface_draw_string(mud->surface, "Reset to: default / vanilla", ui_x + 4,
+    char formatted_reset[43] = {0};
+    char default_colour[4] = "whi";
+    char vanilla_colour[4] = "whi";
+
+    if (mud->mouse_y > ui_y + ADDITIONAL_OPTIONS_HEIGHT - 20 &&
+        mud->mouse_y < ui_y + ADDITIONAL_OPTIONS_HEIGHT) {
+        if (mud->mouse_x >= ui_x + 58 && mud->mouse_x <= ui_x + 100) {
+            strcpy(default_colour, "red");
+        } else if (mud->mouse_x >= ui_x + 102 && mud->mouse_x <= ui_x + 140) {
+            strcpy(vanilla_colour, "red");
+        }
+    }
+
+    sprintf(formatted_reset, "Reset to: @%s@default @whi@/ @%s@vanilla",
+            default_colour, vanilla_colour);
+
+    surface_draw_string(mud->surface, formatted_reset, ui_x + 4,
                         ui_y + ADDITIONAL_OPTIONS_HEIGHT - 5, 1, WHITE);
 
     text_colour = WHITE;
@@ -504,6 +520,15 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
     int ui_y = mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
 
+    /* tabs */
+    if (mud->last_mouse_button_down == 1 && mud->mouse_x >= ui_x &&
+        mud->mouse_x < ui_x + ADDITIONAL_OPTIONS_WIDTH &&
+        mud->mouse_y >= ui_y + 12 &&
+        mud->mouse_y <= ui_y + 12 + OPTIONS_TAB_HEIGHT) {
+        mud->options_tab =
+            (mud->mouse_x - ui_x) / (ADDITIONAL_OPTIONS_WIDTH / 4);
+    }
+
     Panel *panel = mudclient_get_active_option_panel(mud);
 
     if (panel != NULL) {
@@ -521,15 +546,6 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
             mud->show_additional_options = 0;
         }
 
-        /* tabs */
-        if (mud->mouse_x >= ui_x &&
-            mud->mouse_x < ui_x + ADDITIONAL_OPTIONS_WIDTH &&
-            mud->mouse_y >= ui_y + 12 &&
-            mud->mouse_y <= ui_y + 12 + OPTIONS_TAB_HEIGHT) {
-            mud->options_tab =
-                (mud->mouse_x - ui_x) / (ADDITIONAL_OPTIONS_WIDTH / 4);
-        }
-
         /* save and close */
         if (mud->mouse_x > ui_x + ADDITIONAL_OPTIONS_WIDTH - 90 &&
             mud->mouse_y >= ui_y + ADDITIONAL_OPTIONS_HEIGHT - 12 &&
@@ -537,6 +553,24 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
             mud->mouse_y < ui_y + ADDITIONAL_OPTIONS_HEIGHT) {
             options_save(mud->options);
             mud->show_additional_options = 0;
+        }
+
+        /* reset */
+        if (mud->mouse_y > ui_y + ADDITIONAL_OPTIONS_HEIGHT - 20 &&
+            mud->mouse_y < ui_y + ADDITIONAL_OPTIONS_HEIGHT) {
+            mud->confirm_text_top =
+                "Are you sure you wish to reset the";
+
+            if (mud->mouse_x >= ui_x + 58 && mud->mouse_x <= ui_x + 100) {
+                mud->confirm_text_bottom = "options to defaults?";
+                mud->confirm_type = CONFIRM_OPTIONS_DEFAULT;
+                mud->show_dialog_confirm = 1;
+            } else if (mud->mouse_x >= ui_x + 102 &&
+                       mud->mouse_x <= ui_x + 140) {
+                mud->confirm_text_bottom = "options to vanilla?";
+                mud->confirm_type = CONFIRM_OPTIONS_VANILLA;
+                mud->show_dialog_confirm = 1;
+            }
         }
 
         if (panel != NULL) {
@@ -547,9 +581,16 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
 
             mudclient_get_active_options(mud, &options, &option_types);
 
-            for (int i = 0; i < panel->control_count; i++) {
-                if (option_types[i] == 2) {
-                    *(int *)options[i] = panel_is_activated(panel, i);
+            if (options != NULL && option_types != NULL) {
+                for (int i = 0; i < panel->control_count; i++) {
+                    if (option_types[i] == 2) {
+                        int *option = (int *)options[i];
+                        *option = panel_is_activated(panel, i);
+
+                        if (option == &mud->options->ui_scale) {
+                            mudclient_on_resize(mud);
+                        }
+                    }
                 }
             }
         }

@@ -69,6 +69,7 @@ void mudclient_handle_confirm_input(mudclient *mud) {
          mud->mouse_x <= cancel_x + (CONFIRM_BUTTON_SIZE / 2) &&
          mud->mouse_y >= button_y - (CONFIRM_BUTTON_SIZE / 2) &&
          mud->mouse_y <= button_y + (CONFIRM_BUTTON_SIZE / 2))) {
+        mud->show_dialog_confirm = 0;
     } else if (mud->mouse_x >= ok_x - (CONFIRM_BUTTON_SIZE / 2) &&
                mud->mouse_x <= ok_x + (CONFIRM_BUTTON_SIZE / 2) &&
                mud->mouse_y >= button_y - (CONFIRM_BUTTON_SIZE / 2) &&
@@ -77,9 +78,14 @@ void mudclient_handle_confirm_input(mudclient *mud) {
             case CONFIRM_TUTORIAL:
                 mudclient_send_command_string(mud, "skiptutorial");
                 break;
+            case CONFIRM_OPTIONS_DEFAULT:
+                break;
+            case CONFIRM_OPTIONS_VANILLA:
+                break;
         }
+
+        mud->show_dialog_confirm = 0;
     }
 
-    mud->show_dialog_confirm = 0;
     mud->last_mouse_button_down = 0;
 }

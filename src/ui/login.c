@@ -521,6 +521,10 @@ void mudclient_draw_login_screens(mudclient *mud) {
     mudclient_draw_blue_bar(mud);
 
     if (mud->show_additional_options) {
+        if (mud->show_dialog_confirm) {
+            mudclient_draw_confirm(mud);
+        }
+
         mudclient_draw_additional_options(mud);
     }
 

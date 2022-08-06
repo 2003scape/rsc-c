@@ -2,7 +2,6 @@
 #define _H_MINIMAP_TAB
 
 #include "../mudclient.h"
-#include "../utility.h"
 
 #define MINIMAP_WIDTH 156
 #define MINIMAP_HEIGHT 152

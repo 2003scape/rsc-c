@@ -10,6 +10,8 @@
 #define CONFIRM_BUTTON_SIZE 40
 
 #define CONFIRM_TUTORIAL 1
+#define CONFIRM_OPTIONS_DEFAULT 2
+#define CONFIRM_OPTIONS_VANILLA 3
 
 void mudclient_draw_confirm(mudclient *mud);
 void mudclient_handle_confirm_input(mudclient *mud);

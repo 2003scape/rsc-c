@@ -4007,7 +4007,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                 surface_sprite_clipping_from9(
                     surface, slot_x + offset_x, slot_y + offset_y,
                     ITEM_GRID_SLOT_WIDTH - 1, ITEM_GRID_SLOT_HEIGHT - 2,
-                    surface->mud->sprite_item + game_data_item_picture[item_id],
+                    surface->mud->sprite_item + game_data_item_sprite[item_id],
                     game_data_item_mask[item_id], 0, 0, 0);
 
                 int item_count = items_count[item_index];

@@ -3,6 +3,20 @@
 void options_new(Options *options) {
     memset(options, 0, sizeof(Options));
 
+    /* connection */
+    strcpy(options->server, "127.0.0.1");
+    options->port = 43594;
+
+    // strcpy(options->server, "162.198.202.160"); /* openrsc preservation */
+    // mud->options->port = 43596;
+    // mud->options->port = 43496; /* websockets */
+
+    strcpy(options->rsa_exponent, "00010001");
+
+    strcpy(options->rsa_modulus,
+           "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
+           "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
+
     /* presets */
     options->account_management = 1;
     options->anti_macro = 0;
@@ -54,6 +68,10 @@ void options_new(Options *options) {
 
     options->thick_walls = 0;
 }
+
+void options_set_defaults(Options *options) {}
+
+void options_set_vanilla(Options *options) {}
 
 void options_save(Options *options) {
     FILE *ini_file = fopen("./options.ini", "w");

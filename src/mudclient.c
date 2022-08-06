@@ -461,10 +461,6 @@ void mudclient_new(mudclient *mud) {
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
     mud->thread_sleep = 10;
-    // mud->options->server = "127.0.0.1";
-    //  mud->options->server = "162.198.202.160"; /* openrsc preservation */
-    //  mud->options->port = 43596;
-    //  mud->options->port = 43496; /* websockets */
     mud->game_width = MUD_WIDTH;
     mud->game_height = MUD_HEIGHT;
     mud->camera_angle = 1;
@@ -474,14 +470,9 @@ void mudclient_new(mudclient *mud) {
     mud->last_height_offset = -1;
 
     mud->options = malloc(sizeof(Options));
+
     options_new(mud->options);
-
-    strcpy(mud->options->server, "127.0.0.1");
-    mud->options->port = 43594;
-
     options_load(mud->options);
-
-    // options_save(mud->options);
 
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
@@ -515,11 +506,6 @@ void mudclient_new(mudclient *mud) {
 
     mud->bank_selected_item_slot = -1;
     mud->bank_selected_item = -2;
-
-    // mud->show_additional_options = 1;
-    // mud->show_dialog_trade = 1;
-    // mud->show_dialog_duel = 1;
-    // mud->show_dialog_duel_confirm = 1;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -1994,6 +1980,27 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
+    // TODO toggleable
+    for (int i = 0; i < game_data_item_count; i++) {
+        int sprite_id = game_data_item_sprite[i];
+
+        char file_name[21] = {0};
+        sprintf(file_name, "item-%d.ob3", sprite_id);
+
+        int offset = get_data_file_offset(file_name, models_jag);
+
+        if (offset == 0) {
+            continue;
+        }
+
+        GameModel *game_model = malloc(sizeof(GameModel));
+        game_model_from_bytes(game_model, models_jag, offset);
+
+        mud->item_models[i] = game_model;
+
+        printf("found model for item: %d %d\n", i, game_model->num_vertices);
+    }
+
     free(models_jag);
 
 #ifdef RENDER_GL
@@ -3311,6 +3318,12 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 #endif
 
+    if (mud->show_dialog_confirm) {
+        mudclient_handle_confirm_input(mud);
+    } else if (mud->show_additional_options) {
+        mudclient_handle_additional_options_input(mud);
+    }
+
     if (mud->options->tab_respond && mud->key_tab) {
         if (mud->private_message_target != 0) {
             int is_online = 0;
@@ -3348,10 +3361,6 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 
     mudclient_packet_tick(mud);
-
-    if (mud->show_dialog_confirm) {
-        mudclient_handle_confirm_input(mud);
-    }
 
     if (mud->logout_timeout > 0) {
         mud->logout_timeout--;
@@ -3658,10 +3667,6 @@ void mudclient_handle_inputs(mudclient *mud) {
         mud->mouse_action_timeout = 0;
         mudclient_handle_login_screen_input(mud);
     } else if (mud->logged_in == 1) {
-        if (mud->show_additional_options) {
-            mudclient_handle_additional_options_input(mud);
-        }
-
         mud->mouse_action_timeout++;
 
 #if defined(RENDER_GL) && !defined(RENDER_SW)
@@ -4179,6 +4184,10 @@ void mudclient_draw_ui(mudclient *mud) {
 
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
+
+        if (mud->show_dialog_confirm) {
+            mudclient_draw_confirm(mud);
+        }
     } else if (mud->show_dialog_confirm) {
         mudclient_draw_confirm(mud);
     } else if (mud->logout_timeout != 0) {
@@ -4369,7 +4378,7 @@ void mudclient_draw_overhead(mudclient *mud) {
 
         surface_sprite_clipping_from9(
             mud->surface, final_x, final_y, scale_x_clip, scale_y_clip,
-            game_data_item_picture[id] + mud->sprite_item,
+            game_data_item_sprite[id] + mud->sprite_item,
             game_data_item_mask[id], 0, 0, 0);
     }
 
@@ -4716,7 +4725,7 @@ void mudclient_draw_game(mudclient *mud) {
 
         surface_draw_string(mud->surface, fps,
                             mud->surface->width - 62 - offset_x,
-                            mud->game_height - 22, 1, YELLOW);
+                            mud->surface->height - 22, 1, YELLOW);
     }
 
 #ifndef REVISION_177
@@ -5411,7 +5420,9 @@ void mudclient_poll_events(mudclient *mud) {
                                      event.button.button);
             break;
         case SDL_MOUSEWHEEL:
-            mud->mouse_scroll_delta = event.wheel.y * -1;
+            if (mud->options->mouse_wheel) {
+                mud->mouse_scroll_delta = event.wheel.y * -1;
+            }
             break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -5599,7 +5610,7 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
 // TODO draw_ground_item
 void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
                          int id, float depth_top, float depth_bottom) {
-    int picture = game_data_item_picture[id] + mud->sprite_item;
+    int picture = game_data_item_sprite[id] + mud->sprite_item;
     int mask = game_data_item_mask[id];
 
     surface_sprite_clipping_from9_depth(mud->surface, x, y, width, height,

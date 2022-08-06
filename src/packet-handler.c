@@ -930,27 +930,36 @@ void mudclient_packet_tick(mudclient *mud) {
                     }
 
 #if 1
-                    GameModel *model = game_model_copy(mud->game_models[118 - 2]);
+                    //GameModel *model = game_model_copy(mud->game_models[118 - 2]);
+                    //GameModel *original_model = mud->game_models[item_id];
+                    GameModel *original_model = mud->item_models[item_id];
 
-                    scene_add_model(mud->scene, model);
+                    if (original_model != NULL) {
+                        GameModel *model = game_model_copy(original_model);
+                        scene_add_model(mud->scene, model);
 
-                    model->key = mud->ground_item_count + 20000;
+                        model->key = mud->ground_item_count + 20000;
 
-                    int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
-                    int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
+                        int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
+                        int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
 
-                    game_model_translate(
-                        model,
-                        model_x,
-                        -world_get_elevation(mud->world, model_x, model_y),
-                        model_y);
+                        printf("%d %d\n",-world_get_elevation(mud->world, model_x, model_y), mud->ground_item_z[mud->ground_item_count]);
 
-                    game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+                        game_model_translate(
+                            model,
+                            model_x,
+                            -(world_get_elevation(mud->world, model_x, model_y) +mud->ground_item_z[mud->ground_item_count]),
+                            //mud->ground_item_z[mud->ground_item_count],
+                            //-world_get_elevation(mud->world, model_x, model_y),
+                            model_y);
 
-                    mud->ground_item_model[mud->ground_item_count] = model;
-#endif
+                        game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+
+                        mud->ground_item_model[mud->ground_item_count] = model;
+                    }
 
                     mud->ground_item_count++;
+#endif
                 } else {
                     item_id &= 32767;
 

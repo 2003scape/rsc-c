@@ -34,9 +34,6 @@ extern int THREAT_LENGTH;
 
 extern int OPCODE_ENCRYPTION[];
 
-extern char *rsa_exponent;
-extern char *rsa_modulus;
-
 int get_client_opcode_friend(int opcode);
 #endif
 
@@ -67,6 +64,9 @@ typedef struct PacketStream {
     int available_offset;
 
 #ifdef REVISION_177
+    char *rsa_exponent;
+    char *rsa_modulus;
+
     int decode_key;
     int decode_threat_index;
 

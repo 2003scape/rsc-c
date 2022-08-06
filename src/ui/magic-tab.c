@@ -89,7 +89,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
 
                 surface_draw_sprite_from3(
                     mud->surface, ui_x + 2 + i * 44, ui_y + 150,
-                    mud->sprite_item + game_data_item_picture[rune_id]);
+                    mud->sprite_item + game_data_item_sprite[rune_id]);
 
                 char formatted_count[29] = {0};
 

@@ -62,7 +62,7 @@ int game_data_item_sprite_count;
 char **game_data_item_name;
 char **game_data_item_description;
 char **game_data_item_command;
-int *game_data_item_picture;
+int *game_data_item_sprite;
 int *game_data_item_base_price;
 int8_t *game_data_item_stackable;
 int *game_data_item_wearable;
@@ -180,7 +180,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data_item_name = malloc(game_data_item_count * sizeof(char *));
     game_data_item_description = malloc(game_data_item_count * sizeof(char *));
     game_data_item_command = malloc(game_data_item_count * sizeof(char *));
-    game_data_item_picture = malloc(game_data_item_count * sizeof(int));
+    game_data_item_sprite = malloc(game_data_item_count * sizeof(int));
     game_data_item_base_price = malloc(game_data_item_count * sizeof(int));
     game_data_item_stackable = malloc(game_data_item_count * sizeof(int8_t));
     game_data_item_wearable = malloc(game_data_item_count * sizeof(int));
@@ -201,10 +201,10 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data_item_count; i++) {
-        game_data_item_picture[i] = game_data_get_unsigned_short();
+        game_data_item_sprite[i] = game_data_get_unsigned_short();
 
-        if (game_data_item_picture[i] + 1 > game_data_item_sprite_count) {
-            game_data_item_sprite_count = game_data_item_picture[i] + 1;
+        if (game_data_item_sprite[i] + 1 > game_data_item_sprite_count) {
+            game_data_item_sprite_count = game_data_item_sprite[i] + 1;
         }
     }
 

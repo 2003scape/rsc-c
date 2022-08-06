@@ -36,12 +36,6 @@ int OPCODE_ENCRYPTION[] = {
     43,  573, 132, 527, 235, 434, 658, 912, 825, 298, 753, 282, 652, 439, 629,
     945};
 
-char *rsa_exponent = "00010001";
-
-char *rsa_modulus =
-    "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41fefbdc5f"
-    "ed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25";
-
 int get_client_opcode_friend(int opcode) {
     switch (opcode) {
     case CLIENT_LOGIN:
@@ -62,6 +56,9 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #ifdef REVISION_177
     packet_stream->decode_key = 3141592;
     packet_stream->encode_key = 3141592;
+
+    packet_stream->rsa_exponent = mud->options->rsa_exponent;
+    packet_stream->rsa_modulus = mud->options->rsa_modulus;
 #endif
 
     int ret;
@@ -123,7 +120,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
                       sizeof(server_addr));
 #else
 #ifdef WIN32
-    setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, (char *) &set,
+    setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, (char *)&set,
                sizeof(set));
 #else
     setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, &set,
@@ -141,7 +138,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         ret = connect(packet_stream->socket, (struct sockaddr *)&server_addr,
                       sizeof(server_addr));
 
-        //printf("%d %d\n", ret, errno);
+        // printf("%d %d\n", ret, errno);
 
         if (errno == 30) {
             ret = 0;
@@ -499,11 +496,15 @@ void packet_stream_put_password(PacketStream *packet_stream, int session_id,
 
     struct bn exponent;
     bignum_init(&exponent);
-    bignum_from_string(&exponent, rsa_exponent, strlen(rsa_exponent));
+
+    bignum_from_string(&exponent, packet_stream->rsa_exponent,
+                       strlen(packet_stream->rsa_exponent));
 
     struct bn modulus;
     bignum_init(&modulus);
-    bignum_from_string(&modulus, rsa_modulus, strlen(rsa_modulus));
+
+    bignum_from_string(&modulus, packet_stream->rsa_modulus,
+                       strlen(packet_stream->rsa_modulus));
 
     while (password_index < password_length) {
         encoded[0] = (int8_t)(1 + ((float)rand() / (float)RAND_MAX) * 127);

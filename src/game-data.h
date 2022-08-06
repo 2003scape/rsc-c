@@ -71,7 +71,7 @@ extern int game_data_item_sprite_count;
 extern char **game_data_item_name;
 extern char **game_data_item_description;
 extern char **game_data_item_command;
-extern int *game_data_item_picture;
+extern int *game_data_item_sprite;
 extern int *game_data_item_base_price;
 extern int8_t *game_data_item_stackable;
 extern int *game_data_item_wearable;

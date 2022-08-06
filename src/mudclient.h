@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <time.h>
 
 #ifdef WII
 #include <asndlib.h>
@@ -419,9 +418,6 @@ typedef struct mudclient {
     int max_draw_time;
     int thread_sleep;
 
-    // TODO move to options
-    //int8_t interlace;
-
     /* used for username boxes */
     char input_text_current[INPUT_TEXT_LENGTH + 1];
     char input_text_final[INPUT_TEXT_LENGTH + 1];
@@ -441,7 +437,7 @@ typedef struct mudclient {
 
     /* ./ui/social-tab.c */
     Panel *panel_social_list;
-    int show_dialog_social_input;
+    int8_t show_dialog_social_input;
     int control_list_social;
     int ui_tab_social_sub_tab;
     int message_index;
@@ -461,10 +457,6 @@ typedef struct mudclient {
     int8_t settings_block_duel;
     int8_t settings_mouse_button_one;
     int8_t settings_sound_disabled;
-
-    //int8_t members;
-    //char *server;
-    //int port;
 
     PacketStream *packet_stream;
     int packet_last_read;
@@ -491,6 +483,9 @@ typedef struct mudclient {
 
     /* created from cache and copied for each in-game instance */
     GameModel *game_models[GAME_OBJECTS_MAX];
+
+    // TODO toggle
+    GameModel *item_models[1290];
 
     /* ./ui/login.c */
     Panel *panel_login_welcome;
@@ -683,7 +678,7 @@ typedef struct mudclient {
     int teleport_bubble_y[TELEPORT_BUBBLE_MAX];
     int teleport_bubble_time[TELEPORT_BUBBLE_MAX];
 
-    /*int show_dialog_report_abuse_step;
+    /*int8_t show_dialog_report_abuse_step;
     int report_abuse_offence;*/
 
     /* ./ui/password.c */
@@ -869,12 +864,12 @@ typedef struct mudclient {
     int8_t duel_option_weapons;
 
     /* ./ui/offer-x.c */
-    int show_dialog_offer_x;
+    int8_t show_dialog_offer_x;
     int offer_id;
     int offer_max;
 
     /* ./ui/confirm.c */
-    int show_dialog_confirm;
+    int8_t show_dialog_confirm;
     char *confirm_text_top;
     char *confirm_text_bottom;
     int confirm_type;

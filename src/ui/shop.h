@@ -1,8 +1,6 @@
 #ifndef _H_SHOP
 #define _H_SHOP
 
-#include "../client-opcodes.h"
-#include "../colours.h"
 #include "../mudclient.h"
 
 #define SHOP_COLUMNS 8

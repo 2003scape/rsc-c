@@ -24,7 +24,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
 
         if (i < mud->inventory_items_count) {
             int sprite_id = mud->sprite_item +
-                            game_data_item_picture[mud->inventory_item_id[i]];
+                            game_data_item_sprite[mud->inventory_item_id[i]];
 
             int sprite_mask = game_data_item_mask[mud->inventory_item_id[i]];
 

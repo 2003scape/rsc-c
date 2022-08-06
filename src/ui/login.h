@@ -2,8 +2,6 @@
 #define _H_LOGIN
 
 #include "../mudclient.h"
-#include "../panel.h"
-#include "additional-options.h"
 
 #define LOGIN_STAGE_WELCOME 0
 #define LOGIN_STAGE_NEW 1

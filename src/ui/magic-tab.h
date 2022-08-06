@@ -1,10 +1,7 @@
 #ifndef _H_MAGIC_TAB
 #define _H_MAGIC_TAB
 
-#include "../colours.h"
 #include "../mudclient.h"
-#include "../packet-stream.h"
-#include "./message-tabs.h"
 
 #define MAGIC_HEIGHT 182
 #define MAGIC_WIDTH 196

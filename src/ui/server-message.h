@@ -2,7 +2,6 @@
 #define _H_SERVER_MESSAGE
 
 #include "../mudclient.h"
-#include "../colours.h"
 
 #define SERVER_MESSAGE_WIDTH 400
 

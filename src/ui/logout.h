@@ -1,7 +1,6 @@
 #ifndef _H_LOGOUT
 #define _H_LOGOUT
 
-#include "../colours.h"
 #include "../mudclient.h"
 
 #define LOGOUT_WIDTH 260
