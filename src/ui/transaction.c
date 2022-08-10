@@ -262,7 +262,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     int offer_height = is_trade ? TRADE_OFFER_HEIGHT : DUEL_OFFER_HEIGHT;
 
     if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < TRANSACTION_WIDTH &&
-        mouse_y < TRANSACTION_HEIGHT - 12) {
+        mouse_y < TRANSACTION_HEIGHT - 16) {
         /* handle inventory */
         if (mouse_x > TRANSACTION_INVENTORY_X &&
             mouse_y > TRANSACTION_INVENTORY_Y &&

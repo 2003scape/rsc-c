@@ -79,7 +79,7 @@ void mudclient_draw_sleep(mudclient *mud) {
 
     y += 49;
 
-    surface_draw_box_edge(mud->surface, x - 128, y, 257, 42, WHITE);
+    surface_draw_border(mud->surface, x - 128, y, 257, 42, WHITE);
 
     mudclient_draw_chat_message_tabs(mud);
 

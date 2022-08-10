@@ -231,7 +231,7 @@ void surface_draw_line_vertical_software(Surface *surface, int x, int y,
                                          int height, int colour);
 void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
                                 int colour);
-void surface_draw_box_edge(Surface *surface, int x, int y, int width,
+void surface_draw_border(Surface *surface, int x, int y, int width,
                            int height, int colour);
 void surface_set_pixel(Surface *surface, int x, int y, int colour);
 void surface_fade_to_black_software(Surface *surface, int32_t *dest,
@@ -362,5 +362,9 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int items_length, int selected, int show_inventory_count);
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height);
+void surface_draw_status_bar(Surface *surface, int min, int max, int current,
+                             char *label,
+                             int x, int y, int width, int height,
+                             int background_colour, int foreground_colour);
 
 #endif

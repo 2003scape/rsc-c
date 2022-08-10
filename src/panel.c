@@ -342,13 +342,13 @@ void panel_draw_box(Panel *panel, int x, int y, int width, int height) {
 void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height) {
     surface_draw_box(panel->surface, x, y, width, height, 0);
 
-    surface_draw_box_edge(panel->surface, x, y, width, height,
+    surface_draw_border(panel->surface, x, y, width, height,
                           PANEL_ROUNDED_BOX_OUT_COLOUR);
 
-    surface_draw_box_edge(panel->surface, x + 1, y + 1, width - 2, height - 2,
+    surface_draw_border(panel->surface, x + 1, y + 1, width - 2, height - 2,
                           PANEL_ROUNDED_BOX_MIDDLE_COLOUR);
 
-    surface_draw_box_edge(panel->surface, x + 2, y + 2, width - 4, height - 4,
+    surface_draw_border(panel->surface, x + 2, y + 2, width - 4, height - 4,
                           PANEL_ROUNDED_BOX_IN_COLOUR);
 
     surface_draw_sprite_from3(panel->surface, x, y,

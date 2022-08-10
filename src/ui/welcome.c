@@ -15,7 +15,7 @@ void mudclient_draw_welcome(mudclient *mud) {
     surface_draw_box(mud->surface, dialog_x, dialog_y, WELCOME_WIDTH, height,
                      BLACK);
 
-    surface_draw_box_edge(mud->surface, dialog_x, dialog_y, WELCOME_WIDTH,
+    surface_draw_border(mud->surface, dialog_x, dialog_y, WELCOME_WIDTH,
                           height, WHITE);
 
     int y = dialog_y + 20;

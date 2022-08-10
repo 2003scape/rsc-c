@@ -74,7 +74,9 @@
      "; Also draw which item a certificate is associated with\n"               \
      "certificate_items = %d\n"                                                \
      "; Display the warning dialog near the wilderness border\n"               \
-     "wilderness_warning = %d\n\n"                                             \
+     "wilderness_warning = %d\n"                                               \
+     "; Display hits and prayer bars\n"                                        \
+     "status_bars = %d\n\n"                                                    \
                                                                                \
      "; Add filtering to the bank\n"                                           \
      "bank_search = %d\n"                                                      \
@@ -192,6 +194,9 @@ typedef struct Options {
     /* show your total experience in the skills tab */
     int total_experience;
 
+    /* show experience drops */
+    int experience_drops;
+
     /* show a count of inventory items on the UI */
     int inventory_count;
 
@@ -203,6 +208,9 @@ typedef struct Options {
 
     /* display the warning dialog near the wilderness border */
     int wilderness_warning;
+
+    /* display hits and prayer bars */
+    int status_bars;
 
     /* withdraw multiple unstackable items */
     int bank_unstackble_withdraw;
@@ -266,9 +274,14 @@ typedef struct Options {
 
     /* experimental thick walls support (requires restart) */
     int thick_walls;
+
+    /* experimental ground item model support */
+    int ground_item_models;
 } Options;
 
 void options_new(Options *options);
+void options_set_defaults(Options *options);
+void options_set_vanilla(Options *options);
 void options_load(Options *options);
 void options_save(Options *options);
 

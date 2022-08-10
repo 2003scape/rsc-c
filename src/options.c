@@ -3,9 +3,27 @@
 void options_new(Options *options) {
     memset(options, 0, sizeof(Options));
 
+    /* presets */
+    options->account_management = 1;
+    options->anti_macro = 0;
+    options->retry_login_on_disconnect = 0;
+    options->show_additional_options = 1;
+    options->skip_tutorial = 1;
+
+    /* experimental */
+    options->thick_walls = 0;
+    options->ground_item_models = 0;
+
+    options_set_defaults(options);
+}
+
+void options_set_defaults(Options *options) {
     /* connection */
     strcpy(options->server, "127.0.0.1");
     options->port = 43594;
+    options->members = 0;
+    options->remember_username = 0;
+    options->remember_password = 0;
 
     // strcpy(options->server, "162.198.202.160"); /* openrsc preservation */
     // mud->options->port = 43596;
@@ -17,13 +35,7 @@ void options_new(Options *options) {
            "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
            "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
 
-    /* presets */
-    options->account_management = 1;
-    options->anti_macro = 0;
     options->idle_logout = 0;
-    options->retry_login_on_disconnect = 0;
-    options->show_additional_options = 1;
-    options->skip_tutorial = 1;
 
     /* controls */
     options->off_handle_scroll_drag = 1;
@@ -33,23 +45,23 @@ void options_new(Options *options) {
     options->zoom_camera = 1;
     options->tab_respond = 1;
     options->option_numbers = 1;
+    options->compass_menu = 1;
+    options->transaction_menus = 1;
+    options->offer_x = 1;
+    options->last_offer_x = 1;
 
     /* display */
+    options->interlace = 0;
     options->display_fps = 0;
     options->number_commas = 1;
     options->show_roofs = 1;
-    options->compass_menu = 1;
-    options->transaction_menus = 1;
     options->remaining_experience = 1;
     options->total_experience = 1;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
     options->certificate_items = 1;
-
-    options->offer_x = 1;
-    options->last_offer_x = 1;
-
     options->wilderness_warning = 1;
+    options->status_bars = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 1;
@@ -65,13 +77,65 @@ void options_new(Options *options) {
     /* gl */
     options->ui_scale = 1;
     options->field_of_view = 360;
-
-    options->thick_walls = 0;
 }
 
-void options_set_defaults(Options *options) {}
+void options_set_vanilla(Options *options) {
+    /* connection */
+    strcpy(options->server, "127.0.0.1");
+    options->port = 43594;
+    options->members = 0;
+    options->remember_username = 0;
+    options->remember_password = 0;
 
-void options_set_vanilla(Options *options) {}
+    strcpy(options->rsa_exponent, "00010001");
+
+    strcpy(options->rsa_modulus,
+           "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
+           "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
+
+    options->idle_logout = 1;
+
+    /* controls */
+    options->off_handle_scroll_drag = 0;
+    options->escape_clear = 0;
+    options->mouse_wheel = 0;
+    options->middle_click_camera = 0;
+    options->zoom_camera = 0;
+    options->tab_respond = 0;
+    options->option_numbers = 0;
+    options->compass_menu = 0;
+    options->transaction_menus = 0;
+    options->offer_x = 0;
+    options->last_offer_x = 0;
+
+    /* display */
+    options->interlace = 0;
+    options->display_fps = 0;
+    options->number_commas = 0;
+    options->show_roofs = 1;
+    options->remaining_experience = 0;
+    options->total_experience = 0;
+    options->inventory_count = 0;
+    options->condense_item_amounts = 0;
+    options->certificate_items = 0;
+    options->wilderness_warning = 1;
+    options->status_bars = 0;
+
+    /* bank */
+    options->bank_unstackble_withdraw = 0;
+    options->bank_search = 0;
+    options->bank_capacity = 0;
+    options->bank_value = 0;
+    options->bank_expand = 0;
+    options->bank_scroll = 0;
+    options->bank_menus = 0;
+    options->bank_inventory = 0;
+    options->bank_maintain_slot = 0;
+
+    /* gl */
+    options->ui_scale = 0;
+    options->field_of_view = 360;
+}
 
 void options_save(Options *options) {
     FILE *ini_file = fopen("./options.ini", "w");
@@ -110,6 +174,7 @@ void options_save(Options *options) {
             options->condense_item_amounts, //
             options->certificate_items,     //
             options->wilderness_warning,    //
+            options->status_bars,           //
                                             //
             options->bank_search,           //
             options->bank_capacity,         //
@@ -138,6 +203,8 @@ void options_load(Options *options) {
     OPTION_INI_INT("idle_logout", options->idle_logout, 0, 1);
     OPTION_INI_INT("remember_username", options->remember_username, 0, 1);
     OPTION_INI_INT("remember_password", options->remember_password, 0, 1);
+    OPTION_INI_STR("username", options->username, 20);
+    OPTION_INI_STR("password", options->password, 20);
 
     /* controls */
     OPTION_INI_INT("mouse_wheel", options->mouse_wheel, 0, 1);
@@ -154,7 +221,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
     OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
     OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);
-    OPTION_INI_INT("field_of_view", options->field_of_view, 0, 1);
+    OPTION_INI_INT("field_of_view", options->field_of_view, 360, 880);
     OPTION_INI_INT("show_roofs", options->show_roofs, 0, 1);
     OPTION_INI_INT("number_commas", options->number_commas, 0, 1);
     OPTION_INI_INT("remaining_experience", options->remaining_experience, 0, 1);
@@ -164,6 +231,17 @@ void options_load(Options *options) {
                    1);
     OPTION_INI_INT("certificate_items", options->certificate_items, 0, 1);
     OPTION_INI_INT("wilderness_warning", options->wilderness_warning, 0, 1);
+    OPTION_INI_INT("status_bars", options->status_bars, 0, 1);
+
+    /* bank */
+    OPTION_INI_INT("bank_search", options->bank_search, 0, 1);
+    OPTION_INI_INT("bank_capacity", options->bank_capacity, 0, 1);
+    OPTION_INI_INT("bank_value", options->bank_value, 0, 1);
+    OPTION_INI_INT("bank_expand", options->bank_expand, 0, 1);
+    OPTION_INI_INT("bank_scroll", options->bank_scroll, 0, 1);
+    OPTION_INI_INT("bank_menus", options->bank_menus, 0, 1);
+    OPTION_INI_INT("bank_inventory", options->bank_inventory, 0, 1);
+    OPTION_INI_INT("bank_maintain_slot", options->bank_maintain_slot, 0, 1);
 
     ini_free(options_ini);
 }

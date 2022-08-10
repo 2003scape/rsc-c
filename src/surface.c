@@ -885,7 +885,7 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface) {
 }
 
 float surface_gl_get_layer_depth(Surface *surface) {
-    //return (-0.00875 * surface->mud->camera_zoom + 11.9375) / 100000.0;
+    // return (-0.00875 * surface->mud->camera_zoom + 11.9375) / 100000.0;
     float min_depth = 0.00001f;
     float max_depth = 0.00008f;
 
@@ -899,7 +899,7 @@ float surface_gl_get_layer_depth(Surface *surface) {
         return min_depth / 2;
     }
 
-    //printf("%d %f\n", surface->mud->camera_zoom, depth * 100000);
+    // printf("%d %f\n", surface->mud->camera_zoom, depth * 100000);
 
     return depth;
 }
@@ -1533,8 +1533,8 @@ void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
 #endif
 }
 
-void surface_draw_box_edge(Surface *surface, int x, int y, int width,
-                           int height, int colour) {
+void surface_draw_border(Surface *surface, int x, int y, int width, int height,
+                         int colour) {
     surface_draw_line_horizontal(surface, x, y, width, colour);
     surface_draw_line_horizontal(surface, x, y + height - 1, width, colour);
     surface_draw_line_vertical(surface, x, y, height, colour);
@@ -4045,28 +4045,24 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
         }
     }
 
-    surface_draw_box_edge(surface, x, y, box_width + 1, box_height + 1,
-                          BLACK);
+    surface_draw_border(surface, x, y, box_width + 1, box_height + 1, BLACK);
 
     for (int row = 1; row < rows; row++) {
-        surface_draw_line_horizontal(surface, x,
-                                     y + (row * ITEM_GRID_SLOT_HEIGHT),
-                                     box_width, BLACK);
+        surface_draw_line_horizontal(
+            surface, x, y + (row * ITEM_GRID_SLOT_HEIGHT), box_width, BLACK);
     }
 
     for (int column = 1; column < columns; column++) {
-        surface_draw_line_vertical(surface,
-                                   x + (column * ITEM_GRID_SLOT_WIDTH), y,
-                                   box_height, BLACK);
+        surface_draw_line_vertical(surface, x + (column * ITEM_GRID_SLOT_WIDTH),
+                                   y, box_height, BLACK);
     }
-
 }
 
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height) {
     x += width - 12;
 
-    surface_draw_box_edge(surface, x, y, 12, height, 0);
+    surface_draw_border(surface, x, y, 12, height, 0);
 
     /* up arrow */
     surface_draw_sprite_from3(surface, x + 1, y + 1, surface->mud->sprite_util);
@@ -4089,4 +4085,24 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 
     surface_draw_line_vertical(surface, x + 2 + 8, scrub_y + y + 14,
                                scrub_height, SCRUB_RIGHT_COLOUR);
+}
+
+void surface_draw_status_bar(Surface *surface, int min, int max, int current,
+                             char *label, int x, int y, int width, int height,
+                             int background_colour, int foreground_colour) {
+    int current_width = (current / (float)max) * width;
+
+    surface_draw_box_alpha(surface, x, y, current_width, height,
+                           foreground_colour, 128);
+
+    surface_draw_box_alpha(surface, x + current_width, y, width - current_width,
+                           height, background_colour, 128);
+
+    surface_draw_border(surface, x, y, width, height, BLACK);
+
+    char formatted_status[strlen(label) + 27];
+    sprintf(formatted_status, "%s: %d / %d", label, current, max);
+
+    surface_draw_string_centre(surface, formatted_status, x + (width / 2),
+                               y + 12, 0, WHITE);
 }

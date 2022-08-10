@@ -10,7 +10,7 @@ void mudclient_draw_offer_x(mudclient *mud) {
     surface_draw_box(mud->surface, dialog_x, dialog_y, OFFER_X_WIDTH,
                      OFFER_X_HEIGHT, BLACK);
 
-    surface_draw_box_edge(mud->surface, dialog_x, dialog_y, OFFER_X_WIDTH,
+    surface_draw_border(mud->surface, dialog_x, dialog_y, OFFER_X_WIDTH,
                           OFFER_X_HEIGHT, WHITE);
 
     int x = mud->surface->width / 2;

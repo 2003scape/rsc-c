@@ -6,7 +6,7 @@ void mudclient_draw_logout(mudclient *mud) {
 
     surface_draw_box(mud->surface, x, y, LOGOUT_WIDTH, LOGOUT_HEIGHT, BLACK);
 
-    surface_draw_box_edge(mud->surface, x, y, LOGOUT_WIDTH, LOGOUT_HEIGHT,
+    surface_draw_border(mud->surface, x, y, LOGOUT_WIDTH, LOGOUT_HEIGHT,
                           WHITE);
 
     surface_draw_string_centre(mud->surface, "Logging out...", mud->surface->width / 2, mud->surface->height / 2, 5, WHITE);

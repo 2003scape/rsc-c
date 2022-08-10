@@ -120,7 +120,7 @@
 #define NPCS_MAX 500
 #define GROUND_ITEMS_MAX 5000
 #define PRAYER_COUNT 50
-#define PLAYER_STAT_COUNT 18
+#define PLAYER_SKILL_COUNT 18
 #define PLAYER_STAT_EQUIPMENT_COUNT 5
 #define PROJECTILE_RANGE_MAX 40
 
@@ -243,6 +243,7 @@ typedef struct mudclient mudclient;
 #include "ui/shop.h"
 #include "ui/sleep.h"
 #include "ui/stats-tab.h"
+#include "ui/status-bars.h"
 #include "ui/trade.h"
 #include "ui/ui-tabs.h"
 #include "ui/welcome.h"
@@ -724,9 +725,9 @@ typedef struct mudclient {
     int control_list_quest;
     int8_t *quest_complete;
     int ui_tab_stats_sub_tab;
-    int player_skill_current[PLAYER_STAT_COUNT];
-    int player_skill_base[PLAYER_STAT_COUNT];
-    int player_experience[PLAYER_STAT_COUNT];
+    int player_skill_current[PLAYER_SKILL_COUNT];
+    int player_skill_base[PLAYER_SKILL_COUNT];
+    int player_experience[PLAYER_SKILL_COUNT];
     int player_quest_points;
     int stat_fatigue;
     int player_stat_equipment[PLAYER_STAT_EQUIPMENT_COUNT];
@@ -893,6 +894,13 @@ typedef struct mudclient {
     Panel *panel_bank_options;
     void *bank_options[50];
     int bank_option_types[50];
+
+    /* experience drops */
+    int experience_drop_skill[100];
+    int experience_drop_amount[100];
+    int experience_drop_float[100];
+    int experience_drop_speed[100];
+    int experience_drop_count;
 } mudclient;
 
 void mudclient_new(mudclient *mud);
@@ -968,6 +976,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int skew_x, int ty, float depth_top, float depth_bottom);
 void mudclient_draw_blue_bar(mudclient *mud);
+void mudclient_draw_experience_drops(mudclient *mud);
 void mudclient_draw_ui(mudclient *mud);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);

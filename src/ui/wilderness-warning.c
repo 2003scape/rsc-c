@@ -7,7 +7,7 @@ void mudclient_draw_wilderness_warning(mudclient *mud) {
     surface_draw_box(mud->surface, dialog_x, dialog_y, WILDERNESS_WARNING_WIDTH,
                      WILDERNESS_WARNING_HEIGHT, BLACK);
 
-    surface_draw_box_edge(mud->surface, dialog_x, dialog_y,
+    surface_draw_border(mud->surface, dialog_x, dialog_y,
                           WILDERNESS_WARNING_WIDTH, WILDERNESS_WARNING_HEIGHT,
                           WHITE);
 

@@ -468,8 +468,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     game_model_rotate(model, 0, tile_direction * 32, 0);
 
                     game_model_translate(
-                        model,
-                        model_x,
+                        model, model_x,
                         -world_get_elevation(mud->world, model_x, model_y),
                         model_y);
 
@@ -491,7 +490,7 @@ void mudclient_packet_tick(mudclient *mud) {
         }
 
 #ifdef RENDER_GL
-    world_gl_update_terrain_buffers(mud->world);
+        world_gl_update_terrain_buffers(mud->world);
 #endif
         break;
     }
@@ -929,37 +928,41 @@ void mudclient_packet_tick(mudclient *mud) {
                         break;
                     }
 
-#if 1
-                    //GameModel *model = game_model_copy(mud->game_models[118 - 2]);
-                    //GameModel *original_model = mud->game_models[item_id];
-                    GameModel *original_model = mud->item_models[item_id];
+                    if (mud->options->ground_item_models) {
+                        GameModel *original_model = mud->item_models[item_id];
 
-                    if (original_model != NULL) {
-                        GameModel *model = game_model_copy(original_model);
-                        scene_add_model(mud->scene, model);
+                        if (original_model != NULL) {
+                            GameModel *model = game_model_copy(original_model);
+                            scene_add_model(mud->scene, model);
 
-                        model->key = mud->ground_item_count + 20000;
+                            model->key = mud->ground_item_count + 20000;
 
-                        int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
-                        int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
+                            int model_x =
+                                ((area_x + area_x + 1) * MAGIC_LOC) / 2;
+                            int model_y =
+                                ((area_y + area_y + 1) * MAGIC_LOC) / 2;
 
-                        printf("%d %d\n",-world_get_elevation(mud->world, model_x, model_y), mud->ground_item_z[mud->ground_item_count]);
+                            printf("%d %d\n",
+                                   -world_get_elevation(mud->world, model_x,
+                                                        model_y),
+                                   mud->ground_item_z[mud->ground_item_count]);
 
-                        game_model_translate(
-                            model,
-                            model_x,
-                            -(world_get_elevation(mud->world, model_x, model_y) +mud->ground_item_z[mud->ground_item_count]),
-                            //mud->ground_item_z[mud->ground_item_count],
-                            //-world_get_elevation(mud->world, model_x, model_y),
-                            model_y);
+                            game_model_translate(
+                                model, model_x,
+                                -(world_get_elevation(mud->world, model_x,
+                                                      model_y) +
+                                  mud->ground_item_z[mud->ground_item_count]),
+                                model_y);
 
-                        game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+                            game_model_set_light_from6(model, 1, 48, 48, -50,
+                                                       -10, -50);
 
-                        mud->ground_item_model[mud->ground_item_count] = model;
+                            mud->ground_item_model[mud->ground_item_count] =
+                                model;
+                        }
+
+                        mud->ground_item_count++;
                     }
-
-                    mud->ground_item_count++;
-#endif
                 } else {
                     item_id &= 32767;
 
@@ -1100,7 +1103,18 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_PLAYER_STAT_EXPERIENCE_UPDATE: {
         int skill_index = data[1] & 0xff;
+
+        int old_experience = mud->player_experience[skill_index];
         mud->player_experience[skill_index] = get_unsigned_int(data, 2);
+
+        mud->experience_drop_float[mud->experience_drop_count] = 1000 + (mud->experience_drop_count * 1000);
+        mud->experience_drop_skill[mud->experience_drop_count] = skill_index;
+
+        mud->experience_drop_amount[mud->experience_drop_count] =
+            mud->player_experience[skill_index] - old_experience;
+
+        mud->experience_drop_speed[mud->experience_drop_count] = 0;
+        mud->experience_drop_count++;
         break;
     }
     case SERVER_PLAYER_STAT_UPDATE: {
@@ -1300,8 +1314,8 @@ void mudclient_packet_tick(mudclient *mud) {
             mud->show_right_click_menu = 0;
         }
 
-        //mud->bank_selected_item_slot = -1;
-        //mud->bank_selected_item = -2; // TODO toggle
+        // mud->bank_selected_item_slot = -1;
+        // mud->bank_selected_item = -2; // TODO toggle
 
         int offset = 1;
 
@@ -1480,7 +1494,8 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 2;
 
         for (int i = 0; i < mud->transaction_recipient_item_count; i++) {
-            mud->transaction_recipient_items[i] = get_unsigned_short(data, offset);
+            mud->transaction_recipient_items[i] =
+                get_unsigned_short(data, offset);
 
             offset += 2;
 
@@ -1517,13 +1532,15 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
 
-        mud->transaction_recipient_confirm_name= get_unsigned_long(data, offset);
+        mud->transaction_recipient_confirm_name =
+            get_unsigned_long(data, offset);
 
         offset += 8;
 
         mud->transaction_recipient_confirm_item_count = data[offset++] & 0xff;
 
-        for (int i = 0; i < mud->transaction_recipient_confirm_item_count; i++) {
+        for (int i = 0; i < mud->transaction_recipient_confirm_item_count;
+             i++) {
             mud->transaction_recipient_confirm_items[i] =
                 get_unsigned_short(data, offset);
 
@@ -1538,11 +1555,13 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->transaction_confirm_item_count = data[offset++] & 0xff;
 
         for (int i = 0; i < mud->transaction_confirm_item_count; i++) {
-            mud->transaction_confirm_items[i] = get_unsigned_short(data, offset);
+            mud->transaction_confirm_items[i] =
+                get_unsigned_short(data, offset);
 
             offset += 2;
 
-            mud->transaction_confirm_items_count[i] = get_unsigned_int(data, offset);
+            mud->transaction_confirm_items_count[i] =
+                get_unsigned_int(data, offset);
 
             offset += 4;
         }

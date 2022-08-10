@@ -393,7 +393,7 @@ void mudclient_draw_social_input(mudclient *mud) {
         surface_draw_box(mud->surface, add_dialog_x, y, SOCIAL_DIALOG_ADD_WIDTH,
                          SOCIAL_DIALOG_HEIGHT, BLACK);
 
-        surface_draw_box_edge(mud->surface, add_dialog_x, y,
+        surface_draw_border(mud->surface, add_dialog_x, y,
                               SOCIAL_DIALOG_ADD_WIDTH, SOCIAL_DIALOG_HEIGHT,
                               WHITE);
 
@@ -433,7 +433,7 @@ void mudclient_draw_social_input(mudclient *mud) {
         surface_draw_box(mud->surface, message_dialog_x, y,
                          SOCIAL_DIALOG_MESSAGE_WIDTH, 70, BLACK);
 
-        surface_draw_box_edge(mud->surface, message_dialog_x, y,
+        surface_draw_border(mud->surface, message_dialog_x, y,
                               SOCIAL_DIALOG_MESSAGE_WIDTH, 70, WHITE);
 
         y += 20;
@@ -489,7 +489,7 @@ void mudclient_draw_social_input(mudclient *mud) {
         surface_draw_box(mud->surface, add_dialog_x, y, SOCIAL_DIALOG_ADD_WIDTH,
                          70, BLACK);
 
-        surface_draw_box_edge(mud->surface, add_dialog_x, y,
+        surface_draw_border(mud->surface, add_dialog_x, y,
                               SOCIAL_DIALOG_ADD_WIDTH, 70, WHITE);
 
         y += 20;

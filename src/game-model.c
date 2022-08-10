@@ -959,13 +959,13 @@ void game_model_project_view(GameModel *game_model, int camera_x, int camera_y,
         }
 
         if (z >= clip_near) {
-            //game_model->vertex_view_x[i] = (int)((x << view_distance) / z);
-            //game_model->vertex_view_y[i] = (int)((y << view_distance) / z);
+            // game_model->vertex_view_x[i] = (int)((x << view_distance) / z);
+            // game_model->vertex_view_y[i] = (int)((y << view_distance) / z);
             game_model->vertex_view_x[i] = (int)((x * view_distance) / z);
             game_model->vertex_view_y[i] = (int)((y * view_distance) / z);
         } else {
-            //game_model->vertex_view_x[i] = x << view_distance;
-            //game_model->vertex_view_y[i] = y << view_distance;
+            // game_model->vertex_view_x[i] = x << view_distance;
+            // game_model->vertex_view_y[i] = y << view_distance;
             game_model->vertex_view_x[i] = x * view_distance;
             game_model->vertex_view_y[i] = y * view_distance;
         }
@@ -1233,6 +1233,30 @@ void game_model_dump(GameModel *game_model, int i) {
     }
 
     fclose(obj_file);
+}
+
+/* use the sprite masking technique on model faces */
+void game_model_mask_faces(GameModel *game_model, int *face_fill,
+                           int mask_colour) {
+    for (int j = 0; j < game_model->num_faces; j++) {
+        int fill_colour = -1 - face_fill[j];
+        int r = ((fill_colour >> 10) & 31) * 8;
+        int g = ((fill_colour >> 5) & 31) * 8;
+        int b = (fill_colour & 31) * 8;
+
+        if (r == g && g == b) {
+            float mask_r = ((mask_colour >> 16) & 0xff) / 255.0f;
+            float mask_g = ((mask_colour >> 8) & 0xff) / 255.0f;
+            float mask_b = (mask_colour & 0xff) / 255.0f;
+
+            int new_r = (int)((float)r * mask_r) & 0xff;
+            int new_g = (int)((float)g * mask_g) & 0xff;
+            int new_b = (int)((float)b * mask_b) & 0xff;
+
+            face_fill[j] =
+                -(((new_r / 8) << 10) | ((new_g / 8) << 5) | (new_b / 8)) - 1;
+        }
+    }
 }
 
 #ifdef RENDER_GL

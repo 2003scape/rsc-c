@@ -12,7 +12,8 @@ void mudclient_draw_duel(mudclient *mud) {
         int mouse_x = mud->mouse_x - dialog_x;
         int mouse_y = mud->mouse_y - dialog_y;
 
-        if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < 468 && mouse_y < 262) {
+        if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < TRANSACTION_WIDTH &&
+            mouse_y < TRANSACTION_HEIGHT - 16) {
             int send_update = 0;
 
             if (mouse_x >= 93 && mouse_y >= 221 && mouse_x <= 104 &&
@@ -70,7 +71,7 @@ void mudclient_draw_duel(mudclient *mud) {
     surface_draw_box_alpha(mud->surface, dialog_x + 8, dialog_y + 215, 197, 43,
                            GREY_D0, 160);
 
-    surface_draw_box_edge(mud->surface, dialog_x + 8, dialog_y + 215, 197, 43,
+    surface_draw_border(mud->surface, dialog_x + 8, dialog_y + 215, 197, 43,
                           BLACK);
 
     surface_draw_string(mud->surface, "Duel Options", dialog_x + 9,
@@ -88,7 +89,7 @@ void mudclient_draw_duel(mudclient *mud) {
     surface_draw_string(mud->surface, "No weapons", dialog_x + 8 + 102,
                         dialog_y + 215 + 35, 3, YELLOW);
 
-    surface_draw_box_edge(mud->surface, dialog_x + 93, dialog_y + 215 + 6, 11,
+    surface_draw_border(mud->surface, dialog_x + 93, dialog_y + 215 + 6, 11,
                           11, YELLOW);
 
     if (mud->duel_option_retreat) {
@@ -96,7 +97,7 @@ void mudclient_draw_duel(mudclient *mud) {
                          YELLOW);
     }
 
-    surface_draw_box_edge(mud->surface, dialog_x + 93, dialog_y + 215 + 25, 11,
+    surface_draw_border(mud->surface, dialog_x + 93, dialog_y + 215 + 25, 11,
                           11, YELLOW);
 
     if (mud->duel_option_magic) {
@@ -104,7 +105,7 @@ void mudclient_draw_duel(mudclient *mud) {
                          YELLOW);
     }
 
-    surface_draw_box_edge(mud->surface, dialog_x + 191, dialog_y + 215 + 6, 11,
+    surface_draw_border(mud->surface, dialog_x + 191, dialog_y + 215 + 6, 11,
                           11, YELLOW);
 
     if (mud->duel_option_prayer) {
@@ -112,7 +113,7 @@ void mudclient_draw_duel(mudclient *mud) {
                          YELLOW);
     }
 
-    surface_draw_box_edge(mud->surface, dialog_x + 191, dialog_y + 215 + 25, 11,
+    surface_draw_border(mud->surface, dialog_x + 191, dialog_y + 215 + 25, 11,
                           11, YELLOW);
 
     if (mud->duel_option_weapons) {

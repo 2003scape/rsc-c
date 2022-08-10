@@ -193,6 +193,7 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
 void game_model_copy_position(GameModel *game_model, GameModel *source);
 void game_model_destroy(GameModel *game_model);
 void game_model_dump(GameModel *game_model, int i);
+void game_model_mask_faces(GameModel *game_model, int *face_fill, int mask_colour);
 
 #ifdef RENDER_GL
 void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,

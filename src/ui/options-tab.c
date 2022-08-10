@@ -30,7 +30,7 @@ void mudclient_draw_change_password(mudclient *mud) {
     surface_draw_box(mud->surface, dialog_x, dialog_y, CHANGE_PASSWORD_WIDTH,
                      CHANGE_PASSWORD_HEIGHT, BLACK);
 
-    surface_draw_box_edge(mud->surface, dialog_x, dialog_y,
+    surface_draw_border(mud->surface, dialog_x, dialog_y,
                           CHANGE_PASSWORD_WIDTH, CHANGE_PASSWORD_HEIGHT, WHITE);
 
     int x = mud->surface->width / 2;

@@ -46,7 +46,7 @@ extern int *game_data_npc_height;
 extern int **game_data_npc_sprite;
 extern int *game_data_npc_colour_hair;
 extern int *game_data_npc_colour_top;
-extern int *game_data_npc_color_bottom;
+extern int *game_data_npc_colour_bottom;
 extern int *game_data_npc_colour_skin;
 extern int *game_data_npc_attack;
 extern int *game_data_npc_strength;

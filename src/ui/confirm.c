@@ -7,7 +7,7 @@ void mudclient_draw_confirm(mudclient *mud) {
     surface_draw_box(mud->surface, dialog_x, dialog_y, CONFIRM_DIALOG_WIDTH,
                      CONFIRM_DIALOG_HEIGHT, BLACK);
 
-    surface_draw_box_edge(mud->surface, dialog_x, dialog_y,
+    surface_draw_border(mud->surface, dialog_x, dialog_y,
                           CONFIRM_DIALOG_WIDTH, CONFIRM_DIALOG_HEIGHT, WHITE);
 
     int x = mud->surface->width / 2;
@@ -79,8 +79,12 @@ void mudclient_handle_confirm_input(mudclient *mud) {
                 mudclient_send_command_string(mud, "skiptutorial");
                 break;
             case CONFIRM_OPTIONS_DEFAULT:
+                options_set_defaults(mud->options);
+                mudclient_sync_options_panels(mud);
                 break;
             case CONFIRM_OPTIONS_VANILLA:
+                options_set_vanilla(mud->options);
+                mudclient_sync_options_panels(mud);
                 break;
         }
 

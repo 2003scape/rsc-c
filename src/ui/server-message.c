@@ -10,7 +10,7 @@ void mudclient_draw_server_message(mudclient *mud) {
                      dialog_y - (height / 2), SERVER_MESSAGE_WIDTH, height,
                      BLACK);
 
-    surface_draw_box_edge(mud->surface, dialog_x - (SERVER_MESSAGE_WIDTH / 2),
+    surface_draw_border(mud->surface, dialog_x - (SERVER_MESSAGE_WIDTH / 2),
                           dialog_y - (height / 2), SERVER_MESSAGE_WIDTH, height,
                           WHITE);
 

@@ -43,7 +43,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
     int ui_y = mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
     int x = ui_x + 4;
-    int y = ui_y + 20 + 24 + 4;
+    int y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     y += 20;
 
@@ -56,7 +56,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         15, x, y);
 
     mud->connection_options[control] = &mud->options->server;
-    mud->connection_option_types[control] = 0;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_STRING;
 
     y += 20;
 
@@ -68,7 +68,7 @@ void mudclient_create_options_panel(mudclient *mud) {
                                                 15, x, y);
 
     mud->connection_options[control] = &mud->options->port;
-    mud->connection_option_types[control] = 1;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
     y += 20;
 
@@ -77,7 +77,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         x, y);
 
     mud->connection_options[control] = &mud->options->members;
-    mud->connection_option_types[control] = 2;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -86,7 +86,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Idle logout: ", mud->options->idle_logout, x, y);
 
     mud->connection_options[control] = &mud->options->idle_logout;
-    mud->connection_option_types[control] = 2;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -95,7 +95,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Remember username:", mud->options->remember_username, x, y);
 
     mud->connection_options[control] = &mud->options->remember_username;
-    mud->connection_option_types[control] = 2;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -104,10 +104,10 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Remember password: ", mud->options->remember_password, x, y);
 
     mud->connection_options[control] = &mud->options->remember_password;
-    mud->connection_option_types[control] = 2;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     /* controls */
-    y = ui_y + 20 + 24 + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     mud->panel_control_options = malloc(sizeof(Panel));
     panel_new(mud->panel_control_options, mud->surface, 50);
@@ -117,7 +117,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Mouse wheel: ", mud->options->mouse_wheel, x, y);
 
     mud->control_options[control] = &mud->options->mouse_wheel;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -126,7 +126,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Middle click camera: ", mud->options->middle_click_camera, x, y);
 
     mud->control_options[control] = &mud->options->middle_click_camera;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -135,7 +135,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Zoom camera: ", mud->options->zoom_camera, x, y);
 
     mud->control_options[control] = &mud->options->zoom_camera;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -144,7 +144,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Tab message respond: ", mud->options->tab_respond, x, y);
 
     mud->control_options[control] = &mud->options->tab_respond;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -153,7 +153,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Option number keys: ", mud->options->option_numbers, x, y);
 
     mud->control_options[control] = &mud->options->option_numbers;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -162,7 +162,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Compass menu: ", mud->options->compass_menu, x, y);
 
     mud->control_options[control] = &mud->options->compass_menu;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -171,7 +171,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Transaction menus: ", mud->options->transaction_menus, x, y);
 
     mud->control_options[control] = &mud->options->transaction_menus;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -180,21 +180,21 @@ void mudclient_create_options_panel(mudclient *mud) {
         y);
 
     mud->control_options[control] = &mud->options->offer_x;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
-    y = ui_y + 20 + 24 + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_control_options,
         "@whi@Last Offer-X: ", mud->options->last_offer_x, x, y);
 
     mud->control_options[control] = &mud->options->last_offer_x;
-    mud->control_option_types[control] = 2;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     /* display */
     x = ui_x + 4;
-    y = ui_y + 20 + 24 + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     mud->panel_display_options = malloc(sizeof(Panel));
     panel_new(mud->panel_display_options, mud->surface, 50);
@@ -204,7 +204,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Interlace (F1): ", mud->options->interlace, x, y);
 
     mud->display_options[control] = &mud->options->interlace;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -213,7 +213,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Display FPS: ", mud->options->display_fps, x, y);
 
     mud->display_options[control] = &mud->options->display_fps;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -222,7 +222,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         x, y);
 
     mud->display_options[control] = &mud->options->ui_scale;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -242,7 +242,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Show roofs: ", mud->options->show_roofs, x, y);
 
     mud->display_options[control] = &mud->options->show_roofs;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -251,7 +251,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Number commas: ", mud->options->number_commas, x, y);
 
     mud->display_options[control] = &mud->options->number_commas;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -260,7 +260,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Remaining XP: ", mud->options->remaining_experience, x, y);
 
     mud->display_options[control] = &mud->options->remaining_experience;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -269,17 +269,17 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Total XP: ", mud->options->total_experience, x, y);
 
     mud->display_options[control] = &mud->options->total_experience;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
-    y = ui_y + 20 + 24 + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
         "@whi@Inventory count: ", mud->options->inventory_count, x, y);
 
     mud->display_options[control] = &mud->options->inventory_count;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -288,7 +288,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@K/M amounts: ", mud->options->condense_item_amounts, x, y);
 
     mud->display_options[control] = &mud->options->condense_item_amounts;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -297,7 +297,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Certificate items: ", mud->options->certificate_items, x, y);
 
     mud->display_options[control] = &mud->options->certificate_items;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -306,11 +306,11 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Wilderness warning: ", mud->options->wilderness_warning, x, y);
 
     mud->display_options[control] = &mud->options->wilderness_warning;
-    mud->display_option_types[control] = 2;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     /* bank */
     x = ui_x + 4;
-    y = ui_y + 20 + 24 + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     mud->panel_bank_options = malloc(sizeof(Panel));
     panel_new(mud->panel_bank_options, mud->surface, 50);
@@ -321,7 +321,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         x, y);
 
     mud->bank_options[control] = &mud->options->bank_unstackble_withdraw;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -330,7 +330,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Search items: ", mud->options->bank_search, x, y);
 
     mud->bank_options[control] = &mud->options->bank_search;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -339,7 +339,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Show capacity: ", mud->options->bank_capacity, x, y);
 
     mud->bank_options[control] = &mud->options->bank_capacity;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -348,7 +348,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Show total value: ", mud->options->bank_value, x, y);
 
     mud->bank_options[control] = &mud->options->bank_value;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -357,7 +357,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Deposit all: ", mud->options->bank_deposit_all, x, y);
 
     mud->bank_options[control] = &mud->options->bank_deposit_all;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -366,7 +366,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Bank expand: ", mud->options->bank_expand, x, y);
 
     mud->bank_options[control] = &mud->options->bank_expand;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -375,7 +375,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Bank scrollbar: ", mud->options->bank_scroll, x, y);
 
     mud->bank_options[control] = &mud->options->bank_scroll;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -384,17 +384,17 @@ void mudclient_create_options_panel(mudclient *mud) {
         x, y);
 
     mud->bank_options[control] = &mud->options->bank_menus;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
-    y = ui_y + 20 + 24 + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_bank_options,
         "@whi@Show inventory: ", mud->options->bank_inventory, x, y);
 
     mud->bank_options[control] = &mud->options->bank_inventory;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += 20;
 
@@ -403,7 +403,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Maintain slot: ", mud->options->bank_maintain_slot, x, y);
 
     mud->bank_options[control] = &mud->options->bank_maintain_slot;
-    mud->bank_option_types[control] = 2;
+    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 }
 
 Panel *mudclient_get_active_option_panel(mudclient *mud) {
@@ -439,6 +439,34 @@ void mudclient_get_active_options(mudclient *mud, void ***options,
     }
 }
 
+void mudclient_sync_options_panel(Panel *panel, void **options,
+                                  int *option_types) {
+    for (int i = 0; i < panel->control_count; i++) {
+        if (option_types[i] == ADDITIONAL_OPTIONS_CHECKBOX) {
+            int option = *(int *)options[i];
+            panel_toggle_checkbox(panel, i, option);
+        }
+    }
+}
+
+void mudclient_sync_options_panels(mudclient *mud) {
+    mudclient_sync_options_panel(mud->panel_connection_options,
+                                 mud->connection_options,
+                                 mud->connection_option_types);
+
+    mudclient_sync_options_panel(mud->panel_control_options,
+                                 mud->control_options,
+                                 mud->control_option_types);
+
+    mudclient_sync_options_panel(mud->panel_display_options,
+                                 mud->display_options,
+                                 mud->display_option_types);
+
+    mudclient_sync_options_panel(mud->panel_bank_options,
+                                 mud->bank_options,
+                                 mud->bank_option_types);
+}
+
 void mudclient_draw_additional_options(mudclient *mud) {
     mud->surface->draw_string_shadow = 1;
 
@@ -469,7 +497,7 @@ void mudclient_draw_additional_options(mudclient *mud) {
                               text_colour);
 
     surface_draw_tabs(mud->surface, ui_x, ui_y + 12, ADDITIONAL_OPTIONS_WIDTH,
-                      OPTIONS_TAB_HEIGHT, option_tabs, 4, mud->options_tab);
+                      ADDITIONAL_OPTIONS_TAB_HEIGHT, option_tabs, 4, mud->options_tab);
 
     surface_draw_line_horizontal(mud->surface, ui_x + 8,
                                  ui_y + ADDITIONAL_OPTIONS_HEIGHT - 20,
@@ -524,7 +552,7 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
     if (mud->last_mouse_button_down == 1 && mud->mouse_x >= ui_x &&
         mud->mouse_x < ui_x + ADDITIONAL_OPTIONS_WIDTH &&
         mud->mouse_y >= ui_y + 12 &&
-        mud->mouse_y <= ui_y + 12 + OPTIONS_TAB_HEIGHT) {
+        mud->mouse_y <= ui_y + 12 + ADDITIONAL_OPTIONS_TAB_HEIGHT) {
         mud->options_tab =
             (mud->mouse_x - ui_x) / (ADDITIONAL_OPTIONS_WIDTH / 4);
     }
@@ -558,8 +586,7 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
         /* reset */
         if (mud->mouse_y > ui_y + ADDITIONAL_OPTIONS_HEIGHT - 20 &&
             mud->mouse_y < ui_y + ADDITIONAL_OPTIONS_HEIGHT) {
-            mud->confirm_text_top =
-                "Are you sure you wish to reset the";
+            mud->confirm_text_top = "Are you sure you wish to reset the";
 
             if (mud->mouse_x >= ui_x + 58 && mud->mouse_x <= ui_x + 100) {
                 mud->confirm_text_bottom = "options to defaults?";
@@ -574,24 +601,28 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
         }
 
         if (panel != NULL) {
-            // printf("\n---\n");
-
             void **options = NULL;
             int *option_types = NULL;
 
             mudclient_get_active_options(mud, &options, &option_types);
 
             if (options != NULL && option_types != NULL) {
+#ifdef RENDER_GL
+                int old_ui_scale = mud->options->ui_scale;
+#endif
+
                 for (int i = 0; i < panel->control_count; i++) {
-                    if (option_types[i] == 2) {
+                    if (option_types[i] == ADDITIONAL_OPTIONS_CHECKBOX) {
                         int *option = (int *)options[i];
                         *option = panel_is_activated(panel, i);
-
-                        if (option == &mud->options->ui_scale) {
-                            mudclient_on_resize(mud);
-                        }
                     }
                 }
+
+#ifdef RENDER_GL
+                if (old_ui_scale != mud->options->ui_scale) {
+                    mudclient_on_resize(mud);
+                }
+#endif
             }
         }
     }

@@ -1980,25 +1980,37 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
-    // TODO toggleable
-    for (int i = 0; i < game_data_item_count; i++) {
-        int sprite_id = game_data_item_sprite[i];
+    if (mud->options->ground_item_models) {
+        for (int i = 0; i < game_data_item_count; i++) {
+            int sprite_id = game_data_item_sprite[i];
 
-        char file_name[21] = {0};
-        sprintf(file_name, "item-%d.ob3", sprite_id);
+            char file_name[21] = {0};
+            sprintf(file_name, "item-%d.ob3", sprite_id);
 
-        int offset = get_data_file_offset(file_name, models_jag);
+            int offset = get_data_file_offset(file_name, models_jag);
 
-        if (offset == 0) {
-            continue;
+            if (offset == 0) {
+                continue;
+            }
+
+            GameModel *game_model = malloc(sizeof(GameModel));
+            game_model_from_bytes(game_model, models_jag, offset);
+
+            int mask_colour = game_data_item_mask[i];
+
+            if (mask_colour != 0) {
+                game_model_mask_faces(game_model, game_model->face_fill_back,
+                                      mask_colour);
+
+                game_model_mask_faces(game_model, game_model->face_fill_front,
+                                      mask_colour);
+            }
+
+            mud->item_models[i] = game_model;
+
+            printf("found model for item: %d %d\n", i,
+                   game_model->num_vertices);
         }
-
-        GameModel *game_model = malloc(sizeof(GameModel));
-        game_model_from_bytes(game_model, models_jag, offset);
-
-        mud->item_models[i] = game_model;
-
-        printf("found model for item: %d %d\n", i, game_model->num_vertices);
     }
 
     free(models_jag);
@@ -4130,7 +4142,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 animation_colour = game_data_npc_colour_top[npc->npc_id];
                 skin_colour = game_data_npc_colour_skin[npc->npc_id];
             } else if (animation_colour == 3) {
-                animation_colour = game_data_npc_color_bottom[npc->npc_id];
+                animation_colour = game_data_npc_colour_bottom[npc->npc_id];
                 skin_colour = game_data_npc_colour_skin[npc->npc_id];
             }
 
@@ -4172,6 +4184,45 @@ void mudclient_draw_blue_bar(mudclient *mud) {
     }
 }
 
+void mudclient_draw_experience_drops(mudclient *mud) {
+    int x = mud->surface->width / 2;
+    int max_y = mud->surface->height / 4;
+
+    int drop_count = mud->experience_drop_count;
+
+    int last_drop_float = -1;
+    int offset_y = 0;
+
+    for (int i = 0; i < drop_count; i++) {
+        int drop_float = mud->experience_drop_float[i];
+
+        if (drop_float <= 0) {
+            mud->experience_drop_count--;
+            continue;
+        }
+
+        int experience = mud->experience_drop_amount[i];
+
+        char formatted_amount[15] = {0};
+        mudclient_format_number_commas(mud, experience / 4, formatted_amount);
+
+        char *skill_name = skill_names[mud->experience_drop_skill[i]];
+
+        char formatted_drop[strlen(skill_name) + strlen(formatted_amount) + 5];
+
+        sprintf(formatted_drop, "%s %s XP", formatted_amount, skill_name);
+
+        int y = ((drop_float / 1000.0f) * max_y);
+
+        surface_draw_string_centre(mud->surface, formatted_drop, x, y + offset_y, 0,
+                                   WHITE);
+
+        mud->experience_drop_float[i] -= mud->experience_drop_speed[i];
+        mud->experience_drop_speed[i] += 1;
+        //mud->experience_drop_speed[i] += 1;
+    }
+}
+
 void mudclient_draw_ui(mudclient *mud) {
     surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 3 - 197,
                                     3, mud->sprite_media, 128);
@@ -4180,6 +4231,10 @@ void mudclient_draw_ui(mudclient *mud) {
 
     if (no_menus) {
         mud->menu_items_count = 0;
+    }
+
+    mudclient_draw_experience_drops(mud);
+    if (mud->options->experience_drops) {
     }
 
     if (mud->show_additional_options) {
@@ -4250,11 +4305,11 @@ void mudclient_draw_ui(mudclient *mud) {
             mudclient_draw_combat_style(mud);
         }
 
-        mudclient_set_active_ui_tab(mud);
+        if (mud->options->status_bars) {
+            mudclient_draw_status_bars(mud);
+        }
 
-        /*if (no_menus) {
-            mud->menu_items_count = 0;
-        }*/
+        mudclient_set_active_ui_tab(mud);
 
         if (mud->show_ui_tab == 0 && no_menus) {
             mudclient_create_right_click_menu(mud);
@@ -4564,12 +4619,14 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int x = mud->ground_item_x[i] * MAGIC_LOC + 64;
         int y = mud->ground_item_y[i] * MAGIC_LOC + 64;
 
-        /*scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
-                         -world_get_elevation(mud->world, x, y) -
-                             mud->ground_item_z[i],
-                         y, 96, 64, i + GROUND_ITEM_FACE_TAG);
+        if (mud->ground_item_model[i] == NULL) {
+            scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
+                             -world_get_elevation(mud->world, x, y) -
+                                 mud->ground_item_z[i],
+                             y, 96, 64, i + GROUND_ITEM_FACE_TAG);
 
-        mud->scene_sprite_count++;*/
+            mud->scene_sprite_count++;
+        }
     }
 
     for (int i = 0; i < mud->teleport_bubble_count; i++) {
