@@ -31,10 +31,10 @@ void main() {
         gradient_index = 0;
     }
 
-    if (vertex_texture_position.z > -1) {
+    if (vertex_texture_position.z > -1.0f) {
         fragment_colour = texture(textures, vertex_texture_position);
 
-        if (vertex_colour.x > -1) {
+        if (vertex_colour.x > -1.0f) {
             fragment_colour *= vertex_colour;
         }
 
@@ -45,7 +45,7 @@ void main() {
         lightness = light_gradient[gradient_index];
     }
 
-    if (fragment_colour.w <= 0.0) {
+    if (fragment_colour.w <= 0.0f) {
         discard;
     }
 

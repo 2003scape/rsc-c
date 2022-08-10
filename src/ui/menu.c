@@ -468,8 +468,43 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         }
         break;
     }
-    case MENU_MAP_LOOK: {
+    case MENU_MAP_LOOK:
         mud->camera_rotation = menu_index;
+        break;
+    case MENU_WIKI_LOOKUP: {
+        char *page_name_raw = mud->menu_item_text2[i];
+        int page_name_length = strlen(page_name_raw);
+
+        for (int i = page_name_length; i >= 0; i--) {
+            if (page_name_raw[i] == '@') {
+                page_name_raw += i + 1;
+                break;
+            }
+        }
+
+        char encoded_page_name[(page_name_length * 3) + 1];
+        url_encode(page_name_raw, encoded_page_name);
+
+        char encoded_url[strlen(mud->options->wiki_url) +
+                         strlen(encoded_page_name) + 1];
+
+        sprintf(encoded_url, mud->options->wiki_url, encoded_page_name);
+
+#ifdef EMSCRIPTEN
+        EM_ASM({
+            const url = UTF8ToString($0);
+            window.open(url, '_blank');
+        }, encoded_url);
+#else
+        char formatted_command[strlen(encoded_url) +
+                               strlen(mud->options->browser_command) + 1];
+
+        sprintf(formatted_command, mud->options->browser_command, encoded_url);
+
+        system(formatted_command);
+#endif
+
+        mud->selected_wiki = 0;
         break;
     }
     case MENU_CANCEL:
@@ -883,7 +918,21 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     sprintf(level_text, " %s(level-%d)", colour, npc_level);
                 }
 
-                if (mud->selected_spell >= 0) {
+                if (mud->selected_wiki) {
+                    strcpy(mud->menu_item_text1[mud->menu_items_count],
+                           "Wiki lookup");
+
+                    sprintf(mud->menu_item_text2[mud->menu_items_count],
+                            "@yel@%s",
+                            game_data_npc_name[mud->npcs[index]->npc_id]);
+
+                    mud->menu_type[mud->menu_items_count] = MENU_WIKI_LOOKUP;
+
+                    mud->menu_index[mud->menu_items_count] =
+                        mud->npcs[index]->server_index;
+
+                    mud->menu_items_count++;
+                } else if (mud->selected_spell >= 0) {
                     if (game_data_spell_type[mud->selected_spell] == 2) {
                         sprintf(mud->menu_item_text1[mud->menu_items_count],
                                 "Cast %s on",

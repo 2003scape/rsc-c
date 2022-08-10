@@ -46,7 +46,9 @@
      "; Allow inputting item amounts\n"                                        \
      "offer_x = %d\n"                                                          \
      "; Add another button to perform the last offer x amount\n"               \
-     "last_offer_x = %d\n\n"                                                   \
+     "last_offer_x = %d\n"                                                     \
+     "; Add RuneScape Wiki lookup button instead of report abuse\n"            \
+     "wiki_lookup = %d\n\n"                                                    \
                                                                                \
      "; F1 mode - only render every second scanline\n"                         \
      "interlace = %d\n"                                                        \
@@ -137,6 +139,12 @@ typedef struct Options {
     int remember_username;
     int remember_password;
 
+    /* command to use to open web browser (on desktop) */
+    char browser_command[255];
+
+    /* url to open wiki pages in */
+    char wiki_url[255];
+
     /* credentials if remember username/password is enabled */
     char username[20];
     char password[20];
@@ -167,6 +175,9 @@ typedef struct Options {
 
     /* add another button to perform the last offer x amount */
     int last_offer_x;
+
+    /* add runescape wiki lookup button instead of report abuse */
+    int wiki_lookup;
 
     /* F1 mode - only render every second scanline */
     int interlace;

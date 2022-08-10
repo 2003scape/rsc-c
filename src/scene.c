@@ -85,7 +85,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
                "./cache/game-model.webgl.fs");
 
     shader_new(&scene->game_model_pick_shader, "./cache/pick.webgl.vs",
-               "./cache/game-model.webgl.fs");
+               "./cache/pick.webgl.fs");
 #else
     shader_new(&scene->game_model_shader, "./cache/game-model.vs",
                "./cache/game-model.fs");
@@ -4314,7 +4314,7 @@ void scene_gl_render(Scene *scene) {
 
         shader_use(&scene->game_model_pick_shader);
 
-        shader_set_int("interlace", scene->interlace);
+        shader_set_int(&scene->game_model_pick_shader, "interlace", scene->interlace);
 
         game_model_gl_buffer_pick_models(
             &scene->gl_pick_vao, &scene->gl_pick_vbo, &scene->gl_pick_ebo,

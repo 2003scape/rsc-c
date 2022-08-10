@@ -67,6 +67,9 @@
 /* compass directions */
 #define MENU_MAP_LOOK 101
 
+/* wiki lookup */
+#define MENU_WIKI_LOOKUP 102
+
 #define MENU_CANCEL 4000
 
 void mudclient_menu_item_click(mudclient *mud, int i);

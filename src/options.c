@@ -22,12 +22,20 @@ void options_set_defaults(Options *options) {
     strcpy(options->server, "127.0.0.1");
     options->port = 43594;
     options->members = 0;
+    options->idle_logout = 0;
     options->remember_username = 0;
     options->remember_password = 0;
 
-    // strcpy(options->server, "162.198.202.160"); /* openrsc preservation */
-    // mud->options->port = 43596;
-    // mud->options->port = 43496; /* websockets */
+    /* openrsc preservation */
+    //strcpy(options->server, "162.198.202.160");
+
+#ifdef EMSCRIPTEN
+    options->port = 43496; /* websockets */
+#else
+    options->port = 43596;
+#endif
+
+    options->port = 43595; // TODO remove
 
     strcpy(options->rsa_exponent, "00010001");
 
@@ -35,7 +43,15 @@ void options_set_defaults(Options *options) {
            "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
            "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
 
-    options->idle_logout = 0;
+#ifdef _WIN32
+    strcpy(options->browser_command, "explorer \"%s\"");
+#elif __APPLE__
+    strcpy(options->browser_command, "open \"%s\"");
+#else
+    strcpy(options->browser_command, "xdg-open \"%s\"");
+#endif
+
+    strcpy(options->wiki_url, "https://classic.runescape.wiki/w/%s");
 
     /* controls */
     options->off_handle_scroll_drag = 1;
@@ -49,6 +65,7 @@ void options_set_defaults(Options *options) {
     options->transaction_menus = 1;
     options->offer_x = 1;
     options->last_offer_x = 1;
+    options->wiki_lookup = 1;
 
     /* display */
     options->interlace = 0;
@@ -84,6 +101,7 @@ void options_set_vanilla(Options *options) {
     strcpy(options->server, "127.0.0.1");
     options->port = 43594;
     options->members = 0;
+    options->idle_logout = 1;
     options->remember_username = 0;
     options->remember_password = 0;
 
@@ -92,8 +110,6 @@ void options_set_vanilla(Options *options) {
     strcpy(options->rsa_modulus,
            "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
            "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
-
-    options->idle_logout = 1;
 
     /* controls */
     options->off_handle_scroll_drag = 0;
@@ -107,6 +123,7 @@ void options_set_vanilla(Options *options) {
     options->transaction_menus = 0;
     options->offer_x = 0;
     options->last_offer_x = 0;
+    options->wiki_lookup = 0;
 
     /* display */
     options->interlace = 0;
@@ -161,6 +178,7 @@ void options_save(Options *options) {
             options->transaction_menus,     //
             options->offer_x,               //
             options->last_offer_x,          //
+            options->wiki_lookup,           //
                                             //
             options->interlace,             //
             options->display_fps,           //

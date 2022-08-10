@@ -506,6 +506,24 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
     sprintf(dest, "%s%s%c", use_colour ? colour : "", formatted_amount, suffix);
 }
 
+void url_encode(char *s, char *dest) {
+    const char *hex = "0123456789abcdef";
+
+    int pos = 0;
+
+    for (int i = 0; i < strlen(s); i++) {
+        if (('a' <= s[i] && s[i] <= 'z') || ('A' <= s[i] && s[i] <= 'Z') || ('0' <= s[i] && s[i] <= '9')) {
+                dest[pos++] = s[i];
+            } else {
+                dest[pos++] = '%';
+                dest[pos++] = hex[s[i] >> 4];
+                dest[pos++] = hex[s[i] & 15];
+            }
+    }
+
+    dest[pos] = '\0';
+}
+
 #ifdef RENDER_GL
 float gl_translate_coord(int position, int range) {
     float half = range / 2.0f;

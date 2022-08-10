@@ -80,6 +80,8 @@ int player_top_bottom_colours[] = {0xff0000, 0xff8000, 0xffe000, 0xa0e000,
 
 int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
 
+int certificate_items[][2] = {{1,1}};
+
 #if defined(_3DS) || defined(WII)
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
@@ -4233,6 +4235,10 @@ void mudclient_draw_ui(mudclient *mud) {
         mudclient_draw_experience_drops(mud);
     }
 
+    if (mud->options->status_bars) {
+        mudclient_draw_status_bars(mud);
+    }
+
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
 
@@ -4250,10 +4256,6 @@ void mudclient_draw_ui(mudclient *mud) {
     } else if (mud->show_ui_wild_warn == 1) {
         mudclient_draw_wilderness_warning(mud);
     } else if (mud->show_dialog_bank && mud->combat_timeout == 0) {
-        /*if (no_menus) {
-            mud->menu_items_count = 0;
-        }*/
-
         mudclient_draw_bank(mud);
 
         if (mud->options->bank_menus) {
@@ -4296,10 +4298,6 @@ void mudclient_draw_ui(mudclient *mud) {
 
         if (mudclient_is_in_combat(mud)) {
             mudclient_draw_combat_style(mud);
-        }
-
-        if (mud->options->status_bars) {
-            mudclient_draw_status_bars(mud);
         }
 
         mudclient_set_active_ui_tab(mud);

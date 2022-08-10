@@ -2,7 +2,8 @@
 
 void mudclient_draw_status_bars(mudclient *mud) {
     int ui_x = 7;
-    int ui_y = 15 + (20 * 5) + 6;
+    int ui_y = 15 + (COMBAT_BUTTON_HEIGHT * 5) + 6;
+        //mudclient_is_in_combat(mud) ? : 63;
 
     int x = ui_x;
     int y = ui_y;
@@ -11,7 +12,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
     int current_hits = mud->player_skill_current[SKILL_HITS];
 
     surface_draw_status_bar(mud->surface, 0, max_hits, current_hits, "Hits", x,
-                            y, STATUS_BAR_WIDTH, 16, RED, GREEN);
+                            y, STATUS_BAR_WIDTH, STATUS_BAR_HEIGHT, RED, GREEN);
 
     x += STATUS_BAR_WIDTH + 3;
 
@@ -19,13 +20,14 @@ void mudclient_draw_status_bars(mudclient *mud) {
     int current_prayer = mud->player_skill_current[SKILL_PRAYER];
 
     surface_draw_status_bar(mud->surface, 0, max_prayer, current_prayer,
-                            "Prayer", x, y, STATUS_BAR_WIDTH, 16, BLACK, CYAN);
+                            "Prayer", x, y, STATUS_BAR_WIDTH, STATUS_BAR_HEIGHT,
+                            BLACK, CYAN);
 
     GameCharacter *opponent = mudclient_get_opponent(mud);
 
     if (opponent != NULL && opponent->max_hits != 0) {
         x = ui_x;
-        y += 16 + 5;
+        y += STATUS_BAR_HEIGHT + 5;
 
         char *opponent_name = "";
 
@@ -40,6 +42,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
 
         surface_draw_status_bar(mud->surface, 0, opponent->max_hits,
                                 opponent->current_hits, opponent_name, x, y,
-                                (STATUS_BAR_WIDTH * 2) + 2, 16, RED, GREEN);
+                                (STATUS_BAR_WIDTH * 2) + 3, STATUS_BAR_HEIGHT,
+                                RED, GREEN);
     }
 }

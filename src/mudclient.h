@@ -902,6 +902,9 @@ typedef struct mudclient {
     float experience_drop_y[50];
     float experience_drop_speed[50];
     int experience_drop_count;
+
+    /* wiki */
+    int selected_wiki;
 } mudclient;
 
 void mudclient_new(mudclient *mud);

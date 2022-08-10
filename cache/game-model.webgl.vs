@@ -1,6 +1,6 @@
 #version 300 es
 
-#define FOUNTAIN_ID 17
+#define FOUNTAIN_ID 17.0f
 #define RAMP_SIZE 256
 #define USE_GOURAUD 12345678
 

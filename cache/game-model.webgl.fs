@@ -44,6 +44,7 @@ void main() {
                                : texture_light_gradient[gradient_index];
     } else {
         fragment_colour = vertex_colour;
+        lightness = light_gradient[gradient_index];
     }
 
     if (fragment_colour.w <= 0.0f) {

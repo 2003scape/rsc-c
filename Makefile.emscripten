@@ -1,6 +1,6 @@
 CC = emcc
 #DEBUG = 1
-SRC = $(wildcard src/*.c src/ui/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
 CFLAGS = -I ./cglm/include -DRENDER_GL -s USE_SDL=2 #-DREVISION_177 -s USE_SDL=2
 #CFLAGS = -s USE_SDL=2
@@ -21,5 +21,5 @@ mudclient.html: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f src/*.o src/ui/*.o
+	rm -f src/*.o src/lib/*.o src/ui/*.o
 	rm -f mudclient mudclient.*

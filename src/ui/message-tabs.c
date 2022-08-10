@@ -43,6 +43,12 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
                                      mud->surface->width - 503, BLACK);
     }
 
+    if (mud->options->wiki_lookup) {
+        surface_draw_box(mud->surface, x + 416, y + 3, 84, 9, MESSAGE_TAB_WIKI);
+        surface_draw_box(mud->surface, x + 414, y + 7, 88, 5, MESSAGE_TAB_WIKI);
+        surface_draw_box(mud->surface, x + 413, y + 8, 90, 3, MESSAGE_TAB_WIKI);
+    }
+
     y = mud->surface->height - 6;
 
     int text_colour = MESSAGE_TAB_PURPLE;
@@ -97,8 +103,10 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
     surface_draw_string_centre(mud->surface, "Private history", x + 355, y, 0,
                                text_colour);
 
-    surface_draw_string_centre(mud->surface, "Report abuse", x + 457, y, 0,
-                               WHITE);
+    surface_draw_string_centre(mud->surface,
+                               mud->options->wiki_lookup ? "Wiki lookup"
+                                                         : "Report abuse",
+                               x + 457, y, 0, WHITE);
 }
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
@@ -183,6 +191,10 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
 
         if (mouse_x > 417 && mouse_x < 497 &&
             mud->last_mouse_button_down == 1) {
+            if (mud->options->wiki_lookup) {
+                mud->selected_wiki = 1;
+            }
+
             /*mud->show_dialog_report_abuse_step = 1;
             mud->report_abuse_offence = 0;
 
