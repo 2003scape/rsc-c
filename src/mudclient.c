@@ -2998,7 +2998,7 @@ GameCharacter *mudclient_add_character(mudclient *mud,
     }
 
     if (exists) {
-        character->animation_next = animation;
+        character->next_animation = animation;
         int waypoint_index = character->waypoint_current;
 
         if (x != character->waypoints_x[waypoint_index] ||
@@ -3016,8 +3016,8 @@ GameCharacter *mudclient_add_character(mudclient *mud,
         character->current_y = y;
         character->waypoints_x[0] = x;
         character->waypoints_y[0] = y;
-        character->animation_current = animation;
-        character->animation_next = animation;
+        character->current_animation = animation;
+        character->next_animation = animation;
         character->step_count = 0;
     }
 
@@ -3093,7 +3093,7 @@ void mudclient_move_character(mudclient *mud, GameCharacter *character) {
     int next_waypoint = (character->waypoint_current + 1) % 10;
 
     if (character->moving_step != next_waypoint) {
-        int animation_current = -1;
+        int current_animation = -1;
         int step = character->moving_step;
 
         int delta_step = step < next_waypoint ? next_waypoint - step
@@ -3120,11 +3120,11 @@ void mudclient_move_character(mudclient *mud, GameCharacter *character) {
             if (character->current_x < character->waypoints_x[step]) {
                 character->current_x += j5;
                 character->step_count++;
-                animation_current = 2;
+                current_animation = 2;
             } else if (character->current_x > character->waypoints_x[step]) {
                 character->current_x -= j5;
                 character->step_count++;
-                animation_current = 6;
+                current_animation = 6;
             }
 
             if (character->current_x - character->waypoints_x[step] < j5 &&
@@ -3136,23 +3136,23 @@ void mudclient_move_character(mudclient *mud, GameCharacter *character) {
                 character->current_y += j5;
                 character->step_count++;
 
-                if (animation_current == -1) {
-                    animation_current = 4;
-                } else if (animation_current == 2) {
-                    animation_current = 3;
+                if (current_animation == -1) {
+                    current_animation = 4;
+                } else if (current_animation == 2) {
+                    current_animation = 3;
                 } else {
-                    animation_current = 5;
+                    current_animation = 5;
                 }
             } else if (character->current_y > character->waypoints_y[step]) {
                 character->current_y -= j5;
                 character->step_count++;
 
-                if (animation_current == -1) {
-                    animation_current = 0;
-                } else if (animation_current == 2) {
-                    animation_current = 1;
+                if (current_animation == -1) {
+                    current_animation = 0;
+                } else if (current_animation == 2) {
+                    current_animation = 1;
                 } else {
-                    animation_current = 7;
+                    current_animation = 7;
                 }
             }
 
@@ -3162,8 +3162,8 @@ void mudclient_move_character(mudclient *mud, GameCharacter *character) {
             }
         }
 
-        if (animation_current != -1) {
-            character->animation_current = animation_current;
+        if (current_animation != -1) {
+            character->current_animation = current_animation;
         }
 
         if (character->current_x == character->waypoints_x[step] &&
@@ -3171,7 +3171,7 @@ void mudclient_move_character(mudclient *mud, GameCharacter *character) {
             character->moving_step = (step + 1) % 10;
         }
     } else {
-        character->animation_current = character->animation_next;
+        character->current_animation = character->next_animation;
 
         if (character->npc_id == GIANT_BAT_ID) {
             character->step_count++;
@@ -3385,8 +3385,8 @@ void mudclient_handle_game_input(mudclient *mud) {
         return;
     }
 
-    if (mud->local_player->animation_current == 8 ||
-        mud->local_player->animation_current == 9) {
+    if (mud->local_player->current_animation == 8 ||
+        mud->local_player->current_animation == 9) {
         mud->combat_timeout = 500;
     }
 
@@ -3796,21 +3796,21 @@ void mudclient_draw_character_message(mudclient *mud, GameCharacter *character,
 void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
                                      int x, int y, int ty, int width,
                                      int height, int is_npc, float depth) {
-    if (character->animation_current != 8 &&
-        character->animation_current != 9 && character->combat_timer == 0) {
+    if (character->current_animation != 8 &&
+        character->current_animation != 9 && character->combat_timer == 0) {
         return;
     }
 
     if (character->combat_timer > 0) {
         int offset_x = x;
 
-        if (character->animation_current == 8) {
+        if (character->current_animation == 8) {
             offset_x -= (20 * ty) / 100;
-        } else if (character->animation_current == 9) {
+        } else if (character->current_animation == 9) {
             offset_x += (20 * ty) / 100;
         }
 
-        int missing = (character->health_current * 30) / character->health_max;
+        int missing = (character->current_hits * 30) / character->max_hits;
 
         mud->health_bar_x[mud->health_bar_count] = offset_x + (width / 2);
         mud->health_bar_y[mud->health_bar_count] = y;
@@ -3820,9 +3820,9 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
     if (character->combat_timer > 150) {
         int offset_x = x;
 
-        if (character->animation_current == 8) {
+        if (character->current_animation == 8) {
             offset_x -= (10 * ty) / 100;
-        } else if (character->animation_current == 9) {
+        } else if (character->current_animation == 9) {
             offset_x += (10 * ty) / 100;
         }
 
@@ -3861,12 +3861,12 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            float depth_bottom) {
     GameCharacter *player = mud->players[id];
 
-    if (player->colour_bottom == 255) {
+    if (player->bottom_colour == 255) {
         return;
     }
 
     int animation_order =
-        (player->animation_current + (mud->camera_rotation + 16) / 32) & 7;
+        (player->current_animation + (mud->camera_rotation + 16) / 32) & 7;
 
     int flip = 0;
     int i2 = animation_order;
@@ -3884,13 +3884,13 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
     int j2 = i2 * 3 + character_walk_model[(player->step_count / 6) % 4];
 
-    if (player->animation_current == 8) {
+    if (player->current_animation == 8) {
         i2 = 5;
         animation_order = 2;
         flip = 0;
         x -= (5 * ty) / 100;
         j2 = i2 * 3 + character_combat_model_array1[(mud->login_timer / 5) % 8];
-    } else if (player->animation_current == 9) {
+    } else if (player->current_animation == 9) {
         i2 = 5;
         animation_order = 2;
         flip = 1;
@@ -3978,16 +3978,16 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
             int animation_colour =
                 game_data_animation_character_colour[aimation_id];
-            int skin_colour = player_skin_colours[player->colour_skin];
+            int skin_colour = player_skin_colours[player->skin_colour];
 
             if (animation_colour == 1) {
-                animation_colour = player_hair_colours[player->colour_hair];
+                animation_colour = player_hair_colours[player->hair_colour];
             } else if (animation_colour == 2) {
                 animation_colour =
-                    player_top_bottom_colours[player->colour_top];
+                    player_top_bottom_colours[player->top_colour];
             } else if (animation_colour == 3) {
                 animation_colour =
-                    player_top_bottom_colours[player->colour_bottom];
+                    player_top_bottom_colours[player->bottom_colour];
             }
 
             surface_sprite_clipping_from9_depth(
@@ -4025,9 +4025,9 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     if (player->skull_visible == 1 && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
 
-        if (player->animation_current == 8) {
+        if (player->current_animation == 8) {
             k3 -= (20 * ty) / 100;
-        } else if (player->animation_current == 9) {
+        } else if (player->current_animation == 9) {
             k3 += (20 * ty) / 100;
         }
 
@@ -4046,7 +4046,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     GameCharacter *npc = mud->npcs[id];
 
     int animation_order =
-        (npc->animation_current + (mud->camera_rotation + 16) / 32) & 7;
+        (npc->current_animation + (mud->camera_rotation + 16) / 32) & 7;
 
     int flip = 0;
     int i2 = animation_order;
@@ -4067,7 +4067,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                                        game_data_npc_walk_model[npc->npc_id]) %
                                       4];
 
-    if (npc->animation_current == 8) {
+    if (npc->current_animation == 8) {
         i2 = 5;
         animation_order = 2;
         flip = 0;
@@ -4077,7 +4077,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                                  (game_data_npc_combat_model[npc->npc_id]) -
                              1)) %
                            8];
-    } else if (npc->animation_current == 9) {
+    } else if (npc->current_animation == 9) {
         i2 = 5;
         animation_order = 2;
         flip = 1;
@@ -4136,14 +4136,14 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
             int skin_colour = 0;
 
             if (animation_colour == 1) {
-                animation_colour = game_data_npc_colour_hair[npc->npc_id];
-                skin_colour = game_data_npc_colour_skin[npc->npc_id];
+                animation_colour = game_data_npc_hair_colour[npc->npc_id];
+                skin_colour = game_data_npc_skin_colour[npc->npc_id];
             } else if (animation_colour == 2) {
-                animation_colour = game_data_npc_colour_top[npc->npc_id];
-                skin_colour = game_data_npc_colour_skin[npc->npc_id];
+                animation_colour = game_data_npc_top_colour[npc->npc_id];
+                skin_colour = game_data_npc_skin_colour[npc->npc_id];
             } else if (animation_colour == 3) {
-                animation_colour = game_data_npc_colour_bottom[npc->npc_id];
-                skin_colour = game_data_npc_colour_skin[npc->npc_id];
+                animation_colour = game_data_npc_bottom_colour[npc->npc_id];
+                skin_colour = game_data_npc_skin_colour[npc->npc_id];
             }
 
             surface_sprite_clipping_from9_depth(
@@ -4184,43 +4184,39 @@ void mudclient_draw_blue_bar(mudclient *mud) {
     }
 }
 
-void mudclient_draw_experience_drops(mudclient *mud) {
-    int x = mud->surface->width / 2;
-    int max_y = mud->surface->height / 4;
+int mudclient_is_in_combat(mudclient *mud) {
+    return mud->local_player->current_animation == 8 ||
+           mud->local_player->current_animation == 9;
+}
 
-    int drop_count = mud->experience_drop_count;
-
-    int last_drop_float = -1;
-    int offset_y = 0;
-
-    for (int i = 0; i < drop_count; i++) {
-        int drop_float = mud->experience_drop_float[i];
-
-        if (drop_float <= 0) {
-            mud->experience_drop_count--;
-            continue;
-        }
-
-        int experience = mud->experience_drop_amount[i];
-
-        char formatted_amount[15] = {0};
-        mudclient_format_number_commas(mud, experience / 4, formatted_amount);
-
-        char *skill_name = skill_names[mud->experience_drop_skill[i]];
-
-        char formatted_drop[strlen(skill_name) + strlen(formatted_amount) + 5];
-
-        sprintf(formatted_drop, "%s %s XP", formatted_amount, skill_name);
-
-        int y = ((drop_float / 1000.0f) * max_y);
-
-        surface_draw_string_centre(mud->surface, formatted_drop, x, y + offset_y, 0,
-                                   WHITE);
-
-        mud->experience_drop_float[i] -= mud->experience_drop_speed[i];
-        mud->experience_drop_speed[i] += 1;
-        //mud->experience_drop_speed[i] += 1;
+GameCharacter *mudclient_get_opponent(mudclient *mud) {
+    if (!mudclient_is_in_combat(mud)) {
+        return NULL;
     }
+
+    int desired_animation = mud->local_player->current_animation == 8 ? 9 : 8;
+
+    for (int i = 0; i < mud->known_npc_count; i++) {
+        GameCharacter *npc = mud->known_npcs[i];
+
+        if (npc->current_x == mud->local_player->current_x &&
+            npc->current_y == mud->local_player->current_y &&
+            npc->current_animation == desired_animation) {
+            return npc;
+        }
+    }
+
+    for (int i = 0; i < mud->known_player_count; i++) {
+        GameCharacter *player = mud->known_players[i];
+
+        if (player->current_x == mud->local_player->current_x &&
+            player->current_y == mud->local_player->current_y &&
+            player->current_animation == desired_animation) {
+            return player;
+        }
+    }
+
+    return NULL;
 }
 
 void mudclient_draw_ui(mudclient *mud) {
@@ -4233,8 +4229,8 @@ void mudclient_draw_ui(mudclient *mud) {
         mud->menu_items_count = 0;
     }
 
-    mudclient_draw_experience_drops(mud);
     if (mud->options->experience_drops) {
+        mudclient_draw_experience_drops(mud);
     }
 
     if (mud->show_additional_options) {
@@ -4298,10 +4294,7 @@ void mudclient_draw_ui(mudclient *mud) {
             mudclient_draw_option_menu(mud);
         }
 
-        int is_in_combat = mud->local_player->animation_current == 8 ||
-                           mud->local_player->animation_current == 9;
-
-        if (is_in_combat) {
+        if (mudclient_is_in_combat(mud)) {
             mudclient_draw_combat_style(mud);
         }
 
@@ -4522,25 +4515,27 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
     for (int i = 0; i < mud->player_count; i++) {
         GameCharacter *player = mud->players[i];
 
-        if (player->colour_bottom != 255) {
-            int x = player->current_x;
-            int y = player->current_y;
-            int elevation = -world_get_elevation(mud->world, x, y);
+        if (player->bottom_colour == 255) {
+            continue;
+        }
 
-            int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation,
-                                             y, 145, 220, i + PLAYER_FACE_TAG);
+        int x = player->current_x;
+        int y = player->current_y;
+        int elevation = -world_get_elevation(mud->world, x, y);
 
-            mud->scene_sprite_count++;
+        int sprite_id = scene_add_sprite(mud->scene, 5000 + i, x, elevation, y,
+                                         145, 220, i + PLAYER_FACE_TAG);
 
-            if (player == mud->local_player) {
-                scene_set_local_player(mud->scene, sprite_id);
-            }
+        mud->scene_sprite_count++;
 
-            if (player->animation_current == 8) {
-                scene_set_sprite_translate_x(mud->scene, sprite_id, -30);
-            } else if (player->animation_current == 9) {
-                scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
-            }
+        if (player == mud->local_player) {
+            scene_set_local_player(mud->scene, sprite_id);
+        }
+
+        if (player->current_animation == 8) {
+            scene_set_sprite_translate_x(mud->scene, sprite_id, -30);
+        } else if (player->current_animation == 9) {
+            scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
         }
     }
 
@@ -4608,9 +4603,9 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
 
         mud->scene_sprite_count++;
 
-        if (npc->animation_current == 8) {
+        if (npc->current_animation == 8) {
             scene_set_sprite_translate_x(mud->scene, sprite_id, -30);
-        } else if (npc->animation_current == 9) {
+        } else if (npc->current_animation == 9) {
             scene_set_sprite_translate_x(mud->scene, sprite_id, 30);
         }
     }

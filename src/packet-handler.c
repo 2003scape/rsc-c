@@ -115,7 +115,7 @@ void mudclient_packet_tick(mudclient *mud) {
                         player_y -= MAGIC_LOC;
                     }
 
-                    player->animation_next = sprite;
+                    player->next_animation = sprite;
 
                     player->waypoint_current = waypoint_current =
                         (waypoint_current + 1) % 10;
@@ -130,7 +130,7 @@ void mudclient_packet_tick(mudclient *mud) {
                         continue;
                     }
 
-                    player->animation_next = get_bit_mask(data, offset, 4);
+                    player->next_animation = get_bit_mask(data, offset, 4);
                     offset += 4;
                 }
             }
@@ -257,8 +257,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (player != NULL) {
                     player->damage_taken = damage;
-                    player->health_current = current;
-                    player->health_max = max;
+                    player->current_hits = current;
+                    player->max_hits = max;
                     player->combat_timer = 200;
 
                     if (player == mud->local_player) {
@@ -319,10 +319,10 @@ void mudclient_packet_tick(mudclient *mud) {
                         player->equipped_item[j] = 0;
                     }
 
-                    player->colour_hair = data[offset++] & 0xff;
-                    player->colour_top = data[offset++] & 0xff;
-                    player->colour_bottom = data[offset++] & 0xff;
-                    player->colour_skin = data[offset++] & 0xff;
+                    player->hair_colour = data[offset++] & 0xff;
+                    player->top_colour = data[offset++] & 0xff;
+                    player->bottom_colour = data[offset++] & 0xff;
+                    player->skin_colour = data[offset++] & 0xff;
                     player->level = data[offset++] & 0xff;
                     player->skull_visible = data[offset++] & 0xff;
                 } else {
@@ -538,7 +538,7 @@ void mudclient_packet_tick(mudclient *mud) {
                         npc_y -= MAGIC_LOC;
                     }
 
-                    npc->animation_next = sprite;
+                    npc->next_animation = sprite;
 
                     npc->waypoint_current = waypoint_current =
                         (waypoint_current + 1) % 10;
@@ -553,7 +553,7 @@ void mudclient_packet_tick(mudclient *mud) {
                         continue;
                     }
 
-                    npc->animation_next = get_bit_mask(data, offset, 4);
+                    npc->next_animation = get_bit_mask(data, offset, 4);
                     offset += 4;
                 }
             }
@@ -644,8 +644,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (npc != NULL) {
                     npc->damage_taken = damage_taken;
-                    npc->health_current = current_health;
-                    npc->health_max = max_health;
+                    npc->current_hits = current_health;
+                    npc->max_hits = max_health;
                     npc->combat_timer = 200;
                 }
             }
@@ -1107,14 +1107,9 @@ void mudclient_packet_tick(mudclient *mud) {
         int old_experience = mud->player_experience[skill_index];
         mud->player_experience[skill_index] = get_unsigned_int(data, 2);
 
-        mud->experience_drop_float[mud->experience_drop_count] = 1000 + (mud->experience_drop_count * 1000);
-        mud->experience_drop_skill[mud->experience_drop_count] = skill_index;
-
-        mud->experience_drop_amount[mud->experience_drop_count] =
-            mud->player_experience[skill_index] - old_experience;
-
-        mud->experience_drop_speed[mud->experience_drop_count] = 0;
-        mud->experience_drop_count++;
+        mudclient_drop_experience(mud, skill_index,
+                                  mud->player_experience[skill_index] -
+                                      old_experience);
         break;
     }
     case SERVER_PLAYER_STAT_UPDATE: {

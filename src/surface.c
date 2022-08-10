@@ -1312,7 +1312,7 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
 }
 
 void surface_draw_gradient(Surface *surface, int x, int y, int width,
-                           int height, int colour_top, int colour_bottom) {
+                           int height, int top_colour, int bottom_colour) {
     if (x < surface->bounds_min_x) {
         width -= surface->bounds_min_x - x;
         x = surface->bounds_min_x;
@@ -1322,12 +1322,12 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         width = surface->bounds_max_x - x;
     }
 
-    int bottom_red = (colour_bottom >> 16) & 0xff;
-    int bottom_green = (colour_bottom >> 8) & 0xff;
-    int bottom_blue = colour_bottom & 0xff;
-    int top_red = (colour_top >> 16) & 0xff;
-    int top_green = (colour_top >> 8) & 0xff;
-    int top_blue = colour_top & 0xff;
+    int bottom_red = (bottom_colour >> 16) & 0xff;
+    int bottom_green = (bottom_colour >> 8) & 0xff;
+    int bottom_blue = bottom_colour & 0xff;
+    int top_red = (top_colour >> 16) & 0xff;
+    int top_green = (top_colour >> 8) & 0xff;
+    int top_blue = top_colour & 0xff;
 
 #ifdef RENDER_GL
     GLfloat left_x = surface_gl_translate_x(surface, x);

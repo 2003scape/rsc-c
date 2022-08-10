@@ -35,10 +35,10 @@ char **game_data_npc_command;
 int *game_data_npc_width;
 int *game_data_npc_height;
 int **game_data_npc_sprite;
-int *game_data_npc_colour_hair;
-int *game_data_npc_colour_top;
-int *game_data_npc_colour_bottom;
-int *game_data_npc_colour_skin;
+int *game_data_npc_hair_colour;
+int *game_data_npc_top_colour;
+int *game_data_npc_bottom_colour;
+int *game_data_npc_skin_colour;
 int *game_data_npc_attack;
 int *game_data_npc_strength;
 int *game_data_npc_hits;
@@ -266,10 +266,10 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data_npc_defense = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_attackable = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_sprite = malloc(game_data_npc_count * sizeof(int *));
-    game_data_npc_colour_hair = malloc(game_data_npc_count * sizeof(int));
-    game_data_npc_colour_top = malloc(game_data_npc_count * sizeof(int));
-    game_data_npc_colour_bottom = malloc(game_data_npc_count * sizeof(int));
-    game_data_npc_colour_skin = malloc(game_data_npc_count * sizeof(int));
+    game_data_npc_hair_colour = malloc(game_data_npc_count * sizeof(int));
+    game_data_npc_top_colour = malloc(game_data_npc_count * sizeof(int));
+    game_data_npc_bottom_colour = malloc(game_data_npc_count * sizeof(int));
+    game_data_npc_skin_colour = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_width = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_height = malloc(game_data_npc_count * sizeof(int));
     game_data_npc_walk_model = malloc(game_data_npc_count * sizeof(int));
@@ -317,19 +317,19 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data_npc_count; i++) {
-        game_data_npc_colour_hair[i] = game_data_get_unsigned_int();
+        game_data_npc_hair_colour[i] = game_data_get_unsigned_int();
     }
 
     for (i = 0; i < game_data_npc_count; i++) {
-        game_data_npc_colour_top[i] = game_data_get_unsigned_int();
+        game_data_npc_top_colour[i] = game_data_get_unsigned_int();
     }
 
     for (i = 0; i < game_data_npc_count; i++) {
-        game_data_npc_colour_bottom[i] = game_data_get_unsigned_int();
+        game_data_npc_bottom_colour[i] = game_data_get_unsigned_int();
     }
 
     for (i = 0; i < game_data_npc_count; i++) {
-        game_data_npc_colour_skin[i] = game_data_get_unsigned_int();
+        game_data_npc_skin_colour[i] = game_data_get_unsigned_int();
     }
 
     for (i = 0; i < game_data_npc_count; i++) {

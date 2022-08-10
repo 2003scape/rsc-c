@@ -233,6 +233,7 @@ typedef struct mudclient mudclient;
 #include "ui/combat-style.h"
 #include "ui/confirm.h"
 #include "ui/duel.h"
+#include "ui/experience-drops.h"
 #include "ui/login.h"
 #include "ui/logout.h"
 #include "ui/menu.h"
@@ -895,11 +896,11 @@ typedef struct mudclient {
     void *bank_options[50];
     int bank_option_types[50];
 
-    /* experience drops */
-    int experience_drop_skill[100];
-    int experience_drop_amount[100];
-    int experience_drop_float[100];
-    int experience_drop_speed[100];
+    /* ./ui/experience-drops.c */
+    int experience_drop_skill[50];
+    int experience_drop_amount[50];
+    float experience_drop_y[50];
+    float experience_drop_speed[50];
     int experience_drop_count;
 } mudclient;
 
@@ -976,7 +977,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                         int id, int skew_x, int ty, float depth_top, float depth_bottom);
 void mudclient_draw_blue_bar(mudclient *mud);
-void mudclient_draw_experience_drops(mudclient *mud);
+int mudclient_is_in_combat(mudclient *mud);
+GameCharacter *mudclient_get_opponent(mudclient *mud);
 void mudclient_draw_ui(mudclient *mud);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);

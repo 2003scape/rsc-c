@@ -10,7 +10,7 @@
     ("; IPv4 address with revision 177 compatible protocol support\n"          \
      "server = %s\n"                                                           \
      "port = %d\n"                                                             \
-     "; Disable registration and load sounds, P2P landscape and items ( "      \
+     "; Disable registration and load sounds, P2P landscape and items ("       \
      "requires\n; restart)\n"                                                  \
      "members = %d\n"                                                          \
      "; Used together to encrypt passwords, Must be represented as "           \

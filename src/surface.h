@@ -218,7 +218,7 @@ void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
 void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
                             int height, int colour, int alpha);
 void surface_draw_gradient(Surface *surface, int x, int y, int width,
-                           int height, int colour_top, int colour_bottom);
+                           int height, int top_colour, int bottom_colour);
 void surface_draw_box_software(Surface *surface, int x, int y, int width,
                                int height, int colour);
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,
