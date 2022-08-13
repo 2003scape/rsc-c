@@ -59,11 +59,11 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                                                      mud->control_list_magic);
 
         if (spell_index != -1) {
+            char *spell_name = game_data_spell_name[spell_index];
             char formatted_spell[64] = {0};
 
             sprintf(formatted_spell, "Level %d: %s",
-                    game_data_spell_level[spell_index],
-                    game_data_spell_name[spell_index]);
+                    game_data_spell_level[spell_index], spell_name);
 
             surface_draw_string(mud->surface, formatted_spell, ui_x + 2,
                                 ui_y + 124, 1, YELLOW);
@@ -98,6 +98,10 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
 
                 surface_draw_string(mud->surface, formatted_count,
                                     ui_x + 2 + i * 44, ui_y + 150, 1, WHITE);
+            }
+
+            if (mud->selected_wiki) {
+                mudclient_menu_add_wiki(mud, spell_name, spell_name);
             }
         } else {
             surface_draw_string(mud->surface,
@@ -134,11 +138,11 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                                                       mud->control_list_magic);
 
         if (prayer_index != -1) {
+            char *prayer_name = game_data_prayer_name[prayer_index];
             char formatted_prayer[64] = {0};
 
             sprintf(formatted_prayer, "Level %d: %s",
-                    game_data_prayer_level[prayer_index],
-                    game_data_prayer_name[prayer_index]);
+                    game_data_prayer_level[prayer_index], prayer_name);
 
             surface_draw_string_centre(mud->surface, formatted_prayer,
                                        ui_x + (MAGIC_WIDTH / 2), ui_y + 130, 1,
@@ -154,6 +158,10 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
             surface_draw_string_centre(mud->surface, formatted_prayer,
                                        ui_x + (MAGIC_WIDTH / 2), ui_y + 160, 1,
                                        BLACK);
+
+            if (mud->selected_wiki) {
+                mudclient_menu_add_wiki(mud, prayer_name, prayer_name);
+            }
         } else {
             surface_draw_string(mud->surface,
                                 "Point at a prayer for a description", ui_x + 2,
@@ -191,7 +199,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
         }
     }
 
-    if (mud->mouse_button_click != 1) {
+    if (mud->selected_wiki || mud->mouse_button_click != 1) {
         return;
     }
 

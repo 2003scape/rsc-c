@@ -1362,7 +1362,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    // game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
     game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
 
     int colour = 0x606060;
@@ -1467,10 +1466,11 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     game_model_set_light_from6(world->parent_model, 0, 60, 24, -50, -10, -50);
 
-    /*game_model_split(world->parent_model, world->wall_models[plane], 1536, 1536,
-                     8, 64, 338, 1);*/
+    // TODO thick walls needs more faces/vertices
     game_model_split(world->parent_model, world->wall_models[plane], 1536, 1536,
-                     8, 64, 338 + 100, 1);
+                     8, 64, 338, 1);
+    /*game_model_split(world->parent_model, world->wall_models[plane], 1536, 1536,
+                     8, 64, 338 + 100, 1);*/
 
     /* add walls */
 

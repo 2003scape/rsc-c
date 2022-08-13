@@ -225,6 +225,7 @@ typedef struct mudclient mudclient;
 #include "surface.h"
 #include "utility.h"
 #include "version.h"
+#include "wiki.h"
 #include "world.h"
 
 #include "ui/additional-options.h"
@@ -712,6 +713,7 @@ typedef struct mudclient {
     int menu_height;
     int menu_x;
     int menu_y;
+    char *menu_wiki_page[MENU_MAX];
 
     /* ./ui/inventory-tab.c */
     int inventory_items_count;
@@ -1007,7 +1009,7 @@ void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id, float depth);
-void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
+void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width, int height,
                          int id, float depth_top, float depth_bottom);
 int mudclient_is_item_equipped(mudclient *mud, int id);
 int mudclient_get_inventory_count(mudclient *mud, int id);
@@ -1029,5 +1031,6 @@ int mudclient_is_ui_scaled(mudclient *mud);
 void mudclient_format_number_commas(mudclient *mud, int number, char *dest);
 void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest);
 int mudclient_get_wilderness_depth(mudclient *mud);
+void mudclient_draw_item(mudclient *mud, int x, int y, int item_id);
 int main(int argc, char **argv);
 #endif

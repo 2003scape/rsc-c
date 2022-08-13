@@ -899,8 +899,6 @@ float surface_gl_get_layer_depth(Surface *surface) {
         return min_depth / 2;
     }
 
-    // printf("%d %f\n", surface->mud->camera_zoom, depth * 100000);
-
     return depth;
 }
 
@@ -2314,15 +2312,22 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
     if (sprite_id >= 50000) {
+#ifdef RENDER_GL
+        float depth = ((depth_top + depth_bottom) / 2) -
+                      ANIMATION_COUNT * surface_gl_get_layer_depth(surface);
+#else
+        float depth = 0.0f;
+#endif
+
         mudclient_draw_teleport_bubble(surface->mud, x, y, width, height,
-                                       sprite_id - 50000, depth_top);
+                                       sprite_id - 50000, depth);
 
         return;
     }
 
     if (sprite_id >= 40000) {
-        mudclient_draw_item(surface->mud, x, y, width, height,
-                            sprite_id - 40000, depth_top, depth_bottom);
+        mudclient_draw_ground_item(surface->mud, x, y, width, height,
+                                   sprite_id - 40000, depth_top, depth_bottom);
         return;
     }
 
@@ -3970,6 +3975,13 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     surface_draw_line_horizontal(surface, x, y + height, width, BLACK);
 }
 
+void surface_draw_item(Surface *surface, int x, int y, int item_id) {
+    surface_sprite_clipping_from9(
+        surface, x, y, INVENTORY_SLOT_WIDTH - 1, INVENTORY_SLOT_HEIGHT - 2,
+        surface->mud->sprite_item + game_data_item_sprite[item_id],
+        game_data_item_mask[item_id], 0, 0, 0);
+}
+
 /* used in bank and shop */
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int columns, int *items, int *items_count,
@@ -4004,11 +4016,8 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
             int item_id = items[item_index];
 
             if (item_index < items_length && item_id != -1) {
-                surface_sprite_clipping_from9(
-                    surface, slot_x + offset_x, slot_y + offset_y,
-                    ITEM_GRID_SLOT_WIDTH - 1, ITEM_GRID_SLOT_HEIGHT - 2,
-                    surface->mud->sprite_item + game_data_item_sprite[item_id],
-                    game_data_item_mask[item_id], 0, 0, 0);
+                mudclient_draw_item(surface->mud, slot_x + offset_x,
+                                    slot_y + offset_y, item_id);
 
                 int item_count = items_count[item_index];
 

@@ -960,9 +960,9 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->ground_item_model[mud->ground_item_count] =
                                 model;
                         }
-
-                        mud->ground_item_count++;
                     }
+
+                    mud->ground_item_count++;
                 } else {
                     item_id &= 32767;
 

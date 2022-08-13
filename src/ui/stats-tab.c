@@ -83,7 +83,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     if (mud->options->total_experience || mud->options->remaining_experience) {
         height += STATS_LINE_BREAK;
 
-        mud->panel_quests->control_height[mud->control_list_quest] = 251 + STATS_LINE_BREAK;
+        mud->panel_quests->control_height[mud->control_list_quest] =
+            251 + STATS_LINE_BREAK;
     }
 
     int ui_x = mud->surface->width - STATS_WIDTH - 3;
@@ -155,6 +156,13 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                                 y - STATS_LINE_BREAK + 1, 1, text_colour);
 
             y += STATS_LINE_BREAK + 1;
+        }
+
+        if (no_menus && mud->selected_wiki &&
+            mud->mouse_x > ui_x + (STATS_WIDTH / 2) - 5 &&
+            mud->mouse_y > y - 13 - STATS_LINE_BREAK && mud->mouse_y < y - 13) {
+
+            mudclient_menu_add_wiki(mud, "Quest Points", "Quest Points");
         }
 
         char formatted_quest_points[30] = {0};
@@ -242,7 +250,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
             y += STATS_LINE_BREAK;
 
-            mudclient_format_number_commas(mud, next_level_at / 4, formatted_number);
+            mudclient_format_number_commas(mud, next_level_at / 4,
+                                           formatted_number);
 
             char formatted_next[30] = {0};
             sprintf(formatted_next, "Next level at: %s", formatted_number);
@@ -253,12 +262,18 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             if (mud->options->remaining_experience) {
                 y += STATS_LINE_BREAK;
 
-                mudclient_format_number_commas(mud, (next_level_at - total_xp) / 4, formatted_number);
+                mudclient_format_number_commas(
+                    mud, (next_level_at - total_xp) / 4, formatted_number);
 
                 sprintf(formatted_next, "Remaining xp: %s", formatted_number);
 
                 surface_draw_string(mud->surface, formatted_next, ui_x + 5, y,
                                     1, WHITE);
+            }
+
+            if (no_menus && mud->selected_wiki) {
+                char *skill_name = skill_names[selected_skill];
+                mudclient_menu_add_wiki(mud, skill_name, skill_name);
             }
         } else {
             surface_draw_string(mud->surface, "Overall levels", ui_x + 5, y, 1,
@@ -283,7 +298,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             y += STATS_LINE_BREAK;
 
             if (mud->options->total_experience) {
-                mudclient_format_number_commas(mud, total_experience, formatted_number);
+                mudclient_format_number_commas(mud, total_experience,
+                                               formatted_number);
 
                 sprintf(formatted_total, "Total xp: %s", formatted_number);
 
@@ -344,11 +360,19 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                                mud->mouse_button_down, mud->mouse_scroll_delta);
         }
 
-        if (mouse_y <= STATS_TAB_HEIGHT && mud->mouse_button_click == 1) {
+        if (mouse_y <= STATS_TAB_HEIGHT) {
             if (mouse_x < (STATS_WIDTH / 2)) {
-                mud->ui_tab_stats_sub_tab = 0;
+                if (mud->selected_wiki) {
+                    mudclient_menu_add_wiki(mud, stats_tabs[0], stats_tabs[0]);
+                } else if (mud->mouse_button_click == 1) {
+                    mud->ui_tab_stats_sub_tab = 0;
+                }
             } else if (mouse_x > (STATS_WIDTH / 2)) {
-                mud->ui_tab_stats_sub_tab = 1;
+                if (mud->selected_wiki) {
+                    mudclient_menu_add_wiki(mud, stats_tabs[1], stats_tabs[1]);
+                } else if (mud->mouse_button_click == 1) {
+                    mud->ui_tab_stats_sub_tab = 1;
+                }
             }
         }
     }

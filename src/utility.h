@@ -75,6 +75,8 @@ extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
 extern int BITMASK[];
 
+extern int certificate_items[][2];
+
 void init_utility_global();
 
 void strtrim(char *s);
@@ -106,6 +108,7 @@ void format_number_commas(int number, char *dest);
 void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
                           int use_commas, char *dest);
 void url_encode(char *s, char *dest);
+int get_certificate_item_id(int item_id);
 
 #ifdef RENDER_GL
 float gl_translate_coord(int position, int range);

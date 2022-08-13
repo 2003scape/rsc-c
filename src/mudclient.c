@@ -80,8 +80,6 @@ int player_top_bottom_colours[] = {0xff0000, 0xff8000, 0xffe000, 0xa0e000,
 
 int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
 
-int certificate_items[][2] = {{1,1}};
-
 #if defined(_3DS) || defined(WII)
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
@@ -4222,7 +4220,7 @@ GameCharacter *mudclient_get_opponent(mudclient *mud) {
 }
 
 void mudclient_draw_ui(mudclient *mud) {
-    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 3 - 197,
+    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 200,
                                     3, mud->sprite_media, 128);
 
     int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
@@ -5471,7 +5469,7 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         case SDL_MOUSEWHEEL:
             if (mud->options->mouse_wheel) {
-                mud->mouse_scroll_delta = event.wheel.y * -1;
+                mud->mouse_scroll_delta = (event.wheel.y > 0 ? -1 : 1);
             }
             break;
         case SDL_WINDOWEVENT:
@@ -5657,9 +5655,9 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
     }
 }
 
-// TODO draw_ground_item
-void mudclient_draw_item(mudclient *mud, int x, int y, int width, int height,
-                         int id, float depth_top, float depth_bottom) {
+void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
+                                int height, int id, float depth_top,
+                                float depth_bottom) {
     int picture = game_data_item_sprite[id] + mud->sprite_item;
     int mask = game_data_item_mask[id];
 
@@ -5939,6 +5937,35 @@ int mudclient_get_wilderness_depth(mudclient *mud) {
     }
 
     return wilderness_depth;
+}
+
+void mudclient_draw_item(mudclient *mud, int x, int y, int item_id) {
+    int certificate_item_id = -1;
+
+    if (mud->options->certificate_items) {
+        certificate_item_id = get_certificate_item_id(item_id);
+    }
+
+    int offset_x = 0;
+
+    /*surface_draw_item(mud->surface, x + offset_x, y, item_id);
+
+    if (certificate_item_id != -1) {
+        int og_width = INVENTORY_SLOT_WIDTH - 1;
+        int og_height = INVENTORY_SLOT_HEIGHT - 2;
+
+        surface_sprite_clipping_from9(
+            mud->surface, x + og_width * 0.125, y + og_height * 0.125, og_width * 0.75, og_height * 0.75,
+            mud->surface->mud->sprite_item + game_data_item_sprite[certificate_item_id],
+            game_data_item_mask[certificate_item_id], 0, 0, 0);
+    }*/
+
+    /*if (certificate_item_id != -1) {
+        surface_draw_item(mud->surface, x, y, certificate_item_id);
+        offset_x = 5;
+    }
+
+    surface_draw_item(mud->surface, x + offset_x, y, item_id);*/
 }
 
 int main(int argc, char **argv) {

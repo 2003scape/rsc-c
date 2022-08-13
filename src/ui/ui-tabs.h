@@ -2,6 +2,7 @@
 #define _H_UI_TABS
 
 #define UI_TABS_WIDTH 245
+#define UI_BUTTON_SIZE 35
 
 #define INVENTORY_TAB 1
 #define MAP_TAB 2

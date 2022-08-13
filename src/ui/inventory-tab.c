@@ -23,18 +23,14 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
                                slot_colour, 128);
 
         if (i < mud->inventory_items_count) {
-            int sprite_id = mud->sprite_item +
-                            game_data_item_sprite[mud->inventory_item_id[i]];
+            int item_id = mud->inventory_item_id[i];
 
-            int sprite_mask = game_data_item_mask[mud->inventory_item_id[i]];
-
-            surface_sprite_clipping_from9(
-                mud->surface, slot_x, slot_y, INVENTORY_SLOT_WIDTH - 1,
-                INVENTORY_SLOT_HEIGHT - 2, sprite_id, sprite_mask, 0, 0, 0);
+            mudclient_draw_item(mud, slot_x, slot_y, item_id);
 
             char formatted_amount[12] = {0};
 
-            mudclient_format_item_amount(mud, mud->inventory_item_stack_count[i], formatted_amount);
+            mudclient_format_item_amount(
+                mud, mud->inventory_item_stack_count[i], formatted_amount);
 
             if (game_data_item_stackable[mud->inventory_item_id[i]] == 0) {
                 surface_draw_string(mud->surface, formatted_amount, slot_x + 1,
@@ -84,8 +80,9 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     if (mud->show_dialog_bank) {
         int item_amount = mudclient_get_inventory_count(mud, item_id);
 
-        mudclient_add_offer_menus(mud, "Deposit", MENU_BANK_DEPOSIT, item_id, item_amount,
-                                 formatted_item_name, mud->bank_last_deposit_offer);
+        mudclient_add_offer_menus(mud, "Deposit", MENU_BANK_DEPOSIT, item_id,
+                                  item_amount, formatted_item_name,
+                                  mud->bank_last_deposit_offer);
     } else {
         if (mud->selected_spell >= 0) {
             if (game_data_spell_type[mud->selected_spell] == 3) {

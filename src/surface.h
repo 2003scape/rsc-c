@@ -357,6 +357,7 @@ int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
+void surface_draw_item(Surface *surface, int x, int y, int item_id);
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int columns, int *items, int *items_count,
                             int items_length, int selected, int show_inventory_count);

@@ -17,6 +17,8 @@ uniform float bounds_max_x;
 uniform float bounds_min_y;
 uniform float bounds_max_y;
 
+uniform bool ui_scale;
+
 void main() {
     if (interlace && int(gl_FragCoord.y) % 2 == 0) {
         discard;
