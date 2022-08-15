@@ -46,7 +46,7 @@ typedef struct Panel {
     int8_t *control_list_scrollbar_handle_dragged;
     int8_t *control_mask_text;
     int8_t *control_clicked;
-    int *control_flash_text;
+    int *control_list_position;
     int *control_list_entry_count;
     int *control_activated;
     int *control_list_entry_mouse_over;

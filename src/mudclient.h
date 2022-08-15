@@ -713,7 +713,7 @@ typedef struct mudclient {
     int menu_height;
     int menu_x;
     int menu_y;
-    char *menu_wiki_page[MENU_MAX];
+    char menu_wiki_page[MENU_MAX][192];
 
     /* ./ui/inventory-tab.c */
     int inventory_items_count;

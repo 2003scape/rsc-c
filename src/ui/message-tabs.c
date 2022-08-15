@@ -170,7 +170,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             mud->message_tab_selected = MESSAGE_TAB_CHAT;
 
             mud->panel_message_tabs
-                ->control_flash_text[mud->control_text_list_chat] = 999999;
+                ->control_list_position[mud->control_text_list_chat] = 999999;
         }
 
         if (mouse_x > 215 && mouse_x < 295 &&
@@ -178,7 +178,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             mud->message_tab_selected = MESSAGE_TAB_QUEST;
 
             mud->panel_message_tabs
-                ->control_flash_text[mud->control_text_list_quest] = 999999;
+                ->control_list_position[mud->control_text_list_quest] = 999999;
         }
 
         if (mouse_x > 315 && mouse_x < 395 &&
@@ -186,7 +186,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             mud->message_tab_selected = MESSAGE_TAB_PRIVATE;
 
             mud->panel_message_tabs
-                ->control_flash_text[mud->control_text_list_private] = 999999;
+                ->control_list_position[mud->control_text_list_private] = 999999;
         }
 
         if (mouse_x > 417 && mouse_x < 497 &&
@@ -380,7 +380,7 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
     if (type == MESSAGE_TYPE_CHAT) {
         int flash =
             mud->panel_message_tabs
-                ->control_flash_text[mud->control_text_list_chat] ==
+                ->control_list_position[mud->control_text_list_chat] ==
             mud->panel_message_tabs
                     ->control_list_entry_count[mud->control_text_list_chat] -
                 4;
@@ -391,7 +391,7 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
     } else if (type == MESSAGE_TYPE_QUEST) {
         int flash =
             mud->panel_message_tabs
-                ->control_flash_text[mud->control_text_list_quest] ==
+                ->control_list_position[mud->control_text_list_quest] ==
             mud->panel_message_tabs
                     ->control_list_entry_count[mud->control_text_list_quest] -
                 4;
@@ -402,7 +402,7 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
     } else if (type == MESSAGE_TYPE_PRIVATE) {
         int flash =
             mud->panel_message_tabs
-                ->control_flash_text[mud->control_text_list_private] ==
+                ->control_list_position[mud->control_text_list_private] ==
             mud->panel_message_tabs
                     ->control_list_entry_count[mud->control_text_list_private] -
                 4;

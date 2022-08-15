@@ -175,11 +175,6 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
         mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
         mud->menu_index[mud->menu_items_count] = 64;
         mud->menu_items_count++;
-
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Cancel");
-        strcpy(mud->menu_item_text2[mud->menu_items_count], "");
-        mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
-        mud->menu_items_count++;
         return;
     }
 

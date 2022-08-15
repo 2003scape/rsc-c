@@ -16,7 +16,7 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->control_mask_text = calloc(max, sizeof(int8_t));
     panel->control_clicked = calloc(max, sizeof(int8_t));
     panel->control_use_alternative_colour = calloc(max, sizeof(int8_t));
-    panel->control_flash_text = calloc(max, sizeof(int));
+    panel->control_list_position = calloc(max, sizeof(int));
     panel->control_list_entry_count = calloc(max, sizeof(int));
     panel->control_activated = calloc(max, sizeof(int));
     panel->control_list_entry_mouse_over = calloc(max, sizeof(int));
@@ -163,7 +163,7 @@ void panel_draw_panel(Panel *panel) {
                 panel->control_height[i], panel->control_text_size[i],
                 panel->control_list_entries[i],
                 panel->control_list_entry_count[i],
-                panel->control_flash_text[i],
+                panel->control_list_position[i],
                 panel->control_type[i] == PANEL_TEXT_LIST_INTERACTIVE);
             break;
         case PANEL_LIST_INPUT:
@@ -377,7 +377,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         list_entry_position = 0;
     }
 
-    panel->control_flash_text[control] = list_entry_position;
+    panel->control_list_position[control] = list_entry_position;
 
     if (displayed_entry_count < list_entry_count) {
         int corner_top_right = x + width - 12;
@@ -403,7 +403,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                 list_entry_position = max_entries;
             }
 
-            panel->control_flash_text[control] = list_entry_position;
+            panel->control_list_position[control] = list_entry_position;
         }
 
         /* the up and down arrow buttons on the scrollbar */
@@ -421,7 +421,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                 list_entry_position++;
             }
 
-            panel->control_flash_text[control] = list_entry_position;
+            panel->control_list_position[control] = list_entry_position;
         }
 
         /* handle the thumb/middle section dragging of the scrollbar */
@@ -457,7 +457,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                     list_entry_position = max_entries;
                 }
 
-                panel->control_flash_text[control] = list_entry_position;
+                panel->control_list_position[control] = list_entry_position;
             }
         } else {
             panel->control_list_scrollbar_handle_dragged[control] = 0;
@@ -469,7 +469,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         surface_draw_scrollbar(panel->surface, x, y, width, height, scrub_y, scrub_height);
     } else {
         list_entry_position = 0;
-        panel->control_flash_text[control] = 0;
+        panel->control_list_position[control] = 0;
     }
 
     if (is_interactive) {
@@ -682,7 +682,7 @@ void panel_clear_list(Panel *panel, int control) {
 }
 
 void panel_reset_list(Panel *panel, int control) {
-    panel->control_flash_text[control] = 0;
+    panel->control_list_position[control] = 0;
     panel->control_list_entry_mouse_over[control] = -1;
 }
 
@@ -720,7 +720,7 @@ void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
     }
 
     if (flash) {
-        panel->control_flash_text[control] = 999999;
+        panel->control_list_position[control] = 999999;
     }
 }
 

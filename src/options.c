@@ -12,7 +12,7 @@ void options_new(Options *options) {
 
     /* experimental */
     options->thick_walls = 0;
-    options->ground_item_models = 0;
+    options->ground_item_models = 1;
 
     options_set_defaults(options);
 }

@@ -3726,10 +3726,26 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
     }
 }
 
+int get_string_tilde_offset(char *text, int text_length, int offset, int length) {
+    if (text[offset] == '~' && offset + length + 1 < text_length &&
+               text[offset + length + 1] == '~') {
+        int start = offset + 1;
+        int end = offset + length + 1;
+        int sliced_length = (end - start);
+        char sliced[sliced_length + 1];
+        memset(sliced, '\0', sliced_length);
+        strncpy(sliced, text + start, end - start);
+        return atoi(sliced);
+    }
+
+    return -1;
+}
+
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                int font, int colour, float depth) {
     int8_t *font_data = game_fonts[font];
     int text_length = strlen(text);
+    int tilde_x = -1;
 
     for (int i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
@@ -3782,20 +3798,11 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
             }
 
             i += 4;
-        } else if (text[i] == '~' && i + 5 < text_length &&
-                   text[i + 5] == '~') {
-            // TODO check if the server ever sends ~XXX~ and support both
-            if (isdigit(text[i + 1]) && isdigit(text[i + 2]) &&
-                isdigit(text[i + 3]) && isdigit(text[i + 4])) {
-                int start = i + 1;
-                int end = i + 5;
-                int sliced_length = (end - start);
-                char sliced[sliced_length + 1];
-                memset(sliced, '\0', sliced_length);
-                strncpy(sliced, text + start, end - start);
-                x = atoi(sliced);
-            }
-
+        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i, 3)) >= 0) {
+            x = tilde_x;
+            i += 4;
+        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i, 4)) >= 0) {
+            x = tilde_x;
             i += 5;
         } else {
             int character_offset = character_width[(unsigned)text[i]];

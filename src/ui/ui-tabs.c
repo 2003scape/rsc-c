@@ -146,8 +146,15 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
                 [mud->control_list_quest];
     }
 
+    int stats_height = 36 + STATS_HEIGHT + 5;
+
+    if (mud->options->total_experience || mud->options->remaining_experience) {
+        stats_height += STATS_LINE_BREAK;
+    }
+
     if (mud->show_ui_tab == STATS_TAB &&
-        (mud->mouse_x < mud->surface->width - 199 || mud->mouse_y > 316) &&
+        (mud->mouse_x < mud->surface->width - 199 ||
+         mud->mouse_y > stats_height) &&
         !is_dragging_scrollbar) {
         mud->show_ui_tab = 0;
     }

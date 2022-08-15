@@ -1980,6 +1980,8 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
+    int ground_item_model_count = 0;
+
     if (mud->options->ground_item_models) {
         for (int i = 0; i < game_data_item_count; i++) {
             int sprite_id = game_data_item_sprite[i];
@@ -2010,16 +2012,29 @@ void mudclient_load_models(mudclient *mud) {
 
             printf("found model for item: %d %d\n", i,
                    game_model->num_vertices);
+
+            ground_item_model_count++;
         }
     }
 
     free(models_jag);
 
 #ifdef RENDER_GL
+    int models_length = game_data_model_count + game_data_item_count - 1;
+    GameModel *models_buffer[models_length];
+
+    for (int i = 0; i < game_data_model_count - 1; i++) {
+        models_buffer[i] = mud->game_models[i];
+    }
+
+    for (int i = 0; i < game_data_item_count; i++) {
+        models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
+    }
+
     game_model_gl_buffer_models(&mud->scene->game_model_vao,
                                 &mud->scene->game_model_vbo,
-                                &mud->scene->game_model_ebo, mud->game_models,
-                                game_data_model_count - 1);
+                                &mud->scene->game_model_ebo, models_buffer,
+                                models_length);
 #endif
 }
 
@@ -2646,19 +2661,19 @@ void mudclient_start_game(mudclient *mud) {
     panel_new(mud->panel_quests, mud->surface, 5);
 
     mud->control_list_quest = panel_add_text_list_interactive(
-        mud->panel_quests, x, y + 24, 196, 251, 1, 500, 1);
+        mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH, 251, 1, 500, 1);
 
     mud->panel_magic = malloc(sizeof(Panel));
     panel_new(mud->panel_magic, mud->surface, 5);
 
     mud->control_list_magic = panel_add_text_list_interactive(
-        mud->panel_magic, x, y + 24, 196, 90, 1, 500, 1);
+        mud->panel_magic, x, y + MAGIC_TAB_HEIGHT, MAGIC_WIDTH, 90, 1, 500, 1);
 
     mud->panel_social_list = malloc(sizeof(Panel));
     panel_new(mud->panel_social_list, mud->surface, 5);
 
     mud->control_list_social = panel_add_text_list_interactive(
-        mud->panel_social_list, x, y + 40, 196, 126, 1, 500, 1);
+        mud->panel_social_list, x, y + SOCIAL_TAB_HEIGHT + 16, 196, 126, 1, 500, 1);
 
     mudclient_load_media(mud);
 
@@ -2685,8 +2700,6 @@ void mudclient_start_game(mudclient *mud) {
 #ifdef RENDER_GL
     mudclient_update_fov(mud);
 #endif
-
-    // scene_set_light_from3(mud->scene, -50, -10, -50);
 
     mud->world = malloc(sizeof(World));
     world_new(mud->world, mud->scene, mud->surface);
@@ -2978,7 +2991,6 @@ GameCharacter *mudclient_add_character(mudclient *mud,
 
         character_server[server_index] = character;
         character_server[server_index]->server_index = server_index;
-        // character_server[server_index]->server_id = 0; - should already be 0
     }
 
     GameCharacter *character = character_server[server_index];
@@ -4220,8 +4232,8 @@ GameCharacter *mudclient_get_opponent(mudclient *mud) {
 }
 
 void mudclient_draw_ui(mudclient *mud) {
-    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 200,
-                                    3, mud->sprite_media, 128);
+    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 200, 3,
+                                    mud->sprite_media, 128);
 
     int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
 
@@ -5948,24 +5960,23 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int item_id) {
 
     int offset_x = 0;
 
-    /*surface_draw_item(mud->surface, x + offset_x, y, item_id);
+    if (certificate_item_id != -1) {
+        offset_x = -2;
+    }
+
+    surface_draw_item(mud->surface, x + offset_x, y, item_id);
 
     if (certificate_item_id != -1) {
         int og_width = INVENTORY_SLOT_WIDTH - 1;
         int og_height = INVENTORY_SLOT_HEIGHT - 2;
 
         surface_sprite_clipping_from9(
-            mud->surface, x + og_width * 0.125, y + og_height * 0.125, og_width * 0.75, og_height * 0.75,
-            mud->surface->mud->sprite_item + game_data_item_sprite[certificate_item_id],
+            mud->surface, x + 4 + og_width * 0.125f, y + 2 + og_height * 0.125f,
+            og_width * 0.75f, og_height * 0.75f,
+            mud->surface->mud->sprite_item +
+                game_data_item_sprite[certificate_item_id],
             game_data_item_mask[certificate_item_id], 0, 0, 0);
-    }*/
-
-    /*if (certificate_item_id != -1) {
-        surface_draw_item(mud->surface, x, y, certificate_item_id);
-        offset_x = 5;
     }
-
-    surface_draw_item(mud->surface, x + offset_x, y, item_id);*/
 }
 
 int main(int argc, char **argv) {

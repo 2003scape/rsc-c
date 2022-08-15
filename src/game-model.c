@@ -1614,6 +1614,10 @@ void game_model_get_vertex_ebo_lengths(GameModel **game_models, int length,
     for (int i = 0; i < length; i++) {
         GameModel *game_model = game_models[i];
 
+        if (game_model == NULL) {
+            continue;
+        }
+
         game_model->ebo_length = 0;
 
         for (int j = 0; j < game_model->num_faces; j++) {
@@ -1643,6 +1647,10 @@ void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
 
     for (int i = 0; i < length; i++) {
         GameModel *game_model = game_models[i];
+
+        if (game_model == NULL) {
+            continue;
+        }
 
         game_model->vao = *vao;
         game_model->vbo_offset = vertex_offset;

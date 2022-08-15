@@ -511,8 +511,24 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
 }
 
 void mudclient_create_top_mouse_menu(mudclient *mud) {
-    if (mud->selected_spell >= 0 || mud->selected_item_inventory_index >= 0 ||
-        mud->selected_wiki) {
+    int add_cancel = mud->selected_spell >= 0 ||
+                     mud->selected_item_inventory_index >= 0 ||
+                     mud->selected_wiki;
+
+    if (!add_cancel) {
+        for (int i = 0; i < mud->menu_items_count; i++) {
+            if (mud->menu_type[i] == MENU_MAP_LOOK ||
+                mud->menu_type[i] == MENU_BANK_WITHDRAW ||
+                mud->menu_type[i] == MENU_BANK_DEPOSIT ||
+                mud->menu_type[i] == MENU_TRANSACTION_OFFER ||
+                mud->menu_type[i] == MENU_TRANSACTION_REMOVE) {
+                add_cancel = 1;
+                break;
+            }
+        }
+    }
+
+    if (add_cancel) {
         strcpy(mud->menu_item_text1[mud->menu_items_count], "Cancel");
         strcpy(mud->menu_item_text2[mud->menu_items_count], "");
         mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
@@ -711,7 +727,7 @@ void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page) {
     strcpy(mud->menu_item_text1[mud->menu_items_count], "Wiki lookup");
     strcpy(mud->menu_item_text2[mud->menu_items_count], display);
     mud->menu_type[mud->menu_items_count] = MENU_WIKI_LOOKUP;
-    mud->menu_wiki_page[mud->menu_items_count] = page;
+    strcpy(mud->menu_wiki_page[mud->menu_items_count], page);
     mud->menu_items_count++;
 }
 
