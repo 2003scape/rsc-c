@@ -10,6 +10,8 @@ int character_width[256];
 int32_t *surface_texture_pixels;
 
 void init_surface_global() {
+    memset(game_fonts, '\0', sizeof(game_fonts));
+
     for (int i = 0; i < 256; i++) {
         int index = 74;
 
@@ -142,7 +144,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
                                     FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
                                     FONT_COUNT * 2);
 
-    surface_gl_create_font_textures(surface);
+    //surface_gl_create_font_textures(surface);
     surface_gl_create_circle_texture(surface);
 
     surface_gl_reset_context(surface);

@@ -477,6 +477,16 @@ void mudclient_new(mudclient *mud) {
 
     mud->bank_selected_item_slot = -1;
     mud->bank_selected_item = -2;
+
+    mud->sprite_media = 2000;
+    mud->sprite_util = mud->sprite_media + 100;
+    mud->sprite_item = mud->sprite_util + 50;
+    mud->sprite_logo = mud->sprite_item + 1000;
+    mud->sprite_projectile = mud->sprite_logo + 10;
+    mud->sprite_texture = mud->sprite_projectile + 50;
+    mud->sprite_texture_world = mud->sprite_texture + 10;
+
+    mud->loading_step = 1;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -571,8 +581,6 @@ void mudclient_resize(mudclient *mud) {
 }
 
 void mudclient_start_application(mudclient *mud, char *title) {
-    mud->loading_step = 1;
-
 #ifdef WII
     VIDEO_Init();
     WPAD_Init();
@@ -1265,19 +1273,12 @@ void mudclient_stop(mudclient *mud) {
 }
 
 void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
+#ifdef RENDER_GL
+    glClear(GL_COLOR_BUFFER_BIT);
+#endif
+
     /* hide the previously drawn textures */
     surface_draw_box(mud->surface, 0, 0, 128, 128, BLACK);
-
-    /* loading bar */
-    int bar_x = (mud->game_width / 2.0f) - (LOADING_WIDTH / 2.0f);
-    int bar_y = (mud->game_height / 2) + 2;
-    int width = (int)((percent / (float)100) * LOADING_WIDTH);
-
-    surface_draw_border(mud->surface, bar_x - 2, bar_y - 2, LOADING_WIDTH + 4,
-                        LOADING_HEIGHT + 4, GREY_84);
-
-    surface_draw_box(mud->surface, bar_x, bar_y, width, LOADING_HEIGHT,
-                     GREY_84);
 
     /* jagex logo */
     int logo_sprite_id = SPRITE_LIMIT - 1;
@@ -1288,9 +1289,71 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     int logo_y = (mud->game_height / 2) -
                  (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
 
-    surface_draw_sprite_from3(mud->surface, logo_x, logo_y, logo_sprite_id);
+    //surface_draw_sprite_from3(mud->surface, logo_x, logo_y, logo_sprite_id);
 
+    /* loading bar */
+    int bar_x = (mud->game_width / 2.0f) - (LOADING_WIDTH / 2.0f);
+    int bar_y = (mud->game_height / 2) + 2;
+    int width = (int)((percent / (float)100) * LOADING_WIDTH);
+
+    surface_draw_border(mud->surface, bar_x - 2, bar_y - 2, LOADING_WIDTH + 4,
+                        LOADING_HEIGHT + 4, GREY_84);
+
+    surface_draw_box(mud->surface, bar_x, bar_y, LOADING_WIDTH, LOADING_HEIGHT,
+                     BLACK);
+
+    surface_draw_box(mud->surface, bar_x, bar_y, width, LOADING_HEIGHT,
+                     GREY_84);
+
+    int copyright_x = (mud->surface->width / 2) - 1;
+    int copyright_y = (mud->surface->height / 2) + 16;
+
+    if (game_fonts[2] != NULL) {
+        surface_draw_string_centre(mud->surface,
+                                   text, copyright_x, copyright_y, 2, GREY_C6);
+    }
+
+    /* footer */
+    if (game_fonts[3] != NULL) {
+        copyright_y += 20;
+
+        surface_draw_string_centre(mud->surface,
+                                   "Created by JAGeX - visit www.jagex.com",
+                                   copyright_x, copyright_y, 3, GREY_C6);
+
+        copyright_x += 7;
+        copyright_y += 16;
+
+        char *copyright_date = "2001-2002 Andrew Gower and Jagex Ltd";
+
+        int copyright_icon_x =
+            copyright_x - (surface_text_width(copyright_date, 3) / 2) - 8;
+
+        surface_draw_circle(mud->surface, copyright_icon_x + 2, copyright_y - 5,
+                            5, GREY_C6, 255, 0);
+
+        surface_draw_circle(mud->surface, copyright_icon_x + 2, copyright_y - 5,
+                            4, BLACK, 255, 0);
+
+        surface_draw_string(mud->surface, "c", copyright_icon_x,
+                            copyright_y - 2, 0, GREY_C6);
+
+        surface_draw_string_centre(mud->surface, copyright_date, copyright_x,
+                                   copyright_y, 3, GREY_C6);
+    }
+
+#ifdef RENDER_GL
+    if (mud->gl_last_swap == 0 || get_ticks() - mud->gl_last_swap >= 16) {
+        mudclient_poll_events(mud);
+        surface_draw(mud->surface);
+        SDL_GL_SwapWindow(mud->gl_window);
+        mud->gl_last_swap = get_ticks();
+    } else {
+        surface_gl_reset_context(mud->surface);
+    }
+#else
     surface_draw(mud->surface);
+#endif
 }
 
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
@@ -1385,7 +1448,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
         read += length;
 
-        sprintf(loading_text, "Loading %s - %d", description,
+        sprintf(loading_text, "Loading %s - %d%%", description,
                 5 + (read * 95) / archive_size_compressed);
 
         mudclient_draw_loading_progress(mud, percent, loading_text);
@@ -1471,6 +1534,10 @@ void mudclient_load_jagex(mudclient *mud) {
         }
 
         free(fonts_jag);
+
+#ifdef RENDER_GL
+        surface_gl_create_font_textures(mud->surface);
+#endif
     }
 }
 
@@ -2579,14 +2646,6 @@ void mudclient_start_game(mudclient *mud) {
     if (mud->error_loading_data) {
         return;
     }
-
-    mud->sprite_media = 2000;
-    mud->sprite_util = mud->sprite_media + 100;
-    mud->sprite_item = mud->sprite_util + 50;
-    mud->sprite_logo = mud->sprite_item + 1000;
-    mud->sprite_projectile = mud->sprite_logo + 10;
-    mud->sprite_texture = mud->sprite_projectile + 50;
-    mud->sprite_texture_world = mud->sprite_texture + 10;
 
     mudclient_set_target_fps(mud, 50);
 

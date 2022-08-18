@@ -755,6 +755,8 @@ typedef struct mudclient {
     int gl_is_walking;
     int gl_mouse_x;
     int gl_mouse_y;
+
+    int gl_last_swap;
 #endif
 
     int walk_path_x[PATH_STEPS_MAX];

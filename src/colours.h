@@ -11,6 +11,7 @@
 #define GREY_A0 0xa0a0a0
 #define GREY_B5 0xb5b5b5
 #define GREY_BE 0xbebebe
+#define GREY_C6 0xc6c6c6
 #define GREY_C9 0xc9c9c9
 #define GREY_D0 0xd0d0d0
 #define GREY_DC 0xdcdcdc
