@@ -207,6 +207,11 @@
 #define SKILL_PRAYER 5
 #define SKILL_MAGIC 6
 
+#define SPRITE_LIMIT 4000
+
+#define LOADING_WIDTH 277
+#define LOADING_HEIGHT 20
+
 typedef struct mudclient mudclient;
 
 #include "chat-message.h"
@@ -284,7 +289,6 @@ extern int keyboard_offsets[];
 #ifdef WII
 void draw_background(uint8_t *framebuffer, int full);
 void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y);
-void draw_rectangle(uint8_t *framebuffer, int x, int y, int width, int height);
 
 extern int wii_mouse_x;
 extern int wii_mouse_y;
@@ -301,7 +305,6 @@ extern ndspWaveBuf wave_buf[2];
 extern u32 *audio_buffer;
 extern int fill_block;
 
-void draw_rectangle(uint8_t *framebuffer, int x, int y, int width, int height);
 void draw_blue_bar(uint8_t *framebuffer);
 #endif
 
@@ -926,12 +929,10 @@ void mudclient_reset_timings(mudclient *mud);
 void mudclient_start(mudclient *mud);
 void mudclient_stop(mudclient *mud);
 
-void mudclient_show_loading_progress(mudclient *mud, int percent, char *text);
+void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text);
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                  int percent);
-#if !defined(WII) && !defined(_3DS)
-SDL_Surface *mudclient_parse_tga(mudclient *mud, int8_t *buffer);
-#endif
+void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer);
 void mudclient_load_jagex(mudclient *mud);
 void mudclient_load_game_config(mudclient *mud);
 void mudclient_load_media(mudclient *mud);

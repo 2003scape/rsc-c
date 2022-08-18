@@ -935,23 +935,20 @@ void mudclient_packet_tick(mudclient *mud) {
                             GameModel *model = game_model_copy(original_model);
                             scene_add_model(mud->scene, model);
 
-                            model->key = mud->ground_item_count + 20000;
+                            model->key =
+                                mud->ground_item_count + GROUND_ITEM_FACE_TAG;
 
                             int model_x =
                                 ((area_x + area_x + 1) * MAGIC_LOC) / 2;
                             int model_y =
                                 ((area_y + area_y + 1) * MAGIC_LOC) / 2;
 
-                            printf("%d %d\n",
-                                   -world_get_elevation(mud->world, model_x,
-                                                        model_y),
-                                   mud->ground_item_z[mud->ground_item_count]);
-
                             game_model_translate(
                                 model, model_x,
                                 -(world_get_elevation(mud->world, model_x,
                                                       model_y) +
-                                  mud->ground_item_z[mud->ground_item_count]),
+                                  mud->ground_item_z[mud->ground_item_count]) -
+                                    10,
                                 model_y);
 
                             game_model_set_light_from6(model, 1, 48, 48, -50,
@@ -987,8 +984,6 @@ void mudclient_packet_tick(mudclient *mud) {
                             }
 
                             item_index++;
-                        } else {
-                            item_id = -123;
                         }
                     }
 

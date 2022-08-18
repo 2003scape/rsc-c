@@ -3362,7 +3362,7 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
 }
 
 // surface_draw_sprite_transform_mask
-/* applies scale, both grey and skin colour mask, skew/shear and flip. used for
+/* applies scale, both grey and skin colour masks, skew/shear and flip. used for
  * entity sprites */
 void surface_sprite_clipping_from9(Surface *surface, int x, int y,
                                    int draw_width, int draw_height,

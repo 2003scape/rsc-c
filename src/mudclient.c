@@ -107,22 +107,10 @@ ndspWaveBuf wave_buf[2] = {0};
 u32 *audio_buffer = NULL;
 int fill_block = 0;
 
-void draw_rectangle(uint8_t *framebuffer, int x, int y, int width, int height) {
-    for (int draw_y = y; draw_y < y + height; draw_y++) {
-        for (int draw_x = x; draw_x < x + width; draw_x++) {
-            int fb_index = (((draw_x + 1) * 240) - (draw_y + 1)) * 3;
-            framebuffer[fb_index] = 132;
-            framebuffer[fb_index + 1] = 132;
-            framebuffer[fb_index + 2] = 132;
-        }
-    }
-}
-
 void draw_blue_bar(uint8_t *framebuffer) {
     for (int x = 0; x < 256; x++) {
         for (int y = 1; y <= 7; y++) {
             int bar_index = (((x + 31) * 240) + (240 - y)) * 3;
-
             int screen_index = (((x + 72) * 240) + (240 - (y + 50))) * 3;
 
             memcpy(framebuffer + screen_index, game_background_bgr + bar_index,
@@ -205,23 +193,6 @@ void draw_keyboard(uint8_t *framebuffer, int is_shift) {
                      rsc_keyboard_yuv[keyboard_index + x]) /
                     2;
             }
-        }
-    }
-}
-
-void draw_rectangle(uint8_t *framebuffer, int x, int y, int width, int height) {
-    for (int draw_y = y; draw_y < y + height; draw_y++) {
-        for (int draw_x = x; draw_x < x + width; draw_x += 2) {
-            int y = RGB2Y(132, 132, 132);
-            int u = RGB2U(132, 132, 132);
-            int v = RGB2V(132, 132, 132);
-
-            int fb_index = (640 * 2 * draw_y) + (draw_x * 2);
-
-            framebuffer[fb_index] = y;
-            framebuffer[fb_index + 2] = y;
-            framebuffer[fb_index + 1] = u;
-            framebuffer[fb_index + 3] = v;
         }
     }
 }
@@ -801,6 +772,13 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 #endif
 
+    mud->surface = malloc(sizeof(Surface));
+
+    surface_new(mud->surface, mud->game_width, mud->game_height, SPRITE_LIMIT,
+                mud);
+
+    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);
+
     printf("Started application\n");
 
 #ifdef WII
@@ -1286,35 +1264,33 @@ void mudclient_stop(mudclient *mud) {
     }
 }
 
-void mudclient_show_loading_progress(mudclient *mud, int percent, char *text) {
-#ifdef _3DS
-    int width = (int)((percent / (float)100) * 137);
-    draw_rectangle(mud->framebuffer_bottom, 91, 101, width, 8);
-#endif
+void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
+    /* hide the previously drawn textures */
+    surface_draw_box(mud->surface, 0, 0, 128, 128, BLACK);
 
-#ifdef WII
-    int width = (int)((percent / (float)100) * 276);
-    draw_rectangle(mud->framebuffer, 181, 244, width, 19);
-#endif
+    /* loading bar */
+    int bar_x = (mud->game_width / 2.0f) - (LOADING_WIDTH / 2.0f);
+    int bar_y = (mud->game_height / 2) + 2;
+    int width = (int)((percent / (float)100) * LOADING_WIDTH);
 
-#if !defined(WII) && !defined(_3DS)
-    SDL_Rect texture_dest = {0};
-    texture_dest.w = 128;
-    texture_dest.h = 128;
+    surface_draw_border(mud->surface, bar_x - 2, bar_y - 2, LOADING_WIDTH + 4,
+                        LOADING_HEIGHT + 4, GREY_84);
 
-    SDL_FillRect(mud->pixel_surface, &texture_dest, 0x000000);
+    surface_draw_box(mud->surface, bar_x, bar_y, width, LOADING_HEIGHT,
+                     GREY_84);
 
-    SDL_Rect loading_dest = {0};
-    loading_dest.x = ((mud->game_width - 281) / 2) + 2;
-    loading_dest.y = ((mud->game_height - 148) / 2) + 76;
-    loading_dest.w = (int)((percent / (float)100) * 277);
-    loading_dest.h = 20;
+    /* jagex logo */
+    int logo_sprite_id = SPRITE_LIMIT - 1;
 
-    SDL_FillRect(mud->pixel_surface, &loading_dest, 0x848484);
+    int logo_x = (mud->game_width / 2) -
+                 (mud->surface->sprite_width[logo_sprite_id] / 2) - 19;
 
-    SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
-    SDL_UpdateWindowSurface(mud->window);
-#endif
+    int logo_y = (mud->game_height / 2) -
+                 (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
+
+    surface_draw_sprite_from3(mud->surface, logo_x, logo_y, logo_sprite_id);
+
+    surface_draw(mud->surface);
 }
 
 int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
@@ -1322,7 +1298,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     char loading_text[35] = {0}; /* max description is 19 */
 
     sprintf(loading_text, "Loading %s - 0%%", description);
-    mudclient_show_loading_progress(mud, percent, loading_text);
+    mudclient_draw_loading_progress(mud, percent, loading_text);
 
     int8_t header[6];
 #ifdef WII
@@ -1390,7 +1366,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                                   (header[5] & 0xff);
 
     sprintf(loading_text, "Loading %s - 5%%", description);
-    mudclient_show_loading_progress(mud, percent, loading_text);
+    mudclient_draw_loading_progress(mud, percent, loading_text);
 
 #ifdef WII
     int8_t *archive_data = file_data + 6;
@@ -1412,14 +1388,14 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         sprintf(loading_text, "Loading %s - %d", description,
                 5 + (read * 95) / archive_size_compressed);
 
-        mudclient_show_loading_progress(mud, percent, loading_text);
+        mudclient_draw_loading_progress(mud, percent, loading_text);
     }
 
     fclose(archive_stream);
 #endif
 
     sprintf(loading_text, "Unpacking %s", description);
-    mudclient_show_loading_progress(mud, percent, loading_text);
+    mudclient_draw_loading_progress(mud, percent, loading_text);
 
     if (archive_size_compressed != archive_size) {
         int8_t *decompressed = malloc(archive_size);
@@ -1438,8 +1414,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 }
 
 /* used for the jagex logo in the loading screen */
-#if !defined(WII) && !defined(_3DS)
-SDL_Surface *mudclient_parse_tga(mudclient *mud, int8_t *buffer) {
+void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
     int width = buffer[13] * 256 + buffer[12];
     int height = buffer[15] * 256 + buffer[14];
 
@@ -1462,29 +1437,30 @@ SDL_Surface *mudclient_parse_tga(mudclient *mud, int8_t *buffer) {
             pixels[index++] = b[palette_index];
             pixels[index++] = g[palette_index];
             pixels[index++] = r[palette_index];
-            pixels[index++] = 0;
+            pixels[index++] = 255;
         }
     }
 
-    mud->logo_pixels = pixels;
-
-    return SDL_CreateRGBSurfaceFrom(pixels, width, height, 32, 4 * width,
-                                    0xff0000, 0x00ff00, 0x0000ff, 0);
+    int sprite_index = SPRITE_LIMIT - 1;
+    mud->surface->sprite_width[sprite_index] = width;
+    mud->surface->sprite_height[sprite_index] = height;
+    mud->surface->surface_pixels[sprite_index] = (int32_t *)pixels;
 }
-#endif
 
 void mudclient_load_jagex(mudclient *mud) {
-#if !defined(WII) && !defined(_3DS)
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
         int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag);
-        mud->logo_surface = mudclient_parse_tga(mud, logo_tga);
+        mudclient_load_jagex_tga_sprite(mud, logo_tga);
         free(logo_tga);
+
+#ifndef WII
+        // TODO double check this
         free(jagex_jag);
-    }
 #endif
+    }
 
     int8_t *fonts_jag =
         mudclient_read_data_file(mud, "fonts" FONTS ".jag", "Game fonts", 5);
@@ -1496,37 +1472,6 @@ void mudclient_load_jagex(mudclient *mud) {
 
         free(fonts_jag);
     }
-}
-
-void mudclient_draw_loading_screen(mudclient *mud) {
-#if !defined(WII) && !defined(_3DS)
-    SDL_Rect logo_dest = {0};
-    logo_dest.x = ((mud->game_width - 281) / 2) - 18;
-    logo_dest.y = ((mud->game_height - 148) / 2) - 14;
-
-    SDL_BlitSurface(mud->logo_surface, NULL, mud->pixel_surface, &logo_dest);
-
-    SDL_Rect loading_dest = {0};
-    loading_dest.x = ((mud->game_width - 281) / 2);
-    loading_dest.y = logo_dest.y + 88;
-    loading_dest.w = 281;
-    loading_dest.h = 24;
-
-    SDL_FillRect(mud->pixel_surface, &loading_dest, 0x848484);
-
-    loading_dest.y += 1;
-    loading_dest.x += 1;
-    loading_dest.w -= 2;
-    loading_dest.h -= 2;
-
-    SDL_FillRect(mud->pixel_surface, &loading_dest, 0);
-
-    SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
-    SDL_UpdateWindowSurface(mud->window);
-
-    SDL_FreeSurface(mud->logo_surface);
-    free(mud->logo_pixels);
-#endif
 }
 
 void mudclient_load_game_config(mudclient *mud) {
@@ -2000,6 +1945,9 @@ void mudclient_load_models(mudclient *mud) {
 
             int mask_colour = game_data_item_mask[i];
 
+            printf("found model for item: %d %d\n", i,
+                   game_model->num_vertices);
+
             if (mask_colour != 0) {
                 game_model_mask_faces(game_model, game_model->face_fill_back,
                                       mask_colour);
@@ -2009,9 +1957,6 @@ void mudclient_load_models(mudclient *mud) {
             }
 
             mud->item_models[i] = game_model;
-
-            printf("found model for item: %d %d\n", i,
-                   game_model->num_vertices);
 
             ground_item_model_count++;
         }
@@ -2031,10 +1976,9 @@ void mudclient_load_models(mudclient *mud) {
         models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
     }
 
-    game_model_gl_buffer_models(&mud->scene->game_model_vao,
-                                &mud->scene->game_model_vbo,
-                                &mud->scene->game_model_ebo, models_buffer,
-                                models_length);
+    game_model_gl_buffer_models(
+        &mud->scene->game_model_vao, &mud->scene->game_model_vbo,
+        &mud->scene->game_model_ebo, models_buffer, models_length);
 #endif
 }
 
@@ -2646,11 +2590,12 @@ void mudclient_start_game(mudclient *mud) {
 
     mudclient_set_target_fps(mud, 50);
 
-    mud->surface = malloc(sizeof(Surface));
+    /*mud->surface = malloc(sizeof(Surface));
 
-    surface_new(mud->surface, mud->game_width, mud->game_height, 4000, mud);
+    surface_new(mud->surface, mud->game_width, mud->game_height, SPRITE_LIMIT,
+    mud);
 
-    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);
+    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);*/
 
     panel_base_sprite_start = mud->sprite_util;
 
@@ -2661,7 +2606,8 @@ void mudclient_start_game(mudclient *mud) {
     panel_new(mud->panel_quests, mud->surface, 5);
 
     mud->control_list_quest = panel_add_text_list_interactive(
-        mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH, 251, 1, 500, 1);
+        mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH, 251, 1, 500,
+        1);
 
     mud->panel_magic = malloc(sizeof(Panel));
     panel_new(mud->panel_magic, mud->surface, 5);
@@ -2673,7 +2619,8 @@ void mudclient_start_game(mudclient *mud) {
     panel_new(mud->panel_social_list, mud->surface, 5);
 
     mud->control_list_social = panel_add_text_list_interactive(
-        mud->panel_social_list, x, y + SOCIAL_TAB_HEIGHT + 16, 196, 126, 1, 500, 1);
+        mud->panel_social_list, x, y + SOCIAL_TAB_HEIGHT + 16, 196, 126, 1, 500,
+        1);
 
     mudclient_load_media(mud);
 
@@ -2733,7 +2680,7 @@ void mudclient_start_game(mudclient *mud) {
         return;
     }
 
-    mudclient_show_loading_progress(mud, 100, "Starting game...");
+    mudclient_draw_loading_progress(mud, 100, "Starting game...");
     mudclient_create_message_tabs_panel(mud);
     mudclient_create_login_panels(mud);
     mudclient_create_appearance_panel(mud);
@@ -5540,7 +5487,6 @@ void mudclient_run(mudclient *mud) {
     if (mud->loading_step == 1) {
         mud->loading_step = 2;
         mudclient_load_jagex(mud);
-        mudclient_draw_loading_screen(mud);
         mudclient_start_game(mud);
         mud->loading_step = 0;
     }
