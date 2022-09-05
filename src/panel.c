@@ -724,8 +724,6 @@ void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
     }
 }
 
-// TODO set_text?
-// TODO strcpy any control_text setting
 void panel_update_text(Panel *panel, int control, char *text) {
     if (panel->control_type[control] == PANEL_TEXT_INPUT ||
         panel->control_type[control] == PANEL_LIST_INPUT) {

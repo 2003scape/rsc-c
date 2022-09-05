@@ -665,18 +665,25 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 }
 
 void mudclient_menu_add_ground_item(mudclient *mud, int index) {
-    if (mud->selected_spell >= 0) {
+    int item_id = mud->ground_item_id[index];
+    char *item_name = game_data_item_name[item_id];
+    char formatted_item_name[strlen(item_name) + 6];
+
+    sprintf(formatted_item_name, "@lre@%s", item_name);
+    strcpy(mud->menu_item_text2[mud->menu_items_count], formatted_item_name);
+
+    mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
+    mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
+    mud->menu_index[mud->menu_items_count] = item_id;
+
+    if (mud->selected_wiki) {
+        mudclient_menu_add_wiki(mud, formatted_item_name, wiki_get_item_page(item_id));
+    } else if (mud->selected_spell >= 0) {
         if (game_data_spell_type[mud->selected_spell] == 3) {
             sprintf(mud->menu_item_text1[mud->menu_items_count], "Cast %s on",
                     game_data_spell_name[mud->selected_spell]);
 
-            sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
-                    game_data_item_name[mud->ground_item_id[index]]);
-
             mud->menu_type[mud->menu_items_count] = MENU_CAST_GROUNDITEM;
-            mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
-            mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
-            mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
             mud->menu_source_index[mud->menu_items_count] = mud->selected_spell;
             mud->menu_items_count++;
         }
@@ -684,13 +691,7 @@ void mudclient_menu_add_ground_item(mudclient *mud, int index) {
         sprintf(mud->menu_item_text1[mud->menu_items_count], "Use %s with",
                 mud->selected_item_name);
 
-        sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
-                game_data_item_name[mud->ground_item_id[index]]);
-
         mud->menu_type[mud->menu_items_count] = MENU_USEWITH_GROUNDITEM;
-        mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
-        mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
-        mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
 
         mud->menu_source_index[mud->menu_items_count] =
             mud->selected_item_inventory_index;
@@ -699,19 +700,12 @@ void mudclient_menu_add_ground_item(mudclient *mud, int index) {
     } else {
         strcpy(mud->menu_item_text1[mud->menu_items_count], "Take");
 
-        sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
-                game_data_item_name[mud->ground_item_id[index]]);
-
         mud->menu_type[mud->menu_items_count] = MENU_GROUNDITEM_TAKE;
-        mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
-        mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
-        mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
         mud->menu_items_count++;
 
         strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
 
-        sprintf(mud->menu_item_text2[mud->menu_items_count], "@lre@%s",
-                game_data_item_name[mud->ground_item_id[index]]);
+        strcpy(mud->menu_item_text2[mud->menu_items_count], mud->menu_item_text2[mud->menu_items_count - 1]);
 
         mud->menu_type[mud->menu_items_count] = MENU_GROUNDITEM_EXAMINE;
         mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
@@ -1362,7 +1356,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 mud->menu_items_count++;
                 return;
             }
-        } else if (mud->selected_item_inventory_index < 0) {
+        } else if (!mud->selected_wiki && mud->selected_item_inventory_index < 0) {
             strcpy(mud->menu_item_text1[mud->menu_items_count], "Walk here");
             strcpy(mud->menu_item_text2[mud->menu_items_count], "");
 

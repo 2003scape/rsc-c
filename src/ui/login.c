@@ -323,14 +323,14 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
            15, 400, 120, mud->sprite_media + 10, 0, 0, 0, 0);*/
 
-    surface_draw_sprite_from5(mud->surface, mud->sprite_logo, 0, 0,
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
                               mud->surface->width, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
 #endif
 
-    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo);
+    surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo);
 
     x = 9216;
     y = 9216;
@@ -352,14 +352,14 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);
 
-    surface_draw_sprite_from5(mud->surface, mud->sprite_logo + 1, 0, 0,
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1, 0, 0,
                               mud->surface->width, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
 #endif
 
-    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1);
+    surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo + 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene, mud->world->roof_models[0][i]);
@@ -407,14 +407,14 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);
 
-    surface_draw_sprite_from5(mud->surface, mud->sprite_media + 10, 0, 0,
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10, 0, 0,
                               mud->surface->width, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
 #endif
 
-    surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10);
+    surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_media + 10);
 
     world_reset(mud->world, 0);
 

@@ -27,7 +27,7 @@ typedef struct Scene Scene;
 
 #define VERTEX_COUNT 40 // ambigious
 #define RAMP_COUNT 50
-#define RAMP_SIZE 256 // TODO gradient size?
+#define RAMP_SIZE 256
 
 /* originally Scene had a wide_band property and a second gradient_scanline
  * function that was unused */
@@ -51,11 +51,10 @@ extern int scene_frustum_near_z;
 extern int64_t scene_texture_count_loaded;
 
 #ifdef RENDER_GL
-// TODO prefix gl?
-typedef struct ModelTime {
+typedef struct GlModelTime {
     GameModel *game_model;
     float time;
-} ModelTime;
+} GlModelTime;
 #endif
 
 typedef struct Scene {
@@ -75,8 +74,8 @@ typedef struct Scene {
     int gradient_ramps[RAMP_COUNT][RAMP_SIZE];
     int32_t *gradient_ramp;
     int texture_count;
-    int8_t **texture_colours_used;
-    int32_t **texture_colour_list;
+    int8_t **texture_colours;
+    int32_t **texture_palette;
     int8_t *texture_dimension;
     int64_t *texture_loaded_number;
     int32_t **texture_pixels;
@@ -168,8 +167,6 @@ typedef struct Scene {
 
     mat4 gl_inverse_projection;
     mat4 gl_inverse_view;
-    // mat4 gl_inverse_projection_view;
-    //  TODO can these be combined?
 
     vec3 gl_mouse_world;
     vec3 gl_mouse_ray;
@@ -185,7 +182,7 @@ typedef struct Scene {
     int gl_terrain_pick_y;
 
     /* sort based on distance */
-    ModelTime gl_mouse_picked_time[MOUSE_PICKED_MAX];
+    GlModelTime gl_mouse_picked_time[MOUSE_PICKED_MAX];
 
     int gl_mouse_picked_count;
 
@@ -227,7 +224,6 @@ void scene_gradient_translucent_scanline(int32_t *raster, int i, int j,
                                          int32_t *ramp, int l, int i1);
 void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
                              int32_t *ramp, int ramp_index, int ramp_inc);
-int rgb(int i, int j, int k); // TODO bad name
 void scene_add_model(Scene *scene, GameModel *model);
 void scene_remove_model(Scene *scene, GameModel *model);
 void scene_null_model(Scene *scene, GameModel *model);
@@ -251,7 +247,7 @@ void scene_render(Scene *scene);
 void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                               int32_t *plane_y, int32_t *vertex_shade,
                               GameModel *game_model, int face);
-void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
+void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                      int32_t *vertices_y, int32_t *vertices_z, int face_fill,
                      GameModel *game_model);
 void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,

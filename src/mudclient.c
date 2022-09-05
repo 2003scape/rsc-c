@@ -397,33 +397,6 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 }
 #endif
 
-int test_x = 1;
-int test_y = 0;
-// float test_x = 37;
-// float test_y = 77;
-// float test_x = 36.0f;
-// float test_y = 76.750000;
-// int test_x = 0;
-/*float test_x = 0.6370452f;
-float test_y = 1.571051;
-float test_z = 1.338493;*/
-int test_yaw = 0;
-int test_colour = -1;
-int test_fade = 0;
-float test_depth = 0;
-GameModel *test_model = NULL;
-
-#if 0
-void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id,
-                                GLenum severity, GLsizei length,
-                                const GLchar *message, const void *user_param) {
-    fprintf(stderr,
-            "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type,
-            severity, message);
-}
-#endif
-
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
 
@@ -734,10 +707,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
                         SDL_GL_CONTEXT_PROFILE_CORE);
 
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
     // TODO make AA toggleable
-    glEnable(GL_MULTISAMPLE);
+    //glEnable(GL_MULTISAMPLE);
 #endif
 
     mud->gl_window = SDL_CreateWindow(
@@ -772,11 +745,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     /* transparent textures */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // TODO disable for production
-    /* debugging */
-    // glEnable(GL_DEBUG_OUTPUT);
-    // glDebugMessageCallback(MessageCallback, 0);
 #endif
 #endif
 
@@ -1562,6 +1530,12 @@ void mudclient_load_game_config(mudclient *mud) {
     }
 
     free(filter_jag);*/
+#ifdef RENDER_GL
+    surface_gl_create_texture_array(&mud->surface->gl_sprite_item_textures,
+                                    ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT,
+                                    game_data_item_sprite_count +
+                                        game_data_projectile_sprite);
+#endif
 }
 
 void mudclient_load_media(mudclient *mud) {
@@ -1892,11 +1866,11 @@ void mudclient_load_textures(mudclient *mud) {
         surface_draw_box_software(surface, 0, 0, 128, 128, MAGENTA);
         surface_draw_sprite_from3_software(surface, 0, 0, mud->sprite_texture);
 
-        free(surface->sprite_colour_list[mud->sprite_texture]);
-        surface->sprite_colour_list[mud->sprite_texture] = NULL;
+        free(surface->sprite_palette[mud->sprite_texture]);
+        surface->sprite_palette[mud->sprite_texture] = NULL;
 
-        free(surface->sprite_colours_used[mud->sprite_texture]);
-        surface->sprite_colours_used[mud->sprite_texture] = NULL;
+        free(surface->sprite_colours[mud->sprite_texture]);
+        surface->sprite_colours[mud->sprite_texture] = NULL;
 
         int texture_size = surface->sprite_width_full[mud->sprite_texture];
         char *name_sub = game_data_texture_subtype_name[i];
@@ -1915,15 +1889,15 @@ void mudclient_load_textures(mudclient *mud) {
                 surface_draw_sprite_from3_software(surface, 0, 0,
                                                    mud->sprite_texture);
 
-                free(surface->sprite_colour_list[mud->sprite_texture]);
-                surface->sprite_colour_list[mud->sprite_texture] = NULL;
+                free(surface->sprite_palette[mud->sprite_texture]);
+                surface->sprite_palette[mud->sprite_texture] = NULL;
 
-                free(surface->sprite_colours_used[mud->sprite_texture]);
-                surface->sprite_colours_used[mud->sprite_texture] = NULL;
+                free(surface->sprite_colours[mud->sprite_texture]);
+                surface->sprite_colours[mud->sprite_texture] = NULL;
             }
         }
 
-        surface_draw_sprite_from5(surface, mud->sprite_texture_world + i, 0, 0,
+        surface_screen_raster_to_sprite(surface, mud->sprite_texture_world + i, 0, 0,
                                   texture_size, texture_size);
 
         for (int j = 0; j < texture_size * texture_size; j++) {
@@ -1934,12 +1908,12 @@ void mudclient_load_textures(mudclient *mud) {
             }
         }
 
-        surface_screen_raster_to_sprite(surface, mud->sprite_texture_world + i);
+        surface_screen_raster_to_palette_sprite(surface, mud->sprite_texture_world + i);
 
         scene_define_texture(
             mud->scene, i,
-            surface->sprite_colours_used[mud->sprite_texture_world + i],
-            surface->sprite_colour_list[mud->sprite_texture_world + i],
+            surface->sprite_colours[mud->sprite_texture_world + i],
+            surface->sprite_palette[mud->sprite_texture_world + i],
             (texture_size / 64) - 1);
 
         free(surface->surface_pixels[mud->sprite_texture_world + i]);
@@ -2011,9 +1985,6 @@ void mudclient_load_models(mudclient *mud) {
             game_model_from_bytes(game_model, models_jag, offset);
 
             int mask_colour = game_data_item_mask[i];
-
-            printf("found model for item: %d %d\n", i,
-                   game_model->num_vertices);
 
             if (mask_colour != 0) {
                 game_model_mask_faces(game_model, game_model->face_fill_back,
@@ -2812,16 +2783,16 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
 #ifdef RENDER_GL
-    game_model->vao = mud->scene->gl_wall_vao;
-    game_model->ebo_length = 6;
+    game_model->gl_vao = mud->scene->gl_wall_vao;
+    game_model->gl_ebo_length = 6;
 
     int vbo_offset = 0;
     int ebo_offset = 0;
 
     scene_gl_get_wall_model_offsets(mud->scene, &vbo_offset, &ebo_offset);
 
-    game_model->vbo_offset = vbo_offset;
-    game_model->ebo_offset = ebo_offset;
+    game_model->gl_vbo_offset = vbo_offset;
+    game_model->gl_ebo_offset = ebo_offset;
 
     glBindVertexArray(mud->scene->gl_wall_vao);
     glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_vbo);
@@ -4768,6 +4739,14 @@ void mudclient_draw_game(mudclient *mud) {
 
     surface_black_screen(mud->surface);
 
+#if defined(RENDER_GL) && !defined(EMSCRIPTEN)
+    if (mud->options->anti_alias) {
+        glEnable(GL_MULTISAMPLE);
+    } else {
+        glDisable(GL_MULTISAMPLE);
+    }
+#endif
+
     scene_render(mud->scene);
 
     mudclient_draw_overhead(mud);
@@ -4962,10 +4941,7 @@ void mudclient_on_resize(mudclient *mud) {
 
 #ifdef RENDER_GL
         mudclient_update_fov(mud);
-        // printf("%f\n", mud->scene->gl_fov);
 #endif
-
-        // printf("height %d\n", mud->game_height);
     }
 
     mudclient_resize(mud);
@@ -5432,35 +5408,6 @@ void mudclient_poll_events(mudclient *mud) {
             int code;
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_pressed(mud, code, char_code);
-
-            int mag = 1;
-
-            if (code == 113) {
-                test_x -= 1;
-                mud->scene->view_distance -= 0;
-            } else if (code == 97) {
-                test_x += 1;
-                mud->scene->view_distance += 0;
-            } else if (code == 119) {
-                test_y -= 1;
-                // mud->scene->clip_y -= 1;
-            } else if (code == 115) {
-                test_y += 1;
-                // mud->scene->clip_y += 1;
-            } else if (code == 101) {
-                // test_z -= 0.001;
-            } else if (code == 100) {
-                // test_z += 0.001;
-            } else if (code == 114) {
-                test_yaw += 1;
-            } else if (code == 102) {
-                test_yaw -= 1;
-            }
-
-            printf("%d %d\n", test_x, test_y);
-
-            // printf("vd=%d\n", mud->scene->view_distance);
-
             break;
         }
         case SDL_KEYUP: {

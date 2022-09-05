@@ -132,7 +132,7 @@
 
 #define INVENTORY_ITEMS_MAX 30
 #define MENU_MAX 250
-#define PATH_STEPS_MAX 8000 /* TODO seems a bit large */
+#define PATH_STEPS_MAX 8000
 #define BANK_ITEMS_MAX 256
 #define SHOP_ITEMS_MAX 256
 #define TRADE_ITEMS_MAX 14
@@ -255,15 +255,6 @@ typedef struct mudclient mudclient;
 #include "ui/ui-tabs.h"
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
-
-extern int test_x;
-extern int test_y;
-extern float test_z;
-extern int test_yaw;
-extern int test_colour;
-extern int test_fade;
-extern float test_depth;
-extern GameModel *test_model; // TODO remove
 
 extern char *font_files[];
 extern char *animated_models[];
@@ -489,8 +480,6 @@ typedef struct mudclient {
 
     /* created from cache and copied for each in-game instance */
     GameModel *game_models[GAME_OBJECTS_MAX];
-
-    // TODO toggle
     GameModel *item_models[1290];
 
     /* ./ui/login.c */
@@ -597,7 +586,6 @@ typedef struct mudclient {
     int ground_item_y[GROUND_ITEMS_MAX];
     int ground_item_z[GROUND_ITEMS_MAX];
     int ground_item_id[GROUND_ITEMS_MAX];
-    // TODO toggleable
     GameModel *ground_item_model[GROUND_ITEMS_MAX];
     int8_t ground_item_already_in_menu[GROUND_ITEMS_MAX];
 

@@ -963,31 +963,55 @@ void mudclient_packet_tick(mudclient *mud) {
                 } else {
                     item_id &= 32767;
 
-                    int item_index = 0;
+                    int index = 0;
 
                     for (int i = 0; i < mud->ground_item_count; i++) {
                         if (mud->ground_item_x[i] != area_x ||
                             mud->ground_item_y[i] != area_y ||
                             mud->ground_item_id[i] != item_id) {
-                            if (i != item_index) {
-                                mud->ground_item_x[item_index] =
+                            if (i != index) {
+                                mud->ground_item_x[index] =
                                     mud->ground_item_x[i];
 
-                                mud->ground_item_y[item_index] =
+                                mud->ground_item_y[index] =
                                     mud->ground_item_y[i];
 
-                                mud->ground_item_id[item_index] =
+                                mud->ground_item_id[index] =
                                     mud->ground_item_id[i];
 
-                                mud->ground_item_z[item_index] =
+                                mud->ground_item_z[index] =
                                     mud->ground_item_z[i];
+
+                                if (mud->options->ground_item_models) {
+                                    GameModel *item_model =
+                                        mud->ground_item_model[i];
+
+                                    if (item_model != NULL) {
+                                        item_model->key =
+                                            index + GROUND_ITEM_FACE_TAG;
+                                    }
+
+                                    mud->ground_item_model[index] = item_model;
+                                }
                             }
 
-                            item_index++;
+                            index++;
+                        } else {
+                            if (mud->options->ground_item_models) {
+                                GameModel *item_model =
+                                    mud->ground_item_model[index];
+
+                                if (item_model != NULL) {
+                                    scene_remove_model(mud->scene, item_model);
+                                    game_model_destroy(item_model);
+                                    free(item_model);
+                                    mud->ground_item_model[index] = NULL;
+                                }
+                            }
                         }
                     }
 
-                    mud->ground_item_count = item_index;
+                    mud->ground_item_count = index;
                 }
             }
         }

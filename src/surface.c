@@ -62,8 +62,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #endif
 
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
-    surface->sprite_colours_used = calloc(limit, sizeof(int8_t *));
-    surface->sprite_colour_list = calloc(limit, sizeof(int32_t *));
+    surface->sprite_colours = calloc(limit, sizeof(int8_t *));
+    surface->sprite_palette = calloc(limit, sizeof(int32_t *));
     surface->sprite_width = calloc(limit, sizeof(int));
     surface->sprite_height = calloc(limit, sizeof(int));
     surface->sprite_width_full = calloc(limit, sizeof(int));
@@ -127,10 +127,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * FLAT_QUAD_COUNT,
                  NULL, GL_DYNAMIC_DRAW);
 
-    surface_gl_create_texture_array(&surface->gl_sprite_item_textures,
+    /*surface_gl_create_texture_array(&surface->gl_sprite_item_textures,
                                     ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT,
                                     game_data_item_sprite_count +
-                                        game_data_projectile_sprite);
+                                        game_data_projectile_sprite);*/
 
     /* +1 for circle, +2 for extra login screen scenes, +1 for sleep */
     surface_gl_create_texture_array(&surface->gl_sprite_media_textures,
@@ -144,9 +144,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
                                     FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
                                     FONT_COUNT * 2);
 
-    //surface_gl_create_font_textures(surface);
-    surface_gl_create_circle_texture(surface);
+    // surface_gl_create_font_textures(surface);
 
+    surface_gl_create_circle_texture(surface);
     surface_gl_reset_context(surface);
 #endif
 }
@@ -171,7 +171,6 @@ void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, width, height, length);
 }
 
-// TODO make sure we aren't going over 256 with shadows
 void surface_gl_create_font_texture(int32_t *dest, int font_id,
                                     int draw_shadow) {
     int8_t *font_data = game_fonts[font_id];
@@ -546,7 +545,6 @@ void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
     surface_gl_buffer_flat_quad(surface, textured_quad, texture_array_id);
 }
 
-/* TODO kind of a lot of arguments :( */
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
@@ -1713,8 +1711,8 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         int type = index_data[index_offset++] & 0xff;
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
-        surface->sprite_colours_used[i] = calloc(area, sizeof(int8_t));
-        surface->sprite_colour_list[i] = colours;
+        surface->sprite_colours[i] = calloc(area, sizeof(int8_t));
+        surface->sprite_palette[i] = colours;
         surface->sprite_width_full[i] = full_width;
         surface->sprite_height_full[i] = full_height;
 
@@ -1730,10 +1728,9 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
         if (type == 0) {
             for (int j = 0; j < area; j++) {
-                surface->sprite_colours_used[i][j] =
-                    sprite_data[sprite_offset++];
+                surface->sprite_colours[i][j] = sprite_data[sprite_offset++];
 
-                if (surface->sprite_colours_used[i][j] == 0) {
+                if (surface->sprite_colours[i][j] == 0) {
                     surface->sprite_translate[i] = 1;
                 }
             }
@@ -1742,10 +1739,10 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                 for (int y = 0; y < surface->sprite_height[i]; y++) {
                     int index = x + y * surface->sprite_width[i];
 
-                    surface->sprite_colours_used[i][index] =
+                    surface->sprite_colours[i][index] =
                         sprite_data[sprite_offset++];
 
-                    if (surface->sprite_colours_used[i][index] == 0) {
+                    if (surface->sprite_colours[i][index] == 0) {
                         surface->sprite_translate[i] = 1;
                     }
                 }
@@ -1880,7 +1877,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 #endif
 }
 
-void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
+void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
 #ifdef RENDER_GL
     if (sprite_id == surface->mud->sprite_logo ||
         sprite_id == surface->mud->sprite_logo + 1 ||
@@ -1989,9 +1986,8 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
         colours[i] = texture_pixel & 0xff;
     }
 
-    surface->sprite_colours_used[sprite_id] = colours;
-    surface->sprite_colour_list[sprite_id] = palette;
-    // TODO rename colour list to palette too
+    surface->sprite_colours[sprite_id] = colours;
+    surface->sprite_palette[sprite_id] = palette;
 
     free(surface->surface_pixels[sprite_id]);
     surface->surface_pixels[sprite_id] = NULL;
@@ -1999,7 +1995,7 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id) {
 
 int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id,
                                           int add_alpha) {
-    int8_t *colours = surface->sprite_colours_used[sprite_id];
+    int8_t *colours = surface->sprite_colours[sprite_id];
 
     if (colours == NULL) {
         return NULL;
@@ -2008,7 +2004,7 @@ int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id,
     int area =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
-    int32_t *palette = surface->sprite_colour_list[sprite_id];
+    int32_t *palette = surface->sprite_palette[sprite_id];
     int32_t *pixels = malloc(area * sizeof(int32_t));
 
     for (int i = 0; i < area; i++) {
@@ -2035,15 +2031,12 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
     surface->surface_pixels[sprite_id] =
         surface_palette_sprite_to_raster(surface, sprite_id, 0);
 
-    free(surface->sprite_colours_used[sprite_id]);
-    surface->sprite_colours_used[sprite_id] = NULL;
+    free(surface->sprite_colours[sprite_id]);
+    surface->sprite_colours[sprite_id] = NULL;
 }
 
-/* TODO not actually draw_sprite - also allocates ? */
-/* allocates a sprite buffer to draw the landscape onto with
- * screen_raster_to_sprite */
-void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
-                               int width, int height) {
+void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
+                                     int y, int width, int height) {
     surface->sprite_width[sprite_id] = width;
     surface->sprite_height[sprite_id] = height;
     surface->sprite_translate[sprite_id] = 0;
@@ -2066,11 +2059,11 @@ void surface_draw_sprite_from5(Surface *surface, int sprite_id, int x, int y,
         }
     }
 
-    free(surface->sprite_colours_used[sprite_id]);
-    surface->sprite_colours_used[sprite_id] = NULL;
+    free(surface->sprite_colours[sprite_id]);
+    surface->sprite_colours[sprite_id] = NULL;
 
-    free(surface->sprite_colour_list[sprite_id]);
-    surface->sprite_colour_list[sprite_id] = NULL;
+    free(surface->sprite_palette[sprite_id]);
+    surface->sprite_palette[sprite_id] = NULL;
 }
 
 // TODO not draw - load from raster reversed
@@ -2107,11 +2100,11 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
         }
     }
 
-    free(surface->sprite_colours_used[sprite_id]);
-    surface->sprite_colours_used[sprite_id] = NULL;
+    free(surface->sprite_colours[sprite_id]);
+    surface->sprite_colours[sprite_id] = NULL;
 
-    free(surface->sprite_colour_list[sprite_id]);
-    surface->sprite_colour_list[sprite_id] = NULL;
+    free(surface->sprite_palette[sprite_id]);
+    surface->sprite_palette[sprite_id] = NULL;
 
 #ifdef RENDER_GL
     GLuint texture_array_id =
@@ -2191,8 +2184,8 @@ void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
 
     if (surface->surface_pixels[sprite_id] == NULL) {
         surface_plot_palette_sprite(
-            surface->pixels, surface->sprite_colours_used[sprite_id],
-            surface->sprite_colour_list[sprite_id], src_pos, dest_pos, width,
+            surface->pixels, surface->sprite_colours[sprite_id],
+            surface->sprite_palette[sprite_id], src_pos, dest_pos, width,
             height, dest_offset, sprite_offset, y_inc);
     } else {
         surface_plot_sprite(surface->pixels, surface->surface_pixels[sprite_id],
@@ -2417,9 +2410,9 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
 
     if (surface->surface_pixels[sprite_id] == NULL) {
         surface_draw_sprite_alpha_from11a(
-            surface->pixels, surface->sprite_colours_used[sprite_id],
-            surface->sprite_colour_list[sprite_id], src_pos, size, width,
-            height, dest_offset, src_offset, y_inc, alpha);
+            surface->pixels, surface->sprite_colours[sprite_id],
+            surface->sprite_palette[sprite_id], src_pos, size, width, height,
+            dest_offset, src_offset, y_inc, alpha);
     } else {
         surface_draw_sprite_alpha_from11(
             surface->pixels, surface->surface_pixels[sprite_id], src_pos, size,
@@ -2431,7 +2424,6 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
 void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
                                 int scale_y, int sprite_id, int alpha) {
 #ifdef RENDER_GL
-    // TODO see what this looks like with draw_circle
     surface_gl_buffer_sprite(surface, sprite_id, x, y, scale_x, scale_y, 0, 0,
                              0, alpha, 0, 0, 0, 0);
 #endif
@@ -3309,15 +3301,15 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
             if (!flip) {
                 surface_transparent_sprite_plot_from16a(
                     surface, surface->pixels,
-                    surface->sprite_colours_used[sprite_id],
-                    surface->sprite_colour_list[sprite_id], offset_x, offset_y,
-                    j4, draw_width, draw_height, width_ratio, height_ratio,
+                    surface->sprite_colours[sprite_id],
+                    surface->sprite_palette[sprite_id], offset_x, offset_y, j4,
+                    draw_width, draw_height, width_ratio, height_ratio,
                     sprite_width, mask_colour, i3, l3, y_inc);
             } else {
                 surface_transparent_sprite_plot_from16a(
                     surface, surface->pixels,
-                    surface->sprite_colours_used[sprite_id],
-                    surface->sprite_colour_list[sprite_id],
+                    surface->sprite_colours[sprite_id],
+                    surface->sprite_palette[sprite_id],
                     (surface->sprite_width[sprite_id] << 16) - offset_x - 1,
                     offset_y, j4, draw_width, draw_height, -width_ratio,
                     height_ratio, sprite_width, mask_colour, i3, l3, y_inc);
@@ -3345,15 +3337,15 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
             if (!flip) {
                 surface_transparent_sprite_plot_from17(
                     surface, surface->pixels,
-                    surface->sprite_colours_used[sprite_id],
-                    surface->sprite_colour_list[sprite_id], offset_x, offset_y,
-                    j4, draw_width, draw_height, width_ratio, height_ratio,
+                    surface->sprite_colours[sprite_id],
+                    surface->sprite_palette[sprite_id], offset_x, offset_y, j4,
+                    draw_width, draw_height, width_ratio, height_ratio,
                     sprite_width, mask_colour, skin_colour, i3, l3, y_inc);
             } else {
                 surface_transparent_sprite_plot_from17(
                     surface, surface->pixels,
-                    surface->sprite_colours_used[sprite_id],
-                    surface->sprite_colour_list[sprite_id],
+                    surface->sprite_colours[sprite_id],
+                    surface->sprite_palette[sprite_id],
                     (surface->sprite_width[sprite_id] << 16) - offset_x - 1,
                     offset_y, j4, draw_width, draw_height, -width_ratio,
                     height_ratio, sprite_width, mask_colour, skin_colour, i3,
@@ -3728,9 +3720,10 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
     }
 }
 
-int get_string_tilde_offset(char *text, int text_length, int offset, int length) {
+int get_string_tilde_offset(char *text, int text_length, int offset,
+                            int length) {
     if (text[offset] == '~' && offset + length + 1 < text_length &&
-               text[offset + length + 1] == '~') {
+        text[offset + length + 1] == '~') {
         int start = offset + 1;
         int end = offset + length + 1;
         int sliced_length = (end - start);
@@ -3800,10 +3793,12 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
             }
 
             i += 4;
-        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i, 3)) >= 0) {
+        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i,
+                                                      3)) >= 0) {
             x = tilde_x;
             i += 4;
-        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i, 4)) >= 0) {
+        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i,
+                                                      4)) >= 0) {
             x = tilde_x;
             i += 5;
         } else {

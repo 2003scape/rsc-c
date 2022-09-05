@@ -27,7 +27,7 @@ void options_set_defaults(Options *options) {
     options->remember_password = 0;
 
     /* openrsc preservation */
-    //strcpy(options->server, "162.198.202.160");
+    // strcpy(options->server, "162.198.202.160");
 #if 0
 #ifdef EMSCRIPTEN
     options->port = 43496; /* websockets */
@@ -94,6 +94,7 @@ void options_set_defaults(Options *options) {
 
     /* gl */
     options->ui_scale = 1;
+    options->anti_alias = 1;
     options->field_of_view = 360;
 }
 
@@ -152,11 +153,14 @@ void options_set_vanilla(Options *options) {
 
     /* gl */
     options->ui_scale = 0;
+    options->anti_alias = 0;
     options->field_of_view = 360;
 }
 
 void options_save(Options *options) {
     FILE *ini_file = fopen("./options.ini", "w");
+
+    printf("%d\n", options->field_of_view);
 
     fprintf(ini_file, OPTIONS_INI_TEMPLATE,
             options->server,                //
@@ -184,6 +188,7 @@ void options_save(Options *options) {
             options->interlace,             //
             options->display_fps,           //
             options->ui_scale,              //
+            options->anti_alias,            //
             options->field_of_view,         //
             options->show_roofs,            //
             options->number_commas,         //
@@ -194,6 +199,7 @@ void options_save(Options *options) {
             options->certificate_items,     //
             options->wilderness_warning,    //
             options->status_bars,           //
+            options->ground_item_models,    //
                                             //
             options->bank_search,           //
             options->bank_capacity,         //
@@ -240,6 +246,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
     OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
     OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);
+    OPTION_INI_INT("anti_alias", options->anti_alias, 0, 1);
     OPTION_INI_INT("field_of_view", options->field_of_view, 360, 880);
     OPTION_INI_INT("show_roofs", options->show_roofs, 0, 1);
     OPTION_INI_INT("number_commas", options->number_commas, 0, 1);
@@ -251,6 +258,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("certificate_items", options->certificate_items, 0, 1);
     OPTION_INI_INT("wilderness_warning", options->wilderness_warning, 0, 1);
     OPTION_INI_INT("status_bars", options->status_bars, 0, 1);
+    OPTION_INI_INT("ground_item_models", options->ground_item_models, 0, 1);
 
     /* bank */
     OPTION_INI_INT("bank_search", options->bank_search, 0, 1);

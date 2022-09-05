@@ -192,6 +192,14 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->control_options[control] = &mud->options->last_offer_x;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_control_options, "@whi@Wiki lookup: ", mud->options->wiki_lookup, x, y);
+
+    mud->control_options[control] = &mud->options->wiki_lookup;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
     /* display */
     x = ui_x + 4;
     y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
@@ -226,6 +234,15 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += 20;
 
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_display_options, "@whi@Anti-alias: ", mud->options->anti_alias,
+        x, y);
+
+    mud->display_options[control] = &mud->options->anti_alias;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += 20;
+
     sprintf(formatted_digits, "%d", mud->options->field_of_view);
 
     control = mudclient_add_option_panel_string(
@@ -233,7 +250,7 @@ void mudclient_create_options_panel(mudclient *mud) {
         x, y);
 
     mud->display_options[control] = &mud->options->field_of_view;
-    mud->display_option_types[control] = 1;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
     y += 20;
 
@@ -262,7 +279,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->remaining_experience;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 20;
+    x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -271,8 +289,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->total_experience;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
-    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -306,6 +323,24 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Wilderness warning: ", mud->options->wilderness_warning, x, y);
 
     mud->display_options[control] = &mud->options->wilderness_warning;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_display_options,
+        "@whi@Status bars: ", mud->options->status_bars, x, y);
+
+    mud->display_options[control] = &mud->options->status_bars;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_display_options,
+        "@whi@Ground item models: ", mud->options->ground_item_models, x, y);
+
+    mud->display_options[control] = &mud->options->ground_item_models;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     /* bank */
@@ -609,18 +644,26 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
             if (options != NULL && option_types != NULL) {
 #ifdef RENDER_GL
                 int old_ui_scale = mud->options->ui_scale;
+                int old_field_of_view = mud->options->field_of_view;
 #endif
 
                 for (int i = 0; i < panel->control_count; i++) {
                     if (option_types[i] == ADDITIONAL_OPTIONS_CHECKBOX) {
                         int *option = (int *)options[i];
                         *option = panel_is_activated(panel, i);
+                    } else if (option_types[i] == ADDITIONAL_OPTIONS_INT) {
+                        int *option = (int *)options[i];
+                        *option = atoi(panel_get_text(panel, i));
                     }
                 }
 
 #ifdef RENDER_GL
                 if (old_ui_scale != mud->options->ui_scale) {
                     mudclient_on_resize(mud);
+                }
+
+                if (old_field_of_view != mud->options->field_of_view) {
+                    mudclient_update_fov(mud);
                 }
 #endif
             }

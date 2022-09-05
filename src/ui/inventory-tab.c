@@ -77,7 +77,10 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     char formatted_item_name[strlen(item_name) + 6];
     sprintf(formatted_item_name, "@lre@%s", item_name);
 
-    if (mud->show_dialog_bank) {
+    if (mud->selected_wiki) {
+        mudclient_menu_add_wiki(mud, formatted_item_name,
+                                wiki_get_item_page(item_id));
+    } else if (mud->show_dialog_bank) {
         int item_amount = mudclient_get_inventory_count(mud, item_id);
 
         mudclient_add_offer_menus(mud, "Deposit", MENU_BANK_DEPOSIT, item_id,

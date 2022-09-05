@@ -57,6 +57,8 @@
      "; Double the UI size but keep the scene size if window is over double"   \
      "; original\n; size (GL only)\n"                                          \
      "ui_scale = %d\n"                                                         \
+     "; Enable multi-sampling\n"                                               \
+     "anti_alias = %d\n"                                                       \
      "; Change the field of view. scales with height by default and in \n"     \
      "; software. About 36 degrees on the original height of 346 (GL only)\n"  \
      "field_of_view = %d\n"                                                    \
@@ -78,7 +80,9 @@
      "; Display the warning dialog near the wilderness border\n"               \
      "wilderness_warning = %d\n"                                               \
      "; Display hits and prayer bars\n"                                        \
-     "status_bars = %d\n\n"                                                    \
+     "status_bars = %d\n"                                                      \
+     "; Use ground item models instead of billboarded sprites\n"               \
+     "ground_item_models = %d\n\n"                                             \
                                                                                \
      "; Add filtering to the bank\n"                                           \
      "bank_search = %d\n"                                                      \
@@ -189,6 +193,9 @@ typedef struct Options {
      * original size (GL only) */
     int ui_scale;
 
+    /* enable multi-sampling (GL only) */
+    int anti_alias;
+
     /* change the field of view. scales with height by default and in software.
      * about 36 degrees on the original height of 346 (GL only) */
     int field_of_view;
@@ -222,6 +229,9 @@ typedef struct Options {
 
     /* display hits and prayer bars */
     int status_bars;
+
+    /* use ground item models instead of billboarded sprites */
+    int ground_item_models;
 
     /* withdraw multiple unstackable items */
     int bank_unstackble_withdraw;
@@ -285,9 +295,6 @@ typedef struct Options {
 
     /* experimental thick walls support (requires restart) */
     int thick_walls;
-
-    /* experimental ground item model support */
-    int ground_item_models;
 } Options;
 
 void options_new(Options *options);

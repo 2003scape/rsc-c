@@ -46,6 +46,7 @@ typedef struct World World;
 
 extern int terrain_colours[TERRAIN_COLOUR_COUNT];
 
+int rgb_to_texture_colour(int r, int g, int b);
 void init_world_global();
 
 typedef struct World {

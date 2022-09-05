@@ -26,8 +26,8 @@ int scene_polygon_depth_compare(const void *a, const void *b) {
 
 #ifdef RENDER_GL
 int scene_gl_model_time_compare(const void *a, const void *b) {
-    ModelTime model_time_a = *(ModelTime *)a;
-    ModelTime model_time_b = *(ModelTime *)b;
+    GlModelTime model_time_a = *(GlModelTime *)a;
+    GlModelTime model_time_b = *(GlModelTime *)b;
 
     if (model_time_a.time == model_time_b.time) {
         return 0;
@@ -883,10 +883,6 @@ void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
     }
 }
 
-int rgb(int i, int j, int k) {
-    return -1 - (i / 8) * 1024 - (j / 8) * 32 - (k / 8);
-}
-
 void scene_add_model(Scene *scene, GameModel *model) {
     if (model == NULL) {
         fprintf(stderr, "Warning tried to add null object!\n");
@@ -910,7 +906,7 @@ void scene_remove_model(Scene *scene, GameModel *model) {
     }
 
 #ifdef RENDER_GL
-    if (model->vao == scene->gl_wall_vao) {
+    if (model->gl_vao == scene->gl_wall_vao) {
         scene_gl_remove_wall_buffers(scene, model);
     }
 #endif
@@ -1060,8 +1056,6 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
 }
 
 void scene_set_bounds(Scene *scene, int width, int height) {
-    printf("scene height %d\n", height);
-
     int base_x = width / 2;
     int base_y = height / 2;
     int clip_x = base_x;
@@ -1254,7 +1248,7 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
 }
 
 void scene_initialise_polygons_2d(Scene *scene) {
-    for (int face = 0; face < scene->view->num_faces; face++) {
+    for (int face = 0; face < scene->view->face_count; face++) {
         int *face_vertices = scene->view->face_vertices[face];
         int face_vertex_index = face_vertices[0];
         int view_z = scene->view->project_vertex_z[face_vertex_index];
@@ -1398,12 +1392,12 @@ void scene_render(Scene *scene) {
             continue;
         }
 
-        for (int face = 0; face < game_model->num_faces; face++) {
-            int num_vertices = game_model->face_num_vertices[face];
+        for (int face = 0; face < game_model->face_count; face++) {
+            int vertex_count = game_model->face_vertex_count[face];
             int *face_vertices = game_model->face_vertices[face];
             int visible = 0;
 
-            for (int vertex = 0; vertex < num_vertices; vertex++) {
+            for (int vertex = 0; vertex < vertex_count; vertex++) {
                 int z = game_model->project_vertex_z[face_vertices[vertex]];
 
                 if (z <= scene->clip_near || z >= scene->clip_far_3d) {
@@ -1417,7 +1411,7 @@ void scene_render(Scene *scene) {
             if (visible) {
                 int view_x_count = 0;
 
-                for (int vertex = 0; vertex < num_vertices; vertex++) {
+                for (int vertex = 0; vertex < vertex_count; vertex++) {
                     int x = game_model->vertex_view_x[face_vertices[vertex]];
 
                     if (x > -scene->clip_x) {
@@ -1436,7 +1430,7 @@ void scene_render(Scene *scene) {
                 if (view_x_count == 3) {
                     int view_y_count = 0;
 
-                    for (int vertex = 0; vertex < num_vertices; vertex++) {
+                    for (int vertex = 0; vertex < vertex_count; vertex++) {
                         int vertex_y =
                             game_model->vertex_view_y[face_vertices[vertex]];
 
@@ -1475,14 +1469,14 @@ void scene_render(Scene *scene) {
                         if (face_fill != COLOUR_TRANSPARENT) {
                             int h = 0;
 
-                            for (int vertex = 0; vertex < num_vertices;
+                            for (int vertex = 0; vertex < vertex_count;
                                  vertex++) {
                                 h += game_model->project_vertex_z
                                          [face_vertices[vertex]];
                             }
 
                             polygon_1->depth =
-                                (h / num_vertices) + game_model->depth;
+                                (h / vertex_count) + game_model->depth;
 
                             polygon_1->facefill = face_fill;
 
@@ -1518,7 +1512,7 @@ void scene_render(Scene *scene) {
         } else {
             int k8 = 0;
             int vertex_shade = 0;
-            int face_num_vertices = game_model->face_num_vertices[face];
+            int face_vertex_count = game_model->face_vertex_count[face];
             int *face_vertices = game_model->face_vertices[face];
 
             if (game_model->face_intensity[face] != GAME_MODEL_USE_GOURAUD) {
@@ -1531,7 +1525,7 @@ void scene_render(Scene *scene) {
                 }
             }
 
-            for (int j = 0; j < face_num_vertices; j++) {
+            for (int j = 0; j < face_vertex_count; j++) {
                 int vertex_index = face_vertices[j];
 
                 scene->vertex_x[j] = game_model->project_vertex_x[vertex_index];
@@ -1577,7 +1571,7 @@ void scene_render(Scene *scene) {
 
                     if (j == 0) {
                         previous_vertex_index =
-                            face_vertices[face_num_vertices - 1];
+                            face_vertices[face_vertex_count - 1];
                     } else {
                         previous_vertex_index = face_vertices[j - 1];
                     }
@@ -1618,7 +1612,7 @@ void scene_render(Scene *scene) {
                         k8++;
                     }
 
-                    if (j == face_num_vertices - 1) {
+                    if (j == face_vertex_count - 1) {
                         previous_vertex_index = face_vertices[0];
                     } else {
                         previous_vertex_index = face_vertices[j + 1];
@@ -1667,7 +1661,7 @@ void scene_render(Scene *scene) {
                 }
             }
 
-            for (int j = 0; j < face_num_vertices; j++) {
+            for (int j = 0; j < face_vertex_count; j++) {
                 if (scene->vertex_shade[j] < 0) {
                     scene->vertex_shade[j] = 0;
                 } else if (scene->vertex_shade[j] > 255) {
@@ -1687,7 +1681,7 @@ void scene_render(Scene *scene) {
                                      scene->vertex_shade, game_model, face);
 
             if (scene->max_y > scene->min_y) {
-                scene_rasterize(scene, face_num_vertices, scene->vertex_x,
+                scene_rasterize(scene, face_vertex_count, scene->vertex_x,
                                 scene->vertex_y, scene->vertex_z,
                                 polygon->facefill, game_model);
             }
@@ -2331,7 +2325,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
     }
 }
 
-void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
+void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                      int32_t *vertices_y, int32_t *vertices_z, int face_fill,
                      GameModel *game_model) {
     if (face_fill == -2) {
@@ -2353,11 +2347,11 @@ void scene_rasterize(Scene *scene, int num_vertices, int32_t *vertices_x,
         int k3 = vertex_y - vertices_y[1];
         int i4 = vertex_z - vertices_z[1];
 
-        num_vertices--;
+        vertex_count--;
 
-        int i6 = vertices_x[num_vertices] - vertex_x;
-        int j7 = vertices_y[num_vertices] - vertex_y;
-        int k8 = vertices_z[num_vertices] - vertex_z;
+        int i6 = vertices_x[vertex_count] - vertex_x;
+        int j7 = vertices_y[vertex_count] - vertex_y;
+        int k8 = vertices_z[vertex_count] - vertex_z;
 
         /* texture mapping (UVs) */
         if (scene->texture_dimension[face_fill] == 1) {
@@ -2758,8 +2752,6 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     roll &= 1023;
 
     // TODO remove
-    // yaw = 0;
-    // pitch = 0;
     roll = 0;
 
     scene->camera_yaw = (1024 - yaw) & 1023; // pitch
@@ -2808,7 +2800,7 @@ void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     GameModel *game_model = polygon->model;
     int face = polygon->face;
     int *face_vertices = game_model->face_vertices[face];
-    int face_num_vertices = game_model->face_num_vertices[face];
+    int face_vertex_count = game_model->face_vertex_count[face];
     int normal_scale = game_model->normal_scale[face];
     int vcx = game_model->project_vertex_x[face_vertices[0]];
     int vcy = game_model->project_vertex_y[face_vertices[0]];
@@ -2859,7 +2851,7 @@ void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     int min_plane_y = game_model->vertex_view_y[face_vertices[0]];
     int max_plane_y = min_plane_y;
 
-    for (int i = 1; i < face_num_vertices; i++) {
+    for (int i = 1; i < face_vertex_count; i++) {
         int project_vertex_z = game_model->project_vertex_z[face_vertices[i]];
 
         if (project_vertex_z > max_z) {
@@ -2983,8 +2975,8 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     int face_b = polygon_b->face;
     int *face_vertices_a = game_model_a->face_vertices[face_a];
     int *face_vertices_b = game_model_b->face_vertices[face_b];
-    int face_num_vertices_a = game_model_a->face_num_vertices[face_a];
-    int face_num_vertices_b = game_model_b->face_num_vertices[face_b];
+    int face_vertex_count_a = game_model_a->face_vertex_count[face_a];
+    int face_vertex_count_b = game_model_b->face_vertex_count[face_b];
 
     int first_project_x = game_model_b->project_vertex_x[face_vertices_b[0]];
     int first_project_y = game_model_b->project_vertex_y[face_vertices_b[0]];
@@ -2996,7 +2988,7 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     int visibility = polygon_b->visibility;
     int flag = 0;
 
-    for (int i = 0; i < face_num_vertices_a; i++) {
+    for (int i = 0; i < face_vertex_count_a; i++) {
         int vertex_index = face_vertices_a[i];
 
         int magnitude =
@@ -3030,7 +3022,7 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     visibility = polygon_a->visibility;
     flag = 0;
 
-    for (int i = 0; i < face_num_vertices_b; i++) {
+    for (int i = 0; i < face_vertex_count_b; i++) {
         int vertex_index = face_vertices_b[i];
 
         int magnitude =
@@ -3058,7 +3050,7 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     int *vertex_view_y_a = NULL;
     int length_a = 0;
 
-    if (face_num_vertices_a == 2) {
+    if (face_vertex_count_a == 2) {
         length_a = 4;
 
         vertex_view_x_a = alloca(length_a * sizeof(int));
@@ -3085,23 +3077,23 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
         vertex_view_y_a[1] = vertex_view_y_a[2] =
             game_model_a->vertex_view_y[second_vertex_index];
     } else {
-        vertex_view_x_a = alloca(face_num_vertices_a * sizeof(int));
-        vertex_view_y_a = alloca(face_num_vertices_a * sizeof(int));
+        vertex_view_x_a = alloca(face_vertex_count_a * sizeof(int));
+        vertex_view_y_a = alloca(face_vertex_count_a * sizeof(int));
 
-        for (int i = 0; i < face_num_vertices_a; i++) {
+        for (int i = 0; i < face_vertex_count_a; i++) {
             int vertex_index = face_vertices_a[i];
             vertex_view_x_a[i] = game_model_a->vertex_view_x[vertex_index];
             vertex_view_y_a[i] = game_model_a->vertex_view_y[vertex_index];
         }
 
-        length_a = face_num_vertices_a;
+        length_a = face_vertex_count_a;
     }
 
     int *vertex_view_x_b = NULL;
     int *vertex_view_y_b = NULL;
     int length_b = 0;
 
-    if (face_num_vertices_b == 2) {
+    if (face_vertex_count_b == 2) {
         length_b = 4;
 
         vertex_view_x_b = alloca(length_b * sizeof(int));
@@ -3128,16 +3120,16 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
         vertex_view_y_b[1] = vertex_view_y_b[2] =
             game_model_b->vertex_view_y[second_vertex_index];
     } else {
-        vertex_view_x_b = alloca(face_num_vertices_b * sizeof(int));
-        vertex_view_y_b = alloca(face_num_vertices_b * sizeof(int));
+        vertex_view_x_b = alloca(face_vertex_count_b * sizeof(int));
+        vertex_view_y_b = alloca(face_vertex_count_b * sizeof(int));
 
-        for (int i = 0; i < face_num_vertices_b; i++) {
+        for (int i = 0; i < face_vertex_count_b; i++) {
             int vertex_index = face_vertices_b[i];
             vertex_view_x_b[i] = game_model_b->vertex_view_x[vertex_index];
             vertex_view_y_b[i] = game_model_b->vertex_view_y[vertex_index];
         }
 
-        length_b = face_num_vertices_b;
+        length_b = face_vertex_count_b;
     }
 
     return !scene_intersect(vertex_view_x_a, vertex_view_y_a, vertex_view_x_b,
@@ -3151,8 +3143,8 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     int face_b = polygon_b->face;
     int *face_vertices_a = game_model_a->face_vertices[face_a];
     int *face_vertices_b = game_model_b->face_vertices[face_b];
-    int face_num_vertices_a = game_model_a->face_num_vertices[face_a];
-    int face_num_vertices_b = game_model_b->face_num_vertices[face_b];
+    int face_vertex_count_a = game_model_a->face_vertex_count[face_a];
+    int face_vertex_count_b = game_model_b->face_vertex_count[face_b];
 
     int first_project_x = game_model_b->project_vertex_x[face_vertices_b[0]];
     int first_project_y = game_model_b->project_vertex_y[face_vertices_b[0]];
@@ -3164,7 +3156,7 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     int visibility = polygon_b->visibility;
     int flag = 0;
 
-    for (int i = 0; i < face_num_vertices_a; i++) {
+    for (int i = 0; i < face_vertex_count_a; i++) {
         int vertex_index = face_vertices_a[i];
 
         int magnitude =
@@ -3198,7 +3190,7 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     visibility = polygon_a->visibility;
     flag = 0;
 
-    for (int i = 0; i < face_num_vertices_b; i++) {
+    for (int i = 0; i < face_vertex_count_b; i++) {
         int vertex_index = face_vertices_b[i];
 
         int magnitude =
@@ -3224,8 +3216,8 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128) {
     scene->texture_count = count;
-    scene->texture_colours_used = calloc(count, sizeof(int8_t *));
-    scene->texture_colour_list = calloc(count, sizeof(int32_t *));
+    scene->texture_colours = calloc(count, sizeof(int8_t *));
+    scene->texture_palette = calloc(count, sizeof(int32_t *));
     scene->texture_loaded_number = calloc(count, sizeof(int64_t));
     scene->texture_dimension = calloc(count, sizeof(int8_t));
     scene->texture_back_transparent = calloc(count, sizeof(int8_t));
@@ -3259,8 +3251,8 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
 
 void scene_define_texture(Scene *scene, int id, int8_t *colours,
                           int32_t *palette, int is_128) {
-    scene->texture_colours_used[id] = colours;
-    scene->texture_colour_list[id] = palette;
+    scene->texture_colours[id] = colours;
+    scene->texture_palette[id] = palette;
     scene->texture_dimension[id] = is_128;
 
     scene->texture_loaded_number[id] = 0;
@@ -3383,7 +3375,7 @@ void scene_set_texture_pixels(Scene *scene, int id) {
     for (int x = 0; x < texture_width; x++) {
         for (int y = 0; y < texture_width; y++) {
             int colour =
-                scene->texture_colour_list[id][scene->texture_colours_used
+                scene->texture_palette[id][scene->texture_colours
                                                    [id][y + x * texture_width] &
                                                0xff];
 
@@ -4152,10 +4144,6 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    //0.67578125
-    //scene->gl_fov = 0.628614;
-    //printf("fov=%f\n", fov);
-
     glm_perspective(scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
                     VERTEX_TO_FLOAT(scene->clip_near), clip_far,
                     scene->gl_projection);
@@ -4167,16 +4155,16 @@ void scene_gl_update_camera(Scene *scene) {
 }
 
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
-    if (game_model->ebo_offset == -1 || !game_model->visible) {
+    if (game_model->gl_ebo_offset == -1 || !game_model->visible) {
         return;
     }
 
-    if (scene->last_vao != game_model->vao) {
-        glBindVertexArray(game_model->vao);
-        scene->last_vao = game_model->vao;
+    if (scene->last_vao != game_model->gl_vao) {
+        glBindVertexArray(game_model->gl_vao);
+        scene->last_vao = game_model->gl_vao;
     }
 
-    glBindVertexArray(game_model->vao);
+    glBindVertexArray(game_model->gl_vao);
 
     shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
 
@@ -4212,14 +4200,20 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     glCullFace(GL_BACK);
     shader_set_int(&scene->game_model_shader, "cull_front", 0);
 
-    glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
-                   (void *)(game_model->ebo_offset * sizeof(GLuint)));
+    /*glDrawElements(GL_LINES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));*/
+
+    glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
 
     glCullFace(GL_FRONT);
     shader_set_int(&scene->game_model_shader, "cull_front", 1);
 
-    glDrawElements(GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
-                   (void *)(game_model->ebo_offset * sizeof(GLuint)));
+    /*glDrawElements(GL_LINES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));*/
+
+    glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
 }
 
 void scene_gl_render(Scene *scene) {
@@ -4335,7 +4329,7 @@ void scene_gl_render(Scene *scene) {
                             "projection_view_model", projection_view_model);
 
             glDrawElements(
-                GL_TRIANGLES, game_model->ebo_length, GL_UNSIGNED_INT,
+                GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                 (void *)(game_model->gl_pick_ebo_offset * sizeof(GLuint)));
         }
 
@@ -4412,7 +4406,7 @@ void scene_gl_render(Scene *scene) {
 #ifndef RENDER_SW
                     /* only pick if software is disabled, so we don't pick
                      * twice */
-                    ModelTime model_time = {game_model, time};
+                    GlModelTime model_time = {game_model, time};
 
                     scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
                         model_time;
@@ -4433,7 +4427,7 @@ void scene_gl_render(Scene *scene) {
 #ifndef RENDER_SW
     /* mousepicking is already done in software */
     qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,
-          sizeof(ModelTime), scene_gl_model_time_compare);
+          sizeof(GlModelTime), scene_gl_model_time_compare);
 
     for (int i = 0; i < scene->gl_mouse_picked_count; i++) {
         scene->mouse_picked_models[scene->mouse_picked_count + i] =
@@ -4488,7 +4482,7 @@ void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
 void scene_gl_remove_wall_buffers(Scene *scene, GameModel *wall_object) {
     for (int i = 0; i < WALL_OBJECTS_MAX; i++) {
         if (scene->gl_wall_objects_removed[i] == 0) {
-            scene->gl_wall_objects_removed[i] = wall_object->vbo_offset / 4;
+            scene->gl_wall_objects_removed[i] = wall_object->gl_vbo_offset / 4;
             return;
         }
     }
