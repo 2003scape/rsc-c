@@ -113,7 +113,7 @@ void world_set_tiles(World *world);
 int world_get_wall_north_south(World *world, int x, int y);
 int world_get_tile_direction(World *world, int x, int y);
 int world_get_tile_decoration(World *world, int x, int y);
-int world_get_tile_decoration_from4(World *world, int x, int y);
+int world_get_tile_decoration_from4(World *world, int x, int y, int colour);
 void world_set_tile_decoration(World *world, int x, int y, int decoration);
 int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
                 int end_x2, int end_y2, int *route_x, int *route_y,

@@ -573,11 +573,11 @@ int world_get_tile_decoration(World *world, int x, int y) {
 }
 
 // TODO rename
-int world_get_tile_decoration_from4(World *world, int x, int y) {
+int world_get_tile_decoration_from4(World *world, int x, int y, int colour) {
     int decoration = world_get_tile_decoration(world, x, y);
 
     if (decoration == 0) {
-        return decoration;
+        return colour;
     }
 
     return game_data_tile_decoration[decoration - 1];
@@ -923,47 +923,48 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                             colour_1 = 31;
                         }
                     } else if (tile_type == HOLE_TILE_TYPE) {
+                        // TODO HERE
                         int diagonal = world_get_wall_diagonal(world, r_x, r_y);
 
                         if (diagonal > 0 && diagonal < 24000) {
                             if (world_get_tile_decoration_from4(world, r_x - 1,
-                                                                r_y) !=
+                                                                r_y, colour_2) !=
                                     COLOUR_TRANSPARENT &&
                                 world_get_tile_decoration_from4(world, r_x,
-                                                                r_y - 1) !=
+                                                                r_y - 1, colour_2) !=
                                     COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
-                                    world, r_x - 1, r_y);
+                                    world, r_x - 1, r_y, colour_2);
 
                                 direction = 0;
                             } else if (world_get_tile_decoration_from4(
-                                           world, r_x + 1, r_y) !=
+                                           world, r_x + 1, r_y, colour_2) !=
                                            COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, r_x, r_y + 1) !=
+                                           world, r_x, r_y + 1, colour_2) !=
                                            COLOUR_TRANSPARENT) {
                                 colour_1 = world_get_tile_decoration_from4(
-                                    world, r_x + 1, r_y);
+                                    world, r_x + 1, r_y, colour_2);
 
                                 direction = 0;
                             } else if (world_get_tile_decoration_from4(
-                                           world, r_x + 1, r_y) !=
+                                           world, r_x + 1, r_y, colour_2) !=
                                            COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, r_x, r_y - 1) !=
+                                           world, r_x, r_y - 1, colour_2) !=
                                            COLOUR_TRANSPARENT) {
                                 colour_1 = world_get_tile_decoration_from4(
-                                    world, r_x + 1, r_y);
+                                    world, r_x + 1, r_y, colour_2);
 
                                 direction = 1;
                             } else if (world_get_tile_decoration_from4(
-                                           world, r_x - 1, r_y) !=
+                                           world, r_x - 1, r_y, colour_2) !=
                                            COLOUR_TRANSPARENT &&
                                        world_get_tile_decoration_from4(
-                                           world, r_x, r_y + 1) !=
+                                           world, r_x, r_y + 1, colour_2) !=
                                            COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
-                                    world, r_x - 1, r_y);
+                                    world, r_x - 1, r_y, colour_2);
 
                                 direction = 1;
                             }
@@ -972,7 +973,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                (world_get_wall_diagonal(world, r_x, r_y) > 0 &&
                                 world_get_wall_diagonal(world, r_x, r_y) <
                                     24000)) {
-
                         /* antialiasing on diagonals */
 
                         if (world_get_tile_type(world, r_x - 1, r_y) !=
@@ -1473,6 +1473,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     // TODO thick walls needs more faces/vertices
     game_model_split(world->parent_model, world->wall_models[plane], 1536, 1536,
                      8, 64, 338, 1);
+
     /*game_model_split(world->parent_model, world->wall_models[plane], 1536,
        1536, 8, 64, 338 + 100, 1);*/
 

@@ -138,8 +138,6 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         ret = connect(packet_stream->socket, (struct sockaddr *)&server_addr,
                       sizeof(server_addr));
 
-        // printf("%d %d\n", ret, errno);
-
         if (errno == 30) {
             ret = 0;
             break;

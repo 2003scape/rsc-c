@@ -517,15 +517,17 @@ void url_encode(char *s, char *dest) {
     const char *hex = "0123456789abcdef";
 
     int pos = 0;
+    int length = strlen(s);
 
-    for (int i = 0; i < strlen(s); i++) {
-        if (('a' <= s[i] && s[i] <= 'z') || ('A' <= s[i] && s[i] <= 'Z') || ('0' <= s[i] && s[i] <= '9')) {
-                dest[pos++] = s[i];
-            } else {
-                dest[pos++] = '%';
-                dest[pos++] = hex[s[i] >> 4];
-                dest[pos++] = hex[s[i] & 15];
-            }
+    for (int i = 0; i < length; i++) {
+        if (('a' <= s[i] && s[i] <= 'z') || ('A' <= s[i] && s[i] <= 'Z') ||
+            ('0' <= s[i] && s[i] <= '9')) {
+            dest[pos++] = s[i];
+        } else {
+            dest[pos++] = '%';
+            dest[pos++] = hex[s[i] >> 4];
+            dest[pos++] = hex[s[i] & 15];
+        }
     }
 
     dest[pos] = '\0';
@@ -534,7 +536,7 @@ void url_encode(char *s, char *dest) {
 int get_certificate_item_id(int item_id) {
     int length = sizeof(certificate_items) / sizeof(certificate_items[0]);
 
-    for (int i = 0; i < length; i ++) {
+    for (int i = 0; i < length; i++) {
         if (certificate_items[i][0] == item_id) {
             return certificate_items[i][1];
         }

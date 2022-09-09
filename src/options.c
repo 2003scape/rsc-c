@@ -75,6 +75,7 @@ void options_set_defaults(Options *options) {
     options->show_roofs = 1;
     options->remaining_experience = 1;
     options->total_experience = 1;
+    options->experience_drops = 1;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
     options->certificate_items = 1;
@@ -134,6 +135,7 @@ void options_set_vanilla(Options *options) {
     options->show_roofs = 1;
     options->remaining_experience = 0;
     options->total_experience = 0;
+    options->experience_drops = 0;
     options->inventory_count = 0;
     options->condense_item_amounts = 0;
     options->certificate_items = 0;
@@ -159,8 +161,6 @@ void options_set_vanilla(Options *options) {
 
 void options_save(Options *options) {
     FILE *ini_file = fopen("./options.ini", "w");
-
-    printf("%d\n", options->field_of_view);
 
     fprintf(ini_file, OPTIONS_INI_TEMPLATE,
             options->server,                //
@@ -194,6 +194,7 @@ void options_save(Options *options) {
             options->number_commas,         //
             options->remaining_experience,  //
             options->total_experience,      //
+            options->experience_drops,      //
             options->inventory_count,       //
             options->condense_item_amounts, //
             options->certificate_items,     //
@@ -252,6 +253,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("number_commas", options->number_commas, 0, 1);
     OPTION_INI_INT("remaining_experience", options->remaining_experience, 0, 1);
     OPTION_INI_INT("total_experience", options->total_experience, 0, 1);
+    OPTION_INI_INT("experience_drops", options->experience_drops, 0, 1);
     OPTION_INI_INT("inventory_count", options->inventory_count, 0, 1);
     OPTION_INI_INT("condense_item_amounts", options->condense_item_amounts, 0,
                    1);

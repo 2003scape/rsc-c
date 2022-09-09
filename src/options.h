@@ -70,6 +70,8 @@
      "remaining_experience = %d\n"                                             \
      "; Show your total experience in the skills tab\n"                        \
      "total_experience = %d\n"                                                 \
+     "; Show experience drops\n"                        \
+     "experience_drops = %d\n"                                                 \
      "; Show a count of inventory items on the UI\n"                           \
      "inventory_count = %d\n"                                                  \
      "; Condenses item amounts with K and M and add their amounts to "         \
