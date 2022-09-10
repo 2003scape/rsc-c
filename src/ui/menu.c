@@ -764,11 +764,12 @@ void mudclient_create_right_click_menu(mudclient *mud) {
             continue;
         }
 
+        /* 2D face picking */
         if (game_model == mud->scene->view) {
             int index = game_model->face_tag[face] % 10000;
             int type = game_model->face_tag[face] / 10000;
 
-            if (type == 1) {
+            if (!mud->selected_wiki && type == 1) {
                 GameCharacter *player = mud->players[index];
                 char level_text[26] = {0};
                 int level_difference = 0;
@@ -1068,10 +1069,12 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 mudclient_menu_add_ground_item(mud, index);
                 mud->ground_item_already_in_menu[index] = 1;
             }
-        } else if (game_model && game_model->key >= 10000) {
+        } else if (!mud->selected_wiki && game_model &&
+                   game_model->key >= 10000) {
             int index = game_model->key - 10000;
             int wall_object_id = mud->wall_object_id[index];
 
+            // TODO wall-object wiki
             if (!mud->wall_object_already_in_menu[index]) {
                 sprintf(mud->menu_item_text2[mud->menu_items_count], "@cya@%s",
                         game_data_wall_object_name[wall_object_id]);
@@ -1237,7 +1240,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                game_data_object_command2[id]);
 
-                        strcpy(mud->menu_item_text2[mud->menu_items_count], formatted_object_name);
+                        strcpy(mud->menu_item_text2[mud->menu_items_count],
+                               formatted_object_name);
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_OBJECT_COMMAND2;

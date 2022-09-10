@@ -710,7 +710,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
     // TODO make AA toggleable
-    //glEnable(GL_MULTISAMPLE);
+    // glEnable(GL_MULTISAMPLE);
 #endif
 
     mud->gl_window = SDL_CreateWindow(
@@ -1257,7 +1257,7 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     int logo_y = (mud->game_height / 2) -
                  (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
 
-    //surface_draw_sprite_from3(mud->surface, logo_x, logo_y, logo_sprite_id);
+    surface_draw_sprite_from3(mud->surface, logo_x, logo_y, logo_sprite_id);
 
     /* loading bar */
     int bar_x = (mud->game_width / 2.0f) - (LOADING_WIDTH / 2.0f);
@@ -1277,8 +1277,8 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     int copyright_y = (mud->surface->height / 2) + 16;
 
     if (game_fonts[2] != NULL) {
-        surface_draw_string_centre(mud->surface,
-                                   text, copyright_x, copyright_y, 2, GREY_C6);
+        surface_draw_string_centre(mud->surface, text, copyright_x, copyright_y,
+                                   2, GREY_C6);
     }
 
     /* footer */
@@ -1473,9 +1473,34 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
     }
 
     int sprite_index = SPRITE_LIMIT - 1;
+
     mud->surface->sprite_width[sprite_index] = width;
     mud->surface->sprite_height[sprite_index] = height;
+    mud->surface->sprite_width_full[sprite_index] = width;
+    mud->surface->sprite_height_full[sprite_index] = height;
     mud->surface->surface_pixels[sprite_index] = (int32_t *)pixels;
+
+#ifdef RENDER_GL
+    uint32_t *texture_pixels =
+        calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(uint32_t));
+
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            texture_pixels[x + y * MEDIA_TEXTURE_WIDTH] =
+                ((uint32_t *)pixels)[x + y * width];
+        }
+    }
+
+    int texture_index =
+        surface_gl_sprite_texture_index(mud->surface, sprite_index);
+
+    gl_update_texture_array(mud->surface->gl_sprite_media_textures,
+                            texture_index, MEDIA_TEXTURE_WIDTH,
+                            MEDIA_TEXTURE_HEIGHT, (int32_t *)texture_pixels, 1);
+
+    free(texture_pixels);
+    free(pixels);
+#endif
 }
 
 void mudclient_load_jagex(mudclient *mud) {
@@ -1897,8 +1922,8 @@ void mudclient_load_textures(mudclient *mud) {
             }
         }
 
-        surface_screen_raster_to_sprite(surface, mud->sprite_texture_world + i, 0, 0,
-                                  texture_size, texture_size);
+        surface_screen_raster_to_sprite(surface, mud->sprite_texture_world + i,
+                                        0, 0, texture_size, texture_size);
 
         for (int j = 0; j < texture_size * texture_size; j++) {
             if (surface->surface_pixels[mud->sprite_texture_world + i][j] ==
@@ -1908,7 +1933,8 @@ void mudclient_load_textures(mudclient *mud) {
             }
         }
 
-        surface_screen_raster_to_palette_sprite(surface, mud->sprite_texture_world + i);
+        surface_screen_raster_to_palette_sprite(surface,
+                                                mud->sprite_texture_world + i);
 
         scene_define_texture(
             mud->scene, i,

@@ -927,11 +927,11 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         int diagonal = world_get_wall_diagonal(world, r_x, r_y);
 
                         if (diagonal > 0 && diagonal < 24000) {
-                            if (world_get_tile_decoration_from4(world, r_x - 1,
-                                                                r_y, colour_2) !=
+                            if (world_get_tile_decoration_from4(
+                                    world, r_x - 1, r_y, colour_2) !=
                                     COLOUR_TRANSPARENT &&
-                                world_get_tile_decoration_from4(world, r_x,
-                                                                r_y - 1, colour_2) !=
+                                world_get_tile_decoration_from4(
+                                    world, r_x, r_y - 1, colour_2) !=
                                     COLOUR_TRANSPARENT) {
                                 colour = world_get_tile_decoration_from4(
                                     world, r_x - 1, r_y, colour_2);

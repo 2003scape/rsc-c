@@ -127,15 +127,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * FLAT_QUAD_COUNT,
                  NULL, GL_DYNAMIC_DRAW);
 
-    /*surface_gl_create_texture_array(&surface->gl_sprite_item_textures,
-                                    ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT,
-                                    game_data_item_sprite_count +
-                                        game_data_projectile_sprite);*/
-
-    /* +1 for circle, +2 for extra login screen scenes, +1 for sleep */
+    /* +1 for circle, +2 for extra login screen scenes, +1 for sleep, +1 for logo */
     surface_gl_create_texture_array(&surface->gl_sprite_media_textures,
                                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
-                                    (mud->sprite_item - mud->sprite_media) + 4);
+                                    (mud->sprite_item - mud->sprite_media) + 5);
 
     surface_gl_create_texture_array(&surface->gl_map_textures,
                                     MAP_TEXTURE_WIDTH, MAP_TEXTURE_HEIGHT, 1);
@@ -143,8 +138,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface_gl_create_texture_array(&surface->gl_font_textures,
                                     FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
                                     FONT_COUNT * 2);
-
-    // surface_gl_create_font_textures(surface);
 
     surface_gl_create_circle_texture(surface);
     surface_gl_reset_context(surface);
@@ -353,6 +346,10 @@ int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id) {
         return surface->gl_map_textures;
     }
 
+    if (sprite_id == SPRITE_LIMIT - 1) {
+        return surface->gl_sprite_media_textures;
+    }
+
     if (sprite_id == mud->sprite_texture + 1) {
         return surface->gl_sprite_media_textures;
     }
@@ -437,6 +434,10 @@ int surface_gl_sprite_texture_height(Surface *surface,
 /* index in the 2D texture array */
 int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
     mudclient *mud = surface->mud;
+
+    if (sprite_id == SPRITE_LIMIT - 1) {
+       return (mud->sprite_item - mud->sprite_media) + 4;
+    }
 
     /* map texture */
     if (sprite_id == mud->sprite_media - 1) {
