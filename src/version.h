@@ -1,7 +1,6 @@
 #ifndef _H_VERSION
 #define _H_VERSION
 
-#define CLIENT "204"
 #define CONFIG "85"
 #define ENTITY "24"
 #define FILTER "2"

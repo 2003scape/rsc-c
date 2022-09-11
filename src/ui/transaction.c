@@ -376,7 +376,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
         }
     } else if (mud->mouse_button_click != 0) {
         mud->show_dialog_trade = 0;
-        mud->show_dialog_duel= 0;
+        mud->show_dialog_duel = 0;
 
         packet_stream_new_packet(mud->packet_stream, decline_opcode);
         packet_stream_send_packet(mud->packet_stream);
@@ -585,7 +585,8 @@ void mudclient_draw_transaction_items_confirm(
     }
 }
 
-void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x, int dialog_y, int is_trade) {
+void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
+                                        int dialog_y, int is_trade) {
     surface_draw_box(mud->surface, dialog_x, dialog_y, TRANSACTION_WIDTH, 16,
                      TITLE_BAR_COLOUR);
 

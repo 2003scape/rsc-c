@@ -293,6 +293,15 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
+        "@whi@XP drops: ", mud->options->experience_drops, x, y);
+
+    mud->display_options[control] = &mud->options->experience_drops;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_display_options,
         "@whi@Inventory count: ", mud->options->inventory_count, x, y);
 
     mud->display_options[control] = &mud->options->inventory_count;

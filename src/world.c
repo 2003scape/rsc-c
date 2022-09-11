@@ -923,7 +923,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                             colour_1 = 31;
                         }
                     } else if (tile_type == HOLE_TILE_TYPE) {
-                        // TODO HERE
                         int diagonal = world_get_wall_diagonal(world, r_x, r_y);
 
                         if (diagonal > 0 && diagonal < 24000) {

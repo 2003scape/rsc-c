@@ -6,8 +6,6 @@ void mudclient_draw_duel(mudclient *mud) {
     int dialog_y =
         (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) + 2; // 36
 
-    mudclient_draw_transaction(mud, dialog_x, dialog_y, 0);
-
     if (mud->mouse_button_click != 0) {
         int mouse_x = mud->mouse_x - dialog_x;
         int mouse_y = mud->mouse_y - dialog_y;
@@ -63,6 +61,8 @@ void mudclient_draw_duel(mudclient *mud) {
             }
         }
     }
+
+    mudclient_draw_transaction(mud, dialog_x, dialog_y, 0);
 
     if (!mud->show_dialog_duel) {
         return;

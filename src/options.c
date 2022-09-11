@@ -26,16 +26,14 @@ void options_set_defaults(Options *options) {
     options->remember_username = 0;
     options->remember_password = 0;
 
-    /* openrsc preservation */
-    // strcpy(options->server, "162.198.202.160");
 #if 0
+    /* openrsc preservation */
+    strcpy(options->server, "162.198.202.160");
 #ifdef EMSCRIPTEN
     options->port = 43496; /* websockets */
 #else
     options->port = 43596;
 #endif
-
-    options->port = 43595;
 #endif
 
     strcpy(options->rsa_exponent, "00010001");

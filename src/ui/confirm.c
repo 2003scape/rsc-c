@@ -85,6 +85,16 @@ void mudclient_handle_confirm_input(mudclient *mud) {
             case CONFIRM_OPTIONS_VANILLA:
                 options_set_vanilla(mud->options);
                 mudclient_sync_options_panels(mud);
+
+#if !defined(WII) && !defined(_3DS)
+#ifdef RENDER_SW
+                SDL_SetWindowSize(mud->window, MUD_WIDTH, MUD_HEIGHT);
+#endif
+#ifdef RENDER_GL
+                SDL_SetWindowSize(mud->gl_window, MUD_WIDTH, MUD_HEIGHT);
+#endif
+#endif
+                mudclient_on_resize(mud);
                 break;
         }
 

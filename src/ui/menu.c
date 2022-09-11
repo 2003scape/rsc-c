@@ -664,6 +664,18 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
     }
 }
 
+void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page) {
+    if (!mud->options->wiki_lookup) {
+        return;
+    }
+
+    strcpy(mud->menu_item_text1[mud->menu_items_count], "Wiki lookup");
+    strcpy(mud->menu_item_text2[mud->menu_items_count], display);
+    mud->menu_type[mud->menu_items_count] = MENU_WIKI_LOOKUP;
+    strcpy(mud->menu_wiki_page[mud->menu_items_count], page);
+    mud->menu_items_count++;
+}
+
 void mudclient_menu_add_ground_item(mudclient *mud, int index) {
     int item_id = mud->ground_item_id[index];
     char *item_name = game_data_item_name[item_id];
@@ -714,18 +726,6 @@ void mudclient_menu_add_ground_item(mudclient *mud, int index) {
         mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
         mud->menu_items_count++;
     }
-}
-
-void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page) {
-    if (!mud->options->wiki_lookup) {
-        return;
-    }
-
-    strcpy(mud->menu_item_text1[mud->menu_items_count], "Wiki lookup");
-    strcpy(mud->menu_item_text2[mud->menu_items_count], display);
-    mud->menu_type[mud->menu_items_count] = MENU_WIKI_LOOKUP;
-    strcpy(mud->menu_wiki_page[mud->menu_items_count], page);
-    mud->menu_items_count++;
 }
 
 void mudclient_create_right_click_menu(mudclient *mud) {
@@ -915,6 +915,10 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 char level_text[26] = {0};
                 int level_difference = -1;
                 int npc_id = npc->npc_id;
+                char *npc_name = game_data_npc_name[npc_id];
+
+                char formatted_npc_name[strlen(npc_name) + 6];
+                sprintf(formatted_npc_name, "@yel@%s", npc_name);
 
                 if (game_data_npc_attackable[npc_id] > 0) {
                     int npc_level = (game_data_npc_attack[npc_id] +
@@ -938,8 +942,12 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     sprintf(level_text, " %s(level-%d)", colour, npc_level);
                 }
 
+                mud->menu_item_x[mud->menu_items_count] = npc->current_x;
+                mud->menu_item_y[mud->menu_items_count] = npc->current_y;
+                mud->menu_index[mud->menu_items_count] = npc->server_index;
+
                 if (mud->selected_wiki) {
-                    mudclient_menu_add_wiki(mud, game_data_npc_name[npc_id],
+                    mudclient_menu_add_wiki(mud, formatted_npc_name,
                                             wiki_get_npc_page(npc_id));
                 } else if (mud->selected_spell >= 0) {
                     if (game_data_spell_type[mud->selected_spell] == 2) {
@@ -947,19 +955,10 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                 "Cast %s on",
                                 game_data_spell_name[mud->selected_spell]);
 
-                        sprintf(mud->menu_item_text2[mud->menu_items_count],
-                                "@yel@%s", game_data_npc_name[npc_id]);
+                        strcpy(mud->menu_item_text2[mud->menu_items_count],
+                               formatted_npc_name);
 
                         mud->menu_type[mud->menu_items_count] = MENU_CAST_NPC;
-
-                        mud->menu_item_x[mud->menu_items_count] =
-                            npc->current_x;
-
-                        mud->menu_item_y[mud->menu_items_count] =
-                            npc->current_y;
-
-                        mud->menu_index[mud->menu_items_count] =
-                            npc->server_index;
 
                         mud->menu_source_index[mud->menu_items_count] =
                             mud->selected_spell;
@@ -975,9 +974,6 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             game_data_npc_name[mud->npcs[index]->npc_id]);
 
                     mud->menu_type[mud->menu_items_count] = MENU_USEWITH_NPC;
-                    mud->menu_item_x[mud->menu_items_count] = npc->current_x;
-                    mud->menu_item_y[mud->menu_items_count] = npc->current_y;
-                    mud->menu_index[mud->menu_items_count] = npc->server_index;
 
                     mud->menu_source_index[mud->menu_items_count] =
                         mud->selected_item_inventory_index;
@@ -1001,29 +997,15 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                 MENU_NPC_ATTACK2;
                         }
 
-                        mud->menu_item_x[mud->menu_items_count] =
-                            npc->current_x;
-
-                        mud->menu_item_y[mud->menu_items_count] =
-                            npc->current_y;
-
-                        mud->menu_index[mud->menu_items_count] =
-                            npc->server_index;
-
                         mud->menu_items_count++;
                     }
 
                     strcpy(mud->menu_item_text1[mud->menu_items_count],
                            "Talk-to");
 
-                    sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@yel@%s",
-                            game_data_npc_name[mud->npcs[index]->npc_id]);
+                    strcpy(mud->menu_item_text2[mud->menu_items_count], formatted_npc_name);
 
                     mud->menu_type[mud->menu_items_count] = MENU_NPC_TALK;
-                    mud->menu_item_x[mud->menu_items_count] = npc->current_x;
-                    mud->menu_item_y[mud->menu_items_count] = npc->current_y;
-                    mud->menu_index[mud->menu_items_count] = npc->server_index;
 
                     mud->menu_items_count++;
 
@@ -1031,9 +1013,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                game_data_npc_command[npc_id]);
 
-                        sprintf(mud->menu_item_text2[mud->menu_items_count],
-                                "@yel@%s",
-                                game_data_npc_name[mud->npcs[index]->npc_id]);
+                        strcpy(mud->menu_item_text2[mud->menu_items_count],
+                                formatted_npc_name);
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_NPC_COMMAND;
@@ -1053,8 +1034,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     strcpy(mud->menu_item_text1[mud->menu_items_count],
                            "Examine");
 
-                    sprintf(mud->menu_item_text2[mud->menu_items_count],
-                            "@yel@%s", game_data_npc_name[npc_id]);
+                    strcpy(mud->menu_item_text2[mud->menu_items_count],
+                            formatted_npc_name);
 
                     mud->menu_type[mud->menu_items_count] = MENU_NPC_EXAMINE;
                     mud->menu_index[mud->menu_items_count] = npc_id;

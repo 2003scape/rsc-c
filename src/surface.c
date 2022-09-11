@@ -2219,8 +2219,14 @@ void surface_draw_sprite_from3_depth(Surface *surface, int x, int y,
 #endif
 }
 
-void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
-                                   int height, int sprite_id) {
+void surface_draw_sprite_scaled(Surface *surface, int x, int y, int width,
+                                   int height, int sprite_id, float depth) {
+#ifdef RENDER_GL
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, width, height, 0, 0, 0,
+                             255, 0, 0, depth, depth);
+#endif
+
+#ifdef RENDER_SW
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];
     int l1 = 0;
@@ -2302,6 +2308,7 @@ void surface_sprite_clipping_from5(Surface *surface, int x, int y, int width,
     surface_plot_scale_from13(
         surface->pixels, surface->surface_pixels[sprite_id], l1, i2, dest_pos,
         k3, width, height, j2, k2, sprite_width, y_inc);
+#endif
 }
 
 void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
@@ -2340,7 +2347,8 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
         return;
     }
 
-    surface_sprite_clipping_from5(surface, x, y, width, height, sprite_id);
+    surface_draw_sprite_scaled(surface, x, y, width, height, sprite_id,
+                               (depth_top + depth_bottom) / 2);
 }
 
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,

@@ -46,6 +46,15 @@ void mudclient_create_login_panels(mudclient *mud) {
             panel_add_button(mud->panel_login_welcome, x, 250 + y, 200, 35);
     }
 
+    if (mud->options->show_additional_options) {
+        panel_add_button_background(mud->panel_login_welcome, x + 218, y + 270, 60, 24);
+
+        panel_add_text_centre(mud->panel_login_welcome, x + 218, y + 270, "Options", 1, 0);
+
+        mud->control_welcome_options =
+            panel_add_button(mud->panel_login_welcome,x + 218, y + 270, 60, 24);
+    }
+
     mud->panel_login_new_user = malloc(sizeof(Panel));
     panel_new(mud->panel_login_new_user, mud->surface, 50);
 
@@ -521,18 +530,21 @@ void mudclient_draw_login_screens(mudclient *mud) {
     mudclient_draw_blue_bar(mud);
 
     if (mud->show_additional_options) {
+        mudclient_draw_additional_options(mud);
+
         if (mud->show_dialog_confirm) {
             mudclient_draw_confirm(mud);
         }
-
-        mudclient_draw_additional_options(mud);
     }
 
     surface_draw(mud->surface);
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {
-    if (mud->show_additional_options) {
+    if (mud->show_dialog_confirm) {
+        mudclient_handle_confirm_input(mud);
+        return;
+    } else if (mud->show_additional_options) {
         mudclient_handle_additional_options_input(mud);
         return;
     }
@@ -588,8 +600,9 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
 
             panel_set_focus(mud->panel_login_existing_user,
                             mud->control_login_user);
-
-            return;
+        } else if (panel_is_clicked(mud->panel_login_welcome,
+                             mud->control_welcome_options)) {
+            mud->show_additional_options = 1;
         }
         return;
     case LOGIN_STAGE_NEW:

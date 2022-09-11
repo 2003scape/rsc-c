@@ -324,7 +324,8 @@ void mudclient_packet_tick(mudclient *mud) {
                     player->bottom_colour = data[offset++] & 0xff;
                     player->skin_colour = data[offset++] & 0xff;
                     player->level = data[offset++] & 0xff;
-                    player->skull_visible = data[offset++] & 0xff;
+                    //player->skull_visible = data[offset++] & 0xff;
+                    player->skull_visible = 1;
                 } else {
                     offset += 14;
 

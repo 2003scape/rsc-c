@@ -546,7 +546,8 @@ void mudclient_draw_bank(mudclient *mud) {
                                                  mud->mouse_button_click == 1
                                            : mud->mouse_button_click != 0;
 
-                    if (!mud->show_dialog_offer_x && clicked_slot) {
+                    if (!mud->selected_wiki && !mud->show_dialog_offer_x &&
+                        clicked_slot) {
                         /* only withdraw if they click an item that's already
                          * selected */
                         if (mud->bank_selected_item != selected_item_id) {
@@ -557,13 +558,17 @@ void mudclient_draw_bank(mudclient *mud) {
                         mud->bank_selected_item_slot = slot_index;
                     }
 
-                    if (mud->options->bank_menus &&
-                        !mud->show_right_click_menu) {
-                        char *item_name = game_data_item_name[selected_item_id];
+                    char *item_name = game_data_item_name[selected_item_id];
 
-                        char formatted_item_name[strlen(item_name) + 6];
-                        sprintf(formatted_item_name, "@lre@%s", item_name);
+                    char formatted_item_name[strlen(item_name) + 6];
+                    sprintf(formatted_item_name, "@lre@%s", item_name);
 
+                    if (mud->selected_wiki) {
+                        mudclient_menu_add_wiki(
+                            mud, formatted_item_name,
+                            wiki_get_item_page(selected_item_id));
+                    } else if (mud->options->bank_menus &&
+                               !mud->show_right_click_menu) {
                         int item_amount = bank_items_count[slot_index];
 
                         mudclient_add_offer_menus(
@@ -784,8 +789,7 @@ void mudclient_draw_bank(mudclient *mud) {
 
         surface_draw_string_centre(mud->surface, formatted_money,
                                    ui_x + (bank_width / 2) + 12, ui_y + 24,
-                                   total_value >= 10000000 ? 0 : 1,
-                                   YELLOW);
+                                   total_value >= 10000000 ? 0 : 1, YELLOW);
     }
 
     surface_draw_item_grid(mud->surface, ui_x + 7, ui_y + 28, visible_rows,

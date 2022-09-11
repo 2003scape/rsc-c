@@ -3859,7 +3859,10 @@ int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
                                int animation_index) {
 #ifdef RENDER_GL
     /* lmao sorry */
-    return (mud->options->show_roofs &&
+    int roof_id = world_get_wall_roof(mud->world, character->current_x / 128,
+                                      character->current_y / 128);
+
+    return (roof_id > 0 && mud->options->show_roofs &&
             (animation_index == ANIMATION_INDEX_HEAD ||
              animation_index == ANIMATION_INDEX_HEAD_OVERLAY) &&
             !world_is_under_roof(mud->world, mud->local_player->current_x,
@@ -4037,7 +4040,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
                                     damage_depth);
 
-    if (player->skull_visible == 1 && player->bubble_timeout == 0) {
+    if (player->skull_visible && player->bubble_timeout == 0) {
         int k3 = skew_x + x + (width / 2);
 
         if (player->current_animation == 8) {
@@ -4046,12 +4049,13 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             k3 += (20 * ty) / 100;
         }
 
-        int j4 = (16 * ty) / 100;
-        int l4 = (16 * ty) / 100;
+        int width = (16 * ty) / 100;
+        int height = (16 * ty) / 100;
 
-        surface_sprite_clipping_from5(mud->surface, k3 - (j4 / 2),
-                                      y - (l4 / 2) - ((10 * ty) / 100), j4, l4,
-                                      mud->sprite_media + 13);
+        surface_draw_sprite_scaled(mud->surface, k3 - (width / 2),
+                                   y - (height / 2) - ((10 * ty) / 100), width,
+                                   height, mud->sprite_media + 13,
+                                   damage_depth);
     }
 }
 
@@ -5749,6 +5753,11 @@ void mudclient_play_sound(mudclient *mud, char *name) {
     sprintf(file_name, "%s.pcm", name);
 
     int offset = get_data_file_offset(file_name, mud->sound_data);
+
+    if (offset == 0) {
+        return;
+    }
+
     int length = get_data_file_length(file_name, mud->sound_data);
 
     memset(mud->pcm_out, 0, 1024 * 50 * 2);
@@ -5988,11 +5997,11 @@ int main(int argc, char **argv) {
 #ifdef REVISION_177
     /* BEGIN INAUTHENTIC COMMAND LINE ARGUMENTS */
     if (argc > 4) {
-        rsa_exponent = argv[4];
+        strcpy(mud->options->rsa_exponent, argv[4]);
     }
 
     if (argc > 5) {
-        rsa_modulus = argv[5];
+        strcpy(mud->options->rsa_modulus, argv[5]);
     }
     /* END INAUTHENTIC COMMAND LINE ARGUMENTS */
 #endif

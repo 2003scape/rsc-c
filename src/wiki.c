@@ -2145,7 +2145,7 @@ char *wiki_pages_objects[] = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    "Torch_(scenery)",
     "Hopper#Lumbridge",
     NULL,
     NULL,

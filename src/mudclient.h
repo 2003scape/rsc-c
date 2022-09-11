@@ -488,6 +488,7 @@ typedef struct mudclient {
     Panel *panel_login_existing_user;
     int control_welcome_new_user;
     int control_welcome_existing_user;
+    int control_welcome_options;
     int refer_id;
     int control_login_new_ok;
     int control_register_status;

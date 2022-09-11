@@ -2,6 +2,10 @@
 
 void mudclient_drop_experience(mudclient *mud, int skill_index,
                                int experience) {
+    if (!mud->options->experience_drops) {
+        return;
+    }
+
     int max_y = MUD_HEIGHT / 4;
 
     mud->experience_drop_y[mud->experience_drop_count] =
@@ -26,7 +30,6 @@ void mudclient_draw_experience_drops(mudclient *mud) {
         char *skill_name = skill_names[mud->experience_drop_skill[i]];
 
         char formatted_drop[strlen(skill_name) + strlen(formatted_amount) + 5];
-
         sprintf(formatted_drop, "%s %s XP", formatted_amount, skill_name);
 
         surface_draw_string_centre(mud->surface, formatted_drop, x, drop_y, 1,
