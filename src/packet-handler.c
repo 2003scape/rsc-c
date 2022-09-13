@@ -653,6 +653,8 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_REGION_ENTITY_UPDATE: {
+        printf("entity packet\n");
+#if 0
         int length = (size - 1) / 4;
 
         for (int i = 0; i < length; i++) {
@@ -764,6 +766,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
             mud->wall_object_count = entity_count;
         }
+#endif
         break;
     }
     case SERVER_REGION_WALL_OBJECTS: {
@@ -878,6 +881,13 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_REGION_GROUND_ITEMS: {
+        int old_ground_item_count = mud->ground_item_count;
+        GameModel *old_ground_items[old_ground_item_count];
+
+        for (int i = 0; i < mud->ground_item_count; i++) {
+            old_ground_items[i] = mud->ground_item_model[i];
+        }
+
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data[offset]) == 255) {
                 int index = 0;
@@ -896,6 +906,18 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->ground_item_y[index] = mud->ground_item_y[i];
                             mud->ground_item_id[index] = mud->ground_item_id[i];
                             mud->ground_item_z[index] = mud->ground_item_z[i];
+
+                            if (mud->options->ground_item_models) {
+                                GameModel *item_model =
+                                    mud->ground_item_model[i];
+
+                                if (item_model != NULL) {
+                                    item_model->key =
+                                        index + GROUND_ITEM_FACE_TAG;
+                                }
+
+                                mud->ground_item_model[index] = item_model;
+                            }
                         }
 
                         index++;
@@ -996,23 +1018,29 @@ void mudclient_packet_tick(mudclient *mud) {
                             }
 
                             index++;
-                        } else {
-                            if (mud->options->ground_item_models) {
-                                GameModel *item_model =
-                                    mud->ground_item_model[index];
-
-                                if (item_model != NULL) {
-                                    scene_remove_model(mud->scene, item_model);
-                                    game_model_destroy(item_model);
-                                    free(item_model);
-                                    mud->ground_item_model[index] = NULL;
-                                }
-                            }
                         }
                     }
 
                     mud->ground_item_count = index;
                 }
+            }
+        }
+
+        for (int i = 0; i < old_ground_item_count; i++) {
+            GameModel *item_model = old_ground_items[i];
+            int has_item = 0;
+
+            for (int j = 0; j < mud->ground_item_count; j++) {
+                if (mud->ground_item_model[j] == item_model) {
+                    has_item = 1;
+                    break;
+                }
+            }
+
+            if (!has_item) {
+                scene_remove_model(mud->scene, item_model);
+                game_model_destroy(item_model);
+                free(item_model);
             }
         }
         break;

@@ -2956,6 +2956,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     for (int i = 0; i < mud->ground_item_count; i++) {
         mud->ground_item_x[i] -= offset_x;
         mud->ground_item_y[i] -= offset_y;
+
+        // TODO probably have to move ground items
     }
 
     for (int i = 0; i < mud->player_count; i++) {
