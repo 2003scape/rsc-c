@@ -17,7 +17,7 @@ void options_new(Options *options) {
 }
 
 void options_set_server(Options *options) {
-#if 0
+#if REVISION_177
     /* openrsc preservation */
     strcpy(options->server, "162.198.202.160");
 

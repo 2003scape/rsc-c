@@ -671,7 +671,7 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
             mud->mouse_x <= dialog_x + 118 + 70 &&
             mud->mouse_y >= dialog_y + 238 &&
             mud->mouse_y <= dialog_y + 238 + 21) {
-            mud->transaction_confirm_accepted = 0;
+            mud->transaction_confirm_accepted = 1;
 
             packet_stream_new_packet(mud->packet_stream,
                                      is_trade ? CLIENT_TRADE_CONFIRM_ACCEPT

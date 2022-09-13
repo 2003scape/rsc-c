@@ -343,8 +343,10 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
                          int dest_offset, int font_data_offset);
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
+#if 0
 int get_string_tilde_offset(char *text, int text_length, int offset,
                             int length);
+#endif
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                int font, int colour, float depth);
 void surface_draw_string(Surface *surface, char *text, int x, int y, int font,

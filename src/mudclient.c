@@ -4310,10 +4310,14 @@ void mudclient_draw_ui(mudclient *mud) {
         mudclient_draw_duel_confirm(mud);
     } else if (mud->show_dialog_duel) {
         mudclient_draw_duel(mud);
-        /*} else if (mud->show_dialog_report_abuse_step == 1) {
-            mudclient_draw_dialog_report_abuse(mud);
-        } else if (mud->show_dialog_report_abuse_step == 2) {
-            mudclient_draw_dialog_report_abuse_input(mud);*/
+
+        if (mud->options->transaction_menus) {
+            if (mud->show_right_click_menu) {
+                mudclient_draw_right_click_menu(mud);
+            } else {
+                mudclient_create_top_mouse_menu(mud);
+            }
+        }
     } else if (mud->show_change_password_step != 0) {
         mudclient_draw_change_password(mud);
     } else if (mud->show_dialog_social_input != 0) {

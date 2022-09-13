@@ -1535,9 +1535,15 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TRADE_CONFIRM_OPEN:
     case SERVER_DUEL_CONFIRM_OPEN: {
-        mud->show_dialog_trade_confirm = 1;
+        if (opcode == SERVER_TRADE_CONFIRM_OPEN) {
+            mud->show_dialog_trade_confirm = 1;
+        } else {
+            mud->show_dialog_duel_confirm = 1;
+        }
+
         mud->transaction_confirm_accepted = 0;
         mud->show_dialog_trade = 0;
+        mud->show_dialog_duel = 0;
 
         int offset = 1;
 

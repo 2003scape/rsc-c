@@ -3729,6 +3729,7 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
     }
 }
 
+#if 0
 int get_string_tilde_offset(char *text, int text_length, int offset,
                             int length) {
     if (text[offset] == '~' && offset + length + 1 < text_length &&
@@ -3744,6 +3745,7 @@ int get_string_tilde_offset(char *text, int text_length, int offset,
 
     return -1;
 }
+#endif
 
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                int font, int colour, float depth) {
@@ -3802,13 +3804,40 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
             }
 
             i += 4;
-        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i,
-                                                      3)) >= 0) {
-            x = tilde_x;
+        } else if (text[i] == '~' && i + 4 < text_length &&
+                               text[i + 4] == '~') {
+            char c = text[i + 1];
+            char c1 = text[i + 2];
+            char c2 = text[i + 3];
+
+            if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' &&
+                c2 <= '9') {
+                int start = i + 1;
+                int end = i + 4;
+                char sliced[(end - start) + 1];
+                sliced[end - start] = '\0';
+                strncpy(sliced, text + start, end - start);
+                x = atoi(sliced);
+            }
+
             i += 4;
-        } else if ((tilde_x = get_string_tilde_offset(text, text_length, i,
-                                                      4)) >= 0) {
-            x = tilde_x;
+        } else if (text[i] == '~' && i + 5 < text_length &&
+                               text[i + 5] == '~') {
+            char c = text[i + 1];
+            char c1 = text[i + 2];
+            char c2 = text[i + 3];
+            char c3 = text[i + 4];
+
+            if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' &&
+                c2 <= '9' && c3 >= '0' && c3 <= '9') {
+                int start = i + 1;
+                int end = i + 5;
+                char sliced[(end - start) + 1];
+                sliced[end - start] = '\0';
+                strncpy(sliced, text + start, end - start);
+                x = atoi(sliced);
+            }
+
             i += 5;
         } else {
             int index = (unsigned)text[i];
@@ -3880,9 +3909,9 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
     for (int i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
             i += 4;
-        } else if (text[i] == '~' && i + 5 < text_length &&
-                   text[i + 5] == '~') {
-            i += 5;
+        } else if (text[i] == '~' && i + 4 < text_length &&
+                   text[i + 4] == '~') {
+            i += 4;
         } else {
             unsigned int character_index = (unsigned)text[i];
             width += font_data[character_width[character_index] + 7];
