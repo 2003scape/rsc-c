@@ -47,12 +47,14 @@ void mudclient_create_login_panels(mudclient *mud) {
     }
 
     if (mud->options->show_additional_options) {
-        panel_add_button_background(mud->panel_login_welcome, x + 218, y + 270, 60, 24);
+        panel_add_button_background(mud->panel_login_welcome, x + 218, y + 270,
+                                    60, 24);
 
-        panel_add_text_centre(mud->panel_login_welcome, x + 218, y + 270, "Options", 1, 0);
+        panel_add_text_centre(mud->panel_login_welcome, x + 218, y + 270,
+                              "Options", 1, 0);
 
-        mud->control_welcome_options =
-            panel_add_button(mud->panel_login_welcome,x + 218, y + 270, 60, 24);
+        mud->control_welcome_options = panel_add_button(
+            mud->panel_login_welcome, x + 218, y + 270, 60, 24);
     }
 
     mud->panel_login_new_user = malloc(sizeof(Panel));
@@ -198,7 +200,7 @@ void mudclient_create_login_panels(mudclient *mud) {
     panel_add_text_centre(mud->panel_login_existing_user, x - 116, y - 10,
                           "Username:", 4, 0);
 
-    mud->control_login_user = panel_add_text_input(
+    mud->control_login_username = panel_add_text_input(
         mud->panel_login_existing_user, x - 116, y + 10, 200, 40, 4, 12, 0, 0);
 
     y += 47;
@@ -268,12 +270,12 @@ void mudclient_reset_login_screen(mudclient *mud) {
     mud->logged_in = 0;
     mud->login_screen = LOGIN_STAGE_WELCOME;
 
-    memset(mud->login_user, '\0', USERNAME_LENGTH + 1);
+    memset(mud->login_username, '\0', USERNAME_LENGTH + 1);
     memset(mud->login_pass, '\0', PASSWORD_LENGTH + 1);
 
     mud->login_prompt = "Please enter a username:";
 
-    sprintf(mud->login_user_disp, "*%s*", mud->login_user);
+    sprintf(mud->login_username_display, "*%s*", mud->login_username);
 
     mud->player_count = 0;
     mud->npc_count = 0;
@@ -333,7 +335,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
            15, 400, 120, mud->sprite_media + 10, 0, 0, 0, 0);*/
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
-                              mud->surface->width, 200);
+                                    mud->surface->width, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
@@ -362,7 +364,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
         15, mud->sprite_media + 10);
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1, 0, 0,
-                              mud->surface->width, 200);
+                                    mud->surface->width, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
@@ -417,13 +419,14 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
         15, mud->sprite_media + 10);
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10, 0, 0,
-                              mud->surface->width, 200);
+                                    mud->surface->width, 200);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface, 0);
 #endif
 
-    surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_media + 10);
+    surface_screen_raster_to_palette_sprite(mud->surface,
+                                            mud->sprite_media + 10);
 
     world_reset(mud->world, 0);
 
@@ -592,16 +595,22 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                               mud->control_login_status,
                               "Please enter your username and password");
 
-            panel_update_text(mud->panel_login_existing_user,
-                              mud->control_login_user, "");
+            char *username =
+                mud->options->remember_username ? mud->options->username : "";
 
             panel_update_text(mud->panel_login_existing_user,
-                              mud->control_login_password, "");
+                              mud->control_login_username, username);
+
+            char *password =
+                mud->options->remember_password ? mud->options->password : "";
+
+            panel_update_text(mud->panel_login_existing_user,
+                              mud->control_login_password, password);
 
             panel_set_focus(mud->panel_login_existing_user,
-                            mud->control_login_user);
+                            mud->control_login_username);
         } else if (panel_is_clicked(mud->panel_login_welcome,
-                             mud->control_welcome_options)) {
+                                    mud->control_welcome_options)) {
             mud->show_additional_options = 1;
         }
         return;
@@ -710,7 +719,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                              mud->control_login_cancel)) {
             mud->login_screen = 0;
         } else if (panel_is_clicked(mud->panel_login_existing_user,
-                                    mud->control_login_user)) {
+                                    mud->control_login_username)) {
             panel_set_focus(mud->panel_login_existing_user,
                             mud->control_login_password);
         } else if (panel_is_clicked(mud->panel_login_existing_user,
@@ -718,21 +727,21 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                    panel_is_clicked(mud->panel_login_existing_user,
                                     mud->control_login_ok)) {
 
-            strcpy(mud->login_user,
+            strcpy(mud->login_username,
                    panel_get_text(mud->panel_login_existing_user,
-                                  mud->control_login_user));
+                                  mud->control_login_username));
             strcpy(mud->login_pass,
                    panel_get_text(mud->panel_login_existing_user,
                                   mud->control_login_password));
 
-            mudclient_login(mud, mud->login_user, mud->login_pass, 0);
+            mudclient_login(mud, mud->login_username, mud->login_pass, 0);
         } /*else if (panel_is_clicked(mud->panel_login_existing_user,
                                     mud->control_login_recover)) {
-            strcpy(mud->login_user,
+            strcpy(mud->login_username,
                    panel_get_text(mud->panel_login_existing_user,
-                                  mud->control_login_user));
+                                  mud->control_login_username));
 
-            if (strlen(mud->login_user) == 0) {
+            if (strlen(mud->login_username) == 0) {
                 mudclient_show_login_screen_status(
                     mud,
                     "You must enter your username to recover your password",
@@ -741,7 +750,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                 return;
             }
 
-            // mudclient_recover_attempt(mud, mud->login_user);
+            // mudclient_recover_attempt(mud, mud->login_username);
         }*/
         return;
     }

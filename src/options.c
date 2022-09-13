@@ -12,35 +12,40 @@ void options_new(Options *options) {
 
     /* experimental */
     options->thick_walls = 0;
-    options->ground_item_models = 1;
 
     options_set_defaults(options);
 }
 
-void options_set_defaults(Options *options) {
-    /* connection */
-    strcpy(options->server, "127.0.0.1");
-    options->port = 43594;
-    options->members = 0;
-    options->idle_logout = 0;
-    options->remember_username = 0;
-    options->remember_password = 0;
-
+void options_set_server(Options *options) {
 #if 0
     /* openrsc preservation */
     strcpy(options->server, "162.198.202.160");
-#ifdef EMSCRIPTEN
-    options->port = 43496; /* websockets */
-#else
-    options->port = 43596;
-#endif
-#endif
 
     strcpy(options->rsa_exponent, "00010001");
 
     strcpy(options->rsa_modulus,
            "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
            "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
+
+#ifdef EMSCRIPTEN
+    options->port = 43496; /* websockets */
+#else
+    options->port = 43596;
+#endif
+#else
+    strcpy(options->server, "127.0.0.1");
+    options->port = 43594;
+#endif
+}
+
+void options_set_defaults(Options *options) {
+    /* connection */
+    options->members = 1;
+    options->idle_logout = 0;
+    options->remember_username = 0;
+    options->remember_password = 0;
+
+    options_set_server(options);
 
 #ifdef _WIN32
     strcpy(options->browser_command, "explorer \"%s\"");
@@ -79,6 +84,7 @@ void options_set_defaults(Options *options) {
     options->certificate_items = 1;
     options->wilderness_warning = 1;
     options->status_bars = 0;
+    options->ground_item_models = 1;
 
     /* bank */
     options->bank_unstackble_withdraw = 1;
@@ -99,18 +105,12 @@ void options_set_defaults(Options *options) {
 
 void options_set_vanilla(Options *options) {
     /* connection */
-    strcpy(options->server, "127.0.0.1");
-    options->port = 43594;
-    options->members = 0;
+    options->members = 1;
     options->idle_logout = 1;
     options->remember_username = 0;
     options->remember_password = 0;
 
-    strcpy(options->rsa_exponent, "00010001");
-
-    strcpy(options->rsa_modulus,
-           "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
-           "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
+    options_set_server(options);
 
     /* controls */
     options->off_handle_scroll_drag = 0;
@@ -139,6 +139,7 @@ void options_set_vanilla(Options *options) {
     options->certificate_items = 0;
     options->wilderness_warning = 1;
     options->status_bars = 0;
+    options->ground_item_models = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 0;
@@ -171,6 +172,7 @@ void options_save(Options *options) {
             options->remember_password,     //
             options->username,              //
             options->password,              //
+            options->browser_command,       //
                                             //
             options->mouse_wheel,           //
             options->middle_click_camera,   //
@@ -220,7 +222,7 @@ void options_load(Options *options) {
 
     /* connection */
     OPTION_INI_STR("server", options->server, 15);
-    OPTION_INI_INT("port", options->port, 0, 1);
+    OPTION_INI_INT("port", options->port, 0, 65535);
     OPTION_INI_INT("members", options->members, 0, 1);
     OPTION_INI_STR("rsa_exponent", options->rsa_exponent, 512);
     OPTION_INI_STR("rsa_modulus", options->rsa_modulus, 512);
@@ -229,6 +231,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("remember_password", options->remember_password, 0, 1);
     OPTION_INI_STR("username", options->username, 20);
     OPTION_INI_STR("password", options->password, 20);
+    OPTION_INI_STR("browser_command", options->browser_command, 20);
 
     /* controls */
     OPTION_INI_INT("mouse_wheel", options->mouse_wheel, 0, 1);

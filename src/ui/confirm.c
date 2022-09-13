@@ -88,9 +88,11 @@ void mudclient_handle_confirm_input(mudclient *mud) {
 
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
+                SDL_RestoreWindow(mud->window);
                 SDL_SetWindowSize(mud->window, MUD_WIDTH, MUD_HEIGHT);
 #endif
 #ifdef RENDER_GL
+                SDL_RestoreWindow(mud->gl_window);
                 SDL_SetWindowSize(mud->gl_window, MUD_WIDTH, MUD_HEIGHT);
 #endif
 #endif

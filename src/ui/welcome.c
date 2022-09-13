@@ -22,7 +22,7 @@ void mudclient_draw_welcome(mudclient *mud) {
     int x = mud->surface->width / 2;
 
     char formatted_welcome[21 + USERNAME_LENGTH + 1] = {0};
-    sprintf(formatted_welcome, "Welcome to RuneScape %s", mud->login_user);
+    sprintf(formatted_welcome, "Welcome to RuneScape %s", mud->login_username);
 
     surface_draw_string_centre(mud->surface, formatted_welcome, x, y, 4,
                                YELLOW);

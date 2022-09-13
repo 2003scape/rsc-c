@@ -4465,6 +4465,7 @@ void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
 
     if (offset == -1) {
         if (scene->gl_wall_models_offset + 1 >= WALL_OBJECTS_MAX) {
+            // TODO oh no, this triggered
             fprintf(stderr, "too many wall objects!\n");
             exit(1);
             return;

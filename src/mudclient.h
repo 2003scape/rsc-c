@@ -499,17 +499,17 @@ typedef struct mudclient {
     int control_register_submit;
     int control_register_cancel;
     int control_login_status;
-    int control_login_user;
+    int control_login_username;
     int control_login_password;
     int control_login_ok;
     int control_login_cancel;
     int control_login_recover;
 
     int login_screen;
-    char login_user[USERNAME_LENGTH + 1];
+    char login_username[USERNAME_LENGTH + 1];
     char login_pass[PASSWORD_LENGTH + 1];
     char *login_prompt;
-    char login_user_disp[USERNAME_LENGTH + 3];
+    char login_username_display[USERNAME_LENGTH + 3];
 
 #ifdef REVISION_177
     int session_id;

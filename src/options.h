@@ -25,7 +25,8 @@
      "remember_password = %d\n\n"                                              \
      "username = %s\n"                                                         \
      "password = %s\n\n"                                                       \
-                                                                               \
+     "; System command to use to open the web browser (only on desktop)\n"     \
+     "browser_command = %s\n\n" \
      "; Scroll panel lists, chatbox, and camera (if zoom enabled) with "       \
      "wheel\n"                                                                 \
      "mouse_wheel = %d\n"                                                      \
@@ -55,7 +56,7 @@
      "; Display the FPS at the bottom right of the screen\n"                   \
      "display_fps = %d\n"                                                      \
      "; Double the UI size but keep the scene size if window is over double"   \
-     "; original\n; size (GL only)\n"                                          \
+     "original\n; size (GL only)\n"                                            \
      "ui_scale = %d\n"                                                         \
      "; Enable multi-sampling\n"                                               \
      "anti_alias = %d\n"                                                       \

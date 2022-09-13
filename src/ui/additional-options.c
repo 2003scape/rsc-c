@@ -489,6 +489,14 @@ void mudclient_sync_options_panel(Panel *panel, void **options,
         if (option_types[i] == ADDITIONAL_OPTIONS_CHECKBOX) {
             int option = *(int *)options[i];
             panel_toggle_checkbox(panel, i, option);
+        } else if (option_types[i] == ADDITIONAL_OPTIONS_INT) {
+            int option = *(int *)options[i];
+            char formatted_option[12] = {0};
+            sprintf(formatted_option, "%d", option);
+            panel_update_text(panel, i, formatted_option);
+        } else if (option_types[i] == ADDITIONAL_OPTIONS_STRING) {
+            char *option = (char *)options[i];
+            panel_update_text(panel, i, option);
         }
     }
 }
@@ -663,6 +671,9 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
                     } else if (option_types[i] == ADDITIONAL_OPTIONS_INT) {
                         int *option = (int *)options[i];
                         *option = atoi(panel_get_text(panel, i));
+                    } else if (option_types[i] == ADDITIONAL_OPTIONS_STRING) {
+                        char *option = (char *)options[i];
+                        strcpy(option, panel_get_text(panel, i));
                     }
                 }
 

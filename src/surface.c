@@ -3811,7 +3811,13 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
             x = tilde_x;
             i += 5;
         } else {
-            int character_offset = character_width[(unsigned)text[i]];
+            int index = (unsigned)text[i];
+
+            if (index > 255) {
+                index = 0;
+            }
+
+            int character_offset = character_width[index];
             int draw_shadow = surface->draw_string_shadow && colour != 0;
 
 #ifdef RENDER_GL

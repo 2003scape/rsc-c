@@ -2326,6 +2326,18 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     if (response == 0 || response == 25) {
         mud->moderator_level = response == 25;
         mud->auto_login_timeout = 0;
+
+        strcpy(mud->options->username,
+               mud->options->remember_username ? username : "");
+
+        strcpy(mud->options->password,
+               mud->options->remember_password ? password : "");
+
+        if (mud->options->remember_username ||
+            mud->options->remember_password) {
+            options_save(mud->options);
+        }
+
         mudclient_reset_game(mud);
         return;
     }
@@ -2336,8 +2348,6 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     }
 
     if (reconnecting) {
-        // username[0] = '\0';
-        // password[0] = '\0';
         mudclient_reset_login_screen(mud);
         return;
     }
@@ -2457,8 +2467,8 @@ void mudclient_registration_login(mudclient *mud) {
     panel_update_text(mud->panel_login_existing_user, mud->control_login_status,
                       "Please enter your username and password");
 
-    panel_update_text(mud->panel_login_existing_user, mud->control_login_user,
-                      username);
+    panel_update_text(mud->panel_login_existing_user,
+                      mud->control_login_username, username);
 
     panel_update_text(mud->panel_login_existing_user,
                       mud->control_login_password, password);
@@ -3862,7 +3872,7 @@ int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
     int roof_id = world_get_wall_roof(mud->world, character->current_x / 128,
                                       character->current_y / 128);
 
-    return (roof_id > 0 && mud->options->show_roofs &&
+    return (mud->options->show_roofs && roof_id > 0 &&
             (animation_index == ANIMATION_INDEX_HEAD ||
              animation_index == ANIMATION_INDEX_HEAD_OVERLAY) &&
             !world_is_under_roof(mud->world, mud->local_player->current_x,

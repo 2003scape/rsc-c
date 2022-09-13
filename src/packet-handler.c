@@ -324,8 +324,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     player->bottom_colour = data[offset++] & 0xff;
                     player->skin_colour = data[offset++] & 0xff;
                     player->level = data[offset++] & 0xff;
-                    //player->skull_visible = data[offset++] & 0xff;
-                    player->skull_visible = 1;
+                    player->skull_visible = data[offset++] & 0xff;
                 } else {
                     offset += 14;
 
@@ -1519,11 +1518,6 @@ void mudclient_packet_tick(mudclient *mud) {
 
             offset += 4;
         }
-
-        // TODO remove
-        /*mud->transaction_recipient_item_count = 1;
-        mud->transaction_recipient_items[0] = 10;
-        mud->transaction_recipient_items_count[0] = 100000;*/
 
         mud->transaction_recipient_accepted = 0;
         mud->transaction_accepted = 0;

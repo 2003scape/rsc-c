@@ -227,7 +227,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     int update_opcode =
         is_trade ? CLIENT_TRADE_ITEM_UPDATE : CLIENT_DUEL_ITEM_UPDATE;
 
-    int decline_opcode = is_trade ? CLIENT_TRADE_ACCEPT : CLIENT_TRADE_DECLINE;
+    int decline_opcode = is_trade ? CLIENT_TRADE_DECLINE : CLIENT_DUEL_DECLINE;
 
     if (mud->show_dialog_offer_x && mud->input_digits_final > 0) {
         if (mud->input_digits_final > mud->offer_max) {
