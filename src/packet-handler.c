@@ -1,5 +1,54 @@
 #include "packet-handler.h"
 
+void mudclient_update_ground_item_models(mudclient *mud) {
+    for (int i = 0; i < GROUND_ITEMS_MAX; i++) {
+        if (mud->ground_item_model[i] == NULL) {
+            continue;
+        }
+
+        scene_remove_model(mud->scene, mud->ground_item_model[i]);
+        game_model_destroy(mud->ground_item_model[i]);
+        free(mud->ground_item_model[i]);
+
+        mud->ground_item_model[i] = NULL;
+    }
+
+    if (!mud->options->ground_item_models) {
+        return;
+    }
+
+    for (int i = 0; i < mud->ground_item_count; i++) {
+        int item_id = mud->ground_item_id[i];
+        GameModel *original_model = mud->item_models[item_id];
+
+        if (original_model == NULL) {
+            continue;
+        }
+
+        GameModel *model = game_model_copy(original_model);
+
+        model->key = i + GROUND_ITEM_FACE_TAG;
+
+        int area_x = mud->ground_item_x[i];
+        int area_y = mud->ground_item_y[i];
+        int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
+        int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
+
+        game_model_translate(
+            model, model_x,
+            -(world_get_elevation(mud->world, model_x, model_y) +
+              mud->ground_item_z[i]) -
+                10,
+            model_y);
+
+        game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+
+        scene_add_model(mud->scene, model);
+
+        mud->ground_item_model[i] = model;
+    }
+}
+
 void mudclient_packet_tick(mudclient *mud) {
     uint64_t timestamp = get_ticks();
 
@@ -653,8 +702,6 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_REGION_ENTITY_UPDATE: {
-        printf("entity packet\n");
-#if 0
         int length = (size - 1) / 4;
 
         for (int i = 0; i < length; i++) {
@@ -688,6 +735,8 @@ void mudclient_packet_tick(mudclient *mud) {
                     entity_count++;
                 }
             }
+
+            mudclient_update_ground_item_models(mud);
 
             mud->ground_item_count = entity_count;
             entity_count = 0;
@@ -766,7 +815,6 @@ void mudclient_packet_tick(mudclient *mud) {
 
             mud->wall_object_count = entity_count;
         }
-#endif
         break;
     }
     case SERVER_REGION_WALL_OBJECTS: {
@@ -881,13 +929,6 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_REGION_GROUND_ITEMS: {
-        int old_ground_item_count = mud->ground_item_count;
-        GameModel *old_ground_items[old_ground_item_count];
-
-        for (int i = 0; i < mud->ground_item_count; i++) {
-            old_ground_items[i] = mud->ground_item_model[i];
-        }
-
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data[offset]) == 255) {
                 int index = 0;
@@ -906,18 +947,6 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->ground_item_y[index] = mud->ground_item_y[i];
                             mud->ground_item_id[index] = mud->ground_item_id[i];
                             mud->ground_item_z[index] = mud->ground_item_z[i];
-
-                            if (mud->options->ground_item_models) {
-                                GameModel *item_model =
-                                    mud->ground_item_model[i];
-
-                                if (item_model != NULL) {
-                                    item_model->key =
-                                        index + GROUND_ITEM_FACE_TAG;
-                                }
-
-                                mud->ground_item_model[index] = item_model;
-                            }
                         }
 
                         index++;
@@ -950,37 +979,6 @@ void mudclient_packet_tick(mudclient *mud) {
                         break;
                     }
 
-                    if (mud->options->ground_item_models) {
-                        GameModel *original_model = mud->item_models[item_id];
-
-                        if (original_model != NULL) {
-                            GameModel *model = game_model_copy(original_model);
-                            scene_add_model(mud->scene, model);
-
-                            model->key =
-                                mud->ground_item_count + GROUND_ITEM_FACE_TAG;
-
-                            int model_x =
-                                ((area_x + area_x + 1) * MAGIC_LOC) / 2;
-                            int model_y =
-                                ((area_y + area_y + 1) * MAGIC_LOC) / 2;
-
-                            game_model_translate(
-                                model, model_x,
-                                -(world_get_elevation(mud->world, model_x,
-                                                      model_y) +
-                                  mud->ground_item_z[mud->ground_item_count]) -
-                                    10,
-                                model_y);
-
-                            game_model_set_light_from6(model, 1, 48, 48, -50,
-                                                       -10, -50);
-
-                            mud->ground_item_model[mud->ground_item_count] =
-                                model;
-                        }
-                    }
-
                     mud->ground_item_count++;
                 } else {
                     item_id &= 32767;
@@ -1003,18 +1001,6 @@ void mudclient_packet_tick(mudclient *mud) {
 
                                 mud->ground_item_z[index] =
                                     mud->ground_item_z[i];
-
-                                if (mud->options->ground_item_models) {
-                                    GameModel *item_model =
-                                        mud->ground_item_model[i];
-
-                                    if (item_model != NULL) {
-                                        item_model->key =
-                                            index + GROUND_ITEM_FACE_TAG;
-                                    }
-
-                                    mud->ground_item_model[index] = item_model;
-                                }
                             }
 
                             index++;
@@ -1026,23 +1012,7 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-        for (int i = 0; i < old_ground_item_count; i++) {
-            GameModel *item_model = old_ground_items[i];
-            int has_item = 0;
-
-            for (int j = 0; j < mud->ground_item_count; j++) {
-                if (mud->ground_item_model[j] == item_model) {
-                    has_item = 1;
-                    break;
-                }
-            }
-
-            if (!has_item) {
-                scene_remove_model(mud->scene, item_model);
-                game_model_destroy(item_model);
-                free(item_model);
-            }
-        }
+        mudclient_update_ground_item_models(mud);
         break;
     }
     case SERVER_MESSAGE: {

@@ -2957,7 +2957,18 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         mud->ground_item_x[i] -= offset_x;
         mud->ground_item_y[i] -= offset_y;
 
-        // TODO probably have to move ground items
+        GameModel *model = mud->ground_item_model[i];
+
+        if (model != NULL) {
+        int area_x = mud->ground_item_x[i];
+        int area_y = mud->ground_item_y[i];
+
+        int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
+
+        int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
+
+        game_model_translate(model, model_x, -(world_get_elevation(mud->world, model_x, model_y) + mud->ground_item_z[i]) - 10, model_y);
+        }
     }
 
     for (int i = 0; i < mud->player_count; i++) {

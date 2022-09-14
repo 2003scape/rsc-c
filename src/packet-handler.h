@@ -10,6 +10,7 @@
 #include "utility.h"
 #include "world.h"
 
+void mudclient_update_ground_item_models(mudclient *mud);
 void mudclient_packet_tick(mudclient *mud);
 
 #endif
