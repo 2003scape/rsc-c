@@ -32,8 +32,8 @@ void mudclient_draw_sleep(mudclient *mud) {
             ((float)rand() / (float)RAND_MAX) * WHITE);
     }
 
-    surface_draw_box(mud->surface, (mud->surface->width / 2) - 100, 160, 200,
-                     40, BLACK);
+    surface_draw_box(mud->surface, (mud->surface->width / 2) - 100,
+                     (mud->surface->height / 2) - 13, 200, 40, BLACK);
 
     int x = mud->surface->width / 2;
     int y = 50 + (mud->surface->height / 2) - (MUD_HEIGHT / 2);

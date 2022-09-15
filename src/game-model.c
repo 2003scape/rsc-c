@@ -868,7 +868,7 @@ void game_model_apply(GameModel *game_model) {
         /* fixes the z-fighting with the walls. check if faces > 1 so it
          * doesn't break wallobjects */
         if (!game_model->autocommit && game_model->face_count > 1) {
-            glm_scale_uni(game_model->transform, 0.995f);
+            glm_scale_uni(game_model->transform, 0.990f);
         }
 #endif
 

@@ -127,7 +127,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * FLAT_QUAD_COUNT,
                  NULL, GL_DYNAMIC_DRAW);
 
-    /* +1 for circle, +2 for extra login screen scenes, +1 for sleep, +1 for logo */
+    /* +1 for circle, +2 for extra login screen scenes, +1 for sleep, +1 for
+     * logo */
     surface_gl_create_texture_array(&surface->gl_sprite_media_textures,
                                     MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
                                     (mud->sprite_item - mud->sprite_media) + 5);
@@ -396,7 +397,7 @@ int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id) {
     }
 
     if (texture_array_id == surface->gl_framebuffer_textures) {
-        return surface->width;
+        return surface->mud->game_width;
     }
 
     return 0;
@@ -425,7 +426,7 @@ int surface_gl_sprite_texture_height(Surface *surface,
     }
 
     if (texture_array_id == surface->gl_framebuffer_textures) {
-        return surface->height;
+        return surface->mud->game_height;
     }
 
     return 0;
@@ -436,7 +437,7 @@ int surface_gl_sprite_texture_index(Surface *surface, int sprite_id) {
     mudclient *mud = surface->mud;
 
     if (sprite_id == SPRITE_LIMIT - 1) {
-       return (mud->sprite_item - mud->sprite_media) + 4;
+        return (mud->sprite_item - mud->sprite_media) + 4;
     }
 
     /* map texture */
@@ -504,6 +505,11 @@ void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
 
     GLfloat texture_height =
         (float)surface_gl_sprite_texture_height(surface, texture_array_id);
+
+    if (texture_array_id == surface->gl_framebuffer_textures) {
+        // printf("%f %f\n", texture_height, surface_gl_translate_y(surface,
+        // points[2][1]));
+    }
 
     GLfloat textured_quad[] = {
         /* top left / northwest */
@@ -819,28 +825,29 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 void surface_gl_create_framebuffer(Surface *surface) {
     free(surface->gl_screen_pixels_reversed);
 
-    surface->gl_screen_pixels_reversed =
-        calloc(surface->width * surface->height, sizeof(int32_t));
+    surface->gl_screen_pixels_reversed = calloc(
+        surface->mud->game_width * surface->mud->game_height, sizeof(int32_t));
 
-//#ifdef RENDER_SW
+    //#ifdef RENDER_SW
     free(surface->gl_screen_pixels);
 
-    surface->gl_screen_pixels =
-        calloc(surface->width * surface->height, sizeof(int32_t));
-//#else
-    //surface->gl_screen_pixels = surface->pixels;
-//#endif
+    surface->gl_screen_pixels = calloc(
+        surface->mud->game_width * surface->mud->game_height, sizeof(int32_t));
+    //#else
+    // surface->gl_screen_pixels = surface->pixels;
+    //#endif
 
-    surface->gl_last_screen_width = surface->width;
-    surface->gl_last_screen_height = surface->height;
+    surface->gl_last_screen_width = surface->mud->game_width;
+    surface->gl_last_screen_height = surface->mud->game_height;
 
     surface_gl_create_texture_array(&surface->gl_framebuffer_textures,
-                                    surface->width, surface->height, 1);
+                                    surface->mud->game_width,
+                                    surface->mud->game_height, 1);
 }
 
 void surface_gl_update_framebuffer(Surface *surface) {
-    if (surface->gl_last_screen_width != surface->width ||
-        surface->gl_last_screen_height != surface->height) {
+    if (surface->gl_last_screen_width != surface->mud->game_width ||
+        surface->gl_last_screen_height != surface->mud->game_height) {
         if (surface->gl_framebuffer_textures != 0) {
             glDeleteTextures(1, &surface->gl_framebuffer_textures);
         }
@@ -848,17 +855,19 @@ void surface_gl_update_framebuffer(Surface *surface) {
         surface_gl_create_framebuffer(surface);
     }
 
-    glReadPixels(0, 0, surface->width, surface->height, GL_RGBA,
-                 GL_UNSIGNED_BYTE, surface->gl_screen_pixels_reversed);
+    glReadPixels(0, 0, surface->mud->game_width, surface->mud->game_height,
+                 GL_RGBA, GL_UNSIGNED_BYTE, surface->gl_screen_pixels_reversed);
 
-    for (int x = 0; x < surface->width; x++) {
-        for (int y = 0; y < surface->height; y++) {
-            int colour =
-                surface
-                    ->gl_screen_pixels_reversed[x + (surface->height - y - 1) *
-                                                        surface->width];
+    for (int x = 0; x < surface->mud->game_width; x++) {
+        for (int y = 0; y < surface->mud->game_height; y++) {
+            int colour = surface->gl_screen_pixels_reversed
+                             [x + (surface->mud->game_height - y - 1) *
+                                      surface->mud->game_width];
 
-            surface->gl_screen_pixels[x + y * surface->width] = colour;
+            // colour = y >= surface->mud->game_height / 2 ? 0xffff00ff :
+            // 0xffff0000;
+            surface->gl_screen_pixels[x + y * surface->mud->game_width] =
+                colour;
         }
     }
 }
@@ -866,8 +875,9 @@ void surface_gl_update_framebuffer(Surface *surface) {
 void surface_gl_update_framebuffer_texture(Surface *surface) {
     glBindTexture(GL_TEXTURE_2D_ARRAY, surface->gl_framebuffer_textures);
 
-    gl_update_texture_array(surface->gl_framebuffer_textures, 0, surface->width,
-                            surface->height, surface->gl_screen_pixels, 0);
+    gl_update_texture_array(surface->gl_framebuffer_textures, 0,
+                            surface->mud->game_width, surface->mud->game_height,
+                            surface->gl_screen_pixels, 0);
 }
 
 void surface_gl_buffer_framebuffer_quad(Surface *surface) {
@@ -879,8 +889,12 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface) {
     };
 
     surface_gl_buffer_textured_quad(surface, surface->gl_framebuffer_textures,
-                                    0, 0, 0, 255, surface->width,
-                                    surface->height, points, 0, 0);
+                                    0, 0, 0, 255, surface->mud->game_width,
+                                    surface->mud->game_height, points, 0, 0);
+
+    /*surface_gl_buffer_textured_quad(surface,
+       surface->gl_sprite_media_textures, 0, 0, 0, 255, 197, 32, points, 0,
+       0);*/
 }
 
 float surface_gl_get_layer_depth(Surface *surface) {
@@ -910,12 +924,8 @@ void surface_gl_draw(Surface *surface, int use_depth) {
 
     shader_use(&surface->gl_flat_shader);
 
-    if (!use_depth) {
-        shader_set_int(&surface->gl_flat_shader, "ui_scale",
-                       mudclient_is_ui_scaled(surface->mud));
-    } else {
-        shader_set_int(&surface->gl_flat_shader, "ui_scale", 0);
-    }
+    shader_set_int(&surface->gl_flat_shader, "ui_scale",
+                   use_depth ? 0 : mudclient_is_ui_scaled(surface->mud));
 
     glBindVertexArray(surface->gl_flat_vao);
     glActiveTexture(GL_TEXTURE0);
@@ -1549,7 +1559,7 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour) {
 
 void surface_fade_to_black_software(Surface *surface, int32_t *dest,
                                     int add_alpha) {
-    int area = surface->width * surface->height;
+    int area = surface->mud->game_width * surface->mud->game_height;
 
     for (int i = 0; i < area; i++) {
         int32_t pixel = dest[i] & 0xffffff;
@@ -2217,7 +2227,7 @@ void surface_draw_sprite_from3_depth(Surface *surface, int x, int y,
 }
 
 void surface_draw_sprite_scaled(Surface *surface, int x, int y, int width,
-                                   int height, int sprite_id, float depth) {
+                                int height, int sprite_id, float depth) {
 #ifdef RENDER_GL
     surface_gl_buffer_sprite(surface, sprite_id, x, y, width, height, 0, 0, 0,
                              255, 0, 0, depth, depth);
@@ -3726,29 +3736,10 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
     }
 }
 
-#if 0
-int get_string_tilde_offset(char *text, int text_length, int offset,
-                            int length) {
-    if (text[offset] == '~' && offset + length + 1 < text_length &&
-        text[offset + length + 1] == '~') {
-        int start = offset + 1;
-        int end = offset + length + 1;
-        int sliced_length = (end - start);
-        char sliced[sliced_length + 1];
-        memset(sliced, '\0', sliced_length);
-        strncpy(sliced, text + start, end - start);
-        return atoi(sliced);
-    }
-
-    return -1;
-}
-#endif
-
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                int font, int colour, float depth) {
     int8_t *font_data = game_fonts[font];
     int text_length = strlen(text);
-    int tilde_x = -1;
 
     for (int i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
@@ -3802,7 +3793,7 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
 
             i += 4;
         } else if (text[i] == '~' && i + 4 < text_length &&
-                               text[i + 4] == '~') {
+                   text[i + 4] == '~') {
             char c = text[i + 1];
             char c1 = text[i + 2];
             char c2 = text[i + 3];
@@ -3819,7 +3810,7 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
 
             i += 4;
         } else if (text[i] == '~' && i + 5 < text_length &&
-                               text[i + 5] == '~') {
+                   text[i + 5] == '~') {
             char c = text[i + 1];
             char c1 = text[i + 2];
             char c2 = text[i + 3];
