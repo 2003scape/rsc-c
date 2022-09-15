@@ -3,6 +3,8 @@
 #ifdef EMSCRIPTEN
 EM_JS(int, get_canvas_width, (), { return canvas.width; });
 EM_JS(int, get_canvas_height, (), { return canvas.height; });
+
+mudclient *global_mud;
 #endif
 
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
@@ -693,6 +695,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     mudclient_resize(mud);
 #endif
+
+    mud->default_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    mud->hand_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 
 #ifdef RENDER_GL
 #ifdef EMSCRIPTEN
@@ -2960,14 +2965,19 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         GameModel *model = mud->ground_item_model[i];
 
         if (model != NULL) {
-        int area_x = mud->ground_item_x[i];
-        int area_y = mud->ground_item_y[i];
+            int area_x = mud->ground_item_x[i];
+            int area_y = mud->ground_item_y[i];
 
-        int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
+            int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
 
-        int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
+            int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
 
-        game_model_translate(model, model_x, -(world_get_elevation(mud->world, model_x, model_y) + mud->ground_item_z[i]) - 10, model_y);
+            game_model_translate(
+                model, model_x,
+                -(world_get_elevation(mud->world, model_x, model_y) +
+                  mud->ground_item_z[i]) -
+                    10,
+                model_y);
         }
     }
 
@@ -3374,21 +3384,23 @@ void mudclient_handle_game_input(mudclient *mud) {
         mudclient_handle_additional_options_input(mud);
     }
 
-    if (mud->options->tab_respond && mud->key_tab) {
-        if (mud->private_message_target != 0) {
-            int is_online = 0;
+    if (mud->options->tab_respond && mud->key_tab &&
+        mud->private_message_target != 0) {
+        int is_online = 0;
 
-            for (int i = 0; i < mud->friend_list_count; i++) {
-                if (mud->friend_list[i] == mud->private_message_target &&
-                    mud->friend_list_online[i] > 0) {
-                    is_online = 1;
-                    break;
-                }
+        for (int i = 0; i < mud->friend_list_count; i++) {
+            if (mud->friend_list[i] == mud->private_message_target &&
+                mud->friend_list_online[i] > 0) {
+                is_online = 1;
+                break;
             }
+        }
 
-            if (is_online) {
-                mud->show_dialog_social_input = SOCIAL_MESSAGE_FRIEND;
-            }
+        if (is_online) {
+            mud->show_dialog_social_input = SOCIAL_MESSAGE_FRIEND;
+
+            memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
+            memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
         }
 
         mud->key_tab = 0;
@@ -3886,6 +3898,9 @@ int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
                                       character->current_y / 128);
 
     return (mud->options->show_roofs && roof_id > 0 &&
+            (character->npc_id > -1
+                 ? game_data_npc_height[character->npc_id] >= 200
+                 : 1) &&
             (animation_index == ANIMATION_INDEX_HEAD ||
              animation_index == ANIMATION_INDEX_HEAD_OVERLAY) &&
             !world_is_under_roof(mud->world, mud->local_player->current_x,
@@ -4689,8 +4704,8 @@ void mudclient_draw_game(mudclient *mud) {
                                    (mud->surface->height - 12) / 2, 7, RED);
 
         mudclient_draw_chat_message_tabs(mud);
-        surface_draw(mud->surface);
 
+        surface_draw(mud->surface);
         return;
     }
 
@@ -6009,8 +6024,12 @@ int main(int argc, char **argv) {
     mudclient *mud = malloc(sizeof(mudclient));
     mudclient_new(mud);
 
-    if (argc > 1 && strcmp(argv[1], "members") == 0) {
-        mud->options->members = 1;
+#ifdef EMSCRIPTEN
+    global_mud = mud;
+#endif
+
+    if (argc > 1) {
+        mud->options->members = strcmp(argv[1], "members") == 0;
     }
 
     if (argc > 2) {
@@ -6044,3 +6063,9 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+#ifdef EMSCRIPTEN
+void browser_mouse_moved(int x, int y) {
+    mudclient_mouse_moved(global_mud, x , y);
+}
+#endif

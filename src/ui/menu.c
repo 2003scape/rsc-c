@@ -573,6 +573,11 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
         char menu_text[255] = {0};
 
+        if ((index == -1 || !mud->selected_wiki) && mud->is_hand_cursor) {
+            SDL_SetCursor(mud->default_cursor);
+            mud->is_hand_cursor = 0;
+        }
+
         if (index == -1 && mud->selected_wiki) {
             strcpy(menu_text, "@cya@Choose a wiki lookup target");
         } else if ((mud->selected_item_inventory_index >= 0 ||
@@ -586,6 +591,11 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
                     mud->menu_item_text1[mud->menu_indices[0]],
                     mud->menu_item_text2[mud->menu_indices[0]]);
         } else if (index != -1) {
+            if (mud->selected_wiki && !mud->is_hand_cursor) {
+                SDL_SetCursor(mud->hand_cursor);
+                mud->is_hand_cursor = 1;
+            }
+
             sprintf(menu_text, "%s: @whi@%s",
                     mud->menu_item_text2[mud->menu_indices[index]],
                     mud->menu_item_text1[mud->menu_indices[0]]);
@@ -1003,9 +1013,14 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     strcpy(mud->menu_item_text1[mud->menu_items_count],
                            "Talk-to");
 
-                    strcpy(mud->menu_item_text2[mud->menu_items_count], formatted_npc_name);
+                    strcpy(mud->menu_item_text2[mud->menu_items_count],
+                           formatted_npc_name);
 
                     mud->menu_type[mud->menu_items_count] = MENU_NPC_TALK;
+
+                    mud->menu_item_x[mud->menu_items_count] = npc->current_x;
+                    mud->menu_item_y[mud->menu_items_count] = npc->current_y;
+                    mud->menu_index[mud->menu_items_count] = npc->server_index;
 
                     mud->menu_items_count++;
 
@@ -1014,7 +1029,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                game_data_npc_command[npc_id]);
 
                         strcpy(mud->menu_item_text2[mud->menu_items_count],
-                                formatted_npc_name);
+                               formatted_npc_name);
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_NPC_COMMAND;
@@ -1035,7 +1050,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                            "Examine");
 
                     strcpy(mud->menu_item_text2[mud->menu_items_count],
-                            formatted_npc_name);
+                           formatted_npc_name);
 
                     mud->menu_type[mud->menu_items_count] = MENU_NPC_EXAMINE;
                     mud->menu_index[mud->menu_items_count] = npc_id;
@@ -1213,6 +1228,18 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         mud->menu_type[mud->menu_items_count] =
                             MENU_OBJECT_COMMAND1;
 
+                        mud->menu_item_x[mud->menu_items_count] =
+                            mud->object_x[index];
+
+                        mud->menu_item_y[mud->menu_items_count] =
+                            mud->object_y[index];
+
+                        mud->menu_index[mud->menu_items_count] =
+                            mud->object_direction[index];
+
+                        mud->menu_source_index[mud->menu_items_count] =
+                            object_id;
+
                         mud->menu_items_count++;
                     }
 
@@ -1226,6 +1253,18 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_OBJECT_COMMAND2;
+
+                        mud->menu_item_x[mud->menu_items_count] =
+                            mud->object_x[index];
+
+                        mud->menu_item_y[mud->menu_items_count] =
+                            mud->object_y[index];
+
+                        mud->menu_index[mud->menu_items_count] =
+                            mud->object_direction[index];
+
+                        mud->menu_source_index[mud->menu_items_count] =
+                            object_id;
 
                         mud->menu_items_count++;
                     }

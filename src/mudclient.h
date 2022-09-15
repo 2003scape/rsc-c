@@ -343,10 +343,16 @@ typedef struct mudclient {
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
 
+#ifdef RENDER_GL
     SDL_Window *gl_window;
+#endif
 
     uint8_t *logo_pixels;
     SDL_Surface *logo_surface;
+
+    SDL_Cursor *default_cursor;
+    SDL_Cursor *hand_cursor;
+    int is_hand_cursor;
 #endif
 
     Options *options;
@@ -1025,4 +1031,7 @@ void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest);
 int mudclient_get_wilderness_depth(mudclient *mud);
 void mudclient_draw_item(mudclient *mud, int x, int y, int item_id);
 int main(int argc, char **argv);
+#endif
+#ifdef EMSCRIPTEN
+void browser_mouse_moved(int x, int y);
 #endif

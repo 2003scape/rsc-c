@@ -817,15 +817,19 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 }
 
 void surface_gl_create_framebuffer(Surface *surface) {
+    free(surface->gl_screen_pixels_reversed);
+
     surface->gl_screen_pixels_reversed =
         calloc(surface->width * surface->height, sizeof(int32_t));
 
-#ifdef RENDER_SW
+//#ifdef RENDER_SW
+    free(surface->gl_screen_pixels);
+
     surface->gl_screen_pixels =
         calloc(surface->width * surface->height, sizeof(int32_t));
-#else
-    surface->gl_screen_pixels = surface->pixels;
-#endif
+//#else
+    //surface->gl_screen_pixels = surface->pixels;
+//#endif
 
     surface->gl_last_screen_width = surface->width;
     surface->gl_last_screen_height = surface->height;
@@ -837,12 +841,6 @@ void surface_gl_create_framebuffer(Surface *surface) {
 void surface_gl_update_framebuffer(Surface *surface) {
     if (surface->gl_last_screen_width != surface->width ||
         surface->gl_last_screen_height != surface->height) {
-        free(surface->gl_screen_pixels_reversed);
-
-#ifdef RENDER_SW
-        free(surface->gl_screen_pixels);
-#endif
-
         if (surface->gl_framebuffer_textures != 0) {
             glDeleteTextures(1, &surface->gl_framebuffer_textures);
         }
@@ -1568,7 +1566,6 @@ void surface_fade_to_black_software(Surface *surface, int32_t *dest,
 void surface_fade_to_black(Surface *surface) {
 #ifdef RENDER_GL
     // TODO this leaves some sort of residue. https://imgur.com/a/35sqk7v
-
     /*surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height,
                           BLACK, 16);*/
 

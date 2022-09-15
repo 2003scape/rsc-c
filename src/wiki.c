@@ -2290,7 +2290,7 @@ char *wiki_pages_objects[] = {
     "Fishing_spot#Shrimp/Anchovies_&amp;_Sardine/Herring",
     "Fishing_spot#Tuna/Swordfish_&amp;_Lobster",
     "Rock_(scenery)",
-    "Rock_(scenery)",
+    "Silver_rock",
     "Rock_(scenery)",
     "Ladder_(Monastery)",
     "Ladder_(Black_hole)",

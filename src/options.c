@@ -159,7 +159,11 @@ void options_set_vanilla(Options *options) {
 }
 
 void options_save(Options *options) {
+#ifdef EMSCRIPTEN
+    FILE *ini_file = fopen("/options/options.ini", "w");
+#else
     FILE *ini_file = fopen("./options.ini", "w");
+#endif
 
     fprintf(ini_file, OPTIONS_INI_TEMPLATE,
             options->server,                //
@@ -214,7 +218,11 @@ void options_save(Options *options) {
 }
 
 void options_load(Options *options) {
+#ifdef EMSCRIPTEN
+    ini_t *options_ini = ini_load("/options/options.ini");
+#else
     ini_t *options_ini = ini_load("options.ini");
+#endif
 
     if (options_ini == NULL) {
         return;
@@ -243,6 +251,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("transaction_menus", options->transaction_menus, 0, 1);
     OPTION_INI_INT("offer_x", options->offer_x, 0, 1);
     OPTION_INI_INT("last_offer_x", options->last_offer_x, 0, 1);
+    OPTION_INI_INT("wiki_lookup", options->wiki_lookup, 0, 1);
 
     /* display */
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
