@@ -768,9 +768,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
         int face = picked_faces[i];
 
         // TODO clean up
-        if (!((game_model->face_tag[face] <= 65535 ||
-               game_model->face_tag[face] >= 200000) &&
-              game_model->face_tag[face] <= 300000)) {
+        if (face != -1 && !((game_model->face_tag[face] <= 65535 ||
+                             game_model->face_tag[face] >= 200000) &&
+                            game_model->face_tag[face] <= 300000)) {
             continue;
         }
 

@@ -828,14 +828,10 @@ void surface_gl_create_framebuffer(Surface *surface) {
     surface->gl_screen_pixels_reversed = calloc(
         surface->mud->game_width * surface->mud->game_height, sizeof(int32_t));
 
-    //#ifdef RENDER_SW
     free(surface->gl_screen_pixels);
 
     surface->gl_screen_pixels = calloc(
         surface->mud->game_width * surface->mud->game_height, sizeof(int32_t));
-    //#else
-    // surface->gl_screen_pixels = surface->pixels;
-    //#endif
 
     surface->gl_last_screen_width = surface->mud->game_width;
     surface->gl_last_screen_height = surface->mud->game_height;

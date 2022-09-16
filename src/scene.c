@@ -46,7 +46,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->max_sprite_count = max_sprite_count;
 
     scene->clip_near = 5;
-    //scene->view_distance = 9;
+    // scene->view_distance = 9;
     scene->view_distance = 512;
     scene->normal_magnitude = 4;
 
@@ -954,7 +954,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
                      int width, int height, int tag) {
     scene->sprite_id[scene->sprite_count] = sprite_id;
     scene->sprite_x[scene->sprite_count] = x;
-    scene->sprite_z[scene->sprite_count] = y; // TODO probably rename the z?
+    scene->sprite_z[scene->sprite_count] = y;
     scene->sprite_y[scene->sprite_count] = z;
     scene->sprite_width[scene->sprite_count] = width;
     scene->sprite_height[scene->sprite_count] = height;
@@ -1295,11 +1295,12 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
     int view_y = scene->view->vertex_view_y[face_0];
     int project_z = scene->view->project_vertex_z[face_0];
 
-    //int width = (scene->sprite_width[face] << scene->view_distance) / vz;
+    // int width = (scene->sprite_width[face] << scene->view_distance) / vz;
     int width = (scene->sprite_width[face] * scene->view_distance) / project_z;
-    //int height = (scene->sprite_height[face] << scene->view_distance) / vz;
+    // int height = (scene->sprite_height[face] << scene->view_distance) / vz;
 
-    int height = (scene->sprite_height[face] * scene->view_distance) / project_z;
+    int height =
+        (scene->sprite_height[face] * scene->view_distance) / project_z;
 
     int skew_x = scene->view->vertex_view_x[face_vertices[1]] - view_x;
     int x = view_x - (width / 2);
@@ -1314,17 +1315,21 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 #endif
 
     /*surface_draw_entity_sprite(
-        scene->surface, x + scene->base_x, y, width, height, scene->sprite_id[face],
-        skew_x, (256 << scene->view_distance) / project_z, depth_top, depth_bottom);*/
-    surface_draw_entity_sprite(
-        scene->surface, x + scene->base_x, y, width, height, scene->sprite_id[face],
-        skew_x, (256 * scene->view_distance) / project_z, depth_top, depth_bottom);
+        scene->surface, x + scene->base_x, y, width, height,
+       scene->sprite_id[face], skew_x, (256 << scene->view_distance) /
+       project_z, depth_top, depth_bottom);*/
+    surface_draw_entity_sprite(scene->surface, x + scene->base_x, y, width,
+                               height, scene->sprite_id[face], skew_x,
+                               (256 * scene->view_distance) / project_z,
+                               depth_top, depth_bottom);
 
     if (scene->mouse_picking_active &&
         scene->mouse_picked_count < MOUSE_PICKED_MAX) {
 
-        //x += (scene->sprite_translate_x[face] << scene->view_distance) / project_z;
-        x += (scene->sprite_translate_x[face] * scene->view_distance) / project_z;
+        // x += (scene->sprite_translate_x[face] << scene->view_distance) /
+        // project_z;
+        x += (scene->sprite_translate_x[face] * scene->view_distance) /
+             project_z;
 
         if (scene->mouse_y >= y && scene->mouse_y <= y + height &&
             scene->mouse_x >= x && scene->mouse_x <= x + width &&
@@ -2380,9 +2385,9 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                       << 3;
 
             int i13 = (k3 * i6 - i3 * j7) << 5;
-            //int k13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
+            // int k13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
             int k13 = (i4 * j7 - k3 * k8); // 5 - 9 + 4 = 0
-            //int i14 = (i3 * k8 - i4 * i6) >> (scene->view_distance - 5);
+            // int i14 = (i3 * k8 - i4 * i6) >> (scene->view_distance - 5);
             int i14 = (i3 * k8 - i4 * i6) >> 4;
             int k14 = k10 >> 4;
             int i15 = i12 >> 4;
@@ -2521,9 +2526,9 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                   << 2;
 
         int j13 = (k3 * i6 - i3 * j7) << 5;
-        //int l13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
+        // int l13 = (i4 * j7 - k3 * k8) << (5 - scene->view_distance + 4);
         int l13 = (i4 * j7 - k3 * k8);
-        //int j14 = (i3 * k8 - i4 * i6) / 16;
+        // int j14 = (i3 * k8 - i4 * i6) / 16;
         int j14 = (i3 * k8 - i4 * i6) >> 4;
         int l14 = l10 >> 4;
         int j15 = j12 >> 4;
@@ -3375,9 +3380,9 @@ void scene_set_texture_pixels(Scene *scene, int id) {
     for (int x = 0; x < texture_width; x++) {
         for (int y = 0; y < texture_width; y++) {
             int colour =
-                scene->texture_palette[id][scene->texture_colours
-                                                   [id][y + x * texture_width] &
-                                               0xff];
+                scene->texture_palette
+                    [id]
+                    [scene->texture_colours[id][y + x * texture_width] & 0xff];
 
             colour &= 0xf8f8ff;
 
@@ -4144,9 +4149,9 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
-    glm_perspective(scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
-                    VERTEX_TO_FLOAT(scene->clip_near), clip_far,
-                    scene->gl_projection);
+    glm_perspective(
+        scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
+        VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 
@@ -4308,7 +4313,8 @@ void scene_gl_render(Scene *scene) {
 
         shader_use(&scene->game_model_pick_shader);
 
-        shader_set_int(&scene->game_model_pick_shader, "interlace", scene->interlace);
+        shader_set_int(&scene->game_model_pick_shader, "interlace",
+                       scene->interlace);
 
         game_model_gl_buffer_pick_models(
             &scene->gl_pick_vao, &scene->gl_pick_vbo, &scene->gl_pick_ebo,
