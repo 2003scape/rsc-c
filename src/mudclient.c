@@ -713,9 +713,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-
-    // TODO make AA toggleable
-    // glEnable(GL_MULTISAMPLE);
 #endif
 
     mud->gl_window = SDL_CreateWindow(
@@ -5490,10 +5487,6 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
         case SDL_MOUSEMOTION:
-            // TODO: (for off-screen middle click)
-            // event = new MouseEvent('mousemove', { buttons: 0, clientX: 1177,
-            // clientY: 267, layerX: 0, layerY: 0 })
-            // canvas.dispatchEvent(event);
             mudclient_mouse_moved(mud, event.motion.x, event.motion.y);
             break;
         case SDL_MOUSEBUTTONDOWN:

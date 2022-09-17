@@ -1,5 +1,5 @@
 CC = x86_64-w64-mingw32-gcc
-DEBUG = 1
+#DEBUG = 1
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
 CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_GL -DREVISION_177

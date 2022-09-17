@@ -6,3 +6,8 @@ src/wii/*.o
 mudclient
 *.dol
 *.elf
+mudclient.exe
+mudclient.data
+mudclient.html
+mudclient.js
+mudclient.wasm
