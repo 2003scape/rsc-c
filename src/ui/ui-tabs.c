@@ -1,6 +1,6 @@
 #include "ui-tabs.h"
 
-void mudclient_set_active_ui_tab(mudclient *mud) {
+void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
@@ -8,7 +8,7 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             mud->show_ui_tab = INVENTORY_TAB;
         }
 
-        if (mud->selected_wiki) {
+        if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Inventory", "Inventory");
         }
     }
@@ -29,7 +29,7 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             }
         }
 
-        if (mud->selected_wiki) {
+        if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Map", "RuneScape_Classic_Map");
         }
     }
@@ -41,7 +41,7 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             mud->show_ui_tab = STATS_TAB;
         }
 
-        if (mud->selected_wiki) {
+        if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Stats", "Stats");
         }
     }
@@ -53,7 +53,7 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             mud->show_ui_tab = MAGIC_TAB;
         }
 
-        if (mud->selected_wiki) {
+        if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Spellbook", "Spellbook");
         }
     }
@@ -65,7 +65,7 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             mud->show_ui_tab = SOCIAL_TAB;
         }
 
-        if (mud->selected_wiki) {
+        if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Friends", "Friends");
         }
     }
@@ -77,7 +77,7 @@ void mudclient_set_active_ui_tab(mudclient *mud) {
             mud->show_ui_tab = OPTIONS_TAB;
         }
 
-        if (mud->selected_wiki) {
+        if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Options", "Options");
         }
     }

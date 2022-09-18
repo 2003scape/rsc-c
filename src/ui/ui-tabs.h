@@ -19,7 +19,7 @@
 #include "social-tab.h"
 #include "stats-tab.h"
 
-void mudclient_set_active_ui_tab(mudclient *mud);
+void mudclient_set_active_ui_tab(mudclient *mud, int no_menus);
 void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus);
 
 #endif

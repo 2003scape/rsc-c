@@ -4349,7 +4349,7 @@ void mudclient_draw_ui(mudclient *mud) {
             mudclient_draw_combat_style(mud);
         }
 
-        mudclient_set_active_ui_tab(mud);
+        mudclient_set_active_ui_tab(mud, no_menus);
 
         if (mud->show_ui_tab == 0 && no_menus) {
             mudclient_create_right_click_menu(mud);

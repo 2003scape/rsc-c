@@ -100,7 +100,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                                     ui_x + 2 + i * 44, ui_y + 150, 1, WHITE);
             }
 
-            if (mud->selected_wiki) {
+            if (mud->selected_wiki && no_menus) {
                 mudclient_menu_add_wiki(mud, spell_name, spell_name);
             }
         } else {
@@ -159,7 +159,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                                        ui_x + (MAGIC_WIDTH / 2), ui_y + 160, 1,
                                        BLACK);
 
-            if (mud->selected_wiki) {
+            if (mud->selected_wiki && no_menus) {
                 mudclient_menu_add_wiki(mud, prayer_name, prayer_name);
             }
         } else {
