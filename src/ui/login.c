@@ -327,13 +327,6 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);
 
-    /* TODO: resizable logo
-    surface_sprite_clipping_from9(
-           mud->surface,
-           (mud->surface->width / 2) -
-               (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-           15, 400, 120, mud->sprite_media + 10, 0, 0, 0, 0);*/
-
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
                                     mud->surface->width, 200);
 

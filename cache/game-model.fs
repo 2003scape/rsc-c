@@ -31,7 +31,7 @@ void main() {
         gradient_index = 0;
     }
 
-    if (vertex_texture_position.z > -1.0f) {
+    if (vertex_texture_position.z >= 0.0f) {
         fragment_colour = texture(textures, vertex_texture_position);
 
         if (vertex_colour.x > -1.0f) {

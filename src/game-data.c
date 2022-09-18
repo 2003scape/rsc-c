@@ -97,7 +97,7 @@ int game_data_model_count;
 int game_data_projectile_sprite;
 
 int8_t *game_data_data_string;
-int8_t *game_data_data_integer; /* TODO use uint8_t */
+int8_t *game_data_data_integer;
 int game_data_string_offset;
 int game_data_offset;
 

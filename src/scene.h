@@ -154,7 +154,7 @@ typedef struct Scene {
     GLuint gl_wall_ebo;
 
     int gl_wall_models_offset;
-    int gl_wall_objects_removed[WALL_OBJECTS_MAX];
+    int gl_wall_objects_removed[WALL_OBJECTS_MAX * 2];
 
     GLuint last_vao;
 

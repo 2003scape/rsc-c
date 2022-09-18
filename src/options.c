@@ -258,7 +258,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
     OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);
     OPTION_INI_INT("anti_alias", options->anti_alias, 0, 1);
-    OPTION_INI_INT("field_of_view", options->field_of_view, 360, 880);
+    OPTION_INI_INT("field_of_view", options->field_of_view, 0, 880);
     OPTION_INI_INT("show_roofs", options->show_roofs, 0, 1);
     OPTION_INI_INT("number_commas", options->number_commas, 0, 1);
     OPTION_INI_INT("remaining_experience", options->remaining_experience, 0, 1);

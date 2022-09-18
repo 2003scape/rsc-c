@@ -112,8 +112,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     shader_use(&scene->game_model_shader);
 
     game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
-                             &scene->gl_wall_ebo, WALL_OBJECTS_MAX * 4,
-                             WALL_OBJECTS_MAX * 6);
+                             &scene->gl_wall_ebo, (WALL_OBJECTS_MAX * 2) * 4,
+                             (WALL_OBJECTS_MAX * 2) * 6);
 
     shader_set_float(&scene->game_model_shader, "vertex_scale",
                      (float)VERTEX_SCALE);
@@ -4461,7 +4461,7 @@ void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
                                      int *ebo_offset) {
     int offset = -1;
 
-    for (int i = 0; i < WALL_OBJECTS_MAX; i++) {
+    for (int i = 0; i < WALL_OBJECTS_MAX * 2; i++) {
         if (scene->gl_wall_objects_removed[i] != 0) {
             offset = scene->gl_wall_objects_removed[i];
             scene->gl_wall_objects_removed[i] = 0;
@@ -4470,7 +4470,7 @@ void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
     }
 
     if (offset == -1) {
-        if (scene->gl_wall_models_offset + 1 >= WALL_OBJECTS_MAX) {
+        if (scene->gl_wall_models_offset + 1 >= (WALL_OBJECTS_MAX * 2)) {
             // TODO oh no, this triggered
             fprintf(stderr, "too many wall objects!\n");
             exit(1);
@@ -4487,7 +4487,7 @@ void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
 
 /* mark a previously-used wall-buffer as deleted to be re-used */
 void scene_gl_remove_wall_buffers(Scene *scene, GameModel *wall_object) {
-    for (int i = 0; i < WALL_OBJECTS_MAX; i++) {
+    for (int i = 0; i < WALL_OBJECTS_MAX * 2; i++) {
         if (scene->gl_wall_objects_removed[i] == 0) {
             scene->gl_wall_objects_removed[i] = wall_object->gl_vbo_offset / 4;
             return;

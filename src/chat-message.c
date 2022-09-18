@@ -101,8 +101,7 @@ int chat_message_encode(char *message) {
             if (char_map_index < 13) {
                 left_shift = char_map_index;
             } else {
-                chat_message_encoded[offset++] =
-                    char_map_index & 0xff;
+                chat_message_encoded[offset++] = char_map_index & 0xff;
             }
         } else if (char_map_index < 13) {
             chat_message_encoded[offset++] =

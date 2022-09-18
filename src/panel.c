@@ -58,7 +58,8 @@ void panel_handle_mouse(Panel *panel, int x, int y, int last_button,
                 if (control_type == PANEL_BUTTON) {
                     panel->control_clicked[i] = 1;
                 } else if (control_type == PANEL_CHECKBOX) {
-                    panel->control_activated[i] = 1 - panel->control_activated[i];
+                    panel->control_activated[i] =
+                        1 - panel->control_activated[i];
                 }
             }
         }
@@ -271,10 +272,8 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
         int min_x = is_centred ? x - (width / 2) : x;
         int max_x = is_centred ? x + (width / 2) : x + width;
 
-        if (panel->mouse_last_button_down == 1 &&
-            panel->mouse_x >= min_x &&
-            panel->mouse_y >= y - (height / 2) &&
-            panel->mouse_x <= max_x &&
+        if (panel->mouse_last_button_down == 1 && panel->mouse_x >= min_x &&
+            panel->mouse_y >= y - (height / 2) && panel->mouse_x <= max_x &&
             panel->mouse_y <= y + (height / 2)) {
             panel->focus_control_index = control;
         }
@@ -343,13 +342,13 @@ void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height) {
     surface_draw_box(panel->surface, x, y, width, height, 0);
 
     surface_draw_border(panel->surface, x, y, width, height,
-                          PANEL_ROUNDED_BOX_OUT_COLOUR);
+                        PANEL_ROUNDED_BOX_OUT_COLOUR);
 
     surface_draw_border(panel->surface, x + 1, y + 1, width - 2, height - 2,
-                          PANEL_ROUNDED_BOX_MIDDLE_COLOUR);
+                        PANEL_ROUNDED_BOX_MIDDLE_COLOUR);
 
     surface_draw_border(panel->surface, x + 2, y + 2, width - 4, height - 4,
-                          PANEL_ROUNDED_BOX_IN_COLOUR);
+                        PANEL_ROUNDED_BOX_IN_COLOUR);
 
     surface_draw_sprite_from3(panel->surface, x, y,
                               2 + panel_base_sprite_start);
@@ -443,8 +442,8 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                                     panel->mouse_x <= corner_top_right + 24);
             }
 
-            if ((is_within_x || is_dragging) &&
-                panel->mouse_y > y + 12 && panel->mouse_y < y + height - 12) {
+            if ((is_within_x || is_dragging) && panel->mouse_y > y + 12 &&
+                panel->mouse_y < y + height - 12) {
                 panel->control_list_scrollbar_handle_dragged[control] = 1;
 
                 int l3 = panel->mouse_y - y - 12 - (scrub_height / 2);
@@ -466,7 +465,8 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         scrub_y =
             ((height - 27 - scrub_height) * list_entry_position) / max_entries;
 
-        surface_draw_scrollbar(panel->surface, x, y, width, height, scrub_y, scrub_height);
+        surface_draw_scrollbar(panel->surface, x, y, width, height, scrub_y,
+                               scrub_height);
     } else {
         list_entry_position = 0;
         panel->control_list_position[control] = 0;

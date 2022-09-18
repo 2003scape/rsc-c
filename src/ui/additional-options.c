@@ -195,7 +195,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += 20;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_control_options, "@whi@Wiki lookup: ", mud->options->wiki_lookup, x, y);
+        mud->panel_control_options,
+        "@whi@Wiki lookup: ", mud->options->wiki_lookup, x, y);
 
     mud->control_options[control] = &mud->options->wiki_lookup;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -235,8 +236,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += 20;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_display_options, "@whi@Anti-alias: ", mud->options->anti_alias,
-        x, y);
+        mud->panel_display_options,
+        "@whi@Anti-alias: ", mud->options->anti_alias, x, y);
 
     mud->display_options[control] = &mud->options->anti_alias;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -514,8 +515,7 @@ void mudclient_sync_options_panels(mudclient *mud) {
                                  mud->display_options,
                                  mud->display_option_types);
 
-    mudclient_sync_options_panel(mud->panel_bank_options,
-                                 mud->bank_options,
+    mudclient_sync_options_panel(mud->panel_bank_options, mud->bank_options,
                                  mud->bank_option_types);
 }
 
@@ -549,7 +549,8 @@ void mudclient_draw_additional_options(mudclient *mud) {
                               text_colour);
 
     surface_draw_tabs(mud->surface, ui_x, ui_y + 12, ADDITIONAL_OPTIONS_WIDTH,
-                      ADDITIONAL_OPTIONS_TAB_HEIGHT, option_tabs, 4, mud->options_tab);
+                      ADDITIONAL_OPTIONS_TAB_HEIGHT, option_tabs, 4,
+                      mud->options_tab);
 
     surface_draw_line_horizontal(mud->surface, ui_x + 8,
                                  ui_y + ADDITIONAL_OPTIONS_HEIGHT - 20,

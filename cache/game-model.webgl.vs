@@ -80,9 +80,7 @@ void main() {
 
     vertex_gradient_index = float(gradient_index) / float(RAMP_SIZE);
 
-    if (vertex_texture_position.z > -1.0f) {
-        if (vertex_texture_position.z == FOUNTAIN_ID) {
-            vertex_texture_position.y -= scroll_texture;
-        }
+    if (vertex_texture_position.z == FOUNTAIN_ID) {
+        vertex_texture_position.y -= scroll_texture;
     }
 }

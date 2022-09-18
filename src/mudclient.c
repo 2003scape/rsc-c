@@ -2658,13 +2658,6 @@ void mudclient_start_game(mudclient *mud) {
 
     mudclient_set_target_fps(mud, 50);
 
-    /*mud->surface = malloc(sizeof(Surface));
-
-    surface_new(mud->surface, mud->game_width, mud->game_height, SPRITE_LIMIT,
-    mud);
-
-    surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);*/
-
     panel_base_sprite_start = mud->sprite_util;
 
     int x = mud->surface->width - 199;

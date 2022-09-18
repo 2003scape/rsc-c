@@ -1,7 +1,8 @@
 # rsc-c
 
 portable runescape classic client ported to C. supports 204 and 177
-(for [openrsc](https://rsc.vet/) support) client revisions.
+(for [openrsc](https://rsc.vet/) support) client revisions. original java source
+refactored by v0rtex/xetr0v and Isaac Exemplar.
 
 QR code for 3DS install:
 
@@ -46,7 +47,7 @@ distribute with `./cache` directory.
     $ make -f Makefile.windows
     $ wine mudclient.exe
 
-distribute with `./SDL2.dll` and `./cache` directory.
+distribute with `./SDL2.dll`, `./glew32.dll` and `./cache` directory.
 
 ## build (web)
 
