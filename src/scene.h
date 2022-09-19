@@ -153,9 +153,6 @@ typedef struct Scene {
     GLuint gl_wall_vbo;
     GLuint gl_wall_ebo;
 
-    int gl_wall_models_offset;
-    int gl_wall_objects_removed[WALL_OBJECTS_MAX * 2];
-
     GLuint last_vao;
 
     float light_gradient[RAMP_SIZE];
@@ -278,8 +275,5 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 void scene_gl_update_camera(Scene *scene);
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model);
 void scene_gl_render(Scene *scene);
-void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
-                                     int *ebo_offset);
-void scene_gl_remove_wall_buffers(Scene *scene, GameModel *wall_object);
 #endif
 #endif

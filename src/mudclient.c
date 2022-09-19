@@ -2813,7 +2813,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
 
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
-#ifdef RENDER_GL
+#if 0
     game_model->gl_vao = mud->scene->gl_wall_vao;
     game_model->gl_ebo_length = 6;
 
@@ -2948,28 +2948,18 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         mud->wall_object_model[i] = wall_object_model;
     }
 
+#ifdef RENDER_GL
+    mudclient_gl_update_wall_models(mud);
+#endif
+
     for (int i = 0; i < mud->ground_item_count; i++) {
         mud->ground_item_x[i] -= offset_x;
         mud->ground_item_y[i] -= offset_y;
 
         GameModel *model = mud->ground_item_model[i];
-
-        if (model != NULL) {
-            int area_x = mud->ground_item_x[i];
-            int area_y = mud->ground_item_y[i];
-
-            int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
-
-            int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
-
-            game_model_translate(
-                model, model_x,
-                -(world_get_elevation(mud->world, model_x, model_y) +
-                  mud->ground_item_z[i]) -
-                    10,
-                model_y);
-        }
     }
+
+    mudclient_update_ground_item_models(mud);
 
     for (int i = 0; i < mud->player_count; i++) {
         GameCharacter *player = mud->players[i];

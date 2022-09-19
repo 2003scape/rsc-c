@@ -904,12 +904,6 @@ void scene_remove_model(Scene *scene, GameModel *model) {
             }
         }
     }
-
-#ifdef RENDER_GL
-    if (model->gl_vao == scene->gl_wall_vao) {
-        scene_gl_remove_wall_buffers(scene, model);
-    }
-#endif
 }
 
 void scene_null_model(Scene *scene, GameModel *model) {
@@ -4444,6 +4438,7 @@ void scene_gl_render(Scene *scene) {
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
 #endif
+
     glViewport(0, 1, scene->width, scene_height + 12);
 
     surface_gl_draw(scene->surface, 1);
@@ -4455,43 +4450,5 @@ void scene_gl_render(Scene *scene) {
 
     glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);
-}
-
-void scene_gl_get_wall_model_offsets(Scene *scene, int *vbo_offset,
-                                     int *ebo_offset) {
-    int offset = -1;
-
-    for (int i = 0; i < WALL_OBJECTS_MAX * 2; i++) {
-        if (scene->gl_wall_objects_removed[i] != 0) {
-            offset = scene->gl_wall_objects_removed[i];
-            scene->gl_wall_objects_removed[i] = 0;
-            break;
-        }
-    }
-
-    if (offset == -1) {
-        if (scene->gl_wall_models_offset + 1 >= (WALL_OBJECTS_MAX * 2)) {
-            // TODO oh no, this triggered
-            fprintf(stderr, "too many wall objects!\n");
-            exit(1);
-            return;
-        }
-
-        offset = scene->gl_wall_models_offset;
-        scene->gl_wall_models_offset++;
-    }
-
-    *vbo_offset = offset * 4;
-    *ebo_offset = offset * 6;
-}
-
-/* mark a previously-used wall-buffer as deleted to be re-used */
-void scene_gl_remove_wall_buffers(Scene *scene, GameModel *wall_object) {
-    for (int i = 0; i < WALL_OBJECTS_MAX * 2; i++) {
-        if (scene->gl_wall_objects_removed[i] == 0) {
-            scene->gl_wall_objects_removed[i] = wall_object->gl_vbo_offset / 4;
-            return;
-        }
-    }
 }
 #endif

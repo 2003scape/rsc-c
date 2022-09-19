@@ -49,6 +49,32 @@ void mudclient_update_ground_item_models(mudclient *mud) {
     }
 }
 
+#ifdef RENDER_GL
+void mudclient_gl_update_wall_models(mudclient *mud) {
+    int vbo_offset = 0;
+    int ebo_offset = 0;
+
+    for (int i = 0; i < mud->wall_object_count; i++) {
+        GameModel *game_model = mud->wall_object_model[i];
+
+        game_model->gl_vao = mud->scene->gl_wall_vao;
+        game_model->gl_ebo_length = 6;
+
+        game_model->gl_vbo_offset = vbo_offset;
+        game_model->gl_ebo_offset = ebo_offset;
+
+        glBindVertexArray(mud->scene->gl_wall_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_ebo);
+
+        game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
+
+        vbo_offset += 4;
+        ebo_offset += 6;
+    }
+}
+#endif
+
 void mudclient_packet_tick(mudclient *mud) {
     uint64_t timestamp = get_ticks();
 
@@ -814,6 +840,10 @@ void mudclient_packet_tick(mudclient *mud) {
             }
 
             mud->wall_object_count = entity_count;
+
+#ifdef RENDER_GL
+        mudclient_gl_update_wall_models(mud);
+#endif
         }
         break;
     }
@@ -926,6 +956,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 }
             }
         }
+
+#ifdef RENDER_GL
+        mudclient_gl_update_wall_models(mud);
+#endif
         break;
     }
     case SERVER_REGION_GROUND_ITEMS: {

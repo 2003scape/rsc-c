@@ -11,6 +11,9 @@
 #include "world.h"
 
 void mudclient_update_ground_item_models(mudclient *mud);
+#ifdef RENDER_GL
+void mudclient_gl_update_wall_models(mudclient *mud);
+#endif
 void mudclient_packet_tick(mudclient *mud);
 
 #endif

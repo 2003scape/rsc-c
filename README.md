@@ -44,6 +44,10 @@ distribute with `./cache` directory.
 
 ## build (windows)
 
+install [mingw-w64](https://packages.debian.org/sid/mingw-w64).
+
+use [wine](https://packages.debian.org/sid/wine) to test locally.
+
     $ make -f Makefile.windows
     $ wine mudclient.exe
 
@@ -103,12 +107,19 @@ for the desktop version, these are passed as command-line arguments. on the
 web they're passed in the URL hash separated by commas
 (`http://localhost:1337/mudclient.html#free,127.0.0.1`).
 
+## options
+
+```
+```
+
 ## libraries used
 
 * [tiny-bignum-c](https://github.com/kokke/tiny-bignum-c) for RSA encryption on
 login/registration
 * [micro-bunzip](https://landley.net/code/) for decompressing cache archives
 * [libsdl2](https://www.libsdl.org/index.php) for input/output on desktop
+* [glew](http://glew.sourceforge.net/) for runtime opengl extension loading
+* [ini](https://github.com/rxi/ini) for parsing *options.ini*
 
 ## license
 Copyright 2022  2003Scape Team
