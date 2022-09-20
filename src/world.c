@@ -2168,7 +2168,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
             game_model->face_tag[parallel_wall_face] = 0;
         }
 
-        int *top_vertices = malloc(4);
+        int *top_vertices = calloc(4, sizeof(int));
         top_vertices[0] = vertices[1];
         top_vertices[1] = parallel_vertices[1];
         top_vertices[2] = parallel_vertices[2];

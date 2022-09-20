@@ -1019,9 +1019,9 @@ void surface_draw(Surface *surface) {
 
     // 64,54
 
-    for (int y = 0; y < surface->height1; y++) {
-        for (int x = 0; x < surface->width1; x += 2) {
-            // int index = ((y  * surface->width1) + x) * 4;
+    for (int y = 0; y < surface->height; y++) {
+        for (int x = 0; x < surface->width; x += 2) {
+            // int index = ((y  * surface->width) + x) * 4;
 
             int r = pixels[index + 1];
             int g = pixels[index + 2];
@@ -1059,7 +1059,7 @@ void surface_draw(Surface *surface) {
                 int fb_index = ((x * 240) + (240 - y)) * 3;
 
                 int pixel_index =
-                    (((y + mud->zoom_offset_y) * surface->width1) +
+                    (((y + mud->zoom_offset_y) * surface->width) +
                      (x + mud->zoom_offset_x)) *
                     4;
 
@@ -1091,9 +1091,9 @@ void surface_draw(Surface *surface) {
 
     int index = 0;
 
-    for (int y = 0; y < surface->height1; y++) {
-        for (int x = 0; x < surface->width1 / 2; x++) {
-            if (mud->interlace) {
+    for (int y = 0; y < surface->height; y++) {
+        for (int x = 0; x < surface->width / 2; x++) {
+            if (surface->interlace) {
                 if (y % 2 == 1) {
                     index += 8;
                     continue;

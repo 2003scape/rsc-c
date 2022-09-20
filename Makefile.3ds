@@ -29,7 +29,7 @@ include $(DEVKITARM)/3ds_rules
 #     - <libctru folder>/default_icon.png
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/ui
+SOURCES		:=	src src/ui src/lib
 #DATA		:=	data
 DATA		:=
 #INCLUDES	:=	include
@@ -44,7 +44,7 @@ CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-mword-relocations -fomit-frame-pointer -ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DREVISION_177
+CFLAGS	+=	$(INCLUDE) -DARM11 -DRENDER_SW -D_3DS -DREVISION_177
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 

@@ -465,6 +465,7 @@ void mudclient_new(mudclient *mud) {
 }
 
 void mudclient_resize(mudclient *mud) {
+#if defined(RENDER_GL) && defined(RENDER_SW)
     SDL_FreeSurface(mud->screen);
     SDL_FreeSurface(mud->pixel_surface);
 
@@ -552,6 +553,7 @@ void mudclient_resize(mudclient *mud) {
 
 #ifdef RENDER_GL
     glViewport(0, 0, mud->game_width, mud->game_height);
+#endif
 #endif
 }
 
@@ -4936,8 +4938,8 @@ void mudclient_draw(mudclient *mud) {
 }
 
 void mudclient_on_resize(mudclient *mud) {
-    int new_width = 0;
-    int new_height = 0;
+    int new_width = MUD_WIDTH;
+    int new_height = MUD_HEIGHT;
 
 #ifdef EMSCRIPTEN
     new_width = get_canvas_width();
@@ -4947,15 +4949,15 @@ void mudclient_on_resize(mudclient *mud) {
 #elif RENDER_GL
     SDL_SetWindowSize(mud->gl_window, new_width, new_height);
 #endif
-#elif defined(RENDER_GL) && defined(RENDER_SW)
+#elif defined(RENDER_GL) && defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
     if (event.window.windowID == SDL_GetWindowID(mud->window)) {
         SDL_GetWindowSize(mud->window, &new_width, &new_height);
     } else {
         SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
     }
-#elif defined(RENDER_GL)
+#elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
     SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
-#elif defined(RENDER_SW)
+#elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
 #endif
 

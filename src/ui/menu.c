@@ -573,10 +573,12 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
         char menu_text[255] = {0};
 
+#if !defined(WII) && !defined(_3DS)
         if ((index == -1 || !mud->selected_wiki) && mud->is_hand_cursor) {
             SDL_SetCursor(mud->default_cursor);
             mud->is_hand_cursor = 0;
         }
+#endif
 
         if (index == -1 && mud->selected_wiki) {
             strcpy(menu_text, "@cya@Choose a wiki lookup target");
@@ -591,10 +593,12 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
                     mud->menu_item_text1[mud->menu_indices[0]],
                     mud->menu_item_text2[mud->menu_indices[0]]);
         } else if (index != -1) {
+#if !defined(WII) && !defined(_3DS)
             if (mud->selected_wiki && !mud->is_hand_cursor) {
                 SDL_SetCursor(mud->hand_cursor);
                 mud->is_hand_cursor = 1;
             }
+#endif
 
             sprintf(menu_text, "%s: @whi@%s",
                     mud->menu_item_text2[mud->menu_indices[index]],

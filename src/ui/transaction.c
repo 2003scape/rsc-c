@@ -426,7 +426,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     surface_draw_box_alpha(mud->surface, dialog_x + TRANSACTION_INVENTORY_X,
                            dialog_y + 235, 246, 43, GREY_98, 160);
 
-    char formatted_with[USERNAME_LENGTH + 15] = {0};
+    char formatted_with[USERNAME_LENGTH + 25] = {0};
 
     sprintf(formatted_with,
             is_trade ? "Trading with: %s" : "Preparing to duel with: %s",
