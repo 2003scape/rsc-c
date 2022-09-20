@@ -465,7 +465,7 @@ void mudclient_new(mudclient *mud) {
 }
 
 void mudclient_resize(mudclient *mud) {
-#if defined(RENDER_GL) && defined(RENDER_SW)
+#if !defined(WII) && !defined(_3DS)
     SDL_FreeSurface(mud->screen);
     SDL_FreeSurface(mud->pixel_surface);
 
@@ -1996,9 +1996,10 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
-    int ground_item_model_count = 0;
-
     if (mud->options->ground_item_models) {
+#ifdef RENDER_GL
+        mud->item_models = calloc(game_data_item_count, sizeof(GameModel*));
+
         for (int i = 0; i < game_data_item_count; i++) {
             int sprite_id = game_data_item_sprite[i];
 
@@ -2025,9 +2026,36 @@ void mudclient_load_models(mudclient *mud) {
             }
 
             mud->item_models[i] = game_model;
-
-            ground_item_model_count++;
         }
+#else
+        int max_sprite_id = 0;
+
+        for (int i = 0; i < game_data_item_count; i++) {
+            int sprite_id = game_data_item_sprite[i];
+
+            if (sprite_id > max_sprite_id) {
+                max_sprite_id = sprite_id;
+            }
+        }
+
+        mud->item_models = calloc(max_sprite_id, sizeof(GameModel*));
+
+        for (int i = 0; i < max_sprite_id; i++) {
+            char file_name[21] = {0};
+            sprintf(file_name, "item-%d.ob3", i);
+
+            int offset = get_data_file_offset(file_name, models_jag);
+
+            if (offset == 0) {
+                continue;
+            }
+
+            GameModel *game_model = malloc(sizeof(GameModel));
+            game_model_from_bytes(game_model, models_jag, offset);
+
+            mud->item_models[i] = game_model;
+        }
+#endif
     }
 
     free(models_jag);
@@ -2815,25 +2843,6 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
 
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
-#if 0
-    game_model->gl_vao = mud->scene->gl_wall_vao;
-    game_model->gl_ebo_length = 6;
-
-    int vbo_offset = 0;
-    int ebo_offset = 0;
-
-    scene_gl_get_wall_model_offsets(mud->scene, &vbo_offset, &ebo_offset);
-
-    game_model->gl_vbo_offset = vbo_offset;
-    game_model->gl_ebo_offset = ebo_offset;
-
-    glBindVertexArray(mud->scene->gl_wall_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_ebo);
-
-    game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
-#endif
-
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
         scene_add_model(mud->scene, game_model);
     }
@@ -2933,19 +2942,21 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         mud->wall_object_x[i] -= offset_x;
         mud->wall_object_y[i] -= offset_y;
 
-        int wall_obj_x = mud->wall_object_x[i];
-        int wall_obj_y = mud->wall_object_y[i];
-        int wall_obj_id = mud->wall_object_id[i];
-        int wall_obj_dir = mud->wall_object_direction[i];
+        int wall_object_x = mud->wall_object_x[i];
+        int wall_object_y = mud->wall_object_y[i];
+        int wall_object_id = mud->wall_object_id[i];
+        int wall_object_dir = mud->wall_object_direction[i];
 
-        world_set_object_adjacency_from4(mud->world, wall_obj_x, wall_obj_y,
-                                         wall_obj_dir, wall_obj_id);
+        world_set_object_adjacency_from4(mud->world, wall_object_x,
+                                         wall_object_y, wall_object_dir,
+                                         wall_object_id);
 
         game_model_destroy(mud->wall_object_model[i]);
         free(mud->wall_object_model[i]);
 
-        GameModel *wall_object_model = mudclient_create_wall_object(
-            mud, wall_obj_x, wall_obj_y, wall_obj_dir, wall_obj_id, i);
+        GameModel *wall_object_model =
+            mudclient_create_wall_object(mud, wall_object_x, wall_object_y,
+                                         wall_object_dir, wall_object_id, i);
 
         mud->wall_object_model[i] = wall_object_model;
     }
@@ -2957,8 +2968,6 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     for (int i = 0; i < mud->ground_item_count; i++) {
         mud->ground_item_x[i] -= offset_x;
         mud->ground_item_y[i] -= offset_y;
-
-        GameModel *model = mud->ground_item_model[i];
     }
 
     mudclient_update_ground_item_models(mud);
@@ -4949,7 +4958,8 @@ void mudclient_on_resize(mudclient *mud) {
 #elif RENDER_GL
     SDL_SetWindowSize(mud->gl_window, new_width, new_height);
 #endif
-#elif defined(RENDER_GL) && defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
+#elif defined(RENDER_GL) && defined(RENDER_SW) && !defined(_3DS) &&            \
+    !defined(WII)
     if (event.window.windowID == SDL_GetWindowID(mud->window)) {
         SDL_GetWindowSize(mud->window, &new_width, &new_height);
     } else {
@@ -6044,6 +6054,6 @@ int main(int argc, char **argv) {
 
 #ifdef EMSCRIPTEN
 void browser_mouse_moved(int x, int y) {
-    mudclient_mouse_moved(global_mud, x , y);
+    mudclient_mouse_moved(global_mud, x, y);
 }
 #endif

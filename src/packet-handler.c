@@ -19,6 +19,8 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
     for (int i = 0; i < mud->ground_item_count; i++) {
         int item_id = mud->ground_item_id[i];
+
+#ifdef RENDER_GL
         GameModel *original_model = mud->item_models[item_id];
 
         if (original_model == NULL) {
@@ -26,6 +28,23 @@ void mudclient_update_ground_item_models(mudclient *mud) {
         }
 
         GameModel *model = game_model_copy(original_model);
+#else
+        int sprite_id = game_data_item_sprite[item_id];
+        GameModel *original_model = mud->item_models[sprite_id];
+
+        if (original_model == NULL) {
+            continue;
+        }
+
+        GameModel *model = game_model_copy(original_model);
+
+        int mask_colour = game_data_item_mask[item_id];
+
+        if (mask_colour != 0) {
+            game_model_mask_faces(model, model->face_fill_back, mask_colour);
+            game_model_mask_faces(model, model->face_fill_front, mask_colour);
+        }
+#endif
 
         model->key = i + GROUND_ITEM_FACE_TAG;
 

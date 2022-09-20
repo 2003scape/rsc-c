@@ -486,7 +486,7 @@ typedef struct mudclient {
 
     /* created from cache and copied for each in-game instance */
     GameModel *game_models[GAME_OBJECTS_MAX];
-    GameModel *item_models[1290];
+    GameModel **item_models/*[1290]*/;
 
     /* ./ui/login.c */
     Panel *panel_login_welcome;

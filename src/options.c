@@ -13,8 +13,8 @@ void options_new(Options *options) {
     /* experimental */
     options->thick_walls = 0;
 
-    // options_set_defaults(options);
-    options_set_vanilla(options);
+    options_set_defaults(options);
+    // options_set_vanilla(options);
 }
 
 void options_set_server(Options *options) {
