@@ -2,7 +2,7 @@
 
 portable runescape classic client ported to C. supports 204 and 177
 (for [openrsc](https://rsc.vet/) support) client revisions. original java source
-refactored by v0rtex/xetr0v and Isaac Exemplar.
+refactored by v0rtex/xetr0v and Isaac Eggsampler.
 
 QR code for 3DS install:
 

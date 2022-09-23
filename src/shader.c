@@ -81,13 +81,11 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 
-    free((char*)vertex_shader_code);
-    free((char*)fragment_shader_code);
+    free((char *)vertex_shader_code);
+    free((char *)fragment_shader_code);
 }
 
-void shader_use(Shader *shader) {
-    glUseProgram(shader->id);
-}
+void shader_use(Shader *shader) { glUseProgram(shader->id); }
 
 void shader_set_int(Shader *shader, char *name, int value) {
     glUniform1i(glGetUniformLocation(shader->id, name), value);
@@ -97,19 +95,24 @@ void shader_set_float(Shader *shader, char *name, float value) {
     glUniform1f(glGetUniformLocation(shader->id, name), value);
 }
 
-void shader_set_float_array(Shader *shader, char *name, float *values, int length) {
-    glUniform1fv(glGetUniformLocation(shader->id, name), length, (float*)values);
+void shader_set_float_array(Shader *shader, char *name, float *values,
+                            int length) {
+    glUniform1fv(glGetUniformLocation(shader->id, name), length,
+                 (float *)values);
 }
 
 void shader_set_mat4(Shader *shader, char *name, mat4 value) {
-    glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE, (float*)value);
+    glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE,
+                       (float *)value);
 }
 
 void shader_set_vec3(Shader *shader, char *name, vec3 value) {
-    glUniform3fv(glGetUniformLocation(shader->id, name), 1, (float*)value);
+    glUniform3fv(glGetUniformLocation(shader->id, name), 1, (float *)value);
 }
 
-void shader_set_vec3_array(Shader *shader, char *name, vec3 *values, int length) {
-    glUniform3fv(glGetUniformLocation(shader->id, name), length, (float*)values);
+void shader_set_vec3_array(Shader *shader, char *name, vec3 *values,
+                           int length) {
+    glUniform3fv(glGetUniformLocation(shader->id, name), length,
+                 (float *)values);
 }
 #endif

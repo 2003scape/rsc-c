@@ -142,6 +142,9 @@
 
 #define MUD_WIDTH (512)
 #define MUD_HEIGHT (346)
+//#define MUD_WIDTH (320)
+//#define MUD_HEIGHT (240)
+#define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
 
 /* npc IDs */
 #define SHIFTY_MAN_ID 24
@@ -486,7 +489,7 @@ typedef struct mudclient {
 
     /* created from cache and copied for each in-game instance */
     GameModel *game_models[GAME_OBJECTS_MAX];
-    GameModel **item_models/*[1290]*/;
+    GameModel **item_models;
 
     /* ./ui/login.c */
     Panel *panel_login_welcome;
@@ -498,6 +501,7 @@ typedef struct mudclient {
     int refer_id;
     int control_login_new_ok;
     int control_register_status;
+    int control_register_status_bottom;
     int control_register_user;
     int control_register_password;
     int control_register_confirm_password;
@@ -505,6 +509,7 @@ typedef struct mudclient {
     int control_register_submit;
     int control_register_cancel;
     int control_login_status;
+    int control_login_status_bottom;
     int control_login_username;
     int control_login_password;
     int control_login_ok;

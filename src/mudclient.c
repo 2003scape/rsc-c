@@ -1998,7 +1998,7 @@ void mudclient_load_models(mudclient *mud) {
 
     if (mud->options->ground_item_models) {
 #ifdef RENDER_GL
-        mud->item_models = calloc(game_data_item_count, sizeof(GameModel*));
+        mud->item_models = calloc(game_data_item_count, sizeof(GameModel *));
 
         for (int i = 0; i < game_data_item_count; i++) {
             int sprite_id = game_data_item_sprite[i];
@@ -2038,7 +2038,7 @@ void mudclient_load_models(mudclient *mud) {
             }
         }
 
-        mud->item_models = calloc(max_sprite_id, sizeof(GameModel*));
+        mud->item_models = calloc(max_sprite_id, sizeof(GameModel *));
 
         for (int i = 0; i < max_sprite_id; i++) {
             char file_name[21] = {0};
@@ -2240,7 +2240,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    if (strlen(username) == 0) {
+    if (strlen(username) == 0 || strlen(password) == 0) {
         mudclient_show_login_screen_status(mud,
                                            "You must enter both a username",
                                            "and a password - Please try again");
@@ -4227,7 +4227,8 @@ void mudclient_draw_blue_bar(mudclient *mud) {
 
     for (int i = 0; i < bars; i++) {
         surface_draw_sprite_from3(mud->surface, i * HBAR_WIDTH,
-                                  mud->surface->height - 16,
+                                  mud->surface->height - 16 +
+                                      (mud->surface->height < 268 ? 4 : 0),
                                   mud->sprite_media + 22);
     }
 }
@@ -4970,6 +4971,8 @@ void mudclient_on_resize(mudclient *mud) {
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
 #endif
+
+    printf("%d %d\n", new_width, new_height);
 
     int old_height = mud->game_height - 12;
 

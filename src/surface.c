@@ -1644,7 +1644,7 @@ void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
 #endif
 }
 
-void surface_apply_login_filter(Surface *surface) {
+void surface_apply_login_filter(Surface *surface, int background_height) {
     surface_fade_to_black(surface);
 
 #ifdef RENDER_GL
@@ -1659,10 +1659,10 @@ void surface_apply_login_filter(Surface *surface) {
         surface_draw_blur(surface, i, 0, i, surface->width, 8);
     }
 
-    surface_draw_box(surface, 0, 194, surface->width, 20, BLACK);
+    surface_draw_box(surface, 0, background_height - 6, surface->width, 20, BLACK);
 
     for (int i = 6; i >= 1; i--) {
-        surface_draw_blur(surface, i, 0, 194 - i, surface->width, 8);
+        surface_draw_blur(surface, i, 0, background_height - 6 - i, surface->width, 8);
     }
 }
 

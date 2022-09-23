@@ -242,7 +242,7 @@ void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
                                 int y, int width, int height, int add_alpha);
 void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
                        int height);
-void surface_apply_login_filter(Surface *surface);
+void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
@@ -343,10 +343,6 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
                          int dest_offset, int font_data_offset);
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
-#if 0
-int get_string_tilde_offset(char *text, int text_length, int offset,
-                            int length);
-#endif
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                int font, int colour, float depth);
 void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
