@@ -8,6 +8,24 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
                               mud->surface->width - UI_TABS_WIDTH - 3, 3,
                               mud->sprite_media + INVENTORY_TAB_SPRITE_OFFSET);
 
+    if (MUD_IS_COMPACT) {
+        surface_draw_box(mud->surface,
+                         mud->surface->width - UI_TABS_WIDTH - 3 - 49, 3 + 23,
+                         109, 9, 0x000083);
+
+        surface_draw_line_horizontal(
+            mud->surface, mud->surface->width - UI_TABS_WIDTH - 3 - 49,
+            3 + 23 + 9, ITEM_GRID_SLOT_WIDTH, BLACK);
+
+        mud->surface->draw_string_shadow = 0;
+
+        surface_draw_string(mud->surface, "INVENTORY",
+                            mud->surface->width - UI_TABS_WIDTH - 3 - 48,
+                            3 + 23 + 9, 1, WHITE);
+
+        mud->surface->draw_string_shadow = 1;
+    }
+
     /* item slots */
     for (int i = 0; i < INVENTORY_ITEMS_MAX; i++) {
         int slot_x = ui_x + (i % INVENTORY_COLUMNS) * INVENTORY_SLOT_WIDTH;
