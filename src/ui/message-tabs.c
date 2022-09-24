@@ -7,7 +7,7 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
     // TODO make the coordinates for these dynamic
 
     mud->control_text_list_all = panel_add_text_list_input(
-        mud->panel_message_tabs, 7, 324, 498, 14, 0, 80, 0, 1);
+        mud->panel_message_tabs, 7, 324, 498, 14, 0, 80, 1, 1);
 
     mud->control_text_list_chat =
         panel_add_text_list(mud->panel_message_tabs, 5, 269, 502, 56, 1, 20, 1);

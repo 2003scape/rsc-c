@@ -1021,7 +1021,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 if (colour != colour_1 || i17 != 0) {
                     if (direction == 0) {
                         if (colour != COLOUR_TRANSPARENT) {
-                            int *colour_vertices = malloc(3 * sizeof(int));
+                            int *colour_vertices = calloc(3, sizeof(int));
 
                             colour_vertices[0] = r_y + r_x * 96 + 96;
                             colour_vertices[1] = r_y + r_x * 96;
@@ -1039,7 +1039,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            int *colour_1_vertices = malloc(3 * sizeof(int));
+                            int *colour_1_vertices = calloc(3, sizeof(int));
 
                             colour_1_vertices[0] = r_y + r_x * 96 + 1;
                             colour_1_vertices[1] = r_y + r_x * 96 + 96 + 1;
@@ -1057,7 +1057,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
                     } else {
                         if (colour != COLOUR_TRANSPARENT) {
-                            int *colour_vertices = malloc(3 * sizeof(int));
+                            int *colour_vertices = calloc(3, sizeof(int));
 
                             colour_vertices[0] = r_y + r_x * 96 + 1;
                             colour_vertices[1] = r_y + r_x * 96 + 96 + 1;
@@ -1075,7 +1075,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            int *colour_1_vertices = malloc(3 * sizeof(int));
+                            int *colour_1_vertices = calloc(3, sizeof(int));
 
                             colour_1_vertices[0] = r_y + r_x * 96 + 96;
                             colour_1_vertices[1] = r_y + r_x * 96;
@@ -1093,7 +1093,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
                     }
                 } else if (colour != COLOUR_TRANSPARENT) {
-                    int *vertices = malloc(4 * sizeof(int));
+                    int *vertices = calloc(4, sizeof(int));
 
                     vertices[0] = r_y + r_x * 96 + 96;
                     vertices[1] = r_y + r_x * 96;
@@ -1121,7 +1121,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     game_data_tile_type[decoration - 1] == BRIDGE_TILE_TYPE) {
                     int fill_front = game_data_tile_decoration[decoration - 1];
 
-                    int *vertices = malloc(4 * sizeof(int));
+                    int *vertices = calloc(4, sizeof(int));
 
                     vertices[0] = game_model_vertex_at(
                         game_model, r_x * TILE_SIZE,
@@ -1166,7 +1166,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         int fill_front =
                             game_data_tile_decoration[decoration_south - 1];
 
-                        int *vertices = malloc(4 * sizeof(int));
+                        int *vertices = calloc(4, sizeof(int));
 
                         vertices[0] = game_model_vertex_at(
                             game_model, r_x * TILE_SIZE,
@@ -1213,7 +1213,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                                           world, r_x, r_y - 1) -
                                                       1];
 
-                        int *vertices = malloc(4 * sizeof(int));
+                        int *vertices = calloc(4, sizeof(int));
 
                         vertices[0] = game_model_vertex_at(
                             game_model, r_x * TILE_SIZE,
@@ -1258,7 +1258,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         int fill_front =
                             game_data_tile_decoration[decoration_east - 1];
 
-                        int *vertices = malloc(4 * sizeof(int));
+                        int *vertices = calloc(4,sizeof(int));
 
                         vertices[0] = game_model_vertex_at(
                             game_model, r_x * TILE_SIZE,
@@ -1303,7 +1303,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         int face_fill =
                             game_data_tile_decoration[decoration_west - 1];
 
-                        int *vertices = malloc(4 * sizeof(int));
+                        int *vertices = calloc(4, sizeof(int));
 
                         vertices[0] = game_model_vertex_at(
                             game_model, r_x * TILE_SIZE,
@@ -1753,7 +1753,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
             if (diagonal > 12000 && diagonal < 24000 &&
                 world_get_wall_roof(world, r_x - 1, r_y - 1) == 0) {
-                int *vertices = malloc(3 * sizeof(int));
+                int *vertices = calloc(3, sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_4_x,
@@ -1771,7 +1771,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                        roof_id, COLOUR_TRANSPARENT);
             } else if (diagonal > 12000 && diagonal < 24000 &&
                        world_get_wall_roof(world, r_x + 1, r_y + 1) == 0) {
-                int *vertices = malloc(3 * sizeof(int));
+                int *vertices = calloc(3, sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_1_x,
@@ -1790,7 +1790,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             } else if (world_get_wall_diagonal(world, r_x, r_y) > 0 &&
                        world_get_wall_diagonal(world, r_x, r_y) < 12000 &&
                        world_get_wall_roof(world, r_x + 1, r_y - 1) == 0) {
-                int *vertices = malloc(3 * sizeof(int));
+                int *vertices = calloc(3, sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_3_x,
@@ -1809,7 +1809,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             } else if (world_get_wall_diagonal(world, r_x, r_y) > 0 &&
                        world_get_wall_diagonal(world, r_x, r_y) < 12000 &&
                        world_get_wall_roof(world, r_x - 1, r_y + 1) == 0) {
-                int *vertices = malloc(3 * sizeof(int));
+                int *vertices = calloc(3,sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_2_x,
@@ -1827,7 +1827,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                        roof_id, COLOUR_TRANSPARENT);
             } else if (terrain_height == terrain_east_height &&
                        terrain_south_east_height == terrain_south_height) {
-                int *vertices = malloc(4 * sizeof(int));
+                int *vertices = calloc(4, sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_1_x,
@@ -1849,7 +1849,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                        roof_id, COLOUR_TRANSPARENT);
             } else if (terrain_height == terrain_south_height &&
                        terrain_east_height == terrain_south_east_height) {
-                int *vertices = malloc(4 * sizeof(int));
+                int *vertices = calloc(4,sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_3_x,
@@ -1883,7 +1883,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (!direction) {
-                    int *triangle_1 = malloc(3 * sizeof(int));
+                    int *triangle_1 = calloc(3, sizeof(int));
 
                     triangle_1[0] =
                         game_model_vertex_at(world->parent_model, vertex_2_x,
@@ -1900,7 +1900,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     game_model_create_face(world->parent_model, 3, triangle_1,
                                            roof_id, COLOUR_TRANSPARENT);
 
-                    int *triangle_2 = malloc(3 * sizeof(int));
+                    int *triangle_2 = calloc(3, sizeof(int));
 
                     triangle_2[0] =
                         game_model_vertex_at(world->parent_model, vertex_3_x,
@@ -1917,7 +1917,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     game_model_create_face(world->parent_model, 3, triangle_2,
                                            roof_id, COLOUR_TRANSPARENT);
                 } else {
-                    int *triangle_1 = malloc(3 * sizeof(int));
+                    int *triangle_1 = calloc(3, sizeof(int));
 
                     triangle_1[0] =
                         game_model_vertex_at(world->parent_model, vertex_1_x,
@@ -1932,7 +1932,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     game_model_create_face(world->parent_model, 3, triangle_1,
                                            roof_id, COLOUR_TRANSPARENT);
 
-                    int *triangle_2 = malloc(3 * sizeof(int));
+                    int *triangle_2 = calloc(3, sizeof(int));
 
                     triangle_2[0] = game_model_vertex_at(
                         world->parent_model, vertex_4_x,
@@ -2100,7 +2100,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         vertex_y2 -= delta_y;
     }
 
-    int *vertices = malloc(4 * sizeof(int));
+    int *vertices = calloc(4, sizeof(int));
 
     vertices[0] = game_model_vertex_at(
         game_model, vertex_x1, -world->terrain_height_local[x1][y1], vertex_y1);
@@ -2127,7 +2127,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
     }
 
     if (thick_walls) {
-        int *parallel_vertices = malloc(4 * sizeof(int));
+        int *parallel_vertices = calloc(4, sizeof(int));
 
         int parallel_vertex_x1 = x1 * TILE_SIZE;
         int parallel_vertex_y1 = y1 * TILE_SIZE;

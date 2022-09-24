@@ -8,7 +8,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
                               mud->surface->width - UI_TABS_WIDTH - 3, 3,
                               mud->sprite_media + INVENTORY_TAB_SPRITE_OFFSET);
 
-    if (MUD_IS_COMPACT) {
+    if (0) {
         surface_draw_box(mud->surface,
                          mud->surface->width - UI_TABS_WIDTH - 3 - 49, 3 + 23,
                          109, 9, 0x000083);
