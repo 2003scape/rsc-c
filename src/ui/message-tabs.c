@@ -7,7 +7,7 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
     // TODO make the coordinates for these dynamic
 
     mud->control_text_list_all = panel_add_text_list_input(
-        mud->panel_message_tabs, 7, 324, 498, 14, 1, 80, 0, 1);
+        mud->panel_message_tabs, 7, 324, 498, 14, 0, 80, 0, 1);
 
     mud->control_text_list_chat =
         panel_add_text_list(mud->panel_message_tabs, 5, 269, 502, 56, 1, 20, 1);
@@ -25,10 +25,20 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
     int x = 0;
     int y = mud->surface->height - 16;
 
-    surface_draw_sprite_from3(mud->surface, x, y,
-                              mud->sprite_media + HBAR_SPRITE_OFFSET);
+    int button_width = MUD_IS_COMPACT ? 78 : 100;
+    int button_offset_x = MUD_IS_COMPACT ? 41 : 54;
 
-    if (mud->surface->width > HBAR_WIDTH) {
+    int bar_width = MUD_IS_COMPACT ? MUD_WIDTH + (MUD_WIDTH / 5) + 12 : HBAR_WIDTH;
+
+    if (MUD_IS_COMPACT) {
+        surface_sprite_clipping_from9(mud->surface, x, y,
+                bar_width, 15, mud->sprite_media + HBAR_SPRITE_OFFSET,0,0,0,0);
+    } else {
+        surface_draw_sprite_from3(mud->surface, x, y,
+                                  mud->sprite_media + HBAR_SPRITE_OFFSET);
+    }
+
+    if (!MUD_IS_COMPACT && mud->surface->width > HBAR_WIDTH) {
         for (int i = 0; i < mud->surface->width / HBAR_WIDTH; i++) {
             surface_draw_sprite_from3(mud->surface, x + (HBAR_WIDTH * (i + 1)),
                                       y + 4, mud->sprite_media + 22);
@@ -43,7 +53,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
                                      mud->surface->width - 503, BLACK);
     }
 
-    if (mud->options->wiki_lookup) {
+    if (!MUD_IS_COMPACT && mud->options->wiki_lookup) {
         surface_draw_box(mud->surface, x + 416, y + 3, 84, 9, MESSAGE_TAB_WIKI);
         surface_draw_box(mud->surface, x + 414, y + 7, 88, 5, MESSAGE_TAB_WIKI);
         surface_draw_box(mud->surface, x + 413, y + 8, 90, 3, MESSAGE_TAB_WIKI);
@@ -61,7 +71,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         text_colour = MESSAGE_TAB_RED;
     }
 
-    surface_draw_string_centre(mud->surface, "All messages", x + 54, y, 0,
+    surface_draw_string_centre(mud->surface, MUD_IS_COMPACT ? "All" : "All messages", x + button_offset_x, y, 0,
                                text_colour);
 
     text_colour = MESSAGE_TAB_PURPLE;
@@ -74,7 +84,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         text_colour = MESSAGE_TAB_RED;
     }
 
-    surface_draw_string_centre(mud->surface, "Chat history", x + 155, y, 0,
+    surface_draw_string_centre(mud->surface, MUD_IS_COMPACT ? "Chat" : "Chat history", x + button_offset_x + button_width + 1, y, 0,
                                text_colour);
 
     text_colour = MESSAGE_TAB_PURPLE;
@@ -87,7 +97,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         text_colour = MESSAGE_TAB_RED;
     }
 
-    surface_draw_string_centre(mud->surface, "Quest history", x + 255, y, 0,
+    surface_draw_string_centre(mud->surface, MUD_IS_COMPACT ? "Quest":"Quest history", x + button_offset_x + (button_width * 2) + 1, y, 0,
                                text_colour);
 
     text_colour = MESSAGE_TAB_PURPLE;
@@ -100,13 +110,13 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         text_colour = MESSAGE_TAB_RED;
     }
 
-    surface_draw_string_centre(mud->surface, "Private history", x + 355, y, 0,
+    surface_draw_string_centre(mud->surface, MUD_IS_COMPACT ? "Private" : "Private history", x + button_offset_x + (button_width * 3) + 1, y, 0,
                                text_colour);
 
     surface_draw_string_centre(mud->surface,
                                mud->options->wiki_lookup ? "Wiki lookup"
                                                          : "Report abuse",
-                               x + 457, y, 0, WHITE);
+        x + button_offset_x + (button_width * 4) + 3, y, 0, WHITE);
 }
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {

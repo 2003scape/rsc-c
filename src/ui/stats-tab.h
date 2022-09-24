@@ -4,9 +4,9 @@
 #include "../mudclient.h"
 
 #define STATS_WIDTH 196
-#define STATS_HEIGHT 275
+#define STATS_HEIGHT (MUD_IS_COMPACT ? 182 : 275)
 #define STATS_TAB_HEIGHT 24
-#define STATS_LINE_BREAK 12
+#define STATS_LINE_BREAK (MUD_IS_COMPACT ? 11 : 12)
 
 #define STATS_TAB_SPRITE_OFFSET 3
 

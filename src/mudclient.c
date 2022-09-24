@@ -2697,7 +2697,7 @@ void mudclient_start_game(mudclient *mud) {
     panel_new(mud->panel_quests, mud->surface, 5);
 
     mud->control_list_quest = panel_add_text_list_interactive(
-        mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH, 251, 1, 500,
+        mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH, STATS_HEIGHT - STATS_TAB_HEIGHT, 1, 500,
         1);
 
     mud->panel_magic = malloc(sizeof(Panel));

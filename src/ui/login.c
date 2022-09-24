@@ -434,8 +434,6 @@ void mudclient_reset_login_screen(mudclient *mud) {
     mud->npc_count = 0;
 }
 
-void mudclient_draw_login_login(mudclient *mud) {}
-
 void mudclient_render_login_scene_sprites(mudclient *mud) {
 #ifdef RENDER_GL
     int old_fov = mud->options->field_of_view;
