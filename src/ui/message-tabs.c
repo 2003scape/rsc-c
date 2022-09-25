@@ -7,16 +7,19 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
     // TODO make the coordinates for these dynamic
 
     mud->control_text_list_all = panel_add_text_list_input(
-        mud->panel_message_tabs, 7, 324, 498, 14, 0, 80, 1, 1);
+        mud->panel_message_tabs, 7, MUD_HEIGHT - 22, MUD_WIDTH - 14, 14, 1, 80, 0, 1);
+
+    int text_list_y = MUD_HEIGHT - 77;
+    int text_list_width = MUD_WIDTH - 10;
 
     mud->control_text_list_chat =
-        panel_add_text_list(mud->panel_message_tabs, 5, 269, 502, 56, 1, 20, 1);
+        panel_add_text_list(mud->panel_message_tabs, 5, text_list_y, text_list_width, 56, 1, 20, 1);
 
     mud->control_text_list_quest =
-        panel_add_text_list(mud->panel_message_tabs, 5, 269, 502, 56, 1, 20, 1);
+        panel_add_text_list(mud->panel_message_tabs, 5, text_list_y, text_list_width, 56, 1, 20, 1);
 
     mud->control_text_list_private =
-        panel_add_text_list(mud->panel_message_tabs, 5, 269, 502, 56, 1, 20, 1);
+        panel_add_text_list(mud->panel_message_tabs, 5, text_list_y, text_list_width, 56, 1, 20, 1);
 
     panel_set_focus(mud->panel_message_tabs, mud->control_text_list_all);
 }
@@ -40,7 +43,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 
     if (!MUD_IS_COMPACT && mud->surface->width > HBAR_WIDTH) {
         for (int i = 0; i < mud->surface->width / HBAR_WIDTH; i++) {
-            surface_draw_sprite_from3(mud->surface, x + (HBAR_WIDTH * (i + 1)),
+            surface_draw_sprite_from3(mud->surface, (x + HBAR_WIDTH) + (HBAR_WIDTH * i),
                                       y + 4, mud->sprite_media + 22);
         }
 
@@ -113,10 +116,12 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
     surface_draw_string_centre(mud->surface, MUD_IS_COMPACT ? "Private" : "Private history", x + button_offset_x + (button_width * 3) + 1, y, 0,
                                text_colour);
 
+    if (!MUD_IS_COMPACT) {
     surface_draw_string_centre(mud->surface,
                                mud->options->wiki_lookup ? "Wiki lookup"
                                                          : "Report abuse",
         x + button_offset_x + (button_width * 4) + 3, y, 0, WHITE);
+    }
 }
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
@@ -167,39 +172,27 @@ void mudclient_send_chat_message(mudclient *mud, int8_t *encoded,
 }
 
 void mudclient_handle_message_tabs_input(mudclient *mud) {
-    int x = 0;
-    int mouse_x = mud->mouse_x - x;
+    int mouse_x = mud->mouse_x;
 
-    if ((mud->mouse_y > mud->surface->height - 16)) {
-        if (mouse_x > 15 && mouse_x < 96 && mud->last_mouse_button_down == 1) {
+    if (mud->last_mouse_button_down == 1 && mud->mouse_y > mud->surface->height - 16) {
+        if (MUD_IS_COMPACT ? (mouse_x > 20 && mouse_x < 86) : (mouse_x > 15 && mouse_x < 96)) {
             mud->message_tab_selected = MESSAGE_TAB_ALL;
-        }
-
-        if (mouse_x > 110 && mouse_x < 194 &&
-            mud->last_mouse_button_down == 1) {
+        } else if (MUD_IS_COMPACT ? (mouse_x > 96 && mouse_x < 163) : (mouse_x > 110 && mouse_x < 194)) {
             mud->message_tab_selected = MESSAGE_TAB_CHAT;
 
             mud->panel_message_tabs
                 ->control_list_position[mud->control_text_list_chat] = 999999;
-        }
-
-        if (mouse_x > 215 && mouse_x < 295 &&
-            mud->last_mouse_button_down == 1) {
+        } else if (MUD_IS_COMPACT ? (mouse_x > 174 && mouse_x < 240) : (mouse_x > 215 && mouse_x < 295)) {
             mud->message_tab_selected = MESSAGE_TAB_QUEST;
 
             mud->panel_message_tabs
                 ->control_list_position[mud->control_text_list_quest] = 999999;
-        }
-
-        if (mouse_x > 315 && mouse_x < 395 &&
-            mud->last_mouse_button_down == 1) {
+        } else if (MUD_IS_COMPACT ? (mouse_x > 253 && mouse_x < 318) : (mouse_x > 315 && mouse_x < 395)) {
             mud->message_tab_selected = MESSAGE_TAB_PRIVATE;
 
             mud->panel_message_tabs
                 ->control_list_position[mud->control_text_list_private] = 999999;
-        }
-
-        if (mouse_x > 417 && mouse_x < 497 &&
+        } else if (!MUD_IS_COMPACT && mouse_x > 417 && mouse_x < 497 &&
             mud->last_mouse_button_down == 1) {
             if (mud->options->wiki_lookup) {
                 mud->selected_wiki = 1;
@@ -332,6 +325,26 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
 
     if (message_length == -1) {
         message_length = strlen(message);
+    }
+
+    if (surface_text_width(message, 1) >= MUD_WIDTH - 15) {
+        int message1_length = message_length / 2;
+        char message1[message1_length + 1];
+        memset(message1, '\0', message1_length + 1);
+
+        int message2_length= message_length - message1_length + 2;
+        char message2[message2_length + 1];
+        memset(message2, '\0', message2_length + 1);
+
+        strncpy(message1, message, message1_length);
+
+        message2[0] = ' ';
+        message2[1] = ' ';
+        strncpy(message2 + 2, message + message1_length, message2_length);
+
+        mudclient_show_message(mud, message1, type);
+        mudclient_show_message(mud, message2, type);
+        return;
     }
 
     char coloured_message[message_length + 6];
