@@ -347,16 +347,15 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
         char message1[message_length + 1];
         memset(message1, '\0', message_length + 1);
 
-        int last_space = -1;
-
+        // TODO fix when no spaces
         for (int i = 0; i < message_length; i++) {
             message1[i] = message[i];
 
             if (message[i] == ' ') {
                 if (surface_text_width(message1, 1) >= max_text_width) {
-                    message1[last_space] = '\0';
+                    message1[i] = '\0';
 
-                    int message2_length = message_length - last_space;
+                    int message2_length = message_length - i;
                     mudclient_show_message(mud, message1, type);
 
                     char message2[message2_length + 6];
@@ -369,12 +368,10 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
                     }
 
                     strncpy(message2 + message2_offset,
-                            message + last_space + 1, message2_length);
+                            message + i + 1, message2_length);
 
                     mudclient_show_message(mud, message2, type);
                     return;
-                } else {
-                    last_space = i;
                 }
             }
         }

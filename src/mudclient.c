@@ -3349,7 +3349,7 @@ void mudclient_handle_camera_zoom(mudclient *mud) {
     if (mud->mouse_scroll_delta != 0 &&
         (mud->show_ui_tab == 0 || mud->show_ui_tab == MAP_TAB) &&
         !(mud->message_tab_selected != MESSAGE_TAB_ALL &&
-          mud->mouse_y > mud->surface->height - 64) &&
+          mud->mouse_y > mud->surface->height - 80) &&
         !mud->show_dialog_bank) {
 
         mud->camera_zoom += mud->mouse_scroll_delta * 24;
