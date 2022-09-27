@@ -51,8 +51,10 @@
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
-#define ITEM_GRID_SLOT_WIDTH 49
-#define ITEM_GRID_SLOT_HEIGHT 34
+//#define ITEM_GRID_SLOT_WIDTH 49
+//#define ITEM_GRID_SLOT_HEIGHT 34
+#define ITEM_GRID_SLOT_WIDTH 39
+#define ITEM_GRID_SLOT_HEIGHT 27
 
 /* colour of scrollbar background gradients */
 #define SCROLLBAR_TOP_COLOUR 0x7272b0

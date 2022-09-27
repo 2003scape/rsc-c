@@ -1058,10 +1058,9 @@ void surface_draw(Surface *surface) {
             for (int x = 0; x < 400; x++) {
                 int fb_index = ((x * 240) + (240 - y)) * 3;
 
-                int pixel_index =
-                    (((y + mud->zoom_offset_y) * surface->width) +
-                     (x + mud->zoom_offset_x)) *
-                    4;
+                int pixel_index = (((y + mud->zoom_offset_y) * surface->width) +
+                                   (x + mud->zoom_offset_x)) *
+                                  4;
 
                 memcpy(mud->framebuffer_top + fb_index, pixels + pixel_index,
                        3);
@@ -1659,10 +1658,12 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
         surface_draw_blur(surface, i, 0, i, surface->width, 8);
     }
 
-    surface_draw_box(surface, 0, background_height - 6, surface->width, 20, BLACK);
+    surface_draw_box(surface, 0, background_height - 6, surface->width, 20,
+                     BLACK);
 
     for (int i = 6; i >= 1; i--) {
-        surface_draw_blur(surface, i, 0, background_height - 6 - i, surface->width, 8);
+        surface_draw_blur(surface, i, 0, background_height - 6 - i,
+                          surface->width, 8);
     }
 }
 
@@ -4009,7 +4010,7 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
 
 void surface_draw_item(Surface *surface, int x, int y, int item_id) {
     surface_sprite_clipping_from9(
-        surface, x, y, INVENTORY_SLOT_WIDTH - 1, INVENTORY_SLOT_HEIGHT - 2,
+        surface, x, y, ITEM_GRID_SLOT_WIDTH - 1, ITEM_GRID_SLOT_HEIGHT - 2,
         surface->mud->sprite_item + game_data_item_sprite[item_id],
         game_data_item_mask[item_id], 0, 0, 0);
 }
@@ -4067,9 +4068,10 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                         mudclient_get_inventory_count(surface->mud, item_id),
                         formatted_amount);
 
-                    surface_draw_string_right(surface, formatted_amount,
-                                              slot_x + 47, slot_y + 29, 1,
-                                              CYAN);
+                    surface_draw_string_right(
+                        surface, formatted_amount,
+                        slot_x + ITEM_GRID_SLOT_WIDTH - 2,
+                        slot_y + ITEM_GRID_SLOT_HEIGHT - 5, 1, CYAN);
                 } else if (game_data_item_stackable[item_id] == 0) {
                     char formatted_amount[15] = {0};
 

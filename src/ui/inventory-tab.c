@@ -28,8 +28,8 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
 
     /* item slots */
     for (int i = 0; i < INVENTORY_ITEMS_MAX; i++) {
-        int slot_x = ui_x + (i % INVENTORY_COLUMNS) * INVENTORY_SLOT_WIDTH;
-        int slot_y = ui_y + (i / INVENTORY_COLUMNS) * INVENTORY_SLOT_HEIGHT;
+        int slot_x = ui_x + (i % INVENTORY_COLUMNS) * ITEM_GRID_SLOT_WIDTH;
+        int slot_y = ui_y + (i / INVENTORY_COLUMNS) * ITEM_GRID_SLOT_HEIGHT;
         int slot_colour = GREY_B5;
 
         if (i < mud->inventory_items_count && mud->inventory_equipped[i]) {
@@ -37,7 +37,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
         }
 
         surface_draw_box_alpha(mud->surface, slot_x, slot_y,
-                               INVENTORY_SLOT_WIDTH, INVENTORY_SLOT_HEIGHT,
+                               ITEM_GRID_SLOT_WIDTH, ITEM_GRID_SLOT_HEIGHT,
                                slot_colour, 128);
 
         if (i < mud->inventory_items_count) {
@@ -60,13 +60,13 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     /* row and column lines */
     for (int i = 1; i <= INVENTORY_COLUMNS - 1; i++) {
         surface_draw_line_vertical(mud->surface,
-                                   ui_x + i * INVENTORY_SLOT_WIDTH, ui_y,
+                                   ui_x + i * ITEM_GRID_SLOT_WIDTH, ui_y,
                                    INVENTORY_HEIGHT, BLACK);
     }
 
     for (int i = 1; i <= INVENTORY_ROWS - 1; i++) {
         surface_draw_line_horizontal(mud->surface, ui_x,
-                                     ui_y + i * INVENTORY_SLOT_HEIGHT,
+                                     ui_y + i * ITEM_GRID_SLOT_HEIGHT,
                                      INVENTORY_WIDTH, BLACK);
     }
 
@@ -82,8 +82,8 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
         return;
     }
 
-    int item_index = (mouse_x / INVENTORY_SLOT_WIDTH) +
-                     (mouse_y / INVENTORY_SLOT_HEIGHT) * INVENTORY_COLUMNS;
+    int item_index = (mouse_x / ITEM_GRID_SLOT_WIDTH) +
+                     (mouse_y / ITEM_GRID_SLOT_HEIGHT) * INVENTORY_COLUMNS;
 
     if (item_index >= mud->inventory_items_count) {
         return;

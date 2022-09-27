@@ -308,8 +308,10 @@ void mudclient_draw_bank(mudclient *mud) {
 
     mud->bank_visible_rows = visible_rows;
 
+    int offset_y = MUD_IS_COMPACT ? 12 : 0;
+
     int item_grid_height = visible_rows * ITEM_GRID_SLOT_HEIGHT;
-    int bank_height = item_grid_height + 76 - (MUD_IS_COMPACT ? 12 : 0);
+    int bank_height = item_grid_height + 76 - offset_y;
 
     /*if (mud->options->bank_search) {
         bank_height += 24;
@@ -516,7 +518,6 @@ void mudclient_draw_bank(mudclient *mud) {
         item_id = bank_items[mud->bank_selected_item_slot];
     }
 
-    int offset_y = MUD_IS_COMPACT ? 12 : 0;
     int item_grid_y = ui_y + 28 - offset_y;
 
     int mouse_x = mud->mouse_x - ui_x;
@@ -525,8 +526,8 @@ void mudclient_draw_bank(mudclient *mud) {
 
     if (mud->show_dialog_offer_x) {
         mouse_handled = 1;
-    } else if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < bank_width &&
-               mouse_y < item_grid_height + 76) {
+    } else if (mouse_x >= 0 && mouse_y >= 12 + offset_y &&
+               mouse_x < bank_width && mouse_y < item_grid_height + 76) {
         mouse_handled = 1;
 
         int slot_index = bank_item_offset;
@@ -599,10 +600,12 @@ void mudclient_draw_bank(mudclient *mud) {
             bank_count = 1;
         }
 
+        int offset_x = MUD_IS_COMPACT ? 100 : 0;
+
         if (bank_count > 0) {
             mudclient_handle_bank_amounts_input(
                 mud, bank_count, mud->bank_last_withdraw_offer,
-                ui_x + 220 - (MUD_IS_COMPACT ? 100 : 0),
+                ui_x + 220 - offset_x,
                 ui_y + item_grid_height + 34 - (MUD_IS_COMPACT ? 14 : 0),
                 CLIENT_BANK_WITHDRAW);
         }
@@ -612,7 +615,7 @@ void mudclient_draw_bank(mudclient *mud) {
         if (inventory_count > 0) {
             mudclient_handle_bank_amounts_input(
                 mud, inventory_count, mud->bank_last_deposit_offer,
-                ui_x + 220 - (MUD_IS_COMPACT ? 100 : 0),
+                ui_x + 220 - offset_x,
                 ui_y + item_grid_height + 59 - (MUD_IS_COMPACT ? 20 : 0),
                 CLIENT_BANK_DEPOSIT);
         }
@@ -663,7 +666,8 @@ void mudclient_draw_bank(mudclient *mud) {
 
         if (mud->mouse_button_down != 0 &&
             get_ticks() - mud->bank_last_scroll > BANK_SCROLL_SPEED) {
-            int scrollbar_x = (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) + 8;
+            int scrollbar_x = (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) +
+                              (MUD_IS_COMPACT ? 6 : 8);
 
             /* up arrow */
             if (mud->bank_scroll_row > 0 && mud->mouse_x > ui_x + scrollbar_x &&
@@ -725,10 +729,12 @@ void mudclient_draw_bank(mudclient *mud) {
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + 29 - offset_y, 8,
                            item_grid_height, GREY_98, 160);
 
-    surface_draw_box_alpha(mud->surface,
-                           ui_x + (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) + 7,
-                           ui_y + 29 - offset_y, 9 + (bank_width - BANK_WIDTH),
-                           item_grid_height, GREY_98, 160);
+    surface_draw_box_alpha(
+        mud->surface,
+        ui_x + (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) + (MUD_IS_COMPACT ? 5 : 7),
+        ui_y + 29 - offset_y,
+        9 + (bank_width - BANK_WIDTH) - (MUD_IS_COMPACT ? 3 : 0),
+        item_grid_height, GREY_98, 160);
 
     surface_draw_string(mud->surface, bank_title, ui_x + 1, ui_y + 10, 1,
                         WHITE);
@@ -799,8 +805,10 @@ void mudclient_draw_bank(mudclient *mud) {
                 sprintf(formatted_money, "Total value: a lot!");
             } else {
                 char formatted_amount[15] = {0};
+
                 mudclient_format_number_commas(mud, total_value,
                                                formatted_amount);
+
                 sprintf(formatted_money, "Total value: %sgp", formatted_amount);
             }
 
@@ -810,17 +818,17 @@ void mudclient_draw_bank(mudclient *mud) {
         }
     }
 
-    surface_draw_item_grid(mud->surface, ui_x + 7, item_grid_y, visible_rows,
-                           BANK_COLUMNS, bank_items + bank_item_offset,
-                           bank_items_count + bank_item_offset,
-                           bank_item_count - bank_item_offset,
-                           mud->bank_selected_item_slot - bank_item_offset, 1);
+    surface_draw_item_grid(
+        mud->surface, ui_x + (MUD_IS_COMPACT ? 4 : 7), item_grid_y,
+        visible_rows, BANK_COLUMNS, bank_items + bank_item_offset,
+        bank_items_count + bank_item_offset, bank_item_count - bank_item_offset,
+        mud->bank_selected_item_slot - bank_item_offset, 1);
 
     if (show_bank_scroll) {
         int scrub_y = ((float)mud->bank_scroll_row / (float)total_rows) *
                       (float)max_scroll_height;
 
-        int scrollbar_x = (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS);
+        int scrollbar_x = (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) - 4;
 
         surface_draw_scrollbar(mud->surface, ui_x + 24, item_grid_y,
                                scrollbar_x, item_grid_height, 1 + scrub_y,
@@ -835,7 +843,7 @@ void mudclient_draw_bank(mudclient *mud) {
 
     surface_draw_box_alpha(
         mud->surface, ui_x, ui_y + (item_grid_height - 204) + 233 - offset_y,
-        bank_width, 47 - (MUD_IS_COMPACT ? 12 : 0), GREY_98, 160);
+        bank_width, 47 - offset_y, GREY_98, 160);
 
     surface_draw_line_horizontal(mud->surface, ui_x + 5,
                                  ui_y + item_grid_height + 52 -
@@ -870,6 +878,8 @@ void mudclient_draw_bank(mudclient *mud) {
             bank_count = 1;
         }
 
+        int offset_x = MUD_IS_COMPACT ? 100 : 0;
+
         if (bank_count > 0) {
             char *item_name = game_data_item_name[item_id];
             char formatted_withdraw[strlen(item_name) + 10];
@@ -884,7 +894,7 @@ void mudclient_draw_bank(mudclient *mud) {
 
             mudclient_draw_bank_amounts(
                 mud, bank_count, mud->bank_last_withdraw_offer,
-                ui_x + 220 - (MUD_IS_COMPACT ? 100 : 0),
+                ui_x + 220 - offset_x,
                 ui_y + item_grid_height + 34 - (MUD_IS_COMPACT ? 14 : 0));
         }
 
@@ -904,7 +914,7 @@ void mudclient_draw_bank(mudclient *mud) {
 
             mudclient_draw_bank_amounts(
                 mud, inventory_count, mud->bank_last_deposit_offer,
-                ui_x + 220 - (MUD_IS_COMPACT ? 100 : 0),
+                ui_x + 220 - offset_x,
                 ui_y + item_grid_height + 59 - (MUD_IS_COMPACT ? 20 : 0));
         }
     } else {

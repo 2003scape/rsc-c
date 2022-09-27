@@ -5987,8 +5987,8 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int item_id) {
     surface_draw_item(mud->surface, x + offset_x, y, item_id);
 
     if (certificate_item_id != -1) {
-        int og_width = INVENTORY_SLOT_WIDTH - 1;
-        int og_height = INVENTORY_SLOT_HEIGHT - 2;
+        int og_width = ITEM_GRID_SLOT_WIDTH - 1;
+        int og_height = ITEM_GRID_SLOT_HEIGHT - 2;
 
         surface_sprite_clipping_from9(
             mud->surface, x + 4 + og_width * 0.125f, y + 2 + og_height * 0.125f,

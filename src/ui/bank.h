@@ -11,7 +11,8 @@
 #define BANK_ROWS 6
 #endif
 
-#define BANK_WIDTH ((ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) + 16)
+#define BANK_WIDTH                                                             \
+    ((ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) + (MUD_IS_COMPACT ? 11 : 16))
 
 #define BANK_PAGE_BUTTON_WIDTH 65
 
@@ -31,7 +32,7 @@ void mudclient_add_bank_menus(mudclient *mud, int type, int item_id,
 void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
                                  int y);
 void mudclient_handle_bank_amounts_input(mudclient *mud, int amount, int last_x,
-                                    int x, int y, int transaction_opcode);
+                                         int x, int y, int transaction_opcode);
 void mudclient_draw_bank(mudclient *mud);
 
 #endif
