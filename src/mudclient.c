@@ -2479,8 +2479,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    /*
-    if (mud->auto_login_timeout > 0) {
+    /*if (mud->auto_login_timeout > 0) {
         delay_ticks(5000);
         mud->auto_login_timeout--;
         mudclient_login(mud, username, password, reconnecting);
@@ -5971,7 +5970,7 @@ int mudclient_get_wilderness_depth(mudclient *mud) {
     return wilderness_depth;
 }
 
-void mudclient_draw_item(mudclient *mud, int x, int y, int item_id) {
+void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width, int slot_height, int item_id) {
     int certificate_item_id = -1;
 
     if (mud->options->certificate_items) {
@@ -5984,7 +5983,7 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int item_id) {
         offset_x = -2;
     }
 
-    surface_draw_item(mud->surface, x + offset_x, y, item_id);
+    surface_draw_item(mud->surface, x + offset_x, y, slot_width, slot_height, item_id);
 
     if (certificate_item_id != -1) {
         int og_width = ITEM_GRID_SLOT_WIDTH - 1;

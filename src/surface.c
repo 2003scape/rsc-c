@@ -4008,22 +4008,22 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     surface_draw_line_horizontal(surface, x, y + height, width, BLACK);
 }
 
-void surface_draw_item(Surface *surface, int x, int y, int item_id) {
+void surface_draw_item(Surface *surface, int x, int y, int slot_width, int slot_height, int item_id) {
     surface_sprite_clipping_from9(
-        surface, x, y, ITEM_GRID_SLOT_WIDTH - 1, ITEM_GRID_SLOT_HEIGHT - 2,
+        surface, x, y, slot_width, slot_height - 2,
         surface->mud->sprite_item + game_data_item_sprite[item_id],
         game_data_item_mask[item_id], 0, 0, 0);
 }
 
 /* used in bank and shop */
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
-                            int columns, int *items, int *items_count,
-                            int items_length, int selected,
+                            int columns, int slot_width, int slot_height, int *items,
+                            int *items_count, int items_length, int selected,
                             int show_inventory_count) {
     int is_selected_visible = selected >= 0 && selected <= items_length;
 
-    int box_width = (columns * ITEM_GRID_SLOT_WIDTH);
-    int box_height = (rows * ITEM_GRID_SLOT_HEIGHT);
+    int box_width = (columns * slot_width);
+    int box_height = (rows * slot_height);
 
     if (!is_selected_visible) {
         surface_draw_box_alpha(surface, x + 1, y + 1, box_width - 1,
@@ -4034,23 +4034,23 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
     for (int row = 0; row < rows; row++) {
         for (int column = 0; column < columns; column++) {
-            int slot_x = x + column * ITEM_GRID_SLOT_WIDTH;
-            int slot_y = y + row * ITEM_GRID_SLOT_HEIGHT;
+            int slot_x = x + column * slot_width;
+            int slot_y = y + row * slot_height;
             int slot_colour = selected == item_index ? RED : GREY_D0;
             int offset_x = show_inventory_count ? 0 : 1;
             int offset_y = show_inventory_count ? 0 : 1;
 
             if (is_selected_visible) {
-                surface_draw_box_alpha(surface, slot_x, slot_y,
-                                       ITEM_GRID_SLOT_WIDTH,
-                                       ITEM_GRID_SLOT_HEIGHT, slot_colour, 160);
+                surface_draw_box_alpha(surface, slot_x, slot_y, slot_width,
+                                       slot_height, slot_colour, 160);
             }
 
             int item_id = items[item_index];
 
             if (item_index < items_length && item_id != -1) {
                 mudclient_draw_item(surface->mud, slot_x + offset_x,
-                                    slot_y + offset_y, item_id);
+                                    slot_y + offset_y, slot_width, slot_height,
+                                    item_id);
 
                 int item_count = items_count[item_index];
 
@@ -4069,9 +4069,8 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                         formatted_amount);
 
                     surface_draw_string_right(
-                        surface, formatted_amount,
-                        slot_x + ITEM_GRID_SLOT_WIDTH - 2,
-                        slot_y + ITEM_GRID_SLOT_HEIGHT - 5, 1, CYAN);
+                        surface, formatted_amount, slot_x + slot_width - 2,
+                        slot_y + slot_height - 5, 1, CYAN);
                 } else if (game_data_item_stackable[item_id] == 0) {
                     char formatted_amount[15] = {0};
 
@@ -4091,13 +4090,13 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
     surface_draw_border(surface, x, y, box_width + 1, box_height + 1, BLACK);
 
     for (int row = 1; row < rows; row++) {
-        surface_draw_line_horizontal(
-            surface, x, y + (row * ITEM_GRID_SLOT_HEIGHT), box_width, BLACK);
+        surface_draw_line_horizontal(surface, x, y + (row * slot_height),
+                                     box_width, BLACK);
     }
 
     for (int column = 1; column < columns; column++) {
-        surface_draw_line_vertical(surface, x + (column * ITEM_GRID_SLOT_WIDTH),
-                                   y, box_height, BLACK);
+        surface_draw_line_vertical(surface, x + (column * slot_width), y,
+                                   box_height, BLACK);
     }
 }
 

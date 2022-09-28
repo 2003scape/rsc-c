@@ -51,10 +51,8 @@
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
-//#define ITEM_GRID_SLOT_WIDTH 49
-//#define ITEM_GRID_SLOT_HEIGHT 34
-#define ITEM_GRID_SLOT_WIDTH 39
-#define ITEM_GRID_SLOT_HEIGHT 27
+#define ITEM_GRID_SLOT_WIDTH 49
+#define ITEM_GRID_SLOT_HEIGHT 34
 
 /* colour of scrollbar background gradients */
 #define SCROLLBAR_TOP_COLOUR 0x7272b0
@@ -362,10 +360,10 @@ int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
-void surface_draw_item(Surface *surface, int x, int y, int item_id);
+void surface_draw_item(Surface *surface, int x, int y, int slot_width, int slot_height, int item_id);
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
-                            int columns, int *items, int *items_count,
-                            int items_length, int selected,
+                            int columns, int slot_width, int slot_height,
+                            int *items, int *items_count, int items_length, int selected,
                             int show_inventory_count);
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height);

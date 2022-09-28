@@ -3,7 +3,7 @@
 void mudclient_draw_shop(mudclient *mud) {
     int x = (mud->surface->width / 2) - (SHOP_WIDTH / 2);
     int y = (mud->surface->height / 2) - (SHOP_HEIGHT / 2) - 6;
-    int item_grid_height = ITEM_GRID_SLOT_HEIGHT * SHOP_ROWS;
+    int item_grid_height = SHOP_SLOT_HEIGHT * SHOP_ROWS;
 
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
@@ -17,13 +17,13 @@ void mudclient_draw_shop(mudclient *mud) {
 
             for (int row = 0; row < SHOP_ROWS; row++) {
                 for (int column = 0; column < SHOP_COLUMNS; column++) {
-                    int slot_x = 7 + column * ITEM_GRID_SLOT_WIDTH;
-                    int slot_y = 28 + row * ITEM_GRID_SLOT_HEIGHT;
+                    int slot_x = 7 + column * SHOP_SLOT_WIDTH;
+                    int slot_y = 28 + row * SHOP_SLOT_HEIGHT;
 
                     if (mouse_x > slot_x &&
-                        mouse_x < slot_x + ITEM_GRID_SLOT_WIDTH &&
+                        mouse_x < slot_x + SHOP_SLOT_WIDTH &&
                         mouse_y > slot_y &&
-                        mouse_y < slot_y + ITEM_GRID_SLOT_HEIGHT &&
+                        mouse_y < slot_y + SHOP_SLOT_HEIGHT &&
                         mud->shop_items[item_index] != -1) {
                         mud->shop_selected_item_index = item_index;
 
@@ -116,7 +116,7 @@ void mudclient_draw_shop(mudclient *mud) {
 
     surface_draw_box_alpha(
         mud->surface,
-        x + (ITEM_GRID_SLOT_WIDTH * SHOP_COLUMNS) + (MUD_IS_COMPACT ? 5 : 7),
+        x + (SHOP_SLOT_WIDTH * SHOP_COLUMNS) + (MUD_IS_COMPACT ? 5 : 7),
         y + 29, (MUD_IS_COMPACT ? 6 : 9), item_grid_height, GREY_98, 160);
 
     surface_draw_box_alpha(mud->surface, x, y + item_grid_height + 29,
@@ -161,7 +161,8 @@ void mudclient_draw_shop(mudclient *mud) {
     }
 
     surface_draw_item_grid(mud->surface, x + (MUD_IS_COMPACT ? 4 : 7), y + 28,
-                           SHOP_ROWS, SHOP_COLUMNS, mud->shop_items,
+                           SHOP_ROWS, SHOP_COLUMNS, SHOP_SLOT_WIDTH, SHOP_SLOT_HEIGHT,
+                           mud->shop_items,
                            mud->shop_items_count, SHOP_ROWS * SHOP_COLUMNS,
                            mud->shop_selected_item_index, 1);
 

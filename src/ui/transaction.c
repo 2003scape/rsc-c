@@ -204,6 +204,7 @@ void mudclient_draw_transaction_items(mudclient *mud, int x, int y, int rows,
                                       int *transaction_items_count,
                                       int transaction_item_count) {
     surface_draw_item_grid(mud->surface, x, y, rows, TRANSACTION_OFFER_COLUMNS,
+                           ITEM_GRID_SLOT_HEIGHT, ITEM_GRID_SLOT_HEIGHT,
                            transaction_items, transaction_items_count,
                            transaction_item_count, -1, 0);
 
@@ -480,7 +481,8 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     surface_draw_item_grid(
         mud->surface, dialog_x + TRANSACTION_INVENTORY_X,
         dialog_y + TRANSACTION_INVENTORY_Y, TRANSACTION_INVENTORY_ROWS,
-        TRANSACTION_INVENTORY_COLUMNS, mud->inventory_item_id,
+        TRANSACTION_INVENTORY_COLUMNS, ITEM_GRID_SLOT_WIDTH, ITEM_GRID_SLOT_HEIGHT,
+        mud->inventory_item_id,
         mud->inventory_item_stack_count, mud->inventory_items_count, -1, 0);
 
     /* our offer */

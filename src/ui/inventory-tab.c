@@ -43,7 +43,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
         if (i < mud->inventory_items_count) {
             int item_id = mud->inventory_item_id[i];
 
-            mudclient_draw_item(mud, slot_x, slot_y, item_id);
+            mudclient_draw_item(mud, slot_x, slot_y, ITEM_GRID_SLOT_WIDTH, ITEM_GRID_SLOT_HEIGHT, item_id);
 
             char formatted_amount[12] = {0};
 
