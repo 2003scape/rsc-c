@@ -6,6 +6,12 @@ void mudclient_draw_duel(mudclient *mud) {
     int dialog_y =
         (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) + 2; // 36
 
+    int offset_x = MUD_IS_COMPACT ? 2 : 8;
+
+    int offset_y = MUD_IS_COMPACT
+                       ? (DUEL_OFFER_ROWS * TRADE_SLOT_HEIGHT) + 56
+                       : (DUEL_OFFER_ROWS * TRADE_SLOT_HEIGHT * 2) + 79; // 215
+
     if (mud->mouse_button_click != 0) {
         int mouse_x = mud->mouse_x - dialog_x;
         int mouse_y = mud->mouse_y - dialog_y;
@@ -68,57 +74,79 @@ void mudclient_draw_duel(mudclient *mud) {
         return;
     }
 
-    surface_draw_box_alpha(mud->surface, dialog_x + 8, dialog_y + 215, 197, 43,
-                           GREY_D0, 160);
+    int options_width = (TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) + 1;
 
-    surface_draw_border(mud->surface, dialog_x + 8, dialog_y + 215, 197, 43,
-                          BLACK);
+    surface_draw_box_alpha(mud->surface, dialog_x + offset_x,
+                           dialog_y + offset_y, options_width, 43, GREY_D0, 160);
 
-    surface_draw_string(mud->surface, "Duel Options", dialog_x + 9,
-                        dialog_y + 212, 4, WHITE);
+    surface_draw_border(mud->surface, dialog_x + offset_x, dialog_y + offset_y,
+                        options_width, 43, BLACK);
 
-    surface_draw_string(mud->surface, "No retreating", dialog_x + 8 + 1,
-                        dialog_y + 215 + 16, 3, YELLOW);
+    if (!MUD_IS_COMPACT) {
+        surface_draw_string(mud->surface, "Duel Options",
+                            dialog_x + offset_x + 1, dialog_y + offset_y - 3, 4,
+                            WHITE);
+    }
 
-    surface_draw_string(mud->surface, "No magic", dialog_x + 8 + 1,
-                        dialog_y + 215 + 35, 3, YELLOW);
+    surface_draw_string(
+        mud->surface, MUD_IS_COMPACT ? "Retreat" : "No retreating",
+        dialog_x + offset_x + 1, dialog_y + offset_y + 16, 3, YELLOW);
 
-    surface_draw_string(mud->surface, "No prayer", dialog_x + 8 + 102,
-                        dialog_y + 215 + 16, 3, YELLOW);
+    int left_option_width = MUD_IS_COMPACT ? 48 : 84;
 
-    surface_draw_string(mud->surface, "No weapons", dialog_x + 8 + 102,
-                        dialog_y + 215 + 35, 3, YELLOW);
-
-    surface_draw_border(mud->surface, dialog_x + 93, dialog_y + 215 + 6, 11,
-                          11, YELLOW);
+    surface_draw_border(mud->surface,
+                        dialog_x + offset_x + left_option_width + 1,
+                        dialog_y + offset_y + 6, 11, 11, YELLOW);
 
     if (mud->duel_option_retreat) {
-        surface_draw_box(mud->surface, dialog_x + 95, dialog_y + 215 + 8, 7, 7,
-                         YELLOW);
+        surface_draw_box(mud->surface,
+                         dialog_x + offset_x + left_option_width + 3,
+                         dialog_y + offset_y + 8, 7, 7, YELLOW);
     }
 
-    surface_draw_border(mud->surface, dialog_x + 93, dialog_y + 215 + 25, 11,
-                          11, YELLOW);
+    surface_draw_string(mud->surface, MUD_IS_COMPACT ? "Magic" : "No magic",
+                        dialog_x + offset_x + 1, dialog_y + offset_y + 35, 3,
+                        YELLOW);
+
+    surface_draw_border(mud->surface,
+                        dialog_x + offset_x + left_option_width + 1,
+                        dialog_y + offset_y + 25, 11, 11, YELLOW);
 
     if (mud->duel_option_magic) {
-        surface_draw_box(mud->surface, dialog_x + 95, dialog_y + 215 + 27, 7, 7,
-                         YELLOW);
+        surface_draw_box(mud->surface,
+                         dialog_x + offset_x + left_option_width + 3,
+                         dialog_y + offset_y + 27, 7, 7, YELLOW);
     }
 
-    surface_draw_border(mud->surface, dialog_x + 191, dialog_y + 215 + 6, 11,
-                          11, YELLOW);
+    int right_option_width = MUD_IS_COMPACT ? 44 : 81;
+    int padding_left = offset_x + left_option_width + (MUD_IS_COMPACT ? 12 : 18); // 110
+
+    surface_draw_string(mud->surface, MUD_IS_COMPACT ? "Prayer" : "No prayer",
+                        dialog_x + padding_left, dialog_y + offset_y + 16, 3,
+                        YELLOW);
+
+    surface_draw_border(mud->surface,
+                        dialog_x + padding_left + right_option_width,
+                        dialog_y + offset_y + 6, 11, 11, YELLOW);
 
     if (mud->duel_option_prayer) {
-        surface_draw_box(mud->surface, dialog_x + 193, dialog_y + 215 + 8, 7, 7,
-                         YELLOW);
+        surface_draw_box(mud->surface,
+                         dialog_x + padding_left + right_option_width + 2,
+                         dialog_y + offset_y + 8, 7, 7, YELLOW);
     }
 
-    surface_draw_border(mud->surface, dialog_x + 191, dialog_y + 215 + 25, 11,
-                          11, YELLOW);
+    surface_draw_string(mud->surface, MUD_IS_COMPACT ? "Equip" : "No weapons",
+                        dialog_x + padding_left, dialog_y + offset_y + 35, 3,
+                        YELLOW);
+
+    surface_draw_border(mud->surface,
+                        dialog_x + padding_left + right_option_width,
+                        dialog_y + offset_y + 25, 11, 11, YELLOW);
 
     if (mud->duel_option_weapons) {
-        surface_draw_box(mud->surface, dialog_x + 193, dialog_y + 215 + 27, 7,
-                         7, YELLOW);
+        surface_draw_box(mud->surface,
+                         dialog_x + padding_left + right_option_width + 2,
+                         dialog_y + offset_y + 27, 7, 7, YELLOW);
     }
 }
 

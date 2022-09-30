@@ -4053,7 +4053,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                                     item_id);
 
                 int item_count = items_count[item_index];
-
+                int font_size = slot_width < ITEM_GRID_SLOT_WIDTH ? 0 : 1;
                 if (show_inventory_count) {
                     char formatted_amount[15] = {0};
 
@@ -4061,7 +4061,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                                                  formatted_amount);
 
                     surface_draw_string(surface, formatted_amount, slot_x + 1,
-                                        slot_y + 10, 1, GREEN);
+                                        slot_y + 10, font_size, GREEN);
 
                     mudclient_format_item_amount(
                         surface->mud,
@@ -4070,7 +4070,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
                     surface_draw_string_right(
                         surface, formatted_amount, slot_x + slot_width - 2,
-                        slot_y + slot_height - 5, 1, CYAN);
+                        slot_y + slot_height - 5, font_size, CYAN);
                 } else if (game_data_item_stackable[item_id] == 0) {
                     char formatted_amount[15] = {0};
 
@@ -4079,7 +4079,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
                     surface_draw_string(surface, formatted_amount,
                                         slot_x + 1 + offset_x,
-                                        slot_y + 10 + offset_x, 1, YELLOW);
+                                        slot_y + 10 + offset_x, font_size, YELLOW);
                 }
             }
 
