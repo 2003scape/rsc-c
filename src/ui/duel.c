@@ -3,13 +3,13 @@
 void mudclient_draw_duel(mudclient *mud) {
     int dialog_x = mud->surface->width / 2 - TRANSACTION_WIDTH / 2; // 22
 
-    int dialog_y =
-        (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) + 2; // 36
+    int dialog_y = (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) +
+                   (MUD_IS_COMPACT ? 0 : 2); // 36
 
     int offset_x = MUD_IS_COMPACT ? 2 : 8;
 
     int offset_y = MUD_IS_COMPACT
-                       ? (DUEL_OFFER_ROWS * TRADE_SLOT_HEIGHT) + 56
+                       ? (DUEL_OFFER_ROWS * TRADE_SLOT_HEIGHT) + 40
                        : (DUEL_OFFER_ROWS * TRADE_SLOT_HEIGHT * 2) + 79; // 215
 
     if (mud->mouse_button_click != 0) {
@@ -77,7 +77,8 @@ void mudclient_draw_duel(mudclient *mud) {
     int options_width = (TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) + 1;
 
     surface_draw_box_alpha(mud->surface, dialog_x + offset_x,
-                           dialog_y + offset_y, options_width, 43, GREY_D0, 160);
+                           dialog_y + offset_y, options_width, 43, GREY_D0,
+                           160);
 
     surface_draw_border(mud->surface, dialog_x + offset_x, dialog_y + offset_y,
                         options_width, 43, BLACK);
@@ -119,7 +120,9 @@ void mudclient_draw_duel(mudclient *mud) {
     }
 
     int right_option_width = MUD_IS_COMPACT ? 44 : 81;
-    int padding_left = offset_x + left_option_width + (MUD_IS_COMPACT ? 12 : 18); // 110
+
+    int padding_left =
+        offset_x + left_option_width + (MUD_IS_COMPACT ? 13 : 18); // 110
 
     surface_draw_string(mud->surface, MUD_IS_COMPACT ? "Prayer" : "No prayer",
                         dialog_x + padding_left, dialog_y + offset_y + 16, 3,

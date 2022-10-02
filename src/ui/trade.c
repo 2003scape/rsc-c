@@ -3,8 +3,8 @@
 void mudclient_draw_trade(mudclient *mud) {
     int dialog_x = mud->surface->width / 2 - TRANSACTION_WIDTH / 2; // 22
 
-    int dialog_y =
-        (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) + 2; // 36
+    int dialog_y = (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) +
+                   (MUD_IS_COMPACT ? 0 : 2); // 36
 
     mudclient_draw_transaction(mud, dialog_x, dialog_y, 1);
 }

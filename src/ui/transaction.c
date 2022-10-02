@@ -189,6 +189,7 @@ void mudclient_remove_transaction_item(mudclient *mud, int update_opcode,
 
     for (int i = 0; i < mud->transaction_item_count; i++) {
         packet_stream_put_short(mud->packet_stream, mud->transaction_items[i]);
+
         packet_stream_put_int(mud->packet_stream,
                               mud->transaction_items_count[i]);
     }
@@ -393,41 +394,82 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     }
 
     int offer_rows = is_trade ? TRADE_OFFER_ROWS : DUEL_OFFER_ROWS;
-    int opponent_offer_y = TRANSACTION_OFFER_Y + offer_height + (is_trade ? 23 : 25);
+
+    int opponent_padding_bottom = is_trade ? 22 : 24;
+
+    int opponent_offer_y =
+        TRANSACTION_OFFER_Y + offer_height + (opponent_padding_bottom + 1);
 
     surface_draw_box(mud->surface, dialog_x, dialog_y, TRANSACTION_WIDTH, 12,
                      is_trade ? TITLE_BAR_COLOUR : DUEL_BAR_COLOUR);
 
     surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 12,
-                           TRANSACTION_WIDTH, 18, GREY_98, 160);
+                           TRANSACTION_WIDTH, MUD_IS_COMPACT ? 2 : 18, GREY_98,
+                           160);
 
-    int box_height = TRANSACTION_INVENTORY_HEIGHT + (MUD_IS_COMPACT ? 22 : 44);
-
+    int box_width = TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH; // 196
+    int box_height = TRANSACTION_INVENTORY_HEIGHT + (MUD_IS_COMPACT ? 26 : 44);
     int padding_left = MUD_IS_COMPACT ? 2 : 8;
 
-    surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 30, padding_left, box_height, GREY_98, 160);
+    surface_draw_box_alpha(mud->surface, dialog_x,
+                           dialog_y + TRANSACTION_OFFER_Y, padding_left,
+                           box_height, GREY_98, 160);
 
-    surface_draw_box_alpha(mud->surface, dialog_x +
-            (TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) + padding_left + 1, dialog_y + 30, (MUD_IS_COMPACT? 2:11), box_height, GREY_98, 160);
+    surface_draw_box_alpha(mud->surface,
+                           dialog_x + box_width + padding_left + 1,
+                           dialog_y + TRANSACTION_OFFER_Y,
+                           MUD_IS_COMPACT ? 2 : 11, box_height, GREY_98, 160);
 
+    surface_draw_box_alpha(mud->surface,
+                           dialog_x + box_width + padding_left +
+                               TRANSACTION_INVENTORY_WIDTH +
+                               (MUD_IS_COMPACT ? 4 : 13),
+                           dialog_y + TRANSACTION_OFFER_Y,
+                           MUD_IS_COMPACT ? 2 : 6, box_height, GREY_98, 160);
 
-    surface_draw_box_alpha(mud->surface, dialog_x + ((TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) + padding_left + 1) + ((TRANSACTION_INVENTORY_COLUMNS * TRADE_SLOT_WIDTH)) + (MUD_IS_COMPACT?3:12), dialog_y + 30, MUD_IS_COMPACT?2:6, box_height, GREY_98, 160);
+    int tabs_height = 24;
 
-    /*surface_draw_box_alpha(mud->surface, dialog_x + 8,
-                           dialog_y + (offer_rows * TRADE_SLOT_HEIGHT) + 31,
-                           197, 22, GREY_98, 160);*/
+    if (MUD_IS_COMPACT) {
+        int box_y = dialog_y + offer_height + TRANSACTION_OFFER_Y + tabs_height;
 
-    if (offer_rows < 3) {
-        surface_draw_box_alpha(mud->surface, dialog_x + 8,
-                               dialog_y + opponent_offer_y + offer_height, 197,
-                               26, GREY_98, 160);
+        /* below offers */
+        if (is_trade) {
+            surface_draw_box_alpha(mud->surface, dialog_x + padding_left, box_y,
+                                   box_width + 1, 56, GREY_98, 160);
+        } else {
+            surface_draw_box_alpha(mud->surface, dialog_x + padding_left, box_y,
+                                   box_width + 1, 2, GREY_98, 160);
+
+            surface_draw_box_alpha(mud->surface, dialog_x + padding_left,
+                                   box_y + 44, box_width + 1, 39, GREY_98, 160);
+        }
+
+        /* under inventory */
+        surface_draw_box_alpha(
+            mud->surface,
+            dialog_x + TRANSACTION_WIDTH - TRANSACTION_INVENTORY_WIDTH - 3,
+            dialog_y + TRANSACTION_INVENTORY_Y + TRANSACTION_INVENTORY_HEIGHT +
+                1,
+            TRANSACTION_INVENTORY_WIDTH + 1, 25, GREY_98, 160);
+    } else {
+        surface_draw_box_alpha(
+            mud->surface, dialog_x + padding_left,
+            dialog_y + offer_height + TRANSACTION_OFFER_Y + 1, box_width + 1,
+            opponent_padding_bottom, GREY_98, 160);
+
+        surface_draw_box_alpha(mud->surface, dialog_x + padding_left,
+                               dialog_y + opponent_offer_y + offer_height,
+                               box_width + 1, is_trade ? 21 : 26, GREY_98, 160);
+
+        if (!is_trade) {
+            surface_draw_box_alpha(mud->surface, dialog_x + padding_left,
+                                   dialog_y + 258, box_width + 1, 20, GREY_98,
+                                   160);
+        }
+
+        surface_draw_box_alpha(mud->surface, dialog_x + TRANSACTION_INVENTORY_X,
+                               dialog_y + 235, 246, 43, GREY_98, 160);
     }
-
-    surface_draw_box_alpha(mud->surface, dialog_x + 8, dialog_y + 258, 197, 20,
-                           GREY_98, 160);
-
-    surface_draw_box_alpha(mud->surface, dialog_x + TRANSACTION_INVENTORY_X,
-                           dialog_y + 235, 246, 43, GREY_98, 160);
 
     char formatted_with[USERNAME_LENGTH + 25] = {0};
 
@@ -439,16 +481,19 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                         dialog_y + 10, 1, WHITE);
 
     if (MUD_IS_COMPACT) {
-        surface_draw_string(mud->surface, is_trade ? "Offer" : "Stake",
-                            dialog_x + (TRANSACTION_OFFER_X + 1),
-                            dialog_y + (TRANSACTION_OFFER_Y - 3), 4, WHITE);
-
         char *tabs[] = {"Yours", "Theirs"};
         int tabs_width = TRADE_SLOT_WIDTH * TRANSACTION_OFFER_COLUMNS;
+        int tabs_x = dialog_x + TRANSACTION_OFFER_X;
+        int tabs_y = dialog_y + (TRANSACTION_OFFER_Y);
 
-        surface_draw_tabs(mud->surface, dialog_x + TRANSACTION_OFFER_X + 1,
-                          dialog_y + (TRANSACTION_OFFER_Y), tabs_width, 24,
-                          tabs, 2, 0);
+        surface_draw_tabs(mud->surface, tabs_x + 1, tabs_y, tabs_width,
+                          tabs_height - 1, tabs, 2, 0);
+
+        surface_draw_line_vertical(mud->surface, tabs_x, tabs_y, tabs_height,
+                                   BLACK);
+
+        surface_draw_line_vertical(mud->surface, tabs_x + tabs_width, tabs_y,
+                                   tabs_height, BLACK);
 
         surface_draw_line_horizontal(
             mud->surface, dialog_x + (TRANSACTION_OFFER_X + 1),
@@ -465,9 +510,11 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                             dialog_y + (opponent_offer_y - 3), 4, WHITE);
     }
 
-    surface_draw_string(mud->surface, "Your Inventory",
-                        dialog_x + TRANSACTION_INVENTORY_X,
-                        dialog_y + (TRANSACTION_INVENTORY_Y - 3), 4, WHITE);
+    if (!MUD_IS_COMPACT) {
+        surface_draw_string(mud->surface, "Your Inventory",
+                            dialog_x + TRANSACTION_INVENTORY_X,
+                            dialog_y + (TRANSACTION_INVENTORY_Y - 3), 4, WHITE);
+    }
 
     surface_draw_sprite_from3(mud->surface, dialog_x + TRANSACTION_DECLINE_X,
                               dialog_y + TRANSACTION_BUTTON_Y,
@@ -508,15 +555,17 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     /* our offer */
     mudclient_draw_transaction_items(
         mud, dialog_x + TRANSACTION_OFFER_X,
-        dialog_y + TRANSACTION_OFFER_Y + (MUD_IS_COMPACT ? 23 : 0), offer_rows, mud->transaction_items, mud->transaction_items_count, mud->transaction_item_count);
+        dialog_y + TRANSACTION_OFFER_Y + (MUD_IS_COMPACT ? 23 : 0), offer_rows,
+        mud->transaction_items, mud->transaction_items_count,
+        mud->transaction_item_count);
 
     if (!MUD_IS_COMPACT) {
         /* recipient's offer */
-        mudclient_draw_transaction_items(mud, dialog_x + TRANSACTION_OFFER_X,
-                                         dialog_y + opponent_offer_y, offer_rows,
-                                         mud->transaction_recipient_items,
-                                         mud->transaction_recipient_items_count,
-                                         mud->transaction_recipient_item_count);
+        mudclient_draw_transaction_items(
+            mud, dialog_x + TRANSACTION_OFFER_X, dialog_y + opponent_offer_y,
+            offer_rows, mud->transaction_recipient_items,
+            mud->transaction_recipient_items_count,
+            mud->transaction_recipient_item_count);
     }
 
     /* highlighted item */

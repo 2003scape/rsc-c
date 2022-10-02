@@ -4010,7 +4010,7 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
 
 void surface_draw_item(Surface *surface, int x, int y, int slot_width, int slot_height, int item_id) {
     surface_sprite_clipping_from9(
-        surface, x, y, slot_width, slot_height - 2,
+        surface, x, y, slot_width - 1, slot_height - 2,
         surface->mud->sprite_item + game_data_item_sprite[item_id],
         game_data_item_mask[item_id], 0, 0, 0);
 }

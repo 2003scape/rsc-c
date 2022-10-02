@@ -140,10 +140,10 @@
 
 #define MOUSE_HISTORY_LENGTH 8192
 
-#define MUD_WIDTH (512)
-#define MUD_HEIGHT (346)
-//#define MUD_WIDTH (320)
-//#define MUD_HEIGHT (240)
+//#define MUD_WIDTH (512)
+//#define MUD_HEIGHT (346)
+#define MUD_WIDTH (320)
+#define MUD_HEIGHT (240)
 #define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
 
 /* npc IDs */

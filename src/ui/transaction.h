@@ -13,7 +13,7 @@
     (TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) // 196
 
 #define TRANSACTION_OFFER_X (MUD_IS_COMPACT ? 2 : 8)
-#define TRANSACTION_OFFER_Y 30
+#define TRANSACTION_OFFER_Y (MUD_IS_COMPACT ? 14 : 30)
 
 /* inventory items grid */
 #define TRANSACTION_INVENTORY_ROWS 6
@@ -25,25 +25,31 @@
 #define TRANSACTION_INVENTORY_HEIGHT                                           \
     (TRANSACTION_INVENTORY_ROWS * TRADE_SLOT_HEIGHT) // 204
 
-#define TRANSACTION_INVENTORY_X (TRANSACTION_OFFER_WIDTH + (MUD_IS_COMPACT ? 5 : 20)) // 216
+#define TRANSACTION_INVENTORY_X                                                \
+    (TRANSACTION_OFFER_WIDTH + (MUD_IS_COMPACT ? 5 : 20)) // 216
 
 #define TRANSACTION_INVENTORY_Y TRANSACTION_OFFER_Y
 
 /* ui size */
 #define TRANSACTION_WIDTH                                                      \
-    ((TRANSACTION_INVENTORY_COLUMNS * TRADE_SLOT_WIDTH) +                  \
-     (TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) + (MUD_IS_COMPACT ? 8 : 27)) // 468
+    ((TRANSACTION_INVENTORY_COLUMNS * TRADE_SLOT_WIDTH) +                      \
+     (TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) +                          \
+     (MUD_IS_COMPACT ? 8 : 27)) // 468
 
 #define TRANSACTION_HEIGHT                                                     \
-    ((TRANSACTION_INVENTORY_ROWS * TRADE_SLOT_HEIGHT) + 74) // 278
+    ((TRANSACTION_INVENTORY_ROWS * TRADE_SLOT_HEIGHT) + (MUD_IS_COMPACT ? 43 : 74)) // 278
 
 /* accept and decline buttons */
-#define TRANSACTION_ACCEPT_X (MUD_IS_COMPACT ? 2 : (TRANSACTION_OFFER_WIDTH + 21)) // 221
+#define TRANSACTION_ACCEPT_X                                                   \
+    (TRANSACTION_INVENTORY_X + (MUD_IS_COMPACT ? 0 : 1)) // 221
 
 #define TRANSACTION_DECLINE_X                                                  \
-    (TRANSACTION_WIDTH - TRANSACTION_BUTTON_WIDTH - 5) // 394
+    (TRANSACTION_WIDTH - TRANSACTION_BUTTON_WIDTH -                            \
+     (MUD_IS_COMPACT ? 2 : 5)) // 394
 
-#define TRANSACTION_BUTTON_Y (MUD_IS_COMPACT ? TRANSACTION_HEIGHT - 18 : (TRANSACTION_INVENTORY_HEIGHT + 34)) // 238
+#define TRANSACTION_BUTTON_Y                                                   \
+    (TRANSACTION_INVENTORY_HEIGHT + TRANSACTION_OFFER_Y +                      \
+     (MUD_IS_COMPACT ? 3 : 4)) // 238
 
 #define TRANSACTION_BUTTON_WIDTH 69
 #define TRANSACTION_BUTTON_HEIGHT 21
