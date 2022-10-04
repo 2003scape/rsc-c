@@ -1,8 +1,19 @@
 # rsc-c
 
-portable runescape classic client ported to C. supports 204 and 177
-(for [openrsc](https://rsc.vet/) support) client revisions. original java source
-refactored by v0rtex/xetr0v and Isaac Eggsampler.
+portable, enhanced runescape classic client ported to C. supports 204 and 177
+(for [openrsc](https://rsc.vet/) support) client revisions. original
+mudclient204 java source refactored by v0rtex/xetr0v and Isaac Eggsampler.
+
+prominent new features include:
+* native ports for 3ds, wii, web browser and desktop
+* opengl/webgl renderer with customizable
+[field of view](https://en.wikipedia.org/wiki/Field_of_view)
+* dynamic resizable mode with interface scaling and new minimum resolution of
+320x240
+* 3D model ground items based on runescape 2 beta models
+* [runescape classic wiki](https://classic.runescape.wiki/) button
+* bank interface with scrollbar and search
+* ...and more! TODO link
 
 QR code for 3DS install:
 
@@ -110,6 +121,101 @@ web they're passed in the URL hash separated by commas
 ## options
 
 ```
+; IPv4 address with revision 177 compatible protocol support
+server = 127.0.0.1
+port = 43594
+; Disable registration and load sounds, P2P landscape and items (requires
+; restart)
+members = 1
+; Used together to encrypt passwords, Must be represented as hexadecimal string
+; 0-padded to a multiple of eight characters
+rsa_exponent =
+rsa_modulus =
+; Log out when mouse is idle
+idle_logout = 0
+; Remember username on login screen
+remember_username = 0
+; Remember password on login screen (not secure)
+remember_password = 0
+
+username =
+password =
+
+; System command to use to open the web browser (only on desktop)
+browser_command = xdg-open "%s"
+
+; Scroll panel lists, chatbox, and camera (if zoom enabled) with wheel
+mouse_wheel = 1
+; Hold down middle click and move mouse to rotate camera (manual mode)
+middle_click_camera = 1
+; Use arrow, page, home keys and mouse wheel (if enabled) to zoom
+zoom_camera = 1
+; Respond to the last private message with tab key
+tab_respond = 1
+; Use number keys to select options
+option_numbers = 1
+; Adds a menu with different directions to face to the minimap compass
+compass_menu = 1
+; Adds right click menus to trades and duels
+transaction_menus = 1
+; Allow inputting item amounts
+offer_x = 1
+; Add another button to perform the last offer x amount
+last_offer_x = 1
+; Add RuneScape Wiki lookup button instead of report abuse
+wiki_lookup = 1
+
+; F1 mode - only render every second scanline
+interlace = 0
+; Display the FPS at the bottom right of the screen
+display_fps = 0
+; Double the UI size but keep the scene size if window is over doubleoriginal
+; size (GL only)
+ui_scale = 1
+; Enable multi-sampling
+anti_alias = 1
+; Change the field of view. scales with height by default and in
+; software. About 36 degrees on the original height of 346 (GL only)
+field_of_view = 360
+; Show roofs unless inside buildings
+show_roofs = 1
+; Format large numbers with commas
+number_commas = 1
+; Show the remaining experience until next level in skills tab
+remaining_experience = 1
+; Show your total experience in the skills tab
+total_experience = 1
+; Show experience drops
+experience_drops = 1
+; Show a count of inventory items on the UI
+inventory_count = 0
+; Condenses item amounts with K and M and add their amounts to examine
+condense_item_amounts = 1
+; Also draw which item a certificate is associated with
+certificate_items = 1
+; Display the warning dialog near the wilderness border
+wilderness_warning = 1
+; Display hits and prayer bars
+status_bars = 0
+; Use ground item models instead of billboarded sprites
+ground_item_models = 1
+
+; Add filtering to the bank
+bank_search = 1
+; Adds capacity to the bank
+bank_capacity = 1
+; Adds total high alchemy value to the bank
+bank_value = 1
+; Expand bank item grid with client height
+bank_expand = 1
+; Use a scrollbar instead of bank pages
+bank_scroll = 1
+; Adds right click menus to bank items
+bank_menus = 1
+; Shows the inventory along with the bank interface, given enough width
+bank_inventory = 1
+; Maintain the selected bank slot when items change position
+bank_maintain_slot = 1
 ```
 
 ## libraries used

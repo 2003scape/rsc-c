@@ -263,6 +263,18 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
     int offer_height = is_trade ? TRADE_OFFER_HEIGHT : DUEL_OFFER_HEIGHT;
 
+    int tabs_width = TRADE_SLOT_WIDTH * TRANSACTION_OFFER_COLUMNS;
+    int tabs_height = 24;
+
+    if (MUD_IS_COMPACT && mud->mouse_button_click != 0 &&
+        mouse_x >= TRANSACTION_OFFER_X &&
+        mouse_x <= TRANSACTION_OFFER_X + tabs_width &&
+        mouse_y >= TRANSACTION_INVENTORY_Y &&
+        mouse_y <= TRANSACTION_INVENTORY_Y + tabs_height) {
+        mud->transaction_tab =
+            (mouse_x - TRANSACTION_OFFER_X) / (tabs_width / 2);
+    }
+
     if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < TRANSACTION_WIDTH &&
         mouse_y < TRANSACTION_HEIGHT - 16) {
         /* handle inventory */
@@ -314,8 +326,20 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                 ((mouse_y - (TRANSACTION_OFFER_Y + 1)) / TRADE_SLOT_HEIGHT) *
                     TRANSACTION_OFFER_COLUMNS;
 
-            if (slot >= 0 && slot < mud->transaction_item_count) {
-                int item_id = mud->transaction_items[slot];
+            if (slot >= 0 &&
+                slot < (mud->transaction_tab == 0
+                            ? mud->transaction_item_count
+                            : mud->transaction_recipient_item_count)) {
+                int *transaction_items = mud->transaction_tab == 0
+                                             ? mud->transaction_items
+                                             : mud->transaction_recipient_items;
+
+                int *transaction_items_count =
+                    mud->transaction_tab == 0
+                        ? mud->transaction_items_count
+                        : mud->transaction_recipient_items_count;
+
+                int item_id = transaction_items[slot];
 
                 if (mud->options->transaction_menus &&
                     !mud->show_right_click_menu) {
@@ -329,7 +353,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                     for (int i = 0; i < mud->transaction_item_count; i++) {
                         if (mud->transaction_items[i] == item_id) {
                             if (game_data_item_stackable[item_id] == 0) {
-                                item_amount = mud->transaction_items_count[i];
+                                item_amount = transaction_items_count[i];
                                 break;
                             }
 
@@ -337,10 +361,31 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                         }
                     }
 
-                    mudclient_add_offer_menus(mud, "Remove",
-                                              MENU_TRANSACTION_REMOVE, item_id,
-                                              item_amount, formatted_item_name,
-                                              mud->transaction_last_offer);
+                    if (mud->transaction_tab == 0) {
+                        mudclient_add_offer_menus(
+                            mud, "Remove", MENU_TRANSACTION_REMOVE, item_id,
+                            item_amount, formatted_item_name,
+                            mud->transaction_last_offer);
+                    } else {
+                        strcpy(mud->menu_item_text1[mud->menu_items_count],
+                               "Examine");
+
+                        strcpy(mud->menu_item_text2[mud->menu_items_count],
+                               formatted_item_name);
+
+                        mud->menu_type[mud->menu_items_count] =
+                            MENU_INV_EXAMINE;
+
+                        mud->menu_index[mud->menu_items_count] = item_id;
+                        mud->menu_items_count++;
+
+                        strcpy(mud->menu_item_text1[mud->menu_items_count],
+                               "Cancel");
+
+                        strcpy(mud->menu_item_text2[mud->menu_items_count], "");
+                        mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
+                        mud->menu_items_count++;
+                    }
                 } else if (mud->mouse_item_count_increment > 0) {
                     mudclient_remove_transaction_item(
                         mud, update_opcode, item_id,
@@ -412,25 +457,24 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     int padding_left = MUD_IS_COMPACT ? 2 : 8;
 
     surface_draw_box_alpha(mud->surface, dialog_x,
-                           dialog_y + TRANSACTION_OFFER_Y, padding_left,
+                           dialog_y + TRANSACTION_INVENTORY_Y, padding_left,
                            box_height, GREY_98, 160);
 
     surface_draw_box_alpha(mud->surface,
                            dialog_x + box_width + padding_left + 1,
-                           dialog_y + TRANSACTION_OFFER_Y,
+                           dialog_y + TRANSACTION_INVENTORY_Y,
                            MUD_IS_COMPACT ? 2 : 11, box_height, GREY_98, 160);
 
     surface_draw_box_alpha(mud->surface,
                            dialog_x + box_width + padding_left +
                                TRANSACTION_INVENTORY_WIDTH +
                                (MUD_IS_COMPACT ? 4 : 13),
-                           dialog_y + TRANSACTION_OFFER_Y,
+                           dialog_y + TRANSACTION_INVENTORY_Y,
                            MUD_IS_COMPACT ? 2 : 6, box_height, GREY_98, 160);
 
-    int tabs_height = 24;
-
     if (MUD_IS_COMPACT) {
-        int box_y = dialog_y + offer_height + TRANSACTION_OFFER_Y + tabs_height;
+        int box_y =
+            dialog_y + offer_height + TRANSACTION_INVENTORY_Y + tabs_height;
 
         /* below offers */
         if (is_trade) {
@@ -482,12 +526,11 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
     if (MUD_IS_COMPACT) {
         char *tabs[] = {"Yours", "Theirs"};
-        int tabs_width = TRADE_SLOT_WIDTH * TRANSACTION_OFFER_COLUMNS;
         int tabs_x = dialog_x + TRANSACTION_OFFER_X;
-        int tabs_y = dialog_y + (TRANSACTION_OFFER_Y);
+        int tabs_y = dialog_y + TRANSACTION_INVENTORY_Y;
 
         surface_draw_tabs(mud->surface, tabs_x + 1, tabs_y, tabs_width,
-                          tabs_height - 1, tabs, 2, 0);
+                          tabs_height - 1, tabs, 2, mud->transaction_tab);
 
         surface_draw_line_vertical(mud->surface, tabs_x, tabs_y, tabs_height,
                                    BLACK);
@@ -497,7 +540,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
         surface_draw_line_horizontal(
             mud->surface, dialog_x + (TRANSACTION_OFFER_X + 1),
-            dialog_y + (TRANSACTION_OFFER_Y), tabs_width, BLACK);
+            dialog_y + (TRANSACTION_INVENTORY_Y), tabs_width, BLACK);
     } else {
         surface_draw_string(mud->surface,
                             is_trade ? "Your Offer" : "Your Stake",
@@ -554,10 +597,14 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
     /* our offer */
     mudclient_draw_transaction_items(
-        mud, dialog_x + TRANSACTION_OFFER_X,
-        dialog_y + TRANSACTION_OFFER_Y + (MUD_IS_COMPACT ? 23 : 0), offer_rows,
-        mud->transaction_items, mud->transaction_items_count,
-        mud->transaction_item_count);
+        mud, dialog_x + TRANSACTION_OFFER_X, dialog_y + TRANSACTION_OFFER_Y,
+        offer_rows,
+        mud->transaction_tab == 0 ? mud->transaction_items
+                                  : mud->transaction_recipient_items,
+        mud->transaction_tab == 0 ? mud->transaction_items_count
+                                  : mud->transaction_recipient_items_count,
+        mud->transaction_tab == 0 ? mud->transaction_item_count
+                                  : mud->transaction_recipient_item_count);
 
     if (!MUD_IS_COMPACT) {
         /* recipient's offer */
@@ -606,18 +653,21 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
             }
         }
 
-        char *item_name = game_data_item_name[mud->transaction_selected_item];
+        if (!MUD_IS_COMPACT) {
+            char *item_name =
+                game_data_item_name[mud->transaction_selected_item];
 
-        char *description =
-            game_data_item_description[mud->transaction_selected_item];
+            char *description =
+                game_data_item_description[mud->transaction_selected_item];
 
-        char formatted_item[strlen(item_name) + strlen(description) + 25];
+            char formatted_item[strlen(item_name) + strlen(description) + 25];
 
-        sprintf(formatted_item, "%s: @whi@%s%s", item_name, description,
-                formatted_amount);
+            sprintf(formatted_item, "%s: @whi@%s%s", item_name, description,
+                    formatted_amount);
 
-        surface_draw_string(mud->surface, formatted_item, dialog_x + 8,
-                            dialog_y + TRANSACTION_HEIGHT - 5, 1, YELLOW);
+            surface_draw_string(mud->surface, formatted_item, dialog_x + 8,
+                                dialog_y + TRANSACTION_HEIGHT - 5, 1, YELLOW);
+        }
     }
 
     if (mud->show_dialog_offer_x) {

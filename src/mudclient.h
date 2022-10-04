@@ -849,6 +849,7 @@ typedef struct mudclient {
     int transaction_selected_item;
     int transaction_last_offer;
     int transaction_offer_type;
+    int transaction_tab; /* used for compact mode */
 
     int64_t transaction_recipient_confirm_name;
     int transaction_confirm_item_count;

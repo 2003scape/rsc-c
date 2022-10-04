@@ -121,7 +121,12 @@ void mudclient_packet_tick(mudclient *mud) {
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
-        mud->show_dialog_duel= 1;
+        mud->show_dialog_duel = 1;
+
+        mud->transaction_recipient_items[0] = 82;
+        mud->transaction_recipient_items_count[0] = 1;
+        mud->transaction_recipient_item_count = 1;
+
         mud->loading_area = 1;
         mud->local_player_server_index = get_unsigned_short(data, 1);
         mud->plane_width = get_unsigned_short(data, 3);

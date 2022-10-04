@@ -13,7 +13,7 @@
     (TRANSACTION_OFFER_COLUMNS * TRADE_SLOT_WIDTH) // 196
 
 #define TRANSACTION_OFFER_X (MUD_IS_COMPACT ? 2 : 8)
-#define TRANSACTION_OFFER_Y (MUD_IS_COMPACT ? 14 : 30)
+#define TRANSACTION_OFFER_Y (MUD_IS_COMPACT ? 37 : 30)
 
 /* inventory items grid */
 #define TRANSACTION_INVENTORY_ROWS 6
@@ -28,7 +28,7 @@
 #define TRANSACTION_INVENTORY_X                                                \
     (TRANSACTION_OFFER_WIDTH + (MUD_IS_COMPACT ? 5 : 20)) // 216
 
-#define TRANSACTION_INVENTORY_Y TRANSACTION_OFFER_Y
+#define TRANSACTION_INVENTORY_Y (MUD_IS_COMPACT ? 14 : TRANSACTION_OFFER_Y)
 
 /* ui size */
 #define TRANSACTION_WIDTH                                                      \
@@ -37,7 +37,8 @@
      (MUD_IS_COMPACT ? 8 : 27)) // 468
 
 #define TRANSACTION_HEIGHT                                                     \
-    ((TRANSACTION_INVENTORY_ROWS * TRADE_SLOT_HEIGHT) + (MUD_IS_COMPACT ? 43 : 74)) // 278
+    ((TRANSACTION_INVENTORY_ROWS * TRADE_SLOT_HEIGHT) +                        \
+     (MUD_IS_COMPACT ? 43 : 74)) // 278
 
 /* accept and decline buttons */
 #define TRANSACTION_ACCEPT_X                                                   \
@@ -48,7 +49,7 @@
      (MUD_IS_COMPACT ? 2 : 5)) // 394
 
 #define TRANSACTION_BUTTON_Y                                                   \
-    (TRANSACTION_INVENTORY_HEIGHT + TRANSACTION_OFFER_Y +                      \
+    (TRANSACTION_INVENTORY_HEIGHT + TRANSACTION_INVENTORY_Y +                  \
      (MUD_IS_COMPACT ? 3 : 4)) // 238
 
 #define TRANSACTION_BUTTON_WIDTH 69
