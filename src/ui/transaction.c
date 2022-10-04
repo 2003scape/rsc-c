@@ -712,8 +712,9 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     surface_draw_box(mud->surface, dialog_x, dialog_y, TRANSACTION_WIDTH, 16,
                      TITLE_BAR_COLOUR);
 
-    surface_draw_box_alpha(mud->surface, dialog_x, dialog_y + 16,
-                           TRANSACTION_WIDTH, 246, GREY_98, 160);
+    surface_draw_box_alpha(
+        mud->surface, dialog_x, dialog_y + 16, TRANSACTION_WIDTH,
+        TRANSACTION_HEIGHT - (MUD_IS_COMPACT ? 11 : 32), GREY_98, 160);
 
     char username[USERNAME_LENGTH + 1] = {0};
     decode_username(mud->transaction_recipient_confirm_name, username);
@@ -723,58 +724,96 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     sprintf(formatted_confirm, "Please confirm your %s with @yel@%s",
             is_trade ? "trade" : "duel", username);
 
-    surface_draw_string_centre(mud->surface, formatted_confirm, dialog_x + 234,
+    surface_draw_string_centre(mud->surface, formatted_confirm,
+                               dialog_x + (TRANSACTION_WIDTH / 2),
                                dialog_y + 12, 1, WHITE);
 
-    surface_draw_string_centre(
-        mud->surface,
-        is_trade ? "You are about to give:" : "Your stake:", dialog_x + 117,
-        dialog_y + 30, 1, YELLOW);
+    int y = 30;
 
-    mudclient_draw_transaction_items_confirm(
-        mud, dialog_x + 117, dialog_y + 42, mud->transaction_confirm_items,
-        mud->transaction_confirm_items_count,
-        mud->transaction_confirm_item_count);
+    char *tabs[] = {"Yours", "Theirs"};
 
-    surface_draw_string_centre(mud->surface,
-                               is_trade ? "In return you will receive:"
-                                        : "Your opponent's stake:",
-                               dialog_x + 351, dialog_y + 30, 1, YELLOW);
+    surface_draw_tabs(mud->surface, dialog_x, dialog_y + 16, TRANSACTION_WIDTH,
+                      22, tabs, 2, 0);
 
-    mudclient_draw_transaction_items_confirm(
-        mud, dialog_x + 351, dialog_y + 42,
-        mud->transaction_recipient_confirm_items,
-        mud->transaction_recipient_confirm_items_count,
-        mud->transaction_recipient_confirm_item_count);
+    if (!MUD_IS_COMPACT) {
+        surface_draw_string_centre(
+            mud->surface,
+            is_trade ? "You are about to give:" : "Your stake:", dialog_x + 117,
+            dialog_y + y, 1, YELLOW);
 
-    if (is_trade) {
         surface_draw_string_centre(mud->surface,
-                                   "Are you sure you want to do this?",
-                                   dialog_x + 234, dialog_y + 200, 4, CYAN);
+                                   is_trade ? "In return you will receive:"
+                                            : "Your opponent's stake:",
+                                   dialog_x + 351, dialog_y + y, 1, YELLOW);
+        y += 12;
+    } else {
+        y += 22;
+    }
+
+    if (MUD_IS_COMPACT) {
+        int *confirm_items = mud->transaction_recipient_confirm_items;
+        int *confirm_items_count =
+            mud->transaction_recipient_confirm_items_count;
+
+        mudclient_draw_transaction_items_confirm(
+            mud, dialog_x + (TRANSACTION_WIDTH / 2), dialog_y + y,
+            confirm_items, confirm_items_count,
+            mud->transaction_recipient_confirm_item_count);
+    } else {
+        mudclient_draw_transaction_items_confirm(
+            mud, dialog_x + 351, dialog_y + y,
+            mud->transaction_recipient_confirm_items,
+            mud->transaction_recipient_confirm_items_count,
+            mud->transaction_recipient_confirm_item_count);
+
+        mudclient_draw_transaction_items_confirm(
+            mud, dialog_x + 117, dialog_y + y, mud->transaction_confirm_items,
+            mud->transaction_confirm_items_count,
+            mud->transaction_confirm_item_count);
+    }
+
+    y = 200;
+
+    if (!MUD_IS_COMPACT) {
+        if (is_trade) {
+            surface_draw_string_centre(
+                mud->surface, "Are you sure you want to do this?",
+                dialog_x + (TRANSACTION_WIDTH / 2), dialog_y + y, 4, CYAN);
+
+            y += 15;
+
+            surface_draw_string_centre(
+                mud->surface,
+                "There is NO WAY to reverse a trade if you change your mind.",
+                dialog_x + (TRANSACTION_WIDTH / 2), dialog_y + y, 1, WHITE);
+        }
+
+        y += 15;
 
         surface_draw_string_centre(
             mud->surface,
-            "there is NO WAY to reverse a trade if you change your mind.",
-            dialog_x + 234, dialog_y + 215, 1, WHITE);
+            is_trade ? "Remember that not all players are trustworthy"
+                     : "If you are sure click 'Accept' to begin the duel",
+            dialog_x + (TRANSACTION_WIDTH / 2), dialog_y + y, 1, WHITE);
+
+        y += 20;
     }
 
-    surface_draw_string_centre(
-        mud->surface,
-        is_trade ? "Remember that not all players are trustworthy"
-                 : "If you are sure click 'Accept' to begin the duel",
-        dialog_x + 234, dialog_y + 230, 1, WHITE);
-
     if (!mud->transaction_confirm_accepted) {
-        surface_draw_sprite_from3(mud->surface, dialog_x + 118 - 35,
-                                  dialog_y + TRANSACTION_BUTTON_Y,
-                                  mud->sprite_media + 25);
+        int offset_y = MUD_IS_COMPACT ? 8 : 0;
 
-        surface_draw_sprite_from3(mud->surface, dialog_x + 352 - 35,
-                                  dialog_y + TRANSACTION_BUTTON_Y,
-                                  mud->sprite_media + 26);
+        surface_draw_sprite_from3(
+            mud->surface, dialog_x + (MUD_IS_COMPACT ? 4 : 83),
+            dialog_y + TRANSACTION_BUTTON_Y + offset_y, mud->sprite_media + 25);
+
+        surface_draw_sprite_from3(
+            mud->surface,
+            dialog_x + (MUD_IS_COMPACT ? TRANSACTION_WIDTH - 73 : 317),
+            dialog_y + TRANSACTION_BUTTON_Y + offset_y, mud->sprite_media + 26);
     } else {
         surface_draw_string_centre(mud->surface, "Waiting for other player...",
-                                   dialog_x + 234, dialog_y + 250, 1, YELLOW);
+                                   dialog_x + (TRANSACTION_WIDTH / 2),
+                                   dialog_y + y, 1, YELLOW);
     }
 
     if (mud->mouse_button_click == 1) {

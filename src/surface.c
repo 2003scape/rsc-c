@@ -4008,7 +4008,8 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
     surface_draw_line_horizontal(surface, x, y + height, width, BLACK);
 }
 
-void surface_draw_item(Surface *surface, int x, int y, int slot_width, int slot_height, int item_id) {
+void surface_draw_item(Surface *surface, int x, int y, int slot_width,
+                       int slot_height, int item_id) {
     surface_sprite_clipping_from9(
         surface, x, y, slot_width - 1, slot_height - 2,
         surface->mud->sprite_item + game_data_item_sprite[item_id],
@@ -4017,9 +4018,9 @@ void surface_draw_item(Surface *surface, int x, int y, int slot_width, int slot_
 
 /* used in bank and shop */
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
-                            int columns, int slot_width, int slot_height, int *items,
-                            int *items_count, int items_length, int selected,
-                            int show_inventory_count) {
+                            int columns, int slot_width, int slot_height,
+                            int *items, int *items_count, int items_length,
+                            int selected, int show_inventory_count) {
     int is_selected_visible = selected >= 0 && selected <= items_length;
 
     int box_width = (columns * slot_width);
@@ -4077,9 +4078,9 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                     mudclient_format_item_amount(surface->mud, item_count,
                                                  formatted_amount);
 
-                    surface_draw_string(surface, formatted_amount,
-                                        slot_x + 1 + offset_x,
-                                        slot_y + 10 + offset_x, font_size, YELLOW);
+                    surface_draw_string(
+                        surface, formatted_amount, slot_x + 1 + offset_x,
+                        slot_y + 10 + offset_x, font_size, YELLOW);
                 }
             }
 
