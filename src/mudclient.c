@@ -612,8 +612,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     gfxSetDoubleBuffering(GFX_BOTTOM, 0);
     gfxSetDoubleBuffering(GFX_TOP, 0);
 
-    // mud->framebuffer_top = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, 400, 240);
-
     mud->framebuffer_top = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 
     mud->framebuffer_bottom =
@@ -2727,7 +2725,11 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene = malloc(sizeof(Scene));
     scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
 
+#ifdef _3DS
+    scene_set_bounds(mud->scene, 400, mud->game_height - 12);
+#else
     scene_set_bounds(mud->scene, mud->game_width, mud->game_height - 12);
+#endif
 
     mud->scene->clip_far_3d = 2400;
     mud->scene->clip_far_2d = 2400;
@@ -4810,9 +4812,39 @@ void mudclient_draw_game(mudclient *mud) {
     }
 #endif
 
+#ifdef _3DS
+    mud->surface->width = 400;
+    mud->surface->height = 240;
+    surface_set_bounds(mud->surface, 0, 0, 400, 240);
+
+    int32_t *old_pixels = mud->surface->pixels;
+    mud->surface->pixels = mud->scene->raster;
+#endif
+
     scene_render(mud->scene);
 
     mudclient_draw_overhead(mud);
+
+    //
+
+#ifdef _3DS
+    mud->surface->width = 320;
+    mud->surface->height = 240;
+    surface_set_bounds(mud->surface, 0, 0, 320, 240);
+    mud->surface->pixels = old_pixels;
+
+    uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
+    uint8_t *surface_pixels = (uint8_t *)mud->surface->pixels;
+
+    for (int x = 0; x < 320; x++) {
+        for (int y = 0; y < 240; y++) {
+            int top_index = ((y * 400) + x) * 4;
+            int bottom_index = ((y * mud->surface->width) + x) * 4;
+
+            memcpy(surface_pixels + bottom_index, scene_pixels + top_index, 4);
+        }
+    }
+#endif
 
     /* draw the animated X sprite when clicking */
     if (mud->mouse_click_x_step > 0) {
@@ -4895,6 +4927,16 @@ void mudclient_draw_game(mudclient *mud) {
     mudclient_draw_chat_message_tabs(mud);
 
     surface_draw(mud->surface);
+
+#ifdef _3DS
+    for (int x = 0; x < 400; x++) {
+        for (int y = 0; y < 240; y++) {
+            int fb_index = ((x * 240) + (240 - y)) * 3;
+            int pixel_index = ((y * mud->scene->width) + x) * 4;
+            memcpy(mud->framebuffer_top + fb_index, scene_pixels + pixel_index, 3);
+        }
+    }
+#endif
 }
 
 void mudclient_draw(mudclient *mud) {
@@ -4970,8 +5012,6 @@ void mudclient_on_resize(mudclient *mud) {
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
 #endif
-
-    printf("%d %d\n", new_width, new_height);
 
     int old_height = mud->game_height - 12;
 
@@ -5230,7 +5270,7 @@ void mudclient_poll_events(mudclient *mud) {
     u32 keys_down = hidKeysDown();
 
     if (keys_down & KEY_LEFT) {
-        if (mud->l_down) {
+        /*if (mud->l_down) {
             mud->zoom_offset_x -= 56;
 
             if (mud->zoom_offset_x < 0) {
@@ -5238,11 +5278,13 @@ void mudclient_poll_events(mudclient *mud) {
             }
         } else {
             mudclient_key_pressed(mud, K_LEFT, -1);
-        }
+        }*/
+
+        mudclient_key_pressed(mud, K_LEFT, -1);
     }
 
     if (keys_down & KEY_RIGHT) {
-        if (mud->l_down) {
+        /*if (mud->l_down) {
             mud->zoom_offset_x += 56;
 
             if (mud->zoom_offset_x > 112) {
@@ -5250,10 +5292,12 @@ void mudclient_poll_events(mudclient *mud) {
             }
         } else {
             mudclient_key_pressed(mud, K_RIGHT, -1);
-        }
+        }*/
+
+        mudclient_key_pressed(mud, K_RIGHT, -1);
     }
 
-    if (mud->l_down && keys_down & KEY_UP) {
+    /*if (mud->l_down && keys_down & KEY_UP) {
         mud->zoom_offset_y -= 53;
 
         if (mud->zoom_offset_y < 0) {
@@ -5267,6 +5311,14 @@ void mudclient_poll_events(mudclient *mud) {
         if (mud->zoom_offset_y > 106) {
             mud->zoom_offset_y = 106;
         }
+    }*/
+
+    if (keys_down & KEY_UP) {
+        mudclient_key_pressed(mud, K_UP, -1);
+    }
+
+    if (keys_down & KEY_DOWN) {
+        mudclient_key_pressed(mud, K_DOWN, -1);
     }
 
     if (keys_down & KEY_SELECT) {
@@ -5301,14 +5353,14 @@ void mudclient_poll_events(mudclient *mud) {
     if (keys_down & KEY_R) {
         mud->r_down = !mud->r_down;
 
-        if (!mud->r_down) {
+        /*if (!mud->r_down) {
             memcpy((uint8_t *)mud->framebuffer_top, game_top_bgr,
                    game_top_bgr_size);
 
             if (mud->keyboard_open) {
                 draw_blue_bar(mud->framebuffer_top);
             }
-        }
+        }*/
     }
 
     u32 keys_up = hidKeysUp();
@@ -5319,6 +5371,14 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_up & KEY_RIGHT) {
         mudclient_key_released(mud, K_RIGHT);
+    }
+
+    if (keys_up & KEY_UP) {
+        mudclient_key_released(mud, K_UP);
+    }
+
+    if (keys_up & KEY_DOWN) {
+        mudclient_key_released(mud, K_DOWN);
     }
 
     if (keys_up & KEY_L) {
@@ -5428,10 +5488,6 @@ void mudclient_poll_events(mudclient *mud) {
             }
         }
     } else {
-        // TODO make these consts
-        int offset_x = 32;
-        int offset_y = 6 + 1;
-
         if (touch.px == 0 && touch.py == 0) {
             if (mud->touch_down != 0) {
                 mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y,
@@ -5440,20 +5496,12 @@ void mudclient_poll_events(mudclient *mud) {
 
             mud->touch_down = 0;
         } else {
-            int game_x = (touch.px - offset_x) * 2;
-            int game_y = (touch.py - offset_y) * 2;
-
-            if (game_x < 0 || game_y < 0 || game_x > mud->game_width ||
-                game_y > mud->game_height) {
-                return;
-            }
-
-            mudclient_mouse_moved(mud, game_x, game_y);
+            mudclient_mouse_moved(mud, touch.px, touch.py);
 
             int mouse_down = mud->l_down ? 3 : 1;
 
             if (mud->touch_down == 0) {
-                mudclient_mouse_pressed(mud, game_x, game_y, mouse_down);
+                mudclient_mouse_pressed(mud, touch.px, touch.py, mouse_down);
             }
 
             mud->touch_down = mouse_down;

@@ -7,7 +7,7 @@ int scene_frustum_min_y = 0;
 int scene_frustum_far_z = 0;
 int scene_frustum_near_z = 0;
 int64_t scene_texture_count_loaded = 0;
-float fov = 0;
+//float fov = 0;
 
 int scene_polygon_depth_compare(const void *a, const void *b) {
     GamePolygon *polygon_a = (*(GamePolygon **)a);
@@ -50,7 +50,11 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->view_distance = 512;
     scene->normal_magnitude = 4;
 
+#ifdef _3DS
+    scene->raster = calloc(400 * 240, sizeof(int32_t));;
+#else
     scene->raster = surface->pixels;
+#endif
 
     scene->models = calloc(model_count, sizeof(GameModel *));
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));

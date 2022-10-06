@@ -102,6 +102,13 @@ void options_set_defaults(Options *options) {
     options->ui_scale = 1;
     options->anti_alias = 1;
     options->field_of_view = 360;
+
+    strcpy(options->server, "192.168.100.107");
+    options->remember_username = 1;
+    options->remember_password = 1;
+    options->display_fps = 1;
+    strcpy(options->username, "farts");
+    strcpy(options->password, "farts");
 }
 
 void options_set_vanilla(Options *options) {

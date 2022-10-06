@@ -730,12 +730,14 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
 
     int y = 30;
 
-    char *tabs[] = {"Yours", "Theirs"};
+    if (MUD_IS_COMPACT) {
+        char *tabs[] = {"Yours", "Theirs"};
 
-    surface_draw_tabs(mud->surface, dialog_x, dialog_y + 16, TRANSACTION_WIDTH,
-                      22, tabs, 2, 0);
+        surface_draw_tabs(mud->surface, dialog_x, dialog_y + 16, TRANSACTION_WIDTH,
+                          22, tabs, 2, 0);
 
-    if (!MUD_IS_COMPACT) {
+        y += 22;
+    } else {
         surface_draw_string_centre(
             mud->surface,
             is_trade ? "You are about to give:" : "Your stake:", dialog_x + 117,
@@ -746,8 +748,6 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
                                             : "Your opponent's stake:",
                                    dialog_x + 351, dialog_y + y, 1, YELLOW);
         y += 12;
-    } else {
-        y += 22;
     }
 
     if (MUD_IS_COMPACT) {
