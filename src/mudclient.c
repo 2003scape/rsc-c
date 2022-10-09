@@ -82,7 +82,7 @@ int player_top_bottom_colours[] = {0xff0000, 0xff8000, 0xffe000, 0xa0e000,
 
 int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
 
-#if defined(_3DS) || defined(WII)
+#ifdef WII
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
     {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'},
@@ -109,16 +109,35 @@ ndspWaveBuf wave_buf[2] = {0};
 u32 *audio_buffer = NULL;
 int fill_block = 0;
 
-void draw_blue_bar(uint8_t *framebuffer) {
-    for (int x = 0; x < 256; x++) {
-        for (int y = 1; y <= 7; y++) {
-            int bar_index = (((x + 31) * 240) + (240 - y)) * 3;
-            int screen_index = (((x + 72) * 240) + (240 - (y + 50))) * 3;
+Thread _3ds_keyboard_thread = {0};
+char _3ds_keyboard_buffer[255] = {0};
+volatile int _3ds_keyboard_received_input = 0;
+SwkbdButton _3ds_keyboard_button;
 
-            memcpy(framebuffer + screen_index, game_background_bgr + bar_index,
-                   3);
-        }
+void _3ds_keyboard_thread_callback(void *arg) {
+    static SwkbdState swkbd;
+    swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 3, -1);
+    swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
+    swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
+
+    int reload = 1;
+    static SwkbdStatusData swkbdStatus;
+    swkbdSetStatusData(&swkbd, &swkbdStatus, reload, 1);
+
+    static SwkbdLearningData swkbdLearning;
+    swkbdSetLearningData(&swkbd, &swkbdLearning, reload, 1);
+
+    _3ds_keyboard_button = swkbdInputText(&swkbd, _3ds_keyboard_buffer,
+                                          sizeof(_3ds_keyboard_buffer));
+
+    if (_3ds_keyboard_button != SWKBD_BUTTON_NONE) {
+        // printf("You pressed button %d\n", button);
+        _3ds_keyboard_received_input = 1;
+    } else {
+        // printf("swkbd event: %d\n", swkbdGetResult(&swkbd));
     }
+
+    threadExit(0);
 }
 #endif
 
@@ -433,10 +452,6 @@ void mudclient_new(mudclient *mud) {
 
 #ifdef _3DS
     mud->sound_position = -1;
-
-    /* for top screen panning */
-    mud->zoom_offset_x = 56;
-    mud->zoom_offset_y = 53;
 #endif
 
     mud->appearance_body_type = 1;
@@ -2694,8 +2709,8 @@ void mudclient_start_game(mudclient *mud) {
     panel_new(mud->panel_quests, mud->surface, 5);
 
     mud->control_list_quest = panel_add_text_list_interactive(
-        mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH, STATS_HEIGHT - STATS_TAB_HEIGHT, 1, 500,
-        1);
+        mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH,
+        STATS_HEIGHT - STATS_TAB_HEIGHT, 1, 500, 1);
 
     mud->panel_magic = malloc(sizeof(Panel));
     panel_new(mud->panel_magic, mud->surface, 5);
@@ -2725,11 +2740,7 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene = malloc(sizeof(Scene));
     scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
 
-#ifdef _3DS
-    scene_set_bounds(mud->scene, 400, mud->game_height - 12);
-#else
     scene_set_bounds(mud->scene, mud->game_width, mud->game_height - 12);
-#endif
 
     mud->scene->clip_far_3d = 2400;
     mud->scene->clip_far_2d = 2400;
@@ -2779,6 +2790,11 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
     mudclient_render_login_scene_sprites(mud);
+
+#ifdef _3DS
+    mud->scene->raster = calloc(400 * 240, sizeof(int32_t));
+    scene_set_bounds(mud->scene, 400, mud->game_height - 12);
+#endif
 
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
@@ -3593,7 +3609,13 @@ void mudclient_handle_game_input(mudclient *mud) {
 #ifdef RENDER_GL
     scene_set_mouse_loc(mud->scene, mud->gl_mouse_x, mud->gl_mouse_y);
 #else
-    scene_set_mouse_loc(mud->scene, mud->mouse_x, mud->mouse_y);
+    int offset_x = 0;
+
+#ifdef _3DS
+    offset_x = 40;
+#endif
+
+    scene_set_mouse_loc(mud->scene, mud->mouse_x + offset_x, mud->mouse_y);
 #endif
 
     mud->last_mouse_button_down = 0;
@@ -4815,17 +4837,18 @@ void mudclient_draw_game(mudclient *mud) {
 #ifdef _3DS
     mud->surface->width = 400;
     mud->surface->height = 240;
-    surface_set_bounds(mud->surface, 0, 0, 400, 240);
+    surface_set_bounds(mud->surface, 0, 0, 400, 240 - 12);
 
     int32_t *old_pixels = mud->surface->pixels;
     mud->surface->pixels = mud->scene->raster;
+
+    if (mud->r_down) {
+        memset(mud->scene->raster, 0, 400 * 240 * sizeof(int32_t));
+    }
 #endif
 
     scene_render(mud->scene);
-
     mudclient_draw_overhead(mud);
-
-    //
 
 #ifdef _3DS
     mud->surface->width = 320;
@@ -4836,13 +4859,13 @@ void mudclient_draw_game(mudclient *mud) {
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
     uint8_t *surface_pixels = (uint8_t *)mud->surface->pixels;
 
-    for (int x = 0; x < 320; x++) {
-        for (int y = 0; y < 240; y++) {
-            int top_index = ((y * 400) + x) * 4;
-            int bottom_index = ((y * mud->surface->width) + x) * 4;
+    /* copy the top screen scene raster to the bottom screen surface */
+    for (int y = 0; y < mud->game_height - 12; y++) {
+        int top_index = ((y * 400) + 40) * 4;
+        int bottom_index = (y * mud->surface->width) * 4;
 
-            memcpy(surface_pixels + bottom_index, scene_pixels + top_index, 4);
-        }
+        memcpy(surface_pixels + bottom_index, scene_pixels + top_index,
+               320 * 4);
     }
 #endif
 
@@ -4929,12 +4952,9 @@ void mudclient_draw_game(mudclient *mud) {
     surface_draw(mud->surface);
 
 #ifdef _3DS
-    for (int x = 0; x < 400; x++) {
-        for (int y = 0; y < 240; y++) {
-            int fb_index = ((x * 240) + (240 - y)) * 3;
-            int pixel_index = ((y * mud->scene->width) + x) * 4;
-            memcpy(mud->framebuffer_top + fb_index, scene_pixels + pixel_index, 3);
-        }
+    /* draw the scene to the top screen */
+    if (mud->r_down) {
+        mudclient_3ds_draw_framebuffer_top(mud);
     }
 #endif
 }
@@ -5270,48 +5290,12 @@ void mudclient_poll_events(mudclient *mud) {
     u32 keys_down = hidKeysDown();
 
     if (keys_down & KEY_LEFT) {
-        /*if (mud->l_down) {
-            mud->zoom_offset_x -= 56;
-
-            if (mud->zoom_offset_x < 0) {
-                mud->zoom_offset_x = 0;
-            }
-        } else {
-            mudclient_key_pressed(mud, K_LEFT, -1);
-        }*/
-
         mudclient_key_pressed(mud, K_LEFT, -1);
     }
 
     if (keys_down & KEY_RIGHT) {
-        /*if (mud->l_down) {
-            mud->zoom_offset_x += 56;
-
-            if (mud->zoom_offset_x > 112) {
-                mud->zoom_offset_x = 112;
-            }
-        } else {
-            mudclient_key_pressed(mud, K_RIGHT, -1);
-        }*/
-
         mudclient_key_pressed(mud, K_RIGHT, -1);
     }
-
-    /*if (mud->l_down && keys_down & KEY_UP) {
-        mud->zoom_offset_y -= 53;
-
-        if (mud->zoom_offset_y < 0) {
-            mud->zoom_offset_y = 0;
-        }
-    }
-
-    if (mud->l_down && keys_down & KEY_DOWN) {
-        mud->zoom_offset_y += 53;
-
-        if (mud->zoom_offset_y > 106) {
-            mud->zoom_offset_y = 106;
-        }
-    }*/
 
     if (keys_down & KEY_UP) {
         mudclient_key_pressed(mud, K_UP, -1);
@@ -5325,25 +5309,8 @@ void mudclient_poll_events(mudclient *mud) {
         mudclient_key_pressed(mud, K_F1, -1);
     }
 
-    if (keys_down & KEY_START) {
-        if (mud->keyboard_open) {
-            mud->keyboard_open = 0;
-
-            memcpy((uint8_t *)mud->framebuffer_top, game_top_bgr,
-                   game_top_bgr_size);
-
-            gspWaitForVBlank();
-
-            memcpy((uint8_t *)mud->framebuffer_bottom, game_background_bgr,
-                   game_background_bgr_size);
-        } else {
-            mud->keyboard_open = 1;
-
-            memcpy((uint8_t *)mud->framebuffer_bottom, game_keyboard_bgr,
-                   game_keyboard_bgr_size);
-
-            draw_blue_bar(mud->framebuffer_top);
-        }
+    if (keys_down & KEY_START && !mud->keyboard_open) {
+        mudclient_3ds_open_keyboard(mud);
     }
 
     if (keys_down & KEY_L) {
@@ -5352,15 +5319,6 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_down & KEY_R) {
         mud->r_down = !mud->r_down;
-
-        /*if (!mud->r_down) {
-            memcpy((uint8_t *)mud->framebuffer_top, game_top_bgr,
-                   game_top_bgr_size);
-
-            if (mud->keyboard_open) {
-                draw_blue_bar(mud->framebuffer_top);
-            }
-        }*/
     }
 
     u32 keys_up = hidKeysUp();
@@ -5389,103 +5347,8 @@ void mudclient_poll_events(mudclient *mud) {
     hidTouchRead(&touch);
 
     if (mud->keyboard_open) {
-        if (keys_down & KEY_X || keys_down & KEY_Y) {
-            mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
-            mudclient_key_released(mud, K_BACKSPACE);
-        }
-
-        if (keys_down & KEY_A || keys_down & KEY_B) {
-            mudclient_key_pressed(mud, K_ENTER, K_ENTER);
-            mudclient_key_released(mud, K_ENTER);
-        }
-
-        if (touch.px == 0 && touch.py == 0) {
-            mud->touch_down = 0;
-        }
-
-        if (mud->touch_down) {
-            return;
-        }
-
-        /* position of first key */
-        int keyboard_x = 34;
-        int keyboard_y = 31;
-
-        int keyboard_width = KEY_WIDTH * 10;
-        int keyboard_height = KEY_HEIGHT * 5;
-
-        /* shift */
-        if (touch.px >= keyboard_x &&
-            touch.px <= (keyboard_x + (KEY_WIDTH * 2)) &&
-            touch.py >= (keyboard_y + (KEY_HEIGHT * 4)) &&
-            touch.py <= (keyboard_y + (KEY_HEIGHT * 5))) {
-
-            if (mud->keyboard_open == 2) {
-                mud->keyboard_open = 1;
-
-                memcpy((uint8_t *)mud->framebuffer_bottom, game_keyboard_bgr,
-                       game_keyboard_bgr_size);
-            } else {
-                mud->keyboard_open = 2;
-
-                memcpy((uint8_t *)mud->framebuffer_bottom,
-                       game_keyboard_shift_bgr, game_keyboard_shift_bgr_size);
-            }
-
-            gspWaitForVBlank();
-
-            mud->touch_down = 1;
-            return;
-        }
-
-        /* enter */
-        if (touch.px >= 37 && touch.px <= 128 && touch.py >= 151 &&
-            touch.py <= 169) {
-            mudclient_key_pressed(mud, K_ENTER, K_ENTER);
-            mudclient_key_released(mud, K_ENTER);
-
-            mud->touch_down = 1;
-            return;
-        }
-
-        /* backspace */
-        if (touch.px >= 153 && touch.px <= 283 && touch.py >= 151 &&
-            touch.py <= 169) {
-            mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
-            mudclient_key_released(mud, K_BACKSPACE);
-
-            mud->touch_down = 1;
-            return;
-        }
-
-        for (int y = 0; y < keyboard_height; y += KEY_HEIGHT) {
-            int row = y / KEY_HEIGHT;
-            int offset_x = keyboard_x + keyboard_offsets[row];
-
-            for (int x = 0; x < keyboard_width; x += KEY_WIDTH) {
-                if (touch.px >= (x + offset_x) &&
-                    touch.px <= (x + offset_x + KEY_WIDTH) &&
-                    touch.py >= (y + keyboard_y) &&
-                    touch.py <= (y + keyboard_y + KEY_HEIGHT)) {
-
-                    int code = -1;
-
-                    if (mud->keyboard_open == 2) {
-                        code =
-                            keyboard_shift_buttons[row][(touch.px - offset_x) /
-                                                        KEY_WIDTH];
-                    } else {
-                        code = keyboard_buttons[row][(touch.px - offset_x) /
-                                                     KEY_WIDTH];
-                    }
-
-                    mudclient_key_pressed(mud, code, code);
-                    mudclient_key_released(mud, code);
-
-                    mud->touch_down = 1;
-                    return;
-                }
-            }
+        if (_3ds_keyboard_received_input) {
+            mudclient_3ds_handle_keyboard(mud);
         }
     } else {
         if (touch.px == 0 && touch.py == 0) {
@@ -5558,7 +5421,7 @@ void mudclient_poll_events(mudclient *mud) {
 }
 
 #ifdef _3DS
-void mudclient_flush_audio(mudclient *mud) {
+void mudclient_3ds_flush_audio(mudclient *mud) {
     if (mud->sound_position < 0) {
         return;
     }
@@ -5587,6 +5450,69 @@ void mudclient_flush_audio(mudclient *mud) {
         ndspChnWaveBufAdd(0, &wave_buf[fill_block]);
 
         fill_block = !fill_block;
+    }
+}
+
+void mudclient_3ds_open_keyboard(mudclient *mud) {
+    int32_t priority = 0;
+    svcGetThreadPriority(&priority, CUR_THREAD_HANDLE);
+
+    memset(_3ds_keyboard_buffer, '\0', 255);
+
+    for (int i = 0; i < 255; i++) {
+        mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
+    }
+
+    mudclient_3ds_draw_framebuffer_top(mud);
+
+    for (int x = 0; x < 320; x++) {
+        int top_index = (((x + 40) * 240) + (240)) * 3;
+        int bottom_index = ((x * 240) + (240)) * 3;
+
+        memcpy(mud->framebuffer_top + top_index,
+               mud->framebuffer_bottom + bottom_index, 240 * 3);
+    }
+
+    gspWaitForVBlank();
+
+    _3ds_keyboard_thread = threadCreate(_3ds_keyboard_thread_callback, NULL,
+                                        STACK_SIZE, priority + 1, -2, 1);
+
+    mud->keyboard_open = 1;
+}
+
+void mudclient_3ds_handle_keyboard(mudclient *mud) {
+    mud->keyboard_open = 0;
+    _3ds_keyboard_received_input = 0;
+
+    for (int i = 0; i < 10; i++) {
+        mud->timings[i] = get_ticks();
+    }
+
+    int input_length = strlen(_3ds_keyboard_buffer);
+
+    if (input_length <= 0) {
+        return;
+    }
+
+    for (int i = 0; i < input_length; i++) {
+        mudclient_key_pressed(mud, -1, _3ds_keyboard_buffer[i]);
+    }
+
+    mudclient_key_pressed(mud, K_ENTER, K_ENTER);
+}
+
+void mudclient_3ds_draw_framebuffer_top(mudclient *mud) {
+    uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
+
+    for (int x = 0; x < 400; x++) {
+        for (int y = 0; y < 240 - 6; y++) {
+            int framebuffer_index = ((x * 240) + (240 - y - 6)) * 3;
+            int scene_index = ((y * mud->scene->width) + x) * 4;
+
+            memcpy(mud->framebuffer_top + framebuffer_index,
+                   scene_pixels + scene_index, 3);
+        }
     }
 }
 #endif
@@ -5678,25 +5604,22 @@ void mudclient_run(mudclient *mud) {
 
             if (++k2 > mud->max_draw_time) {
                 i1 = 0;
-
-                mud->interlace_timer += 6;
-
-                if (mud->interlace_timer > 25) {
-                    mud->interlace_timer = 0;
-                    mud->options->interlace = 1;
-                }
-
                 break;
             }
         }
 
-        mud->interlace_timer--;
         i1 &= 0xff;
 
+#ifdef _3DS
+        if (!mud->keyboard_open) {
+            mudclient_draw(mud);
+        }
+#else
         mudclient_draw(mud);
+#endif
 
 #ifdef _3DS
-        mudclient_flush_audio(mud);
+        mudclient_3ds_flush_audio(mud);
 
         if (!aptMainLoop()) {
             return;
@@ -6018,7 +5941,8 @@ int mudclient_get_wilderness_depth(mudclient *mud) {
     return wilderness_depth;
 }
 
-void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width, int slot_height, int item_id) {
+void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
+                         int slot_height, int item_id) {
     int certificate_item_id = -1;
 
     if (mud->options->certificate_items) {
@@ -6031,7 +5955,8 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width, int slot_
         offset_x = -2;
     }
 
-    surface_draw_item(mud->surface, x + offset_x, y, slot_width, slot_height, item_id);
+    surface_draw_item(mud->surface, x + offset_x, y, slot_width, slot_height,
+                      item_id);
 
     if (certificate_item_id != -1) {
         int og_width = ITEM_GRID_SLOT_WIDTH - 1;

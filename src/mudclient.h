@@ -196,8 +196,8 @@
 #define ANIMATION_INDEX_HEAD 0
 #define ANIMATION_INDEX_BODY 1
 #define ANIMATION_INDEX_LEGS 2
-#define ANIMATION_INDEX_LEFT_HAND 3 /* shields */
-#define ANIMATION_INDEX_RIGHT_HAND 4 /* swords */
+#define ANIMATION_INDEX_LEFT_HAND 3    /* shields */
+#define ANIMATION_INDEX_RIGHT_HAND 4   /* swords */
 #define ANIMATION_INDEX_HEAD_OVERLAY 5 /* med helms */
 #define ANIMATION_INDEX_BODY_OVERLAY 6 /* chainmail */
 #define ANIMATION_INDEX_LEGS_OVERLAY 7 /* skirts */
@@ -274,7 +274,7 @@ extern int player_hair_colours[10];
 extern int player_top_bottom_colours[15];
 extern int player_skin_colours[5];
 
-#if defined(_3DS) || defined(WII)
+#ifdef WII
 /* these are doubled for the wii */
 #define KEY_WIDTH 23
 #define KEY_HEIGHT 22
@@ -282,9 +282,7 @@ extern int player_skin_colours[5];
 extern char keyboard_buttons[5][10];
 extern char keyboard_shift_buttons[5][10];
 extern int keyboard_offsets[];
-#endif
 
-#ifdef WII
 void draw_background(uint8_t *framebuffer, int full);
 void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y);
 
@@ -297,13 +295,21 @@ extern int wii_mouse_button;
 #define SOC_ALIGN 0x1000
 #define SOC_BUFFER_SIZE 0x100000
 
+/* for keyboard thread */
+#define STACK_SIZE (4 * 1024)
+
 extern u32 *SOC_buffer;
 
 extern ndspWaveBuf wave_buf[2];
 extern u32 *audio_buffer;
 extern int fill_block;
 
-void draw_blue_bar(uint8_t *framebuffer);
+extern Thread _3ds_keyboard_thread;
+extern char _3ds_keyboard_buffer[255];
+extern volatile int _3ds_keyboard_received_input;
+extern SwkbdButton _3ds_keyboard_button;
+
+void _3ds_keyboard_thread_callback(void *arg);
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -332,9 +338,6 @@ typedef struct mudclient {
 #ifdef _3DS
     uint8_t *framebuffer_top;
     uint8_t *framebuffer_bottom;
-
-    int zoom_offset_x;
-    int zoom_offset_y;
 
     int l_down;
     int r_down;
@@ -422,7 +425,6 @@ typedef struct mudclient {
 
     int timings[10];
     int stop_timeout;
-    int interlace_timer;
     int fps;
     int target_fps;
     int max_draw_time;
@@ -945,7 +947,7 @@ void mudclient_load_game_config(mudclient *mud);
 void mudclient_load_media(mudclient *mud);
 #ifdef RENDER_GL
 int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
-                                     int8_t *entity_jag_mem);
+                                           int8_t *entity_jag_mem);
 #endif
 void mudclient_load_entities(mudclient *mud);
 void mudclient_load_textures(mudclient *mud);
@@ -986,9 +988,11 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
                                int animation_index);
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
-                           int id, int skew_x, int ty, float depth_top, float depth_bottom);
+                           int id, int skew_x, int ty, float depth_top,
+                           float depth_bottom);
 void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
-                        int id, int skew_x, int ty, float depth_top, float depth_bottom);
+                        int id, int skew_x, int ty, float depth_top,
+                        float depth_bottom);
 void mudclient_draw_blue_bar(mudclient *mud);
 int mudclient_is_in_combat(mudclient *mud);
 GameCharacter *mudclient_get_opponent(mudclient *mud);
@@ -1011,14 +1015,18 @@ void mudclient_draw(mudclient *mud);
 void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
 #ifdef _3DS
-void mudclient_flush_audio(mudclient *mud);
+void mudclient_3ds_flush_audio(mudclient *mud);
+void mudclient_3ds_open_keyboard(mudclient *mud);
+void mudclient_3ds_handle_keyboard(mudclient *mud);
+void mudclient_3ds_draw_framebuffer_top(mudclient *mud);
 #endif
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id, float depth);
-void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width, int height,
-                         int id, float depth_top, float depth_bottom);
+void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
+                                int height, int id, float depth_top,
+                                float depth_bottom);
 int mudclient_is_item_equipped(mudclient *mud, int id);
 int mudclient_get_inventory_count(mudclient *mud, int id);
 int mudclient_has_inventory_item(mudclient *mud, int id, int minimum);
@@ -1039,7 +1047,8 @@ int mudclient_is_ui_scaled(mudclient *mud);
 void mudclient_format_number_commas(mudclient *mud, int number, char *dest);
 void mudclient_format_item_amount(mudclient *mud, int item_amount, char *dest);
 int mudclient_get_wilderness_depth(mudclient *mud);
-void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width, int slot_height, int item_id);
+void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
+                         int slot_height, int item_id);
 int main(int argc, char **argv);
 #endif
 #ifdef EMSCRIPTEN

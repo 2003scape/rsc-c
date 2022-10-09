@@ -1134,15 +1134,17 @@ void surface_draw(Surface *surface) {
         }
     }
 #endif
-    for (int x = 0; x < 320; x++) {
+    for (int x = 0; x < surface->width; x++) {
         for (int y = 0; y < 240; y++) {
-            int fb_index = ((x * 240) + (240 - y)) * 3;
+            int framebuffer_index = ((x * 240) + (240 - y)) * 3;
             int pixel_index = ((y * surface->width) + x) * 4;
-            memcpy(mud->framebuffer_bottom + fb_index, surface_pixels + pixel_index, 3);
+
+            memcpy(mud->framebuffer_bottom + framebuffer_index,
+                   surface_pixels + pixel_index, 3);
         }
     }
 
-    //gspWaitForVBlank();
+    // gspWaitForVBlank();
 #endif
 
 #if !defined(WII) && !defined(_3DS)

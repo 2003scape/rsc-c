@@ -50,11 +50,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->view_distance = 512;
     scene->normal_magnitude = 4;
 
-#ifdef _3DS
-    scene->raster = calloc(400 * 240, sizeof(int32_t));;
-#else
     scene->raster = surface->pixels;
-#endif
 
     scene->models = calloc(model_count, sizeof(GameModel *));
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
