@@ -144,8 +144,10 @@
 #define MUD_WIDTH 320
 #define MUD_HEIGHT 240
 #else
-#define MUD_WIDTH 512
-#define MUD_HEIGHT 346
+//#define MUD_WIDTH 512
+//#define MUD_HEIGHT 346
+#define MUD_WIDTH 320
+#define MUD_HEIGHT 240
 #endif
 
 #define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
@@ -336,16 +338,16 @@ typedef struct mudclient {
 #endif
 
 #ifdef _3DS
-    uint8_t *framebuffer_top;
-    uint8_t *framebuffer_bottom;
+    uint8_t *_3ds_framebuffer_top;
+    uint8_t *_3ds_framebuffer_bottom;
 
     int l_down;
     int r_down;
     int touch_down;
     int keyboard_open;
 
-    int sound_position;
-    int sound_length;
+    int _3ds_sound_position;
+    int _3ds_sound_length;
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -1018,6 +1020,7 @@ void mudclient_poll_events(mudclient *mud);
 void mudclient_3ds_flush_audio(mudclient *mud);
 void mudclient_3ds_open_keyboard(mudclient *mud);
 void mudclient_3ds_handle_keyboard(mudclient *mud);
+void mudclient_3ds_draw_top_background(mudclient *mud);
 void mudclient_3ds_draw_framebuffer_top(mudclient *mud);
 #endif
 void mudclient_run(mudclient *mud);

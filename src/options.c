@@ -103,7 +103,8 @@ void options_set_defaults(Options *options) {
     options->anti_alias = 1;
     options->field_of_view = 360;
 
-    strcpy(options->server, "192.168.100.107");
+    strcpy(options->server, "172.30.6.158");
+    //strcpy(options->server, "192.168.100.107");
     options->remember_username = 1;
     options->remember_password = 1;
     options->display_fps = 1;
@@ -177,6 +178,7 @@ void options_save(Options *options) {
             options->server,                //
             options->port,                  //
             options->members,               //
+            options->registration,          //
             options->rsa_exponent,          //
             options->rsa_modulus,           //
             options->idle_logout,           //
@@ -240,6 +242,7 @@ void options_load(Options *options) {
     OPTION_INI_STR("server", options->server, 15);
     OPTION_INI_INT("port", options->port, 0, 65535);
     OPTION_INI_INT("members", options->members, 0, 1);
+    OPTION_INI_INT("registration", options->members, 0, 1);
     OPTION_INI_STR("rsa_exponent", options->rsa_exponent, 512);
     OPTION_INI_STR("rsa_modulus", options->rsa_modulus, 512);
     OPTION_INI_INT("idle_logout", options->idle_logout, 0, 1);

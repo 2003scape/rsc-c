@@ -338,23 +338,23 @@ void mudclient_draw_bank(mudclient *mud) {
                                : active_page * items_per_page;
 
     int bank_item_count = 0;
-    int bank_items[mud->bank_items_max];
-    int bank_items_count[mud->bank_items_max];
+    int bank_items[BANK_ITEMS_MAX];
+    int bank_items_count[BANK_ITEMS_MAX];
 
     // TODO strtrim
     if (mud->options->bank_search && strlen(mud->input_pm_current) > 0) {
         /* clear on enter */
-        if (strlen(mud->input_pm_final)) {
+        /*if (strlen(mud->input_pm_final)) {
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
             memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
-        }
+        }*/
 
-        int prefix_match_items[mud->bank_items_max];
-        int prefix_match_items_count[mud->bank_items_max];
+        int prefix_match_items[BANK_ITEMS_MAX] = {0};
+        int prefix_match_items_count[BANK_ITEMS_MAX] = {0};
         int prefix_match_length = 0;
 
-        int contains_match_items[mud->bank_items_max];
-        int contains_match_items_count[mud->bank_items_max];
+        int contains_match_items[BANK_ITEMS_MAX] = {0};
+        int contains_match_items_count[BANK_ITEMS_MAX] = {0};
         int contains_match_length = 0;
 
         for (int i = 0; i < mud->bank_item_count; i++) {
@@ -371,12 +371,12 @@ void mudclient_draw_bank(mudclient *mud) {
             int bank_item_id = mud->bank_items[i];
             int item_amount = mud->bank_items_count[i];
 
-            if (prefix_match_length < mud->bank_items_max &&
+            if (prefix_match_length < BANK_ITEMS_MAX &&
                 strncmp(lower_search, lower_item_name, search_length) == 0) {
                 prefix_match_items[prefix_match_length] = bank_item_id;
                 prefix_match_items_count[prefix_match_length] = item_amount;
                 prefix_match_length++;
-            } else if (contains_match_length < mud->bank_items_max &&
+            } else if (contains_match_length < BANK_ITEMS_MAX &&
                        strstr(lower_item_name, lower_search) != NULL) {
                 contains_match_items[contains_match_length] = bank_item_id;
                 contains_match_items_count[contains_match_length] = item_amount;
@@ -390,7 +390,7 @@ void mudclient_draw_bank(mudclient *mud) {
             bank_items_count[i] = prefix_match_items_count[i];
         }
 
-        for (int i = prefix_match_length; i < mud->bank_items_max; i++) {
+        for (int i = prefix_match_length; i < BANK_ITEMS_MAX; i++) {
             int contains_index = i - prefix_match_length;
 
             if (contains_index < contains_match_length) {
@@ -723,12 +723,16 @@ void mudclient_draw_bank(mudclient *mud) {
     surface_draw_box(mud->surface, ui_x, ui_y, bank_width, 12,
                      TITLE_BAR_COLOUR);
 
+    /* alpha box under title bar */
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + 12, bank_width,
                            17 - offset_y, GREY_98, 160);
 
-    surface_draw_box_alpha(mud->surface, ui_x, ui_y + 29 - offset_y, 8,
-                           item_grid_height, GREY_98, 160);
+    /* alpha box to left of item grid */
+    surface_draw_box_alpha(mud->surface, ui_x, ui_y + 29 - offset_y,
+                           MUD_IS_COMPACT ? 5 : 8, item_grid_height, GREY_98,
+                           160);
 
+    /* alpha box to right of item grid */
     surface_draw_box_alpha(
         mud->surface,
         ui_x + (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) + (MUD_IS_COMPACT ? 5 : 7),
@@ -819,17 +823,18 @@ void mudclient_draw_bank(mudclient *mud) {
     }
 
     surface_draw_item_grid(
-        mud->surface, ui_x + (MUD_IS_COMPACT ? 4 : 7), item_grid_y,
-        visible_rows, BANK_COLUMNS, ITEM_GRID_SLOT_WIDTH,
-        ITEM_GRID_SLOT_HEIGHT, bank_items + bank_item_offset,
-        bank_items_count + bank_item_offset, bank_item_count - bank_item_offset,
+        mud->surface, ui_x + (MUD_IS_COMPACT ? 5 : 7), item_grid_y,
+        visible_rows, BANK_COLUMNS, ITEM_GRID_SLOT_WIDTH, ITEM_GRID_SLOT_HEIGHT,
+        bank_items + bank_item_offset, bank_items_count + bank_item_offset,
+        bank_item_count - bank_item_offset,
         mud->bank_selected_item_slot - bank_item_offset, 1);
 
     if (show_bank_scroll) {
         int scrub_y = ((float)mud->bank_scroll_row / (float)total_rows) *
                       (float)max_scroll_height;
 
-        int scrollbar_x = (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) - 4;
+        int scrollbar_x =
+            (ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) - (MUD_IS_COMPACT ? 4 : 0);
 
         surface_draw_scrollbar(mud->surface, ui_x + 24, item_grid_y,
                                scrollbar_x, item_grid_height, 1 + scrub_y,
@@ -855,7 +860,7 @@ void mudclient_draw_bank(mudclient *mud) {
         surface_draw_box_alpha(
             mud->surface, ui_x,
             ui_y + item_grid_height + (MUD_IS_COMPACT ? 52 : 76), bank_width,
-            (MUD_IS_COMPACT ? 24 : 18), GREY_98, 160);
+            (MUD_IS_COMPACT ? 18 : 24), GREY_98, 160);
 
         surface_draw_line_horizontal(mud->surface, ui_x + 5,
                                      ui_y + item_grid_height +
@@ -868,7 +873,7 @@ void mudclient_draw_bank(mudclient *mud) {
 
         surface_draw_string(
             mud->surface, formatted_search, ui_x + 2,
-            ui_y + item_grid_height + (MUD_IS_COMPACT ? 66 : 93), 1, WHITE);
+            ui_y + item_grid_height + (MUD_IS_COMPACT ? 66 : 92), 1, WHITE);
     }
 
     if (item_id != -1) {

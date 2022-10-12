@@ -1,12 +1,30 @@
 #include "ui-tabs.h"
 
+#ifdef _3DS
+void mudclient_3ds_toggle_ui_tab(mudclient *mud, int tab) {
+    if (mud->mouse_button_click != 0) {
+        if (mud->show_ui_tab == tab) {
+            mud->show_ui_tab = 0;
+        } else {
+            mud->show_ui_tab = tab;
+        }
+
+        mud->mouse_button_click = 0;
+    }
+}
+#endif
+
 void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
+#ifdef _3DS
+        mudclient_3ds_toggle_ui_tab(mud, INVENTORY_TAB);
+#else
         if (mud->show_ui_tab == 0) {
             mud->show_ui_tab = INVENTORY_TAB;
         }
+#endif
 
         if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Inventory", "Inventory");
@@ -16,7 +34,9 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 33 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 36 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
-
+#ifdef _3DS
+        mudclient_3ds_toggle_ui_tab(mud, MAP_TAB);
+#else
         if (mud->show_ui_tab == 0) {
             mud->show_ui_tab = MAP_TAB;
 
@@ -28,6 +48,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
                     (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
             }
         }
+#endif
 
         if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Map", "RuneScape_Classic_Map");
@@ -37,9 +58,13 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 66 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 66 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
+#ifdef _3DS
+        mudclient_3ds_toggle_ui_tab(mud, STATS_TAB);
+#else
         if (mud->show_ui_tab == 0) {
             mud->show_ui_tab = STATS_TAB;
         }
+#endif
 
         if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Stats", "Stats");
@@ -49,9 +74,13 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 99 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 99 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
+#ifdef _3DS
+        mudclient_3ds_toggle_ui_tab(mud, MAGIC_TAB);
+#else
         if (mud->show_ui_tab == 0) {
             mud->show_ui_tab = MAGIC_TAB;
         }
+#endif
 
         if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Spellbook", "Spellbook");
@@ -61,9 +90,13 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 132 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 132 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
+#ifdef _3DS
+        mudclient_3ds_toggle_ui_tab(mud, SOCIAL_TAB);
+#else
         if (mud->show_ui_tab == 0) {
             mud->show_ui_tab = SOCIAL_TAB;
         }
+#endif
 
         if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Friends", "Friends");
@@ -73,9 +106,13 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 165 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 165 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
+#ifdef _3DS
+        mudclient_3ds_toggle_ui_tab(mud, OPTIONS_TAB);
+#else
         if (mud->show_ui_tab == 0) {
             mud->show_ui_tab = OPTIONS_TAB;
         }
+#endif
 
         if (mud->selected_wiki && no_menus) {
             mudclient_menu_add_wiki(mud, "Options", "Options");
@@ -176,8 +213,9 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
 
     if (mud->show_ui_tab == OPTIONS_TAB &&
         (mud->mouse_x < mud->surface->width - 199 ||
-         mud->mouse_y >
-             311 + (mud->options->show_additional_options ? OPTIONS_LINE_BREAK : 0))) {
+         mud->mouse_y > 311 + (mud->options->show_additional_options
+                                   ? OPTIONS_LINE_BREAK
+                                   : 0))) {
         mud->show_ui_tab = 0;
     }
 }

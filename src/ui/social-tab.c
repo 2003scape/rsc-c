@@ -357,7 +357,7 @@ void mudclient_draw_social_input(mudclient *mud) {
     int cancel_offset_x = mud->surface->width / 2 - SOCIAL_CANCEL_SIZE / 2;
     int cancel_offset_y = mud->surface->height / 2 + SOCIAL_CANCEL_SIZE / 2;
 
-    int y = 145 + (mud->surface->height / 2 - MUD_HEIGHT / 2);
+    int y = (mud->surface->height / 2) - (SOCIAL_DIALOG_HEIGHT / 2) + 7;
 
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;

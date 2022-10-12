@@ -347,32 +347,36 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
         char message1[message_length + 1];
         memset(message1, '\0', message_length + 1);
 
-        // TODO fix when no spaces
+        int last_space = -1;
+
         for (int i = 0; i < message_length; i++) {
             message1[i] = message[i];
 
             if (message[i] == ' ') {
-                if (surface_text_width(message1, 1) >= max_text_width) {
-                    message1[i] = '\0';
+                last_space = i;
+            }
 
-                    int message2_length = message_length - i;
-                    mudclient_show_message(mud, message1, type);
+            if (surface_text_width(message1, 1) >= max_text_width) {
+                int position = last_space == -1 ? i : last_space;
+                message1[position] = '\0';
 
-                    char message2[message2_length + 6];
-                    memset(message2, '\0', message2_length + 6);
-                    int message2_offset = 0;
+                int message2_length = message_length - position;
+                mudclient_show_message(mud, message1, type);
 
-                    if (message1[0] == '@') {
-                        strncpy(message2, message1, 5);
-                        message2_offset = 5;
-                    }
+                char message2[message2_length + 6];
+                memset(message2, '\0', message2_length + 6);
+                int message2_offset = 0;
 
-                    strncpy(message2 + message2_offset,
-                            message + i + 1, message2_length);
-
-                    mudclient_show_message(mud, message2, type);
-                    return;
+                if (message1[0] == '@') {
+                    strncpy(message2, message1, 5);
+                    message2_offset = 5;
                 }
+
+                strncpy(message2 + message2_offset,
+                        message + position + 1, message2_length);
+
+                mudclient_show_message(mud, message2, type);
+                return;
             }
         }
 

@@ -1,11 +1,7 @@
 #ifndef _H_SOCIAL_TAB
 #define _H_SOCIAL_TAB
 
-#include "../client-opcodes.h"
-#include "../colours.h"
 #include "../mudclient.h"
-#include "../packet-stream.h"
-#include "../utility.h"
 
 /* width and height of tab window */
 #define SOCIAL_WIDTH 196
@@ -16,7 +12,7 @@
 #define SOCIAL_DIALOG_ADD_WIDTH 300
 
 /* width of message friend dialog box */
-#define SOCIAL_DIALOG_MESSAGE_WIDTH 500
+#define SOCIAL_DIALOG_MESSAGE_WIDTH (MUD_WIDTH - 12)
 
 /* height of add, ignore and message dialog boxes */
 #define SOCIAL_DIALOG_HEIGHT 70

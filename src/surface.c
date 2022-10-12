@@ -1053,93 +1053,12 @@ void surface_draw(Surface *surface) {
 #ifdef _3DS
     uint8_t *surface_pixels = (uint8_t *)surface->pixels;
 
-#if 0
-    if (mud->r_down) {
-        for (int y = 0; y < 240; y++) {
-            for (int x = 0; x < 400; x++) {
-                int fb_index = ((x * 240) + (240 - y)) * 3;
-
-                int pixel_index = (((y + mud->zoom_offset_y) * surface->width) +
-                                   (x + mud->zoom_offset_x)) *
-                                  4;
-
-                memcpy(mud->framebuffer_top + fb_index, pixels + pixel_index,
-                       3);
-            }
-        }
-
-        // gspWaitForVBlank();
-    }
-
-    uint8_t *fb = NULL;
-    int offset_x = 0;
-    int offset_y = 0;
-
-    if (mud->keyboard_open) {
-        if (mud->r_down) {
-            return;
-        }
-
-        fb = mud->framebuffer_top;
-        offset_x = 72 + 1;
-        offset_y = (57 * 2) + 1;
-    } else {
-        fb = mud->framebuffer_bottom;
-        offset_x = 32;
-        offset_y = (6 * 2) + 1;
-    }
-
-    int index = 0;
-
-    for (int y = 0; y < surface->height; y++) {
-        for (int x = 0; x < surface->width / 2; x++) {
-            if (surface->interlace) {
-                if (y % 2 == 1) {
-                    index += 8;
-                    continue;
-                }
-
-                int fb_index =
-                    (((x + offset_x) * 240) + (240 - ((y + offset_y) / 2))) * 3;
-
-                memcpy(fb + fb_index, pixels + index, 3);
-
-                index += 8;
-            } else {
-                int b1 = pixels[index];
-                int g1 = pixels[index + 1];
-                int r1 = pixels[index + 2];
-
-                index += 4;
-
-                int b2 = pixels[index];
-                int g2 = pixels[index + 1];
-                int r2 = pixels[index + 2];
-
-                index += 4;
-
-                int fb_index =
-                    (((x + offset_x) * 240) + (240 - ((y + offset_y) / 2))) * 3;
-
-                if (y % 2 == 1) {
-                    fb[fb_index] = (fb[fb_index] + b1 + b2) / 3;
-                    fb[fb_index + 1] = (fb[fb_index + 1] + g1 + g2) / 3;
-                    fb[fb_index + 2] = (fb[fb_index + 2] + r1 + r2) / 3;
-                } else {
-                    fb[fb_index] = (b1 + b2) / 2;
-                    fb[fb_index + 1] = (g1 + g2) / 2;
-                    fb[fb_index + 2] = (r1 + r2) / 2;
-                }
-            }
-        }
-    }
-#endif
     for (int x = 0; x < surface->width; x++) {
-        for (int y = 0; y < 240; y++) {
-            int framebuffer_index = ((x * 240) + (240 - y)) * 3;
+        for (int y = 0; y < 240; y += (mud->surface->interlace ? 2 : 1)) {
+            int framebuffer_index = ((x * 240) + (239 - y)) * 3;
             int pixel_index = ((y * surface->width) + x) * 4;
 
-            memcpy(mud->framebuffer_bottom + framebuffer_index,
+            memcpy(mud->_3ds_framebuffer_bottom + framebuffer_index,
                    surface_pixels + pixel_index, 3);
         }
     }
@@ -1169,10 +1088,7 @@ void surface_black_screen(Surface *surface) {
     int area = surface->width * surface->height;
 
     if (!surface->interlace) {
-        for (int i = 0; i < area; i++) {
-            surface->pixels[i] = 0;
-        }
-
+        memset(surface->pixels, 0, area * sizeof(int32_t));
         return;
     }
 

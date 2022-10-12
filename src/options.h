@@ -13,6 +13,8 @@
      "; Disable registration and load sounds, P2P landscape and items ("       \
      "requires\n; restart)\n"                                                  \
      "members = %d\n"                                                          \
+     "; If enabled, override members option and always show New User button\n"\
+     "registration = %d\n" \
      "; Used together to encrypt passwords, Must be represented as "           \
      "hexadecimal string\n; 0-padded to a multiple of eight characters\n"      \
      "rsa_exponent = %s\n"                                                     \
@@ -133,6 +135,9 @@ typedef struct Options {
     /* disable registration and load sounds, P2P landscape and items (requires
      * restart) */
     int members;
+
+    /* if enabled, override members option and always show New User button */
+    int registration;
 
     /* used together to encrypt passwords, must be represented as hexadecimal
      * string 0-padded to a multiple of eight characters */

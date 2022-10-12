@@ -451,7 +451,7 @@ void mudclient_new(mudclient *mud) {
     mud->quest_complete = calloc(quests_length, sizeof(int8_t));
 
 #ifdef _3DS
-    mud->sound_position = -1;
+    mud->_3ds_sound_position = -1;
 #endif
 
     mud->appearance_body_type = 1;
@@ -627,9 +627,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     gfxSetDoubleBuffering(GFX_BOTTOM, 0);
     gfxSetDoubleBuffering(GFX_TOP, 0);
 
-    mud->framebuffer_top = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+    mud->_3ds_framebuffer_top = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 
-    mud->framebuffer_bottom =
+    mud->_3ds_framebuffer_bottom =
         gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
 
     /* allocate buffer for SOC service (networking) */
@@ -820,44 +820,14 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
 #ifdef _3DS
-    memcpy((uint8_t *)mud->framebuffer_top, game_top_bgr, game_top_bgr_size);
+    mudclient_3ds_draw_top_background(mud);
 
     gspWaitForVBlank();
 
-    while (aptMainLoop()) {
-        memcpy((uint8_t *)mud->framebuffer_bottom, game_type_bgr,
-               game_type_bgr_size);
-
-        hidScanInput();
-
-        touchPosition touch;
-        hidTouchRead(&touch);
-
-        if (touch.px >= 30 && touch.py >= 38 && touch.px <= 126 &&
-            touch.py <= 88) {
-            memcpy((uint8_t *)mud->framebuffer_bottom, game_background_bgr,
-                   game_background_bgr_size);
-
-            gspWaitForVBlank();
-
-            mud->options->members = 0;
-            mudclient_run(mud);
-            break;
-        } else if (touch.px >= 200 && touch.py >= 38 && touch.px <= 290 &&
-                   touch.py <= 90) {
-            memcpy((uint8_t *)mud->framebuffer_bottom, game_background_bgr,
-                   game_background_bgr_size);
-
-            gspWaitForVBlank();
-
-            mud->options->members = 1;
-            mudclient_run(mud);
-            break;
-        }
-    }
+    mud->options->members = 0;
 #endif
 
-#if !defined(WII) && !defined(_3DS)
+#ifndef WII
     mudclient_run(mud);
 #endif
 }
@@ -4819,8 +4789,15 @@ void mudclient_draw_game(mudclient *mud) {
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
+    int offset_y = 0;
+
+#ifdef _3DS
+    /* centres the camera for the smaller FOV */
+    offset_y = 75;
+#endif
+
     scene_set_camera(mud->scene, camera_x,
-                     -world_get_elevation(mud->world, camera_x, camera_z),
+                     -world_get_elevation(mud->world, camera_x, camera_z) - offset_y,
                      camera_z, 912, (mud->camera_rotation * 4), 0,
                      (mud->camera_zoom * 2));
 
@@ -4860,7 +4837,7 @@ void mudclient_draw_game(mudclient *mud) {
     uint8_t *surface_pixels = (uint8_t *)mud->surface->pixels;
 
     /* copy the top screen scene raster to the bottom screen surface */
-    for (int y = 0; y < mud->game_height - 12; y++) {
+    for (int y = 0; y < mud->game_height - 12; y += (mud->surface->interlace ? 2 : 1)) {
         int top_index = ((y * 400) + 40) * 4;
         int bottom_index = (y * mud->surface->width) * 4;
 
@@ -4956,6 +4933,9 @@ void mudclient_draw_game(mudclient *mud) {
     if (mud->r_down) {
         mudclient_3ds_draw_framebuffer_top(mud);
     }
+
+    gfxFlushBuffers();
+    gfxSwapBuffers();
 #endif
 }
 
@@ -5319,6 +5299,10 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_down & KEY_R) {
         mud->r_down = !mud->r_down;
+
+        if (!mud->r_down) {
+            mudclient_3ds_draw_top_background(mud);
+        }
     }
 
     u32 keys_up = hidKeysUp();
@@ -5343,14 +5327,14 @@ void mudclient_poll_events(mudclient *mud) {
         mud->l_down = 0;
     }
 
-    touchPosition touch;
-    hidTouchRead(&touch);
-
     if (mud->keyboard_open) {
         if (_3ds_keyboard_received_input) {
             mudclient_3ds_handle_keyboard(mud);
         }
     } else {
+        touchPosition touch = {0};
+        hidTouchRead(&touch);
+
         if (touch.px == 0 && touch.py == 0) {
             if (mud->touch_down != 0) {
                 mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y,
@@ -5422,7 +5406,7 @@ void mudclient_poll_events(mudclient *mud) {
 
 #ifdef _3DS
 void mudclient_3ds_flush_audio(mudclient *mud) {
-    if (mud->sound_position < 0) {
+    if (mud->_3ds_sound_position < 0) {
         return;
     }
 
@@ -5431,18 +5415,18 @@ void mudclient_3ds_flush_audio(mudclient *mud) {
         int done = 0;
 
         for (int i = 0; i < SAMPLE_BUFFER_SIZE; i++) {
-            if (done || mud->sound_position >= mud->sound_length) {
+            if (done || mud->_3ds_sound_position >= mud->_3ds_sound_length) {
                 wave_buff_data[i] = 0;
                 done = 1;
             } else {
-                wave_buff_data[i] = mud->pcm_out[mud->sound_position];
-                mud->sound_position++;
+                wave_buff_data[i] = mud->pcm_out[mud->_3ds_sound_position];
+                mud->_3ds_sound_position++;
             }
         }
 
         if (done) {
-            mud->sound_position = -1;
-            mud->sound_length = 0;
+            mud->_3ds_sound_position = -1;
+            mud->_3ds_sound_length = 0;
         }
 
         DSP_FlushDataCache((u32 *)wave_buff_data, SAMPLE_BUFFER_SIZE);
@@ -5454,23 +5438,23 @@ void mudclient_3ds_flush_audio(mudclient *mud) {
 }
 
 void mudclient_3ds_open_keyboard(mudclient *mud) {
+    if (mud->keyboard_open) {
+        return;
+    }
+
     int32_t priority = 0;
     svcGetThreadPriority(&priority, CUR_THREAD_HANDLE);
 
     memset(_3ds_keyboard_buffer, '\0', 255);
 
-    for (int i = 0; i < 255; i++) {
-        mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
-    }
-
     mudclient_3ds_draw_framebuffer_top(mud);
 
-    for (int x = 0; x < 320; x++) {
-        int top_index = (((x + 40) * 240) + (240)) * 3;
-        int bottom_index = ((x * 240) + (240)) * 3;
+    for (int x = 0; x < 319; x++) {
+        int top_index = ((x + 40) * 240) * 3;
+        int bottom_index = (x * 240) * 3;
 
-        memcpy(mud->framebuffer_top + top_index,
-               mud->framebuffer_bottom + bottom_index, 240 * 3);
+        memcpy(mud->_3ds_framebuffer_top + top_index,
+               mud->_3ds_framebuffer_bottom + bottom_index, 240 * 3);
     }
 
     gspWaitForVBlank();
@@ -5485,6 +5469,8 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
     mud->keyboard_open = 0;
     _3ds_keyboard_received_input = 0;
 
+    mudclient_3ds_draw_top_background(mud);
+
     for (int i = 0; i < 10; i++) {
         mud->timings[i] = get_ticks();
     }
@@ -5495,6 +5481,10 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
         return;
     }
 
+    for (int i = 0; i < 255; i++) {
+        mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
+    }
+
     for (int i = 0; i < input_length; i++) {
         mudclient_key_pressed(mud, -1, _3ds_keyboard_buffer[i]);
     }
@@ -5502,15 +5492,19 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
     mudclient_key_pressed(mud, K_ENTER, K_ENTER);
 }
 
+void mudclient_3ds_draw_top_background(mudclient *mud) {
+    memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr, game_top_bgr_size);
+}
+
 void mudclient_3ds_draw_framebuffer_top(mudclient *mud) {
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
 
     for (int x = 0; x < 400; x++) {
-        for (int y = 0; y < 240 - 6; y++) {
-            int framebuffer_index = ((x * 240) + (240 - y - 6)) * 3;
+        for (int y = 0; y < 240 - 12; y++) {
+            int framebuffer_index = ((x * 240) + (239 - y)) * 3;
             int scene_index = ((y * mud->scene->width) + x) * 4;
 
-            memcpy(mud->framebuffer_top + framebuffer_index,
+            memcpy(mud->_3ds_framebuffer_top + framebuffer_index,
                    scene_pixels + scene_index, 3);
         }
     }
@@ -5768,8 +5762,8 @@ void mudclient_play_sound(mudclient *mud, char *name) {
     ulaw_to_linear(length, (uint8_t *)mud->sound_data + offset, mud->pcm_out);
 
 #ifdef _3DS
-    mud->sound_position = 0;
-    mud->sound_length = length * 2;
+    mud->_3ds_sound_position = 0;
+    mud->_3ds_sound_length = length * 2;
 #endif
 
 #ifdef WII
