@@ -79,7 +79,7 @@ void options_set_defaults(Options *options) {
     options->show_roofs = 1;
     options->remaining_experience = 1;
     options->total_experience = 1;
-    options->experience_drops = 1;
+    options->experience_drops = 0;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
     options->certificate_items = 1;
@@ -103,8 +103,8 @@ void options_set_defaults(Options *options) {
     options->anti_alias = 1;
     options->field_of_view = 360;
 
-    strcpy(options->server, "172.30.6.158");
-    //strcpy(options->server, "192.168.100.107");
+    //strcpy(options->server, "172.30.6.158");
+    strcpy(options->server, "192.168.100.107");
     options->remember_username = 1;
     options->remember_password = 1;
     options->display_fps = 1;

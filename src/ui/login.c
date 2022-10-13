@@ -11,8 +11,9 @@ void mudclient_create_login_panels(mudclient *mud) {
     int offset_y = MUD_IS_COMPACT ? 17 : 40;
 
     // TODO divorce registration from p2p
+    int show_registration = !mud->options->members || mud->options->registration;
 
-    if (!mud->options->members) {
+    if (show_registration) {
         int offset_x = MUD_IS_COMPACT ? 16 : 0;
 
         panel_add_text_centre(mud->panel_login_welcome, x,
@@ -84,7 +85,7 @@ void mudclient_create_login_panels(mudclient *mud) {
                               "Options", 1, 0);
 
         mud->control_welcome_options = panel_add_button(
-            mud->panel_login_welcome, button_x, button_y, 60, 02);
+            mud->panel_login_welcome, button_x, button_y, 60, 20);
     }
 
     mud->panel_login_new_user = malloc(sizeof(Panel));

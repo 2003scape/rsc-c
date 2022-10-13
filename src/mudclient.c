@@ -115,26 +115,35 @@ volatile int _3ds_keyboard_received_input = 0;
 SwkbdButton _3ds_keyboard_button;
 
 void _3ds_keyboard_thread_callback(void *arg) {
-    static SwkbdState swkbd;
-    swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 3, -1);
+    int keyboard_type = (int)arg;
+
+    static SwkbdState swkbd = {0};
+
+    swkbdInit(&swkbd,
+              keyboard_type == _3DS_KEYBOARD_NUMPAD ? SWKBD_TYPE_NUMPAD
+                                                    : SWKBD_TYPE_NORMAL,
+              2, 255);
+
     swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
-    swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
+
+    if (keyboard_type == _3DS_KEYBOARD_NORMAL) {
+        swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
+    } else if (keyboard_type == _3DS_KEYBOARD_PASSWORD) {
+        swkbdSetPasswordMode(&swkbd, SWKBD_PASSWORD_HIDE);
+    }
 
     int reload = 1;
-    static SwkbdStatusData swkbdStatus;
+    static SwkbdStatusData swkbdStatus = {0};
     swkbdSetStatusData(&swkbd, &swkbdStatus, reload, 1);
 
-    static SwkbdLearningData swkbdLearning;
+    static SwkbdLearningData swkbdLearning = {0};
     swkbdSetLearningData(&swkbd, &swkbdLearning, reload, 1);
 
     _3ds_keyboard_button = swkbdInputText(&swkbd, _3ds_keyboard_buffer,
                                           sizeof(_3ds_keyboard_buffer));
 
     if (_3ds_keyboard_button != SWKBD_BUTTON_NONE) {
-        // printf("You pressed button %d\n", button);
         _3ds_keyboard_received_input = 1;
-    } else {
-        // printf("swkbd event: %d\n", swkbdGetResult(&swkbd));
     }
 
     threadExit(0);
@@ -627,7 +636,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     gfxSetDoubleBuffering(GFX_BOTTOM, 0);
     gfxSetDoubleBuffering(GFX_TOP, 0);
 
-    mud->_3ds_framebuffer_top = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+    mud->_3ds_framebuffer_top =
+        gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 
     mud->_3ds_framebuffer_bottom =
         gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
@@ -4796,10 +4806,10 @@ void mudclient_draw_game(mudclient *mud) {
     offset_y = 75;
 #endif
 
-    scene_set_camera(mud->scene, camera_x,
-                     -world_get_elevation(mud->world, camera_x, camera_z) - offset_y,
-                     camera_z, 912, (mud->camera_rotation * 4), 0,
-                     (mud->camera_zoom * 2));
+    scene_set_camera(
+        mud->scene, camera_x,
+        -world_get_elevation(mud->world, camera_x, camera_z) - offset_y,
+        camera_z, 912, (mud->camera_rotation * 4), 0, (mud->camera_zoom * 2));
 
     surface_black_screen(mud->surface);
 
@@ -4837,7 +4847,8 @@ void mudclient_draw_game(mudclient *mud) {
     uint8_t *surface_pixels = (uint8_t *)mud->surface->pixels;
 
     /* copy the top screen scene raster to the bottom screen surface */
-    for (int y = 0; y < mud->game_height - 12; y += (mud->surface->interlace ? 2 : 1)) {
+    for (int y = 0; y < mud->game_height - 12;
+         y += (mud->surface->interlace ? 2 : 1)) {
         int top_index = ((y * 400) + 40) * 4;
         int bottom_index = (y * mud->surface->width) * 4;
 
@@ -5459,8 +5470,25 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
 
     gspWaitForVBlank();
 
-    _3ds_keyboard_thread = threadCreate(_3ds_keyboard_thread_callback, NULL,
-                                        STACK_SIZE, priority + 1, -2, 1);
+    int keyboard_type = _3DS_KEYBOARD_NORMAL;
+
+    if (!mud->logged_in &&
+        ((mud->login_screen == LOGIN_STAGE_EXISTING &&
+          mud->panel_login_existing_user->focus_control_index ==
+              mud->control_login_password) ||
+         (mud->login_screen == LOGIN_STAGE_NEW &&
+              (mud->panel_login_new_user->focus_control_index ==
+               mud->control_register_password) ||
+          (mud->panel_login_new_user->focus_control_index ==
+           mud->control_register_confirm_password)))) {
+        keyboard_type = _3DS_KEYBOARD_PASSWORD;
+    } else if (mud->show_dialog_offer_x) {
+        keyboard_type = _3DS_KEYBOARD_NUMPAD;
+    }
+
+    _3ds_keyboard_thread =
+        threadCreate(_3ds_keyboard_thread_callback, (void *)keyboard_type,
+                     STACK_SIZE, priority + 1, -2, 1);
 
     mud->keyboard_open = 1;
 }
@@ -5493,7 +5521,8 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
 }
 
 void mudclient_3ds_draw_top_background(mudclient *mud) {
-    memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr, game_top_bgr_size);
+    memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr,
+           game_top_bgr_size);
 }
 
 void mudclient_3ds_draw_framebuffer_top(mudclient *mud) {

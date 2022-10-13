@@ -18,12 +18,12 @@ mudclient_create_appearance_box(mudclient *mud, char *type, int x, int y) {
     if (type_split == NULL) {
         panel_add_text_centre(mud->panel_appearance, x, y, type_1, 1, 1);
     } else {
-        panel_add_text_centre(mud->panel_appearance, x, y - 8, type_1, 1, 1);
+        panel_add_text_centre(mud->panel_appearance, x, y - APPEARANCE_BOX_PADDING, type_1, 1, 1);
 
         char *type_2 = malloc(strlen(type_split) + 1);
         strcpy(type_2, type_split);
 
-        panel_add_text_centre(mud->panel_appearance, x, y + 8, type_2, 1, 1);
+        panel_add_text_centre(mud->panel_appearance, x, y + APPEARANCE_BOX_PADDING, type_2, 1, 1);
     }
 
     struct appearance_buttons buttons = {0};
@@ -49,20 +49,25 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->panel_appearance = malloc(sizeof(Panel));
     panel_new(mud->panel_appearance, mud->surface, 100);
 
-    int x = 256;
+    int x = MUD_WIDTH / 2;
+    int y = 10;
 
-    panel_add_text_centre(mud->panel_appearance, x, 10,
-                          "Please design Your Character", 4, 1);
+    if (!MUD_IS_COMPACT) {
+        panel_add_text_centre(mud->panel_appearance, x, y,
+                              "Please design Your Character", 4, 1);
 
-    int y = 24;
+        y += 14;
 
-    panel_add_text_centre(mud->panel_appearance, x - 55, y + 110, "Front", 3,
-                          1);
+        panel_add_text_centre(mud->panel_appearance, x - 55, y + 110, "Front", 3,
+                              1);
 
-    panel_add_text_centre(mud->panel_appearance, x, y + 110, "Side", 3, 1);
-    panel_add_text_centre(mud->panel_appearance, x + 55, y + 110, "Back", 3, 1);
+        panel_add_text_centre(mud->panel_appearance, x, y + 110, "Side", 3, 1);
+        panel_add_text_centre(mud->panel_appearance, x + 55, y + 110, "Back", 3, 1);
 
-    y += 145;
+        y += 145;
+    } else {
+        y += 102;
+    }
 
     struct appearance_buttons head_buttons = mudclient_create_appearance_box(
         mud, "Head\nType", x - APPEARANCE_COLUMN_WIDTH, y);
@@ -76,7 +81,7 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->control_appearance_hair_left = hair_buttons.left;
     mud->control_appearance_hair_right = hair_buttons.right;
 
-    y += 50;
+    y += APPEARANCE_BOX_MARGIN;
 
     struct appearance_buttons gender_buttons = mudclient_create_appearance_box(
         mud, "Gender", x - APPEARANCE_COLUMN_WIDTH, y);
@@ -90,7 +95,7 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->control_appearance_top_left = top_buttons.left;
     mud->control_appearance_top_right = top_buttons.right;
 
-    y += 50;
+    y += APPEARANCE_BOX_MARGIN;
 
     struct appearance_buttons skin_buttons = mudclient_create_appearance_box(
         mud, "Skin\nColor", x - APPEARANCE_COLUMN_WIDTH, y);
@@ -104,7 +109,7 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->control_appearance_bottom_left = bottom_buttons.left;
     mud->control_appearance_bottom_right = bottom_buttons.right;
 
-    y += 47;
+    y += APPEARANCE_BOX_MARGIN - (MUD_IS_COMPACT ? -1 : 3);
 
     panel_add_button_background(mud->panel_appearance, x, y,
                                 APPEARANCE_ACCEPT_WIDTH,
@@ -254,9 +259,7 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
     panel_draw_panel(mud->panel_appearance);
 
     int x = mud->surface->width / 2;
-    int y = 25 + (mud->surface->height / 2 - MUD_HEIGHT / 2);
-
-    // TODO support even smaller resolution
+    int y = (MUD_IS_COMPACT ? -7 : 25) + (mud->surface->height / 2 - MUD_HEIGHT / 2);
 
     surface_sprite_clipping_from6(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,

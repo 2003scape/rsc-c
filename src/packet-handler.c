@@ -121,13 +121,13 @@ void mudclient_packet_tick(mudclient *mud) {
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
-        /*mud->show_dialog_trade_confirm = 1;
+        mud->show_dialog_duel_confirm = 1;
 
         mud->transaction_recipient_confirm_items[0] = 82;
         mud->transaction_recipient_confirm_items_count[0] = 1;
         mud->transaction_recipient_confirm_item_count = 1;
 
-        for (int i = 0; i < 12; i++) {
+        /*for (int i = 0; i < 12; i++) {
             mud->transaction_recipient_confirm_items[i] = 11 + i;
             mud->transaction_recipient_confirm_items_count[i] = 100000;
         }

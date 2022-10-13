@@ -9,8 +9,12 @@
 #define APPEARANCE_ARROW_SIZE 20
 
 /* box around type text */
+#define APPEARANCE_BOX_PADDING (MUD_IS_COMPACT ? 5 : 8)
+
 #define APPEARANCE_BOX_WIDTH 53
-#define APPEARANCE_BOX_HEIGHT 41
+#define APPEARANCE_BOX_HEIGHT (APPEARANCE_BOX_PADDING + (MUD_IS_COMPACT ? 25 : 33))
+
+#define APPEARANCE_BOX_MARGIN (APPEARANCE_BOX_HEIGHT + (MUD_IS_COMPACT ? 3 : 9))
 
 /* the width of each option column including the arrows */
 #define APPEARANCE_COLUMN_WIDTH 54

@@ -733,8 +733,8 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     if (MUD_IS_COMPACT) {
         char *tabs[] = {"Yours", "Theirs"};
 
-        surface_draw_tabs(mud->surface, dialog_x, dialog_y + 16, TRANSACTION_WIDTH,
-                          22, tabs, 2, 0);
+        surface_draw_tabs(mud->surface, dialog_x, dialog_y + 16,
+                          TRANSACTION_WIDTH, 22, tabs, 2, mud->transaction_tab);
 
         y += 22;
     } else {
@@ -751,14 +751,23 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     }
 
     if (MUD_IS_COMPACT) {
-        int *confirm_items = mud->transaction_recipient_confirm_items;
+        int *confirm_items = mud->transaction_tab == 0
+                                 ? mud->transaction_confirm_items
+                                 : mud->transaction_recipient_confirm_items;
+
         int *confirm_items_count =
-            mud->transaction_recipient_confirm_items_count;
+            mud->transaction_tab == 0
+                ? mud->transaction_confirm_items_count
+                : mud->transaction_recipient_confirm_items_count;
+
+        int confirm_item_count =
+            mud->transaction_tab == 0
+                ? mud->transaction_confirm_item_count
+                : mud->transaction_recipient_confirm_item_count;
 
         mudclient_draw_transaction_items_confirm(
             mud, dialog_x + (TRANSACTION_WIDTH / 2), dialog_y + y,
-            confirm_items, confirm_items_count,
-            mud->transaction_recipient_confirm_item_count);
+            confirm_items, confirm_items_count, confirm_item_count);
     } else {
         mudclient_draw_transaction_items_confirm(
             mud, dialog_x + 351, dialog_y + y,
@@ -817,42 +826,87 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     }
 
     if (mud->mouse_button_click == 1) {
-        if (mud->mouse_x < dialog_x || mud->mouse_y < dialog_y ||
-            mud->mouse_x > dialog_x + TRANSACTION_WIDTH ||
-            mud->mouse_y > dialog_y + 262) {
-            mud->show_dialog_trade_confirm = 0;
-            mud->show_dialog_duel_confirm = 0;
+        int confirm_accept_opcode =
+            is_trade ? CLIENT_TRADE_CONFIRM_ACCEPT : CLIENT_DUEL_CONFIRM_ACCEPT;
 
-            /* this is accurate! */
-            packet_stream_new_packet(mud->packet_stream, CLIENT_TRADE_DECLINE);
-            packet_stream_send_packet(mud->packet_stream);
-        }
+        int decline_opcode =
+            is_trade ? CLIENT_TRADE_DECLINE : CLIENT_DUEL_DECLINE;
 
-        if (mud->mouse_x >= dialog_x + 118 - 35 &&
-            mud->mouse_x <= dialog_x + 118 + 70 &&
-            mud->mouse_y >= dialog_y + 238 &&
-            mud->mouse_y <= dialog_y + 238 + 21) {
-            mud->transaction_confirm_accepted = 1;
+        if (MUD_IS_COMPACT) {
+            if (mud->mouse_y < dialog_y + 12 || mud->mouse_x < dialog_x ||
+                mud->mouse_x > dialog_x + TRANSACTION_WIDTH) {
+                mud->show_dialog_trade_confirm = 0;
+                mud->show_dialog_duel_confirm = 0;
 
-            packet_stream_new_packet(mud->packet_stream,
-                                     is_trade ? CLIENT_TRADE_CONFIRM_ACCEPT
-                                              : CLIENT_DUEL_CONFIRM_ACCEPT);
+                packet_stream_new_packet(mud->packet_stream,
+                                         CLIENT_TRADE_DECLINE);
 
-            packet_stream_send_packet(mud->packet_stream);
-        }
+                packet_stream_send_packet(mud->packet_stream);
+            } else if (mud->mouse_y > dialog_y + 12 &&
+                       mud->mouse_y < dialog_y + 12 + 22) {
+                if (mud->mouse_x < dialog_x + (TRANSACTION_WIDTH / 2)) {
+                    mud->transaction_tab = 0;
+                } else {
+                    mud->transaction_tab = 1;
+                }
+            } else if (mud->mouse_y > dialog_y + TRANSACTION_HEIGHT -
+                                          TRANSACTION_BUTTON_HEIGHT &&
+                       mud->mouse_y < dialog_y + TRANSACTION_HEIGHT) {
+                if (mud->mouse_x > dialog_x + 4 &&
+                    mud->mouse_x < dialog_x + TRANSACTION_BUTTON_WIDTH + 4) {
+                    mud->transaction_confirm_accepted = 1;
 
-        if (mud->mouse_x >= dialog_x + 352 - 35 &&
-            mud->mouse_x <= dialog_x + 353 + 70 &&
-            mud->mouse_y >= dialog_y + 238 &&
-            mud->mouse_y <= dialog_y + 238 + 21) {
-            mud->show_dialog_trade_confirm = 0;
-            mud->show_dialog_duel_confirm = 0;
+                    packet_stream_new_packet(mud->packet_stream,
+                                             confirm_accept_opcode);
 
-            packet_stream_new_packet(mud->packet_stream,
-                                     is_trade ? CLIENT_TRADE_DECLINE
-                                              : CLIENT_DUEL_DECLINE);
+                    packet_stream_send_packet(mud->packet_stream);
+                } else if (mud->mouse_x > dialog_x + TRANSACTION_WIDTH -
+                                              TRANSACTION_BUTTON_WIDTH - 4 &&
+                           mud->mouse_x < dialog_x + TRANSACTION_WIDTH - 4) {
+                    mud->show_dialog_trade_confirm = 0;
+                    mud->show_dialog_duel_confirm = 0;
 
-            packet_stream_send_packet(mud->packet_stream);
+                    packet_stream_new_packet(mud->packet_stream,
+                                             decline_opcode);
+
+                    packet_stream_send_packet(mud->packet_stream);
+                }
+            }
+        } else {
+            if (mud->mouse_x < dialog_x || mud->mouse_y < dialog_y ||
+                mud->mouse_x > dialog_x + TRANSACTION_WIDTH ||
+                mud->mouse_y > dialog_y + 262) {
+                mud->show_dialog_trade_confirm = 0;
+                mud->show_dialog_duel_confirm = 0;
+
+                /* this is accurate! */
+                packet_stream_new_packet(mud->packet_stream,
+                                         CLIENT_TRADE_DECLINE);
+
+                packet_stream_send_packet(mud->packet_stream);
+            } else if (mud->mouse_y >= dialog_y + 238 &&
+                       mud->mouse_y <=
+                           dialog_y + 238 + TRANSACTION_BUTTON_HEIGHT) {
+                if (mud->mouse_x >= dialog_x + 118 - 35 &&
+                    mud->mouse_x <= dialog_x + 119 + TRANSACTION_BUTTON_WIDTH) {
+                    mud->transaction_confirm_accepted = 1;
+
+                    packet_stream_new_packet(mud->packet_stream,
+                                             confirm_accept_opcode);
+
+                    packet_stream_send_packet(mud->packet_stream);
+                } else if (mud->mouse_x >= dialog_x + 352 - 35 &&
+                           mud->mouse_x <=
+                               dialog_x + 354 + TRANSACTION_BUTTON_WIDTH) {
+                    mud->show_dialog_trade_confirm = 0;
+                    mud->show_dialog_duel_confirm = 0;
+
+                    packet_stream_new_packet(mud->packet_stream,
+                                             decline_opcode);
+
+                    packet_stream_send_packet(mud->packet_stream);
+                }
+            }
         }
 
         mud->mouse_button_click = 0;

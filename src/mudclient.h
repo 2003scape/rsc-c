@@ -300,6 +300,10 @@ extern int wii_mouse_button;
 /* for keyboard thread */
 #define STACK_SIZE (4 * 1024)
 
+#define _3DS_KEYBOARD_NORMAL 0
+#define _3DS_KEYBOARD_PASSWORD 1
+#define _3DS_KEYBOARD_NUMPAD 2
+
 extern u32 *SOC_buffer;
 
 extern ndspWaveBuf wave_buf[2];
