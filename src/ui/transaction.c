@@ -731,10 +731,19 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     int y = 30;
 
     if (MUD_IS_COMPACT) {
-        char *tabs[] = {"Yours", "Theirs"};
+        char *tabs[3];
+
+        if (is_trade) {
+            tabs[0] = "Your Offer";
+            tabs[1] = "Their Offer";
+        } else {
+            tabs[0] = "Your Stake";
+            tabs[1] = "Their Stake";
+            tabs[2] = "Rules";
+        }
 
         surface_draw_tabs(mud->surface, dialog_x, dialog_y + 16,
-                          TRANSACTION_WIDTH, 22, tabs, 2, mud->transaction_tab);
+                          TRANSACTION_WIDTH, 22, tabs, is_trade ? 2 : 3, mud->transaction_tab);
 
         y += 22;
     } else {
@@ -751,6 +760,7 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     }
 
     if (MUD_IS_COMPACT) {
+        if (mud->transaction_tab != 2) {
         int *confirm_items = mud->transaction_tab == 0
                                  ? mud->transaction_confirm_items
                                  : mud->transaction_recipient_confirm_items;
@@ -768,6 +778,7 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
         mudclient_draw_transaction_items_confirm(
             mud, dialog_x + (TRANSACTION_WIDTH / 2), dialog_y + y,
             confirm_items, confirm_items_count, confirm_item_count);
+        }
     } else {
         mudclient_draw_transaction_items_confirm(
             mud, dialog_x + 351, dialog_y + y,
@@ -843,12 +854,9 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
 
                 packet_stream_send_packet(mud->packet_stream);
             } else if (mud->mouse_y > dialog_y + 12 &&
-                       mud->mouse_y < dialog_y + 12 + 22) {
-                if (mud->mouse_x < dialog_x + (TRANSACTION_WIDTH / 2)) {
-                    mud->transaction_tab = 0;
-                } else {
-                    mud->transaction_tab = 1;
-                }
+                       mud->mouse_y < dialog_y + 12 + 22 &&
+                       mud->mouse_x < dialog_x + TRANSACTION_WIDTH - 4) {
+                mud->transaction_tab = (mud->mouse_x - dialog_x) / (TRANSACTION_WIDTH / (is_trade ? 2 : 3));
             } else if (mud->mouse_y > dialog_y + TRANSACTION_HEIGHT -
                                           TRANSACTION_BUTTON_HEIGHT &&
                        mud->mouse_y < dialog_y + TRANSACTION_HEIGHT) {

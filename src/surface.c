@@ -3913,7 +3913,7 @@ int surface_text_width(char *text, int font_id) {
 
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected) {
-    int tab_width = width / tabs_length;
+    int tab_width = (int)ceilf(width / (float)tabs_length);
     int offset_x = 0;
 
     for (int i = 0; i < tabs_length; i++) {

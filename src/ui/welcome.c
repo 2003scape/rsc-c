@@ -9,14 +9,14 @@ void mudclient_draw_welcome(mudclient *mud) {
         height += 15 * 3;
     }
 
-    int dialog_x = (mud->surface->width / 2) - (WELCOME_WIDTH / 2);
+    int dialog_x = (mud->surface->width / 2) - (SERVER_MESSAGE_WIDTH / 2);
     int dialog_y = (mud->surface->height / 2) - (height / 2);
 
-    surface_draw_box(mud->surface, dialog_x, dialog_y, WELCOME_WIDTH, height,
-                     BLACK);
+    surface_draw_box(mud->surface, dialog_x, dialog_y, SERVER_MESSAGE_WIDTH,
+                     height, BLACK);
 
-    surface_draw_border(mud->surface, dialog_x, dialog_y, WELCOME_WIDTH,
-                          height, WHITE);
+    surface_draw_border(mud->surface, dialog_x, dialog_y, SERVER_MESSAGE_WIDTH,
+                        height, WHITE);
 
     int y = dialog_y + 20;
     int x = mud->surface->width / 2;
@@ -66,7 +66,7 @@ void mudclient_draw_welcome(mudclient *mud) {
 
     if (mud->mouse_y > y - 12 && mud->mouse_y <= y &&
         mud->mouse_x > dialog_x + 50 &&
-        mud->mouse_x < dialog_x + WELCOME_WIDTH - 50) {
+        mud->mouse_x < dialog_x + SERVER_MESSAGE_WIDTH - 50) {
         text_colour = RED;
     }
 
@@ -79,7 +79,7 @@ void mudclient_draw_welcome(mudclient *mud) {
         }
 
         if ((mud->mouse_x < dialog_x + 30 ||
-             mud->mouse_x > dialog_x + WELCOME_WIDTH - 30) &&
+             mud->mouse_x > dialog_x + SERVER_MESSAGE_WIDTH - 30) &&
             (mud->mouse_y < dialog_y - (height / 2) ||
              mud->mouse_y > dialog_y + (height / 2))) {
             mud->show_dialog_welcome = 0;

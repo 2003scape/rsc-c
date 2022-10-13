@@ -144,13 +144,17 @@ void mudclient_draw_duel(mudclient *mud) {
 void mudclient_draw_duel_confirm(mudclient *mud) {
     int dialog_x = mud->surface->width / 2 - TRANSACTION_WIDTH / 2; // 22
 
-    int dialog_y =
-        (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) + 2; // 36
+    int dialog_y = (mud->surface->height / 2 - TRANSACTION_HEIGHT / 2) +
+                   (MUD_IS_COMPACT ? -8 : 2); // 36
 
     mudclient_draw_transaction_confirm(mud, dialog_x, dialog_y, 0);
 
-    int x = dialog_x + 234;
-    int y = dialog_y + 180;
+    if (MUD_IS_COMPACT && mud->transaction_tab != 2) {
+        return;
+    }
+
+    int x = dialog_x + (TRANSACTION_WIDTH / 2);
+    int y = dialog_y + (MUD_IS_COMPACT ? 52 : 180);
 
     if (mud->duel_option_retreat == 0) {
         surface_draw_string_centre(
