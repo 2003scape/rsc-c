@@ -44,7 +44,7 @@ CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-mword-relocations -fomit-frame-pointer -ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -DRENDER_SW -D_3DS -DREVISION_177
+CFLAGS	+=	$(INCLUDE) -D__3DS__ -DRENDER_SW -D_3DS -DREVISION_177
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
