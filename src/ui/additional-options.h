@@ -3,7 +3,7 @@
 
 #include "../mudclient.h"
 
-#define ADDITIONAL_OPTIONS_WIDTH 348
+#define ADDITIONAL_OPTIONS_WIDTH 320
 #define ADDITIONAL_OPTIONS_HEIGHT 218
 
 /* tabs */

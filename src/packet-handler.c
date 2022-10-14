@@ -121,19 +121,6 @@ void mudclient_packet_tick(mudclient *mud) {
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
-        mud->show_dialog_duel_confirm = 1;
-
-        mud->transaction_recipient_confirm_items[0] = 82;
-        mud->transaction_recipient_confirm_items_count[0] = 1;
-        mud->transaction_recipient_confirm_item_count = 1;
-
-        /*for (int i = 0; i < 12; i++) {
-            mud->transaction_recipient_confirm_items[i] = 11 + i;
-            mud->transaction_recipient_confirm_items_count[i] = 100000;
-        }
-
-        mud->transaction_recipient_confirm_item_count = 12;*/
-
         mud->loading_area = 1;
         mud->local_player_server_index = get_unsigned_short(data, 1);
         mud->plane_width = get_unsigned_short(data, 3);

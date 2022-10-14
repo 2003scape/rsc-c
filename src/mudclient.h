@@ -345,8 +345,8 @@ typedef struct mudclient {
     uint8_t *_3ds_framebuffer_top;
     uint8_t *_3ds_framebuffer_bottom;
 
-    int l_down;
-    int r_down;
+    int _3ds_l_down;
+    int _3ds_r_down;
     int touch_down;
     int keyboard_open;
 
@@ -362,9 +362,6 @@ typedef struct mudclient {
 #ifdef RENDER_GL
     SDL_Window *gl_window;
 #endif
-
-    uint8_t *logo_pixels;
-    SDL_Surface *logo_surface;
 
     SDL_Cursor *default_cursor;
     SDL_Cursor *hand_cursor;
@@ -671,7 +668,7 @@ typedef struct mudclient {
     int local_upper_y;
 
     /* ./ui/wilderness-warning.c */
-    int show_ui_wild_warn;
+    int show_wilderness_warning;
 
     /* oh dear you are dead */
     int death_screen_timeout;

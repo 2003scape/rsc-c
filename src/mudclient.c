@@ -4303,7 +4303,7 @@ void mudclient_draw_ui(mudclient *mud) {
         mudclient_draw_welcome(mud);
     } else if (mud->show_dialog_server_message) {
         mudclient_draw_server_message(mud);
-    } else if (mud->show_ui_wild_warn == 1) {
+    } else if (mud->show_wilderness_warning == 1) {
         mudclient_draw_wilderness_warning(mud);
     } else if (mud->show_dialog_bank && mud->combat_timeout == 0) {
         mudclient_draw_bank(mud);
@@ -4350,7 +4350,7 @@ void mudclient_draw_ui(mudclient *mud) {
             mudclient_draw_option_menu(mud);
         }
 
-        if (mudclient_is_in_combat(mud)) {
+        if (1 || mudclient_is_in_combat(mud)) {
             mudclient_draw_combat_style(mud);
         }
 
@@ -4801,10 +4801,11 @@ void mudclient_draw_game(mudclient *mud) {
 
     int offset_y = 0;
 
-#ifdef _3DS
     /* centres the camera for the smaller FOV */
-    offset_y = 75;
-#endif
+    /* TODO could be an option */
+    if (MUD_IS_COMPACT) {
+        offset_y = 75;
+    }
 
     scene_set_camera(
         mud->scene, camera_x,
@@ -4829,7 +4830,7 @@ void mudclient_draw_game(mudclient *mud) {
     int32_t *old_pixels = mud->surface->pixels;
     mud->surface->pixels = mud->scene->raster;
 
-    if (mud->r_down) {
+    if (mud->_3ds_r_down) {
         memset(mud->scene->raster, 0, 400 * 240 * sizeof(int32_t));
     }
 #endif
@@ -4840,7 +4841,9 @@ void mudclient_draw_game(mudclient *mud) {
 #ifdef _3DS
     mud->surface->width = 320;
     mud->surface->height = 240;
+
     surface_set_bounds(mud->surface, 0, 0, 320, 240);
+
     mud->surface->pixels = old_pixels;
 
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
@@ -4919,14 +4922,14 @@ void mudclient_draw_game(mudclient *mud) {
                                        mud->surface->width - 47,
                                        mud->surface->height - 19, 1, YELLOW);
 
-            if (mud->show_ui_wild_warn == 0) {
-                mud->show_ui_wild_warn = 2;
+            if (mud->show_wilderness_warning == 0) {
+                mud->show_wilderness_warning = 2;
             }
         }
 
-        if (mud->options->wilderness_warning && mud->show_ui_wild_warn == 0 &&
+        if (mud->options->wilderness_warning && mud->show_wilderness_warning == 0 &&
             wilderness_depth > -10 && wilderness_depth <= 0) {
-            mud->show_ui_wild_warn = 1;
+            mud->show_wilderness_warning = 1;
         }
     }
 
@@ -4941,7 +4944,7 @@ void mudclient_draw_game(mudclient *mud) {
 
 #ifdef _3DS
     /* draw the scene to the top screen */
-    if (mud->r_down) {
+    if (mud->_3ds_r_down) {
         mudclient_3ds_draw_framebuffer_top(mud);
     }
 
@@ -5305,13 +5308,13 @@ void mudclient_poll_events(mudclient *mud) {
     }
 
     if (keys_down & KEY_L) {
-        mud->l_down = 1;
+        mud->_3ds_l_down = 1;
     }
 
     if (keys_down & KEY_R) {
-        mud->r_down = !mud->r_down;
+        mud->_3ds_r_down = !mud->_3ds_r_down;
 
-        if (!mud->r_down) {
+        if (!mud->_3ds_r_down) {
             mudclient_3ds_draw_top_background(mud);
         }
     }
@@ -5335,7 +5338,7 @@ void mudclient_poll_events(mudclient *mud) {
     }
 
     if (keys_up & KEY_L) {
-        mud->l_down = 0;
+        mud->_3ds_l_down = 0;
     }
 
     if (mud->keyboard_open) {
@@ -5356,7 +5359,7 @@ void mudclient_poll_events(mudclient *mud) {
         } else {
             mudclient_mouse_moved(mud, touch.px, touch.py);
 
-            int mouse_down = mud->l_down ? 3 : 1;
+            int mouse_down = mud->_3ds_l_down ? 3 : 1;
 
             if (mud->touch_down == 0) {
                 mudclient_mouse_pressed(mud, touch.px, touch.py, mouse_down);
@@ -5402,7 +5405,16 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         case SDL_MOUSEWHEEL:
             if (mud->options->mouse_wheel) {
-                mud->mouse_scroll_delta = (event.wheel.y > 0 ? -1 : 1);
+                if (event.wheel.y != 0) {
+                    mud->mouse_scroll_delta = (event.wheel.y > 0 ? -1 : 1);
+                }
+
+                if (event.wheel.x != 0) {
+                    int direction = event.wheel.x > 0 ? 1 : -1;
+
+                    mud->camera_rotation =
+                        (mud->camera_rotation + (direction * 3)) & 0xff;
+                }
             }
             break;
         case SDL_WINDOWEVENT:
@@ -5477,10 +5489,10 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
           mud->panel_login_existing_user->focus_control_index ==
               mud->control_login_password) ||
          (mud->login_screen == LOGIN_STAGE_NEW &&
-              (mud->panel_login_new_user->focus_control_index ==
-               mud->control_register_password) ||
           (mud->panel_login_new_user->focus_control_index ==
-           mud->control_register_confirm_password)))) {
+               mud->control_register_password ||
+           mud->panel_login_new_user->focus_control_index ==
+               mud->control_register_confirm_password)))) {
         keyboard_type = _3DS_KEYBOARD_PASSWORD;
     } else if (mud->show_dialog_offer_x) {
         keyboard_type = _3DS_KEYBOARD_NUMPAD;

@@ -13,8 +13,8 @@ void mudclient_draw_combat_style(mudclient *mud) {
         for (int i = 0; i < combat_styles_length + 1; i++) {
             if (i <= 0 || mud->mouse_x <= ui_x ||
                 mud->mouse_x >= ui_x + COMBAT_STYLE_WIDTH ||
-                mud->mouse_y <= ui_y + i * COMBAT_BUTTON_HEIGHT ||
-                mud->mouse_y >=
+                mud->mouse_y < ui_y + i * COMBAT_BUTTON_HEIGHT ||
+                mud->mouse_y >
                     ui_y + i * COMBAT_BUTTON_HEIGHT + COMBAT_BUTTON_HEIGHT) {
                 continue;
             }
@@ -46,20 +46,36 @@ void mudclient_draw_combat_style(mudclient *mud) {
                                      COMBAT_STYLE_WIDTH, BLACK);
     }
 
-    int y = 16;
+    int y = 16 + (MUD_IS_COMPACT ? 2 : 0);
 
-    surface_draw_string_centre(mud->surface, "Select combat style",
-                               ui_x + (COMBAT_STYLE_WIDTH / 2), ui_y + y, 3,
-                               WHITE);
+    surface_draw_string_centre(
+        mud->surface, MUD_IS_COMPACT ? "Combat style" : "Select combat style",
+        ui_x + (COMBAT_STYLE_WIDTH / 2), ui_y + y, 3, WHITE);
 
     y += COMBAT_BUTTON_HEIGHT;
 
     for (int i = 0; i < combat_styles_length; i++) {
         char *combat_style = combat_styles[i];
 
-        surface_draw_string_centre(mud->surface, combat_style,
-                                   ui_x + ((COMBAT_STYLE_WIDTH / 2) | 0),
-                                   ui_y + y, 3, BLACK);
+        if (MUD_IS_COMPACT) {
+            char combat_style_tokens[strlen(combat_style) + 1];
+            strcpy(combat_style_tokens, combat_style);
+            combat_style = strtok(combat_style_tokens, " ");
+
+            surface_draw_string_centre(mud->surface, combat_style,
+                                       ui_x + (COMBAT_STYLE_WIDTH / 2),
+                                       ui_y + y - 6, 1, BLACK);
+
+            combat_style = strtok(NULL, "(");
+
+            surface_draw_string_centre(mud->surface, combat_style - 1,
+                                       ui_x + (COMBAT_STYLE_WIDTH / 2),
+                                       ui_y + y + 4, 0, BLACK);
+        } else {
+            surface_draw_string_centre(mud->surface, combat_style,
+                                       ui_x + (COMBAT_STYLE_WIDTH / 2),
+                                       ui_y + y, 3, BLACK);
+        }
 
         y += COMBAT_BUTTON_HEIGHT;
     }

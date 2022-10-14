@@ -1937,7 +1937,7 @@ int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id,
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
     int32_t *palette = surface->sprite_palette[sprite_id];
-    int32_t *pixels = malloc(area * sizeof(int32_t));
+    int32_t *pixels = calloc(area, sizeof(int32_t));
 
     for (int i = 0; i < area; i++) {
         int32_t colour = palette[colours[i] & 0xff];
@@ -1980,7 +1980,7 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
     free(surface->surface_pixels[sprite_id]);
 
     surface->surface_pixels[sprite_id] =
-        malloc(width * height * sizeof(int32_t));
+        calloc(width * height, sizeof(int32_t));
 
     int pixel = 0;
 

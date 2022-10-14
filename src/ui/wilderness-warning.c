@@ -73,14 +73,14 @@ void mudclient_draw_wilderness_warning(mudclient *mud) {
     if (mud->mouse_button_click != 0) {
         if (mud->mouse_y > y - 12 && mud->mouse_y <= y &&
             mud->mouse_x > x - 75 && mud->mouse_x < x + 75) {
-            mud->show_ui_wild_warn = 2;
+            mud->show_wilderness_warning = 2;
         }
 
         if (mud->mouse_x < dialog_x ||
             mud->mouse_x > dialog_x + WILDERNESS_WARNING_WIDTH ||
             mud->mouse_y < dialog_y ||
             mud->mouse_y > dialog_y + WILDERNESS_WARNING_HEIGHT) {
-            mud->show_ui_wild_warn = 2;
+            mud->show_wilderness_warning = 2;
         }
 
         mud->mouse_button_click = 0;

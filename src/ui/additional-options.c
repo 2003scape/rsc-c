@@ -1,6 +1,6 @@
 #include "./additional-options.h"
 
-char *option_tabs[] = {"Connection", "Controls", "Display", "Bank"};
+char *option_tabs[] = {"Network", "Controls", "Display", "Bank"};
 
 int mudclient_add_option_panel_label(Panel *panel, char *label, int x, int y) {
     panel_add_text(panel, x, y, label, 1, 0);
