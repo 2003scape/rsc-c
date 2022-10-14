@@ -9,7 +9,8 @@ void mudclient_draw_combat_style(mudclient *mud) {
 
     int combat_styles_length = sizeof(combat_styles) / sizeof(combat_styles[0]);
 
-    if (mud->mouse_button_click != 0) {
+    if (mud->mouse_button_click != 0 &&
+        (MUD_IS_COMPACT ? mud->show_ui_tab != INVENTORY_TAB : 1)) {
         for (int i = 0; i < combat_styles_length + 1; i++) {
             if (i <= 0 || mud->mouse_x <= ui_x ||
                 mud->mouse_x >= ui_x + COMBAT_STYLE_WIDTH ||

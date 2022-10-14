@@ -833,8 +833,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mudclient_3ds_draw_top_background(mud);
 
     gspWaitForVBlank();
-
-    mud->options->members = 0;
 #endif
 
 #ifndef WII
@@ -4350,11 +4348,11 @@ void mudclient_draw_ui(mudclient *mud) {
             mudclient_draw_option_menu(mud);
         }
 
-        if (1 || mudclient_is_in_combat(mud)) {
+        mudclient_set_active_ui_tab(mud, no_menus);
+
+        if (mudclient_is_in_combat(mud)) {
             mudclient_draw_combat_style(mud);
         }
-
-        mudclient_set_active_ui_tab(mud, no_menus);
 
         if (mud->show_ui_tab == 0 && no_menus) {
             mudclient_create_right_click_menu(mud);
@@ -4927,8 +4925,9 @@ void mudclient_draw_game(mudclient *mud) {
             }
         }
 
-        if (mud->options->wilderness_warning && mud->show_wilderness_warning == 0 &&
-            wilderness_depth > -10 && wilderness_depth <= 0) {
+        if (mud->options->wilderness_warning &&
+            mud->show_wilderness_warning == 0 && wilderness_depth > -10 &&
+            wilderness_depth <= 0) {
             mud->show_wilderness_warning = 1;
         }
     }
@@ -5279,6 +5278,14 @@ void mudclient_poll_events(mudclient *mud) {
 #endif
 
 #ifdef _3DS
+    if (mud->keyboard_open) {
+        if (_3ds_keyboard_received_input) {
+            mudclient_3ds_handle_keyboard(mud);
+        }
+
+        return;
+    }
+
     hidScanInput();
 
     u32 keys_down = hidKeysDown();
@@ -5319,6 +5326,18 @@ void mudclient_poll_events(mudclient *mud) {
         }
     }
 
+    if (keys_down & KEY_A || keys_down & KEY_Y) {
+        mudclient_key_pressed(mud, K_HOME, -1);
+    }
+
+    if (keys_down & KEY_X) {
+        mudclient_key_pressed(mud, K_PAGE_UP, -1);
+    }
+
+    if (keys_down & KEY_B) {
+        mudclient_key_pressed(mud, K_PAGE_DOWN, -1);
+    }
+
     u32 keys_up = hidKeysUp();
 
     if (keys_up & KEY_LEFT) {
@@ -5341,32 +5360,38 @@ void mudclient_poll_events(mudclient *mud) {
         mud->_3ds_l_down = 0;
     }
 
-    if (mud->keyboard_open) {
-        if (_3ds_keyboard_received_input) {
-            mudclient_3ds_handle_keyboard(mud);
+    if (keys_up & KEY_A || keys_down & KEY_Y) {
+        mudclient_key_released(mud, K_HOME);
+    }
+
+    if (keys_up & KEY_X) {
+        mudclient_key_released(mud, K_PAGE_UP);
+    }
+
+    if (keys_up & KEY_B) {
+        mudclient_key_released(mud, K_PAGE_DOWN);
+    }
+
+    touchPosition touch = {0};
+    hidTouchRead(&touch);
+
+    if (touch.px == 0 && touch.py == 0) {
+        if (mud->touch_down != 0) {
+            mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y,
+                                     mud->touch_down);
         }
+
+        mud->touch_down = 0;
     } else {
-        touchPosition touch = {0};
-        hidTouchRead(&touch);
+        mudclient_mouse_moved(mud, touch.px, touch.py);
 
-        if (touch.px == 0 && touch.py == 0) {
-            if (mud->touch_down != 0) {
-                mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y,
-                                         mud->touch_down);
-            }
+        int mouse_down = mud->_3ds_l_down ? 3 : 1;
 
-            mud->touch_down = 0;
-        } else {
-            mudclient_mouse_moved(mud, touch.px, touch.py);
-
-            int mouse_down = mud->_3ds_l_down ? 3 : 1;
-
-            if (mud->touch_down == 0) {
-                mudclient_mouse_pressed(mud, touch.px, touch.py, mouse_down);
-            }
-
-            mud->touch_down = mouse_down;
+        if (mud->touch_down == 0) {
+            mudclient_mouse_pressed(mud, touch.px, touch.py, mouse_down);
         }
+
+        mud->touch_down = mouse_down;
     }
 #endif
 
