@@ -1057,6 +1057,8 @@ void mudclient_packet_tick(mudclient *mud) {
                             }
 
                             index++;
+                        } else {
+                            item_id = -123;
                         }
                     }
 
