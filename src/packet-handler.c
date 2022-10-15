@@ -861,7 +861,7 @@ void mudclient_packet_tick(mudclient *mud) {
             mud->wall_object_count = entity_count;
 
 #ifdef RENDER_GL
-        mudclient_gl_update_wall_models(mud);
+            mudclient_gl_update_wall_models(mud);
 #endif
         }
         break;
@@ -1380,9 +1380,9 @@ void mudclient_packet_tick(mudclient *mud) {
         }
 
         // TODO toggle
-        mud->bank_selected_item_slot = -1;
-        mud->bank_selected_item = -2;
-        mud->bank_scroll_row = 0;
+        // mud->bank_selected_item_slot = -1;
+        // mud->bank_selected_item = -2;
+        // mud->bank_scroll_row = 0;
 
         int offset = 1;
 

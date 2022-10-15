@@ -427,6 +427,8 @@ void mudclient_draw_bank(mudclient *mud) {
 
     if (show_bank_scroll) {
         bank_width += 13;
+    } else {
+        mud->bank_scroll_row = 0;
     }
 
     int show_inventory =
