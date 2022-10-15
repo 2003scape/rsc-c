@@ -1054,7 +1054,8 @@ void surface_draw(Surface *surface) {
     uint8_t *surface_pixels = (uint8_t *)surface->pixels;
 
     for (int x = 0; x < surface->width; x++) {
-        for (int y = 0; y < 240; y += (mud->surface->interlace ? 2 : 1)) {
+        // for (int y = 0; y < 240; y += (mud->surface->interlace ? 2 : 1)) {
+        for (int y = 0; y < 240; y++) {
             int framebuffer_index = ((x * 240) + (239 - y)) * 3;
             int pixel_index = ((y * surface->width) + x) * 4;
 
@@ -4071,7 +4072,12 @@ void surface_draw_status_bar(Surface *surface, int min, int max, int current,
     surface_draw_border(surface, x, y, width, height, BLACK);
 
     char formatted_status[strlen(label) + 27];
-    sprintf(formatted_status, "%s: %d / %d", label, current, max);
+
+    if (MUD_IS_COMPACT) {
+        sprintf(formatted_status, "%d / %d", current, max);
+    } else {
+        sprintf(formatted_status, "%s: %d / %d", label, current, max);
+    }
 
     surface_draw_string_centre(surface, formatted_status, x + (width / 2),
                                y + 12, 0, WHITE);

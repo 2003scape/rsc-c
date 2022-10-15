@@ -682,6 +682,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     ndspChnWaveBufAdd(0, &wave_buf[0]);
     ndspChnWaveBufAdd(0, &wave_buf[1]);
+
+    HIDUSER_EnableGyroscope();
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -4828,9 +4830,7 @@ void mudclient_draw_game(mudclient *mud) {
     int32_t *old_pixels = mud->surface->pixels;
     mud->surface->pixels = mud->scene->raster;
 
-    if (mud->_3ds_r_down) {
-        memset(mud->scene->raster, 0, 400 * 240 * sizeof(int32_t));
-    }
+    memset(mud->scene->raster, 0, 400 * 240 * sizeof(int32_t));
 #endif
 
     scene_render(mud->scene);
@@ -5314,15 +5314,21 @@ void mudclient_poll_events(mudclient *mud) {
         mudclient_3ds_open_keyboard(mud);
     }
 
-    if (keys_down & KEY_L) {
-        mud->_3ds_l_down = 1;
-    }
+    if (keys_down & KEY_L && keys_down & KEY_R) {
+        mud->_3ds_gyro_down = 1;
+        mud->_3ds_r_down = 1;
+        mudclient_3ds_draw_top_background(mud);
+    } else {
+        if (keys_down & KEY_L) {
+            mud->_3ds_l_down = 1;
+        }
 
-    if (keys_down & KEY_R) {
-        mud->_3ds_r_down = !mud->_3ds_r_down;
+        if (keys_down & KEY_R) {
+            mud->_3ds_r_down = !mud->_3ds_r_down;
 
-        if (!mud->_3ds_r_down) {
-            mudclient_3ds_draw_top_background(mud);
+            if (!mud->_3ds_r_down) {
+                mudclient_3ds_draw_top_background(mud);
+            }
         }
     }
 
@@ -5358,9 +5364,14 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_up & KEY_L) {
         mud->_3ds_l_down = 0;
+        mud->_3ds_gyro_down = 0;
     }
 
-    if (keys_up & KEY_A || keys_down & KEY_Y) {
+    if (keys_up & KEY_R) {
+        mud->_3ds_gyro_down = 0;
+    }
+
+    if (keys_up & KEY_A || keys_up & KEY_Y) {
         mudclient_key_released(mud, K_HOME);
     }
 
@@ -5376,22 +5387,37 @@ void mudclient_poll_events(mudclient *mud) {
     hidTouchRead(&touch);
 
     if (touch.px == 0 && touch.py == 0) {
-        if (mud->touch_down != 0) {
+        if (mud->_3ds_touch_down != 0) {
             mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y,
-                                     mud->touch_down);
+                                     mud->_3ds_touch_down);
         }
 
-        mud->touch_down = 0;
+        mud->_3ds_touch_down = 0;
     } else {
         mudclient_mouse_moved(mud, touch.px, touch.py);
 
         int mouse_down = mud->_3ds_l_down ? 3 : 1;
 
-        if (mud->touch_down == 0) {
+        if (mud->_3ds_touch_down == 0) {
             mudclient_mouse_pressed(mud, touch.px, touch.py, mouse_down);
         }
 
-        mud->touch_down = mouse_down;
+        mud->_3ds_touch_down = mouse_down;
+    }
+
+    if (mud->_3ds_gyro_down) {
+        angularRate gyro = {0};
+        hidGyroRead(&gyro);
+
+        mud->camera_rotation = (mud->camera_rotation + (gyro.y / 150)) & 0xff;
+
+        mud->camera_zoom += gyro.x / -20;
+
+        if (mud->camera_zoom > ZOOM_MAX) {
+            mud->camera_zoom = ZOOM_MAX;
+        } else if (mud->camera_zoom < ZOOM_MIN) {
+            mud->camera_zoom = ZOOM_MIN;
+        }
     }
 #endif
 
@@ -5494,6 +5520,10 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
     svcGetThreadPriority(&priority, CUR_THREAD_HANDLE);
 
     memset(_3ds_keyboard_buffer, '\0', 255);
+
+    if (!mud->logged_in) {
+        mudclient_3ds_draw_top_background(mud);
+    }
 
     mudclient_3ds_draw_framebuffer_top(mud);
 

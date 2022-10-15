@@ -42,11 +42,7 @@
 #ifdef _3DS
 #include <3ds.h>
 
-#include "game_background_bgr.h"
-#include "game_keyboard_bgr.h"
-#include "game_keyboard_shift_bgr.h"
 #include "game_top_bgr.h"
-#include "game_type_bgr.h"
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -345,10 +341,12 @@ typedef struct mudclient {
     uint8_t *_3ds_framebuffer_top;
     uint8_t *_3ds_framebuffer_bottom;
 
-    int _3ds_l_down;
-    int _3ds_r_down;
-    int touch_down;
-    int keyboard_open;
+    int8_t _3ds_l_down;
+    int8_t _3ds_r_down;
+    int8_t _3ds_touch_down;
+    int8_t keyboard_open;
+    int8_t _3ds_gyro_down;
+    int8_t _3ds_gyro_start;
 
     int _3ds_sound_position;
     int _3ds_sound_length;

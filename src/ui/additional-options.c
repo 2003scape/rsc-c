@@ -41,7 +41,11 @@ void mudclient_create_options_panel(mudclient *mud) {
     }
 
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
-    int ui_y = mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
+
+    int ui_y = MUD_IS_COMPACT
+                   ? 4
+                   : mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
+
     int x = ui_x + 4;
     int y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
@@ -523,7 +527,10 @@ void mudclient_draw_additional_options(mudclient *mud) {
     mud->surface->draw_string_shadow = 1;
 
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
-    int ui_y = mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
+
+    int ui_y = MUD_IS_COMPACT
+                   ? 4
+                   : mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
 
     surface_draw_box(mud->surface, ui_x, ui_y, ADDITIONAL_OPTIONS_WIDTH, 12,
                      TITLE_BAR_COLOUR);
@@ -599,7 +606,10 @@ void mudclient_draw_additional_options(mudclient *mud) {
 
 void mudclient_handle_additional_options_input(mudclient *mud) {
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
-    int ui_y = mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
+
+    int ui_y = MUD_IS_COMPACT
+                   ? 4
+                   : mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
 
     /* tabs */
     if (mud->last_mouse_button_down == 1 && mud->mouse_x >= ui_x &&
