@@ -5030,6 +5030,20 @@ void mudclient_poll_events(mudclient *mud) {
                        !(wiimote_data->btns_h & WPAD_BUTTON_RIGHT)) {
                 mudclient_key_released(mud, K_RIGHT);
             }
+
+            if (!mud->key_up && wiimote_data->btns_h & WPAD_BUTTON_UP) {
+                mudclient_key_pressed(mud, K_UP, -1);
+            } else if (mud->key_up &&
+                       !(wiimote_data->btns_h & WPAD_BUTTON_UP)) {
+                mudclient_key_released(mud, K_UP);
+            }
+
+            if (!mud->key_down && wiimote_data->btns_h & WPAD_BUTTON_DOWN) {
+                mudclient_key_pressed(mud, K_DOWN, -1);
+            } else if (mud->key_down &&
+                       !(wiimote_data->btns_h & WPAD_BUTTON_DOWN)) {
+                mudclient_key_released(mud, K_DOWN);
+            }
         }
 
         /* minus - open keyboard */

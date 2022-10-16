@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef WII
+#include <fat.h>
+#endif
+
 #include "lib/ini.h"
 
 #define OPTIONS_INI_TEMPLATE                                                   \
@@ -126,6 +130,10 @@
             }                                                                  \
         }                                                                      \
     }
+
+#ifdef WII
+extern int wii_fat_enabled;
+#endif
 
 typedef struct Options {
     /* configurable options: */

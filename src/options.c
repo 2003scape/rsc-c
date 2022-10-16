@@ -1,5 +1,9 @@
 #include "options.h"
 
+#ifdef WII
+int wii_fat_enabled = 0;
+#endif
+
 void options_new(Options *options) {
     memset(options, 0, sizeof(Options));
 
@@ -15,6 +19,10 @@ void options_new(Options *options) {
 
     options_set_defaults(options);
     // options_set_vanilla(options);
+
+#ifdef WII
+    wii_fat_enabled = fatInitDefault();
+#endif
 }
 
 void options_set_server(Options *options) {
@@ -171,6 +179,12 @@ void options_set_vanilla(Options *options) {
 }
 
 void options_save(Options *options) {
+#ifdef WII
+    if (!wii_fat_enabled) {
+        return;
+    }
+#endif
+
 #ifdef EMSCRIPTEN
     FILE *ini_file = fopen("/options/options.ini", "w");
 #else
