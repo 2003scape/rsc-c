@@ -14,6 +14,7 @@
 #include <wiikeyboard/keyboard.h>
 #include <wiiuse/wpad.h>
 
+#include "jagex_jag.h"
 #include "config85_jag.h"
 #include "entity24_jag.h"
 #include "entity24_mem.h"
@@ -283,6 +284,7 @@ extern int keyboard_offsets[];
 
 void draw_background(uint8_t *framebuffer, int full);
 void draw_arrow(uint8_t *framebuffer, int mouse_x, int mouse_y);
+void draw_keyboard(uint8_t *framebuffer, int is_shift);
 
 extern int wii_mouse_x;
 extern int wii_mouse_y;

@@ -1047,7 +1047,19 @@ void surface_draw(Surface *surface) {
         }
     }
 
-    // VIDEO_WaitVSync();
+    if (mud->keyboard_open) {
+        draw_keyboard(mud->framebuffer, mud->keyboard_open == 2 ? 1 : 0);
+    }
+
+    draw_arrow(mud->framebuffer, mud->last_wii_x, mud->last_wii_y);
+    VIDEO_SetNextFramebuffer(mud->framebuffer);
+    mud->active_framebuffer ^= 1;
+    mud->framebuffer = mud->framebuffers[mud->active_framebuffer];
+    VIDEO_Flush();
+
+    if (mud->keyboard_open) {
+        VIDEO_WaitVSync();
+    }
 #endif
 
 #ifdef _3DS

@@ -98,59 +98,7 @@ char keyboard_shift_buttons[5][10] = {
     {' ', ' ', ' ', ' ', ' ', ' ', '_', '+', '"', NULL}};
 
 int keyboard_offsets[] = {0, 11, 16, 21, 46};
-#endif
 
-#ifdef _3DS
-u32 *SOC_buffer = NULL;
-
-void soc_shutdown() { socExit(); }
-
-ndspWaveBuf wave_buf[2] = {0};
-u32 *audio_buffer = NULL;
-int fill_block = 0;
-
-Thread _3ds_keyboard_thread = {0};
-char _3ds_keyboard_buffer[255] = {0};
-volatile int _3ds_keyboard_received_input = 0;
-SwkbdButton _3ds_keyboard_button;
-
-void _3ds_keyboard_thread_callback(void *arg) {
-    int keyboard_type = (int)arg;
-
-    static SwkbdState swkbd = {0};
-
-    swkbdInit(&swkbd,
-              keyboard_type == _3DS_KEYBOARD_NUMPAD ? SWKBD_TYPE_NUMPAD
-                                                    : SWKBD_TYPE_NORMAL,
-              2, 255);
-
-    swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
-
-    if (keyboard_type == _3DS_KEYBOARD_NORMAL) {
-        swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
-    } else if (keyboard_type == _3DS_KEYBOARD_PASSWORD) {
-        swkbdSetPasswordMode(&swkbd, SWKBD_PASSWORD_HIDE);
-    }
-
-    int reload = 1;
-    static SwkbdStatusData swkbdStatus = {0};
-    swkbdSetStatusData(&swkbd, &swkbdStatus, reload, 1);
-
-    static SwkbdLearningData swkbdLearning = {0};
-    swkbdSetLearningData(&swkbd, &swkbdLearning, reload, 1);
-
-    _3ds_keyboard_button = swkbdInputText(&swkbd, _3ds_keyboard_buffer,
-                                          sizeof(_3ds_keyboard_buffer));
-
-    if (_3ds_keyboard_button != SWKBD_BUTTON_NONE) {
-        _3ds_keyboard_received_input = 1;
-    }
-
-    threadExit(0);
-}
-#endif
-
-#ifdef WII
 void draw_background(uint8_t *framebuffer, int full) {
     if (full) {
         memcpy(framebuffer, rsc_game_yuv,
@@ -484,8 +432,6 @@ void mudclient_new(mudclient *mud) {
     mud->sprite_projectile = mud->sprite_logo + 10;
     mud->sprite_texture = mud->sprite_projectile + 50;
     mud->sprite_texture_world = mud->sprite_texture + 10;
-
-    mud->loading_step = 1;
 }
 
 void mudclient_resize(mudclient *mud) {
@@ -786,60 +732,13 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     printf("Started application\n");
 
-#ifdef WII
-    while (1) {
-        memcpy(mud->framebuffer, rsc_type_yuv,
-               rsc_type_yuv_width * rsc_type_yuv_height * 2);
-
-        WPAD_ReadPending(WPAD_CHAN_ALL, NULL);
-        int res = WPAD_Probe(0, NULL);
-
-        if (res != WPAD_ERR_NONE) {
-            update_wii_mouse(NULL);
-        } else {
-            WPADData *wiimote_data = WPAD_Data(0);
-            update_wii_mouse(wiimote_data);
-        }
-
-        int button_down = wii_mouse_button != 0;
-        int mouse_x = wii_mouse_x;
-        int mouse_y = wii_mouse_y;
-
-        if (button_down) {
-            if (mouse_x >= 62 && mouse_x <= 250 && mouse_y >= 128 &&
-                mouse_y <= 230) {
-                mud->options->members = 0;
-
-                mudclient_run(mud);
-                break;
-            } else if (mouse_x >= 404 && mouse_x <= 576 && mouse_y >= 132 &&
-                       mouse_y <= 232) {
-                mud->options->members = 1;
-
-                mudclient_run(mud);
-                break;
-            }
-        }
-
-        draw_arrow(mud->framebuffer, mouse_x, mouse_y);
-
-        VIDEO_SetNextFramebuffer(mud->framebuffer);
-        mud->active_framebuffer ^= 1;
-        mud->framebuffer = mud->framebuffers[mud->active_framebuffer];
-        VIDEO_Flush();
-        VIDEO_WaitVSync();
-    }
-#endif
-
 #ifdef _3DS
     mudclient_3ds_draw_top_background(mud);
 
     gspWaitForVBlank();
 #endif
 
-#ifndef WII
     mudclient_run(mud);
-#endif
 }
 
 void mudclient_handle_key_press(mudclient *mud, int key_code) {
@@ -1332,7 +1231,9 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 #ifdef WII
     const int8_t *file_data = NULL;
 
-    if (strcmp(file, "fonts" FONTS ".jag") == 0) {
+    if (strcmp(file, "jagex.jag") == 0) {
+        file_data = (int8_t *)jagex_jag;
+    } else if (strcmp(file, "fonts" FONTS ".jag") == 0) {
         file_data = (int8_t *)fonts1_jag;
     } else if (strcmp(file, "config" CONFIG ".jag") == 0) {
         file_data = (int8_t *)config85_jag;
@@ -1462,10 +1363,17 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
     for (int y = height - 1; y >= 0; y--) {
         for (int x = 0; x < width; x++) {
             int palette_index = buffer[(256 * 3) + x + y * width];
+#ifdef WII
+            pixels[index++] = 255;
+            pixels[index++] = r[palette_index];
+            pixels[index++] = g[palette_index];
+            pixels[index++] = b[palette_index];
+#else
             pixels[index++] = b[palette_index];
             pixels[index++] = g[palette_index];
             pixels[index++] = r[palette_index];
             pixels[index++] = 255;
+#endif
         }
     }
 
@@ -4977,24 +4885,6 @@ void mudclient_draw(mudclient *mud) {
         mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
     }
-
-#ifdef WII
-    if (mud->keyboard_open) {
-        draw_keyboard(mud->framebuffer, mud->keyboard_open == 2 ? 1 : 0);
-    }
-
-    draw_arrow(mud->framebuffer, mud->last_wii_x, mud->last_wii_y);
-    VIDEO_SetNextFramebuffer(mud->framebuffer);
-    mud->active_framebuffer ^= 1;
-    mud->framebuffer = mud->framebuffers[mud->active_framebuffer];
-    VIDEO_Flush();
-
-    if (mud->keyboard_open) {
-        VIDEO_WaitVSync();
-    }
-
-    // VIDEO_WaitVSync(); /* TODO investigate */
-#endif
 
 #ifdef RENDER_GL
     SDL_GL_SwapWindow(mud->gl_window);
