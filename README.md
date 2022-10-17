@@ -13,7 +13,7 @@ prominent new features include:
 * 3D model ground items based on runescape 2 beta models
 * [runescape classic wiki](https://classic.runescape.wiki/) button
 * bank interface with scrollbar and search
-* ...and more! TODO link
+* [...and more! ](https://github.com/2003scape/rsc-c#options)
 
 QR code for 3DS install:
 
@@ -127,6 +127,8 @@ port = 43594
 ; Disable registration and load sounds, P2P landscape and items (requires
 ; restart)
 members = 1
+; If enabled, override members option and always show New User button
+registration = 1
 ; Used together to encrypt passwords, Must be represented as hexadecimal string
 ; 0-padded to a multiple of eight characters
 rsa_exponent =
