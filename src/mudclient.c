@@ -2035,15 +2035,22 @@ void mudclient_load_models(mudclient *mud) {
     free(models_jag);
 
 #ifdef RENDER_GL
-    int models_length = game_data_model_count + game_data_item_count - 1;
+    int models_length = game_data_model_count - 1;
+
+    if (mud->options->ground_item_models) {
+        models_length += game_data_item_count;
+    }
+
     GameModel *models_buffer[models_length];
 
     for (int i = 0; i < game_data_model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
     }
 
-    for (int i = 0; i < game_data_item_count; i++) {
-        models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
+    if (mud->options->ground_item_models) {
+        for (int i = 0; i < game_data_item_count; i++) {
+            models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
+        }
     }
 
     game_model_gl_buffer_models(
