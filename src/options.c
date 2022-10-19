@@ -178,21 +178,15 @@ void options_set_vanilla(Options *options) {
     options->field_of_view = 360;
 }
 
-#ifndef __cplusplus
-typedef unsigned char bool;
-static const bool false = 0;
-static const bool true = 1;
-#endif
-
-bool checkfile(const char* path)
+int checkfile(const char* path)
 {
 	FILE* f = fopen(path, "r");
 	if (f)
 	{
         fclose(f);
-		return true;
+		return 1;
 	} else {
-        return false;
+        return 0;
     }
 }
 
