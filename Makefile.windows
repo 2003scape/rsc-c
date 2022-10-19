@@ -11,7 +11,7 @@ LDFLAGS += -lSDL2main -lSDL2 -lwsock32 -lws2_32
 ifdef DEBUG
 CFLAGS += -Wall -Wextra -pedantic -g
 else
-CFLAGS += -s -Ofast
+CFLAGS += -s -O3 -ffast-math
 LDFLAGS += -s
 endif
 
