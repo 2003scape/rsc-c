@@ -178,17 +178,41 @@ void options_set_vanilla(Options *options) {
     options->field_of_view = 360;
 }
 
+#ifndef __cplusplus
+typedef unsigned char bool;
+static const bool false = 0;
+static const bool true = 1;
+#endif
+
+bool checkfile(const char* path)
+{
+	FILE* f = fopen(path, "r");
+	if (f)
+	{
+        fclose(f);
+		return true;
+	} else {
+        return false;
+    }
+}
+
 void options_save(Options *options) {
 #ifdef WII
     if (!wii_fat_enabled) {
         return;
     }
 #endif
-
+FILE *ini_file;
 #ifdef EMSCRIPTEN
-    FILE *ini_file = fopen("/options/options.ini", "w");
+    if (checkfile("/options/options.ini") == 1)
+        ini_file = fopen("/options/options.ini", "r+");
+    else
+        ini_file = fopen("/options/options.ini", "w");
 #else
-    FILE *ini_file = fopen("./options.ini", "w");
+    if (checkfile("./options.ini") == 1)
+        ini_file = fopen("./options.ini", "r+");
+    else
+        ini_file = fopen("./options.ini", "w");
 #endif
 
     fprintf(ini_file, OPTIONS_INI_TEMPLATE,
