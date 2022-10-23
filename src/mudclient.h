@@ -34,7 +34,6 @@
 #include "wii/rsc_game_yuv.h"
 #include "wii/rsc_keyboard_shift_yuv.h"
 #include "wii/rsc_keyboard_yuv.h"
-#include "wii/rsc_type_yuv.h"
 
 #define GAME_OFFSET_X 64
 #define GAME_OFFSET_Y 54

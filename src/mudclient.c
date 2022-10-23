@@ -239,6 +239,44 @@ int update_wii_mouse(WPADData *wiimote_data) {
 }
 #endif
 
+#ifdef _3DS
+u32 *SOC_buffer = NULL;
+
+void soc_shutdown() { socExit(); }
+
+ndspWaveBuf wave_buf[2] = {0};
+u32 *audio_buffer = NULL;
+int fill_block = 0;
+
+Thread _3ds_keyboard_thread = {0};
+char _3ds_keyboard_buffer[255] = {0};
+volatile int _3ds_keyboard_received_input = 0;
+SwkbdButton _3ds_keyboard_button;
+
+void _3ds_keyboard_thread_callback(void *arg) {
+    static SwkbdState swkbd;
+    swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 3, -1);
+    swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
+    swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
+
+    int reload = 1;
+    static SwkbdStatusData swkbdStatus;
+    swkbdSetStatusData(&swkbd, &swkbdStatus, reload, 1);
+
+    static SwkbdLearningData swkbdLearning;
+    swkbdSetLearningData(&swkbd, &swkbdLearning, reload, 1);
+
+    _3ds_keyboard_button = swkbdInputText(&swkbd, _3ds_keyboard_buffer,
+                                          sizeof(_3ds_keyboard_buffer));
+
+    if (_3ds_keyboard_button != SWKBD_BUTTON_NONE) {
+        _3ds_keyboard_received_input = 1;
+    }
+
+    threadExit(0);
+}
+#endif
+
 #if !defined(WII) && !defined(_3DS)
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     *char_code = -1;
