@@ -48,9 +48,17 @@
 #include <3ds.h>
 #endif
 
-#ifdef _3DS_GL
-#include <citro3d.h>
+#ifdef RENDER_3DS_GL
+#define FLAT_QUAD_COUNT 2048
+
 #include "flat_shbin.h"
+
+typedef struct _3ds_gl_flat_vertex {
+    float x, y, z;
+    float r, g, b, a;
+    float skin_r, skin_g, skin_b;
+    float u, v;
+} _3ds_gl_flat_vertex;
 #endif
 
 #define SLEEP_WIDTH 255
@@ -164,12 +172,21 @@ typedef struct Surface {
     int gl_last_screen_height;
 #endif
 
-#ifdef _3DS_GL
+#ifdef RENDER_3DS_GL
     DVLB_s *_3ds_gl_flat_shader_dvlb;
     shaderProgram_s _3ds_gl_flat_shader;
 
+    int _3ds_gl_projection_uniform;
     int _3ds_gl_interlace_uniform;
     int _3ds_gl_bounds_uniform;
+
+    void *_3ds_gl_flat_vbo;
+    void *_3ds_gl_flat_ebo;
+
+    C3D_Mtx _3ds_gl_projection;
+
+    uint16_t _3ds_gl_flat_count;
+    int _3ds_gl_context_count;
 #endif
 } Surface;
 
@@ -217,6 +234,11 @@ void surface_gl_update_framebuffer_texture(Surface *surface);
 void surface_gl_buffer_framebuffer_quad(Surface *surface);
 float surface_gl_get_layer_depth(Surface *surface);
 void surface_gl_draw(Surface *surface, int use_depth);
+#endif
+
+#ifdef RENDER_3DS_GL
+float surface_3ds_gl_translate_x(Surface *surface, int x);
+float surface_3ds_gl_translate_y(Surface *surface, int y);
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,

@@ -118,5 +118,4 @@ void gl_update_texture_array(GLuint texture_array_id, int index, int width,
                              int height, int32_t *pixels, int convert_bgra);
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
 #endif
-
 #endif

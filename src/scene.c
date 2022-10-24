@@ -1348,12 +1348,12 @@ void scene_render(Scene *scene) {
         //(scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
         (scene->clip_y * scene->clip_far_3d) / scene->view_distance;
 
-    scene_frustum_max_x = 0;  // right
-    scene_frustum_min_x = 0;  // left
-    scene_frustum_max_y = 0;  // top
-    scene_frustum_min_y = 0;  // bottom
-    scene_frustum_far_z = 0;  // far
-    scene_frustum_near_z = 0; // near
+    scene_frustum_max_x = 0; /* right */
+    scene_frustum_min_x = 0; /* left */
+    scene_frustum_max_y = 0; /* top */
+    scene_frustum_min_y = 0; /* bottom */
+    scene_frustum_far_z = 0; /* far */
+    scene_frustum_near_z = 0; /* near */
 
     scene_set_frustum(scene, -frustum_x, -frustum_y, scene->clip_far_3d);
     scene_set_frustum(scene, -frustum_x, frustum_y, scene->clip_far_3d);

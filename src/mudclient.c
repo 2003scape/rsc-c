@@ -682,7 +682,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     gfxInitDefault();
 
-    consoleInit(GFX_BOTTOM, NULL);
+    consoleInit(GFX_TOP, NULL);
 
     Result romfs_res = romfsInit();
 
@@ -691,7 +691,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 
-    gfxSetDoubleBuffering(GFX_BOTTOM, 0);
+    //gfxSetDoubleBuffering(GFX_BOTTOM, 0);
     gfxSetDoubleBuffering(GFX_TOP, 0);
 
     mud->_3ds_framebuffer_top =
@@ -835,8 +835,12 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 #endif
 
-#ifdef _3DS_GL
-    //C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+#ifdef RENDER_3DS_GL
+    C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+
+    mud->_3ds_gl_render_target = C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+
+    C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target,  GFX_BOTTOM, GFX_LEFT,  DISPLAY_TRANSFER_FLAGS);
 #endif
 
     mud->surface = malloc(sizeof(Surface));
@@ -851,7 +855,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef _3DS
     mudclient_3ds_draw_top_background(mud);
 
-    gspWaitForVBlank();
+    //gspWaitForVBlank();
 #endif
 
     mudclient_run(mud);
@@ -4984,11 +4988,11 @@ void mudclient_draw_game(mudclient *mud) {
 #ifdef _3DS
     /* draw the scene to the top screen */
     if (mud->_3ds_r_down) {
-        mudclient_3ds_draw_framebuffer_top(mud);
+        //mudclient_3ds_draw_framebuffer_top(mud);
     }
 
-    gfxFlushBuffers();
-    gfxSwapBuffers();
+//    gfxFlushBuffers();
+//    gfxSwapBuffers();
 #endif
 }
 
@@ -5624,6 +5628,7 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
 }
 
 void mudclient_3ds_draw_top_background(mudclient *mud) {
+    return;
     memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr,
            game_top_bgr_size);
 }
@@ -6143,7 +6148,7 @@ int main(int argc, char **argv) {
 
     mudclient_start_application(mud, "Runescape by Andrew Gower");
 
-#ifdef _3DS_GL
+#ifdef RENDER_3DS_GL
     shaderProgramFree(&mud->surface->_3ds_gl_flat_shader);
     DVLB_Free(mud->surface->_3ds_gl_flat_shader_dvlb);
 

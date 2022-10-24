@@ -71,6 +71,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->mud = mud;
 
 #ifdef RENDER_GL
+    // TODO surface_init_gl()
     surface_gl_create_framebuffer(surface);
 
     /* coloured quads */
@@ -140,8 +141,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface_gl_reset_context(surface);
 #endif
 
-//#ifdef _3DS_GL
-#if 0
+#ifdef RENDER_3DS_GL
     surface->_3ds_gl_flat_shader_dvlb =
         DVLB_ParseFile((u32 *)flat_shbin, flat_shbin_size);
 
@@ -151,6 +151,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
                         &surface->_3ds_gl_flat_shader_dvlb->DVLE[0]);
 
     C3D_BindProgram(&surface->_3ds_gl_flat_shader);
+
+    surface->_3ds_gl_projection_uniform = shaderInstanceGetUniformLocation(
+        (&surface->_3ds_gl_flat_shader)->vertexShader, "projection");
 
     surface->_3ds_gl_interlace_uniform = shaderInstanceGetUniformLocation(
         (&surface->_3ds_gl_flat_shader)->vertexShader, "interlace");
@@ -167,8 +170,31 @@ void surface_new(Surface *surface, int width, int height, int limit,
     /* skin colour { r, g, b } */
     AttrInfo_AddLoader(attr_info, 2, GPU_FLOAT, 3);
 
-    /* texture { s, t } */
+    /* texture { s, t } ({ u ,v }) */
     AttrInfo_AddLoader(attr_info, 3, GPU_FLOAT, 2);
+
+    surface->_3ds_gl_flat_vbo =
+        linearAlloc(FLAT_QUAD_COUNT * sizeof(_3ds_gl_flat_vertex) * 4);
+
+    surface->_3ds_gl_flat_ebo =
+        linearAlloc(FLAT_QUAD_COUNT * sizeof(uint16_t) * 6);
+
+    C3D_BufInfo *buf_info = C3D_GetBufInfo();
+    BufInfo_Init(buf_info);
+
+    BufInfo_Add(buf_info, surface->_3ds_gl_flat_vbo,
+                sizeof(_3ds_gl_flat_vertex), 4, 0x3210);
+
+    C3D_TexEnv* tex_env = C3D_GetTexEnv(0);
+    C3D_TexEnvInit(tex_env);
+    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_REPLACE);
+
+    Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
+                  1.0, true);
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, surface->_3ds_gl_projection_uniform,
+                     &surface->_3ds_gl_projection);
 #endif
 }
 
@@ -914,10 +940,6 @@ void surface_gl_buffer_framebuffer_quad(Surface *surface) {
     surface_gl_buffer_textured_quad(surface, surface->gl_framebuffer_textures,
                                     0, 0, 0, 255, surface->mud->game_width,
                                     surface->mud->game_height, points, 0, 0);
-
-    /*surface_gl_buffer_textured_quad(surface,
-       surface->gl_sprite_media_textures, 0, 0, 0, 255, 197, 32, points, 0,
-       0);*/
 }
 
 float surface_gl_get_layer_depth(Surface *surface) {
@@ -1002,6 +1024,117 @@ void surface_gl_draw(Surface *surface, int use_depth) {
     surface_gl_reset_context(surface);
 
     surface->gl_fade_to_black = 0;
+}
+#endif
+
+#ifdef RENDER_3DS_GL
+void surface_3ds_gl_buffer_flat_quad(Surface *surface, float *quad,
+                                     int texture_id) {
+    if (surface->_3ds_gl_flat_count >= 2) {
+        return;
+    }
+
+    /*if (surface->gl_context_count >= FLAT_MAX_CONTEXTS) {
+        fprintf(stderr, "too many context (texture/boundary) switches!\n");
+        return;
+    }*/
+
+    int quad_vbo_size = (sizeof(float) * 12 * 4);
+
+    memcpy(surface->_3ds_gl_flat_vbo +
+               (surface->_3ds_gl_flat_count * quad_vbo_size),
+           quad, quad_vbo_size);
+
+    uint16_t index = surface->_3ds_gl_flat_count * 4;
+
+    uint16_t indices[] = {index, index + 1, index + 2,
+                          index, index + 2, index + 3};
+
+    memcpy(surface->_3ds_gl_flat_ebo +
+               (surface->_3ds_gl_flat_count * sizeof(indices)),
+           indices, sizeof(indices));
+
+    surface->_3ds_gl_flat_count++;
+
+    /*int context_index = surface->_3ds_gl_context_count - 1;
+    SurfaceGlContext *context = &surface->gl_contexts[context_index];
+
+    if (context->min_x == surface->bounds_min_x &&
+        context->max_x == surface->bounds_max_x &&
+        context->min_y == surface->bounds_min_y &&
+        context->max_y == surface->bounds_max_y &&
+        (context->texture_id == texture_array_id ||
+         texture_array_id == 0 &&
+             context->texture_id != surface->gl_font_textures)) {
+        context->quad_count++;
+    } else {
+        context = &surface->gl_contexts[context_index + 1];
+
+        context->min_x = surface->bounds_min_x;
+        context->max_x = surface->bounds_max_x;
+        context->min_y = surface->bounds_min_y;
+        context->max_y = surface->bounds_max_y;
+
+        context->texture_id = texture_array_id;
+        context->quad_count = 1;
+
+        surface->gl_context_count++;
+    }*/
+}
+
+void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
+                               int height, int colour, int alpha) {
+    /*if (y != 0) {
+        return;
+    }*/
+
+    float red_f = ((colour >> 16) & 0xff) / 255.0f;
+    float green_f = ((colour >> 8) & 0xff) / 255.0f;
+    float blue_f = (colour & 0xff) / 255.0f;
+    float alpha_f = alpha / 255.0f;
+
+    float left_x = x;
+    float right_x = x + width;
+    float top_y = (240 - y - height);
+    float bottom_y = (240 - y);
+
+    /*float left_x = surface_3ds_gl_translate_x(surface, x);
+    float right_x = surface_3ds_gl_translate_x(surface, x + width);
+    float top_y = surface_3ds_gl_translate_y(surface, y);
+    float bottom_y = surface_3ds_gl_translate_y(surface, y + height);*/
+
+    //printf("%d %d %f %f\n", x, y, top_y, bottom_y);
+
+    //bottom_y = 240;
+    //top_y = 240 - height;
+
+    float box_quad[] = {
+        /* top left / northwest */
+        left_x, top_y, 0,                //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0,                            //
+
+        /* top right / northeast */
+        right_x, top_y, 0,               //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0,                            //
+
+        /* bottom right / southeast */
+        right_x, bottom_y, 0,            //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0,                            //
+
+        /* bottom left / southwest */
+        left_x, bottom_y, 0,             //
+        red_f, green_f, blue_f, alpha_f, //
+        -1.0, -1.0, -1.0,                //
+        0, 0,                            //
+    };
+
+    surface_3ds_gl_buffer_flat_quad(surface, box_quad, 0);
 }
 #endif
 
@@ -1105,7 +1238,23 @@ void surface_draw(Surface *surface) {
     }
 #endif
 
-    gspWaitForVBlank();
+#ifdef RENDER_3DS_GL
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
+    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, 0,
+                          0);
+
+    C3D_FrameDrawOn(mud->_3ds_gl_render_target);
+
+    C3D_DrawElements(GPU_TRIANGLES, surface->_3ds_gl_flat_count * 6,
+                     C3D_UNSIGNED_SHORT, surface->_3ds_gl_flat_ebo);
+
+    C3D_FrameEnd(0);
+
+    surface->_3ds_gl_flat_count = 0;
+#endif
+
+    // gspWaitForVBlank();
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -1222,6 +1371,10 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
                             int height, int colour, int alpha) {
 #ifdef RENDER_GL
     surface_gl_buffer_box(surface, x, y, width, height, colour, alpha);
+#endif
+
+#ifdef RENDER_3DS_GL
+    surface_3ds_gl_buffer_box(surface, x, y, width, height, colour, alpha);
 #endif
 
 #ifdef RENDER_SW
@@ -1431,6 +1584,10 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
                       int colour) {
 #ifdef RENDER_GL
     surface_gl_buffer_box(surface, x, y, width, height, colour, 255);
+#endif
+
+#ifdef RENDER_3DS_GL
+    surface_3ds_gl_buffer_box(surface, x, y, width, height, colour, 255);
 #endif
 
 #ifdef RENDER_SW

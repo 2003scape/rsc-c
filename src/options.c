@@ -233,6 +233,8 @@ void options_save(Options *options) {
             options->bank_inventory,        //
             options->bank_maintain_slot     //
     );
+
+    fclose(ini_file);
 }
 
 void options_load(Options *options) {
