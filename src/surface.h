@@ -48,6 +48,11 @@
 #include <3ds.h>
 #endif
 
+#ifdef _3DS_GL
+#include <citro3d.h>
+#include "flat_shbin.h"
+#endif
+
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
@@ -157,6 +162,14 @@ typedef struct Surface {
     int32_t *gl_screen_pixels;
     int gl_last_screen_width;
     int gl_last_screen_height;
+#endif
+
+#ifdef _3DS_GL
+    DVLB_s *_3ds_gl_flat_shader_dvlb;
+    shaderProgram_s _3ds_gl_flat_shader;
+
+    int _3ds_gl_interlace_uniform;
+    int _3ds_gl_bounds_uniform;
 #endif
 } Surface;
 

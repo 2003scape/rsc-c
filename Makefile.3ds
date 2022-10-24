@@ -28,14 +28,13 @@ include $(DEVKITARM)/3ds_rules
 #     - icon.png
 #     - <libctru folder>/default_icon.png
 TARGET		:=	$(notdir $(CURDIR))
-BUILD		:=	build
-SOURCES		:=	src src/lib src/ui
-#DATA		:=	data
-DATA		:=
-#INCLUDES	:=	include
+BUILD			:=	build
+SOURCES		:=	src src/lib src/ui src/pica
+DATA			:=
+#INCLUDES : = include
 INCLUDES	:=	src
 GRAPHICS	:=	gfx
-ROMFS		:=	cache
+ROMFS			:=	cache
 
 # options for code generation
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
@@ -44,14 +43,14 @@ CFLAGS	:=	-Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-mword-relocations -fomit-frame-pointer -ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -D__3DS__ -DRENDER_SW -D_3DS -DREVISION_177
+CFLAGS	+=	$(INCLUDE) -D__3DS__ -D_3DS -D_3DS_GL
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lctru -lm
+LIBS	:= -lcitro3d -lctru -lm
 
 # list of directories containing libraries, this must be the top level containing
 # include and lib

@@ -676,12 +676,13 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
 #ifdef _3DS
-    // gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
+    //gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
 
     atexit(soc_shutdown);
 
     gfxInitDefault();
-    // consoleInit(GFX_TOP, NULL);
+
+    consoleInit(GFX_BOTTOM, NULL);
 
     Result romfs_res = romfsInit();
 
@@ -696,8 +697,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->_3ds_framebuffer_top =
         gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 
-    mud->_3ds_framebuffer_bottom =
-        gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+    mud->_3ds_framebuffer_bottom = NULL;
+        //gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
 
     /* allocate buffer for SOC service (networking) */
     SOC_buffer = (u32 *)memalign(SOC_ALIGN, SOC_BUFFER_SIZE);
@@ -832,6 +833,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #endif
+#endif
+
+#ifdef _3DS_GL
+    //C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 #endif
 
     mud->surface = malloc(sizeof(Surface));
@@ -1520,6 +1525,7 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
 }
 
 void mudclient_load_jagex(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
@@ -1529,10 +1535,10 @@ void mudclient_load_jagex(mudclient *mud) {
         free(logo_tga);
 
 #ifndef WII
-        // TODO double check this
         free(jagex_jag);
 #endif
     }
+#endif
 
     int8_t *fonts_jag =
         mudclient_read_data_file(mud, "fonts" FONTS ".jag", "Game fonts", 5);
@@ -1580,6 +1586,7 @@ void mudclient_load_game_config(mudclient *mud) {
 }
 
 void mudclient_load_media(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     int8_t *media_jag =
         mudclient_read_data_file(mud, "media" MEDIA ".jag", "2d graphics", 20);
 
@@ -1657,6 +1664,7 @@ void mudclient_load_media(mudclient *mud) {
 
 #ifndef WII
     free(media_jag);
+#endif
 #endif
 
 #ifdef RENDER_SW
@@ -1751,6 +1759,7 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 #endif
 
 void mudclient_load_entities(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     int8_t *entity_jag = mudclient_read_data_file(mud, "entity" ENTITY ".jag",
                                                   "people and monsters", 30);
 
@@ -1877,9 +1886,11 @@ void mudclient_load_entities(mudclient *mud) {
 
     free(index_dat);
     free(index_dat_mem);
+#endif
 }
 
 void mudclient_load_textures(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     int8_t *textures_jag = mudclient_read_data_file(
         mud, "textures" TEXTURES ".jag", "Textures", 50);
 
@@ -1962,11 +1973,13 @@ void mudclient_load_textures(mudclient *mud) {
         surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
     }
 
+
+    free(index_dat);
+
 #ifndef WII
     free(textures_jag);
 #endif
-
-    free(index_dat);
+#endif
 }
 
 void mudclient_load_models(mudclient *mud) {
@@ -2083,6 +2096,7 @@ void mudclient_load_models(mudclient *mud) {
 
     for (int i = 0; i < game_data_model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
+        GameModel *game_model = mud->game_models[i];
     }
 
     if (mud->options->ground_item_models) {
@@ -6128,6 +6142,13 @@ int main(int argc, char **argv) {
 #endif
 
     mudclient_start_application(mud, "Runescape by Andrew Gower");
+
+#ifdef _3DS_GL
+    shaderProgramFree(&mud->surface->_3ds_gl_flat_shader);
+    DVLB_Free(mud->surface->_3ds_gl_flat_shader_dvlb);
+
+    C3D_Fini();
+#endif
 
 #ifdef _3DS
     linearFree(audio_buffer);

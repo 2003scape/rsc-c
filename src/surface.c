@@ -45,18 +45,14 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->bounds_max_x = width;
     surface->bounds_max_y = height;
 
-#ifdef WII
-    surface->pixels = calloc(width * height, sizeof(int32_t));
-#endif
-
-#ifdef _3DS
+#if defined(RENDER_SW) && (defined(WII) || defined(_3DS))
     surface->pixels = calloc(width * height, sizeof(int32_t));
 #endif
 
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
     surface->pixels = mud->pixel_surface->pixels;
-#else
+#elif RENDER_GL
     surface->pixels = calloc(width * height, sizeof(int32_t));
 #endif
 #endif
@@ -142,6 +138,37 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     surface_gl_create_circle_texture(surface);
     surface_gl_reset_context(surface);
+#endif
+
+//#ifdef _3DS_GL
+#if 0
+    surface->_3ds_gl_flat_shader_dvlb =
+        DVLB_ParseFile((u32 *)flat_shbin, flat_shbin_size);
+
+    shaderProgramInit(&surface->_3ds_gl_flat_shader);
+
+    shaderProgramSetVsh(&surface->_3ds_gl_flat_shader,
+                        &surface->_3ds_gl_flat_shader_dvlb->DVLE[0]);
+
+    C3D_BindProgram(&surface->_3ds_gl_flat_shader);
+
+    surface->_3ds_gl_interlace_uniform = shaderInstanceGetUniformLocation(
+        (&surface->_3ds_gl_flat_shader)->vertexShader, "interlace");
+
+    C3D_AttrInfo *attr_info = C3D_GetAttrInfo();
+    AttrInfo_Init(attr_info);
+
+    /* vertex { x, y, z } */
+    AttrInfo_AddLoader(attr_info, 0, GPU_FLOAT, 3);
+
+    /* colour { r, g, b, a } */
+    AttrInfo_AddLoader(attr_info, 1, GPU_FLOAT, 4);
+
+    /* skin colour { r, g, b } */
+    AttrInfo_AddLoader(attr_info, 2, GPU_FLOAT, 3);
+
+    /* texture { s, t } */
+    AttrInfo_AddLoader(attr_info, 3, GPU_FLOAT, 2);
 #endif
 }
 
@@ -1063,6 +1090,7 @@ void surface_draw(Surface *surface) {
 #endif
 
 #ifdef _3DS
+#ifdef RENDER_SW
     uint8_t *surface_pixels = (uint8_t *)surface->pixels;
 
     for (int x = 0; x < surface->width; x++) {
@@ -1075,8 +1103,9 @@ void surface_draw(Surface *surface) {
                    surface_pixels + pixel_index, 3);
         }
     }
+#endif
 
-    // gspWaitForVBlank();
+    gspWaitForVBlank();
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -1411,6 +1440,7 @@ void surface_draw_box(Surface *surface, int x, int y, int width, int height,
 
 void surface_draw_line_horizontal_software(Surface *surface, int x, int y,
                                            int width, int colour) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     if (y < surface->bounds_min_y || y >= surface->bounds_max_y) {
         return;
     }
@@ -1429,6 +1459,7 @@ void surface_draw_line_horizontal_software(Surface *surface, int x, int y,
     for (int i = 0; i < width; i++) {
         surface->pixels[start + i] = colour;
     }
+#endif
 }
 
 void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
@@ -1444,6 +1475,7 @@ void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
 
 void surface_draw_line_vertical_software(Surface *surface, int x, int y,
                                          int height, int colour) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     if (x < surface->bounds_min_x || x >= surface->bounds_max_x) {
         return;
     }
@@ -1462,6 +1494,7 @@ void surface_draw_line_vertical_software(Surface *surface, int x, int y,
     for (int i = 0; i < height; i++) {
         surface->pixels[start + i * surface->width] = colour;
     }
+#endif
 }
 
 void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
@@ -1484,12 +1517,14 @@ void surface_draw_border(Surface *surface, int x, int y, int width, int height,
 }
 
 void surface_set_pixel(Surface *surface, int x, int y, int colour) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     if (x < surface->bounds_min_x || y < surface->bounds_min_y ||
         x >= surface->bounds_max_x || y >= surface->bounds_max_y) {
         return;
     }
 
     surface->pixels[x + y * surface->width] = colour;
+#endif
 }
 
 void surface_fade_to_black_software(Surface *surface, int32_t *dest,
@@ -1982,6 +2017,7 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
 
 void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
                                      int y, int width, int height) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     surface->sprite_width[sprite_id] = width;
     surface->sprite_height[sprite_id] = height;
     surface->sprite_translate[sprite_id] = 0;
@@ -2009,11 +2045,13 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
 
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
+#endif
 }
 
 // TODO not draw - load from raster reversed
 void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
                                   int width, int height) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     surface->sprite_width[sprite_id] = width;
     surface->sprite_height[sprite_id] = height;
     surface->sprite_translate[sprite_id] = 0;
@@ -2063,6 +2101,7 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
                             1);
 
     free(texture_pixels);
+#endif
 #endif
 }
 
