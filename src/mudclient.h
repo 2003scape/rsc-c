@@ -46,6 +46,7 @@
 
 #ifdef RENDER_3DS_GL
 #include <citro3d.h>
+#include <tex3ds.h>
 
 #define DISPLAY_TRANSFER_FLAGS                                                 \
     (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) |                     \

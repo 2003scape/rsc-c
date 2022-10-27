@@ -49,9 +49,10 @@
 #endif
 
 #ifdef RENDER_3DS_GL
-#define FLAT_QUAD_COUNT 2048
+#define FLAT_QUAD_COUNT (2048 / 2)
 
 #include "flat_shbin.h"
+#include "sprites_t3x.h"
 
 typedef struct _3ds_gl_flat_vertex {
     float x, y, z;
@@ -59,6 +60,13 @@ typedef struct _3ds_gl_flat_vertex {
     float skin_r, skin_g, skin_b;
     float u, v;
 } _3ds_gl_flat_vertex;
+
+typedef struct _3ds_gl_atlas_position {
+    float left_u, right_u;
+    float top_v, bottom_v;
+} _3ds_gl_atlas_position;
+
+#include "textures/fonts.h"
 #endif
 
 #define SLEEP_WIDTH 255
@@ -187,6 +195,8 @@ typedef struct Surface {
 
     uint16_t _3ds_gl_flat_count;
     int _3ds_gl_context_count;
+
+    C3D_Tex _3ds_gl_sprites_tex;
 #endif
 } Surface;
 
@@ -194,6 +204,9 @@ void create_font(int8_t *buffer, int id);
 
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
+
+void surface_test_create_font_texture(int32_t *dest, int font_id,
+                                    int draw_shadow);
 
 #ifdef RENDER_GL
 float surface_gl_translate_x(Surface *surface, int x);

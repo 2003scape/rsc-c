@@ -29,11 +29,12 @@ include $(DEVKITARM)/3ds_rules
 #     - <libctru folder>/default_icon.png
 TARGET		:=	$(notdir $(CURDIR))
 BUILD			:=	build
-SOURCES		:=	src src/lib src/ui src/pica
+SOURCES		:=	src src/lib src/ui src/pica src/textures
 DATA			:=
 #INCLUDES : = include
 INCLUDES	:=	src
 GRAPHICS	:=	gfx
+GFXBUILD	:=	$(BUILD)
 ROMFS			:=	cache
 
 # options for code generation

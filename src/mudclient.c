@@ -691,14 +691,18 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 
-    //gfxSetDoubleBuffering(GFX_BOTTOM, 0);
+    gfxSetDoubleBuffering(GFX_BOTTOM, 0);
     gfxSetDoubleBuffering(GFX_TOP, 0);
 
     mud->_3ds_framebuffer_top =
         gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 
+#ifdef RENDER_3DS_GL
     mud->_3ds_framebuffer_bottom = NULL;
-        //gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+#else
+    mud->_3ds_framebuffer_bottom =
+        gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+#endif
 
     /* allocate buffer for SOC service (networking) */
     SOC_buffer = (u32 *)memalign(SOC_ALIGN, SOC_BUFFER_SIZE);
@@ -1257,6 +1261,8 @@ void mudclient_stop(mudclient *mud) {
 }
 
 void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
+    printf("%s %d\n", text, percent);
+
 #ifdef RENDER_GL
     glClear(GL_COLOR_BUFFER_BIT);
 #endif
@@ -1557,6 +1563,16 @@ void mudclient_load_jagex(mudclient *mud) {
 #ifdef RENDER_GL
         surface_gl_create_font_textures(mud->surface);
 #endif
+
+        /*for (int i = 0; i < 8; i++) {
+            printf("%d\n", surface_text_height(i));
+        }
+
+        surface_draw_box(mud->surface, 0, 0, MUD_WIDTH, MUD_HEIGHT, 0xff00ff);
+        surface_test_create_font_texture(mud->surface->pixels, 7, 0);
+        surface_draw(mud->surface);
+
+        delay_ticks(3000);*/
     }
 }
 
@@ -4991,8 +5007,10 @@ void mudclient_draw_game(mudclient *mud) {
         //mudclient_3ds_draw_framebuffer_top(mud);
     }
 
-//    gfxFlushBuffers();
-//    gfxSwapBuffers();
+#ifndef RENDER_3DS_GL
+    gfxFlushBuffers();
+    gfxSwapBuffers();
+#endif
 #endif
 }
 
