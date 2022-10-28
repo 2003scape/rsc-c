@@ -2,7 +2,7 @@
 
 // TODO remove
 void surface_test_create_font_texture(int32_t *dest, int font_id,
-                                    int draw_shadow) {
+                                      int draw_shadow) {
     int8_t *font_data = game_fonts[font_id];
     int slot_size = surface_text_height(font_id);
 
@@ -231,18 +231,20 @@ void surface_new(Surface *surface, int width, int height, int limit,
     BufInfo_Add(buf_info, surface->_3ds_gl_flat_vbo,
                 sizeof(_3ds_gl_flat_vertex), 4, 0x3210);
 
-    Tex3DS_Texture t3x = Tex3DS_TextureImport(sprites_t3x, sprites_t3x_size,
-                    &surface->_3ds_gl_sprites_tex, NULL, false);
+    Tex3DS_Texture t3x =
+        Tex3DS_TextureImport(sprites_t3x, sprites_t3x_size,
+                             &surface->_3ds_gl_sprites_tex, NULL, false);
 
     C3D_TexSetFilter(&surface->_3ds_gl_sprites_tex, GPU_NEAREST, GPU_NEAREST);
     C3D_TexBind(0, &surface->_3ds_gl_sprites_tex);
 
-    C3D_TexEnv* tex_env = C3D_GetTexEnv(0);
+    C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(tex_env);
-    //C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-    //C3D_TexEnvFunc(tex_env, C3D_Both, GPU_REPLACE);
+    // C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_REPLACE);
     C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
-    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
+    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
+    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
 
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
@@ -1170,10 +1172,8 @@ void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
 }
 
 void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
-                                     int y, int colour, int font_id, int draw_shadow,
-                                     float depth) {
-    draw_shadow = 0;
-
+                                     int y, int colour, int font_id,
+                                     int draw_shadow, float depth) {
     if (character == ' ') {
         return;
     }
@@ -1214,36 +1214,34 @@ void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
     float g = ((colour >> 8) & 0xff) / 255.0f;
     float b = (colour & 0xff) / 255.0f;
 
-    r = 0;
-    g = 0;
-    b = 0;
-
     _3ds_gl_atlas_position atlas_position =
-        _3ds_gl_font_atlas_positions[font_id][char_set_index];
+        draw_shadow
+            ? _3ds_gl_font_shadow_atlas_positions[font_id][char_set_index]
+            : _3ds_gl_font_atlas_positions[font_id][char_set_index];
 
     float char_quad[] = {
         /* top left / northwest */
-        left_x, top_y, depth, //
-        r, g, b, 1.0f,        //
-        -1.0f, -1.0f, -1.0f,  //
+        left_x, top_y, depth,                        //
+        r, g, b, 1.0f,                               //
+        -1.0f, -1.0f, -1.0f,                         //
         atlas_position.left_u, atlas_position.top_v, //
 
         /* top right / northeast */
-        right_x, top_y, depth,                //
-        r, g, b, 1.0f,                        //
-        -1.0f, -1.0f, -1.0f,                  //
+        right_x, top_y, depth,                        //
+        r, g, b, 1.0f,                                //
+        -1.0f, -1.0f, -1.0f,                          //
         atlas_position.right_u, atlas_position.top_v, //
 
         /* bottom right / southeast */
-        right_x, bottom_y, depth,                              //
-        r, g, b, 1.0f,                                         //
-        -1.0f, -1.0f, -1.0f,                                   //
+        right_x, bottom_y, depth,                        //
+        r, g, b, 1.0f,                                   //
+        -1.0f, -1.0f, -1.0f,                             //
         atlas_position.right_u, atlas_position.bottom_v, //
 
         /* bottom left / southwest */
-        left_x, bottom_y, depth,               //
-        r, g, b, 1.0f,                         //
-        -1.0f, -1.0f, -1.0f,                   //
+        left_x, bottom_y, depth,                        //
+        r, g, b, 1.0f,                                  //
+        -1.0f, -1.0f, -1.0f,                            //
         atlas_position.left_u, atlas_position.bottom_v, //
     };
 
@@ -1352,13 +1350,17 @@ void surface_draw(Surface *surface) {
 #endif
 
 #ifdef RENDER_3DS_GL
-    //C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
+    // C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
 
-    C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
+    // int test = C3D_FrameBegin(C3D_FRAME_NONBLOCK); // TODO C3D_FRAME_NONBLOCK
+    int test = C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
 
-    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK,
-                          0);
+    if (!test) {
+        printf("hello!", test);
+    }
+
+    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
 
     C3D_FrameDrawOn(mud->_3ds_gl_render_target);
 
@@ -1631,7 +1633,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         top_blue / 255.0f,  //
         1.0,                //
         -1.0, -1.0, -1.0,   //
-        0, 0,           //
+        0, 0,               //
 
         /* top right / northeast */
         right_x, top_y, 0,  //
@@ -1640,7 +1642,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         top_blue / 255.0f,  //
         1.0,                //
         -1.0, -1.0, -1.0,   //
-        0, 0,           //
+        0, 0,               //
 
         /* bottom right / southeast */
         right_x, bottom_y, 0,  //
@@ -1649,7 +1651,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         bottom_blue / 255.0f,  //
         1.0,                   //
         -1.0, -1.0, -1.0,      //
-        0, 0,              //
+        0, 0,                  //
 
         /* bottom left / southwest */
         left_x, bottom_y, 0,   //
@@ -1658,7 +1660,7 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         bottom_blue / 255.0f,  //
         1.0,                   //
         -1.0, -1.0, -1.0,      //
-        0, 0,               //
+        0, 0,                  //
     };
 
     surface_3ds_gl_buffer_flat_quad(surface, gradient_quad, 0);
@@ -4141,8 +4143,8 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
 #endif
 
 #ifdef RENDER_3DS_GL
-            surface_3ds_gl_buffer_character(surface, text[i], x, y, colour, font,
-                                            draw_shadow, depth);
+            surface_3ds_gl_buffer_character(surface, text[i], x, y, colour,
+                                            font, draw_shadow, depth);
 #endif
 
 #ifdef RENDER_SW

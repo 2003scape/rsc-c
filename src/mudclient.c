@@ -1261,8 +1261,6 @@ void mudclient_stop(mudclient *mud) {
 }
 
 void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
-    printf("%s %d\n", text, percent);
-
 #ifdef RENDER_GL
     glClear(GL_COLOR_BUFFER_BIT);
 #endif
@@ -4902,6 +4900,7 @@ void mudclient_draw_game(mudclient *mud) {
 
     surface_set_bounds(mud->surface, 0, 0, 320, 240);
 
+#ifdef RENDER_SW
     mud->surface->pixels = old_pixels;
 
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
@@ -4916,6 +4915,7 @@ void mudclient_draw_game(mudclient *mud) {
         memcpy(surface_pixels + bottom_index, scene_pixels + top_index,
                320 * 4);
     }
+#endif
 #endif
 
     /* draw the animated X sprite when clicking */
@@ -5652,6 +5652,7 @@ void mudclient_3ds_draw_top_background(mudclient *mud) {
 }
 
 void mudclient_3ds_draw_framebuffer_top(mudclient *mud) {
+    return;
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
 
     for (int x = 0; x < 400; x++) {

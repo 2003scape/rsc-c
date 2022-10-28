@@ -6,7 +6,6 @@
 .constf myconst(0.0, 1.0, -1.0, 0.5)
 .alias  zeros myconst.xxxx ; Vector full of zeros
 .alias  ones  myconst.yyyy ; Vector full of ones
-.alias  pink  myconst.yxyw
 
 ; Outputs
 .out out_position position
@@ -30,17 +29,6 @@
 
     mov out_colour, in_colour
     mov out_texture_position.xy, in_texture
-
-;    ; -1 < intex.x
-;    cmp myconst.z, lt, lt, in_texture.x
-;
-;    ifc !cmp.x
-;        mov out_colour, ones
-;        mov out_colour.xyz, in_colour
-;    .else
-;        mov out_colour, zeros
-;        mov out_texture_position, in_texture.xy
-;    .end
 
     end
 .end
