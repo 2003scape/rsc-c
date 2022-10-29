@@ -1247,6 +1247,82 @@ void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
 
     surface_3ds_gl_buffer_flat_quad(surface, char_quad, 0);
 }
+
+void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
+                              int draw_width, int draw_height, int skew_x,
+                              int mask_colour, int skin_colour, int alpha,
+                              int flip, int rotation, float depth_top,
+                              float depth_bottom) {
+    // TODO put into function
+    int texture_id = -1;
+    _3ds_gl_atlas_position atlas_position = {0};
+
+    if (sprite_id >= 2000 && sprite_id <= 3166) {
+        texture_id = 0;
+
+        atlas_position = _3ds_gl_media_atlas_positions[sprite_id - 2000];
+    }
+
+    if (texture_id == -1) {
+        return;
+    }
+
+    int full_width = surface->sprite_width_full[sprite_id];
+    int full_height = surface->sprite_height_full[sprite_id];
+
+    if (draw_width == -1) {
+        if (surface->sprite_translate[sprite_id]) {
+            draw_width = full_width;
+            draw_height = full_height;
+        } else {
+            draw_width = surface->sprite_width[sprite_id];
+            draw_height = surface->sprite_height[sprite_id];
+        }
+    }
+
+    // TODO should really be a function..
+    float left_x = x;
+    float right_x = x + draw_width;
+    float top_y = (240 - y - draw_height);
+    float bottom_y = (240 - y);
+
+    if (mask_colour == 0) {
+        mask_colour = WHITE;
+    }
+
+    float r = ((mask_colour >> 16) & 0xff) / 255.0f;
+    float g = ((mask_colour >> 8) & 0xff) / 255.0f;
+    float b = (mask_colour & 0xff) / 255.0f;
+    float a = alpha / 255.0f;
+
+    float sprite_quad[] = {
+        /* top left / northwest */
+        left_x, top_y, depth_top,                        //
+        r, g, b, a,                               //
+        -1.0f, -1.0f, -1.0f,                         //
+        atlas_position.left_u, atlas_position.top_v, //
+
+        /* top right / northeast */
+        right_x, top_y, depth_top,                        //
+        r, g, b, a,                                //
+        -1.0f, -1.0f, -1.0f,                          //
+        atlas_position.right_u, atlas_position.top_v, //
+
+        /* bottom right / southeast */
+        right_x, bottom_y, depth_bottom,                        //
+        r, g, b, a,                                   //
+        -1.0f, -1.0f, -1.0f,                             //
+        atlas_position.right_u, atlas_position.bottom_v, //
+
+        /* bottom left / southwest */
+        left_x, bottom_y, depth_bottom,                        //
+        r, g, b, a,                                  //
+        -1.0f, -1.0f, -1.0f,                            //
+        atlas_position.left_u, atlas_position.bottom_v, //
+    };
+
+    surface_3ds_gl_buffer_flat_quad(surface, sprite_quad, texture_id);
+}
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,
@@ -1986,13 +2062,19 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
     int colour_count = index_data[index_offset++] & 0xff;
 
+#ifndef RENDER_3DS_GL
     int32_t *colours = calloc(colour_count, sizeof(int32_t));
     colours[0] = MAGENTA;
+#endif
 
     for (int i = 0; i < colour_count - 1; i++) {
-        colours[i + 1] = ((index_data[index_offset] & 0xff) << 16) +
+        int colour = ((index_data[index_offset] & 0xff) << 16) +
                          ((index_data[index_offset + 1] & 0xff) << 8) +
                          (index_data[index_offset + 2] & 0xff);
+
+#ifndef RENDER_3DS_GL
+        colours[i + 1] = colour;
+#endif
 
         index_offset += 3;
     }
@@ -2014,8 +2096,10 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         int type = index_data[index_offset++] & 0xff;
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
+#ifndef RENDER_3DS_GL
         surface->sprite_colours[i] = calloc(area, sizeof(int8_t));
         surface->sprite_palette[i] = colours;
+#endif
         surface->sprite_width_full[i] = full_width;
         surface->sprite_height_full[i] = full_height;
 
@@ -2029,6 +2113,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
             surface->sprite_translate[i] = 1;
         }
 
+#ifndef RENDER_3DS_GL
         if (type == 0) {
             for (int j = 0; j < area; j++) {
                 surface->sprite_colours[i][j] = sprite_data[sprite_offset++];
@@ -2051,6 +2136,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                 }
             }
         }
+#endif
     }
 
     free(sprite_data);
@@ -2502,9 +2588,15 @@ void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
 }
 
 void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
+    // TODO use a generic struct instead
 #ifdef RENDER_GL
     surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
                              0, 0, 0);
+#endif
+
+#ifdef RENDER_3DS_GL
+    surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
+                                 0, 0, 0);
 #endif
 
 #ifdef RENDER_SW

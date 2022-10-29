@@ -1604,7 +1604,7 @@ void mudclient_load_game_config(mudclient *mud) {
 }
 
 void mudclient_load_media(mudclient *mud) {
-#if defined(RENDER_GL) || defined(RENDER_SW)
+#if defined(RENDER_GL) || defined(RENDER_SW) || RENDER_3DS_GL
     int8_t *media_jag =
         mudclient_read_data_file(mud, "media" MEDIA ".jag", "2d graphics", 20);
 

@@ -67,6 +67,7 @@ typedef struct _3ds_gl_atlas_position {
 } _3ds_gl_atlas_position;
 
 #include "textures/fonts.h"
+#include "textures/media.h"
 #endif
 
 #define SLEEP_WIDTH 255
