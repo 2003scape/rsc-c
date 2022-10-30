@@ -57,8 +57,9 @@
 typedef struct _3ds_gl_flat_vertex {
     float x, y, z;
     float r, g, b, a;
-    float skin_r, skin_g, skin_b;
+    //float skin_r, skin_g, skin_b;
     float u, v;
+    float base_u, base_v;
 } _3ds_gl_flat_vertex;
 
 typedef struct _3ds_gl_atlas_position {

@@ -214,9 +214,12 @@ void surface_new(Surface *surface, int width, int height, int limit,
     AttrInfo_AddLoader(attr_info, 1, GPU_FLOAT, 4);
 
     /* skin colour { r, g, b } */
-    AttrInfo_AddLoader(attr_info, 2, GPU_FLOAT, 3);
+    //AttrInfo_AddLoader(attr_info, 2, GPU_FLOAT, 3);
 
     /* texture { s, t } ({ u ,v }) */
+    AttrInfo_AddLoader(attr_info, 2, GPU_FLOAT, 2);
+
+    /* base texture { s, t } ({ u ,v }) */
     AttrInfo_AddLoader(attr_info, 3, GPU_FLOAT, 2);
 
     surface->_3ds_gl_flat_vbo =
@@ -245,6 +248,12 @@ void surface_new(Surface *surface, int width, int height, int limit,
     C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
     // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
     C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
+
+    tex_env = C3D_GetTexEnv(1);
+    C3D_TexBind(1, &surface->_3ds_gl_sprites_tex);
+    C3D_TexEnvInit(tex_env);
+    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PREVIOUS, GPU_TEXTURE1, 0);
+    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
 
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
@@ -1146,26 +1155,26 @@ void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
         /* top left / northwest */
         left_x, top_y, 0,                //
         red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
         0, 0,                            //
+        0.001953f, 0.0,
 
         /* top right / northeast */
         right_x, top_y, 0,               //
         red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
         0, 0,                            //
+        0.001953f, 0.0,
 
         /* bottom right / southeast */
         right_x, bottom_y, 0,            //
         red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
         0, 0,                            //
+        0.001953f, 0.0,
 
         /* bottom left / southwest */
         left_x, bottom_y, 0,             //
         red_f, green_f, blue_f, alpha_f, //
-        -1.0, -1.0, -1.0,                //
         0, 0,                            //
+        0.001953f, 0.0,
     };
 
     surface_3ds_gl_buffer_flat_quad(surface, box_quad, 0);
@@ -1223,26 +1232,26 @@ void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
         /* top left / northwest */
         left_x, top_y, depth,                        //
         r, g, b, 1.0f,                               //
-        -1.0f, -1.0f, -1.0f,                         //
         atlas_position.left_u, atlas_position.top_v, //
+        0.001953f, 0.0,
 
         /* top right / northeast */
         right_x, top_y, depth,                        //
         r, g, b, 1.0f,                                //
-        -1.0f, -1.0f, -1.0f,                          //
         atlas_position.right_u, atlas_position.top_v, //
+        0.001953f, 0.0,
 
         /* bottom right / southeast */
         right_x, bottom_y, depth,                        //
         r, g, b, 1.0f,                                   //
-        -1.0f, -1.0f, -1.0f,                             //
         atlas_position.right_u, atlas_position.bottom_v, //
+        0.001953f, 0.0,
 
         /* bottom left / southwest */
         left_x, bottom_y, depth,                        //
         r, g, b, 1.0f,                                  //
-        -1.0f, -1.0f, -1.0f,                            //
         atlas_position.left_u, atlas_position.bottom_v, //
+        0.001953f, 0.0,
     };
 
     surface_3ds_gl_buffer_flat_quad(surface, char_quad, 0);
@@ -1257,10 +1266,14 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     int texture_id = -1;
     _3ds_gl_atlas_position atlas_position = {0};
 
+    _3ds_gl_atlas_position base_atlas_position = {0.0019535f, 0.0019535f, 0.0f, 0.0f};
+
     if (sprite_id >= 2000 && sprite_id <= 3166) {
         texture_id = 0;
 
         atlas_position = _3ds_gl_media_atlas_positions[sprite_id - 2000];
+
+        base_atlas_position = _3ds_gl_media_base_atlas_positions[sprite_id - 2000];
     }
 
     if (texture_id == -1) {
@@ -1310,26 +1323,26 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         /* top left / northwest */
         left_x, top_y, depth_top,                        //
         r, g, b, a,                               //
-        -1.0f, -1.0f, -1.0f,                         //
         atlas_position.left_u, atlas_position.top_v, //
+        base_atlas_position.left_u, base_atlas_position.top_v, //
 
         /* top right / northeast */
         right_x, top_y, depth_top,                        //
         r, g, b, a,                                //
-        -1.0f, -1.0f, -1.0f,                          //
         atlas_position.right_u, atlas_position.top_v, //
+        base_atlas_position.right_u, base_atlas_position.top_v, //
 
         /* bottom right / southeast */
         right_x, bottom_y, depth_bottom,                        //
         r, g, b, a,                                   //
-        -1.0f, -1.0f, -1.0f,                             //
         atlas_position.right_u, atlas_position.bottom_v, //
+        base_atlas_position.right_u, base_atlas_position.bottom_v, //
 
         /* bottom left / southwest */
         left_x, bottom_y, depth_bottom,                        //
         r, g, b, a,                                  //
-        -1.0f, -1.0f, -1.0f,                            //
         atlas_position.left_u, atlas_position.bottom_v, //
+        base_atlas_position.left_u, base_atlas_position.bottom_v //
     };
 
     surface_3ds_gl_buffer_flat_quad(surface, sprite_quad, texture_id);
@@ -1719,8 +1732,8 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         bottom_green / 255.0f, //
         bottom_blue / 255.0f,  //
         1.0,                //
-        -1.0, -1.0, -1.0,   //
         0, 0,               //
+        0.001953f, 0.0,
 
         /* top right / northeast */
         right_x, top_y, 0,  //
@@ -1728,8 +1741,8 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         bottom_green / 255.0f, //
         bottom_blue / 255.0f,  //
         1.0,                //
-        -1.0, -1.0, -1.0,   //
         0, 0,               //
+        0.001953f, 0.0,
 
         /* bottom right / southeast */
         right_x, bottom_y, 0,  //
@@ -1737,8 +1750,8 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         top_green / 255.0f, //
         top_blue / 255.0f,  //
         1.0,                   //
-        -1.0, -1.0, -1.0,      //
         0, 0,                  //
+        0.001953f, 0.0,
 
         /* bottom left / southwest */
         left_x, bottom_y, 0,   //
@@ -1746,8 +1759,8 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         top_green / 255.0f, //
         top_blue / 255.0f,  //
         1.0,                   //
-        -1.0, -1.0, -1.0,      //
         0, 0,                  //
+        0.001953f, 0.0,
     };
 
     surface_3ds_gl_buffer_flat_quad(surface, gradient_quad, 0);
