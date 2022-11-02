@@ -3285,6 +3285,12 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
                             texture_pixels, 1);
 
     free(texture_pixels);
+
+    free(colours);
+    free(palette);
+
+    scene->texture_colours[id] = NULL;
+    scene->texture_palette[id] = NULL;
 #endif
 
     scene_prepare_texture(scene, id);
@@ -3367,6 +3373,7 @@ void scene_prepare_texture(Scene *scene, int id) {
 }
 
 void scene_set_texture_pixels(Scene *scene, int id) {
+#ifdef RENDER_SW
     int texture_width = scene->texture_dimension[id] ? 128 : 64;
     int32_t *colours = scene->texture_pixels[id];
     int colour_count = 0;
@@ -3400,9 +3407,11 @@ void scene_set_texture_pixels(Scene *scene, int id) {
         colours[colour_count * 3 + i] =
             (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
     }
+#endif
 }
 
 void scene_scroll_texture(Scene *scene, int id) {
+#ifdef RENDER_SW
     if (scene->texture_pixels[id] == NULL) {
         return;
     }
@@ -3432,6 +3441,7 @@ void scene_scroll_texture(Scene *scene, int id) {
         colours[SCROLL_TEXTURE_AREA * 3 + i] =
             (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
     }
+#endif
 }
 
 /* used to convert face_fill values (textures or colours) to minimap colours */

@@ -1816,9 +1816,11 @@ void mudclient_load_entities(mudclient *mud) {
 
     int i = 0;
 
+    //printf("loading animation--\n");
     while (i < game_data_animation_count) {
     label0:;
         char *animation_name = game_data_animation_name[i];
+        //printf("%s\n", animation_name);
 
         for (int j = 0; j < i; j++) {
             if (strcmp(game_data_animation_name[j], animation_name) != 0) {
@@ -4880,7 +4882,7 @@ void mudclient_draw_game(mudclient *mud) {
     }
 #endif
 
-#ifdef _3DS
+#if defined(_3DS) && defined(RENDER_SW)
     mud->surface->width = 400;
     mud->surface->height = 240;
     surface_set_bounds(mud->surface, 0, 0, 400, 240 - 12);
@@ -4895,10 +4897,10 @@ void mudclient_draw_game(mudclient *mud) {
     mudclient_draw_overhead(mud);
 
 #ifdef _3DS
-    mud->surface->width = 320;
-    mud->surface->height = 240;
+    mud->surface->width = MUD_WIDTH;
+    mud->surface->height = MUD_HEIGHT;
 
-    surface_set_bounds(mud->surface, 0, 0, 320, 240);
+    surface_set_bounds(mud->surface, 0, 0, MUD_WIDTH, MUD_HEIGHT);
 
 #ifdef RENDER_SW
     mud->surface->pixels = old_pixels;

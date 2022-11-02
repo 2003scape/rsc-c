@@ -57,7 +57,6 @@
 typedef struct _3ds_gl_flat_vertex {
     float x, y, z;
     float r, g, b, a;
-    //float skin_r, skin_g, skin_b;
     float u, v;
     float base_u, base_v;
 } _3ds_gl_flat_vertex;
@@ -66,6 +65,13 @@ typedef struct _3ds_gl_atlas_position {
     float left_u, right_u;
     float top_v, bottom_v;
 } _3ds_gl_atlas_position;
+
+typedef struct _3ds_gl_context {
+    int texture_id; /* grey sprite */
+    int base_texture_id; /* non-grey sprite */
+    int quad_count;
+    int is_scissored; /* chop off portion for minimap */
+} _3ds_gl_context;
 
 #include "textures/fonts.h"
 #include "textures/media.h"
@@ -133,6 +139,7 @@ typedef struct Surface {
     int8_t interlace;
     int8_t draw_string_shadow;
 
+    // TODO remove for gl/headless
     /* arrays used for minimap sprite rotation */
     int *rotations_0;
     int *rotations_1;
@@ -190,15 +197,19 @@ typedef struct Surface {
     int _3ds_gl_interlace_uniform;
     int _3ds_gl_bounds_uniform;
 
-    void *_3ds_gl_flat_vbo;
-    void *_3ds_gl_flat_ebo;
-
     C3D_Mtx _3ds_gl_projection;
 
+    void *_3ds_gl_flat_vbo;
+    void *_3ds_gl_flat_ebo;
     uint16_t _3ds_gl_flat_count;
+
+    /* used for texture array and boundary changes */
+    _3ds_gl_context _3ds_gl_contexts[FLAT_QUAD_COUNT];
     int _3ds_gl_context_count;
 
     C3D_Tex _3ds_gl_sprites_tex;
+
+    C3D_Tex _3ds_gl_entities_tex[5];
 #endif
 } Surface;
 
@@ -252,8 +263,8 @@ void surface_gl_draw(Surface *surface, int use_depth);
 #endif
 
 #ifdef RENDER_3DS_GL
-float surface_3ds_gl_translate_x(Surface *surface, int x);
-float surface_3ds_gl_translate_y(Surface *surface, int y);
+void surface_3ds_gl_buffer_flat_quad(Surface *surface, float *quad,
+                                     int texture_id, int base_texture_id);
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,
