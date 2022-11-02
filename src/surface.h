@@ -49,6 +49,9 @@
 #endif
 
 #ifdef RENDER_3DS_GL
+#include <citro3d.h>
+#include <tex3ds.h>
+
 #define FLAT_QUAD_COUNT (2048 / 2)
 
 #include "flat_shbin.h"
@@ -67,8 +70,8 @@ typedef struct _3ds_gl_atlas_position {
 } _3ds_gl_atlas_position;
 
 typedef struct _3ds_gl_context {
-    int texture_id; /* grey sprite */
-    int base_texture_id; /* non-grey sprite */
+    C3D_Tex *texture; /* grey sprite */
+    C3D_Tex *base_texture; /* non-grey sprite */
     int quad_count;
     int is_scissored; /* chop off portion for minimap */
 } _3ds_gl_context;
@@ -263,8 +266,19 @@ void surface_gl_draw(Surface *surface, int use_depth);
 #endif
 
 #ifdef RENDER_3DS_GL
+int surface_3ds_gl_is_scissored(Surface *surface);
 void surface_3ds_gl_buffer_flat_quad(Surface *surface, float *quad,
-                                     int texture_id, int base_texture_id);
+                                     C3D_Tex *texture, C3D_Tex *base_texture);
+void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
+                               int height, int colour, int alpha);
+void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
+                                     int y, int colour, int font_id,
+                                     int draw_shadow, float depth);
+void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
+                                  int scale_width, int scale_height, int skew_x,
+                                  int mask_colour, int skin_colour, int alpha,
+                                  int flip, int rotation, float depth_top,
+                                  float depth_bottom);
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,

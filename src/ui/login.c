@@ -721,6 +721,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
+    surface_draw_sprite_from3(mud->surface, 50, 200, 0);
+
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
 
@@ -737,8 +739,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {
-    mudclient_login(mud, "farts", "farts", 0);
-    return;
+    /*mudclient_login(mud, "farts", "farts", 0);
+    return;*/
 
     if (mud->show_dialog_confirm) {
         mudclient_handle_confirm_input(mud);
