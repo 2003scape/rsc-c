@@ -498,7 +498,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     surface_gl_draw(mud->surface, 0);
 #endif
 
+#ifndef RENDER_3DS_GL
     surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo);
+#endif
 
     x = 9216;
     y = 9216;
@@ -531,7 +533,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     surface_gl_draw(mud->surface, 0);
 #endif
 
+#ifndef RENDER_3DS_GL
     surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo + 1);
+#endif
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_remove_model(mud->scene, mud->world->roof_models[0][i]);
@@ -590,8 +594,10 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     surface_gl_draw(mud->surface, 0);
 #endif
 
+#ifndef RENDER_3DS_GL
     surface_screen_raster_to_palette_sprite(mud->surface,
                                             mud->sprite_media + 10);
+#endif
 
     world_reset(mud->world, 0);
 

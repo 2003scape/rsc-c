@@ -2384,6 +2384,8 @@ void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
     }
 #endif
 
+    printf("wtf\n");
+
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
 
