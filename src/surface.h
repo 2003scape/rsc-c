@@ -48,6 +48,45 @@
 #include <3ds.h>
 #endif
 
+#ifdef RENDER_3DS_GL
+#include <citro3d.h>
+#include <tex3ds.h>
+
+#define FLAT_QUAD_COUNT (2048 / 2)
+
+#include "flat_shbin.h"
+
+#include "sprites_t3x.h"
+#include "entities_0_t3x.h"
+#include "entities_1_t3x.h"
+#include "entities_2_t3x.h"
+#include "entities_3_t3x.h"
+#include "entities_4_t3x.h"
+
+typedef struct _3ds_gl_flat_vertex {
+    float x, y, z;
+    float r, g, b, a;
+    float u, v;
+    float base_u, base_v;
+} _3ds_gl_flat_vertex;
+
+typedef struct _3ds_gl_atlas_position {
+    float left_u, right_u;
+    float top_v, bottom_v;
+} _3ds_gl_atlas_position;
+
+typedef struct _3ds_gl_context {
+    C3D_Tex *texture; /* grey sprite */
+    C3D_Tex *base_texture; /* non-grey sprite */
+    int quad_count;
+    int is_scissored; /* chop off portion for minimap */
+} _3ds_gl_context;
+
+#include "textures/entities.h"
+#include "textures/fonts.h"
+#include "textures/media.h"
+#endif
+
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
@@ -110,6 +149,7 @@ typedef struct Surface {
     int8_t interlace;
     int8_t draw_string_shadow;
 
+    // TODO remove for gl/headless
     /* arrays used for minimap sprite rotation */
     int *rotations_0;
     int *rotations_1;
@@ -158,12 +198,37 @@ typedef struct Surface {
     int gl_last_screen_width;
     int gl_last_screen_height;
 #endif
+
+#ifdef RENDER_3DS_GL
+    DVLB_s *_3ds_gl_flat_shader_dvlb;
+    shaderProgram_s _3ds_gl_flat_shader;
+
+    int _3ds_gl_projection_uniform;
+    int _3ds_gl_interlace_uniform;
+    int _3ds_gl_bounds_uniform;
+
+    C3D_Mtx _3ds_gl_projection;
+
+    void *_3ds_gl_flat_vbo;
+    void *_3ds_gl_flat_ebo;
+    uint16_t _3ds_gl_flat_count;
+
+    /* used for texture array and boundary changes */
+    _3ds_gl_context _3ds_gl_contexts[FLAT_QUAD_COUNT];
+    int _3ds_gl_context_count;
+
+    C3D_Tex _3ds_gl_sprites_tex;
+    C3D_Tex _3ds_gl_entities_tex[5];
+#endif
 } Surface;
 
 void create_font(int8_t *buffer, int id);
 
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
+
+void surface_test_create_font_texture(int32_t *dest, int font_id,
+                                    int draw_shadow);
 
 #ifdef RENDER_GL
 float surface_gl_translate_x(Surface *surface, int x);
@@ -204,6 +269,24 @@ void surface_gl_update_framebuffer_texture(Surface *surface);
 void surface_gl_buffer_framebuffer_quad(Surface *surface);
 float surface_gl_get_layer_depth(Surface *surface);
 void surface_gl_draw(Surface *surface, int use_depth);
+#endif
+
+#ifdef RENDER_3DS_GL
+// TODO move to utility
+void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
+int surface_3ds_gl_is_scissored(Surface *surface);
+void surface_3ds_gl_buffer_flat_quad(Surface *surface, float *quad,
+                                     C3D_Tex *texture, C3D_Tex *base_texture);
+void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
+                               int height, int colour, int alpha);
+void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
+                                     int y, int colour, int font_id,
+                                     int draw_shadow, float depth);
+void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
+                                  int scale_width, int scale_height, int skew_x,
+                                  int mask_colour, int skin_colour, int alpha,
+                                  int flip, int rotation, float depth_top,
+                                  float depth_bottom);
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,

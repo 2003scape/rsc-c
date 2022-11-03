@@ -239,6 +239,44 @@ int update_wii_mouse(WPADData *wiimote_data) {
 }
 #endif
 
+#ifdef _3DS
+u32 *SOC_buffer = NULL;
+
+void soc_shutdown() { socExit(); }
+
+ndspWaveBuf wave_buf[2] = {0};
+u32 *audio_buffer = NULL;
+int fill_block = 0;
+
+Thread _3ds_keyboard_thread = {0};
+char _3ds_keyboard_buffer[255] = {0};
+volatile int _3ds_keyboard_received_input = 0;
+SwkbdButton _3ds_keyboard_button;
+
+void _3ds_keyboard_thread_callback(void *arg) {
+    static SwkbdState swkbd;
+    swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 3, -1);
+    swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
+    swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
+
+    int reload = 1;
+    static SwkbdStatusData swkbdStatus;
+    swkbdSetStatusData(&swkbd, &swkbdStatus, reload, 1);
+
+    static SwkbdLearningData swkbdLearning;
+    swkbdSetLearningData(&swkbd, &swkbdLearning, reload, 1);
+
+    _3ds_keyboard_button = swkbdInputText(&swkbd, _3ds_keyboard_buffer,
+                                          sizeof(_3ds_keyboard_buffer));
+
+    if (_3ds_keyboard_button != SWKBD_BUTTON_NONE) {
+        _3ds_keyboard_received_input = 1;
+    }
+
+    threadExit(0);
+}
+#endif
+
 #if !defined(WII) && !defined(_3DS)
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     *char_code = -1;
@@ -638,12 +676,13 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
 #ifdef _3DS
-    // gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
+    //gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
 
     atexit(soc_shutdown);
 
     gfxInitDefault();
-    // consoleInit(GFX_TOP, NULL);
+
+    consoleInit(GFX_TOP, NULL);
 
     Result romfs_res = romfsInit();
 
@@ -658,8 +697,12 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->_3ds_framebuffer_top =
         gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
 
+#ifdef RENDER_3DS_GL
+    mud->_3ds_framebuffer_bottom = NULL;
+#else
     mud->_3ds_framebuffer_bottom =
         gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+#endif
 
     /* allocate buffer for SOC service (networking) */
     SOC_buffer = (u32 *)memalign(SOC_ALIGN, SOC_BUFFER_SIZE);
@@ -796,6 +839,14 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 #endif
 
+#ifdef RENDER_3DS_GL
+    C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+
+    mud->_3ds_gl_render_target = C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+
+    C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target,  GFX_BOTTOM, GFX_LEFT,  DISPLAY_TRANSFER_FLAGS);
+#endif
+
     mud->surface = malloc(sizeof(Surface));
 
     surface_new(mud->surface, mud->game_width, mud->game_height, SPRITE_LIMIT,
@@ -808,7 +859,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef _3DS
     mudclient_3ds_draw_top_background(mud);
 
-    gspWaitForVBlank();
+    //gspWaitForVBlank();
 #endif
 
     mudclient_run(mud);
@@ -1482,6 +1533,7 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
 }
 
 void mudclient_load_jagex(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
@@ -1491,10 +1543,10 @@ void mudclient_load_jagex(mudclient *mud) {
         free(logo_tga);
 
 #ifndef WII
-        // TODO double check this
         free(jagex_jag);
 #endif
     }
+#endif
 
     int8_t *fonts_jag =
         mudclient_read_data_file(mud, "fonts" FONTS ".jag", "Game fonts", 5);
@@ -1509,6 +1561,16 @@ void mudclient_load_jagex(mudclient *mud) {
 #ifdef RENDER_GL
         surface_gl_create_font_textures(mud->surface);
 #endif
+
+        /*for (int i = 0; i < 8; i++) {
+            printf("%d\n", surface_text_height(i));
+        }
+
+        surface_draw_box(mud->surface, 0, 0, MUD_WIDTH, MUD_HEIGHT, 0xff00ff);
+        surface_test_create_font_texture(mud->surface->pixels, 7, 0);
+        surface_draw(mud->surface);
+
+        delay_ticks(3000);*/
     }
 }
 
@@ -1542,6 +1604,7 @@ void mudclient_load_game_config(mudclient *mud) {
 }
 
 void mudclient_load_media(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW) || RENDER_3DS_GL
     int8_t *media_jag =
         mudclient_read_data_file(mud, "media" MEDIA ".jag", "2d graphics", 20);
 
@@ -1619,6 +1682,7 @@ void mudclient_load_media(mudclient *mud) {
 
 #ifndef WII
     free(media_jag);
+#endif
 #endif
 
 #ifdef RENDER_SW
@@ -1713,6 +1777,7 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 #endif
 
 void mudclient_load_entities(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     int8_t *entity_jag = mudclient_read_data_file(mud, "entity" ENTITY ".jag",
                                                   "people and monsters", 30);
 
@@ -1839,9 +1904,11 @@ void mudclient_load_entities(mudclient *mud) {
 
     free(index_dat);
     free(index_dat_mem);
+#endif
 }
 
 void mudclient_load_textures(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     int8_t *textures_jag = mudclient_read_data_file(
         mud, "textures" TEXTURES ".jag", "Textures", 50);
 
@@ -1924,11 +1991,13 @@ void mudclient_load_textures(mudclient *mud) {
         surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
     }
 
+
+    free(index_dat);
+
 #ifndef WII
     free(textures_jag);
 #endif
-
-    free(index_dat);
+#endif
 }
 
 void mudclient_load_models(mudclient *mud) {
@@ -2045,6 +2114,7 @@ void mudclient_load_models(mudclient *mud) {
 
     for (int i = 0; i < game_data_model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
+        GameModel *game_model = mud->game_models[i];
     }
 
     if (mud->options->ground_item_models) {
@@ -4810,7 +4880,7 @@ void mudclient_draw_game(mudclient *mud) {
     }
 #endif
 
-#ifdef _3DS
+#if defined(_3DS) && defined(RENDER_SW)
     mud->surface->width = 400;
     mud->surface->height = 240;
     surface_set_bounds(mud->surface, 0, 0, 400, 240 - 12);
@@ -4825,11 +4895,12 @@ void mudclient_draw_game(mudclient *mud) {
     mudclient_draw_overhead(mud);
 
 #ifdef _3DS
-    mud->surface->width = 320;
-    mud->surface->height = 240;
+    mud->surface->width = MUD_WIDTH;
+    mud->surface->height = MUD_HEIGHT;
 
-    surface_set_bounds(mud->surface, 0, 0, 320, 240);
+    surface_set_bounds(mud->surface, 0, 0, MUD_WIDTH, MUD_HEIGHT);
 
+#ifdef RENDER_SW
     mud->surface->pixels = old_pixels;
 
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
@@ -4844,6 +4915,7 @@ void mudclient_draw_game(mudclient *mud) {
         memcpy(surface_pixels + bottom_index, scene_pixels + top_index,
                320 * 4);
     }
+#endif
 #endif
 
     /* draw the animated X sprite when clicking */
@@ -4932,11 +5004,13 @@ void mudclient_draw_game(mudclient *mud) {
 #ifdef _3DS
     /* draw the scene to the top screen */
     if (mud->_3ds_r_down) {
-        mudclient_3ds_draw_framebuffer_top(mud);
+        //mudclient_3ds_draw_framebuffer_top(mud);
     }
 
+#ifndef RENDER_3DS_GL
     gfxFlushBuffers();
     gfxSwapBuffers();
+#endif
 #endif
 }
 
@@ -5572,11 +5646,13 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
 }
 
 void mudclient_3ds_draw_top_background(mudclient *mud) {
+    return;
     memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr,
            game_top_bgr_size);
 }
 
 void mudclient_3ds_draw_framebuffer_top(mudclient *mud) {
+    return;
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
 
     for (int x = 0; x < 400; x++) {
@@ -6090,6 +6166,13 @@ int main(int argc, char **argv) {
 #endif
 
     mudclient_start_application(mud, "Runescape by Andrew Gower");
+
+#ifdef RENDER_3DS_GL
+    shaderProgramFree(&mud->surface->_3ds_gl_flat_shader);
+    DVLB_Free(mud->surface->_3ds_gl_flat_shader_dvlb);
+
+    C3D_Fini();
+#endif
 
 #ifdef _3DS
     linearFree(audio_buffer);

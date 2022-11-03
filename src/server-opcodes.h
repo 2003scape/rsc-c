@@ -1,6 +1,8 @@
 #ifndef _H_SERVER_OPCODES
 #define _H_SERVER_OPCODES
 
+// TODO enums!!
+
 #ifdef REVISION_177
 #define SERVER_APPEARANCE 239
 #define SERVER_BANK_CLOSE 221

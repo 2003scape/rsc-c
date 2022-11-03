@@ -1348,12 +1348,12 @@ void scene_render(Scene *scene) {
         //(scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
         (scene->clip_y * scene->clip_far_3d) / scene->view_distance;
 
-    scene_frustum_max_x = 0;  // right
-    scene_frustum_min_x = 0;  // left
-    scene_frustum_max_y = 0;  // top
-    scene_frustum_min_y = 0;  // bottom
-    scene_frustum_far_z = 0;  // far
-    scene_frustum_near_z = 0; // near
+    scene_frustum_max_x = 0; /* right */
+    scene_frustum_min_x = 0; /* left */
+    scene_frustum_max_y = 0; /* top */
+    scene_frustum_min_y = 0; /* bottom */
+    scene_frustum_far_z = 0; /* far */
+    scene_frustum_near_z = 0; /* near */
 
     scene_set_frustum(scene, -frustum_x, -frustum_y, scene->clip_far_3d);
     scene_set_frustum(scene, -frustum_x, frustum_y, scene->clip_far_3d);
@@ -3403,6 +3403,7 @@ void scene_set_texture_pixels(Scene *scene, int id) {
 }
 
 void scene_scroll_texture(Scene *scene, int id) {
+#ifdef RENDER_SW
     if (scene->texture_pixels[id] == NULL) {
         return;
     }
@@ -3432,6 +3433,7 @@ void scene_scroll_texture(Scene *scene, int id) {
         colours[SCROLL_TEXTURE_AREA * 3 + i] =
             (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
     }
+#endif
 }
 
 /* used to convert face_fill values (textures or colours) to minimap colours */

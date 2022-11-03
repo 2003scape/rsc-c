@@ -1,6 +1,8 @@
 #ifndef _H_CLIENT_OPCODES
 #define _H_CLIENT_OPCODES
 
+// TODO enums!!
+
 #ifdef REVISION_177
 #define CLIENT_APPEARANCE 236
 #define CLIENT_APPEARANCE_FRIEND 65

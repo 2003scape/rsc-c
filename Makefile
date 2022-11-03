@@ -8,7 +8,7 @@ LDFLAGS = -lm -lSDL2 -lGLEW -lGL
 
 ifdef DEBUG
 CFLAGS += -Wall -Wextra -pedantic -g
-LDFLAGS += -fsanitize=address -static-libasan
+#LDFLAGS += -fsanitize=address -static-libasan
 else
 CFLAGS += -s -Ofast
 LDFLAGS += -s

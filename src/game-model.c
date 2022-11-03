@@ -1192,9 +1192,9 @@ void game_model_dump(GameModel *game_model, char *file_name) {
     FILE *obj_file = fopen(name, "w");
 
     for (int i = 0; i < game_model->vertex_count; i++) {
-        float vertex_x = (((float)game_model->vertex_x[i]) / 100);
-        float vertex_y = ((float)game_model->vertex_y[i]) / 100;
-        float vertex_z = (((float)game_model->vertex_z[i]) / 100);
+        float vertex_x = (((float)game_model->vertex_x[i]) / 1000.0f);
+        float vertex_y = ((float)game_model->vertex_y[i]) / 1000.0f;
+        float vertex_z = (((float)game_model->vertex_z[i]) / 1000.0f);
 
         fprintf(obj_file, "v %f %f %f\n", vertex_x, -vertex_y, vertex_z);
     }

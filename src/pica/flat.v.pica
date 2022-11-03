@@ -1,0 +1,38 @@
+; Uniforms
+.fvec projection[4]
+.bool interlace
+
+; Constants
+.constf myconst(0.0, 1.0, -1.0, 0.5)
+;.constf test(0.0, 0.0, 0.0, 0.0)
+.alias  zeros myconst.xxxx ; Vector full of zeros
+.alias  ones  myconst.yyyy ; Vector full of ones
+
+; Outputs
+.out out_position position
+.out out_colour color
+.out out_texture_position texcoord0 ;mask texture?
+.out out_base_texture_position texcoord1
+
+; Inputs (defined as aliases for convenience)
+.in in_position v0
+.in in_colour v1
+;.in in_skin_colour v2
+.in in_texture v2
+.in in_base_texture v3
+
+.proc main
+    mov r0.xyz, in_position
+
+    dp4 out_position.x, projection[0], r0
+    dp4 out_position.y, projection[1], r0
+    dp4 out_position.z, projection[2], r0
+;    dp4 out_position.w, projection[3], r0
+    mov out_position.w, ones
+
+    mov out_colour, in_colour
+    mov out_texture_position, in_texture
+    mov out_base_texture_position, in_base_texture
+
+    end
+.end

@@ -218,6 +218,7 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
 
 void world_draw_map_tile(World *world, int x, int y, int direction,
                          int face_fill_1, int face_fill_2) {
+#if defined(RENDER_GL) || defined(RENDER_SW)
     int line_x = x * 3;
     int line_y = y * 3;
     int colour_1 = scene_get_fill_colour(world->scene, face_fill_1);
@@ -258,6 +259,7 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
         surface_draw_line_horizontal_software(world->surface, line_x,
                                               line_y + 2, 2, colour_1);
     }
+#endif
 }
 
 /* TODO rename to read map files? */

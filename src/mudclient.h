@@ -14,7 +14,6 @@
 #include <wiikeyboard/keyboard.h>
 #include <wiiuse/wpad.h>
 
-#include "jagex_jag.h"
 #include "config85_jag.h"
 #include "entity24_jag.h"
 #include "entity24_mem.h"
@@ -34,7 +33,6 @@
 #include "wii/rsc_game_yuv.h"
 #include "wii/rsc_keyboard_shift_yuv.h"
 #include "wii/rsc_keyboard_yuv.h"
-#include "wii/rsc_type_yuv.h"
 
 #define GAME_OFFSET_X 64
 #define GAME_OFFSET_Y 54
@@ -44,6 +42,17 @@
 #include <3ds.h>
 
 #include "game_top_bgr.h"
+#endif
+
+#ifdef RENDER_3DS_GL
+#include <citro3d.h>
+#include <tex3ds.h>
+
+#define DISPLAY_TRANSFER_FLAGS                                                 \
+    (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) |                     \
+     GX_TRANSFER_RAW_COPY(0) | GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) |  \
+     GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) |                            \
+     GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -379,6 +388,10 @@ typedef struct mudclient {
     SDL_Cursor *default_cursor;
     SDL_Cursor *hand_cursor;
     int is_hand_cursor;
+#endif
+
+#ifdef RENDER_3DS_GL
+    C3D_RenderTarget *_3ds_gl_render_target;
 #endif
 
     Options *options;
