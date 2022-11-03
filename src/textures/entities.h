@@ -1,10 +1,11 @@
 #ifndef _H_ENTITIES_TEXTURES
-
-#include "../surface.h"
+#define _H_ENTITIES_TEXTURES
 
 #ifdef RENDER_3DS_GL
 #define SKIN_SPRITE_LENGTH 123
 #define SKIN_COLOUR_LENGTH 31
+
+#include "../surface.h"
 
 typedef struct _3ds_gl_entity_texture {
     int texture_index;

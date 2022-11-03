@@ -55,7 +55,13 @@
 #define FLAT_QUAD_COUNT (2048 / 2)
 
 #include "flat_shbin.h"
+
 #include "sprites_t3x.h"
+#include "entities_0_t3x.h"
+#include "entities_1_t3x.h"
+#include "entities_2_t3x.h"
+#include "entities_3_t3x.h"
+#include "entities_4_t3x.h"
 
 typedef struct _3ds_gl_flat_vertex {
     float x, y, z;
@@ -76,6 +82,7 @@ typedef struct _3ds_gl_context {
     int is_scissored; /* chop off portion for minimap */
 } _3ds_gl_context;
 
+#include "textures/entities.h"
 #include "textures/fonts.h"
 #include "textures/media.h"
 #endif
@@ -211,7 +218,6 @@ typedef struct Surface {
     int _3ds_gl_context_count;
 
     C3D_Tex _3ds_gl_sprites_tex;
-
     C3D_Tex _3ds_gl_entities_tex[5];
 #endif
 } Surface;
@@ -266,6 +272,8 @@ void surface_gl_draw(Surface *surface, int use_depth);
 #endif
 
 #ifdef RENDER_3DS_GL
+// TODO move to utility
+void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
 int surface_3ds_gl_is_scissored(Surface *surface);
 void surface_3ds_gl_buffer_flat_quad(Surface *surface, float *quad,
                                      C3D_Tex *texture, C3D_Tex *base_texture);

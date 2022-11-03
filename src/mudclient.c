@@ -1777,7 +1777,7 @@ int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
 #endif
 
 void mudclient_load_entities(mudclient *mud) {
-#if defined(RENDER_GL) || defined(RENDER_SW)
+#if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     int8_t *entity_jag = mudclient_read_data_file(mud, "entity" ENTITY ".jag",
                                                   "people and monsters", 30);
 
@@ -1816,11 +1816,9 @@ void mudclient_load_entities(mudclient *mud) {
 
     int i = 0;
 
-    //printf("loading animation--\n");
     while (i < game_data_animation_count) {
     label0:;
         char *animation_name = game_data_animation_name[i];
-        //printf("%s\n", animation_name);
 
         for (int j = 0; j < i; j++) {
             if (strcmp(game_data_animation_name[j], animation_name) != 0) {

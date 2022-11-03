@@ -1,4 +1,5 @@
 #ifndef _H_FONT_TEXTURES
+#define _H_FONT_TEXTURES
 
 #include "../surface.h"
 

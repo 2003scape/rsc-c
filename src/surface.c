@@ -231,12 +231,23 @@ void surface_new(Surface *surface, int width, int height, int limit,
     BufInfo_Add(buf_info, surface->_3ds_gl_flat_vbo,
                 sizeof(_3ds_gl_flat_vertex), 4, 0x3210);
 
-    Tex3DS_Texture t3x =
-        Tex3DS_TextureImport(sprites_t3x, sprites_t3x_size,
-                             &surface->_3ds_gl_sprites_tex, NULL, false);
+    _3ds_gl_load_tex(sprites_t3x, sprites_t3x_size,
+                     &surface->_3ds_gl_sprites_tex);
 
-    C3D_TexSetFilter(&surface->_3ds_gl_sprites_tex, GPU_NEAREST, GPU_NEAREST);
-    C3D_TexBind(0, &surface->_3ds_gl_sprites_tex);
+    _3ds_gl_load_tex(entities_0_t3x, entities_0_t3x_size,
+                     &surface->_3ds_gl_entities_tex[0]);
+
+    _3ds_gl_load_tex(entities_1_t3x, entities_1_t3x_size,
+                     &surface->_3ds_gl_entities_tex[1]);
+
+    _3ds_gl_load_tex(entities_2_t3x, entities_2_t3x_size,
+                     &surface->_3ds_gl_entities_tex[2]);
+
+    _3ds_gl_load_tex(entities_3_t3x, entities_3_t3x_size,
+                     &surface->_3ds_gl_entities_tex[3]);
+
+    _3ds_gl_load_tex(entities_4_t3x, entities_4_t3x_size,
+                     &surface->_3ds_gl_entities_tex[4]);
 
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(tex_env);
@@ -247,7 +258,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
     C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
 
     tex_env = C3D_GetTexEnv(1);
-    C3D_TexBind(1, &surface->_3ds_gl_sprites_tex);
     C3D_TexEnvInit(tex_env);
     C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PREVIOUS, GPU_TEXTURE1, 0);
     C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
@@ -1085,6 +1095,13 @@ void surface_gl_draw(Surface *surface, int use_depth) {
 #endif
 
 #ifdef RENDER_3DS_GL
+// TODO move to utility
+void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex) {
+    Tex3DS_Texture t3x = Tex3DS_TextureImport(t3x_data, t3x_size, tex, NULL, false);
+    Tex3DS_TextureFree(t3x);
+    C3D_TexSetFilter(tex, GPU_NEAREST, GPU_NEAREST);
+}
+
 void surface_3ds_gl_reset_context(Surface *surface) {
     surface->_3ds_gl_flat_count = 0;
 
@@ -1327,10 +1344,27 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     _3ds_gl_atlas_position atlas_position = {0};
 
     /* transparent pixel */
+    C3D_Tex *base_texture = &surface->_3ds_gl_sprites_tex;
+
     _3ds_gl_atlas_position base_atlas_position = {0.0019535f, 0.0019535f, 0.0f,
                                                   0.0f};
 
-    if (sprite_id >= 2000 && sprite_id <= 3166) {
+    if (sprite_id >= 0 && sprite_id < 2000) {
+        _3ds_gl_entity_texture entity_texture =
+            _3ds_gl_entities_texture_positions[sprite_id];
+
+        texture = &surface->_3ds_gl_entities_tex[entity_texture.texture_index];
+        atlas_position = entity_texture.atlas_position;
+
+        //printf("%f %f %f %f\n", atlas_position.left_u, atlas_position.right_u, atlas_position.top_v, atlas_position.bottom_v);
+
+        _3ds_gl_entity_texture base_entity_texture =
+            _3ds_gl_entities_base_texture_positions[sprite_id];
+
+        base_texture = &surface->_3ds_gl_entities_tex[base_entity_texture.texture_index];
+
+        base_atlas_position = base_entity_texture.atlas_position;
+    } else if (sprite_id >= 2000 && sprite_id <= 3166) {
         texture = &surface->_3ds_gl_sprites_tex;
 
         atlas_position = _3ds_gl_media_atlas_positions[sprite_id - 2000];
@@ -1411,7 +1445,7 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         base_atlas_position.left_u, base_atlas_position.bottom_v //
     };
 
-    surface_3ds_gl_buffer_flat_quad(surface, sprite_quad, texture, &surface->_3ds_gl_sprites_tex);
+    surface_3ds_gl_buffer_flat_quad(surface, sprite_quad, texture, base_texture);
 }
 #endif
 
@@ -1523,7 +1557,7 @@ void surface_draw(Surface *surface) {
     int test = C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
 
     if (!test) {
-        printf("hello!", test);
+        printf("hello! %d\n", test);
     }
 
     C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
@@ -1534,6 +1568,10 @@ void surface_draw(Surface *surface) {
 
     for (int i = 0; i < surface->_3ds_gl_context_count; i++) {
         _3ds_gl_context *context = &surface->_3ds_gl_contexts[i];
+
+        if (context->texture == &surface->_3ds_gl_entities_tex[4]) {
+            //printf(":)\n");
+        }
 
         C3D_TexBind(0, context->texture);
         C3D_TexBind(1, context->base_texture);
@@ -2204,18 +2242,20 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 #endif
 
     for (int i = 0; i < colour_count - 1; i++) {
+#ifndef RENDER_3DS_GL
         int colour = ((index_data[index_offset] & 0xff) << 16) +
                      ((index_data[index_offset + 1] & 0xff) << 8) +
                      (index_data[index_offset + 2] & 0xff);
 
-#ifndef RENDER_3DS_GL
         colours[i + 1] = colour;
 #endif
 
         index_offset += 3;
     }
 
+#ifndef RENDER_3DS_GL
     int sprite_offset = 2;
+#endif
 
     for (int i = sprite_id; i < sprite_id + frame_count; i++) {
         surface->sprite_translate_x[i] = index_data[index_offset++] & 0xff;
@@ -2229,10 +2269,10 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
         index_offset += 2;
 
+#ifndef RENDER_3DS_GL
         int type = index_data[index_offset++] & 0xff;
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
-#ifndef RENDER_3DS_GL
         surface->sprite_colours[i] = calloc(area, sizeof(int8_t));
         surface->sprite_palette[i] = colours;
 #endif
@@ -2553,8 +2593,10 @@ int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id,
 }
 
 void surface_load_sprite(Surface *surface, int sprite_id) {
+#ifdef RENDER_SW
     surface->surface_pixels[sprite_id] =
         surface_palette_sprite_to_raster(surface, sprite_id, 0);
+#endif
 
     free(surface->sprite_colours[sprite_id]);
     surface->sprite_colours[sprite_id] = NULL;
@@ -3925,9 +3967,9 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y,
 #endif
 
 #ifdef RENDER_3DS_GL
-    surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, draw_width,
+    /*surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, draw_width,
                                  draw_height, skew_x, mask_colour, skin_colour,
-                                 255, flip, 0, 0, 0);
+                                 255, flip, 0, 0, 0);*/
 #endif
 
 #ifdef RENDER_SW
