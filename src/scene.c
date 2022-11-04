@@ -1723,6 +1723,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_2 != plane_y_0) {
             j13 = ((plane_x_2 - plane_x_0) << 8) / (plane_y_2 - plane_y_0);
+
             j14 = ((vertex_shade_2 - vertex_shade_0) << 8) /
                   (plane_y_2 - plane_y_0);
 
@@ -1758,6 +1759,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_1 != plane_y_0) {
             j16 = ((plane_x_1 - plane_x_0) << 8) / (plane_y_1 - plane_y_0);
+
             j17 = ((vertex_shade_1 - vertex_shade_0) << 8) /
                   (plane_y_1 - plane_y_0);
 
@@ -1793,6 +1795,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 
         if (plane_y_2 != plane_y_1) {
             j19 = ((plane_x_2 - plane_x_1) << 8) / (plane_y_2 - plane_y_1);
+
             j20 = ((vertex_shade_2 - vertex_shade_1) << 8) /
                   (plane_y_2 - plane_y_1);
 

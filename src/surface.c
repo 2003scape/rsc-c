@@ -1097,7 +1097,8 @@ void surface_gl_draw(Surface *surface, int use_depth) {
 #ifdef RENDER_3DS_GL
 // TODO move to utility
 void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex) {
-    Tex3DS_Texture t3x = Tex3DS_TextureImport(t3x_data, t3x_size, tex, NULL, false);
+    Tex3DS_Texture t3x =
+        Tex3DS_TextureImport(t3x_data, t3x_size, tex, NULL, false);
     Tex3DS_TextureFree(t3x);
     C3D_TexSetFilter(tex, GPU_NEAREST, GPU_NEAREST);
 }
@@ -1141,8 +1142,7 @@ void surface_3ds_gl_buffer_flat_quad(Surface *surface, float *quad,
     int context_index = surface->_3ds_gl_context_count - 1;
     _3ds_gl_context *context = &surface->_3ds_gl_contexts[context_index];
 
-    if (context->texture == texture &&
-        context->base_texture == base_texture &&
+    if (context->texture == texture && context->base_texture == base_texture &&
         context->is_scissored == surface_3ds_gl_is_scissored(surface)) {
         context->quad_count++;
     } else {
@@ -1226,7 +1226,9 @@ void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
         0.0,
     };
 
-    surface_3ds_gl_buffer_flat_quad(surface, box_quad, &surface->_3ds_gl_sprites_tex, &surface->_3ds_gl_sprites_tex);
+    surface_3ds_gl_buffer_flat_quad(surface, box_quad,
+                                    &surface->_3ds_gl_sprites_tex,
+                                    &surface->_3ds_gl_sprites_tex);
 }
 
 void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
@@ -1331,7 +1333,9 @@ void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
         0.0,
     };
 
-    surface_3ds_gl_buffer_flat_quad(surface, char_quad, &surface->_3ds_gl_sprites_tex, &surface->_3ds_gl_sprites_tex);
+    surface_3ds_gl_buffer_flat_quad(surface, char_quad,
+                                    &surface->_3ds_gl_sprites_tex,
+                                    &surface->_3ds_gl_sprites_tex);
 }
 
 void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
@@ -1356,12 +1360,11 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         texture = &surface->_3ds_gl_entities_tex[entity_texture.texture_index];
         atlas_position = entity_texture.atlas_position;
 
-        //printf("%f %f %f %f\n", atlas_position.left_u, atlas_position.right_u, atlas_position.top_v, atlas_position.bottom_v);
-
         _3ds_gl_entity_texture base_entity_texture =
             _3ds_gl_entities_base_texture_positions[sprite_id];
 
-        base_texture = &surface->_3ds_gl_entities_tex[base_entity_texture.texture_index];
+        base_texture =
+            &surface->_3ds_gl_entities_tex[base_entity_texture.texture_index];
 
         base_atlas_position = base_entity_texture.atlas_position;
     } else if (sprite_id >= 2000 && sprite_id <= 3166) {
@@ -1377,38 +1380,31 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         return;
     }
 
-    int sprite_width = surface->sprite_width[sprite_id];
-    int sprite_height = surface->sprite_height[sprite_id];
+    float ratio_x = 1.0;
+    float ratio_y = 1.0;
+    float width_full = surface->sprite_width_full[sprite_id];
+    float height_full = surface->sprite_height_full[sprite_id];
 
-    int gl_width = sprite_width;
-    int gl_height = sprite_height;
+    if (scale_width != -1) {
+        ratio_x = scale_width / width_full;
+        ratio_y = scale_height / height_full;
+    }
 
-    if (scale_width == -1) {
-        if (surface->sprite_translate[sprite_id]) {
-            x += surface->sprite_translate_x[sprite_id];
-            y += surface->sprite_translate_y[sprite_id];
-        }
-    } else {
-        float ratio_x =
-            scale_width / (float)surface->sprite_width_full[sprite_id];
+    float gl_width = surface->sprite_width[sprite_id] * ratio_x;
+    float gl_height = surface->sprite_height[sprite_id] * ratio_y;
+    float translate_x = surface->sprite_translate_x[sprite_id] * ratio_x;
+    float translate_y = surface->sprite_translate_y[sprite_id] * ratio_y;
 
-        float ratio_y =
-            scale_height / (float)surface->sprite_height_full[sprite_id];
-
-        if (surface->sprite_translate[sprite_id]) {
-            x += surface->sprite_translate_x[sprite_id] * ratio_x;
-            y += surface->sprite_translate_y[sprite_id] * ratio_y;
-        }
-
-        gl_width = gl_width * ratio_x;
-        gl_height = gl_height * ratio_y;
+    if (surface->sprite_translate[sprite_id]) {
+        x += roundf(translate_x);
+        y += roundf(translate_y);
     }
 
     // TODO should really be a function..
     float left_x = x;
     float right_x = x + gl_width;
-    float top_y = (240 - y - gl_height);
-    float bottom_y = (240 - y);
+    float bottom_y = (240 - y - gl_height);
+    float top_y = (240 - y);
 
     if (mask_colour == 0) {
         mask_colour = WHITE;
@@ -1419,33 +1415,43 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     float b = (mask_colour & 0xff) / 255.0f;
     float a = alpha / 255.0f;
 
+    float gl_skew_x = skew_x;
+
+    float top_left_skew =
+        (1.0f - (translate_y / (height_full * ratio_y))) * gl_skew_x;
+
+    float bottom_left_skew =
+        (1.0f - ((translate_y + gl_height) / (height_full * ratio_y))) *
+        gl_skew_x;
+
     float sprite_quad[] = {
-        /* top left / northwest */
-        left_x, top_y, depth_top,                              //
+        /* bottom left / southwest */
+        left_x + bottom_left_skew, bottom_y, depth_bottom,           //
         r, g, b, a,                                            //
         atlas_position.left_u, atlas_position.top_v,           //
         base_atlas_position.left_u, base_atlas_position.top_v, //
 
-        /* top right / northeast */
-        right_x, top_y, depth_top,                              //
+        /* bottom right / southeast */
+        right_x + bottom_left_skew, bottom_y, depth_bottom,           //
         r, g, b, a,                                             //
         atlas_position.right_u, atlas_position.top_v,           //
         base_atlas_position.right_u, base_atlas_position.top_v, //
 
-        /* bottom right / southeast */
-        right_x, bottom_y, depth_bottom,                           //
+        /* top right / northeast */
+        right_x + top_left_skew, top_y, depth_top,           //
         r, g, b, a,                                                //
         atlas_position.right_u, atlas_position.bottom_v,           //
         base_atlas_position.right_u, base_atlas_position.bottom_v, //
 
-        /* bottom left / southwest */
-        left_x, bottom_y, depth_bottom,                          //
+        /* top left / northwest */
+        left_x + top_left_skew, top_y, depth_top,          //
         r, g, b, a,                                              //
         atlas_position.left_u, atlas_position.bottom_v,          //
         base_atlas_position.left_u, base_atlas_position.bottom_v //
     };
 
-    surface_3ds_gl_buffer_flat_quad(surface, sprite_quad, texture, base_texture);
+    surface_3ds_gl_buffer_flat_quad(surface, sprite_quad, texture,
+                                    base_texture);
 }
 #endif
 
@@ -1553,8 +1559,8 @@ void surface_draw(Surface *surface) {
     // C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
 
-    // int test = C3D_FrameBegin(C3D_FRAME_NONBLOCK); // TODO C3D_FRAME_NONBLOCK
-    int test = C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
+    int test = C3D_FrameBegin(C3D_FRAME_NONBLOCK); // TODO C3D_FRAME_NONBLOCK
+    // int test = C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
 
     if (!test) {
         printf("hello! %d\n", test);
@@ -1570,16 +1576,15 @@ void surface_draw(Surface *surface) {
         _3ds_gl_context *context = &surface->_3ds_gl_contexts[i];
 
         if (context->texture == &surface->_3ds_gl_entities_tex[4]) {
-            //printf(":)\n");
+            // printf(":)\n");
         }
 
         C3D_TexBind(0, context->texture);
         C3D_TexBind(1, context->base_texture);
 
-        C3D_DrawElements(GPU_TRIANGLES, context->quad_count * 6,
-                         C3D_UNSIGNED_SHORT,
-                         surface->_3ds_gl_flat_ebo +
-                         (drawn_quads * 6) * sizeof(uint16_t));
+        C3D_DrawElements(
+            GPU_TRIANGLES, context->quad_count * 6, C3D_UNSIGNED_SHORT,
+            surface->_3ds_gl_flat_ebo + (drawn_quads * 6) * sizeof(uint16_t));
 
         drawn_quads += context->quad_count;
     }
@@ -1905,7 +1910,9 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         0.0,
     };
 
-    surface_3ds_gl_buffer_flat_quad(surface, gradient_quad, &surface->_3ds_gl_sprites_tex, &surface->_3ds_gl_sprites_tex);
+    surface_3ds_gl_buffer_flat_quad(surface, gradient_quad,
+                                    &surface->_3ds_gl_sprites_tex,
+                                    &surface->_3ds_gl_sprites_tex);
 #endif
 
 #ifdef RENDER_SW
@@ -2248,6 +2255,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                      (index_data[index_offset + 2] & 0xff);
 
         colours[i + 1] = colour;
+        // colours[i + 1] = GREEN;
 #endif
 
         index_offset += 3;
@@ -2275,6 +2283,8 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
         surface->sprite_colours[i] = calloc(area, sizeof(int8_t));
         surface->sprite_palette[i] = colours;
+#else
+        index_offset++;
 #endif
         surface->sprite_width_full[i] = full_width;
         surface->sprite_height_full[i] = full_height;
@@ -3147,7 +3157,8 @@ void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
         if ((surface->sprite_translate_x[sprite_id] * width) % width_full !=
             0) {
             i2 = ((width_full -
-                   ((surface->sprite_translate_x[sprite_id] * width) % width_full))
+                   ((surface->sprite_translate_x[sprite_id] * width) %
+                    width_full))
                   << 16) /
                  width;
         }
@@ -3817,6 +3828,8 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
         int full_width = surface->sprite_width_full[sprite_id];
         int full_height = surface->sprite_height_full[sprite_id];
 
+        surface_draw_box(surface, x, y, full_width, full_height, RED);
+
         width_ratio = (full_width << 16) / draw_width;
         height_ratio = (full_height << 16) / draw_height;
 
@@ -3967,9 +3980,9 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y,
 #endif
 
 #ifdef RENDER_3DS_GL
-    /*surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, draw_width,
+    surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, draw_width,
                                  draw_height, skew_x, mask_colour, skin_colour,
-                                 255, flip, 0, 0, 0);*/
+                                 255, flip, 0, 0, 0);
 #endif
 
 #ifdef RENDER_SW
