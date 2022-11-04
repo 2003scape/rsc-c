@@ -1561,16 +1561,6 @@ void mudclient_load_jagex(mudclient *mud) {
 #ifdef RENDER_GL
         surface_gl_create_font_textures(mud->surface);
 #endif
-
-        /*for (int i = 0; i < 8; i++) {
-            printf("%d\n", surface_text_height(i));
-        }
-
-        surface_draw_box(mud->surface, 0, 0, MUD_WIDTH, MUD_HEIGHT, 0xff00ff);
-        surface_test_create_font_texture(mud->surface->pixels, 7, 0);
-        surface_draw(mud->surface);
-
-        delay_ticks(3000);*/
     }
 }
 

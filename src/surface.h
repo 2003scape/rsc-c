@@ -56,27 +56,29 @@
 
 #include "flat_shbin.h"
 
-#include "sprites_t3x.h"
 #include "entities_0_t3x.h"
 #include "entities_1_t3x.h"
 #include "entities_2_t3x.h"
 #include "entities_3_t3x.h"
 #include "entities_4_t3x.h"
+#include "sprites_t3x.h"
 
 typedef struct _3ds_gl_flat_vertex {
     float x, y, z;
-    float r, g, b, a;
-    float u, v;
-    float base_u, base_v;
+    float r, g, b, a; /* mask colour */
+    float u, v;       /* greyscale texture that is coloured by mask colour */
+    float base_u, base_v; /* non grey-pixel portion that is added to coloured */
 } _3ds_gl_flat_vertex;
 
+/* atlas positions in ./textures/ to generate UVs */
 typedef struct _3ds_gl_atlas_position {
     float left_u, right_u;
     float top_v, bottom_v;
 } _3ds_gl_atlas_position;
 
+/* used to batch draw calls together for quads with same properties */
 typedef struct _3ds_gl_context {
-    C3D_Tex *texture; /* grey sprite */
+    C3D_Tex *texture;      /* grey sprite */
     C3D_Tex *base_texture; /* non-grey sprite */
     int quad_count;
     int is_scissored; /* chop off portion for minimap */
@@ -228,7 +230,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
 
 void surface_test_create_font_texture(int32_t *dest, int font_id,
-                                    int draw_shadow);
+                                      int draw_shadow);
 
 #ifdef RENDER_GL
 float surface_gl_translate_x(Surface *surface, int x);
@@ -240,8 +242,8 @@ void surface_gl_create_font_texture(int32_t *dest, int font_id,
 void surface_gl_create_font_textures(Surface *surface);
 void surface_gl_create_circle_texture(Surface *surface);
 void surface_gl_reset_context(Surface *surface);
-void surface_gl_buffer_flat_quad(Surface *surface, GLfloat *quad,
-                                 GLuint texture_array_id);
+void surface_gl_buffer_quad(Surface *surface, GLfloat *quad,
+                            GLuint texture_array_id);
 int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id);
 int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id);
 int surface_gl_sprite_texture_height(Surface *surface, GLuint texture_array_id);
@@ -275,8 +277,8 @@ void surface_gl_draw(Surface *surface, int use_depth);
 // TODO move to utility
 void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
 int surface_3ds_gl_is_scissored(Surface *surface);
-void surface_3ds_gl_buffer_flat_quad(Surface *surface, float *quad,
-                                     C3D_Tex *texture, C3D_Tex *base_texture);
+void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_flat_vertex quad[4],
+                                C3D_Tex *texture, C3D_Tex *base_texture);
 void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
                                int height, int colour, int alpha);
 void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
@@ -443,11 +445,12 @@ int surface_text_height_font(int font_id);
 int surface_text_width(char *text, int font_id);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
-void surface_draw_item(Surface *surface, int x, int y, int slot_width, int slot_height, int item_id);
+void surface_draw_item(Surface *surface, int x, int y, int slot_width,
+                       int slot_height, int item_id);
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int columns, int slot_width, int slot_height,
-                            int *items, int *items_count, int items_length, int selected,
-                            int show_inventory_count);
+                            int *items, int *items_count, int items_length,
+                            int selected, int show_inventory_count);
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height);
 void surface_draw_status_bar(Surface *surface, int min, int max, int current,
