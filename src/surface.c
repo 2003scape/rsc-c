@@ -1363,6 +1363,17 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         _3ds_gl_entity_texture base_entity_texture =
             _3ds_gl_entities_base_texture_positions[sprite_id];
 
+        if (skin_colour != 0) {
+            int sprite_index = _3ds_gl_get_entity_sprite_index(sprite_id);
+            int skin_index = _3ds_gl_get_entity_skin_index(skin_colour);
+
+            if (sprite_index != -1 && skin_index != -1) {
+                base_entity_texture =
+                    _3ds_gl_entities_skin_texture_positions[sprite_index]
+                                                           [skin_index];
+            }
+        }
+
         base_texture =
             &surface->_3ds_gl_entities_tex[base_entity_texture.texture_index];
 
@@ -1426,25 +1437,25 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 
     float sprite_quad[] = {
         /* bottom left / southwest */
-        left_x + bottom_left_skew, bottom_y, depth_bottom,           //
+        left_x + bottom_left_skew, bottom_y, depth_bottom,     //
         r, g, b, a,                                            //
         atlas_position.left_u, atlas_position.top_v,           //
         base_atlas_position.left_u, base_atlas_position.top_v, //
 
         /* bottom right / southeast */
-        right_x + bottom_left_skew, bottom_y, depth_bottom,           //
+        right_x + bottom_left_skew, bottom_y, depth_bottom,     //
         r, g, b, a,                                             //
         atlas_position.right_u, atlas_position.top_v,           //
         base_atlas_position.right_u, base_atlas_position.top_v, //
 
         /* top right / northeast */
-        right_x + top_left_skew, top_y, depth_top,           //
+        right_x + top_left_skew, top_y, depth_top,                 //
         r, g, b, a,                                                //
         atlas_position.right_u, atlas_position.bottom_v,           //
         base_atlas_position.right_u, base_atlas_position.bottom_v, //
 
         /* top left / northwest */
-        left_x + top_left_skew, top_y, depth_top,          //
+        left_x + top_left_skew, top_y, depth_top,                //
         r, g, b, a,                                              //
         atlas_position.left_u, atlas_position.bottom_v,          //
         base_atlas_position.left_u, base_atlas_position.bottom_v //
