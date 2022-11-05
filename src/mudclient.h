@@ -44,6 +44,11 @@
 #include "game_top_bgr.h"
 #endif
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#define CGLM_DEFINE_PRINTS
+#include <cglm/cglm.h>
+#endif
+
 #ifdef RENDER_3DS_GL
 #include <citro3d.h>
 #include <tex3ds.h>
@@ -62,9 +67,6 @@
 #include <GL/glew.h>
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
-
-#define CGLM_DEFINE_PRINTS
-#include <cglm/cglm.h>
 
 #include "shader.h"
 #endif

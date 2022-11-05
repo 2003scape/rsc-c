@@ -5060,7 +5060,9 @@ void mudclient_on_resize(mudclient *mud) {
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
 #endif
 
+#ifdef RENDER_SW
     int old_height = mud->game_height - 12;
+#endif
 
     mud->game_width = new_width;
     mud->game_height = new_height;

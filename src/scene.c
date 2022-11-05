@@ -7,7 +7,6 @@ int scene_frustum_min_y = 0;
 int scene_frustum_far_z = 0;
 int scene_frustum_near_z = 0;
 int64_t scene_texture_count_loaded = 0;
-//float fov = 0;
 
 int scene_polygon_depth_compare(const void *a, const void *b) {
     GamePolygon *polygon_a = (*(GamePolygon **)a);
@@ -24,7 +23,7 @@ int scene_polygon_depth_compare(const void *a, const void *b) {
     return polygon_a->depth < polygon_b->depth ? 1 : -1;
 }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
 int scene_gl_model_time_compare(const void *a, const void *b) {
     GlModelTime model_time_a = *(GlModelTime *)a;
     GlModelTime model_time_b = *(GlModelTime *)b;
@@ -111,6 +110,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_use(&scene->game_model_shader);
 
+    // TODO only needs * 1
     game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
                              &scene->gl_wall_ebo, (WALL_OBJECTS_MAX * 2) * 4,
                              (WALL_OBJECTS_MAX * 2) * 6);
@@ -123,6 +123,28 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
+#endif
+
+#ifdef RENDER_3DS_GL
+    scene->_3ds_gl_model_shader_dvlb =
+        DVLB_ParseFile((u32 *)model_shbin, flat_shbin_size);
+
+    shaderProgramInit(&scene->_3ds_gl_model_shader);
+
+    shaderProgramSetVsh(&scene->_3ds_gl_model_shader,
+                        &scene->_3ds_gl_model_shader_dvlb->DVLE[0]);
+
+    C3D_BindProgram(&scene->_3ds_gl_model_shader);
+
+    scene->_3ds_gl_model_uniform = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "model");
+
+    scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
+
+    /*game_model_3ds_gl_create_buffers(&scene->gl_wall_vao, &scene->_3ds_gl_wall_vbo,
+                             &scene->_3ds_gl_wall_ebo, WALL_OBJECTS_MAX * 4,
+                             WALL_OBJECTS_MAX * 6);*/
 #endif
 }
 

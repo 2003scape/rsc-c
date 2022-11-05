@@ -157,23 +157,20 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->_3ds_gl_projection_uniform = shaderInstanceGetUniformLocation(
         (&surface->_3ds_gl_flat_shader)->vertexShader, "projection");
 
-    surface->_3ds_gl_interlace_uniform = shaderInstanceGetUniformLocation(
-        (&surface->_3ds_gl_flat_shader)->vertexShader, "interlace");
-
-    C3D_AttrInfo *attr_info = C3D_GetAttrInfo();
-    AttrInfo_Init(attr_info);
+    //C3D_AttrInfo *attr_info = C3D_GetAttrInfo();
+    AttrInfo_Init(&surface->_3ds_gl_attr_info);
 
     /* vertex { x, y, z } */
-    AttrInfo_AddLoader(attr_info, 0, GPU_FLOAT, 3);
+    AttrInfo_AddLoader(&surface->_3ds_gl_attr_info, 0, GPU_FLOAT, 3);
 
     /* colour { r, g, b, a } */
-    AttrInfo_AddLoader(attr_info, 1, GPU_FLOAT, 4);
+    AttrInfo_AddLoader(&surface->_3ds_gl_attr_info, 1, GPU_FLOAT, 4);
 
     /* texture { s, t } ({ u ,v }) */
-    AttrInfo_AddLoader(attr_info, 2, GPU_FLOAT, 2);
+    AttrInfo_AddLoader(&surface->_3ds_gl_attr_info, 2, GPU_FLOAT, 2);
 
     /* base texture { s, t } ({ u ,v }) */
-    AttrInfo_AddLoader(attr_info, 3, GPU_FLOAT, 2);
+    AttrInfo_AddLoader(&surface->_3ds_gl_attr_info, 3, GPU_FLOAT, 2);
 
     surface->_3ds_gl_flat_vbo =
         linearAlloc(FLAT_QUAD_COUNT * sizeof(_3ds_gl_flat_vertex) * 4);
@@ -181,10 +178,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->_3ds_gl_flat_ebo =
         linearAlloc(FLAT_QUAD_COUNT * sizeof(uint16_t) * 6);
 
-    C3D_BufInfo *buf_info = C3D_GetBufInfo();
-    BufInfo_Init(buf_info);
+    //C3D_BufInfo *buf_info = C3D_GetBufInfo();
+    BufInfo_Init(&surface->_3ds_gl_buf_info);
 
-    BufInfo_Add(buf_info, surface->_3ds_gl_flat_vbo,
+    BufInfo_Add(&surface->_3ds_gl_buf_info, surface->_3ds_gl_flat_vbo,
                 sizeof(_3ds_gl_flat_vertex), 4, 0x3210);
 
     _3ds_gl_load_tex(sprites_t3x, sprites_t3x_size,
@@ -1461,15 +1458,16 @@ void surface_draw(Surface *surface) {
 #endif
 
 #ifdef RENDER_3DS_GL
+    C3D_BindProgram(&surface->_3ds_gl_flat_shader);
+
+    C3D_SetAttrInfo(&surface->_3ds_gl_attr_info);
+    C3D_SetBufInfo(&surface->_3ds_gl_buf_info);
+
     // C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
 
-    int test = C3D_FrameBegin(C3D_FRAME_NONBLOCK); // TODO C3D_FRAME_NONBLOCK
-    // int test = C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
-
-    if (!test) {
-        printf("hello! %d\n", test);
-    }
+    // C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
+    C3D_FrameBegin(C3D_FRAME_NONBLOCK);
 
     C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
 

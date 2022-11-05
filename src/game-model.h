@@ -6,13 +6,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#define CGLM_DEFINE_PRINTS
+#include <cglm/cglm.h>
+
+extern float gl_tri_face_us[];
+extern float gl_tri_face_vs[];
+
+extern float gl_quad_face_us[];
+extern float gl_quad_face_vs[];
+#endif
+
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
+#endif
 
-#define CGLM_DEFINE_PRINTS
-#include <cglm/cglm.h>
+#ifdef RENDER_3DS_GL
+#include <citro3d.h>
+
+typedef struct _3ds_gl_model_vertex {
+    float x, y, z;
+    float normal_x, normal_y, normal_z, normal_magnitude;
+    float face_intensity, vertex_intensity;
+    float front_r, front_g, front_b;
+    float back_r, back_g, back_b;
+    float front_texture_u, front_texture_v, back_texture_u, back_texture_v;
+} _3ds_gl_model_vertex;
 #endif
 
 /* states */
@@ -109,18 +130,23 @@ typedef struct GameModel {
 #ifdef RENDER_GL
     GLuint gl_vao;
 
-    int gl_vbo_offset;
-    int gl_ebo_offset;
-    int gl_ebo_length;
-
 #ifdef EMSCRIPTEN
     int gl_pick_vbo_offset;
     int gl_pick_ebo_offset;
 #endif
 
     mat4 transform;
+#endif
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    int gl_vbo_offset;
+    int gl_ebo_offset;
+    int gl_ebo_length;
 
     int gl_invisible;
+#endif
+#ifdef RENDER_3DS_GL
+    void *_3ds_gl_vao;
+    C3D_Mtx transform;
 #endif
 } GameModel;
 
@@ -194,17 +220,21 @@ void game_model_dump(GameModel *game_model, char *file_name);
 void game_model_mask_faces(GameModel *game_model, int *face_fill,
                            int mask_colour);
 
-#ifdef RENDER_GL
-void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
-                              int vbo_length, int ebo_length);
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
-                              int face_vertex_count, GLfloat *us, GLfloat *vs);
+                              int face_vertex_count, float *us, float *vs);
 void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b,
                                     float *a, float *texture_index);
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
 void game_model_get_vertex_ebo_lengths(GameModel **game_models, int length,
                                        int *vertex_count, int *ebo_length);
+float game_model_gl_intersects(GameModel *game_model, vec3 ray_start,
+                               vec3 ray_end);
+#endif
+#ifdef RENDER_GL
+void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
+                              int vbo_length, int ebo_length);
 void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
                                  GameModel **game_models, int length);
 #ifdef EMSCRIPTEN
@@ -215,7 +245,8 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
 void game_model_gl_buffer_pick_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
                                       GameModel **game_models, int length);
 #endif
-float game_model_gl_intersects(GameModel *game_model, vec3 ray_start,
-                               vec3 ray_end);
+#endif
+#ifdef RENDER_3DS_GL
+void game_model_3ds_gl_create_buffers(void *vbo, void *ebo, C3D_AttrInfo *attr_info, C3D_BufInfo *buf_info, int vbo_length, int ebo_length);
 #endif
 #endif

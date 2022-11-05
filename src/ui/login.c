@@ -721,10 +721,10 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
-    surface_draw_box(mud->surface, 40, 40, 200, 200, 0xff00ff);
-
+    // TODO remove
+    //surface_draw_box(mud->surface, 40, 40, 200, 200, 0xff00ff);
     //surface_sprite_clipping_from9(mud->surface, 50, 50, 64, 102, 0, 0, 0x997326, 50, 0);
-    surface_sprite_clipping_from9(mud->surface, 50, 50, 100, 100, 0, 0, 0, 50, 0);
+    //surface_sprite_clipping_from9(mud->surface, 50, 50, 100, 100, 0, 0, 0, 50, 0);
 
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);

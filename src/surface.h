@@ -206,11 +206,11 @@ typedef struct Surface {
     shaderProgram_s _3ds_gl_flat_shader;
 
     int _3ds_gl_projection_uniform;
-    int _3ds_gl_interlace_uniform;
-    int _3ds_gl_bounds_uniform;
 
     C3D_Mtx _3ds_gl_projection;
 
+    C3D_AttrInfo _3ds_gl_attr_info;
+    C3D_BufInfo _3ds_gl_buf_info;
     void *_3ds_gl_flat_vbo;
     void *_3ds_gl_flat_ebo;
     uint16_t _3ds_gl_flat_count;

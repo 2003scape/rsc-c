@@ -17,6 +17,12 @@
 #include "shader.h"
 #endif
 
+#ifdef RENDER_3DS_GL
+#include <citro3d.h>
+
+#include "model_shbin.h"
+#endif
+
 typedef struct Scene Scene;
 
 #include "game-model.h"
@@ -50,7 +56,7 @@ extern int scene_frustum_near_z;
 
 extern int64_t scene_texture_count_loaded;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
 typedef struct GlModelTime {
     GameModel *game_model;
     float time;
@@ -155,6 +161,7 @@ typedef struct Scene {
 
     GLuint last_vao;
 
+    // TODO add to 3ds gl too
     float light_gradient[RAMP_SIZE];
     float texture_light_gradient[RAMP_SIZE];
 
@@ -190,6 +197,29 @@ typedef struct Scene {
 
     int gl_height;
     float gl_fov;
+#endif
+
+#ifdef RENDER_3DS_GL
+    DVLB_s *_3ds_gl_model_shader_dvlb;
+    shaderProgram_s _3ds_gl_model_shader;
+
+    int _3ds_gl_model_uniform;
+    int _3ds_gl_projection_view_model_uniform;
+
+    void *_3ds_gl_game_model_vbo;
+    void *_3ds_gl_game_model_ebo;
+
+    void *_3ds_gl_terrain_vbo;
+    void *_3ds_gl_terrain_ebo;
+
+    void *_3ds_gl_wall_vbo;
+    void *_3ds_gl_wall_ebo;
+
+    void *_3ds_gl_last_vao;
+
+    C3D_Mtx _3ds_gl_view;
+    C3D_Mtx _3ds_gl_projection;
+    C3D_Mtx _3ds_gl_projection_view;
 #endif
 } Scene;
 
