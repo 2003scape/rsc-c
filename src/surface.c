@@ -52,7 +52,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
     surface->pixels = mud->pixel_surface->pixels;
-#elif RENDER_GL
+#elif defined(RENDER_GL)
     surface->pixels = calloc(width * height, sizeof(int32_t));
 #endif
 #endif

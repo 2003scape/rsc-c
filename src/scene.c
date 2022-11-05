@@ -1,5 +1,39 @@
 #include "scene.h"
 
+#ifdef RENDER_3DS_GL
+void _3ds_gl_perspective(float fov, float aspect, float near, float far,
+                         mat4 projection) {
+    float fovx_tan = tanf(fov / 2.0f);
+
+    glm_mat4_zero(projection);
+
+    projection[1][0] = 1.0f / fovx_tan;
+    projection[0][1] = -1.0f / (fovx_tan * aspect);
+    projection[3][2] = far * near / (near - far);
+    projection[2][3] = -1.0f;
+    projection[2][2] = -projection[2][3] * near / (near - far);
+}
+
+/* transpose convert row/column and vertex order */
+void _3ds_gl_mat4_to_pica(mat4 mtx) {
+    /* change column/row */
+    glm_mat4_transpose(mtx);
+
+    /* reverse vertices */
+    for (int i = 0; i < 4; i++) {
+        float temp = mtx[i][0];
+
+        mtx[i][0] = mtx[i][3];
+        mtx[i][3] = temp;
+
+        temp = mtx[i][1];
+
+        mtx[i][1] = mtx[i][2];
+        mtx[i][2] = temp;
+    }
+}
+#endif
+
 int scene_frustum_max_x = 0;
 int scene_frustum_min_x = 0;
 int scene_frustum_max_y = 0;
@@ -123,9 +157,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
-#endif
-
-#ifdef RENDER_3DS_GL
+#elif defined(RENDER_3DS_GL)
     scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, flat_shbin_size);
 
@@ -141,10 +173,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
-
-    /*game_model_3ds_gl_create_buffers(&scene->gl_wall_vao, &scene->_3ds_gl_wall_vbo,
-                             &scene->_3ds_gl_wall_ebo, WALL_OBJECTS_MAX * 4,
-                             WALL_OBJECTS_MAX * 6);*/
 #endif
 }
 
@@ -1045,7 +1073,7 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->mouse_picked_count = 0;
     scene->mouse_picking_active = 1;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     scene->gl_mouse_picked_count = 0;
 
     // TODO use inverse_projection_view
@@ -1094,7 +1122,7 @@ void scene_set_bounds(Scene *scene, int width, int height) {
     }
 #endif
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     scene->gl_height = height;
 #endif
 }
@@ -2814,7 +2842,7 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     scene->camera_y = y - offset_y;
     scene->camera_z = z - offset_z;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     scene_gl_update_camera(scene);
 #endif
 }
@@ -4143,7 +4171,7 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
     return scene_method308(j6, k10, k15, flag);
 }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene) {
     vec3 camera_position = {VERTEX_TO_FLOAT(scene->camera_x),
                             VERTEX_TO_FLOAT(scene->camera_y),
@@ -4170,16 +4198,27 @@ void scene_gl_update_camera(Scene *scene) {
     float clip_far =
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
+#ifdef RENDER_GL
     glm_perspective(
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+#elif defined(RENDER_3DS_GL)
+    _3ds_gl_perspective(
+        scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
+        VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+#endif
+
+    // TODO this is needed for 3DS, doesn't seem to affect anything else
+    // scene->gl_projection[2][1] = 0.0f;
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 
     glm_mat4_mul(scene->gl_projection, scene->gl_view,
                  scene->gl_projection_view);
 }
+#endif
 
+#ifdef RENDER_GL
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     if (game_model->gl_ebo_offset == -1 || !game_model->visible) {
         return;
@@ -4477,5 +4516,59 @@ void scene_gl_render(Scene *scene) {
 
     glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);
+}
+#elif defined(RENDER_3DS_GL)
+void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
+    if (game_model->gl_ebo_offset == -1 || !game_model->visible) {
+        return;
+    }
+
+    if (scene->_3ds_gl_last_buffer != game_model->_3ds_gl_buffer) {
+        //glBindVertexArray(game_model->gl_vao);
+        scene->_3ds_gl_last_buffer = game_model->_3ds_gl_buffer;
+    }
+
+    //shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
+
+    mat4 view_model = {0};
+    glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
+
+    mat4 projection_view_model = {0};
+    glm_mat4_mul(scene->gl_projection, view_model, projection_view_model);
+
+    /*shader_set_mat4(&scene->game_model_shader, "projection_view_model",
+                    projection_view_model);*/
+
+    /*vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
+                            VERTEX_TO_FLOAT(game_model->light_direction_y),
+                            VERTEX_TO_FLOAT(game_model->light_direction_z)};
+
+    shader_set_int(&scene->game_model_shader, "light_ambience",
+                   game_model->light_ambience);
+
+    shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
+
+    if (!game_model->unlit) {
+        shader_set_vec3(&scene->game_model_shader, "light_direction",
+                        light_direction);
+
+        shader_set_float(&scene->game_model_shader, "light_diffuse",
+                         (float)game_model->light_diffuse);
+
+        shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
+                         (float)game_model->light_direction_magnitude);
+    }*/
+
+    /* glCullFace(GL_BACK);
+    shader_set_int(&scene->game_model_shader, "cull_front", 0);
+
+    glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
+
+    glCullFace(GL_FRONT);
+    shader_set_int(&scene->game_model_shader, "cull_front", 1);
+
+    glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
+                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));*/
 }
 #endif

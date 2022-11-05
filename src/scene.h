@@ -6,13 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#include <cglm/cglm.h>
+#endif
+
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
-
-#define CGLM_DEFINE_PRINTS
-#include <cglm/cglm.h>
 
 #include "shader.h"
 #endif
@@ -21,6 +22,10 @@
 #include <citro3d.h>
 
 #include "model_shbin.h"
+
+void _3ds_gl_perspective(float fov, float aspect, float near, float far,
+                         mat4 projection);
+void _3ds_gl_mat4_to_pica(mat4 mtx);
 #endif
 
 typedef struct Scene Scene;
@@ -133,38 +138,7 @@ typedef struct Scene {
     int *sprite_height;
     int *sprite_translate_x;
 
-#ifdef RENDER_GL
-    Shader game_model_shader;
-
-#ifdef EMSCRIPTEN
-    Shader game_model_pick_shader;
-
-    GLuint gl_pick_vao;
-    GLuint gl_pick_vbo;
-    GLuint gl_pick_ebo;
-
-    int gl_pick_face_tag;
-#endif
-
-    GLuint game_model_vao;
-    GLuint game_model_vbo;
-    GLuint game_model_ebo;
-    GLuint game_model_textures;
-
-    GLuint terrain_vao;
-    GLuint terrain_vbo;
-    GLuint terrain_ebo;
-
-    GLuint gl_wall_vao;
-    GLuint gl_wall_vbo;
-    GLuint gl_wall_ebo;
-
-    GLuint last_vao;
-
-    // TODO add to 3ds gl too
-    float light_gradient[RAMP_SIZE];
-    float texture_light_gradient[RAMP_SIZE];
-
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     mat4 gl_view;
     mat4 gl_projection;
     mat4 gl_projection_view;
@@ -198,34 +172,55 @@ typedef struct Scene {
     int gl_height;
     float gl_fov;
 #endif
+#ifdef RENDER_GL
+    Shader game_model_shader;
 
-#ifdef RENDER_3DS_GL
+#ifdef EMSCRIPTEN
+    Shader game_model_pick_shader;
+
+    GLuint gl_pick_vao;
+    GLuint gl_pick_vbo;
+    GLuint gl_pick_ebo;
+
+    int gl_pick_face_tag;
+#endif
+
+    GLuint game_model_vao;
+    GLuint game_model_vbo;
+    GLuint game_model_ebo;
+    GLuint game_model_textures;
+
+    GLuint terrain_vao;
+    GLuint terrain_vbo;
+    GLuint terrain_ebo;
+
+    GLuint gl_wall_vao;
+    GLuint gl_wall_vbo;
+    GLuint gl_wall_ebo;
+
+    GLuint last_vao;
+
+    // TODO add to 3ds gl too
+    float light_gradient[RAMP_SIZE];
+    float texture_light_gradient[RAMP_SIZE];
+#elif defined(RENDER_3DS_GL)
     DVLB_s *_3ds_gl_model_shader_dvlb;
     shaderProgram_s _3ds_gl_model_shader;
 
     int _3ds_gl_model_uniform;
     int _3ds_gl_projection_view_model_uniform;
 
-    void *_3ds_gl_game_model_vbo;
-    void *_3ds_gl_game_model_ebo;
+    _3ds_gl_vertex_buffer _3ds_gl_game_model_buffer;
+    _3ds_gl_vertex_buffer _3ds_gl_terrain_buffer;
+    _3ds_gl_vertex_buffer _3ds_gl_wall_buffer;
 
-    void *_3ds_gl_terrain_vbo;
-    void *_3ds_gl_terrain_ebo;
-
-    void *_3ds_gl_wall_vbo;
-    void *_3ds_gl_wall_ebo;
-
-    void *_3ds_gl_last_vao;
-
-    C3D_Mtx _3ds_gl_view;
-    C3D_Mtx _3ds_gl_projection;
-    C3D_Mtx _3ds_gl_projection_view;
+    _3ds_gl_vertex_buffer *_3ds_gl_last_buffer;
 #endif
 } Scene;
 
 int scene_polygon_depth_compare(const void *a, const void *b);
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 int scene_gl_model_time_compare(const void *a, const void *b);
 #endif
 
@@ -301,9 +296,13 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
                     int *vertex_view_x_b, int *vertex_view_y_b, int length_a,
                     int length_b);
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene);
+#endif
+#ifdef RENDER_GL
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model);
 void scene_gl_render(Scene *scene);
+#elif defined(RENDER_3DS_GL)
+void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model);
 #endif
 #endif

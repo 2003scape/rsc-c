@@ -213,6 +213,7 @@ typedef struct Surface {
     C3D_BufInfo _3ds_gl_buf_info;
     void *_3ds_gl_flat_vbo;
     void *_3ds_gl_flat_ebo;
+
     uint16_t _3ds_gl_flat_count;
 
     /* used for texture array and boundary changes */

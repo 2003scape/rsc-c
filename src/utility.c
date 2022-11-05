@@ -545,7 +545,7 @@ int get_certificate_item_id(int item_id) {
     return -1;
 }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range) {
     float half = range / 2.0f;
     return (position - half) / half;
@@ -554,7 +554,9 @@ float gl_translate_coord(int position, int range) {
 float gl_translate_x(int x, int range) { return gl_translate_coord(x, range); }
 
 float gl_translate_y(int y, int range) { return -gl_translate_coord(y, range); }
+#endif
 
+#ifdef RENDER_GL
 void gl_update_texture_array(GLuint texture_array_id, int index, int width,
                              int height, int32_t *pixels, int convert_bgra) {
     /* webgl only supports RGBA */

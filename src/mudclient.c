@@ -2093,29 +2093,33 @@ void mudclient_load_models(mudclient *mud) {
 
     free(models_jag);
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int models_length = game_data_model_count - 1;
 
-    if (mud->options->ground_item_models) {
+    /*if (mud->options->ground_item_models) {
         models_length += game_data_item_count;
-    }
+    }*/
 
     GameModel *models_buffer[models_length];
 
     for (int i = 0; i < game_data_model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
-        GameModel *game_model = mud->game_models[i];
+        //GameModel *game_model = mud->game_models[i];
     }
 
-    if (mud->options->ground_item_models) {
+    /*if (mud->options->ground_item_models) {
         for (int i = 0; i < game_data_item_count; i++) {
             models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
         }
-    }
-
+    }*/
+#ifdef RENDER_GL
     game_model_gl_buffer_models(
         &mud->scene->game_model_vao, &mud->scene->game_model_vbo,
         &mud->scene->game_model_ebo, models_buffer, models_length);
+#elif defined(RENDER_3DS_GL)
+    game_model_3ds_gl_buffer_models(&mud->scene->_3ds_gl_game_model_buffer,
+                                     models_buffer, models_length);
+#endif
 #endif
 }
 
@@ -5044,7 +5048,7 @@ void mudclient_on_resize(mudclient *mud) {
     new_height = get_canvas_height();
 #ifdef RENDER_SW
     SDL_SetWindowSize(mud->window, new_width, new_height);
-#elif RENDER_GL
+#elif defined(RENDER_GL)
     SDL_SetWindowSize(mud->gl_window, new_width, new_height);
 #endif
 #elif defined(RENDER_GL) && defined(RENDER_SW) && !defined(_3DS) &&            \
@@ -5589,6 +5593,7 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
 
     int keyboard_type = _3DS_KEYBOARD_NORMAL;
 
+    // TODO also for change password
     if (!mud->logged_in &&
         ((mud->login_screen == LOGIN_STAGE_EXISTING &&
           mud->panel_login_existing_user->focus_control_index ==

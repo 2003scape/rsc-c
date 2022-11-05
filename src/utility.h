@@ -110,10 +110,12 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
 void url_encode(char *s, char *dest);
 int get_certificate_item_id(int item_id);
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range);
 float gl_translate_x(int x, int range);
 float gl_translate_y(int y, int range);
+#endif
+#ifdef RENDER_GL
 void gl_update_texture_array(GLuint texture_array_id, int index, int width,
                              int height, int32_t *pixels, int convert_bgra);
 void rotate_point(int centre_x, int centre_y, float angle, int *point);

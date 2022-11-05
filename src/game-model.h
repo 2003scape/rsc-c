@@ -15,6 +15,11 @@ extern float gl_tri_face_vs[];
 
 extern float gl_quad_face_us[];
 extern float gl_quad_face_vs[];
+
+typedef struct gl_face_fill {
+    float r, g, b, a;
+    int texture_index;
+} gl_face_fill;
 #endif
 
 #ifdef RENDER_GL
@@ -34,6 +39,15 @@ typedef struct _3ds_gl_model_vertex {
     float back_r, back_g, back_b;
     float front_texture_u, front_texture_v, back_texture_u, back_texture_v;
 } _3ds_gl_model_vertex;
+
+// TODO could also use in surface i guess
+// essentially a vao
+typedef struct _3ds_gl_vertex_buffer {
+    C3D_AttrInfo attr_info;
+    C3D_BufInfo buf_info;
+    void *vbo;
+    void *ebo;
+} _3ds_gl_vertex_buffer;
 #endif
 
 /* states */
@@ -53,7 +67,7 @@ typedef struct GameModel GameModel;
 #include "utility.h"
 
 typedef struct GameModel {
-    int vertex_count;
+    uint16_t vertex_count;
     int *project_vertex_x;
     int *project_vertex_y;
     int *project_vertex_z;
@@ -61,7 +75,7 @@ typedef struct GameModel {
     int *vertex_view_y;
     int *vertex_intensity;
     int8_t *vertex_ambience;
-    int face_count;
+    uint16_t face_count;
     int *face_vertex_count;
     int **face_vertices;
     int *face_fill_front;
@@ -96,7 +110,7 @@ typedef struct GameModel {
     int8_t *is_local_player;
     int8_t isolated;
     int8_t projected;
-    int max_vertices;
+    uint16_t max_vertices;
     int *vertex_x;
     int *vertex_y;
     int *vertex_z;
@@ -116,7 +130,7 @@ typedef struct GameModel {
      * wall and roof models */
     int8_t autocommit;
 
-    int max_faces;
+    uint16_t max_faces;
 
     int base_x;
     int base_y;
@@ -127,6 +141,15 @@ typedef struct GameModel {
     int transform_type;
     int transform_state;
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    int gl_vbo_offset;
+    int gl_ebo_offset;
+    int gl_ebo_length;
+
+    int gl_invisible;
+
+    mat4 transform;
+#endif
 #ifdef RENDER_GL
     GLuint gl_vao;
 
@@ -134,19 +157,8 @@ typedef struct GameModel {
     int gl_pick_vbo_offset;
     int gl_pick_ebo_offset;
 #endif
-
-    mat4 transform;
-#endif
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    int gl_vbo_offset;
-    int gl_ebo_offset;
-    int gl_ebo_length;
-
-    int gl_invisible;
-#endif
-#ifdef RENDER_3DS_GL
-    void *_3ds_gl_vao;
-    C3D_Mtx transform;
+#elif defined(RENDER_3DS_GL)
+    _3ds_gl_vertex_buffer *_3ds_gl_buffer;
 #endif
 } GameModel;
 
@@ -223,8 +235,7 @@ void game_model_mask_faces(GameModel *game_model, int *face_fill,
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
                               int face_vertex_count, float *us, float *vs);
-void game_model_gl_decode_face_fill(int face_fill, float *r, float *g, float *b,
-                                    float *a, float *texture_index);
+void game_model_gl_decode_face_fill(int face_fill, gl_face_fill *vbo_face_fill);
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
 void game_model_get_vertex_ebo_lengths(GameModel **game_models, int length,
@@ -247,6 +258,9 @@ void game_model_gl_buffer_pick_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
 #endif
 #endif
 #ifdef RENDER_3DS_GL
-void game_model_3ds_gl_create_buffers(void *vbo, void *ebo, C3D_AttrInfo *attr_info, C3D_BufInfo *buf_info, int vbo_length, int ebo_length);
+void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
+                                      int vbo_length, int ebo_length);
+void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
+                                     GameModel **game_models, int length);
 #endif
 #endif
