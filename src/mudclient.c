@@ -2695,7 +2695,7 @@ void mudclient_change_password(mudclient *mud, char *old_password,
     packet_stream_flush_packet(mud->packet_stream);
 }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void mudclient_update_fov(mudclient *mud) {
     if (mud->options->field_of_view) {
         mud->scene->gl_fov = glm_rad(mud->options->field_of_view / 10.0f);
@@ -2779,7 +2779,7 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene->fog_z_falloff = 1;
     mud->scene->fog_z_distance = 2300;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     mudclient_update_fov(mud);
 #endif
 
@@ -5001,7 +5001,7 @@ void mudclient_draw_game(mudclient *mud) {
         //mudclient_3ds_draw_framebuffer_top(mud);
     }
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_SW
     gfxFlushBuffers();
     gfxSwapBuffers();
 #endif

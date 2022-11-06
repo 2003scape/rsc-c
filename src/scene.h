@@ -304,5 +304,6 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model);
 void scene_gl_render(Scene *scene);
 #elif defined(RENDER_3DS_GL)
 void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model);
+void scene_3ds_gl_render(Scene *scene);
 #endif
 #endif

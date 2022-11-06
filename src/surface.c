@@ -1457,7 +1457,9 @@ void surface_draw(Surface *surface) {
     // gspWaitForVBlank();
 #endif
 
-#ifdef RENDER_3DS_GL
+//#ifdef RENDER_3DS_GL
+    surface_3ds_gl_reset_context(surface);
+#if 0
     C3D_BindProgram(&surface->_3ds_gl_flat_shader);
 
     C3D_SetAttrInfo(&surface->_3ds_gl_attr_info);

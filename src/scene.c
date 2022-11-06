@@ -173,6 +173,11 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
+
+	C3D_TexEnv* env = C3D_GetTexEnv(0);
+	C3D_TexEnvInit(env);
+	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
 #endif
 }
 
@@ -1740,6 +1745,8 @@ void scene_render(Scene *scene) {
 
 #ifdef RENDER_GL
     scene_gl_render(scene);
+#elif defined(RENDER_3DS_GL)
+    scene_3ds_gl_render(scene);
 #endif
 
     scene->mouse_picking_active = 0;
@@ -4209,7 +4216,7 @@ void scene_gl_update_camera(Scene *scene) {
 #endif
 
     // TODO this is needed for 3DS, doesn't seem to affect anything else
-    // scene->gl_projection[2][1] = 0.0f;
+    scene->gl_projection[1][2] = 0.0f;
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 
@@ -4523,12 +4530,22 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         return;
     }
 
-    if (scene->_3ds_gl_last_buffer != game_model->_3ds_gl_buffer) {
-        //glBindVertexArray(game_model->gl_vao);
-        scene->_3ds_gl_last_buffer = game_model->_3ds_gl_buffer;
-    }
+    C3D_SetAttrInfo(&game_model->_3ds_gl_buffer->attr_info);
+    C3D_SetBufInfo(&game_model->_3ds_gl_buffer->buf_info);
 
-    //shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
+    /*if (scene->_3ds_gl_last_buffer != game_model->_3ds_gl_buffer) {
+        C3D_SetAttrInfo(&game_model->_3ds_gl_buffer->attr_info);
+        C3D_SetBufInfo(&game_model->_3ds_gl_buffer->buf_info);
+        scene->_3ds_gl_last_buffer = game_model->_3ds_gl_buffer;
+    }*/
+
+    mat4 pica_model = {0};
+    glm_mat4_copy(game_model->transform, pica_model);
+
+    _3ds_gl_mat4_to_pica(pica_model);
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, scene->_3ds_gl_model_uniform,
+                     (C3D_Mtx*)pica_model);
 
     mat4 view_model = {0};
     glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
@@ -4536,6 +4553,20 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     mat4 projection_view_model = {0};
     glm_mat4_mul(scene->gl_projection, view_model, projection_view_model);
 
+    _3ds_gl_mat4_to_pica(projection_view_model);
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER,
+                     scene->_3ds_gl_projection_view_model_uniform,
+                     (C3D_Mtx*)projection_view_model);
+
+
+    C3D_DrawElements(
+GPU_TRIANGLES,
+game_model->gl_ebo_length,
+C3D_UNSIGNED_SHORT,
+    game_model->_3ds_gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
+
+    // light stuff v
     /*shader_set_mat4(&scene->game_model_shader, "projection_view_model",
                     projection_view_model);*/
 
@@ -4570,5 +4601,167 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));*/
+}
+
+void scene_3ds_gl_render(Scene *scene) {
+    /*int scene_height = scene->gl_height - 1;
+
+    int old_width = scene->surface->width;
+    int old_height = scene->surface->height;
+
+    scene->surface->width = scene->width;
+    scene->surface->height = scene_height + 12;
+
+    surface_reset_bounds(scene->surface);*/
+
+    game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
+                            scene->camera_z, scene->camera_yaw,
+                            scene->camera_pitch, scene->camera_roll,
+                            scene->view_distance, scene->clip_near);
+
+    scene->visible_polygons_count = 0;
+
+    scene_initialise_polygons_2d(scene);
+
+    /*qsort(scene->visible_polygons, scene->visible_polygons_count,
+          sizeof(GamePolygon *), scene_polygon_depth_compare);*/
+
+    for (int i = 0; i < scene->visible_polygons_count; i++) {
+        GamePolygon *polygon = scene->visible_polygons[i];
+        scene_render_polygon_2d_face(scene, polygon->face);
+    }
+
+    C3D_BindProgram(&scene->_3ds_gl_model_shader);
+
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
+    C3D_RenderTargetClear(scene->surface->mud->_3ds_gl_render_target,
+                          C3D_CLEAR_ALL, BLACK, 0);
+
+    C3D_FrameDrawOn(scene->surface->mud->_3ds_gl_render_target);
+
+    //glEnable(GL_CULL_FACE);
+    //glEnable(GL_DEPTH_TEST);
+    //glClear(GL_DEPTH_BUFFER_BIT);
+    //int offset_y = 13;
+    //glViewport(0, offset_y, scene->width, scene_height);
+
+    //shader_use(&scene->game_model_shader);
+
+    /*shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
+
+    shader_set_int(&scene->game_model_shader, "fog_distance",
+                   scene->fog_z_distance);
+
+    shader_set_float(&scene->game_model_shader, "scroll_texture",
+                     scene->gl_scroll_texture_position /
+                         (float)SCROLL_TEXTURE_SIZE);*/
+
+    scene->gl_scroll_texture_position =
+        (scene->gl_scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
+
+    scene->_3ds_gl_last_buffer = NULL;
+
+    // TODO could go in a function
+    vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
+                      VERTEX_TO_FLOAT(scene->camera_y),
+                      VERTEX_TO_FLOAT(scene->camera_z)};
+
+    vec3 ray_end = {0};
+    glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
+
+    /* draw the terrain first for potential mouse picking, since we can click
+     * through the unpickable models */
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (game_model->autocommit && !game_model->unpickable) {
+            scene_3ds_gl_draw_game_model(scene, game_model);
+            game_model->gl_invisible = 1;
+        }
+    }
+
+    if (scene->gl_terrain_pick_step == 1) {
+        int mouse_x = scene->mouse_x + (scene->surface->width / 2);
+        int mouse_y = scene->surface->height - scene->mouse_y;
+
+        /* we discard every even row, so there's no depth data either */
+        if (scene->interlace && mouse_y % 2 == 0) {
+            mouse_y -= 1;
+        }
+
+        float mouse_z = 0;
+
+        /*glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
+                     &mouse_z);*/
+
+        vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
+        vec4 bounds = {0, 0, scene->surface->width, scene->surface->height};
+
+        glm_unproject(position, scene->gl_projection_view, bounds,
+                      scene->gl_mouse_world);
+
+        scene->gl_terrain_pick_step = 2;
+
+        scene->gl_terrain_pick_x =
+            FLOAT_TO_VERTEX(scene->gl_mouse_world[0]) / MAGIC_LOC;
+
+        scene->gl_terrain_pick_y =
+            FLOAT_TO_VERTEX(scene->gl_mouse_world[2]) / MAGIC_LOC;
+    }
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (scene->mouse_picking_active && !game_model->unpickable) {
+            float time = game_model_gl_intersects(game_model,
+                                                  scene->gl_mouse_ray, ray_end);
+
+            if (time >= 0) {
+                if (game_model->autocommit) {
+                    scene->gl_terrain_walkable = 1;
+                } else {
+                    GlModelTime model_time = {game_model, time};
+
+                    scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
+                        model_time;
+
+                    scene->gl_mouse_picked_count++;
+                }
+            }
+        }
+
+        if (!game_model->gl_invisible) {
+            scene_3ds_gl_draw_game_model(scene, game_model);
+        }
+
+        game_model->gl_invisible = 0;
+    }
+
+    qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,
+          sizeof(GlModelTime), scene_gl_model_time_compare);
+
+    for (int i = 0; i < scene->gl_mouse_picked_count; i++) {
+        scene->mouse_picked_models[scene->mouse_picked_count + i] =
+            scene->gl_mouse_picked_time[i].game_model;
+
+        scene->mouse_picked_faces[scene->mouse_picked_count + i] = -1;
+    }
+
+    scene->mouse_picked_count += scene->gl_mouse_picked_count;
+
+    //glViewport(0, 1, scene->width, scene_height + 12);
+
+    //surface_gl_draw(scene->surface, 1);
+
+    //scene->surface->width = old_width;
+    //scene->surface->height = old_height;
+
+    //surface_reset_bounds(scene->surface);
+
+    /*glViewport(0, 0, scene->surface->mud->game_width,
+               scene->surface->mud->game_height);*/
+
+    C3D_FrameEnd(0);
 }
 #endif

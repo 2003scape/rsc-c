@@ -11,17 +11,34 @@
 
 ; outputs
 ; .out outtc0 texcoord0
-.out outpos position
-.out outclr color
+.out out_position position
+.out out_colour color
 
 ; inputs
 .in in_position v0
-.in in_normal v1
-.in in_lighting v2
-.in in_front_colour v3
-.in in_back_colour v4
-.in texture_position v5
+.in in_back_colour v1
+;.in in_normal v1
+;.in in_lighting v2
+;.in in_front_colour v3
+;.in in_back_colour v4
+;.in texture_position v5
 
 .proc main
+    ; r0.xyz = in_position.xyz, w = 1.0f
+    mov r0.xyz, in_position
+    mov r0.w, ones
+
+    ; gl_Position = projection_view_model * vec4(position, 1.0);
+    dp4 out_position.x, projection_view_model[0], r0
+    dp4 out_position.y, projection_view_model[1], r0
+    dp4 out_position.z, projection_view_model[2], r0
+    dp4 out_position.w, projection_view_model[3], r0
+
+    ; out_colour = (1.0, 0.0, 1.0, 1.0)
+    ;mov out_colour, myconst.yxyy
+
+    mov out_colour.xyz, in_back_colour
+    mov out_colour.w, ones
+
     end
 .end

@@ -471,7 +471,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
+#ifndef RENDER_3DS_GL
     scene_render(mud->scene);
+#endif
 
     int background_height = (int)((200 / 512.0f) * (float)(MUD_WIDTH));
 
@@ -512,7 +514,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
+#ifndef RENDER_3DS_GL
     scene_render(mud->scene);
+#endif
 
     surface_apply_login_filter(mud->surface, background_height);
 
@@ -573,7 +577,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
+#ifndef RENDER_3DS_GL
     scene_render(mud->scene);
+#endif
 
     surface_apply_login_filter(mud->surface, background_height);
 
@@ -742,8 +748,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {
-    /*mudclient_login(mud, "farts", "farts", 0);
-    return;*/
+    mudclient_login(mud, "farts", "farts", 0);
+    return;
 
     if (mud->show_dialog_confirm) {
         mudclient_handle_confirm_input(mud);

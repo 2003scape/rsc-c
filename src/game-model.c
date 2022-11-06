@@ -594,7 +594,7 @@ void game_model_compute_bounds(GameModel *game_model) {
         int vertex_index = face_vertices[0];
         int face_vertex_count = game_model->face_vertex_count[i];
 
-#if !defined(RENDER_SW) && defined(RENDER_GL)
+#if !defined(RENDER_SW) && (defined(RENDER_GL) || defined(RENDER_3DS_GL))
         vec3 vertex = {VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]),
                        VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]),
                        VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index])};
@@ -617,13 +617,14 @@ void game_model_compute_bounds(GameModel *game_model) {
         for (int j = 0; j < face_vertex_count; j++) {
             vertex_index = face_vertices[j];
 
-#if !defined(RENDER_SW) && defined(RENDER_GL)
+#if !defined(RENDER_SW) && (defined(RENDER_GL) || defined(RENDER_3DS_GL))
             vec3 vertex = {0};
             vertex[0] = VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
             vertex[1] = VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
             vertex[2] = VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
 
             vec3 transformed_vertex = {0};
+
             glm_mat4_mulv3(game_model->transform, vertex, 1,
                            transformed_vertex);
 
@@ -821,12 +822,12 @@ void game_model_reset_transform(GameModel *game_model) {
     game_model->transform_state = 0;
 
     for (int i = 0; i < game_model->vertex_count; i++) {
-        game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
+        /*game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
-        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
+        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];*/
     }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     glm_mat4_identity(game_model->transform);
 #endif
 }
@@ -844,7 +845,7 @@ void game_model_apply(GameModel *game_model) {
     } else if (game_model->transform_state == GAME_MODEL_TRANSFORM_BEGIN) {
         game_model_reset_transform(game_model);
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         if (game_model->transform_type >= GAME_MODEL_TRANSFORM_TRANSLATE) {
             glm_translate(game_model->transform,
                           (vec3){VERTEX_TO_FLOAT(game_model->base_x),
@@ -1005,11 +1006,16 @@ GameModel *game_model_copy(GameModel *game_model) {
     copy->depth = game_model->depth;
     copy->transparent = game_model->transparent;
 
-#ifdef RENDER_GL
-    copy->gl_vao = game_model->gl_vao;
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     copy->gl_vbo_offset = game_model->gl_vbo_offset;
     copy->gl_ebo_offset = game_model->gl_ebo_offset;
     copy->gl_ebo_length = game_model->gl_ebo_length;
+#endif
+
+#ifdef RENDER_GL
+    copy->gl_vao = game_model->gl_vao;
+#elif defined(RENDER_3DS_GL)
+    copy->_3ds_gl_buffer = game_model->_3ds_gl_buffer;
 #endif
 
     free(pieces);
@@ -1027,11 +1033,16 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
 
     copy->depth = game_model->depth;
 
-#ifdef RENDER_GL
-    copy->gl_vao = game_model->gl_vao;
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     copy->gl_vbo_offset = game_model->gl_vbo_offset;
     copy->gl_ebo_offset = game_model->gl_ebo_offset;
     copy->gl_ebo_length = game_model->gl_ebo_length;
+#endif
+
+#ifdef RENDER_GL
+    copy->gl_vao = game_model->gl_vao;
+#elif defined(RENDER_3DS_GL)
+    copy->_3ds_gl_buffer = game_model->_3ds_gl_buffer;
 #endif
 
     free(pieces);
@@ -1051,7 +1062,7 @@ void game_model_copy_position(GameModel *game_model, GameModel *source) {
 
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     glm_mat4_copy(source->transform, game_model->transform);
 #endif
 }
@@ -1382,10 +1393,10 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         int fill_front = game_model->face_fill_front[i];
         int fill_back = game_model->face_fill_back[i];
 
-        gl_face_fill face_fill_front;
+        gl_face_fill face_fill_front = {0};
         game_model_gl_decode_face_fill(fill_front, &face_fill_front);
 
-        gl_face_fill face_fill_back;
+        gl_face_fill face_fill_back = {0};
         game_model_gl_decode_face_fill(fill_back, &face_fill_back);
 
         float *front_face_us = NULL;
@@ -1487,6 +1498,44 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             glBufferSubData(GL_ARRAY_BUFFER,
                             ((*vertex_offset) + j) * 23 * sizeof(GLfloat),
                             23 * sizeof(GLfloat), vertex);
+#elif defined(RENDER_3DS_GL)
+            // TODO texture coords
+
+            _3ds_gl_model_vertex vertex = {
+                /* vertex */
+                vertex_x, vertex_y, vertex_z, //
+
+                /* back colour */
+                1.0, 0.0, 1.0,
+                //face_fill_back.r, face_fill_back.g, face_fill_back.b, //
+#if 0
+                /* normal */
+                normal[0], normal[1], normal[2], (float)(normal_magnitude), //
+
+                /* lighting */
+                (float)(face_intensity), (float)(vertex_intensity), //
+
+                /* front colour */
+                face_fill_front.r, face_fill_front.g, face_fill_front.b, //
+
+                /* back colour */
+                face_fill_back.r, face_fill_back.g, face_fill_back.b, //
+
+                /* front texture */
+                front_texture_x, front_texture_y, //
+
+                /* back texture */
+                back_texture_x, back_texture_y, //
+#endif
+            };
+
+            //printf("%d\n", (((*vertex_offset) + j) * sizeof(_3ds_gl_model_vertex)));
+
+            memcpy(
+                game_model->_3ds_gl_buffer->vbo +
+                (((*vertex_offset) + j) * sizeof(_3ds_gl_model_vertex)),
+                &vertex,
+                sizeof(_3ds_gl_model_vertex));
 #endif
         }
 
@@ -1498,6 +1547,13 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
                             (*ebo_offset) * sizeof(GLuint), sizeof(indices),
                             indices);
+#elif defined(RENDER_3DS_GL)
+            uint16_t indices[] = {(*vertex_offset), (*vertex_offset) + j + 1,
+                                  (*vertex_offset) + j + 2};
+
+            memcpy(
+                game_model->_3ds_gl_buffer->ebo +
+                ((*ebo_offset) * sizeof(uint16_t)), indices, sizeof(indices));
 #endif
 
             (*ebo_offset) += 3;
@@ -1785,7 +1841,11 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
     /* vertex { x, y, z } */
     AttrInfo_AddLoader(&buffer->attr_info, 0, GPU_FLOAT, 3);
 
-    /* normal { x, y, z, magnitude */
+    /* back colour { r, g, b } */
+    AttrInfo_AddLoader(&buffer->attr_info, 1, GPU_FLOAT, 3);
+
+#if 0
+    /* normal { x, y, z, magnitude } */
     AttrInfo_AddLoader(&buffer->attr_info, 1, GPU_FLOAT, 4);
 
     /* lighting { face, vertex } */
@@ -1799,6 +1859,7 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
 
     /* textures { front_u, front_v, back_u, back_ v } */
     AttrInfo_AddLoader(&buffer->attr_info, 5, GPU_FLOAT, 4);
+#endif
 
     // TODO make sure this works on null
     linearFree(buffer->vbo);
@@ -1807,10 +1868,16 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
     buffer->vbo = linearAlloc(vbo_length * sizeof(_3ds_gl_model_vertex));
     buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
 
+    if (!buffer->vbo || !buffer->ebo) {
+        printf("oh no\n");
+    }
+
     BufInfo_Init(&buffer->buf_info);
 
-    BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_flat_vertex), 6,
-                0x543210);
+    /*BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_flat_vertex), 5,
+                0x543210);*/
+    BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_flat_vertex), 2,
+                0x10);
 }
 
 void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
@@ -1838,6 +1905,8 @@ void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
         game_model->gl_ebo_offset = ebo_offset;
 
         game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
+
+        break;
     }
 }
 #endif

@@ -31,13 +31,14 @@ typedef struct gl_face_fill {
 #ifdef RENDER_3DS_GL
 #include <citro3d.h>
 
-typedef struct _3ds_gl_model_vertex {
+typedef struct /*__attribute__((__packed__))*/ _3ds_gl_model_vertex {
     float x, y, z;
-    float normal_x, normal_y, normal_z, normal_magnitude;
+    float back_r, back_g, back_b;
+    /*float normal_x, normal_y, normal_z, normal_magnitude;
     float face_intensity, vertex_intensity;
     float front_r, front_g, front_b;
     float back_r, back_g, back_b;
-    float front_texture_u, front_texture_v, back_texture_u, back_texture_v;
+    float front_texture_u, front_texture_v, back_texture_u, back_texture_v;*/
 } _3ds_gl_model_vertex;
 
 // TODO could also use in surface i guess
