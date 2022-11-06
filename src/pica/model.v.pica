@@ -2,7 +2,7 @@
 
 ; uniforms
 .fvec model[4], projection_view_model[4]
-.bool cull_front
+;.bool cull_front
 
 ; constants
 .constf myconst(0.0, 1.0, -1.0, -0.5)

@@ -159,7 +159,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
                            scene->texture_light_gradient, RAMP_SIZE);
 #elif defined(RENDER_3DS_GL)
     scene->_3ds_gl_model_shader_dvlb =
-        DVLB_ParseFile((u32 *)model_shbin, flat_shbin_size);
+        DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);
 
     shaderProgramInit(&scene->_3ds_gl_model_shader);
 

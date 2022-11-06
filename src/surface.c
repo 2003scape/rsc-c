@@ -143,7 +143,13 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #endif
 
     // TODO put in function
-#ifdef RENDER_3DS_GL
+//#ifdef RENDER_3DS_GL
+    surface->_3ds_gl_flat_vbo =
+        linearAlloc(FLAT_QUAD_COUNT * sizeof(_3ds_gl_flat_vertex) * 4);
+
+    surface->_3ds_gl_flat_ebo =
+        linearAlloc(FLAT_QUAD_COUNT * sizeof(uint16_t) * 6);
+#if 0
     surface->_3ds_gl_flat_shader_dvlb =
         DVLB_ParseFile((u32 *)flat_shbin, flat_shbin_size);
 
