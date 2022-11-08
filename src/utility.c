@@ -592,4 +592,13 @@ void rotate_point(int centre_x, int centre_y, float angle, int *point) {
     point[0] = x_new + centre_x;
     point[1] = y_new + centre_y;
 }
+#elif defined(RENDER_3DS_GL)
+void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex) {
+    Tex3DS_Texture t3x =
+        Tex3DS_TextureImport(t3x_data, t3x_size, tex, NULL, false);
+
+    Tex3DS_TextureFree(t3x);
+
+    C3D_TexSetFilter(tex, GPU_NEAREST, GPU_NEAREST);
+}
 #endif

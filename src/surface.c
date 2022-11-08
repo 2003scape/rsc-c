@@ -1054,16 +1054,6 @@ void surface_gl_draw(Surface *surface, int use_depth) {
 #endif
 
 #ifdef RENDER_3DS_GL
-// TODO move to utility
-void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex) {
-    Tex3DS_Texture t3x =
-        Tex3DS_TextureImport(t3x_data, t3x_size, tex, NULL, false);
-
-    Tex3DS_TextureFree(t3x);
-
-    C3D_TexSetFilter(tex, GPU_NEAREST, GPU_NEAREST);
-}
-
 void surface_3ds_gl_reset_context(Surface *surface) {
     surface->_3ds_gl_flat_count = 0;
 

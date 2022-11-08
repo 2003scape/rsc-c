@@ -16,12 +16,11 @@
 
 ; inputs
 .in in_position v0
-.in in_back_colour v1
-;.in in_normal v1
-;.in in_lighting v2
-;.in in_front_colour v3
-;.in in_back_colour v4
-;.in texture_position v5
+.in in_normal v1
+.in in_lighting v2
+.in in_front_colour v3
+.in in_back_colour v4
+.in texture_position v5
 
 .proc main
     ; r0.xyz = in_position.xyz, w = 1.0f

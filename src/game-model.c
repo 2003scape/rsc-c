@@ -1386,8 +1386,6 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                   vertex_normal_y, vertex_normal_z,
                                   vertex_normal_magnitude);
 
-    _3ds_gl_model_vertex *vertex_test = malloc(sizeof(_3ds_gl_model_vertex) * 190);
-
     for (int i = 0; i < game_model->face_count; i++) {
         int *face_vertices = game_model->face_vertices[i];
         int face_vertex_count = game_model->face_vertex_count[i];
@@ -1505,13 +1503,8 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
             _3ds_gl_model_vertex vertex = {
                 /* vertex */
-                //vertex_x, vertex_y, vertex_z, //
-                0.0, 0.0, 0.0,
+                vertex_x, vertex_y, vertex_z, //
 
-                /* back colour */
-                0.0, 0.0, 0.0,
-                //face_fill_back.r, face_fill_back.g, face_fill_back.b, //
-#if 0
                 /* normal */
                 normal[0], normal[1], normal[2], (float)(normal_magnitude), //
 
@@ -1529,21 +1522,13 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
                 /* back texture */
                 back_texture_x, back_texture_y, //
-#endif
             };
 
-            //printf("%d\n", (((*vertex_offset) + j) * sizeof(_3ds_gl_model_vertex)));
-
-            /*memcpy(
-                game_model->_3ds_gl_buffer->vbo +
-                (((*vertex_offset) + j) * sizeof(_3ds_gl_model_vertex)),
-                &vertex,
-                sizeof(_3ds_gl_model_vertex));*/
-            float ugh[] = {
-                vertex_x, vertex_y, vertex_z, 1.0, 0.0, 1.0
-                //vertex_x, vertex_y, vertex_z, 1.0, 0.0, 1.0
-            };
-            memcpy(&vertex_test[((*vertex_offset) + j)], ugh, sizeof(ugh));
+            memcpy(
+            game_model->_3ds_gl_buffer->vbo +
+            (((*vertex_offset) + j) * sizeof(_3ds_gl_model_vertex)),
+            &vertex,
+            sizeof(_3ds_gl_model_vertex));
 #endif
         }
 
@@ -1569,11 +1554,6 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
         (*vertex_offset) += face_vertex_count;
     }
-
-    memcpy(game_model->_3ds_gl_buffer->vbo, vertex_test,
-           sizeof(_3ds_gl_model_vertex) * 190);
-
-    free(vertex_test);
 
     free(face_normal_x);
     free(face_normal_y);
@@ -1854,10 +1834,6 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
     /* vertex { x, y, z } */
     AttrInfo_AddLoader(&buffer->attr_info, 0, GPU_FLOAT, 3);
 
-    /* back colour { r, g, b } */
-    AttrInfo_AddLoader(&buffer->attr_info, 1, GPU_FLOAT, 3);
-
-#if 0
     /* normal { x, y, z, magnitude } */
     AttrInfo_AddLoader(&buffer->attr_info, 1, GPU_FLOAT, 4);
 
@@ -1872,7 +1848,6 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
 
     /* textures { front_u, front_v, back_u, back_ v } */
     AttrInfo_AddLoader(&buffer->attr_info, 5, GPU_FLOAT, 4);
-#endif
 
     // TODO make sure this works on null
     linearFree(buffer->vbo);
@@ -1887,10 +1862,10 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
 
     BufInfo_Init(&buffer->buf_info);
 
-    /*BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_flat_vertex), 5,
-                0x543210);*/
-    BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_model_vertex), 2,
-                0x10);
+    /*BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_model_vertex), 2,
+                0x10);*/
+    BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_model_vertex), 6,
+                0x543210);
 }
 
 void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,

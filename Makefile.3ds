@@ -32,7 +32,7 @@ BUILD			:=	build
 SOURCES		:=	src src/lib src/ui src/pica src/textures
 DATA			:=
 #INCLUDES : = include
-INCLUDES	:=	src
+INCLUDES	:=	src cglm/include
 GRAPHICS	:=	gfx
 GFXBUILD	:=	$(BUILD)
 ROMFS			:=	cache
@@ -40,7 +40,8 @@ ROMFS			:=	cache
 # options for code generation
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
-CFLAGS	:=	-Wall -Ofast -fno-signed-zeros -fno-trapping-math \
+# TODO -g for DEBUG mode only
+CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-mword-relocations -fomit-frame-pointer -ffunction-sections \
 			$(ARCH)
 

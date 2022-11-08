@@ -13,16 +13,17 @@
 #include <emscripten.h>
 #endif
 
-#ifdef _3DS
-#include <3ds.h>
-#endif
-
 #ifdef WII
 #include <ogc/lwp_watchdog.h>
 #include <ogcsys.h>
-#endif
+#elif defined(_3DS)
+#include <3ds.h>
 
-#if !defined(WII) && !defined(_3DS)
+#if defined(RENDER_3DS_GL)
+#include <citro3d.h>
+#include <tex3ds.h>
+#endif
+#else
 #include <SDL2/SDL.h>
 
 #ifdef RENDER_GL
@@ -119,5 +120,7 @@ float gl_translate_y(int y, int range);
 void gl_update_texture_array(GLuint texture_array_id, int index, int width,
                              int height, int32_t *pixels, int convert_bgra);
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
+#elif defined(RENDER_3DS_GL)
+void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
 #endif
 #endif
