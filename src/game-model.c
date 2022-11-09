@@ -823,9 +823,9 @@ void game_model_reset_transform(GameModel *game_model) {
 
     for (int i = 0; i < game_model->vertex_count; i++) {
         // TODO needs to be removed on 3ds
-        game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
+        /*game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
-        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
+        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];*/
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -1343,18 +1343,10 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
 
 void game_model_gl_decode_face_fill(int face_fill,
                                     gl_face_fill *vbo_face_fill) {
-#ifdef RENDER_3DS_GL
-    vbo_face_fill->r = 0.0f;
-    vbo_face_fill->g = 0.0f;
-    vbo_face_fill->b = 0.0f;
-    vbo_face_fill->a = 0.0f;
-#else
     vbo_face_fill->r = 1.0f;
     vbo_face_fill->g = 1.0f;
     vbo_face_fill->b = 1.0f;
     vbo_face_fill->a = 1.0f;
-#endif
-
     vbo_face_fill->texture_index = -1;
 
     if (face_fill != COLOUR_TRANSPARENT) {
@@ -1363,10 +1355,23 @@ void game_model_gl_decode_face_fill(int face_fill,
             vbo_face_fill->r = (((face_fill >> 10) & 31) * 8) / 255.0f;
             vbo_face_fill->g = (((face_fill >> 5) & 31) * 8) / 255.0f;
             vbo_face_fill->b = ((face_fill & 31) * 8) / 255.0f;
+            vbo_face_fill->a = 1.0f;
         } else if (face_fill >= 0) {
             vbo_face_fill->texture_index = face_fill;
+#ifdef RENDER_3DS_GL
+        vbo_face_fill->r = 0.0f;
+        vbo_face_fill->g = 0.0f;
+        vbo_face_fill->b = 0.0f;
+        vbo_face_fill->a = 0.0f;
+#endif
+            //vbo_face_fill->a = 0.0f;
         }
     } else {
+#ifdef RENDER_3DS_GL
+        vbo_face_fill->r = 0.0f;
+        vbo_face_fill->g = 0.0f;
+        vbo_face_fill->b = 0.0f;
+#endif
         vbo_face_fill->a = 0.0f;
     }
 }
@@ -1411,7 +1416,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         float *front_face_us = NULL;
         float *front_face_vs = NULL;
 
-        if (face_fill_front.texture_index != 1) {
+        if (face_fill_front.texture_index != -1) {
             front_face_us = alloca(face_vertex_count * sizeof(float));
             front_face_vs = alloca(face_vertex_count * sizeof(float));
 
@@ -1860,10 +1865,10 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
     /* lighting { face, vertex } */
     AttrInfo_AddLoader(&buffer->attr_info, 2, GPU_FLOAT, 2);
 
-    /* front colour { r, g, b } */
+    /* front colour { r, g, b, a } */
     AttrInfo_AddLoader(&buffer->attr_info, 3, GPU_FLOAT, 4);
 
-    /* back colour { r, g, b } */
+    /* back colour { r, g, b, a } */
     AttrInfo_AddLoader(&buffer->attr_info, 4, GPU_FLOAT, 4);
 
     /* textures { front_u, front_v, back_u, back_ v } */

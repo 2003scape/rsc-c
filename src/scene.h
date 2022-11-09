@@ -211,6 +211,7 @@ typedef struct Scene {
 
     int _3ds_gl_model_uniform;
     int _3ds_gl_projection_view_model_uniform;
+    int _3ds_gl_cull_front_uniform;
 
     _3ds_gl_vertex_buffer _3ds_gl_game_model_buffer;
     _3ds_gl_vertex_buffer _3ds_gl_terrain_buffer;

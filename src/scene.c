@@ -174,6 +174,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
 
+    scene->_3ds_gl_cull_front_uniform = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "cull_front");
+
     _3ds_gl_load_tex(model_textures_t3x, model_textures_t3x_size,
                      &scene->_3ds_gl_models_tex);
 #endif
@@ -4558,6 +4561,9 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                      (C3D_Mtx*)projection_view_model);
 
 
+    C3D_BoolUnifSet(GPU_VERTEX_SHADER,
+                     scene->_3ds_gl_projection_view_model_uniform, 0);
+
     C3D_CullFace(GPU_CULL_BACK_CCW);
 
     C3D_DrawElements(
@@ -4565,6 +4571,10 @@ GPU_TRIANGLES,
 game_model->gl_ebo_length,
 C3D_UNSIGNED_SHORT,
     game_model->_3ds_gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
+
+
+    C3D_BoolUnifSet(GPU_VERTEX_SHADER,
+                     scene->_3ds_gl_projection_view_model_uniform, 1);
 
     C3D_CullFace(GPU_CULL_FRONT_CCW);
 
