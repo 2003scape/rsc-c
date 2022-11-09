@@ -72,7 +72,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     // TODO put in function
 #ifdef RENDER_GL
-    // TODO surface_init_gl()
     surface_gl_create_framebuffer(surface);
 
     /* coloured quads */
@@ -143,13 +142,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #endif
 
     // TODO put in function
-//#ifdef RENDER_3DS_GL
-    surface->_3ds_gl_flat_vbo =
-        linearAlloc(FLAT_QUAD_COUNT * sizeof(_3ds_gl_flat_vertex) * 4);
-
-    surface->_3ds_gl_flat_ebo =
-        linearAlloc(FLAT_QUAD_COUNT * sizeof(uint16_t) * 6);
-#if 0
+#ifdef RENDER_3DS_GL
     surface->_3ds_gl_flat_shader_dvlb =
         DVLB_ParseFile((u32 *)flat_shbin, flat_shbin_size);
 
@@ -207,19 +200,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     _3ds_gl_load_tex(entities_4_t3x, entities_4_t3x_size,
                      &surface->_3ds_gl_entities_tex[4]);
-
-    C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
-    C3D_TexEnvInit(tex_env);
-    // C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_REPLACE);
-    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
-    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
-    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
-
-    tex_env = C3D_GetTexEnv(1);
-    C3D_TexEnvInit(tex_env);
-    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PREVIOUS, GPU_TEXTURE1, 0);
-    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
 
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
@@ -1075,6 +1055,11 @@ void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_flat_vertex quad[4],
         return;
     }
 
+    if (surface->_3ds_gl_flat_count >= FLAT_QUAD_COUNT) {
+        fprintf(stderr, "too many quads!\n");
+        return;
+    }
+
     memcpy(surface->_3ds_gl_flat_vbo +
                (surface->_3ds_gl_flat_count * sizeof(_3ds_gl_flat_vertex) * 4),
            quad, sizeof(_3ds_gl_flat_vertex) * 4);
@@ -1453,9 +1438,7 @@ void surface_draw(Surface *surface) {
     // gspWaitForVBlank();
 #endif
 
-//#ifdef RENDER_3DS_GL
-    surface_3ds_gl_reset_context(surface);
-#if 0
+#ifdef RENDER_3DS_GL
     C3D_BindProgram(&surface->_3ds_gl_flat_shader);
 
     C3D_SetAttrInfo(&surface->_3ds_gl_attr_info);
@@ -1464,17 +1447,27 @@ void surface_draw(Surface *surface) {
     // C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
 
-    // C3D_FrameBegin(C3D_FRAME_SYNCDRAW); // TODO C3D_FRAME_NONBLOCK
-    C3D_FrameBegin(C3D_FRAME_NONBLOCK);
+    C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
+    C3D_TexEnvInit(tex_env);
+    // C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_REPLACE);
+    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
+    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
+    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
 
-    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
-
-    C3D_FrameDrawOn(mud->_3ds_gl_render_target);
+    tex_env = C3D_GetTexEnv(1);
+    C3D_TexEnvInit(tex_env);
+    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PREVIOUS, GPU_TEXTURE1, 0);
+    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
 
     int drawn_quads = 0;
 
     for (int i = 0; i < surface->_3ds_gl_context_count; i++) {
         _3ds_gl_context *context = &surface->_3ds_gl_contexts[i];
+
+        if (context->quad_count <= 0) {
+            break;
+        }
 
         C3D_TexBind(0, context->texture);
         C3D_TexBind(1, context->base_texture);
@@ -1494,8 +1487,6 @@ void surface_draw(Surface *surface) {
 
     /*C3D_DrawElements(GPU_TRIANGLES, surface->_3ds_gl_flat_count * 6,
                      C3D_UNSIGNED_SHORT, surface->_3ds_gl_flat_ebo);*/
-
-    C3D_FrameEnd(0);
 
     surface_3ds_gl_reset_context(surface);
 #endif

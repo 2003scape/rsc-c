@@ -158,7 +158,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
 #elif defined(RENDER_3DS_GL)
-    scene->_3ds_gl_model_shader_dvlb =
+    /*scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);
 
     shaderProgramInit(&scene->_3ds_gl_model_shader);
@@ -172,12 +172,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         (&scene->_3ds_gl_model_shader)->vertexShader, "model");
 
     scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
-        (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
+        (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");*/
 
-	C3D_TexEnv* env = C3D_GetTexEnv(0);
+	/*C3D_TexEnv* env = C3D_GetTexEnv(0);
 	C3D_TexEnvInit(env);
 	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);*/
 #endif
 }
 
@@ -1393,6 +1393,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 }
 
 void scene_render(Scene *scene) {
+    return;
     scene->interlace = scene->surface->interlace;
 
     int frustum_x =
@@ -4633,12 +4634,14 @@ void scene_3ds_gl_render(Scene *scene) {
 
     C3D_BindProgram(&scene->_3ds_gl_model_shader);
 
-    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+    C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
-    C3D_RenderTargetClear(scene->surface->mud->_3ds_gl_render_target,
-                          C3D_CLEAR_ALL, BLACK, 0);
+	C3D_TexEnv* env = C3D_GetTexEnv(0);
+	C3D_TexEnvInit(env);
+	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
 
-    C3D_FrameDrawOn(scene->surface->mud->_3ds_gl_render_target);
+    C3D_TexEnvInit(C3D_GetTexEnv(1));
 
     //glEnable(GL_CULL_FACE);
     //glEnable(GL_DEPTH_TEST);
@@ -4761,7 +4764,5 @@ void scene_3ds_gl_render(Scene *scene) {
 
     /*glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);*/
-
-    C3D_FrameEnd(0);
 }
 #endif

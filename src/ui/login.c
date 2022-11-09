@@ -622,6 +622,10 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 }
 
 void mudclient_draw_login_screens(mudclient *mud) {
+#ifdef RENDER_3DS_GL
+    mudclient_3ds_gl_frame_start(mud);
+#endif
+
     mud->welcome_screen_already_shown = 0;
     mud->surface->interlace = 0;
 
@@ -727,11 +731,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
-    // TODO remove
-    //surface_draw_box(mud->surface, 40, 40, 200, 200, 0xff00ff);
-    //surface_sprite_clipping_from9(mud->surface, 50, 50, 64, 102, 0, 0, 0x997326, 50, 0);
-    //surface_sprite_clipping_from9(mud->surface, 50, 50, 100, 100, 0, 0, 0, 50, 0);
-
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
 
@@ -745,6 +744,10 @@ void mudclient_draw_login_screens(mudclient *mud) {
 #endif
 
     surface_draw(mud->surface);
+
+#ifdef RENDER_3DS_GL
+    mudclient_3ds_gl_frame_end();
+#endif
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {

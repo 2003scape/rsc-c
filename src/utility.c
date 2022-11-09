@@ -419,7 +419,11 @@ void delay_ticks(int ticks) {
 #endif
 
 #ifdef _3DS
-    svcSleepThread(ticks * 1000);
+    //svcSleepThread(ticks * 1000);
+    int end = get_ticks() + ticks;
+
+    while (get_ticks() != end)
+        ;
 #endif
 
 #ifdef WII

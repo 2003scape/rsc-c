@@ -338,6 +338,11 @@ extern volatile int _3ds_keyboard_received_input;
 extern SwkbdButton _3ds_keyboard_button;
 
 void _3ds_keyboard_thread_callback(void *arg);
+
+#ifdef RENDER_3DS_GL
+void mudclient_3ds_gl_frame_start(mudclient *mud);
+void mudclient_3ds_gl_frame_end();
+#endif
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -361,9 +366,7 @@ typedef struct mudclient {
 
     int keyboard_open;
     int last_keyboard_button;
-#endif
-
-#ifdef _3DS
+#elif defined(_3DS)
     uint8_t *_3ds_framebuffer_top;
     uint8_t *_3ds_framebuffer_bottom;
 
@@ -376,9 +379,11 @@ typedef struct mudclient {
 
     int _3ds_sound_position;
     int _3ds_sound_length;
-#endif
 
-#if !defined(WII) && !defined(_3DS)
+#ifdef RENDER_3DS_GL
+    C3D_RenderTarget *_3ds_gl_render_target;
+#endif
+#else
     SDL_Window *window;
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
@@ -390,10 +395,6 @@ typedef struct mudclient {
     SDL_Cursor *default_cursor;
     SDL_Cursor *hand_cursor;
     int is_hand_cursor;
-#endif
-
-#ifdef RENDER_3DS_GL
-    C3D_RenderTarget *_3ds_gl_render_target;
 #endif
 
     Options *options;

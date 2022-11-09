@@ -275,6 +275,7 @@ void surface_gl_draw(Surface *surface, int use_depth);
 #endif
 
 #ifdef RENDER_3DS_GL
+void surface_3ds_gl_reset_context(Surface *surface);
 int surface_3ds_gl_is_scissored(Surface *surface);
 void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_flat_vertex quad[4],
                                 C3D_Tex *texture, C3D_Tex *base_texture);

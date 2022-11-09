@@ -275,6 +275,19 @@ void _3ds_keyboard_thread_callback(void *arg) {
 
     threadExit(0);
 }
+
+void mudclient_3ds_gl_frame_start(mudclient *mud) {
+    /* crashes on console, faster on citra */
+    // C3D_FrameBegin(C3D_FRAME_NONBLOCK);
+
+    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+    C3D_FrameDrawOn(mud->_3ds_gl_render_target);
+}
+
+void mudclient_3ds_gl_frame_end() {
+    C3D_FrameEnd(0);
+}
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -1339,6 +1352,10 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     } else {
         surface_gl_reset_context(mud->surface);
     }
+#elif defined(RENDER_3DS_GL)
+    mudclient_3ds_gl_frame_start(mud);
+    surface_draw(mud->surface);
+    mudclient_3ds_gl_frame_end();
 #else
     surface_draw(mud->surface);
 #endif
@@ -2119,10 +2136,10 @@ void mudclient_load_models(mudclient *mud) {
         &mud->scene->game_model_vao, &mud->scene->game_model_vbo,
         &mud->scene->game_model_ebo, models_buffer, models_length);
 #elif defined(RENDER_3DS_GL)
-    C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
+    /*C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
 
     game_model_3ds_gl_buffer_models(&mud->scene->_3ds_gl_game_model_buffer,
-                                     models_buffer, models_length);
+                                     models_buffer, models_length);*/
 #endif
 #endif
 }
@@ -2164,7 +2181,17 @@ void mudclient_reset_game(mudclient *mud) {
     memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
 
     surface_black_screen(mud->surface);
+    // TODO add opengl support here
+
+    //surface_3ds_gl_reset_context(mud->surface);
+
+#if defined(RENDER_3DS_GL)
+    mudclient_3ds_gl_frame_start(mud);
     surface_draw(mud->surface);
+    mudclient_3ds_gl_frame_end();
+#else
+    surface_draw(mud->surface);
+#endif
 
     for (int i = 0; i < mud->object_count; i++) {
         scene_remove_model(mud->scene, mud->object_model[i]);
@@ -2928,7 +2955,14 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
                                mud->surface->height / 2 + 19, 1, WHITE);
 
     mudclient_draw_chat_message_tabs(mud);
+
+#if defined(RENDER_3DS_GL)
+    mudclient_3ds_gl_frame_start(mud);
     surface_draw(mud->surface);
+    mudclient_3ds_gl_frame_end();
+#else
+    surface_draw(mud->surface);
+#endif
 
     int ax = mud->region_x;
     int ay = mud->region_y;
@@ -4747,6 +4781,10 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
 }
 
 void mudclient_draw_game(mudclient *mud) {
+#ifdef RENDER_3DS_GL
+    mudclient_3ds_gl_frame_start(mud);
+#endif
+
     if (mud->death_screen_timeout != 0) {
         surface_fade_to_black(mud->surface);
 
@@ -5036,6 +5074,9 @@ void mudclient_draw(mudclient *mud) {
     } else if (mud->logged_in == 1) {
         mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
+#if defined(RENDER_3DS_GL)
+        mudclient_3ds_gl_frame_end();
+#endif
     }
 
 #ifdef RENDER_GL
