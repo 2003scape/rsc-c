@@ -2136,10 +2136,10 @@ void mudclient_load_models(mudclient *mud) {
         &mud->scene->game_model_vao, &mud->scene->game_model_vbo,
         &mud->scene->game_model_ebo, models_buffer, models_length);
 #elif defined(RENDER_3DS_GL)
-    /*C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
+    C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
 
     game_model_3ds_gl_buffer_models(&mud->scene->_3ds_gl_game_model_buffer,
-                                     models_buffer, models_length);*/
+                                     models_buffer, models_length);
 #endif
 #endif
 }

@@ -158,7 +158,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
 #elif defined(RENDER_3DS_GL)
-    /*scene->_3ds_gl_model_shader_dvlb =
+    scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);
 
     shaderProgramInit(&scene->_3ds_gl_model_shader);
@@ -172,7 +172,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         (&scene->_3ds_gl_model_shader)->vertexShader, "model");
 
     scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
-        (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");*/
+        (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
 
 	/*C3D_TexEnv* env = C3D_GetTexEnv(0);
 	C3D_TexEnvInit(env);
@@ -1393,7 +1393,6 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 }
 
 void scene_render(Scene *scene) {
-    return;
     scene->interlace = scene->surface->interlace;
 
     int frustum_x =

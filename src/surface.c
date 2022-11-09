@@ -203,9 +203,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
-
-    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, surface->_3ds_gl_projection_uniform,
-                     &surface->_3ds_gl_projection);
 #endif
 }
 
@@ -1441,11 +1438,14 @@ void surface_draw(Surface *surface) {
 #ifdef RENDER_3DS_GL
     C3D_BindProgram(&surface->_3ds_gl_flat_shader);
 
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, surface->_3ds_gl_projection_uniform,
+                     &surface->_3ds_gl_projection);
+
     C3D_SetAttrInfo(&surface->_3ds_gl_attr_info);
     C3D_SetBufInfo(&surface->_3ds_gl_buf_info);
 
-    // C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
-    C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
+    C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
+    //C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
 
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(tex_env);
