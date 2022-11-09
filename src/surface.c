@@ -156,7 +156,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->_3ds_gl_projection_uniform = shaderInstanceGetUniformLocation(
         (&surface->_3ds_gl_flat_shader)->vertexShader, "projection");
 
-    //C3D_AttrInfo *attr_info = C3D_GetAttrInfo();
     AttrInfo_Init(&surface->_3ds_gl_attr_info);
 
     /* vertex { x, y, z } */
@@ -177,7 +176,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->_3ds_gl_flat_ebo =
         linearAlloc(FLAT_QUAD_COUNT * sizeof(uint16_t) * 6);
 
-    //C3D_BufInfo *buf_info = C3D_GetBufInfo();
     BufInfo_Init(&surface->_3ds_gl_buf_info);
 
     BufInfo_Add(&surface->_3ds_gl_buf_info, surface->_3ds_gl_flat_vbo,
@@ -1438,6 +1436,8 @@ void surface_draw(Surface *surface) {
 #ifdef RENDER_3DS_GL
     C3D_BindProgram(&surface->_3ds_gl_flat_shader);
 
+    C3D_CullFace(GPU_CULL_BACK_CCW);
+
     C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, surface->_3ds_gl_projection_uniform,
                      &surface->_3ds_gl_projection);
 
@@ -1445,18 +1445,19 @@ void surface_draw(Surface *surface) {
     C3D_SetBufInfo(&surface->_3ds_gl_buf_info);
 
     C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
-    //C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
+    // C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
 
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(tex_env);
-    // C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_REPLACE);
+
+    /* multiply the primary colour by the first texture colour */
     C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
-    // C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
     C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
 
     tex_env = C3D_GetTexEnv(1);
     C3D_TexEnvInit(tex_env);
+
+    /* add the second texture to the empty pixels */
     C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PREVIOUS, GPU_TEXTURE1, 0);
     C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
 

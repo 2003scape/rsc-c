@@ -199,9 +199,7 @@ typedef struct Surface {
     int32_t *gl_screen_pixels;
     int gl_last_screen_width;
     int gl_last_screen_height;
-#endif
-
-#ifdef RENDER_3DS_GL
+#elif defined(RENDER_3DS_GL)
     DVLB_s *_3ds_gl_flat_shader_dvlb;
     shaderProgram_s _3ds_gl_flat_shader;
 

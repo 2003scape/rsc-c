@@ -10,9 +10,9 @@
 .alias ones  myconst.yyyy
 
 ; outputs
-; .out outtc0 texcoord0
 .out out_position position
 .out out_colour color
+.out out_texture_position texcoord0
 
 ; inputs
 .in in_position v0
@@ -20,7 +20,7 @@
 .in in_lighting v2
 .in in_front_colour v3
 .in in_back_colour v4
-.in texture_position v5
+.in in_texture_position v5
 
 .proc main
     ; r0.xyz = in_position.xyz, w = 1.0f
@@ -36,8 +36,11 @@
     ; out_colour = (1.0, 0.0, 1.0, 1.0)
     ;mov out_colour, myconst.yxyy
 
-    mov out_colour.xyz, in_back_colour
-    mov out_colour.w, ones
+    mov out_colour, in_back_colour
+;    mov out_colour.w, ones
+;    mov out_colour.w, zeros
+
+    mov out_texture_position, in_texture_position.zw
 
     end
 .end

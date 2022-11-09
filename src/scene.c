@@ -174,10 +174,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
 
-	/*C3D_TexEnv* env = C3D_GetTexEnv(0);
-	C3D_TexEnvInit(env);
-	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);*/
+    _3ds_gl_load_tex(model_textures_t3x, model_textures_t3x_size,
+                     &scene->_3ds_gl_models_tex);
 #endif
 }
 
@@ -4216,7 +4214,7 @@ void scene_gl_update_camera(Scene *scene) {
 #endif
 
     // TODO this is needed for 3DS, doesn't seem to affect anything else
-    scene->gl_projection[1][2] = 0.0f;
+    //scene->gl_projection[1][2] = 0.0f;
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 
@@ -4560,6 +4558,16 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                      (C3D_Mtx*)projection_view_model);
 
 
+    C3D_CullFace(GPU_CULL_BACK_CCW);
+
+    C3D_DrawElements(
+GPU_TRIANGLES,
+game_model->gl_ebo_length,
+C3D_UNSIGNED_SHORT,
+    game_model->_3ds_gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
+
+    C3D_CullFace(GPU_CULL_FRONT_CCW);
+
     C3D_DrawElements(
 GPU_TRIANGLES,
 game_model->gl_ebo_length,
@@ -4589,18 +4597,6 @@ C3D_UNSIGNED_SHORT,
         shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
                          (float)game_model->light_direction_magnitude);
     }*/
-
-    /* glCullFace(GL_BACK);
-    shader_set_int(&scene->game_model_shader, "cull_front", 0);
-
-    glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
-                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
-
-    glCullFace(GL_FRONT);
-    shader_set_int(&scene->game_model_shader, "cull_front", 1);
-
-    glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
-                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));*/
 }
 
 void scene_3ds_gl_render(Scene *scene) {
@@ -4637,22 +4633,20 @@ void scene_3ds_gl_render(Scene *scene) {
 
 	C3D_TexEnv* env = C3D_GetTexEnv(0);
 	C3D_TexEnvInit(env);
-	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
+	/*C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);*/
+	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_ADD);
 
+    /* clear the second texenv */
     C3D_TexEnvInit(C3D_GetTexEnv(1));
 
-    //glEnable(GL_CULL_FACE);
-    //glEnable(GL_DEPTH_TEST);
-    //glClear(GL_DEPTH_BUFFER_BIT);
+    C3D_TexBind(0, &scene->_3ds_gl_models_tex);
+
     //int offset_y = 13;
     //glViewport(0, offset_y, scene->width, scene_height);
 
-    //shader_use(&scene->game_model_shader);
-
-    /*shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
-
-    shader_set_int(&scene->game_model_shader, "fog_distance",
+    /*shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
 
     shader_set_float(&scene->game_model_shader, "scroll_texture",

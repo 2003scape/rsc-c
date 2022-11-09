@@ -822,9 +822,10 @@ void game_model_reset_transform(GameModel *game_model) {
     game_model->transform_state = 0;
 
     for (int i = 0; i < game_model->vertex_count; i++) {
-        /*game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
+        // TODO needs to be removed on 3ds
+        game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
-        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];*/
+        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -1342,11 +1343,19 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
 
 void game_model_gl_decode_face_fill(int face_fill,
                                     gl_face_fill *vbo_face_fill) {
+#ifdef RENDER_3DS_GL
+    vbo_face_fill->r = 0.0f;
+    vbo_face_fill->g = 0.0f;
+    vbo_face_fill->b = 0.0f;
+    vbo_face_fill->a = 0.0f;
+#else
     vbo_face_fill->r = 1.0f;
     vbo_face_fill->g = 1.0f;
     vbo_face_fill->b = 1.0f;
     vbo_face_fill->a = 1.0f;
-    vbo_face_fill->texture_index = -1.0f;
+#endif
+
+    vbo_face_fill->texture_index = -1;
 
     if (face_fill != COLOUR_TRANSPARENT) {
         if (face_fill < 0) {
@@ -1402,7 +1411,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         float *front_face_us = NULL;
         float *front_face_vs = NULL;
 
-        if (face_fill_front.texture_index > -1.0f) {
+        if (face_fill_front.texture_index != 1) {
             front_face_us = alloca(face_vertex_count * sizeof(float));
             front_face_vs = alloca(face_vertex_count * sizeof(float));
 
@@ -1414,7 +1423,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         float *back_face_us = NULL;
         float *back_face_vs = NULL;
 
-        if (face_fill_back.texture_index > -1.0f) {
+        if (face_fill_back.texture_index != -1) {
             back_face_us = alloca(face_vertex_count * sizeof(float));
             back_face_vs = alloca(face_vertex_count * sizeof(float));
 
@@ -1453,16 +1462,17 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             int vertex_intensity = game_model->vertex_intensity[vertex_index] +
                                    game_model->vertex_ambience[vertex_index];
 
-            float front_texture_x = -1.0f;
-            float front_texture_y = -1.0f;
+            // TODO make these transparent
+            float front_texture_x = 1.0f;
+            float front_texture_y = 0.0f;
 
             if (front_face_us != NULL && front_face_vs != NULL) {
                 front_texture_x = front_face_us[j];
                 front_texture_y = 1.0f - front_face_vs[j];
             }
 
-            float back_texture_x = -1.0f;
-            float back_texture_y = -1.0f;
+            float back_texture_x = 1.0f;
+            float back_texture_y = 0.0f;
 
             if (back_face_us != NULL && back_face_vs != NULL) {
                 back_texture_x = back_face_us[j];
@@ -1485,21 +1495,33 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 face_fill_front.a, //
 
                 /* front texture */
-                front_texture_x, front_texture_y, (float)face_fill_front.texture_index, //
+                front_texture_x, front_texture_y,
+                (float)face_fill_front.texture_index, //
 
                 /* back colour */
                 face_fill_back.r, face_fill_back.g, face_fill_back.b,
                 face_fill_back.a, //
 
                 /* back texture */
-                back_texture_x, back_texture_y, (float)face_fill_back.texture_index //
+                back_texture_x, back_texture_y,
+                (float)face_fill_back.texture_index //
             };
 
             glBufferSubData(GL_ARRAY_BUFFER,
                             ((*vertex_offset) + j) * 23 * sizeof(GLfloat),
                             23 * sizeof(GLfloat), vertex);
 #elif defined(RENDER_3DS_GL)
-            // TODO texture coords
+            if (face_fill_front.texture_index != -1) {
+                _3ds_gl_offset_texture_uvs_atlas(
+                    model_texture_positions[face_fill_front.texture_index],
+                    &front_texture_x, &front_texture_y);
+            }
+
+            if (face_fill_back.texture_index != -1) {
+                _3ds_gl_offset_texture_uvs_atlas(
+                    model_texture_positions[face_fill_back.texture_index],
+                    &back_texture_x, &back_texture_y);
+            }
 
             _3ds_gl_model_vertex vertex = {
                 /* vertex */
@@ -1512,10 +1534,10 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 (float)(face_intensity), (float)(vertex_intensity), //
 
                 /* front colour */
-                face_fill_front.r, face_fill_front.g, face_fill_front.b, //
+                face_fill_front.r, face_fill_front.g, face_fill_front.b, face_fill_front.a, //
 
                 /* back colour */
-                face_fill_back.r, face_fill_back.g, face_fill_back.b, //
+                face_fill_back.r, face_fill_back.g, face_fill_back.b, face_fill_back.a, //
 
                 /* front texture */
                 front_texture_x, front_texture_y, //
@@ -1524,11 +1546,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 back_texture_x, back_texture_y, //
             };
 
-            memcpy(
-            game_model->_3ds_gl_buffer->vbo +
-            (((*vertex_offset) + j) * sizeof(_3ds_gl_model_vertex)),
-            &vertex,
-            sizeof(_3ds_gl_model_vertex));
+            memcpy(game_model->_3ds_gl_buffer->vbo +
+                       (((*vertex_offset) + j) * sizeof(_3ds_gl_model_vertex)),
+                   &vertex, sizeof(_3ds_gl_model_vertex));
 #endif
         }
 
@@ -1544,9 +1564,9 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             uint16_t indices[] = {(*vertex_offset), (*vertex_offset) + j + 1,
                                   (*vertex_offset) + j + 2};
 
-            memcpy(
-                game_model->_3ds_gl_buffer->ebo +
-                ((*ebo_offset) * sizeof(uint16_t)), indices, sizeof(indices));
+            memcpy(game_model->_3ds_gl_buffer->ebo +
+                       ((*ebo_offset) * sizeof(uint16_t)),
+                   indices, sizeof(indices));
 #endif
 
             (*ebo_offset) += 3;
@@ -1841,15 +1861,14 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
     AttrInfo_AddLoader(&buffer->attr_info, 2, GPU_FLOAT, 2);
 
     /* front colour { r, g, b } */
-    AttrInfo_AddLoader(&buffer->attr_info, 3, GPU_FLOAT, 3);
+    AttrInfo_AddLoader(&buffer->attr_info, 3, GPU_FLOAT, 4);
 
     /* back colour { r, g, b } */
-    AttrInfo_AddLoader(&buffer->attr_info, 4, GPU_FLOAT, 3);
+    AttrInfo_AddLoader(&buffer->attr_info, 4, GPU_FLOAT, 4);
 
     /* textures { front_u, front_v, back_u, back_ v } */
     AttrInfo_AddLoader(&buffer->attr_info, 5, GPU_FLOAT, 4);
 
-    // TODO make sure this works on null
     linearFree(buffer->vbo);
     linearFree(buffer->ebo);
 
@@ -1862,8 +1881,6 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
 
     BufInfo_Init(&buffer->buf_info);
 
-    /*BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_model_vertex), 2,
-                0x10);*/
     BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_model_vertex), 6,
                 0x543210);
 }
@@ -1896,5 +1913,21 @@ void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
 
         break;
     }
+}
+
+/* offset UVs for atlas */
+void _3ds_gl_offset_texture_uvs_atlas(_3ds_gl_atlas_position texture_position,
+                                      float *texture_x, float *texture_y) {
+    float texture_width =
+        fabs(texture_position.left_u - texture_position.right_u);
+
+    float texture_height =
+        fabs(texture_position.top_v - texture_position.bottom_v);
+
+    *texture_x *= texture_width;
+    *texture_y *= texture_height;
+
+    *texture_x += texture_position.left_u;
+    *texture_y += texture_position.top_v; /* might be bottom, or subtract */
 }
 #endif

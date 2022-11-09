@@ -23,6 +23,8 @@
 
 #include "model_shbin.h"
 
+#include "model_textures_t3x.h"
+
 void _3ds_gl_perspective(float fov, float aspect, float near, float far,
                          mat4 projection);
 void _3ds_gl_mat4_to_pica(mat4 mtx);
@@ -215,6 +217,8 @@ typedef struct Scene {
     _3ds_gl_vertex_buffer _3ds_gl_wall_buffer;
 
     _3ds_gl_vertex_buffer *_3ds_gl_last_buffer;
+
+    C3D_Tex _3ds_gl_models_tex;
 #endif
 } Scene;
 

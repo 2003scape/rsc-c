@@ -35,8 +35,8 @@ typedef struct _3ds_gl_model_vertex {
     float x, y, z;
     float normal_x, normal_y, normal_z, normal_magnitude;
     float face_intensity, vertex_intensity;
-    float front_r, front_g, front_b;
-    float back_r, back_g, back_b;
+    float front_r, front_g, front_b, front_a;
+    float back_r, back_g, back_b, back_a;
     float front_texture_u, front_texture_v, back_texture_u, back_texture_v;
 } _3ds_gl_model_vertex;
 
@@ -65,6 +65,10 @@ typedef struct GameModel GameModel;
 
 #include "scene.h"
 #include "utility.h"
+
+#ifdef RENDER_3DS_GL
+#include "textures/model-textures.h"
+#endif
 
 typedef struct GameModel {
     uint16_t vertex_count;
@@ -256,11 +260,11 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
 void game_model_gl_buffer_pick_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
                                       GameModel **game_models, int length);
 #endif
-#endif
-#ifdef RENDER_3DS_GL
+#elif defined(RENDER_3DS_GL)
 void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
                                       int vbo_length, int ebo_length);
 void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
                                      GameModel **game_models, int length);
+void _3ds_gl_offset_texture_uvs_atlas(_3ds_gl_atlas_position texture_position, float *texture_x, float *texture_y);
 #endif
 #endif
