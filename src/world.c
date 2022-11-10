@@ -1352,8 +1352,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         for (int i = 0; i < TERRAIN_COUNT; i++) {
             scene_add_model(world->scene, world->terrain_models[i]);
 
-#ifdef RENDER_GL
-            world->world_models_buffer[world->world_models_offset++] =
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+            world->gl_world_models_buffer[world->gl_world_models_offset++] =
                 world->terrain_models[i];
 #endif
         }
@@ -1483,8 +1483,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_add_model(world->scene, world->wall_models[plane][i]);
 
-#ifdef RENDER_GL
-        world->world_models_buffer[world->world_models_offset++] =
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+        world->gl_world_models_buffer[world->gl_world_models_offset++] =
             world->wall_models[plane][i];
 #endif
     }
@@ -1962,8 +1962,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         scene_add_model(world->scene, world->roof_models[plane][i]);
 
-#ifdef RENDER_GL
-        world->world_models_buffer[world->world_models_offset++] =
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+        world->gl_world_models_buffer[world->gl_world_models_offset++] =
             world->roof_models[plane][i];
 #endif
     }
@@ -2191,14 +2191,14 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int max_models = (TERRAIN_COUNT * 3);
 
     if (plane == 0) {
         max_models *= 3;
     }
 
-    world_gl_create_world_models_buffer(world, max_models);
+    world_gl_create_gl_world_models_buffer(world, max_models);
 #endif
 
     world_load_section_from4(world, x, y, plane, 1);
@@ -2217,7 +2217,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
         world_set_tiles(world);
     }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     world_gl_buffer_world_models(world);
 #endif
 
@@ -2330,22 +2330,28 @@ int world_is_under_roof(World *world, int x, int y) {
     return world->object_adjacency[x / 128][y / 128] & 128;
 }
 
-#ifdef RENDER_GL
-void world_gl_create_world_models_buffer(World *world, int max_models) {
-    world->world_models_buffer = calloc(max_models, sizeof(GameModel *));
-    world->world_models_offset = 0;
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+void world_gl_create_gl_world_models_buffer(World *world, int max_models) {
+    world->gl_world_models_buffer = calloc(max_models, sizeof(GameModel *));
+    world->gl_world_models_offset = 0;
 }
 
 /* create and populate the initial VBO of landscape-related models */
 void world_gl_buffer_world_models(World *world) {
+#ifdef RENDER_GL
     game_model_gl_buffer_models(
         &world->scene->terrain_vao, &world->scene->terrain_vbo,
-        &world->scene->terrain_ebo, world->world_models_buffer,
-        world->world_models_offset);
+        &world->scene->terrain_ebo, world->gl_world_models_buffer,
+        world->gl_world_models_offset);
+#elif defined(RENDER_3DS_GL)
+    game_model_3ds_gl_buffer_models(&world->scene->_3ds_gl_terrain_buffer,
+                                     world->gl_world_models_buffer, world->gl_world_models_offset);
+#endif
 
-    free(world->world_models_buffer);
-    world->world_models_buffer = NULL;
-    world->world_models_offset = 0;
+    free(world->gl_world_models_buffer);
+
+    world->gl_world_models_buffer = NULL;
+    world->gl_world_models_offset = 0;
 }
 
 /* update the terrain model VBOs after ambience changes */
@@ -2353,10 +2359,12 @@ void world_gl_update_terrain_buffers(World *world) {
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];
 
+#ifdef RENDER_GL
         glBindVertexArray(game_model->gl_vao);
 
         glBindBuffer(GL_ARRAY_BUFFER, world->scene->terrain_vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, world->scene->terrain_ebo);
+#endif
 
         int vertex_offset = game_model->gl_vbo_offset;
         int ebo_offset = game_model->gl_ebo_offset;

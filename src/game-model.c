@@ -823,9 +823,9 @@ void game_model_reset_transform(GameModel *game_model) {
 
     for (int i = 0; i < game_model->vertex_count; i++) {
         // TODO needs to be removed on 3ds
-        /*game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
+        game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
-        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];*/
+        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)

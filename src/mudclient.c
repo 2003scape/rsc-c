@@ -276,6 +276,7 @@ void _3ds_keyboard_thread_callback(void *arg) {
     threadExit(0);
 }
 
+#ifdef RENDER_3DS_GL
 void mudclient_3ds_gl_frame_start(mudclient *mud) {
     /* crashes on console, faster on citra */
     // C3D_FrameBegin(C3D_FRAME_NONBLOCK);
@@ -288,6 +289,7 @@ void mudclient_3ds_gl_frame_start(mudclient *mud) {
 void mudclient_3ds_gl_frame_end() {
     C3D_FrameEnd(0);
 }
+#endif
 #endif
 
 #if !defined(WII) && !defined(_3DS)

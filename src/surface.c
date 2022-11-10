@@ -3701,8 +3701,6 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
         int full_width = surface->sprite_width_full[sprite_id];
         int full_height = surface->sprite_height_full[sprite_id];
 
-        surface_draw_box(surface, x, y, full_width, full_height, RED);
-
         width_ratio = (full_width << 16) / draw_width;
         height_ratio = (full_height << 16) / draw_height;
 

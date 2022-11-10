@@ -35,6 +35,7 @@ typedef struct World World;
 /* length of the portion of the roof hanging over the building */
 #define ROOF_SLOPE 16
 
+// TODO enum
 /* https://github.com/2003scape/rsc-config/blob/master/res/types.json#L14 */
 #define FLOOR_TILE_TYPE 2
 #define LIQUID_TILE_TYPE 3
@@ -78,10 +79,10 @@ typedef struct World {
     int local_x[LOCAL_COUNT];
     int local_y[LOCAL_COUNT];
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     /* dynamically generated terrain, wall and roof models */
-    GameModel **world_models_buffer;
-    int world_models_offset;
+    GameModel **gl_world_models_buffer;
+    int gl_world_models_offset;
 #endif
 
     int8_t thick_walls;
@@ -136,8 +137,8 @@ void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
                              int x2, int y2);
 int world_is_under_roof(World *world, int x, int y);
 
-#ifdef RENDER_GL
-void world_gl_create_world_models_buffer(World *world, int max_models);
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+void world_gl_create_gl_world_models_buffer(World *world, int max_models);
 void world_gl_buffer_world_models(World *world);
 void world_gl_update_terrain_buffers(World *world);
 #endif

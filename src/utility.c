@@ -11,6 +11,7 @@ int BITMASK[] = {0,          1,          3,         7,         15,
                  0x1ffffff,  0x3ffffff,  0x7ffffff, 0xfffffff, 0x1fffffff,
                  0x3fffffff, 0x7fffffff, -1};
 
+// TODO typed
 int certificate_items[][2] = {
     {517, 151},  {521, 152}, {519, 153},  {518, 155},  {528, 170},  {529, 171},
     {532, 172},  {530, 173}, {1271, 220}, {536, 369},  {535, 370},  {534, 372},
@@ -400,8 +401,8 @@ int get_ticks() {
 #endif
 
 #ifdef _3DS
-    // return (int)osGetTime();
-    return (int)(svcGetSystemTick() / CPU_TICKS_PER_MSEC);
+    return (int)osGetTime();
+    //return (int)(svcGetSystemTick() / CPU_TICKS_PER_MSEC);
 #endif
 
 #ifdef WII
@@ -420,11 +421,11 @@ void delay_ticks(int ticks) {
 #endif
 
 #ifdef _3DS
-    //svcSleepThread(ticks * 1000);
-    int end = get_ticks() + ticks;
+    svcSleepThread(ticks * 1000);
+    /*int end = get_ticks() + ticks;
 
     while (get_ticks() != end)
-        ;
+        ;*/
 #endif
 
 #ifdef WII
