@@ -374,7 +374,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                                formatted_item_name);
 
                         mud->menu_type[mud->menu_items_count] =
-                            MENU_INV_EXAMINE;
+                            MENU_INVENTORY_EXAMINE;
 
                         mud->menu_index[mud->menu_items_count] = item_id;
                         mud->menu_items_count++;

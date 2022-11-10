@@ -4270,7 +4270,6 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                          (float)game_model->light_direction_magnitude);
     }
 
-#if 0
     glCullFace(GL_BACK);
     shader_set_int(&scene->game_model_shader, "cull_front", 0);
 
@@ -4279,9 +4278,7 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
-#endif
 
-#if 1
     glCullFace(GL_FRONT);
     shader_set_int(&scene->game_model_shader, "cull_front", 1);
 
@@ -4290,7 +4287,6 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
-#endif
 }
 
 void scene_gl_render(Scene *scene) {

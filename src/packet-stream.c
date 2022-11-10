@@ -1,6 +1,6 @@
 #include "packet-stream.h"
 
-#ifdef REVISION_177
+#if 0
 char *SPOOKY_THREAT =
     "All RuneScape code and data, including this message, are copyright 2003 "
     "Jagex Ltd. Unauthorised reproduction in any form is strictly prohibited.  "
@@ -54,8 +54,8 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     memset(packet_stream, 0, sizeof(PacketStream));
 
 #ifdef REVISION_177
-    packet_stream->decode_key = 3141592;
-    packet_stream->encode_key = 3141592;
+    /*packet_stream->decode_key = 3141592;
+    packet_stream->encode_key = 3141592;*/
 
     packet_stream->rsa_exponent = mud->options->rsa_exponent;
     packet_stream->rsa_modulus = mud->options->rsa_modulus;
@@ -344,8 +344,8 @@ int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer) {
     return 0;
 }
 
-void packet_stream_new_packet(PacketStream *packet_stream, int opcode) {
-#ifdef REVISION_177
+void packet_stream_new_packet(PacketStream *packet_stream, CLIENT_OPCODE opcode) {
+#if 0
     packet_stream->opcode_friend = get_client_opcode_friend(opcode);
 #endif
 
@@ -359,8 +359,7 @@ void packet_stream_new_packet(PacketStream *packet_stream, int opcode) {
     packet_stream->packet_end = packet_stream->packet_start + 3;
 }
 
-#ifdef REVISION_177
-int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode) {
+/*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode) {
     int index = (opcode - packet_stream->decode_key) & 255;
     int decoded_opcode = OPCODE_ENCRYPTION[index];
 
@@ -374,8 +373,7 @@ int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode) {
                                 0xffff;
 
     return decoded_opcode;
-}
-#endif
+}*/
 
 void packet_stream_write_packet(PacketStream *packet_stream, int i) {
     if (packet_stream->socket_exception) {
@@ -407,8 +405,7 @@ void packet_stream_write_packet(PacketStream *packet_stream, int i) {
 }
 
 void packet_stream_send_packet(PacketStream *packet_stream) {
-#ifdef REVISION_177
-/*
+#if 0
     int i = packet_stream->packet_data[packet_stream->packet_start + 2] & 0xff;
 
     packet_stream->packet_data[packet_stream->packet_start + 2] =
@@ -424,7 +421,6 @@ void packet_stream_send_packet(PacketStream *packet_stream) {
     packet_stream->encode_key =
         packet_stream->encode_key * 3 + (int)threat_character + opcode_friend &
         0xffff;
-*/
 #endif
 
     int length = packet_stream->packet_end - packet_stream->packet_start - 2;
@@ -487,18 +483,18 @@ void packet_stream_put_string(PacketStream *packet_stream, char *s) {
 #ifdef REVISION_177
 void packet_stream_put_password(PacketStream *packet_stream, int session_id,
                                 char *password) {
-    int8_t encoded[15];
+    int8_t encoded[15] = {0};
 
     int password_length = strlen(password);
     int password_index = 0;
 
-    struct bn exponent;
+    struct bn exponent = {0};
     bignum_init(&exponent);
 
     bignum_from_string(&exponent, packet_stream->rsa_exponent,
                        strlen(packet_stream->rsa_exponent));
 
-    struct bn modulus;
+    struct bn modulus = {0};
     bignum_init(&modulus);
 
     bignum_from_string(&modulus, packet_stream->rsa_modulus,
@@ -522,14 +518,14 @@ void packet_stream_put_password(PacketStream *packet_stream, int session_id,
 
         password_index += 7;
 
-        struct bn input;
+        struct bn input = {0};
         bignum_init(&input);
 
         for (int i = 0; i < 15; i++) {
             input.array[i] = (uint8_t)encoded[14 - i];
         }
 
-        struct bn result;
+        struct bn result = {0};
         bignum_init(&result);
 
         bignum_pow_mod(&input, &exponent, &modulus, &result);

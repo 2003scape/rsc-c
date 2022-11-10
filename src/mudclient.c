@@ -6175,11 +6175,7 @@ int main(int argc, char **argv) {
     init_utility_global();
     init_surface_global();
     init_world_global();
-
-#ifdef REVISION_177
-    init_packet_stream_global();
-#endif
-
+    /*init_packet_stream_global();*/
     init_stats_tab_global();
 
     mudclient *mud = malloc(sizeof(mudclient));

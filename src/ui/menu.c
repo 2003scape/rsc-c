@@ -163,30 +163,30 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
 
         mud->selected_item_inventory_index = -1;
         break;
-    case MENU_INV_UNEQUIP:
-        packet_stream_new_packet(mud->packet_stream, CLIENT_INV_UNEQUIP);
+    case MENU_INVENTORY_UNEQUIP:
+        packet_stream_new_packet(mud->packet_stream, CLIENT_INVENTORY_UNEQUIP);
         packet_stream_put_short(mud->packet_stream, menu_index);
         packet_stream_send_packet(mud->packet_stream);
         break;
-    case MENU_INV_WEAR:
-        packet_stream_new_packet(mud->packet_stream, CLIENT_INV_WEAR);
+    case MENU_INVENTORY_WEAR:
+        packet_stream_new_packet(mud->packet_stream, CLIENT_INVENTORY_WEAR);
         packet_stream_put_short(mud->packet_stream, menu_index);
         packet_stream_send_packet(mud->packet_stream);
         break;
-    case MENU_INV_COMMAND:
-        packet_stream_new_packet(mud->packet_stream, CLIENT_INV_COMMAND);
+    case MENU_INVENTORY_COMMAND:
+        packet_stream_new_packet(mud->packet_stream, CLIENT_INVENTORY_COMMAND);
         packet_stream_put_short(mud->packet_stream, menu_index);
         packet_stream_send_packet(mud->packet_stream);
         break;
-    case MENU_INV_USE:
+    case MENU_INVENTORY_USE:
         mud->selected_item_inventory_index = menu_index;
         mud->show_ui_tab = 0;
 
         mud->selected_item_name = game_data_item_name
             [mud->inventory_item_id[mud->selected_item_inventory_index]];
         break;
-    case MENU_INV_DROP: {
-        packet_stream_new_packet(mud->packet_stream, CLIENT_INV_DROP);
+    case MENU_INVENTORY_DROP: {
+        packet_stream_new_packet(mud->packet_stream, CLIENT_INVENTORY_DROP);
         packet_stream_put_short(mud->packet_stream, menu_index);
         packet_stream_send_packet(mud->packet_stream);
 
@@ -202,7 +202,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mudclient_show_message(mud, formatted_drop, MESSAGE_TYPE_BOR);
         break;
     }
-    case MENU_INV_EXAMINE:
+    case MENU_INVENTORY_EXAMINE:
         mudclient_show_message(mud, game_data_item_description[menu_index],
                                MESSAGE_TYPE_GAME);
 

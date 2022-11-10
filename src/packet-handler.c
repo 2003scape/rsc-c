@@ -117,7 +117,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
 
     int8_t *data = mud->incoming_packet;
-    int opcode = data[0] & 0xff; /* TODO isaac */
+    SERVER_OPCODE opcode = data[0] & 0xff; /* TODO isaac */
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
@@ -1688,6 +1688,19 @@ void mudclient_packet_tick(mudclient *mud) {
         mudclient_show_message(mud,
                                "@cya@Sorry, you can't logout at the moment",
                                MESSAGE_TYPE_GAME);
+        break;
+    }
+    case SERVER_GAME_SETTINGS: {
+        mud->settings_camera_auto = data[1];
+        mud->settings_mouse_button_one = data[2];
+        mud->settings_sound_disabled= data[3];
+        break;
+    }
+    case SERVER_PRIVACY_SETTINGS: {
+        mud->settings_block_chat = data[1];
+        mud->settings_block_private = data[2];
+        mud->settings_block_trade = data[3];
+        mud->settings_block_duel = data[4];
         break;
     }
 #ifndef REVISION_177

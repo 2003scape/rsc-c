@@ -28,14 +28,12 @@
 
 #define PACKET_BUFFER_LENGTH 5000
 
-#ifdef REVISION_177
-extern char *SPOOKY_THREAT;
+/*extern char *SPOOKY_THREAT;
 extern int THREAT_LENGTH;
 
 extern int OPCODE_ENCRYPTION[];
 
-int get_client_opcode_friend(int opcode);
-#endif
+int get_client_opcode_friend(int opcode);*/
 
 typedef struct PacketStream PacketStream;
 
@@ -67,6 +65,7 @@ typedef struct PacketStream {
     char *rsa_exponent;
     char *rsa_modulus;
 
+#if 0
     int decode_key;
     int decode_threat_index;
 
@@ -74,8 +73,7 @@ typedef struct PacketStream {
     int encode_threat_index;
 
     int opcode_friend;
-
-    int field_597;
+#endif
 #endif
 } PacketStream;
 
@@ -88,12 +86,8 @@ void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
 int packet_stream_read_byte(PacketStream *packet_stream);
 int packet_stream_has_packet(PacketStream *packet_stream);
 int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer);
-void packet_stream_new_packet(PacketStream *packet_stream, int opcode);
-
-#ifdef REVISION_177
-int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);
-#endif
-
+void packet_stream_new_packet(PacketStream *packet_stream, CLIENT_OPCODE opcode);
+/*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);*/
 void packet_stream_write_packet(PacketStream *packet_stream, int i);
 void packet_stream_send_packet(PacketStream *packet_stream);
 void packet_stream_put_bytes(PacketStream *packet_stream, int8_t *src,

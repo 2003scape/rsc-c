@@ -113,7 +113,7 @@ void mudclient_add_offer_menus(mudclient *mud, char *type_string, int type, int 
 
     strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
     strcpy(mud->menu_item_text2[mud->menu_items_count], item_name);
-    mud->menu_type[mud->menu_items_count] = MENU_INV_EXAMINE;
+    mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_EXAMINE;
     mud->menu_index[mud->menu_items_count] = item_id;
     mud->menu_items_count++;
 }
