@@ -61,6 +61,7 @@
 #include "entities_2_t3x.h"
 #include "entities_3_t3x.h"
 #include "entities_4_t3x.h"
+
 #include "sprites_t3x.h"
 
 typedef struct _3ds_gl_flat_vertex {
@@ -264,15 +265,15 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha);
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha, float depth);
+void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
+                           int height, int top_colour, int bottom_colour);
 void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
 void surface_gl_buffer_framebuffer_quad(Surface *surface);
 float surface_gl_get_layer_depth(Surface *surface);
 void surface_gl_draw(Surface *surface, int use_depth);
-#endif
-
-#ifdef RENDER_3DS_GL
+#elif defined(RENDER_3DS_GL)
 void surface_3ds_gl_reset_context(Surface *surface);
 int surface_3ds_gl_is_scissored(Surface *surface);
 void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_flat_vertex quad[4],
@@ -424,8 +425,10 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
 void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
                          int font_pos, int dest_pos, int width, int height,
                          int dest_offset, int font_data_offset);
+#ifdef RENDER_SW
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
+#endif
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                int font, int colour, float depth);
 void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
@@ -451,7 +454,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                             int selected, int show_inventory_count);
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height);
-void surface_draw_status_bar(Surface *surface, int min, int max, int current,
+void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour);
 

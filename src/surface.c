@@ -876,6 +876,61 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                            surface->gl_sprite_media_textures);
 }
 
+void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
+                           int height, int top_colour, int bottom_colour) {
+    float bottom_red = ((bottom_colour >> 16) & 0xff) / 255.0f;
+    float bottom_green = ((bottom_colour >> 8) & 0xff) / 255.0f;
+    float bottom_blue = (bottom_colour & 0xff) / 255.0f;
+    float top_red = ((top_colour >> 16) & 0xff) / 255.0f;
+    float top_green = ((top_colour >> 8) & 0xff) / 255.0f;
+    float top_blue = (top_colour & 0xff) / 255.0f;
+
+    GLfloat left_x = surface_gl_translate_x(surface, x);
+    GLfloat right_x = surface_gl_translate_x(surface, x + width);
+    GLfloat top_y = surface_gl_translate_y(surface, y);
+    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
+
+    GLfloat gradient_quad[] = {
+        /* top left / northwest */
+        left_x, top_y, 0,   //
+        top_red,   //
+        top_green, //
+        top_blue,  //
+        1.0,                //
+        -1.0, -1.0, -1.0,   //
+        0, 0, -1,           //
+
+        /* top right / northeast */
+        right_x, top_y, 0,  //
+        top_red,   //
+        top_green, //
+        top_blue,  //
+        1.0,                //
+        -1.0, -1.0, -1.0,   //
+        0, 0, -1,           //
+
+        /* bottom right / southeast */
+        right_x, bottom_y, 0,  //
+        bottom_red,   //
+        bottom_green, //
+        bottom_blue,  //
+        1.0,                   //
+        -1.0, -1.0, -1.0,      //
+        0, 0, -1,              //
+
+        /* bottom left / southwest */
+        left_x, bottom_y, 0,   //
+        bottom_red,   //
+        bottom_green, //
+        bottom_blue,  //
+        1.0,                   //
+        -1.0, -1.0, -1.0,      //
+        0, 0, -1               //
+    };
+
+    surface_gl_buffer_quad(surface, gradient_quad, 0);
+}
+
 void surface_gl_create_framebuffer(Surface *surface) {
     free(surface->gl_screen_pixels_reversed);
 
@@ -1595,25 +1650,16 @@ void surface_draw_circle_software(Surface *surface, int x, int y, int radius,
 
 void surface_draw_circle(Surface *surface, int x, int y, int radius, int colour,
                          int alpha, float depth) {
-#ifdef RENDER_GL
-    surface_gl_buffer_circle(surface, x, y, radius, colour, alpha, depth);
-#endif
-
 #ifdef RENDER_SW
     surface_draw_circle_software(surface, x, y, radius, colour, alpha);
+    (void)depth;
+#elif RENDER_GL
+    surface_gl_buffer_circle(surface, x, y, radius, colour, alpha, depth);
 #endif
 }
 
 void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
                             int height, int colour, int alpha) {
-#ifdef RENDER_GL
-    surface_gl_buffer_box(surface, x, y, width, height, colour, alpha);
-#endif
-
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_buffer_box(surface, x, y, width, height, colour, alpha);
-#endif
-
 #ifdef RENDER_SW
     if (x < surface->bounds_min_x) {
         width -= surface->bounds_min_x - x;
@@ -1669,11 +1715,16 @@ void surface_draw_box_alpha(Surface *surface, int x, int y, int width,
 
         index += offset;
     }
+#elif defined(RENDER_GL)
+    surface_gl_buffer_box(surface, x, y, width, height, colour, alpha);
+#elif defined(RENDER_3DS_GL)
+    surface_3ds_gl_buffer_box(surface, x, y, width, height, colour, alpha);
 #endif
 }
 
 void surface_draw_gradient(Surface *surface, int x, int y, int width,
                            int height, int top_colour, int bottom_colour) {
+#ifdef RENDER_SW
     if (x < surface->bounds_min_x) {
         width -= surface->bounds_min_x - x;
         x = surface->bounds_min_x;
@@ -1690,61 +1741,48 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
     int top_green = (top_colour >> 8) & 0xff;
     int top_blue = top_colour & 0xff;
 
-#ifdef RENDER_GL
-    // TODO function
-    GLfloat left_x = surface_gl_translate_x(surface, x);
-    GLfloat right_x = surface_gl_translate_x(surface, x + width);
-    GLfloat top_y = surface_gl_translate_y(surface, y);
-    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
+    int offset = surface->width - width;
+    int8_t y_inc = 1;
 
-    GLfloat gradient_quad[] = {
-        /* top left / northwest */
-        left_x, top_y, 0,   //
-        top_red / 255.0f,   //
-        top_green / 255.0f, //
-        top_blue / 255.0f,  //
-        1.0,                //
-        -1.0, -1.0, -1.0,   //
-        0, 0, -1,           //
+    if (surface->interlace) {
+        y_inc = 2;
+        offset += surface->width;
 
-        /* top right / northeast */
-        right_x, top_y, 0,  //
-        top_red / 255.0f,   //
-        top_green / 255.0f, //
-        top_blue / 255.0f,  //
-        1.0,                //
-        -1.0, -1.0, -1.0,   //
-        0, 0, -1,           //
+        if ((y & 1) != 0) {
+            y++;
+            height--;
+        }
+    }
 
-        /* bottom right / southeast */
-        right_x, bottom_y, 0,  //
-        bottom_red / 255.0f,   //
-        bottom_green / 255.0f, //
-        bottom_blue / 255.0f,  //
-        1.0,                   //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
+    int index = x + y * surface->width;
 
-        /* bottom left / southwest */
-        left_x, bottom_y, 0,   //
-        bottom_red / 255.0f,   //
-        bottom_green / 255.0f, //
-        bottom_blue / 255.0f,  //
-        1.0,                   //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1               //
-    };
+    for (int i = 0; i < height; i += y_inc) {
+        if (i + y >= surface->bounds_min_y && i + y < surface->bounds_max_y) {
+            int new_colour =
+                (((bottom_red * i + top_red * (height - i)) / height) << 16) +
+                (((bottom_green * i + top_green * (height - i)) / height)
+                 << 8) +
+                (((bottom_blue * i + top_blue * (height - i)) / height));
 
-    surface_gl_buffer_quad(surface, gradient_quad, 0);
-#endif
+            for (int j = -width; j < 0; j++) {
+                surface->pixels[index++] = new_colour;
+            }
 
-#ifdef RENDER_3DS_GL
+            index += offset;
+        } else {
+            index += surface->width;
+        }
+    }
+#elif defined(RENDER_GL)
+    surface_gl_buffer_gradient(surface, x, y, width, height, top_colour, bottom_colour);
+#elif defined(RENDER_3DS_GL)
     // TODO function
     float left_x = x;
     float right_x = x + width;
     float top_y = (240 - y - height);
     float bottom_y = (240 - y);
 
+    // TODO use constant for transparent pixel
     _3ds_gl_flat_vertex gradient_quad[] = {
         /* top left / northwest */
         {left_x, top_y, 0,      //
@@ -1786,41 +1824,6 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
     surface_3ds_gl_buffer_quad(surface, gradient_quad,
                                &surface->_3ds_gl_sprites_tex,
                                &surface->_3ds_gl_sprites_tex);
-#endif
-
-#ifdef RENDER_SW
-    int offset = surface->width - width;
-    int8_t y_inc = 1;
-
-    if (surface->interlace) {
-        y_inc = 2;
-        offset += surface->width;
-
-        if ((y & 1) != 0) {
-            y++;
-            height--;
-        }
-    }
-
-    int index = x + y * surface->width;
-
-    for (int i = 0; i < height; i += y_inc) {
-        if (i + y >= surface->bounds_min_y && i + y < surface->bounds_max_y) {
-            int new_colour =
-                (((bottom_red * i + top_red * (height - i)) / height) << 16) +
-                (((bottom_green * i + top_green * (height - i)) / height)
-                 << 8) +
-                (((bottom_blue * i + top_blue * (height - i)) / height));
-
-            for (int j = -width; j < 0; j++) {
-                surface->pixels[index++] = new_colour;
-            }
-
-            index += offset;
-        } else {
-            index += surface->width;
-        }
-    }
 #endif
 }
 
@@ -1870,16 +1873,12 @@ void surface_draw_box_software(Surface *surface, int x, int y, int width,
 
 void surface_draw_box(Surface *surface, int x, int y, int width, int height,
                       int colour) {
-#ifdef RENDER_GL
-    surface_gl_buffer_box(surface, x, y, width, height, colour, 255);
-#endif
-
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_buffer_box(surface, x, y, width, height, colour, 255);
-#endif
-
 #ifdef RENDER_SW
     surface_draw_box_software(surface, x, y, width, height, colour);
+#elif defined(RENDER_GL)
+    surface_gl_buffer_box(surface, x, y, width, height, colour, 255);
+#elif defined(RENDER_3DS_GL)
+    surface_3ds_gl_buffer_box(surface, x, y, width, height, colour, 255);
 #endif
 }
 
@@ -1909,16 +1908,12 @@ void surface_draw_line_horizontal_software(Surface *surface, int x, int y,
 
 void surface_draw_line_horizontal(Surface *surface, int x, int y, int width,
                                   int colour) {
-#ifdef RENDER_GL
-    surface_gl_buffer_box(surface, x, y, width, 1, colour, 255);
-#endif
-
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_buffer_box(surface, x, y, width, 1, colour, 255);
-#endif
-
 #ifdef RENDER_SW
     surface_draw_line_horizontal_software(surface, x, y, width, colour);
+#elif defined(RENDER_GL)
+    surface_gl_buffer_box(surface, x, y, width, 1, colour, 255);
+#elif defined(RENDER_3DS_GL)
+    surface_3ds_gl_buffer_box(surface, x, y, width, 1, colour, 255);
 #endif
 }
 
@@ -1948,16 +1943,12 @@ void surface_draw_line_vertical_software(Surface *surface, int x, int y,
 
 void surface_draw_line_vertical(Surface *surface, int x, int y, int height,
                                 int colour) {
-#ifdef RENDER_GL
-    surface_gl_buffer_box(surface, x, y, 1, height, colour, 255);
-#endif
-
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_buffer_box(surface, x, y, 1, height, colour, 255);
-#endif
-
 #ifdef RENDER_SW
     surface_draw_line_vertical_software(surface, x, y, height, colour);
+#elif defined(RENDER_GL)
+    surface_gl_buffer_box(surface, x, y, 1, height, colour, 255);
+#elif defined(RENDER_3DS_GL)
+    surface_3ds_gl_buffer_box(surface, x, y, 1, height, colour, 255);
 #endif
 }
 
@@ -1997,8 +1988,11 @@ void surface_fade_to_black_software(Surface *surface, int32_t *dest,
 }
 
 void surface_fade_to_black(Surface *surface) {
-#ifdef RENDER_GL
+#ifdef RENDER_SW
+    surface_fade_to_black_software(surface, surface->pixels, 0);
+#elif defined(RENDER_GL)
     // TODO this leaves some sort of residue. https://imgur.com/a/35sqk7v
+
     /*surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height,
                           BLACK, 16);*/
 
@@ -2013,10 +2007,6 @@ void surface_fade_to_black(Surface *surface) {
     surface->gl_fade_to_black = 1;
 
     glClear(GL_COLOR_BUFFER_BIT);
-#endif
-
-#ifdef RENDER_SW
-    surface_fade_to_black_software(surface, surface->pixels, 0);
 #endif
 }
 
@@ -2053,7 +2043,10 @@ void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
 
 void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
                        int height) {
-#ifdef RENDER_GL
+#ifdef RENDER_SW
+    surface_draw_blur_software(surface, surface->pixels, j, x, y, width, height,
+                               1);
+#elif defined(RENDER_GL)
     surface_gl_draw(surface, 0);
 
     surface_gl_update_framebuffer(surface);
@@ -2063,11 +2056,6 @@ void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
 
     surface_gl_update_framebuffer_texture(surface);
     surface_gl_buffer_framebuffer_quad(surface);
-#endif
-
-#ifdef RENDER_SW
-    surface_draw_blur_software(surface, surface->pixels, j, x, y, width, height,
-                               1);
 #endif
 }
 
@@ -2098,6 +2086,7 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
 void surface_clear(Surface *surface) {
     for (int i = 0; i < surface->limit; i++) {
         free(surface->surface_pixels[i]);
+
         surface->surface_pixels[i] = NULL;
         surface->sprite_width[i] = 0;
         surface->sprite_height[i] = 0;
@@ -2668,23 +2657,18 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
 void surface_draw_sprite_from3_depth(Surface *surface, int x, int y,
                                      int sprite_id, float depth_top,
                                      float depth_bottom) {
-#ifdef RENDER_GL
-    surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
-                             0, depth_top, depth_bottom);
-#endif
-
 #ifdef RENDER_SW
     surface_draw_sprite_from3_software(surface, x, y, sprite_id);
+    (void)depth_top;
+    (void)depth_bottom;
+#elif defined(RENDER_GL)
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
+                             0, depth_top, depth_bottom);
 #endif
 }
 
 void surface_draw_sprite_scaled(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, float depth) {
-#ifdef RENDER_GL
-    surface_gl_buffer_sprite(surface, sprite_id, x, y, width, height, 0, 0, 0,
-                             255, 0, 0, depth, depth);
-#endif
-
 #ifdef RENDER_SW
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];
@@ -2767,6 +2751,11 @@ void surface_draw_sprite_scaled(Surface *surface, int x, int y, int width,
     surface_plot_scale_from13(
         surface->pixels, surface->surface_pixels[sprite_id], l1, i2, dest_pos,
         k3, width, height, j2, k2, sprite_width, y_inc);
+
+    (void)depth;
+#elif defined(RENDER_GL)
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, width, height, 0, 0, 0,
+                             255, 0, 0, depth, depth);
 #endif
 }
 
@@ -2812,16 +2801,6 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
 
 void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
                                      int sprite_id, int alpha) {
-#ifdef RENDER_GL
-    surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, alpha,
-                             0, 0, 0, 0);
-#endif
-
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0,
-                                 alpha, 0, 0, 0, 0);
-#endif
-
 #ifdef RENDER_SW
     if (surface->sprite_translate[sprite_id]) {
         x += surface->sprite_translate_x[sprite_id];
@@ -2891,16 +2870,17 @@ void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
             surface->pixels, surface->surface_pixels[sprite_id], src_pos, size,
             width, height, dest_offset, src_offset, y_inc, alpha);
     }
+#elif defined(RENDER_GL)
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, alpha,
+                             0, 0, 0, 0);
+#elif defined(RENDER_3DS_GL)
+    surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0,
+                                 alpha, 0, 0, 0, 0);
 #endif
 }
 
 void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
                                 int scale_y, int sprite_id, int alpha) {
-#ifdef RENDER_GL
-    surface_gl_buffer_sprite(surface, sprite_id, x, y, scale_x, scale_y, 0, 0,
-                             0, alpha, 0, 0, 0, 0);
-#endif
-
 #ifdef RENDER_SW
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];
@@ -2994,6 +2974,9 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
     surface_transparent_scale(
         surface->pixels, surface->surface_pixels[sprite_id], i2, j2, j3, l3,
         scale_x, scale_y, k2, l2, sprite_width, y_inc, alpha);
+#elif defined(RENDER_GL)
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, scale_x, scale_y, 0, 0,
+                             0, alpha, 0, 0, 0, 0);
 #endif
 }
 
@@ -3001,11 +2984,6 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
 /* only works with palette sprites */
 void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
                                    int height, int sprite_id, int colour) {
-#ifdef RENDER_GL
-    surface_gl_buffer_sprite(surface, sprite_id, x, y, width, height, 0, colour,
-                             0, 255, 0, 0, 0, 0);
-#endif
-
 #ifdef RENDER_SW
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];
@@ -3098,6 +3076,9 @@ void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
     surface_plot_scale_from14(
         surface->pixels, surface->surface_pixels[sprite_id], i2, j2, j3, l3,
         width, height, k2, l2, sprite_width, y_inc, colour);
+#elif defined(RENDER_GL)
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, width, height, 0, colour,
+                             0, 255, 0, 0, 0, 0);
 #endif
 }
 
@@ -3300,23 +3281,6 @@ void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k,
 void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
                                  int rotation, int scale) {
     rotation &= 255;
-
-#ifdef RENDER_GL
-    // TODO still *slightly* off
-    int gl_sprite_width = surface->sprite_width[sprite_id];
-    int gl_sprite_height = surface->sprite_height[sprite_id];
-
-    float gl_scale = scale / 128.0f;
-
-    int draw_width = (int)(gl_sprite_width * gl_scale);
-    int draw_height = (int)(gl_sprite_height * gl_scale);
-
-    int gl_x = x - (int)((gl_sprite_width / 2) * gl_scale);
-    int gl_y = y - (int)((gl_sprite_height / 2) * gl_scale);
-
-    surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, draw_width,
-                             draw_height, 0, 0, 0, 255, 0, rotation, 0, 0);
-#endif
 
 #ifdef RENDER_SW
     int j1 = surface->width;
@@ -3646,6 +3610,21 @@ void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
             l10 += j1;
         }
     }
+#elif defined(RENDER_GL)
+    // TODO still *slightly* off
+    int gl_sprite_width = surface->sprite_width[sprite_id];
+    int gl_sprite_height = surface->sprite_height[sprite_id];
+
+    float gl_scale = scale / 128.0f;
+
+    int draw_width = (int)(gl_sprite_width * gl_scale);
+    int draw_height = (int)(gl_sprite_height * gl_scale);
+
+    int gl_x = x - (int)((gl_sprite_width / 2) * gl_scale);
+    int gl_y = y - (int)((gl_sprite_height / 2) * gl_scale);
+
+    surface_gl_buffer_sprite(surface, sprite_id, gl_x, gl_y, draw_width,
+                             draw_height, 0, 0, 0, 255, 0, rotation, 0, 0);
 #endif
 }
 
@@ -3844,22 +3823,18 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y,
                                    int draw_width, int draw_height,
                                    int sprite_id, int mask_colour,
                                    int skin_colour, int skew_x, int flip) {
-#ifdef RENDER_GL
-    surface_gl_buffer_sprite(surface, sprite_id, x, y, draw_width, draw_height,
-                             skew_x, mask_colour, skin_colour, 255, flip, 0, 0,
-                             0);
-#endif
-
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, draw_width,
-                                 draw_height, skew_x, mask_colour, skin_colour,
-                                 255, flip, 0, 0, 0);
-#endif
-
 #ifdef RENDER_SW
     surface_sprite_clipping_from9_software(surface, x, y, draw_width,
                                            draw_height, sprite_id, mask_colour,
                                            skin_colour, skew_x, flip);
+#elif defined(RENDER_GL)
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, draw_width, draw_height,
+                             skew_x, mask_colour, skin_colour, 255, flip, 0, 0,
+                             0);
+#elif defined(RENDER_3DS_GL)
+    surface_3ds_gl_buffer_sprite(surface, sprite_id, x, y, draw_width,
+                                 draw_height, skew_x, mask_colour, skin_colour,
+                                 255, flip, 0, 0, 0);
 #endif
 }
 
@@ -3868,16 +3843,16 @@ void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
                                          int sprite_id, int mask_colour,
                                          int skin_colour, int skew_x, int flip,
                                          float depth_top, float depth_bottom) {
-#ifdef RENDER_GL
-    surface_gl_buffer_sprite(surface, sprite_id, x, y, draw_width, draw_height,
-                             skew_x, mask_colour, skin_colour, 255, flip, 0,
-                             depth_top, depth_bottom);
-#endif
-
 #ifdef RENDER_SW
     surface_sprite_clipping_from9_software(surface, x, y, draw_width,
                                            draw_height, sprite_id, mask_colour,
                                            skin_colour, skew_x, flip);
+    (void)depth_top;
+    (void)depth_bottom;
+#elif defined(RENDER_GL)
+    surface_gl_buffer_sprite(surface, sprite_id, x, y, draw_width, draw_height,
+                             skew_x, mask_colour, skin_colour, 255, flip, 0,
+                             depth_top, depth_bottom);
 #endif
 }
 
@@ -4135,9 +4110,9 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
     }
 }
 
+#ifdef RENDER_SW
 void surface_draw_character(Surface *surface, int character_offset, int x,
                             int y, int colour, int8_t *font_data) {
-#ifdef RENDER_SW
     /* baseline and kerning offsets */
     int draw_x = x + font_data[character_offset + 5];
     int draw_y = y - font_data[character_offset + 6];
@@ -4188,8 +4163,8 @@ void surface_draw_character(Surface *surface, int character_offset, int x,
                             dest_pos, width, height, dest_offset,
                             font_data_offset);
     }
-#endif
 }
+#endif
 
 void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
                          int font_pos, int dest_pos, int width, int height,
@@ -4310,16 +4285,6 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
             int character_offset = character_width[index];
             int draw_shadow = surface->draw_string_shadow && colour != 0;
 
-#ifdef RENDER_GL
-            surface_gl_buffer_character(surface, text[i], x, y, colour, font,
-                                        draw_shadow, depth);
-#endif
-
-#ifdef RENDER_3DS_GL
-            surface_3ds_gl_buffer_character(surface, text[i], x, y, colour,
-                                            font, draw_shadow, depth);
-#endif
-
 #ifdef RENDER_SW
             if (draw_shadow) {
                 surface_draw_character(surface, character_offset, x + 1, y,
@@ -4331,11 +4296,21 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
 
             surface_draw_character(surface, character_offset, x, y, colour,
                                    font_data);
+#elif defined(RENDER_GL)
+            surface_gl_buffer_character(surface, text[i], x, y, colour, font,
+                                        draw_shadow, depth);
+#elif defined(RENDER_3DS_GL)
+            surface_3ds_gl_buffer_character(surface, text[i], x, y, colour,
+                                            font, draw_shadow, depth);
 #endif
 
             x += font_data[character_offset + 7];
         }
     }
+
+#ifdef RENDER_SW
+    (void)depth;
+#endif
 }
 
 void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
@@ -4611,7 +4586,7 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                                scrub_height, SCRUB_RIGHT_COLOUR);
 }
 
-void surface_draw_status_bar(Surface *surface, int min, int max, int current,
+void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour) {
     int current_width = (current / (float)max) * width;

@@ -3220,108 +3220,6 @@ void mudclient_close_connection(mudclient *mud) {
     mudclient_reset_login_screen(mud);
 }
 
-void mudclient_move_character(mudclient *mud, GameCharacter *character) {
-    int next_waypoint = (character->waypoint_current + 1) % 10;
-
-    if (character->moving_step != next_waypoint) {
-        int current_animation = -1;
-        int step = character->moving_step;
-
-        int delta_step = step < next_waypoint ? next_waypoint - step
-                                              : (10 + next_waypoint) - step;
-
-        int j5 = 4;
-
-        if (delta_step > 2) {
-            j5 = (delta_step - 1) * 4;
-        }
-
-        if (character->waypoints_x[step] - character->current_x >
-                MAGIC_LOC * 3 ||
-            character->waypoints_y[step] - character->current_y >
-                MAGIC_LOC * 3 ||
-            character->waypoints_x[step] - character->current_x <
-                -MAGIC_LOC * 3 ||
-            character->waypoints_y[step] - character->current_y <
-                -MAGIC_LOC * 3 ||
-            delta_step > 8) {
-            character->current_x = character->waypoints_x[step];
-            character->current_y = character->waypoints_y[step];
-        } else {
-            if (character->current_x < character->waypoints_x[step]) {
-                character->current_x += j5;
-                character->step_count++;
-                current_animation = 2;
-            } else if (character->current_x > character->waypoints_x[step]) {
-                character->current_x -= j5;
-                character->step_count++;
-                current_animation = 6;
-            }
-
-            if (character->current_x - character->waypoints_x[step] < j5 &&
-                character->current_x - character->waypoints_x[step] > -j5) {
-                character->current_x = character->waypoints_x[step];
-            }
-
-            if (character->current_y < character->waypoints_y[step]) {
-                character->current_y += j5;
-                character->step_count++;
-
-                if (current_animation == -1) {
-                    current_animation = 4;
-                } else if (current_animation == 2) {
-                    current_animation = 3;
-                } else {
-                    current_animation = 5;
-                }
-            } else if (character->current_y > character->waypoints_y[step]) {
-                character->current_y -= j5;
-                character->step_count++;
-
-                if (current_animation == -1) {
-                    current_animation = 0;
-                } else if (current_animation == 2) {
-                    current_animation = 1;
-                } else {
-                    current_animation = 7;
-                }
-            }
-
-            if (character->current_y - character->waypoints_y[step] < j5 &&
-                character->current_y - character->waypoints_y[step] > -j5) {
-                character->current_y = character->waypoints_y[step];
-            }
-        }
-
-        if (current_animation != -1) {
-            character->current_animation = current_animation;
-        }
-
-        if (character->current_x == character->waypoints_x[step] &&
-            character->current_y == character->waypoints_y[step]) {
-            character->moving_step = (step + 1) % 10;
-        }
-    } else {
-        character->current_animation = character->next_animation;
-
-        if (character->npc_id == GIANT_BAT_ID) {
-            character->step_count++;
-        }
-    }
-
-    if (character->message_timeout > 0) {
-        character->message_timeout--;
-    }
-
-    if (character->bubble_timeout > 0) {
-        character->bubble_timeout--;
-    }
-
-    if (character->combat_timer > 0) {
-        character->combat_timer--;
-    }
-}
-
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle) {
     int x = mud->local_player->current_x / 128;
     int y = mud->local_player->current_y / 128;
@@ -3533,7 +3431,7 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->player_count; i++) {
-        mudclient_move_character(mud, mud->players[i]);
+        game_character_move(mud->players[i]);
     }
 
     if (mud->death_screen_timeout > 0) {
@@ -3552,7 +3450,7 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->npc_count; i++) {
-        mudclient_move_character(mud, mud->npcs[i]);
+        game_character_move(mud->npcs[i]);
     }
 
     if (mud->show_ui_tab != MAP_TAB) {
@@ -3987,6 +3885,7 @@ int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
                                       character->current_y / 128);
 
     return (mud->options->show_roofs && roof_id > 0 &&
+            /* check if he's smol */
             (character->npc_id > -1
                  ? game_data_npc_height[character->npc_id] >= 200
                  : 1) &&
@@ -3997,6 +3896,10 @@ int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
             world_is_under_roof(mud->world, character->current_x,
                                 character->current_y));
 #else
+    (void)mud;
+    (void)character;
+    (void)animation_index;
+
     return 0;
 #endif
 }
@@ -4838,13 +4741,10 @@ void mudclient_draw_game(mudclient *mud) {
                     mud->scene,
                     mud->world->roof_models[mud->last_height_offset][i]);
 
-                // TODO redundant check here i think
-                // if (mud->last_height_offset == 0) {
                 scene_add_model(mud->scene, mud->world->wall_models[1][i]);
                 scene_add_model(mud->scene, mud->world->roof_models[1][i]);
                 scene_add_model(mud->scene, mud->world->wall_models[2][i]);
                 scene_add_model(mud->scene, mud->world->roof_models[2][i]);
-                //}
 
                 mud->fog_of_war = 0;
             }
@@ -5379,9 +5279,7 @@ void mudclient_poll_events(mudclient *mud) {
             mud->last_wii_button = 0;
         }
     }
-#endif
-
-#ifdef _3DS
+#elif defined(_3DS)
     if (mud->keyboard_open) {
         if (_3ds_keyboard_received_input) {
             mudclient_3ds_handle_keyboard(mud);
@@ -5524,9 +5422,7 @@ void mudclient_poll_events(mudclient *mud) {
             mud->camera_zoom = ZOOM_MIN;
         }*/
     }
-#endif
-
-#if !defined(WII) && !defined(_3DS)
+#else
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -6107,6 +6003,7 @@ int mudclient_is_ui_scaled(mudclient *mud) {
     return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) &&
            mud->game_height >= (MUD_HEIGHT * 2);
 #else
+    (void)mud;
     return 0;
 #endif
 }

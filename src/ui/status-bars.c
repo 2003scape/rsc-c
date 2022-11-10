@@ -11,7 +11,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
     int max_hits = mud->player_skill_base[SKILL_HITS];
     int current_hits = mud->player_skill_current[SKILL_HITS];
 
-    surface_draw_status_bar(mud->surface, 0, max_hits, current_hits, "Hits", x,
+    surface_draw_status_bar(mud->surface, max_hits, current_hits, "Hits", x,
                             y, STATUS_BAR_WIDTH, STATUS_BAR_HEIGHT, RED, GREEN);
 
     x += STATUS_BAR_WIDTH + 3;
@@ -19,7 +19,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
     int max_prayer = mud->player_skill_base[SKILL_PRAYER];
     int current_prayer = mud->player_skill_current[SKILL_PRAYER];
 
-    surface_draw_status_bar(mud->surface, 0, max_prayer, current_prayer,
+    surface_draw_status_bar(mud->surface, max_prayer, current_prayer,
                             "Prayer", x, y, STATUS_BAR_WIDTH, STATUS_BAR_HEIGHT,
                             BLACK, CYAN);
 
@@ -40,7 +40,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
         char formatted_opponent[strlen(opponent_name) + 2];
         sprintf(formatted_opponent, "%s:", opponent_name);
 
-        surface_draw_status_bar(mud->surface, 0, opponent->max_hits,
+        surface_draw_status_bar(mud->surface, opponent->max_hits,
                                 opponent->current_hits, opponent_name, x, y,
                                 (STATUS_BAR_WIDTH * 2) + 3, STATUS_BAR_HEIGHT,
                                 RED, GREEN);

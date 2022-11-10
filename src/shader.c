@@ -1,5 +1,7 @@
 #include "shader.h"
 
+// TODO put in gl directory
+
 #ifdef RENDER_GL
 char *buffer_file(char *path) {
     FILE *file = fopen(path, "r");

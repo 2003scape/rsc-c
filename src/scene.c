@@ -882,8 +882,10 @@ void scene_gradient_translucent_scanline(int32_t *raster, int i, int raster_idx,
     for (int i1 = length; i1 < 0; i1++) {
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < 4; k++) {
-                raster[raster_idx++] =
-                    colour + ((raster[raster_idx] >> 1) & 0x7f7f7f);
+                raster[raster_idx] =
+                    colour + ((raster[raster_idx + 1] >> 1) & 0x7f7f7f);
+
+                raster_idx++;
             }
 
             colour = ramp[(ramp_index / RAMP_SIZE) & 0xff];
@@ -894,7 +896,9 @@ void scene_gradient_translucent_scanline(int32_t *raster, int i, int raster_idx,
     length = -(i % 16);
 
     for (int i1 = 0; i1 < length; i1++) {
-        raster[raster_idx++] = colour + ((raster[raster_idx] >> 1) & 0x7f7f7f);
+        raster[raster_idx] = colour + ((raster[raster_idx + 1] >> 1) & 0x7f7f7f);
+
+        raster_idx++;
 
         if ((i1 & 3) == 3) {
             colour = ramp[(ramp_index / RAMP_SIZE) & 0xff];

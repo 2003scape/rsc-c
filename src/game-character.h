@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <string.h>
 
+typedef struct GameCharacter GameCharacter;
+
+#include "mudclient.h"
 #include "utility.h"
 
 #define EQUIP_COUNT 12
@@ -55,5 +58,6 @@ typedef struct GameCharacter {
 } GameCharacter;
 
 void game_character_new(GameCharacter* game_character);
+void game_character_move(GameCharacter *character);
 
 #endif

@@ -1,5 +1,6 @@
 #include "bank.h"
 
+/* handle withdrawing or depositing */
 void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
                                 int opcode) {
     int is_withdraw = opcode == CLIENT_BANK_WITHDRAW;
@@ -68,6 +69,7 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
     }
 }
 
+/* draw the page numbers in the title bar */
 void mudclient_draw_bank_page(mudclient *mud, int x, int y, int page,
                               int width) {
     int text_colour = WHITE;

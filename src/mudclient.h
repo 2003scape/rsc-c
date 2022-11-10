@@ -1004,7 +1004,7 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
 
 void mudclient_update_bank_items(mudclient *mud);
 void mudclient_close_connection(mudclient *mud);
-void mudclient_move_character(mudclient *mud, GameCharacter *character);
+//void mudclient_move_character(mudclient *mud, GameCharacter *character);
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
 void mudclient_auto_rotate_camera(mudclient *mud);
 void mudclient_handle_camera_zoom(mudclient *mud);

@@ -981,6 +981,15 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
     game_model_project_view(game_model, camera_x, camera_y, camera_z,
                             camera_pitch, camera_roll, camera_yaw,
                             view_distance, clip_near);
+#else
+    (void)camera_x;
+    (void)camera_y;
+    (void)camera_z;
+    (void)camera_pitch;
+    (void)camera_roll;
+    (void)camera_yaw;
+    (void)view_distance;
+    (void)clip_near;
 #endif
 }
 
@@ -1546,10 +1555,12 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 (float)(face_intensity), (float)(vertex_intensity), //
 
                 /* front colour */
-                face_fill_front.r, face_fill_front.g, face_fill_front.b, face_fill_front.a, //
+                face_fill_front.r, face_fill_front.g, face_fill_front.b,
+                face_fill_front.a, //
 
                 /* back colour */
-                face_fill_back.r, face_fill_back.g, face_fill_back.b, face_fill_back.a, //
+                face_fill_back.r, face_fill_back.g, face_fill_back.b,
+                face_fill_back.a, //
 
                 /* front texture */
                 front_texture_x, front_texture_y, //
