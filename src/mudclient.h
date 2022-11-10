@@ -212,7 +212,7 @@
 #define ENCHANTED_EARTH_BATTLESTAFF_ID 685
 
 /* texture IDs */
-#define FOUNTATION_ID 17
+#define FOUNTAIN_ID 17
 
 /* animation order indices */
 #define ANIMATION_COUNT 12

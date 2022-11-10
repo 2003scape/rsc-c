@@ -182,7 +182,7 @@ void panel_draw_panel(Panel *panel) {
                                    panel->control_height[i]);
             break;
         case PANEL_SPRITE:
-            surface_draw_sprite_from3(panel->surface,
+            surface_draw_sprite(panel->surface,
                                       panel->control_x[i] + panel->offset_x,
                                       panel->control_y[i] + panel->offset_y,
                                       panel->control_text_size[i]);
@@ -350,16 +350,16 @@ void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height) {
     surface_draw_border(panel->surface, x + 2, y + 2, width - 4, height - 4,
                         PANEL_ROUNDED_BOX_IN_COLOUR);
 
-    surface_draw_sprite_from3(panel->surface, x, y,
+    surface_draw_sprite(panel->surface, x, y,
                               2 + panel_base_sprite_start);
 
-    surface_draw_sprite_from3(panel->surface, x + width - 7, y,
+    surface_draw_sprite(panel->surface, x + width - 7, y,
                               3 + panel_base_sprite_start);
 
-    surface_draw_sprite_from3(panel->surface, x, y + height - 7,
+    surface_draw_sprite(panel->surface, x, y + height - 7,
                               4 + panel_base_sprite_start);
 
-    surface_draw_sprite_from3(panel->surface, x + width - 7, y + height - 7,
+    surface_draw_sprite(panel->surface, x + width - 7, y + height - 7,
                               5 + panel_base_sprite_start);
 }
 

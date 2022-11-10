@@ -479,7 +479,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     surface_apply_login_filter(mud->surface, background_height);
 
-    /*surface_draw_sprite_from3(
+    /*surface_draw_sprite(
         mud->surface,
         (mud->surface->width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
@@ -489,7 +489,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     int logo_height = (int)((logo_width / 512.0f) * 146.0f);
     int offset_y = (background_height / 2) - logo_height / 2;
 
-    surface_sprite_clipping_from9(
+    surface_draw_sprite_transform_mask(
         mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
@@ -520,13 +520,13 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     surface_apply_login_filter(mud->surface, background_height);
 
-    /*surface_draw_sprite_from3(
+    /*surface_draw_sprite(
         mud->surface,
         (mud->surface->width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);*/
 
-    surface_sprite_clipping_from9(
+    surface_draw_sprite_transform_mask(
         mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
@@ -583,13 +583,13 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     surface_apply_login_filter(mud->surface, background_height);
 
-    /*surface_draw_sprite_from3(
+    /*surface_draw_sprite(
         mud->surface,
         (mud->surface->width / 2) -
             (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
         15, mud->sprite_media + 10);*/
 
-    surface_sprite_clipping_from9(
+    surface_draw_sprite_transform_mask(
         mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
@@ -648,29 +648,29 @@ void mudclient_draw_login_screens(mudclient *mud) {
         int cycle = (mud->login_timer * 2) % 3072;
 
         if (cycle < 1024) {
-            surface_draw_sprite_from3(mud->surface, 0 + offset_x, 10 + offset_y,
+            surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
                                       mud->sprite_logo);
 
             if (cycle > 768) {
-                surface_draw_sprite_alpha_from4(
+                surface_draw_sprite_alpha(
                     mud->surface, 0 + offset_x, 10 + offset_y,
                     mud->sprite_logo + 1, cycle - 768);
             }
         } else if (cycle < 2048) {
-            surface_draw_sprite_from3(mud->surface, 0 + offset_x, 10 + offset_y,
+            surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
                                       mud->sprite_logo + 1);
 
             if (cycle > 1792) {
-                surface_draw_sprite_alpha_from4(
+                surface_draw_sprite_alpha(
                     mud->surface, 0 + offset_x, 10 + offset_y,
                     mud->sprite_media + 10, cycle - 1792);
             }
         } else {
-            surface_draw_sprite_from3(mud->surface, 0 + offset_x, 10 + offset_y,
+            surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
                                       mud->sprite_media + 10);
 
             if (cycle > 2816) {
-                surface_draw_sprite_alpha_from4(mud->surface, 0 + offset_x,
+                surface_draw_sprite_alpha(mud->surface, 0 + offset_x,
                                                 10 + offset_y, mud->sprite_logo,
                                                 cycle - 2816);
             }

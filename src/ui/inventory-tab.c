@@ -4,7 +4,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - INVENTORY_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface,
+    surface_draw_sprite(mud->surface,
                               mud->surface->width - UI_TABS_WIDTH - (MUD_IS_COMPACT ? 52 : 3), 3,
                               mud->sprite_media + INVENTORY_TAB_SPRITE_OFFSET);
 

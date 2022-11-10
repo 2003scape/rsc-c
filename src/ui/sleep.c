@@ -78,7 +78,7 @@ void mudclient_draw_sleep(mudclient *mud) {
     y += (MUD_IS_COMPACT ? 16 : 49);
 
     if (mud->sleeping_status_text == NULL) {
-        surface_draw_sprite_from3(mud->surface, x - 127, y + 1,
+        surface_draw_sprite(mud->surface, x - 127, y + 1,
                                   mud->sprite_texture + 1);
     } else {
         surface_draw_string_centre(mud->surface, mud->sleeping_status_text, x,

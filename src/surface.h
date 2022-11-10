@@ -42,11 +42,8 @@
 #define RGB2Y(R, G, B) CLIP(((66 * (R) + 129 * (G) + 25 * (B) + 128) >> 8) + 16)
 #define RGB2U(R, G, B) CLIP(((-38 * (R)-74 * (G) + 112 * (B) + 128) >> 8) + 128)
 #define RGB2V(R, G, B) CLIP(((112 * (R)-94 * (G)-18 * (B) + 128) >> 8) + 128)
-#endif
-
-#ifdef _3DS
+#elif defined(_3DS)
 #include <3ds.h>
-#endif
 
 #ifdef RENDER_3DS_GL
 #include <citro3d.h>
@@ -89,6 +86,7 @@ typedef struct _3ds_gl_context {
 #include "textures/fonts.h"
 #include "textures/media.h"
 #endif
+#endif
 
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
@@ -105,7 +103,7 @@ typedef struct _3ds_gl_context {
 #define SCRUB_MIDDLE_COLOUR 0x6081b8
 #define SCRUB_RIGHT_COLOUR 0x355f73
 
-// TODO #define FONT_12PT_BOLD etc
+// TODO enum FONT_12PT_BOLD etc
 
 typedef struct Surface Surface;
 
@@ -152,16 +150,6 @@ typedef struct Surface {
     int8_t interlace;
     int8_t draw_string_shadow;
 
-    // TODO remove for gl/headless
-    /* arrays used for minimap sprite rotation */
-    int *rotations_0;
-    int *rotations_1;
-    int *rotations_2;
-    int *rotations_3;
-    int *rotations_4;
-    int *rotations_5;
-    int rotations_length;
-
     /* used to prevent the minimap from drawing outside of the map UI, and to
      * prevent software rendering from writing outside of the raster array */
     int bounds_min_y;
@@ -171,7 +159,16 @@ typedef struct Surface {
 
     mudclient *mud;
 
-#ifdef RENDER_GL
+#ifdef RENDER_SW
+    /* arrays used for minimap sprite rotation */
+    int *rotations_0;
+    int *rotations_1;
+    int *rotations_2;
+    int *rotations_3;
+    int *rotations_4;
+    int *rotations_5;
+    int rotations_length;
+#elif defined(RENDER_GL)
     int8_t gl_fade_to_black;
     int8_t gl_has_faded;
 
@@ -229,9 +226,6 @@ void create_font(int8_t *buffer, int id);
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
 
-void surface_test_create_font_texture(int32_t *dest, int font_id,
-                                      int draw_shadow);
-
 #ifdef RENDER_GL
 float surface_gl_translate_x(Surface *surface, int x);
 float surface_gl_translate_y(Surface *surface, int y);
@@ -266,7 +260,7 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha, float depth);
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
-                           int height, int top_colour, int bottom_colour);
+                                int height, int top_colour, int bottom_colour);
 void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
@@ -340,23 +334,22 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
                                      int y, int width, int height);
 void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
                                   int width, int height);
-void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
-                                        int sprite_id);
-void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id);
-void surface_draw_sprite_from3_depth(Surface *surface, int x, int y,
-                                     int sprite_id, float depth_top,
-                                     float depth_bottom);
-void surface_draw_sprite_scaled(Surface *surface, int x, int y, int width,
-                                int height, int sprite_id, float depth);
+void surface_draw_sprite_software(Surface *surface, int x, int y,
+                                  int sprite_id);
+void surface_draw_sprite(Surface *surface, int x, int y, int sprite_id);
+void surface_draw_sprite_depth(Surface *surface, int x, int y, int sprite_id,
+                               float depth_top, float depth_bottom);
+void surface_draw_sprite_scale(Surface *surface, int x, int y, int width,
+                               int height, int sprite_id, float depth);
 void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom);
-void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
-                                     int sprite_id, int alpha);
+void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
+                               int alpha);
 void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
                                 int scale_y, int sprite_id, int alpha);
-void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
-                                   int height, int sprite_id, int colour);
+void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
+                                    int height, int sprite_id, int colour);
 void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
                          int width, int height, int dest_offset, int src_offset,
                          int y_inc);
@@ -387,19 +380,18 @@ void surface_draw_minimap(int32_t *dest, int32_t *src, int j, int k, int l,
                           int i1, int j1, int k1, int l1);
 void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
                                     int l, int i1, int j1, int k1, int l1);
-void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
-                                            int draw_width, int draw_height,
-                                            int sprite_id, int mask_colour,
-                                            int skin_colour, int skew_x,
-                                            int flip);
-void surface_sprite_clipping_from9(Surface *surface, int x, int y, int w, int h,
-                                   int sprite_id, int colour1, int colour2,
-                                   int skew_x, int flag);
-void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
-                                         int draw_width, int draw_height,
-                                         int sprite_id, int mask_colour,
-                                         int skin_colour, int skew_x, int flip,
-                                         float depth_top, float depth_bottom);
+void surface_draw_sprite_transform_mask_software(
+    Surface *surface, int x, int y, int draw_width, int draw_height,
+    int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip);
+void surface_draw_sprite_transform_mask(Surface *surface, int x, int y, int w,
+                                        int h, int sprite_id, int colour1,
+                                        int colour2, int skew_x, int flag);
+void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
+                                              int draw_width, int draw_height,
+                                              int sprite_id, int mask_colour,
+                                              int skin_colour, int skew_x,
+                                              int flip, float depth_top,
+                                              float depth_bottom);
 void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
                                             int32_t *src, int j, int k,
                                             int dest_pos, int i1, int j1,

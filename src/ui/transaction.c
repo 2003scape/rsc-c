@@ -559,7 +559,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                             dialog_y + (TRANSACTION_INVENTORY_Y - 3), 4, WHITE);
     }
 
-    surface_draw_sprite_from3(mud->surface, dialog_x + TRANSACTION_DECLINE_X,
+    surface_draw_sprite(mud->surface, dialog_x + TRANSACTION_DECLINE_X,
                               dialog_y + TRANSACTION_BUTTON_Y,
                               mud->sprite_media + 26);
 
@@ -582,7 +582,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
             mud->surface, "other player", dialog_x + TRANSACTION_ACCEPT_X + 35,
             dialog_y + TRANSACTION_BUTTON_Y + 18, 1, WHITE);
     } else {
-        surface_draw_sprite_from3(mud->surface, dialog_x + TRANSACTION_ACCEPT_X,
+        surface_draw_sprite(mud->surface, dialog_x + TRANSACTION_ACCEPT_X,
                                   dialog_y + TRANSACTION_BUTTON_Y,
                                   mud->sprite_media + 25);
     }
@@ -823,11 +823,11 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     if (!mud->transaction_confirm_accepted) {
         int offset_y = MUD_IS_COMPACT ? 8 : 0;
 
-        surface_draw_sprite_from3(
+        surface_draw_sprite(
             mud->surface, dialog_x + (MUD_IS_COMPACT ? 4 : 83),
             dialog_y + TRANSACTION_BUTTON_Y + offset_y, mud->sprite_media + 25);
 
-        surface_draw_sprite_from3(
+        surface_draw_sprite(
             mud->surface,
             dialog_x + (MUD_IS_COMPACT ? TRANSACTION_WIDTH - 73 : 317),
             dialog_y + TRANSACTION_BUTTON_Y + offset_y, mud->sprite_media + 26);

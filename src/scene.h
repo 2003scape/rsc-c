@@ -289,7 +289,9 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
                           int32_t *palette, int wide128);
 void scene_prepare_texture(Scene *scene, int id);
 void scene_set_texture_pixels(Scene *scene, int id);
+#ifdef RENDER_SW
 void scene_scroll_texture(Scene *scene, int id);
+#endif
 int scene_get_fill_colour(Scene *scene, int face_fill);
 void scene_set_light_from3(Scene *scene, int x, int y, int z);
 void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,

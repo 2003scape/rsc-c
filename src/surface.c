@@ -139,10 +139,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     surface_gl_create_circle_texture(surface);
     surface_gl_reset_context(surface);
-#endif
-
-    // TODO put in function
-#ifdef RENDER_3DS_GL
+#elif defined(RENDER_3DS_GL)
     surface->_3ds_gl_flat_shader_dvlb =
         DVLB_ParseFile((u32 *)flat_shbin, flat_shbin_size);
 
@@ -381,8 +378,8 @@ void surface_gl_buffer_quad(Surface *surface, GLfloat *quad,
         context->min_y == surface->bounds_min_y &&
         context->max_y == surface->bounds_max_y &&
         (context->texture_id == texture_array_id ||
-         texture_array_id == 0 &&
-             context->texture_id != surface->gl_font_textures)) {
+         (texture_array_id == 0 &&
+          context->texture_id != surface->gl_font_textures))) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];
@@ -877,7 +874,7 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 }
 
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
-                           int height, int top_colour, int bottom_colour) {
+                                int height, int top_colour, int bottom_colour) {
     float bottom_red = ((bottom_colour >> 16) & 0xff) / 255.0f;
     float bottom_green = ((bottom_colour >> 8) & 0xff) / 255.0f;
     float bottom_blue = (bottom_colour & 0xff) / 255.0f;
@@ -892,40 +889,40 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 
     GLfloat gradient_quad[] = {
         /* top left / northwest */
-        left_x, top_y, 0,   //
-        top_red,   //
-        top_green, //
-        top_blue,  //
-        1.0,                //
-        -1.0, -1.0, -1.0,   //
-        0, 0, -1,           //
+        left_x, top_y, 0, //
+        top_red,          //
+        top_green,        //
+        top_blue,         //
+        1.0,              //
+        -1.0, -1.0, -1.0, //
+        0, 0, -1,         //
 
         /* top right / northeast */
-        right_x, top_y, 0,  //
-        top_red,   //
-        top_green, //
-        top_blue,  //
-        1.0,                //
-        -1.0, -1.0, -1.0,   //
-        0, 0, -1,           //
+        right_x, top_y, 0, //
+        top_red,           //
+        top_green,         //
+        top_blue,          //
+        1.0,               //
+        -1.0, -1.0, -1.0,  //
+        0, 0, -1,          //
 
         /* bottom right / southeast */
-        right_x, bottom_y, 0,  //
-        bottom_red,   //
-        bottom_green, //
-        bottom_blue,  //
-        1.0,                   //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1,              //
+        right_x, bottom_y, 0, //
+        bottom_red,           //
+        bottom_green,         //
+        bottom_blue,          //
+        1.0,                  //
+        -1.0, -1.0, -1.0,     //
+        0, 0, -1,             //
 
         /* bottom left / southwest */
-        left_x, bottom_y, 0,   //
-        bottom_red,   //
-        bottom_green, //
-        bottom_blue,  //
-        1.0,                   //
-        -1.0, -1.0, -1.0,      //
-        0, 0, -1               //
+        left_x, bottom_y, 0, //
+        bottom_red,          //
+        bottom_green,        //
+        bottom_blue,         //
+        1.0,                 //
+        -1.0, -1.0, -1.0,    //
+        0, 0, -1             //
     };
 
     surface_gl_buffer_quad(surface, gradient_quad, 0);
@@ -1774,7 +1771,8 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
         }
     }
 #elif defined(RENDER_GL)
-    surface_gl_buffer_gradient(surface, x, y, width, height, top_colour, bottom_colour);
+    surface_gl_buffer_gradient(surface, x, y, width, height, top_colour,
+                               bottom_colour);
 #elif defined(RENDER_3DS_GL)
     // TODO function
     float left_x = x;
@@ -2565,8 +2563,8 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
 }
 
 /* used for texture loading on GL rendering */
-void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
-                                        int sprite_id) {
+void surface_draw_sprite_software(Surface *surface, int x, int y,
+                                  int sprite_id) {
     if (surface->sprite_translate[sprite_id] != 0) {
         x += surface->sprite_translate_x[sprite_id];
         y += surface->sprite_translate_y[sprite_id];
@@ -2637,7 +2635,7 @@ void surface_draw_sprite_from3_software(Surface *surface, int x, int y,
     }
 }
 
-void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
+void surface_draw_sprite(Surface *surface, int x, int y, int sprite_id) {
     // TODO use a generic struct instead
 #ifdef RENDER_GL
     surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
@@ -2650,15 +2648,14 @@ void surface_draw_sprite_from3(Surface *surface, int x, int y, int sprite_id) {
 #endif
 
 #ifdef RENDER_SW
-    surface_draw_sprite_from3_software(surface, x, y, sprite_id);
+    surface_draw_sprite_software(surface, x, y, sprite_id);
 #endif
 }
 
-void surface_draw_sprite_from3_depth(Surface *surface, int x, int y,
-                                     int sprite_id, float depth_top,
-                                     float depth_bottom) {
+void surface_draw_sprite_depth(Surface *surface, int x, int y, int sprite_id,
+                               float depth_top, float depth_bottom) {
 #ifdef RENDER_SW
-    surface_draw_sprite_from3_software(surface, x, y, sprite_id);
+    surface_draw_sprite_software(surface, x, y, sprite_id);
     (void)depth_top;
     (void)depth_bottom;
 #elif defined(RENDER_GL)
@@ -2667,8 +2664,8 @@ void surface_draw_sprite_from3_depth(Surface *surface, int x, int y,
 #endif
 }
 
-void surface_draw_sprite_scaled(Surface *surface, int x, int y, int width,
-                                int height, int sprite_id, float depth) {
+void surface_draw_sprite_scale(Surface *surface, int x, int y, int width,
+                               int height, int sprite_id, float depth) {
 #ifdef RENDER_SW
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];
@@ -2795,12 +2792,12 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
         return;
     }
 
-    surface_draw_sprite_scaled(surface, x, y, width, height, sprite_id,
-                               (depth_top + depth_bottom) / 2);
+    surface_draw_sprite_scale(surface, x, y, width, height, sprite_id,
+                              (depth_top + depth_bottom) / 2);
 }
 
-void surface_draw_sprite_alpha_from4(Surface *surface, int x, int y,
-                                     int sprite_id, int alpha) {
+void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
+                               int alpha) {
 #ifdef RENDER_SW
     if (surface->sprite_translate[sprite_id]) {
         x += surface->sprite_translate_x[sprite_id];
@@ -2980,10 +2977,9 @@ void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
 #endif
 }
 
-// surface_draw_sprite_scale_mask
 /* only works with palette sprites */
-void surface_sprite_clipping_from6(Surface *surface, int x, int y, int width,
-                                   int height, int sprite_id, int colour) {
+void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
+                                    int height, int sprite_id, int colour) {
 #ifdef RENDER_SW
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];
@@ -3654,11 +3650,9 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int dest_pos,
     }
 }
 
-void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
-                                            int draw_width, int draw_height,
-                                            int sprite_id, int mask_colour,
-                                            int skin_colour, int skew_x,
-                                            int flip) {
+void surface_draw_sprite_transform_mask_software(
+    Surface *surface, int x, int y, int draw_width, int draw_height,
+    int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip) {
     if (mask_colour == 0) {
         mask_colour = WHITE;
     }
@@ -3816,17 +3810,16 @@ void surface_sprite_clipping_from9_software(Surface *surface, int x, int y,
     }
 }
 
-// surface_draw_sprite_transform_mask
 /* applies scale, both grey and skin colour masks, skew/shear and flip. used for
  * entity sprites */
-void surface_sprite_clipping_from9(Surface *surface, int x, int y,
-                                   int draw_width, int draw_height,
-                                   int sprite_id, int mask_colour,
-                                   int skin_colour, int skew_x, int flip) {
+void surface_draw_sprite_transform_mask(Surface *surface, int x, int y,
+                                        int draw_width, int draw_height,
+                                        int sprite_id, int mask_colour,
+                                        int skin_colour, int skew_x, int flip) {
 #ifdef RENDER_SW
-    surface_sprite_clipping_from9_software(surface, x, y, draw_width,
-                                           draw_height, sprite_id, mask_colour,
-                                           skin_colour, skew_x, flip);
+    surface_draw_sprite_transform_mask_software(
+        surface, x, y, draw_width, draw_height, sprite_id, mask_colour,
+        skin_colour, skew_x, flip);
 #elif defined(RENDER_GL)
     surface_gl_buffer_sprite(surface, sprite_id, x, y, draw_width, draw_height,
                              skew_x, mask_colour, skin_colour, 255, flip, 0, 0,
@@ -3838,15 +3831,16 @@ void surface_sprite_clipping_from9(Surface *surface, int x, int y,
 #endif
 }
 
-void surface_sprite_clipping_from9_depth(Surface *surface, int x, int y,
-                                         int draw_width, int draw_height,
-                                         int sprite_id, int mask_colour,
-                                         int skin_colour, int skew_x, int flip,
-                                         float depth_top, float depth_bottom) {
+void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
+                                              int draw_width, int draw_height,
+                                              int sprite_id, int mask_colour,
+                                              int skin_colour, int skew_x,
+                                              int flip, float depth_top,
+                                              float depth_bottom) {
 #ifdef RENDER_SW
-    surface_sprite_clipping_from9_software(surface, x, y, draw_width,
-                                           draw_height, sprite_id, mask_colour,
-                                           skin_colour, skew_x, flip);
+    surface_draw_sprite_transform_mask_software(
+        surface, x, y, draw_width, draw_height, sprite_id, mask_colour,
+        skin_colour, skew_x, flip);
     (void)depth_top;
     (void)depth_bottom;
 #elif defined(RENDER_GL)
@@ -4018,14 +4012,14 @@ void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
                 if (colour != 0) {
                     colour = colours[colour];
 
-                    int j3 = (colour >> 16) & 0xff;
-                    int k3 = (colour >> 8) & 0xff;
-                    int l3 = colour & 0xff;
+                    int r = (colour >> 16) & 0xff;
+                    int g = (colour >> 8) & 0xff;
+                    int b = colour & 0xff;
 
-                    if (j3 == k3 && k3 == l3) {
-                        dest[k6 + l] = (((j3 * mask_r) >> 8) << 16) +
-                                       (((k3 * mask_g) >> 8) << 8) +
-                                       ((l3 * mask_b) >> 8);
+                    if (r == g && g == b) {
+                        dest[k6 + l] = (((r * mask_r) >> 8) << 16) +
+                                       (((g * mask_g) >> 8) << 8) +
+                                       ((b * mask_b) >> 8);
                     } else {
                         dest[k6 + l] = colour;
                     }
@@ -4466,7 +4460,7 @@ void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
 
 void surface_draw_item(Surface *surface, int x, int y, int slot_width,
                        int slot_height, int item_id) {
-    surface_sprite_clipping_from9(
+    surface_draw_sprite_transform_mask(
         surface, x, y, slot_width - 1, slot_height - 2,
         surface->mud->sprite_item + game_data_item_sprite[item_id],
         game_data_item_mask[item_id], 0, 0, 0);
@@ -4564,11 +4558,11 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
     surface_draw_border(surface, x, y, 12, height, 0);
 
     /* up arrow */
-    surface_draw_sprite_from3(surface, x + 1, y + 1, surface->mud->sprite_util);
+    surface_draw_sprite(surface, x + 1, y + 1, surface->mud->sprite_util);
 
     /* down arrow */
-    surface_draw_sprite_from3(surface, x + 1, y + height - 12,
-                              surface->mud->sprite_util + 1);
+    surface_draw_sprite(surface, x + 1, y + height - 12,
+                        surface->mud->sprite_util + 1);
 
     surface_draw_line_horizontal(surface, x, y + 13, 12, 0);
     surface_draw_line_horizontal(surface, x, y + height - 13, 12, 0);

@@ -6,7 +6,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - MAGIC_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite_from3(mud->surface,
+    surface_draw_sprite(mud->surface,
                               mud->surface->width - UI_TABS_WIDTH - 3, 3,
                               mud->sprite_media + MAGIC_TAB_SPRITE_OFFSET);
 
@@ -87,7 +87,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                     strcpy(colour_prefix, "@gre@");
                 }
 
-                surface_draw_sprite_from3(
+                surface_draw_sprite(
                     mud->surface, ui_x + 2 + i * 44, ui_y + 150,
                     mud->sprite_item + game_data_item_sprite[rune_id]);
 

@@ -36,17 +36,17 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         MUD_IS_COMPACT ? MUD_WIDTH + (MUD_WIDTH / 5) + 12 : HBAR_WIDTH;
 
     if (MUD_IS_COMPACT) {
-        surface_sprite_clipping_from9(mud->surface, x, y, bar_width, 15,
+        surface_draw_sprite_transform_mask(mud->surface, x, y, bar_width, 15,
                                       mud->sprite_media + HBAR_SPRITE_OFFSET, 0,
                                       0, 0, 0);
     } else {
-        surface_draw_sprite_from3(mud->surface, x, y,
+        surface_draw_sprite(mud->surface, x, y,
                                   mud->sprite_media + HBAR_SPRITE_OFFSET);
     }
 
     if (!MUD_IS_COMPACT && mud->surface->width > HBAR_WIDTH) {
         for (int i = 0; i < mud->surface->width / HBAR_WIDTH; i++) {
-            surface_draw_sprite_from3(mud->surface,
+            surface_draw_sprite(mud->surface,
                                       (x + HBAR_WIDTH) + (HBAR_WIDTH * i),
                                       y + 4, mud->sprite_media + 22);
         }

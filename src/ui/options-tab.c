@@ -156,7 +156,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
         mud->options->skip_tutorial && (player_x >= 190 && player_x <= 240 &&
                                         player_y >= 720 && player_y <= 770);
 
-    surface_draw_sprite_from3(mud->surface,
+    surface_draw_sprite(mud->surface,
                               mud->surface->width - UI_TABS_WIDTH - 3, 3,
                               mud->sprite_media + 6);
 

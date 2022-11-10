@@ -1292,7 +1292,7 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     int logo_y = (mud->game_height / 2) -
                  (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
 
-    surface_draw_sprite_from3(mud->surface, logo_x, logo_y, logo_sprite_id);
+    surface_draw_sprite(mud->surface, logo_x, logo_y, logo_sprite_id);
 
     /* loading bar */
     int bar_x = (mud->game_width / 2.0f) - (LOADING_WIDTH / 2.0f);
@@ -1943,7 +1943,7 @@ void mudclient_load_textures(mudclient *mud) {
                              index_dat, 1);
 
         surface_draw_box_software(surface, 0, 0, 128, 128, MAGENTA);
-        surface_draw_sprite_from3_software(surface, 0, 0, mud->sprite_texture);
+        surface_draw_sprite_software(surface, 0, 0, mud->sprite_texture);
 
         free(surface->sprite_palette[mud->sprite_texture]);
         surface->sprite_palette[mud->sprite_texture] = NULL;
@@ -1965,7 +1965,7 @@ void mudclient_load_textures(mudclient *mud) {
                 surface_parse_sprite(surface, mud->sprite_texture,
                                      texture_sub_dat, index_dat, 1);
 
-                surface_draw_sprite_from3_software(surface, 0, 0,
+                surface_draw_sprite_software(surface, 0, 0,
                                                    mud->sprite_texture);
 
                 free(surface->sprite_palette[mud->sprite_texture]);
@@ -3668,7 +3668,9 @@ void mudclient_handle_game_input(mudclient *mud) {
         mud->mouse_click_x_step++;
     }
 
-    scene_scroll_texture(mud->scene, FOUNTATION_ID);
+#ifdef RENDER_SW
+    scene_scroll_texture(mud->scene, FOUNTAIN_ID);
+#endif
 
     mud->object_animation_count++;
 
@@ -3863,7 +3865,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
             offset_x += (10 * ty) / 100;
         }
 
-        surface_draw_sprite_from3_depth(
+        surface_draw_sprite_depth(
             mud->surface, (offset_x + (width / 2)) - 12,
             (y + (height / 2)) - 12, mud->sprite_media + 11 + (is_npc ? 1 : 0),
             depth, depth);
@@ -4038,7 +4040,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                     player_top_bottom_colours[player->bottom_colour];
             }
 
-            surface_sprite_clipping_from9_depth(
+            surface_draw_sprite_transform_mask_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
@@ -4082,7 +4084,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         int width = (16 * ty) / 100;
         int height = (16 * ty) / 100;
 
-        surface_draw_sprite_scaled(mud->surface, k3 - (width / 2),
+        surface_draw_sprite_scale(mud->surface, k3 - (width / 2),
                                    y - (height / 2) - ((10 * ty) / 100), width,
                                    height, mud->sprite_media + 13,
                                    damage_depth);
@@ -4195,7 +4197,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 skin_colour = game_data_npc_skin_colour[npc->npc_id];
             }
 
-            surface_sprite_clipping_from9_depth(
+            surface_draw_sprite_transform_mask_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
@@ -4227,7 +4229,7 @@ void mudclient_draw_blue_bar(mudclient *mud) {
     }
 
     for (int i = 0; i < bars; i++) {
-        surface_draw_sprite_from3(mud->surface, i * HBAR_WIDTH,
+        surface_draw_sprite(mud->surface, i * HBAR_WIDTH,
                                   mud->surface->height - 16 +
                                       (mud->surface->height < 268 ? 4 : 0),
                                   mud->sprite_media + 22);
@@ -4270,7 +4272,7 @@ GameCharacter *mudclient_get_opponent(mudclient *mud) {
 }
 
 void mudclient_draw_ui(mudclient *mud) {
-    surface_draw_sprite_alpha_from4(mud->surface, mud->surface->width - 200, 3,
+    surface_draw_sprite_alpha(mud->surface, mud->surface->width - 200, 3,
                                     mud->sprite_media, 128);
 
     int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
@@ -4474,7 +4476,7 @@ void mudclient_draw_overhead(mudclient *mud) {
         int final_x = x - (scale_x_clip / 2);
         int final_y = (y - scale_y + (scale_y / 2)) - (scale_y_clip / 2);
 
-        surface_sprite_clipping_from9(
+        surface_draw_sprite_transform_mask(
             mud->surface, final_x, final_y, scale_x_clip, scale_y_clip,
             game_data_item_sprite[id] + mud->sprite_item,
             game_data_item_mask[id], 0, 0, 0);
@@ -4861,11 +4863,11 @@ void mudclient_draw_game(mudclient *mud) {
 
     /* draw the animated X sprite when clicking */
     if (mud->mouse_click_x_step > 0) {
-        surface_draw_sprite_from3(
+        surface_draw_sprite(
             mud->surface, mud->mouse_click_x_x - 8, mud->mouse_click_x_y - 8,
             mud->sprite_media + 14 + ((24 - mud->mouse_click_x_step) / 6));
     } else if (mud->mouse_click_x_step < 0) {
-        surface_draw_sprite_from3(
+        surface_draw_sprite(
             mud->surface, mud->mouse_click_x_x - 8, mud->mouse_click_x_y - 8,
             mud->sprite_media + 18 + ((24 + mud->mouse_click_x_step) / 6));
     }
@@ -4904,7 +4906,7 @@ void mudclient_draw_game(mudclient *mud) {
         mud->is_in_wilderness = wilderness_depth > 0;
 
         if (mud->is_in_wilderness) {
-            surface_draw_sprite_from3(mud->surface, mud->surface->width - 59,
+            surface_draw_sprite(mud->surface, mud->surface->width - 59,
                                       mud->surface->height - 68,
                                       mud->sprite_media + 13);
 
@@ -5752,7 +5754,7 @@ void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
     int picture = game_data_item_sprite[id] + mud->sprite_item;
     int mask = game_data_item_mask[id];
 
-    surface_sprite_clipping_from9_depth(mud->surface, x, y, width, height,
+    surface_draw_sprite_transform_mask_depth(mud->surface, x, y, width, height,
                                         picture, mask, 0, 0, 0, depth_top,
                                         depth_bottom);
 }
@@ -6004,6 +6006,7 @@ int mudclient_is_ui_scaled(mudclient *mud) {
            mud->game_height >= (MUD_HEIGHT * 2);
 #else
     (void)mud;
+
     return 0;
 #endif
 }
@@ -6057,7 +6060,7 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
         int og_width = ITEM_GRID_SLOT_WIDTH - 1;
         int og_height = ITEM_GRID_SLOT_HEIGHT - 2;
 
-        surface_sprite_clipping_from9(
+        surface_draw_sprite_transform_mask(
             mud->surface, x + 4 + og_width * 0.125f, y + 2 + og_height * 0.125f,
             og_width * 0.75f, og_height * 0.75f,
             mud->surface->mud->sprite_item +

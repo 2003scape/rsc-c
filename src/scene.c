@@ -3467,8 +3467,8 @@ void scene_set_texture_pixels(Scene *scene, int id) {
     }
 }
 
-void scene_scroll_texture(Scene *scene, int id) {
 #ifdef RENDER_SW
+void scene_scroll_texture(Scene *scene, int id) {
     if (scene->texture_pixels[id] == NULL) {
         return;
     }
@@ -3498,8 +3498,8 @@ void scene_scroll_texture(Scene *scene, int id) {
         colours[SCROLL_TEXTURE_AREA * 3 + i] =
             (colour - (colour >> 2) - (colour >> 3)) & 0xf8f8ff;
     }
-#endif
 }
+#endif
 
 /* used to convert face_fill values (textures or colours) to minimap colours */
 int scene_get_fill_colour(Scene *scene, int face_fill) {
