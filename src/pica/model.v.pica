@@ -33,15 +33,17 @@
     dp4 out_position.z, projection_view_model[2], r0
     dp4 out_position.w, projection_view_model[3], r0
 
-    ; out_colour = (1.0, 0.0, 1.0, 1.0)
-    ;mov out_colour, myconst.yxyy
+    ; out_colour = (1.0, 0.0, 1.0, 0.5)
+    ; mov out_colour, myconst.yxyw
 
     ifu cull_front
-        mov out_colour, in_front_colour
-        mov out_texture_position, in_texture_position.xy
-    .else
+;        mov out_colour, myconst.yxyy
         mov out_colour, in_back_colour
         mov out_texture_position, in_texture_position.zw
+    .else
+;        mov out_colour.xyzw, myconst.yxxy
+        mov out_colour, in_front_colour
+        mov out_texture_position, in_texture_position.xy
     .end
 
     end

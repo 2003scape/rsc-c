@@ -4270,6 +4270,7 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                          (float)game_model->light_direction_magnitude);
     }
 
+#if 0
     glCullFace(GL_BACK);
     shader_set_int(&scene->game_model_shader, "cull_front", 0);
 
@@ -4278,7 +4279,9 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
+#endif
 
+#if 1
     glCullFace(GL_FRONT);
     shader_set_int(&scene->game_model_shader, "cull_front", 1);
 
@@ -4287,6 +4290,7 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
+#endif
 }
 
 void scene_gl_render(Scene *scene) {
@@ -4560,9 +4564,8 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                      scene->_3ds_gl_projection_view_model_uniform,
                      (C3D_Mtx*)projection_view_model);
 
-
     C3D_BoolUnifSet(GPU_VERTEX_SHADER,
-                     scene->_3ds_gl_projection_view_model_uniform, 0);
+                     scene->_3ds_gl_cull_front_uniform, 0);
 
     C3D_CullFace(GPU_CULL_BACK_CCW);
 
@@ -4572,9 +4575,7 @@ game_model->gl_ebo_length,
 C3D_UNSIGNED_SHORT,
     game_model->_3ds_gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
 
-
-    C3D_BoolUnifSet(GPU_VERTEX_SHADER,
-                     scene->_3ds_gl_projection_view_model_uniform, 1);
+    C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_cull_front_uniform, 1);
 
     C3D_CullFace(GPU_CULL_FRONT_CCW);
 
@@ -4638,6 +4639,8 @@ void scene_3ds_gl_render(Scene *scene) {
     }
 
     C3D_BindProgram(&scene->_3ds_gl_model_shader);
+
+    // C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
 
     C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 

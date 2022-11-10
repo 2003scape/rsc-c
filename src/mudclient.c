@@ -280,8 +280,8 @@ void mudclient_3ds_gl_frame_start(mudclient *mud) {
     /* crashes on console, faster on citra */
     // C3D_FrameBegin(C3D_FRAME_NONBLOCK);
 
-    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
     C3D_FrameDrawOn(mud->_3ds_gl_render_target);
 }
 
@@ -2112,7 +2112,7 @@ void mudclient_load_models(mudclient *mud) {
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int models_length = game_data_model_count - 1;
-    models_length = 1;
+    models_length = 2;
 
     /*if (mud->options->ground_item_models) {
         models_length += game_data_item_count;
@@ -2122,7 +2122,10 @@ void mudclient_load_models(mudclient *mud) {
 
     for (int i = 0; i < game_data_model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
-        break;
+
+        if (i == 1) {
+            break;
+        }
         //GameModel *game_model = mud->game_models[i];
     }
 
@@ -5510,13 +5513,14 @@ void mudclient_poll_events(mudclient *mud) {
 
         mud->camera_rotation = (mud->camera_rotation + (gyro.y / 150)) & 0xff;
 
-        mud->camera_zoom += gyro.x / -20;
+        // accelerometer should do zooming
+        /*mud->camera_zoom += gyro.x / -20;
 
         if (mud->camera_zoom > ZOOM_MAX) {
             mud->camera_zoom = ZOOM_MAX;
         } else if (mud->camera_zoom < ZOOM_MIN) {
             mud->camera_zoom = ZOOM_MIN;
-        }
+        }*/
     }
 #endif
 

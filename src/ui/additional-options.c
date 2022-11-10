@@ -670,9 +670,11 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
             mudclient_get_active_options(mud, &options, &option_types);
 
             if (options != NULL && option_types != NULL) {
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+                int old_field_of_view = mud->options->field_of_view;
+#endif
 #ifdef RENDER_GL
                 int old_ui_scale = mud->options->ui_scale;
-                int old_field_of_view = mud->options->field_of_view;
 #endif
 
                 for (int i = 0; i < panel->control_count; i++) {
@@ -688,13 +690,14 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
                     }
                 }
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+                if (old_field_of_view != mud->options->field_of_view) {
+                    mudclient_update_fov(mud);
+                }
+#endif
 #ifdef RENDER_GL
                 if (old_ui_scale != mud->options->ui_scale) {
                     mudclient_on_resize(mud);
-                }
-
-                if (old_field_of_view != mud->options->field_of_view) {
-                    mudclient_update_fov(mud);
                 }
 #endif
             }

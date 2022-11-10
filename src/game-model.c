@@ -1266,7 +1266,11 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
 
         for (int i = 0; i < face_vertex_count; i++) {
             us[i] = face_us[i];
+#ifdef RENDER_3DS_GL
+            vs[i] = 1.0f - face_vs[i];
+#else
             vs[i] = face_vs[i];
+#endif
         }
 
         return;
@@ -1337,7 +1341,11 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
         float y = vs[i];
 
         us[i] = (x - min_x) / (max_x - min_x);
+#ifdef RENDER_3DS_GL
+        vs[i] = (y - min_y) / (max_y - min_y);
+#else
         vs[i] = 1.0f - (y - min_y) / (max_y - min_y);
+#endif
     }
 }
 
@@ -1359,12 +1367,11 @@ void game_model_gl_decode_face_fill(int face_fill,
         } else if (face_fill >= 0) {
             vbo_face_fill->texture_index = face_fill;
 #ifdef RENDER_3DS_GL
-        vbo_face_fill->r = 0.0f;
-        vbo_face_fill->g = 0.0f;
-        vbo_face_fill->b = 0.0f;
-        vbo_face_fill->a = 0.0f;
+            vbo_face_fill->r = 0.0f;
+            vbo_face_fill->g = 0.0f;
+            vbo_face_fill->b = 0.0f;
+            vbo_face_fill->a = 0.0f;
 #endif
-            //vbo_face_fill->a = 0.0f;
         }
     } else {
 #ifdef RENDER_3DS_GL
@@ -1915,8 +1922,6 @@ void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
         game_model->gl_ebo_offset = ebo_offset;
 
         game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
-
-        break;
     }
 }
 
@@ -1933,6 +1938,6 @@ void _3ds_gl_offset_texture_uvs_atlas(_3ds_gl_atlas_position texture_position,
     *texture_y *= texture_height;
 
     *texture_x += texture_position.left_u;
-    *texture_y += texture_position.top_v; /* might be bottom, or subtract */
+    *texture_y += texture_position.top_v;
 }
 #endif

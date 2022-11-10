@@ -1444,6 +1444,7 @@ void surface_draw(Surface *surface) {
     C3D_SetAttrInfo(&surface->_3ds_gl_attr_info);
     C3D_SetBufInfo(&surface->_3ds_gl_buf_info);
 
+    C3D_DepthTest(false, GPU_LESS, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
     // C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
 
