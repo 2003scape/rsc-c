@@ -9,7 +9,6 @@ typedef struct GameCharacter GameCharacter;
 #include "mudclient.h"
 #include "utility.h"
 
-#define EQUIP_COUNT 12
 #define WAYPOINT_COUNT 10
 
 typedef struct GameCharacter {
@@ -21,6 +20,7 @@ typedef struct GameCharacter {
     int current_x;
     int current_y;
 
+    /* set to -1 for players */
     int npc_id;
 
     int step_count;
@@ -32,8 +32,11 @@ typedef struct GameCharacter {
     int current_animation;
     int next_animation;
 
+    /* chat message above head */
     char message[255];
     int message_timeout;
+
+    /* action bubble */
     int bubble_item;
     int bubble_timeout;
 
@@ -47,7 +50,7 @@ typedef struct GameCharacter {
     int top_colour;
     int bottom_colour;
     int skin_colour;
-    int equipped_item[EQUIP_COUNT];
+    ANIMATION_INDEX animations[ANIMATION_COUNT];
 
     int incoming_projectile_sprite;
     int attacking_player_server_index;

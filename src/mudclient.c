@@ -21,7 +21,7 @@ char login_screen_status[255] = {0};
 
 /* the order in which to draw character (player and NPC) sprites at different
  * angles */
-int character_animation_array[8][12] = {
+ANIMATION_INDEX character_animation_array[8][ANIMATION_COUNT] = {
     {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
      ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
      ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
@@ -237,9 +237,7 @@ int update_wii_mouse(WPADData *wiimote_data) {
 
     return updated;
 }
-#endif
-
-#ifdef _3DS
+#elif defined(_3DS)
 u32 *SOC_buffer = NULL;
 
 void soc_shutdown() { socExit(); }
@@ -279,20 +277,16 @@ void _3ds_keyboard_thread_callback(void *arg) {
 #ifdef RENDER_3DS_GL
 void mudclient_3ds_gl_frame_start(mudclient *mud) {
     /* crashes on console, faster on citra */
-    // C3D_FrameBegin(C3D_FRAME_NONBLOCK);
-
+    //C3D_FrameBegin(C3D_FRAME_NONBLOCK);
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
     C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
     C3D_FrameDrawOn(mud->_3ds_gl_render_target);
 }
 
-void mudclient_3ds_gl_frame_end() {
-    C3D_FrameEnd(0);
-}
+void mudclient_3ds_gl_frame_end() { C3D_FrameEnd(0); }
 #endif
-#endif
-
-#if !defined(WII) && !defined(_3DS)
+#else
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     *char_code = -1;
 
@@ -691,7 +685,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
 #ifdef _3DS
-    //gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
+    // gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
 
     atexit(soc_shutdown);
 
@@ -857,9 +851,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef RENDER_3DS_GL
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
-    mud->_3ds_gl_render_target = C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+    mud->_3ds_gl_render_target =
+        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 
-    C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target,  GFX_BOTTOM, GFX_LEFT,  DISPLAY_TRANSFER_FLAGS);
+    C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target, GFX_BOTTOM, GFX_LEFT,
+                              DISPLAY_TRANSFER_FLAGS);
 #endif
 
     mud->surface = malloc(sizeof(Surface));
@@ -873,8 +869,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 #ifdef _3DS
     mudclient_3ds_draw_top_background(mud);
-
-    //gspWaitForVBlank();
+    // gspWaitForVBlank();
 #endif
 
     mudclient_run(mud);
@@ -1966,7 +1961,7 @@ void mudclient_load_textures(mudclient *mud) {
                                      texture_sub_dat, index_dat, 1);
 
                 surface_draw_sprite_software(surface, 0, 0,
-                                                   mud->sprite_texture);
+                                             mud->sprite_texture);
 
                 free(surface->sprite_palette[mud->sprite_texture]);
                 surface->sprite_palette[mud->sprite_texture] = NULL;
@@ -1999,7 +1994,6 @@ void mudclient_load_textures(mudclient *mud) {
         free(surface->surface_pixels[mud->sprite_texture_world + i]);
         surface->surface_pixels[mud->sprite_texture_world + i] = NULL;
     }
-
 
     free(index_dat);
 
@@ -2128,7 +2122,7 @@ void mudclient_load_models(mudclient *mud) {
         if (i == 1) {
             break;
         }
-        //GameModel *game_model = mud->game_models[i];
+        // GameModel *game_model = mud->game_models[i];
     }
 
     /*if (mud->options->ground_item_models) {
@@ -2144,7 +2138,7 @@ void mudclient_load_models(mudclient *mud) {
     C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
 
     game_model_3ds_gl_buffer_models(&mud->scene->_3ds_gl_game_model_buffer,
-                                     models_buffer, models_length);
+                                    models_buffer, models_length);
 #endif
 #endif
 }
@@ -2188,7 +2182,7 @@ void mudclient_reset_game(mudclient *mud) {
     surface_black_screen(mud->surface);
     // TODO add opengl support here
 
-    //surface_3ds_gl_reset_context(mud->surface);
+    // surface_3ds_gl_reset_context(mud->surface);
 
 #if defined(RENDER_3DS_GL)
     mudclient_3ds_gl_frame_start(mud);
@@ -2408,9 +2402,13 @@ void mudclient_login(mudclient *mud, char *username, char *password,
 
     int response = packet_stream_get_byte(mud->packet_stream);
 #else
+#ifdef _3DS
+    printf("Verb: Session id: %lld\n", session_id); /* ? */
+#else
     printf("Verb: Session id: %ld\n", session_id);
+#endif
 
-    int32_t keys[4];
+    int32_t keys[4] = {0};
     keys[0] = (int)(((float)rand() / (float)RAND_MAX) * (float)99999999);
     keys[1] = (int)(((float)rand() / (float)RAND_MAX) * (float)99999999);
     keys[2] = (int32_t)(session_id >> 32);
@@ -2465,6 +2463,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
+    // TODO enums
     switch (response) {
     case -1:
         mudclient_show_login_screen_status(mud, "Error unable to login.",
@@ -2867,9 +2866,7 @@ void mudclient_start_game(mudclient *mud) {
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
     SDL_SetWindowResizable(mud->window, 1);
-#endif
-
-#ifdef RENDER_GL
+#elif RENDER_GL
     SDL_SetWindowResizable(mud->gl_window, 1);
 #endif
 #endif
@@ -3865,10 +3862,10 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
             offset_x += (10 * ty) / 100;
         }
 
-        surface_draw_sprite_depth(
-            mud->surface, (offset_x + (width / 2)) - 12,
-            (y + (height / 2)) - 12, mud->sprite_media + 11 + (is_npc ? 1 : 0),
-            depth, depth);
+        surface_draw_sprite_depth(mud->surface, (offset_x + (width / 2)) - 12,
+                                  (y + (height / 2)) - 12,
+                                  mud->sprite_media + 11 + (is_npc ? 1 : 0),
+                                  depth, depth);
 
         char damage_string[12] = {0};
         sprintf(damage_string, "%d", character->damage_taken);
@@ -3880,7 +3877,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 }
 
 int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
-                               int animation_index) {
+                               ANIMATION_INDEX animation_index) {
 #ifdef RENDER_GL
     /* lmao sorry */
     int roof_id = world_get_wall_roof(mud->world, character->current_x / 128,
@@ -3953,10 +3950,11 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 #endif
 
     for (int i = 0; i < ANIMATION_COUNT; i++) {
-        int animation_index = character_animation_array[animation_order][i];
-        int aimation_id = player->equipped_item[animation_index] - 1;
+        ANIMATION_INDEX animation_index = character_animation_array[animation_order][i];
 
-        if (aimation_id < 0) {
+        int animation_id = player->animations[animation_index] - 1;
+
+        if (animation_id < 0) {
             continue;
         }
 
@@ -3969,7 +3967,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         int j5 = j2;
 
         if (flip && i2 >= 1 && i2 <= 3) {
-            if (game_data_animation_has_f[aimation_id] == 1) {
+            if (game_data_animation_has_f[animation_id] == 1) {
                 j5 += 15;
             } else if (animation_index == 4 && i2 == 1) {
                 offset_x = -22;
@@ -4010,8 +4008,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             }
         }
 
-        if (i2 != 5 || game_data_animation_has_a[aimation_id] == 1) {
-            int sprite_id = j5 + game_data_animation_number[aimation_id];
+        if (i2 != 5 || game_data_animation_has_a[animation_id] == 1) {
+            int sprite_id = j5 + game_data_animation_number[animation_id];
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -4022,12 +4020,12 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             int clip_width =
                 (width * mud->surface->sprite_width_full[sprite_id]) /
                 mud->surface->sprite_width_full
-                    [game_data_animation_number[aimation_id]];
+                    [game_data_animation_number[animation_id]];
 
             offset_x -= (clip_width - width) / 2;
 
             int animation_colour =
-                game_data_animation_character_colour[aimation_id];
+                game_data_animation_character_colour[animation_id];
             int skin_colour = player_skin_colours[player->skin_colour];
 
             if (animation_colour == 1) {
@@ -4085,9 +4083,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         int height = (16 * ty) / 100;
 
         surface_draw_sprite_scale(mud->surface, k3 - (width / 2),
-                                   y - (height / 2) - ((10 * ty) / 100), width,
-                                   height, mud->sprite_media + 13,
-                                   damage_depth);
+                                  y - (height / 2) - ((10 * ty) / 100), width,
+                                  height, mud->sprite_media + 13, damage_depth);
     }
 }
 
@@ -4230,9 +4227,9 @@ void mudclient_draw_blue_bar(mudclient *mud) {
 
     for (int i = 0; i < bars; i++) {
         surface_draw_sprite(mud->surface, i * HBAR_WIDTH,
-                                  mud->surface->height - 16 +
-                                      (mud->surface->height < 268 ? 4 : 0),
-                                  mud->sprite_media + 22);
+                            mud->surface->height - 16 +
+                                (mud->surface->height < 268 ? 4 : 0),
+                            mud->sprite_media + 22);
     }
 }
 
@@ -4273,7 +4270,7 @@ GameCharacter *mudclient_get_opponent(mudclient *mud) {
 
 void mudclient_draw_ui(mudclient *mud) {
     surface_draw_sprite_alpha(mud->surface, mud->surface->width - 200, 3,
-                                    mud->sprite_media, 128);
+                              mud->sprite_media, 128);
 
     int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
 
@@ -4907,8 +4904,8 @@ void mudclient_draw_game(mudclient *mud) {
 
         if (mud->is_in_wilderness) {
             surface_draw_sprite(mud->surface, mud->surface->width - 59,
-                                      mud->surface->height - 68,
-                                      mud->sprite_media + 13);
+                                mud->surface->height - 68,
+                                mud->sprite_media + 13);
 
             surface_draw_string_centre(mud->surface, "Wilderness",
                                        mud->surface->width - 47,
@@ -4947,7 +4944,7 @@ void mudclient_draw_game(mudclient *mud) {
 #ifdef _3DS
     /* draw the scene to the top screen */
     if (mud->_3ds_r_down) {
-        //mudclient_3ds_draw_framebuffer_top(mud);
+        // mudclient_3ds_draw_framebuffer_top(mud);
     }
 
 #ifdef RENDER_SW
@@ -5755,8 +5752,8 @@ void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
     int mask = game_data_item_mask[id];
 
     surface_draw_sprite_transform_mask_depth(mud->surface, x, y, width, height,
-                                        picture, mask, 0, 0, 0, depth_top,
-                                        depth_bottom);
+                                             picture, mask, 0, 0, 0, depth_top,
+                                             depth_bottom);
 }
 
 int mudclient_is_item_equipped(mudclient *mud, int id) {

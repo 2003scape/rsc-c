@@ -405,12 +405,12 @@ void mudclient_packet_tick(mudclient *mud) {
                     offset++;
 
                     for (int j = 0; j < equipped_count; j++) {
-                        player->equipped_item[j] =
+                        player->animations[j] =
                             get_unsigned_byte(data[offset++]);
                     }
 
-                    for (int j = equipped_count; j < EQUIP_COUNT; j++) {
-                        player->equipped_item[j] = 0;
+                    for (int j = equipped_count; j < ANIMATION_COUNT; j++) {
+                        player->animations[j] = 0;
                     }
 
                     player->hair_colour = data[offset++] & 0xff;

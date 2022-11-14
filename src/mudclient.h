@@ -216,18 +216,21 @@
 
 /* animation order indices */
 #define ANIMATION_COUNT 12
-#define ANIMATION_INDEX_HEAD 0
-#define ANIMATION_INDEX_BODY 1
-#define ANIMATION_INDEX_LEGS 2
-#define ANIMATION_INDEX_LEFT_HAND 3    /* shields */
-#define ANIMATION_INDEX_RIGHT_HAND 4   /* swords */
-#define ANIMATION_INDEX_HEAD_OVERLAY 5 /* med helms */
-#define ANIMATION_INDEX_BODY_OVERLAY 6 /* chainmail */
-#define ANIMATION_INDEX_LEGS_OVERLAY 7 /* skirts */
-// TODO what is 8?
-#define ANIMATION_INDEX_BOOTS 9
-#define ANIMATION_INDEX_NECK 10 /* amulets */
-#define ANIMATION_INDEX_CAPE 11
+
+typedef enum {
+    ANIMATION_INDEX_HEAD = 0,
+    ANIMATION_INDEX_BODY = 1,
+    ANIMATION_INDEX_LEGS = 2,
+    ANIMATION_INDEX_LEFT_HAND = 3, /* shields */
+    ANIMATION_INDEX_RIGHT_HAND = 4, /* swords */
+    ANIMATION_INDEX_HEAD_OVERLAY = 5, /* med helms */
+    ANIMATION_INDEX_BODY_OVERLAY = 6, /* chainmail */
+    ANIMATION_INDEX_LEGS_OVERLAY = 7, /* skirts */
+    ANIMATION_INDEX_8 = 8,
+    ANIMATION_INDEX_BOOTS = 9,
+    ANIMATION_INDEX_NECK = 10, /* amulets */
+    ANIMATION_INDEX_CAPE = 11
+} ANIMATION_INDEX;
 
 /* skill IDs */
 #define SKILL_ATTACK 0
@@ -289,7 +292,7 @@ typedef struct mudclient mudclient;
 extern char *font_files[];
 extern char *animated_models[];
 extern char login_screen_status[255];
-extern int character_animation_array[8][12];
+extern ANIMATION_INDEX character_animation_array[8][12];
 extern int character_walk_model[4];
 extern int character_combat_model_array1[8];
 extern int character_combat_model_array2[8];
@@ -1018,7 +1021,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
                                      int x, int y, int ty, int width,
                                      int height, int is_npc, float depth);
 int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
-                               int animation_index);
+                               ANIMATION_INDEX animation_index);
 void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                            int id, int skew_x, int ty, float depth_top,
                            float depth_bottom);

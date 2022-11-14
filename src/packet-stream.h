@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -11,8 +12,8 @@
 #include <network.h>
 #else
 #ifdef WIN32
-#include <ws2tcpip.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #else
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -65,15 +66,13 @@ typedef struct PacketStream {
     char *rsa_exponent;
     char *rsa_modulus;
 
-#if 0
-    int decode_key;
+    /*int decode_key;
     int decode_threat_index;
 
     int encode_key;
     int encode_threat_index;
 
-    int opcode_friend;
-#endif
+    int opcode_friend;*/
 #endif
 } PacketStream;
 
@@ -86,7 +85,8 @@ void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
 int packet_stream_read_byte(PacketStream *packet_stream);
 int packet_stream_has_packet(PacketStream *packet_stream);
 int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer);
-void packet_stream_new_packet(PacketStream *packet_stream, CLIENT_OPCODE opcode);
+void packet_stream_new_packet(PacketStream *packet_stream,
+                              CLIENT_OPCODE opcode);
 /*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);*/
 void packet_stream_write_packet(PacketStream *packet_stream, int i);
 void packet_stream_send_packet(PacketStream *packet_stream);
@@ -97,12 +97,10 @@ void packet_stream_put_short(PacketStream *packet_stream, int i);
 void packet_stream_put_int(PacketStream *packet_stream, int i);
 void packet_stream_put_long(PacketStream *packet_stream, int64_t i);
 void packet_stream_put_string(PacketStream *packet_stream, char *s);
-
 #ifdef REVISION_177
 void packet_stream_put_password(PacketStream *packet_stream, int session_id,
                                 char *password);
 #endif
-
 int packet_stream_get_byte(PacketStream *packet_stream);
 int packet_stream_get_short(PacketStream *packet_stream);
 int packet_stream_get_int(PacketStream *packet_stream);

@@ -1381,6 +1381,53 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 
     surface_3ds_gl_buffer_quad(surface, sprite_quad, texture, base_texture);
 }
+
+void surface_3ds_gl_buffer_gradient(Surface *surface, int x, int y, int width,
+                                    int height, int top_colour,
+                                    int bottom_colour) {
+    float bottom_red = ((bottom_colour >> 16) & 0xff) / 255.0f;
+    float bottom_green = ((bottom_colour >> 8) & 0xff) / 255.0f;
+    float bottom_blue = (bottom_colour & 0xff) / 255.0f;
+    float top_red = ((top_colour >> 16) & 0xff) / 255.0f;
+    float top_green = ((top_colour >> 8) & 0xff) / 255.0f;
+    float top_blue = (top_colour & 0xff) / 255.0f;
+
+    float left_x = x;
+    float right_x = x + width;
+    float top_y = (240 - y - height);
+    float bottom_y = (240 - y);
+
+    // TODO use constant for transparent pixel
+    _3ds_gl_flat_vertex gradient_quad[] = {
+        /* top left / northwest */
+        {left_x, top_y, 0,                           //
+         bottom_red, bottom_green, bottom_blue, 1.0, //
+         0, 0,                                       //
+         0.001953f, 0.0},                            //
+
+        /* top right / northeast */
+        {right_x, top_y, 0,                          //
+         bottom_red, bottom_green, bottom_blue, 1.0, //
+         0, 0,                                       //
+         0.001953f, 0.0},                            //
+
+        /* bottom right / southeast */
+        {right_x, bottom_y, 0,              //
+         top_red, top_green, top_blue, 1.0, //
+         0, 0,                              //
+         0.001953f, 0.0},                   //
+
+        /* bottom left / southwest */
+        {left_x, bottom_y, 0,               //
+         top_red, top_green, top_blue, 1.0, //
+         0, 0,                              //
+         0.001953f, 0.0},
+    };
+
+    surface_3ds_gl_buffer_quad(surface, gradient_quad,
+                               &surface->_3ds_gl_sprites_tex,
+                               &surface->_3ds_gl_sprites_tex);
+}
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,
@@ -1472,7 +1519,8 @@ void surface_draw(Surface *surface) {
     uint8_t *surface_pixels = (uint8_t *)surface->pixels;
 
     for (int x = 0; x < surface->width; x++) {
-        // for (int y = 0; y < 240; y += (mud->surface->interlace ? 2 : 1)) {
+        // for (int y = 0; y < 240; y += (mud->surface->interlace ? 2 : 1))
+        // {
         for (int y = 0; y < 240; y++) {
             int framebuffer_index = ((x * 240) + (239 - y)) * 3;
             int pixel_index = ((y * surface->width) + x) * 4;
@@ -1774,54 +1822,8 @@ void surface_draw_gradient(Surface *surface, int x, int y, int width,
     surface_gl_buffer_gradient(surface, x, y, width, height, top_colour,
                                bottom_colour);
 #elif defined(RENDER_3DS_GL)
-    // TODO function
-    float left_x = x;
-    float right_x = x + width;
-    float top_y = (240 - y - height);
-    float bottom_y = (240 - y);
-
-    // TODO use constant for transparent pixel
-    _3ds_gl_flat_vertex gradient_quad[] = {
-        /* top left / northwest */
-        {left_x, top_y, 0,      //
-         bottom_red / 255.0f,   //
-         bottom_green / 255.0f, //
-         bottom_blue / 255.0f,  //
-         1.0,                   //
-         0, 0,                  //
-         0.001953f, 0.0},       //
-
-        /* top right / northeast */
-        {right_x, top_y, 0,     //
-         bottom_red / 255.0f,   //
-         bottom_green / 255.0f, //
-         bottom_blue / 255.0f,  //
-         1.0,                   //
-         0, 0,                  //
-         0.001953f, 0.0},       //
-
-        /* bottom right / southeast */
-        {right_x, bottom_y, 0, //
-         top_red / 255.0f,     //
-         top_green / 255.0f,   //
-         top_blue / 255.0f,    //
-         1.0,                  //
-         0, 0,                 //
-         0.001953f, 0.0},      //
-
-        /* bottom left / southwest */
-        {left_x, bottom_y, 0, //
-         top_red / 255.0f,    //
-         top_green / 255.0f,  //
-         top_blue / 255.0f,   //
-         1.0,                 //
-         0, 0,                //
-         0.001953f, 0.0},
-    };
-
-    surface_3ds_gl_buffer_quad(surface, gradient_quad,
-                               &surface->_3ds_gl_sprites_tex,
-                               &surface->_3ds_gl_sprites_tex);
+    surface_3ds_gl_buffer_gradient(surface, x, y, width, height, top_colour,
+                                   bottom_colour);
 #endif
 }
 
@@ -3810,8 +3812,8 @@ void surface_draw_sprite_transform_mask_software(
     }
 }
 
-/* applies scale, both grey and skin colour masks, skew/shear and flip. used for
- * entity sprites */
+/* applies scale, both grey and skin colour masks, skew/shear and flip. used
+ * for entity sprites */
 void surface_draw_sprite_transform_mask(Surface *surface, int x, int y,
                                         int draw_width, int draw_height,
                                         int sprite_id, int mask_colour,
