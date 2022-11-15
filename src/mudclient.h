@@ -36,9 +36,7 @@
 
 #define GAME_OFFSET_X 64
 #define GAME_OFFSET_Y 54
-#endif
-
-#ifdef _3DS
+#elif defined(_3DS)
 #include <3ds.h>
 
 #include "game_top_bgr.h"
@@ -214,24 +212,6 @@
 /* texture IDs */
 #define FOUNTAIN_ID 17
 
-/* animation order indices */
-#define ANIMATION_COUNT 12
-
-typedef enum {
-    ANIMATION_INDEX_HEAD = 0,
-    ANIMATION_INDEX_BODY = 1,
-    ANIMATION_INDEX_LEGS = 2,
-    ANIMATION_INDEX_LEFT_HAND = 3, /* shields */
-    ANIMATION_INDEX_RIGHT_HAND = 4, /* swords */
-    ANIMATION_INDEX_HEAD_OVERLAY = 5, /* med helms */
-    ANIMATION_INDEX_BODY_OVERLAY = 6, /* chainmail */
-    ANIMATION_INDEX_LEGS_OVERLAY = 7, /* skirts */
-    ANIMATION_INDEX_8 = 8,
-    ANIMATION_INDEX_BOOTS = 9,
-    ANIMATION_INDEX_NECK = 10, /* amulets */
-    ANIMATION_INDEX_CAPE = 11
-} ANIMATION_INDEX;
-
 /* skill IDs */
 #define SKILL_ATTACK 0
 #define SKILL_DEFENSE 1
@@ -292,13 +272,6 @@ typedef struct mudclient mudclient;
 extern char *font_files[];
 extern char *animated_models[];
 extern char login_screen_status[255];
-extern ANIMATION_INDEX character_animation_array[8][12];
-extern int character_walk_model[4];
-extern int character_combat_model_array1[8];
-extern int character_combat_model_array2[8];
-extern int player_hair_colours[10];
-extern int player_top_bottom_colours[15];
-extern int player_skin_colours[5];
 
 #ifdef WII
 /* these are doubled for the wii */
@@ -569,7 +542,7 @@ typedef struct mudclient {
     int64_t session_id;
 #endif
 
-    int logged_in;
+    int8_t logged_in;
 
     /* ./ui/message-tabs.c */
     Panel *panel_message_tabs;

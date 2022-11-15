@@ -103,7 +103,16 @@ typedef struct _3ds_gl_context {
 #define SCRUB_MIDDLE_COLOUR 0x6081b8
 #define SCRUB_RIGHT_COLOUR 0x355f73
 
-// TODO enum FONT_12PT_BOLD etc
+typedef enum {
+    FONT_REGULAR_11 = 0,
+    FONT_BOLD_12 = 1,
+    FONT_REGULAR_12 = 2,
+    FONT_BOLD_13 = 3,
+    FONT_BOLD_14 = 4,
+    FONT_BOLD_16 = 5,
+    FONT_BOLD_20 = 6,
+    FONT_BOLD_24 = 7
+} FONT_STYLE;
 
 typedef struct Surface Surface;
 
@@ -422,20 +431,20 @@ void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
 #endif
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
-                               int font, int colour, float depth);
-void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
+                               FONT_STYLE font, int colour, float depth);
+void surface_draw_string(Surface *surface, char *text, int x, int y, FONT_STYLE font,
                          int colour);
 void surface_draw_string_right(Surface *surface, char *text, int x, int y,
-                               int font, int colour);
+                               FONT_STYLE font, int colour);
 void surface_draw_string_centre_depth(Surface *surface, char *text, int x,
-                                      int y, int font, int colour, float depth);
+                                      int y, FONT_STYLE font, int colour, float depth);
 void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
-                                int font, int colour);
+                                FONT_STYLE font, int colour);
 void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
-                            int font, int colour, int max);
-int surface_text_height(int font_id);
-int surface_text_height_font(int font_id);
-int surface_text_width(char *text, int font_id);
+                            FONT_STYLE font, int colour, int max);
+int surface_text_height(FONT_STYLE font);
+int surface_text_height_font(FONT_STYLE font);
+int surface_text_width(char *text, FONT_STYLE font);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
 void surface_draw_item(Surface *surface, int x, int y, int slot_width,

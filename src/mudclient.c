@@ -19,69 +19,6 @@ char *animated_models[] = {
 
 char login_screen_status[255] = {0};
 
-/* the order in which to draw character (player and NPC) sprites at different
- * angles */
-ANIMATION_INDEX character_animation_array[8][ANIMATION_COUNT] = {
-    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
-     ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
-     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_LEFT_HAND,
-     ANIMATION_INDEX_RIGHT_HAND},
-
-    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
-     ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
-     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_LEFT_HAND,
-     ANIMATION_INDEX_RIGHT_HAND},
-
-    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_LEGS,
-     ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
-     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_RIGHT_HAND},
-
-    {ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND,
-     ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY,
-     ANIMATION_INDEX_BODY, ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK,
-     8, ANIMATION_INDEX_CAPE, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY},
-
-    {ANIMATION_INDEX_LEFT_HAND, ANIMATION_INDEX_RIGHT_HAND,
-     ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY,
-     ANIMATION_INDEX_BODY, ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK,
-     8, ANIMATION_INDEX_CAPE, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY},
-
-    {ANIMATION_INDEX_RIGHT_HAND, ANIMATION_INDEX_LEFT_HAND,
-     ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY,
-     ANIMATION_INDEX_BODY, ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK,
-     8, ANIMATION_INDEX_CAPE, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY},
-
-    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_RIGHT_HAND, ANIMATION_INDEX_LEGS,
-     ANIMATION_INDEX_BOOTS, ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
-     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_LEFT_HAND},
-
-    {ANIMATION_INDEX_CAPE, ANIMATION_INDEX_LEGS, ANIMATION_INDEX_BOOTS,
-     ANIMATION_INDEX_LEGS_OVERLAY, ANIMATION_INDEX_BODY,
-     ANIMATION_INDEX_BODY_OVERLAY, ANIMATION_INDEX_NECK, ANIMATION_INDEX_HEAD,
-     ANIMATION_INDEX_HEAD_OVERLAY, 8, ANIMATION_INDEX_RIGHT_HAND,
-     ANIMATION_INDEX_LEFT_HAND}};
-
-int character_walk_model[] = {0, 1, 2, 1};
-int character_combat_model_array1[] = {0, 1, 2, 1, 0, 0, 0, 0};
-int character_combat_model_array2[] = {0, 0, 0, 0, 0, 1, 2, 1};
-
-int player_hair_colours[] = {0xffc030, 0xffa040, 0x805030, 0x604020, 0x303030,
-                             0xff6020, 0xff4000, 0xffffff, 0x00ff00, 0x00ffff};
-
-int player_top_bottom_colours[] = {0xff0000, 0xff8000, 0xffe000, 0xa0e000,
-                                   0x00e000, 0x008000, 0x00a080, 0x00b0ff,
-                                   0x0080ff, 0x0030f0, 0xe000e0, 0x303030,
-                                   0x604000, 0x805000, 0xffffff};
-
-int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
-
 #ifdef WII
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
@@ -3969,37 +3906,37 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         if (flip && i2 >= 1 && i2 <= 3) {
             if (game_data_animation_has_f[animation_id] == 1) {
                 j5 += 15;
-            } else if (animation_index == 4 && i2 == 1) {
+            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND && i2 == 1) {
                 offset_x = -22;
                 offset_y = -3;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == 4 && i2 == 2) {
+            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND && i2 == 2) {
                 offset_x = 0;
                 offset_y = -8;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == 4 && i2 == 3) {
+            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND && i2 == 3) {
                 offset_x = 26;
                 offset_y = -5;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == 3 && i2 == 1) {
+            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND && i2 == 1) {
                 offset_x = 22;
                 offset_y = 3;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == 3 && i2 == 2) {
+            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND && i2 == 2) {
                 offset_x = 0;
                 offset_y = 8;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == 3 && i2 == 3) {
+            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND && i2 == 3) {
                 offset_x = -26;
                 offset_y = 5;
 
@@ -4498,29 +4435,26 @@ void mudclient_draw_overhead(mudclient *mud) {
 }
 
 void mudclient_animate_objects(mudclient *mud) {
+    char name[23] = {0};
+
     if (mud->object_animation_cycle != mud->last_object_animation_cycle) {
         mud->last_object_animation_cycle = mud->object_animation_cycle;
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == FIRE_ID) {
-                char name[17] = {0};
                 sprintf(name, "firea%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == FIREPLACE_ID) {
-                char name[22] = {0};
                 sprintf(name, "fireplacea%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == LIGHTNING_ID) {
-                char name[21] = {0};
                 sprintf(name, "lightning%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == FIRE_SPELL_ID) {
-                char name[21] = {0};
                 sprintf(name, "firespell%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == SPELL_CHARGE_ID) {
-                char name[23] = {0};
                 sprintf(name, "spellcharge%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
@@ -4533,11 +4467,9 @@ void mudclient_animate_objects(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == TORCH_ID) {
-                char name[18] = {0};
                 sprintf(name, "torcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             } else if (mud->object_id[i] == SKULL_TORCH_ID) {
-                char name[23];
                 sprintf(name, "skulltorcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -4549,7 +4481,6 @@ void mudclient_animate_objects(mudclient *mud) {
 
         for (int i = 0; i < mud->object_count; i++) {
             if (mud->object_id[i] == CLAW_SPELL_ID) {
-                char name[21] = {0};
                 sprintf(name, "clawspell%d", mud->claw_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -5860,19 +5791,16 @@ void mudclient_play_sound(mudclient *mud, char *name) {
 
     ulaw_to_linear(length, (uint8_t *)mud->sound_data + offset, mud->pcm_out);
 
-#ifdef _3DS
-    mud->_3ds_sound_position = 0;
-    mud->_3ds_sound_length = length * 2;
-#endif
-
 #ifdef WII
     // ASND_StopVoice(0);
+
     ASND_SetVoice(0, VOICE_MONO_16BIT_BE, SAMPLE_RATE, 0, mud->pcm_out,
                   length * 2, 127, 127, NULL);
-#endif
-
-#if !defined(WII) && !defined(_3DS)
-    /* TODO could re-pause after sound plays */
+#elif defined(_3DS)
+    mud->_3ds_sound_position = 0;
+    mud->_3ds_sound_length = length * 2;
+#else
+    // TODO could re-pause after sound plays?
     SDL_PauseAudio(0);
     SDL_QueueAudio(1, mud->pcm_out, length * 2);
 #endif

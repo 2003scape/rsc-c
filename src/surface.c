@@ -4180,7 +4180,7 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
 }
 
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
-                               int font, int colour, float depth) {
+                               FONT_STYLE font, int colour, float depth) {
     // TODO 8 is maximum font ID
     int8_t *font_data = game_fonts[font];
     int text_length = strlen(text);
@@ -4309,19 +4309,19 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
 #endif
 }
 
-void surface_draw_string(Surface *surface, char *text, int x, int y, int font,
+void surface_draw_string(Surface *surface, char *text, int x, int y, FONT_STYLE font,
                          int colour) {
     surface_draw_string_depth(surface, text, x, y, font, colour, 0);
 }
 
 void surface_draw_string_right(Surface *surface, char *text, int x, int y,
-                               int font, int colour) {
+                               FONT_STYLE font, int colour) {
     surface_draw_string(surface, text, x - surface_text_width(text, font), y,
                         font, colour);
 }
 
 void surface_draw_string_centre_depth(Surface *surface, char *text, int x,
-                                      int y, int font, int colour,
+                                      int y, FONT_STYLE font, int colour,
                                       float depth) {
     surface_draw_string_depth(surface, text,
                               x - (int)(surface_text_width(text, font) / 2), y,
@@ -4329,14 +4329,14 @@ void surface_draw_string_centre_depth(Surface *surface, char *text, int x,
 }
 
 void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
-                                int font, int colour) {
+                                FONT_STYLE font, int colour) {
     surface_draw_string(surface, text,
                         x - (int)(surface_text_width(text, font) / 2), y, font,
                         colour);
 }
 
 void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
-                            int font, int colour, int max) {
+                            FONT_STYLE font, int colour, int max) {
     int width = 0;
     int8_t *font_data = game_fonts[font];
     int start = 0;
@@ -4386,8 +4386,8 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
     }
 }
 
-int surface_text_height(int font_id) {
-    switch (font_id) {
+int surface_text_height(FONT_STYLE font) {
+    switch (font) {
     case 0:
         return 12;
     case 1:
@@ -4405,21 +4405,21 @@ int surface_text_height(int font_id) {
     case 7:
         return 29;
     default:
-        return surface_text_height_font(font_id);
+        return surface_text_height_font(font);
     }
 }
 
-int surface_text_height_font(int font_id) {
-    if (font_id == 0) {
-        return game_fonts[font_id][8] - 2;
+int surface_text_height_font(FONT_STYLE font) {
+    if (font == 0) {
+        return game_fonts[font][8] - 2;
     }
 
-    return game_fonts[font_id][8] - 1;
+    return game_fonts[font][8] - 1;
 }
 
-int surface_text_width(char *text, int font_id) {
+int surface_text_width(char *text, FONT_STYLE font) {
     int total = 0;
-    int8_t *font = game_fonts[font_id];
+    int8_t *font_data = game_fonts[font];
     int text_length = strlen(text);
 
     for (int i = 0; i < text_length; i++) {
@@ -4429,7 +4429,7 @@ int surface_text_width(char *text, int font_id) {
                    text[i + 4] == '~') {
             i += 4;
         } else {
-            total += font[character_width[(unsigned)text[i]] + 7];
+            total += font_data[character_width[(unsigned)text[i]] + 7];
         }
     }
 
