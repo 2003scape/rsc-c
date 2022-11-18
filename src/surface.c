@@ -239,7 +239,7 @@ void surface_gl_create_font_texture(int32_t *dest, int font_id,
         int height = font_data[character_offset + 4];
 
         /* position of pixel data for the font (on/off) */
-        int font_pos = font_data[character_offset] * 16384 +
+        int font_pos = font_data[character_offset] * (128 * 128) +
                        font_data[character_offset + 1] * 128 +
                        font_data[character_offset + 2];
 
@@ -336,7 +336,6 @@ void surface_gl_reset_context(Surface *surface) {
 
     surface->gl_contexts[0].min_x = surface->bounds_min_x;
     surface->gl_contexts[0].max_x = surface->bounds_max_x;
-
     surface->gl_contexts[0].min_y = surface->bounds_min_y;
     surface->gl_contexts[0].max_y = surface->bounds_max_y;
 
@@ -1014,6 +1013,7 @@ float surface_gl_get_layer_depth(Surface *surface) {
 }
 
 void surface_gl_draw(Surface *surface, int use_depth) {
+    glEnable(GL_SCISSOR_TEST);
     glDisable(GL_CULL_FACE);
 
     if (!use_depth) {
@@ -1022,8 +1022,11 @@ void surface_gl_draw(Surface *surface, int use_depth) {
 
     shader_use(&surface->gl_flat_shader);
 
+    int is_ui_scaled = mudclient_is_ui_scaled(surface->mud);
+
+    /* check the depth so we don't scale the entities */
     shader_set_int(&surface->gl_flat_shader, "ui_scale",
-                   use_depth ? 0 : mudclient_is_ui_scaled(surface->mud));
+                   use_depth ? 0 : is_ui_scaled);
 
     glBindVertexArray(surface->gl_flat_vao);
     glActiveTexture(GL_TEXTURE0);
@@ -1035,17 +1038,16 @@ void surface_gl_draw(Surface *surface, int use_depth) {
 
         int interlace = surface->interlace;
 
-        shader_set_float(&surface->gl_flat_shader, "bounds_min_x",
-                         (float)context->min_x);
+        int min_y = context->min_y * (is_ui_scaled + 1);
+        int max_y = context->max_y * (is_ui_scaled + 1);
+        int min_x = context->min_x * (is_ui_scaled + 1);
+        int max_x = context->max_x * (is_ui_scaled + 1);
 
-        shader_set_float(&surface->gl_flat_shader, "bounds_max_x",
-                         (float)context->max_x);
+        int bounds_width = max_x - min_x;
+        int bounds_height = max_y - min_y;
 
-        shader_set_float(&surface->gl_flat_shader, "bounds_min_y",
-                         (float)(surface->height - context->min_y));
-
-        shader_set_float(&surface->gl_flat_shader, "bounds_max_y",
-                         (float)(surface->height - context->max_y));
+        glScissor(min_x, surface->mud->game_height - min_y - bounds_height,
+                  bounds_width, bounds_height);
 
         GLuint texture_array_id = context->texture_id;
 
@@ -1077,6 +1079,8 @@ void surface_gl_draw(Surface *surface, int use_depth) {
     surface_gl_reset_context(surface);
 
     surface->gl_fade_to_black = 0;
+
+    glDisable(GL_SCISSOR_TEST);
 }
 #endif
 
@@ -4117,7 +4121,7 @@ void surface_draw_character(Surface *surface, int character_offset, int x,
     int height = font_data[character_offset + 4];
 
     /* position of pixel data for the font (on/off) */
-    int font_pos = font_data[character_offset] * 16384 +
+    int font_pos = font_data[character_offset] * (128 + 128) +
                    font_data[character_offset + 1] * 128 +
                    font_data[character_offset + 2];
 
@@ -4300,6 +4304,7 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                             font, draw_shadow, depth);
 #endif
 
+            /* character display width */
             x += font_data[character_offset + 7];
         }
     }
@@ -4309,8 +4314,8 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
 #endif
 }
 
-void surface_draw_string(Surface *surface, char *text, int x, int y, FONT_STYLE font,
-                         int colour) {
+void surface_draw_string(Surface *surface, char *text, int x, int y,
+                         FONT_STYLE font, int colour) {
     surface_draw_string_depth(surface, text, x, y, font, colour, 0);
 }
 

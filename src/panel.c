@@ -294,7 +294,8 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
 }
 
 void panel_draw_box(Panel *panel, int x, int y, int width, int height) {
-    surface_set_bounds(panel->surface, x, y, x + width, y + height);
+    // TODO why would they set bounds here? remove for now
+    // surface_set_bounds(panel->surface, x, y, x + width, y + height);
 
     surface_draw_gradient(panel->surface, x, y, width, height,
                           PANEL_BOX_TOP_COLOUR, PANEL_BOX_BOTTOM_COLOUR);
@@ -335,7 +336,7 @@ void panel_draw_box(Panel *panel, int x, int y, int width, int height) {
     surface_draw_line_vertical(panel->surface, x + width - 3, y + 2, height - 4,
                                PANEL_BOX_BOTTOM_LINE_COLOUR);
 
-    surface_reset_bounds(panel->surface);
+    // surface_reset_bounds(panel->surface);
 }
 
 void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height) {

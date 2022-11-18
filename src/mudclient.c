@@ -4754,6 +4754,7 @@ void mudclient_draw_game(mudclient *mud) {
 #if defined(_3DS) && defined(RENDER_SW)
     mud->surface->width = 400;
     mud->surface->height = 240;
+
     surface_set_bounds(mud->surface, 0, 0, 400, 240 - 12);
 
     int32_t *old_pixels = mud->surface->pixels;

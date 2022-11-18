@@ -11,12 +11,6 @@ in vec3 vertex_texture_position;
 uniform mediump sampler2DArray textures;
 
 uniform bool interlace;
-
-uniform float bounds_min_x;
-uniform float bounds_max_x;
-uniform float bounds_min_y;
-uniform float bounds_max_y;
-
 uniform bool ui_scale;
 
 void main() {
@@ -30,11 +24,6 @@ void main() {
     if (ui_scale) {
         frag_x /= 2.0f;
         frag_y /= 2.0f;
-    }
-
-    if (frag_x < bounds_min_x || frag_x > bounds_max_x ||
-        frag_y > bounds_min_y || frag_y < bounds_max_y) {
-        discard;
     }
 
     if (vertex_texture_position.z > -1.0f) {
