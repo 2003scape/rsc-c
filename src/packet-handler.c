@@ -76,15 +76,16 @@ void mudclient_gl_update_wall_models(mudclient *mud) {
     for (int i = 0; i < mud->wall_object_count; i++) {
         GameModel *game_model = mud->wall_object_model[i];
 
-        game_model->gl_vao = mud->scene->gl_wall_vao;
+        game_model->gl_buffer = &mud->scene->gl_wall_buffer;
         game_model->gl_ebo_length = 6;
 
         game_model->gl_vbo_offset = vbo_offset;
         game_model->gl_ebo_offset = ebo_offset;
 
-        glBindVertexArray(mud->scene->gl_wall_vao);
-        glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_ebo);
+        glBindVertexArray(mud->scene->gl_wall_buffer.vao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_buffer.vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_buffer.ebo);
 
         game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
 

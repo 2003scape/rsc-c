@@ -1260,7 +1260,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         int fill_front =
                             game_data_tile_decoration[decoration_east - 1];
 
-                        int *vertices = calloc(4,sizeof(int));
+                        int *vertices = calloc(4, sizeof(int));
 
                         vertices[0] = game_model_vertex_at(
                             game_model, r_x * TILE_SIZE,
@@ -1811,7 +1811,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             } else if (world_get_wall_diagonal(world, r_x, r_y) > 0 &&
                        world_get_wall_diagonal(world, r_x, r_y) < 12000 &&
                        world_get_wall_roof(world, r_x - 1, r_y + 1) == 0) {
-                int *vertices = calloc(3,sizeof(int));
+                int *vertices = calloc(3, sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_2_x,
@@ -1851,7 +1851,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                        roof_id, COLOUR_TRANSPARENT);
             } else if (terrain_height == terrain_south_height &&
                        terrain_east_height == terrain_south_east_height) {
-                int *vertices = calloc(4,sizeof(int));
+                int *vertices = calloc(4, sizeof(int));
 
                 vertices[0] =
                     game_model_vertex_at(world->parent_model, vertex_3_x,
@@ -2339,13 +2339,13 @@ void world_gl_create_gl_world_models_buffer(World *world, int max_models) {
 /* create and populate the initial VBO of landscape-related models */
 void world_gl_buffer_world_models(World *world) {
 #ifdef RENDER_GL
-    game_model_gl_buffer_models(
-        &world->scene->terrain_vao, &world->scene->terrain_vbo,
-        &world->scene->terrain_ebo, world->gl_world_models_buffer,
-        world->gl_world_models_offset);
+    game_model_gl_buffer_models(&world->scene->gl_terrain_buffer,
+                                world->gl_world_models_buffer,
+                                world->gl_world_models_offset);
 #elif defined(RENDER_3DS_GL)
     game_model_3ds_gl_buffer_models(&world->scene->_3ds_gl_terrain_buffer,
-                                     world->gl_world_models_buffer, world->gl_world_models_offset);
+                                    world->gl_world_models_buffer,
+                                    world->gl_world_models_offset);
 #endif
 
     free(world->gl_world_models_buffer);
@@ -2355,17 +2355,22 @@ void world_gl_buffer_world_models(World *world) {
 }
 
 /* update the terrain model VBOs after ambience changes */
+// TODO we can probably only change the necessary memory rather than rebuffering
+// all of the models
 void world_gl_update_terrain_buffers(World *world) {
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];
 
 #ifdef RENDER_GL
-        glBindVertexArray(game_model->gl_vao);
+        glBindVertexArray(game_model->gl_buffer->vao);
 
-        glBindBuffer(GL_ARRAY_BUFFER, world->scene->terrain_vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, world->scene->terrain_ebo);
+        /*glBindBuffer(GL_ARRAY_BUFFER, world->scene->gl_terrain_buffer.vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,
+                     world->scene->gl_terrain_buffer.ebo);*/
+
+        glBindBuffer(GL_ARRAY_BUFFER, game_model->gl_buffer->vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_model->gl_buffer->ebo);
 #endif
-
         int vertex_offset = game_model->gl_vbo_offset;
         int ebo_offset = game_model->gl_ebo_offset;
 

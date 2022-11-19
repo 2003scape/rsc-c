@@ -26,6 +26,23 @@ typedef struct gl_face_fill {
 #include <GL/glew.h>
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
+
+typedef struct gl_model_vertex {
+    float x, y, z;
+    float normal_x, normal_y, normal_z, normal_magnitude;
+    float face_intensity, vertex_intensity;
+    float front_r, front_g, front_b;
+    float front_texture_u, front_texture_v, remove1;
+    float back_r, back_g, back_b;
+    float back_texture_u, back_texture_v, remove2;
+} gl_model_vertex;
+
+typedef struct gl_vertex_buffer {
+    int attribute_index;
+    GLuint vao;
+    GLuint vbo;
+    GLuint ebo;
+} gl_vertex_buffer;
 #endif
 
 #ifdef RENDER_3DS_GL
@@ -155,7 +172,7 @@ typedef struct GameModel {
     mat4 transform;
 #endif
 #ifdef RENDER_GL
-    GLuint gl_vao;
+    gl_vertex_buffer *gl_buffer;
 
 #ifdef EMSCRIPTEN
     int gl_pick_vbo_offset;
@@ -248,9 +265,9 @@ float game_model_gl_intersects(GameModel *game_model, vec3 ray_start,
                                vec3 ray_end);
 #endif
 #ifdef RENDER_GL
-void game_model_gl_create_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
-                              int vbo_length, int ebo_length);
-void game_model_gl_buffer_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
+void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
+                                 int vbo_length, int ebo_length);
+void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
                                  GameModel **game_models, int length);
 #ifdef EMSCRIPTEN
 void game_model_gl_create_pick_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,

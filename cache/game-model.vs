@@ -1,5 +1,7 @@
 #version 330 core
 
+#define VERTEX_SCALE 100.0
+
 #define FOUNTAIN_ID 17
 #define RAMP_SIZE 256
 #define USE_GOURAUD 12345678
@@ -7,17 +9,15 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 normal;
 layout(location = 2) in vec2 lighting;
-layout(location = 3) in vec4 front_colour;
+layout(location = 3) in vec3 front_colour;
 layout(location = 4) in vec3 front_texture_position;
-layout(location = 5) in vec4 back_colour;
+layout(location = 5) in vec3 back_colour;
 layout(location = 6) in vec3 back_texture_position;
 
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
 out float vertex_gradient_index;
 flat out int foggy;
-
-uniform float vertex_scale;
 
 uniform float scroll_texture;
 
@@ -55,7 +55,7 @@ void main() {
             (light_diffuse * light_direction_magnitude) / float(RAMP_SIZE);
 
         intensity = int(
-            dot(model_normal * vertex_scale, light_direction * vertex_scale) /
+            dot(model_normal * VERTEX_SCALE, light_direction * VERTEX_SCALE) /
             (divisor * normal_magnitude));
     }
 
@@ -63,18 +63,18 @@ void main() {
 
     if (cull_front) {
         gradient_index += intensity;
-        vertex_colour = back_colour;
+        vertex_colour = vec4(back_colour, 1.0);
         vertex_texture_position = back_texture_position;
     } else {
         gradient_index -= intensity;
-        vertex_colour = front_colour;
+        vertex_colour = vec4(front_colour, 1.0);
         vertex_texture_position = front_texture_position;
     }
 
     foggy = 0;
 
-    if (gl_Position.z > (float(fog_distance) / vertex_scale)) {
-        gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
+    if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
+        gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
         foggy = 1;
     }
 

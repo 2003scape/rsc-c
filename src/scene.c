@@ -144,19 +144,15 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_use(&scene->game_model_shader);
 
-    // TODO only needs * 1
-    game_model_gl_create_vao(&scene->gl_wall_vao, &scene->gl_wall_vbo,
-                             &scene->gl_wall_ebo, (WALL_OBJECTS_MAX * 2) * 4,
-                             (WALL_OBJECTS_MAX * 2) * 6);
-
-    shader_set_float(&scene->game_model_shader, "vertex_scale",
-                     (float)VERTEX_SCALE);
+    game_model_gl_create_buffer(&scene->gl_wall_buffer,
+                             WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);
 
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
                            scene->light_gradient, RAMP_SIZE);
 
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
+
 #elif defined(RENDER_3DS_GL)
     scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);
@@ -200,6 +196,7 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         j = (l / i1) << 7;
     }
 
+    // 16256 is almost 128x128
     if (i < 0) {
         i = 0;
     } else if (i > 16256) {
@@ -228,6 +225,7 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         i += k2 & 0x600000;
         i4 = k2 >> 23;
         k2 += l2;
+
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i += k3;
         j += l3;
@@ -240,9 +238,11 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i += k3;
         j += l3;
+
         i = (i & 0x3fff) + (k2 & 0x600000);
         i4 = k2 >> 23;
         k2 += l2;
+
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i += k3;
         j += l3;
@@ -255,9 +255,11 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i += k3;
         j += l3;
+
         i = (i & 0x3fff) + (k2 & 0x600000);
         i4 = k2 >> 23;
         k2 += l2;
+
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i += k3;
         j += l3;
@@ -270,9 +272,11 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i += k3;
         j += l3;
+
         i = (i & 0x3fff) + (k2 & 0x600000);
         i4 = k2 >> 23;
         k2 += l2;
+
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i += k3;
         j += l3;
@@ -285,6 +289,7 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
         i = i3;
         j = j3;
+
         k += j1;
         l += k1;
         i1 += l1;
@@ -312,6 +317,7 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         }
 
         raster[j2++] = texture_pixels[(j & 0x3f80) + (i >> 7)] >> i4;
+
         i += k3;
         j += l3;
     }
@@ -4236,12 +4242,12 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         return;
     }
 
-    if (scene->last_vao != game_model->gl_vao) {
-        glBindVertexArray(game_model->gl_vao);
-        scene->last_vao = game_model->gl_vao;
-    }
+    /*if (scene->gl_last_buffer != game_model->gl_buffer) {
+        glBindVertexArray(game_model->gl_buffer->vao);
+        scene->gl_last_buffer = game_model->gl_buffer;
+    }*/
 
-    glBindVertexArray(game_model->gl_vao);
+    glBindVertexArray(game_model->gl_buffer->vao);
 
     shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
 
@@ -4350,7 +4356,8 @@ void scene_gl_render(Scene *scene) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
 
-    scene->last_vao = 0;
+    // TODO is this necessary?
+    scene->gl_last_buffer = NULL;
 
     vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
                       VERTEX_TO_FLOAT(scene->camera_y),

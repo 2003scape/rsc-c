@@ -31,12 +31,13 @@ void main() {
         gradient_index = 0;
     }
 
+    /* this if statement is super slow! */
     if (vertex_texture_position.z >= 0.0f) {
         fragment_colour = texture(textures, vertex_texture_position);
 
-        if (vertex_colour.x > -1.0f) {
+        /*if (vertex_colour.x > -1.0f) {
             fragment_colour *= vertex_colour;
-        }
+        }*/
 
         lightness = foggy == 1 ? light_gradient[gradient_index]
                                : texture_light_gradient[gradient_index];

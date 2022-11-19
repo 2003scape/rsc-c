@@ -1,5 +1,7 @@
 #version 300 es
 
+#define VERTEX_SCALE 100.0
+
 #define FOUNTAIN_ID 17.0f
 #define RAMP_SIZE 256
 #define USE_GOURAUD 12345678
@@ -7,17 +9,15 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 normal;
 layout(location = 2) in vec2 lighting;
-layout(location = 3) in vec4 front_colour;
+layout(location = 3) in vec3 front_colour;
 layout(location = 4) in vec3 front_texture_position;
-layout(location = 5) in vec4 back_colour;
+layout(location = 5) in vec3 back_colour;
 layout(location = 6) in vec3 back_texture_position;
 
 out vec4 vertex_colour;
 out vec3 vertex_texture_position;
 out float vertex_gradient_index;
 flat out int foggy;
-
-uniform float vertex_scale;
 
 uniform float scroll_texture;
 

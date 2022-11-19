@@ -2045,7 +2045,7 @@ void mudclient_load_models(mudclient *mud) {
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int models_length = game_data_model_count - 1;
-    models_length = 2;
+    //models_length = 2;
 
     /*if (mud->options->ground_item_models) {
         models_length += game_data_item_count;
@@ -2056,9 +2056,10 @@ void mudclient_load_models(mudclient *mud) {
     for (int i = 0; i < game_data_model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
 
-        if (i == 1) {
+        /*if (i == 1) {
             break;
-        }
+        }*/
+
         // GameModel *game_model = mud->game_models[i];
     }
 
@@ -2068,9 +2069,8 @@ void mudclient_load_models(mudclient *mud) {
         }
     }*/
 #ifdef RENDER_GL
-    game_model_gl_buffer_models(
-        &mud->scene->game_model_vao, &mud->scene->game_model_vbo,
-        &mud->scene->game_model_ebo, models_buffer, models_length);
+    game_model_gl_buffer_models(&mud->scene->gl_game_model_buffer,
+                                models_buffer, models_length);
 #elif defined(RENDER_3DS_GL)
     C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
 

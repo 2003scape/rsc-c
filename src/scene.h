@@ -173,6 +173,9 @@ typedef struct Scene {
 
     int gl_height;
     float gl_fov;
+
+    float light_gradient[RAMP_SIZE];
+    float texture_light_gradient[RAMP_SIZE];
 #endif
 #ifdef RENDER_GL
     Shader game_model_shader;
@@ -187,24 +190,18 @@ typedef struct Scene {
     int gl_pick_face_tag;
 #endif
 
-    GLuint game_model_vao;
-    GLuint game_model_vbo;
-    GLuint game_model_ebo;
     GLuint game_model_textures;
 
-    GLuint terrain_vao;
-    GLuint terrain_vbo;
-    GLuint terrain_ebo;
+    /* for game model entities (trees, furniture, etc.) */
+    gl_vertex_buffer gl_game_model_buffer;
 
-    GLuint gl_wall_vao;
-    GLuint gl_wall_vbo;
-    GLuint gl_wall_ebo;
+    /* for generated landscape */
+    gl_vertex_buffer gl_terrain_buffer;
 
-    GLuint last_vao;
+    /* for wallobjects */
+    gl_vertex_buffer gl_wall_buffer;
 
-    // TODO add to 3ds gl too
-    float light_gradient[RAMP_SIZE];
-    float texture_light_gradient[RAMP_SIZE];
+    gl_vertex_buffer *gl_last_buffer;
 #elif defined(RENDER_3DS_GL)
     DVLB_s *_3ds_gl_model_shader_dvlb;
     shaderProgram_s _3ds_gl_model_shader;
