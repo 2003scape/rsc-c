@@ -3329,35 +3329,6 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
     scene->texture_back_transparent[id] = 0;
     scene->texture_pixels[id] = NULL;
 
-#ifdef RENDER_GL
-    int texture_width = is_128 ? 128 : 64;
-    int32_t *texture_pixels = calloc(128 * 128, sizeof(int32_t));
-    int raster_position = 0;
-
-    /* make all the textures 128x128. */
-    for (int x = 0; x < 128; x++) {
-        for (int y = 0; y < 128; y++) {
-            int sprite_x = is_128 ? x : x / 2;
-            int sprite_y = is_128 ? y : y / 2;
-
-            int colour =
-                palette[colours[sprite_y + sprite_x * texture_width] & 0xff];
-
-            if (colour != MAGENTA) {
-                texture_pixels[raster_position] =
-                    0xff000000 + (colour & 0xf8f8ff);
-            }
-
-            raster_position++;
-        }
-    }
-
-    gl_update_texture_array(scene->game_model_textures, id, 128, 128,
-                            texture_pixels, 1);
-
-    free(texture_pixels);
-#endif
-
     scene_prepare_texture(scene, id);
 }
 

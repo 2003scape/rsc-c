@@ -140,8 +140,8 @@ void world_remove_object2(World *world, int x, int y, int id) {
 
     if (game_data_object_type[id] == 1 || game_data_object_type[id] == 2) {
         int tile_direction = world_get_tile_direction(world, x, y);
-        int model_width;
-        int model_height;
+        int model_width = 0;
+        int model_height = 0;
 
         // TODO make cardinal TILE_DIRs
         if (tile_direction == 0 || tile_direction == 4) {
@@ -218,7 +218,8 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
 
 void world_draw_map_tile(World *world, int x, int y, int direction,
                          int face_fill_1, int face_fill_2) {
-#if defined(RENDER_GL) || defined(RENDER_SW)
+//#if defined(RENDER_GL) || defined(RENDER_SW)
+#ifdef RENDER_SW
     int line_x = x * 3;
     int line_y = y * 3;
     int colour_1 = scene_get_fill_colour(world->scene, face_fill_1);
@@ -2362,15 +2363,9 @@ void world_gl_update_terrain_buffers(World *world) {
         GameModel *game_model = world->terrain_models[i];
 
 #ifdef RENDER_GL
-        glBindVertexArray(game_model->gl_buffer->vao);
-
-        /*glBindBuffer(GL_ARRAY_BUFFER, world->scene->gl_terrain_buffer.vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,
-                     world->scene->gl_terrain_buffer.ebo);*/
-
-        glBindBuffer(GL_ARRAY_BUFFER, game_model->gl_buffer->vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_model->gl_buffer->ebo);
+        vertex_buffer_gl_bind(game_model->gl_buffer);
 #endif
+
         int vertex_offset = game_model->gl_vbo_offset;
         int ebo_offset = game_model->gl_ebo_offset;
 

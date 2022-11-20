@@ -25,6 +25,7 @@
 #endif
 #else
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #ifdef RENDER_GL
 #include <GL/glew.h>
@@ -115,10 +116,11 @@ int get_certificate_item_id(int item_id);
 float gl_translate_coord(int position, int range);
 float gl_translate_x(int x, int range);
 float gl_translate_y(int y, int range);
+void gl_load_texture(GLuint *texture_id, char *file);
 #endif
 #ifdef RENDER_GL
-void gl_update_texture_array(GLuint texture_array_id, int index, int width,
-                             int height, int32_t *pixels, int convert_bgra);
+/*void gl_update_texture_array(GLuint texture_array_id, int index, int width,
+                             int height, int32_t *pixels, int convert_bgra);*/
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
 #elif defined(RENDER_3DS_GL)
 void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);

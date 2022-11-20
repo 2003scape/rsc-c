@@ -1460,7 +1460,7 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
     mud->surface->sprite_height_full[sprite_index] = height;
     mud->surface->surface_pixels[sprite_index] = (int32_t *)pixels;
 
-#ifdef RENDER_GL
+#if 0
     uint32_t *texture_pixels =
         calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(uint32_t));
 
@@ -1508,10 +1508,6 @@ void mudclient_load_jagex(mudclient *mud) {
         }
 
         free(fonts_jag);
-
-#ifdef RENDER_GL
-        surface_gl_create_font_textures(mud->surface);
-#endif
     }
 }
 
@@ -1536,12 +1532,6 @@ void mudclient_load_game_config(mudclient *mud) {
     }
 
     free(filter_jag);*/
-#ifdef RENDER_GL
-    surface_gl_create_texture_array(&mud->surface->gl_sprite_item_textures,
-                                    ITEM_TEXTURE_WIDTH, ITEM_TEXTURE_HEIGHT,
-                                    game_data_item_sprite_count +
-                                        game_data_projectile_sprite);
-#endif
 }
 
 void mudclient_load_media(mudclient *mud) {
@@ -1644,7 +1634,7 @@ void mudclient_load_media(mudclient *mud) {
 #endif
 }
 
-#ifdef RENDER_GL
+#if 0
 /* entity sprite IDs have gaps. */
 int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
                                            int8_t *entity_jag_mem) {
@@ -1743,7 +1733,7 @@ void mudclient_load_entities(mudclient *mud) {
         index_dat_mem = load_data("index.dat", 0, entity_jag_mem);
     }
 
-#ifdef RENDER_GL
+#if 0
     int texture_array_length =
         mudclient_update_entity_sprite_indices(mud, entity_jag, entity_jag_mem);
 
@@ -1849,7 +1839,7 @@ void mudclient_load_entities(mudclient *mud) {
 }
 
 void mudclient_load_textures(mudclient *mud) {
-#if defined(RENDER_GL) || defined(RENDER_SW)
+#ifdef RENDER_SW
     int8_t *textures_jag = mudclient_read_data_file(
         mud, "textures" TEXTURES ".jag", "Textures", 50);
 
@@ -1937,6 +1927,8 @@ void mudclient_load_textures(mudclient *mud) {
 #ifndef WII
     free(textures_jag);
 #endif
+#else
+    (void)mud;
 #endif
 }
 

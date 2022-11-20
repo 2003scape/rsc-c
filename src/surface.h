@@ -9,14 +9,33 @@
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
+
 #include <cglm/cglm.h>
 
 #include "shader.h"
+#include "gl/vertex-buffer.h"
+
+typedef struct gl_flat_vertex {
+    float x, y, z;
+    float r, g, b, a; /* mask colour */
+    float u, v;       /* greyscale texture that is coloured by mask colour */
+    float base_u, base_v; /* non grey-pixel portion that is added to coloured */
+} gl_flat_vertex;
+
+/* atlas positions in ./textures/ to generate UVs */
+typedef struct gl_atlas_position {
+    float left_u, right_u;
+    float top_v, bottom_v;
+} gl_atlas_position;
+
+#include "gl/textures/entities.h"
+#include "gl/textures/fonts.h"
+#include "gl/textures/media.h"
 
 #define FLAT_QUAD_COUNT 2048
 #define FLAT_MAX_CONTEXTS 1024
 
-#define ITEM_TEXTURE_WIDTH 48
+/*#define ITEM_TEXTURE_WIDTH 48
 #define ITEM_TEXTURE_HEIGHT 32
 
 #define MEDIA_TEXTURE_WIDTH 512
@@ -25,14 +44,26 @@
 #define ENTITY_TEXTURE_WIDTH 336
 #define ENTITY_TEXTURE_HEIGHT 256
 
-/* TODO combine font and map? */
 #define FONT_TEXTURE_WIDTH 300
 #define FONT_TEXTURE_HEIGHT 300
 
 #define MAP_TEXTURE_WIDTH 285
 #define MAP_TEXTURE_HEIGHT 285
 
-#define CIRCLE_TEXTURE_SIZE 256
+#define CIRCLE_TEXTURE_SIZE 256*/
+
+// TODO rename
+typedef struct SurfaceGlContext {
+    GLuint texture_id;
+    int quad_count;
+
+    /* boundaries for minimap drawing */
+    int min_x;
+    int max_x;
+    int min_y;
+    int max_y;
+} SurfaceGlContext;
+
 #endif
 
 #ifdef WII
@@ -127,19 +158,6 @@ extern int32_t *surface_texture_pixels;
 
 void init_surface_global();
 
-#ifdef RENDER_GL
-typedef struct SurfaceGlContext {
-    GLuint texture_id;
-    int quad_count;
-
-    /* boundaries for minimap drawing */
-    int min_x;
-    int max_x;
-    int min_y;
-    int max_y;
-} SurfaceGlContext;
-#endif
-
 typedef struct Surface {
     int limit;
     int width;
@@ -182,25 +200,28 @@ typedef struct Surface {
     int8_t gl_has_faded;
 
     Shader gl_flat_shader;
-    GLuint gl_flat_vao;
-    GLuint gl_flat_vbo;
-    GLuint gl_flat_ebo;
+    gl_vertex_buffer gl_flat_buffer;
+
     int gl_flat_count;
 
-    /* texture arrays */
-    GLuint gl_sprite_item_textures;
+    /* textures */
+    GLuint gl_sprite_texture;
+    GLuint gl_entity_textures[5];
+    GLuint gl_framebuffer_texture;
+
+    /*GLuint gl_sprite_item_textures;
     GLuint gl_sprite_media_textures;
     GLuint gl_sprite_entity_textures;
     GLuint gl_map_textures;
     GLuint gl_font_textures;
-    GLuint gl_framebuffer_textures;
+    GLuint gl_framebuffer_textures;*/
 
     /* used for texture array and boundary changes */
     SurfaceGlContext gl_contexts[FLAT_MAX_CONTEXTS];
 
     int gl_context_count;
 
-    int gl_entity_sprite_indices[2000];
+    //int gl_entity_sprite_indices[2000];
 
     int32_t *gl_screen_pixels_reversed;
     int32_t *gl_screen_pixels;
@@ -238,24 +259,16 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #ifdef RENDER_GL
 float surface_gl_translate_x(Surface *surface, int x);
 float surface_gl_translate_y(Surface *surface, int y);
-void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
-                                     int height, int length);
-void surface_gl_create_font_texture(int32_t *dest, int font_id,
-                                    int draw_shadow);
-void surface_gl_create_font_textures(Surface *surface);
-void surface_gl_create_circle_texture(Surface *surface);
 void surface_gl_reset_context(Surface *surface);
-void surface_gl_buffer_quad(Surface *surface, GLfloat *quad,
-                            GLuint texture_array_id);
-int surface_gl_sprite_texture_array_id(Surface *surface, int sprite_id);
-int surface_gl_sprite_texture_width(Surface *surface, GLuint texture_array_id);
-int surface_gl_sprite_texture_height(Surface *surface, GLuint texture_array_id);
-int surface_gl_sprite_texture_index(Surface *surface, int sprite_id);
+void surface_gl_buffer_quad(Surface *surface, gl_flat_vertex quad[4],
+                            GLuint texture_id, GLuint base_texture_id);
+#if 0
 void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
                                      int texture_index, int mask_colour,
                                      int skin_colour, int alpha, int width,
                                      int height, int (*points)[2],
                                      float depth_top, float depth_bottom);
+#endif
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
@@ -458,5 +471,4 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour);
-
 #endif

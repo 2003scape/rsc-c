@@ -12,15 +12,15 @@ flat in int foggy;
 
 uniform sampler2DArray textures;
 
-uniform bool interlace;
+//uniform bool interlace;
 
 uniform float light_gradient[RAMP_SIZE];
 uniform float texture_light_gradient[RAMP_SIZE];
 
 void main() {
-    if (interlace && int(gl_FragCoord.y) % 2 == 0) {
+    /*if (interlace && int(gl_FragCoord.y) % 2 == 0) {
         discard;
-    }
+    }*/
 
     float lightness = 1.0f;
     int gradient_index = int(round(vertex_gradient_index * float(RAMP_SIZE)));

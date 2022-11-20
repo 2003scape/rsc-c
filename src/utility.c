@@ -563,6 +563,7 @@ float gl_translate_y(int y, int range) { return -gl_translate_coord(y, range); }
 #endif
 
 #ifdef RENDER_GL
+#if 0
 void gl_update_texture_array(GLuint texture_array_id, int index, int width,
                              int height, int32_t *pixels, int convert_bgra) {
     /* webgl only supports RGBA */
@@ -584,7 +585,29 @@ void gl_update_texture_array(GLuint texture_array_id, int index, int width,
     glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, width, height, 1,
                     GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 }
+#endif
+void gl_load_texture(GLuint *texture_id, char *file) {
+    glGenTextures(1, texture_id);
+    glBindTexture(GL_TEXTURE_2D, *texture_id);
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    SDL_Surface *texture_image = IMG_Load(file);
+
+    printf("%d %d\n", texture_image->w, texture_image->h);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+                 texture_image->w,
+                 texture_image->h,
+                 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 texture_image->pixels);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+// TODO gl_
 void rotate_point(int centre_x, int centre_y, float angle, int *point) {
     point[0] -= centre_x;
     point[1] -= centre_y;

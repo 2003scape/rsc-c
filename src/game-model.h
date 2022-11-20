@@ -27,6 +27,8 @@ typedef struct gl_face_fill {
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
 
+#include "gl/vertex-buffer.h"
+
 typedef struct gl_model_vertex {
     float x, y, z;
     float normal_x, normal_y, normal_z, normal_magnitude;
@@ -36,13 +38,6 @@ typedef struct gl_model_vertex {
     float back_r, back_g, back_b;
     float back_texture_u, back_texture_v, remove2;
 } gl_model_vertex;
-
-typedef struct gl_vertex_buffer {
-    int attribute_index;
-    GLuint vao;
-    GLuint vbo;
-    GLuint ebo;
-} gl_vertex_buffer;
 #endif
 
 #ifdef RENDER_3DS_GL

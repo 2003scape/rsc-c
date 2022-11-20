@@ -1659,34 +1659,9 @@ float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
 
 #ifdef RENDER_GL
 // TODO bind function
-// TODO move to shader
-void game_model_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
-                                 int *attribute_offset, int attribute_length) {
-    glVertexAttribPointer(vertex_buffer->attribute_index, attribute_length,
-                          GL_FLOAT, GL_FALSE, sizeof(gl_model_vertex),
-                          (void *)((*attribute_offset) * sizeof(GLfloat)));
-
-    glEnableVertexAttribArray(vertex_buffer->attribute_index);
-
-    *attribute_offset += attribute_length;
-    vertex_buffer->attribute_index++;
-}
-
 void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
                                  int vbo_length, int ebo_length) {
-    if (vertex_buffer->vao) {
-        vertex_buffer->attribute_index = 0;
-
-        glDeleteVertexArrays(1, &vertex_buffer->vao);
-        glDeleteBuffers(1, &vertex_buffer->vbo);
-        glDeleteBuffers(1, &vertex_buffer->ebo);
-    }
-
-    glGenVertexArrays(1, &vertex_buffer->vao);
-    glBindVertexArray(vertex_buffer->vao);
-
-    glGenBuffers(1, &vertex_buffer->vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer->vbo);
+    vertex_buffer_gl_new(vertex_buffer, sizeof(gl_model_vertex));
 
     glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_model_vertex), NULL,
                  GL_STATIC_DRAW);
@@ -1694,28 +1669,25 @@ void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
     int attribute_offset = 0;
 
     /* vertex { x, y, z } */
-    game_model_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
+    vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
 
     /* normal { x, y, z, magnitude } */
-    game_model_gl_add_attribute(vertex_buffer, &attribute_offset, 4);
+    vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 4);
 
     /* lighting { face_intensity, vertex_intensity } */
-    game_model_gl_add_attribute(vertex_buffer, &attribute_offset, 2);
+    vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 2);
 
     /* front colour { r, g, b } */
-    game_model_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
+    vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
 
     /* front texture { s, t, index } */
-    game_model_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
+    vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
 
     /* back colour { r, g, b } */
-    game_model_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
+    vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
 
     /* back texture { s, t, index } */
-    game_model_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
-
-    glGenBuffers(1, &vertex_buffer->ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertex_buffer->ebo);
+    vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 3);
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
                  GL_STATIC_DRAW);
