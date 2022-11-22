@@ -1,0 +1,31 @@
+{
+  "name": "rsc-texture-pack",
+  "version": "1.0.0",
+  "description": "pack runescape classic sprites into a texture atlas",
+  "main": "texture-pack.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2003scape/rsc-c.git"
+  },
+  "keywords": [
+    "runescape",
+    "rsc",
+    "sprites",
+    "texture",
+    "atlas"
+  ],
+  "author": "2003Scape Team",
+  "license": "AGPL-3.0+",
+  "bugs": {
+    "url": "https://github.com/2003scape/rsc-c/issues"
+  },
+  "homepage": "https://github.com/2003scape/rsc-c#readme",
+  "dependencies": {
+    "canvas": "^2.10.2",
+    "maxrects-packer": "^2.7.3"
+  }
+}
