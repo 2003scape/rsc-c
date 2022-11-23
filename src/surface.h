@@ -15,12 +15,17 @@
 #include "shader.h"
 #include "gl/vertex-buffer.h"
 
+// TODO quad_vertex?
 typedef struct gl_flat_vertex {
     float x, y, z;
     float r, g, b, a; /* mask colour */
     float u, v;       /* greyscale texture that is coloured by mask colour */
     float base_u, base_v; /* non grey-pixel portion that is added to coloured */
 } gl_flat_vertex;
+
+typedef struct gl_quad {
+    gl_flat_vertex bottom_left, bottom_right, top_right, top_left;
+} gl_quad;
 
 /* atlas positions in ./textures/ to generate UVs */
 typedef struct gl_atlas_position {
@@ -235,27 +240,24 @@ void surface_new(Surface *surface, int width, int height, int limit,
 float surface_gl_translate_x(Surface *surface, int x);
 float surface_gl_translate_y(Surface *surface, int y);
 void surface_gl_reset_context(Surface *surface);
-void surface_gl_quad_apply_atlas(gl_flat_vertex quad[4], gl_atlas_position
+void surface_gl_quad_apply_atlas(gl_quad *quad, gl_atlas_position
                                 atlas_position);
-void surface_gl_buffer_quad(Surface *surface, gl_flat_vertex quad[4],
+void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
+                                      atlas_position);
+void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
                             GLuint texture_id, GLuint base_texture_id);
-#if 0
-void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
-                                     int texture_index, int mask_colour,
-                                     int skin_colour, int alpha, int width,
-                                     int height, int (*points)[2],
-                                     float depth_top, float depth_bottom);
-#endif
+void surface_gl_vertex_apply_colour(gl_flat_vertex *vertices, int length,
+                                    int colour, int alpha);
+void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
+                           int height, int colour, int alpha);
+void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
+                                 int colour, int font_id, int draw_shadow,
+                                 float depth);
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int draw_width, int draw_height, int skew_x,
                               int mask_colour, int skin_colour, int alpha,
                               int flip, int rotation, float depth_top,
                               float depth_bottom);
-void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
-                                 int colour, int font_id, int draw_shadow,
-                                 float depth);
-void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
-                           int height, int colour, int alpha);
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha, float depth);
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,

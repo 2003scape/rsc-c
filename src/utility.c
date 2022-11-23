@@ -567,6 +567,7 @@ void gl_load_texture(GLuint *texture_id, char *file) {
     glGenTextures(1, texture_id);
     glBindTexture(GL_TEXTURE_2D, *texture_id);
 
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -582,7 +583,7 @@ void gl_load_texture(GLuint *texture_id, char *file) {
                  GL_UNSIGNED_BYTE,
                  texture_image->pixels);
 
-    glGenerateMipmap(GL_TEXTURE_2D);
+    //glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 // TODO gl_

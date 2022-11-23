@@ -219,67 +219,63 @@ void surface_gl_reset_context(Surface *surface) {
     surface->gl_context_count = 1;
 }
 
-void surface_gl_quad_new(Surface *surface, gl_flat_vertex quad[4], int x, int y, int width,
-                         int height) {
+void surface_gl_quad_new(Surface *surface, gl_quad *quad, int x, int y,
+                         int width, int height) {
     float left_x = surface_gl_translate_x(surface, x);
     float right_x = surface_gl_translate_x(surface, x + width);
 
     float top_y = surface_gl_translate_y(surface, y);
     float bottom_y = surface_gl_translate_y(surface, y + height);
 
-    /* bottom left */
-    quad[0].x = left_x;
-    quad[0].y = bottom_y;
+    quad->bottom_left.x = left_x;
+    quad->bottom_left.y = bottom_y;
 
-    /* bottom right */
-    quad[1].x = right_x;
-    quad[1].y = bottom_y;
+    quad->bottom_right.x = right_x;
+    quad->bottom_right.y = bottom_y;
 
-    /* top right */
-    quad[2].x = right_x;
-    quad[2].y = top_y;
+    quad->top_right.x = right_x;
+    quad->top_right.y = top_y;
 
-    /* top left */
-    quad[3].x = left_x;
-    quad[3].y = top_y;
+    quad->top_left.x = left_x;
+    quad->top_left.y = top_y;
 }
 
-void surface_gl_quad_apply_atlas(gl_flat_vertex quad[4], gl_atlas_position
+void surface_gl_quad_apply_atlas(gl_quad *quad, gl_atlas_position
                                 atlas_position) {
     /* bottom left */
-    quad[0].u = atlas_position.x;
-    quad[0].v = atlas_position.y + atlas_position.height;;
+    quad->bottom_left.u = atlas_position.x;
+    quad->bottom_left.v = atlas_position.y + atlas_position.height;
 
     /* bottom right */
-    quad[1].u = atlas_position.x + atlas_position.width;
-    quad[1].v = atlas_position.y + atlas_position.height;
+    quad->bottom_right.u = atlas_position.x + atlas_position.width;
+    quad->bottom_right.v = atlas_position.y + atlas_position.height;
 
     /* top right */
-    quad[2].u = atlas_position.x + atlas_position.width;
-    quad[2].v = atlas_position.y;
+    quad->top_right.u = atlas_position.x + atlas_position.width;
+    quad->top_right.v = atlas_position.y;
 
     /* top left */
-    quad[3].u = atlas_position.x;
-    quad[3].v = atlas_position.y;
+    quad->top_left.u = atlas_position.x;
+    quad->top_left.v = atlas_position.y;
 }
 
-void surface_gl_quad_apply_base_atlas(gl_flat_vertex quad[4], gl_atlas_position
+void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
                                       atlas_position) {
     /* bottom left */
-    quad[0].base_u = atlas_position.x;
-    quad[0].base_v = atlas_position.y;
+    quad->bottom_left.base_u = atlas_position.x;
+    quad->bottom_left.base_v = atlas_position.y;
 
     /* bottom right */
-    quad[1].base_u = atlas_position.x + atlas_position.width;
-    quad[1].base_v = atlas_position.y;
+    quad->bottom_right.base_u = atlas_position.x + atlas_position.width;
+    quad->bottom_right.base_v = atlas_position.y;
 
     /* top right */
-    quad[2].base_u = atlas_position.x + atlas_position.width;
-    quad[2].base_v = atlas_position.y + atlas_position.height;
+    quad->top_right.base_u = atlas_position.x + atlas_position.width;
+    quad->top_right.base_v = atlas_position.y + atlas_position.height;
 
     /* top left */
-    quad[3].base_u = atlas_position.x;
-    quad[3].base_v = atlas_position.y + atlas_position.height;
+    quad->top_left.base_u = atlas_position.x;
+    quad->top_left.base_v = atlas_position.y + atlas_position.height;
 }
 
 void surface_gl_vertex_apply_colour(gl_flat_vertex *vertices, int length,
@@ -297,7 +293,7 @@ void surface_gl_vertex_apply_colour(gl_flat_vertex *vertices, int length,
     }
 }
 
-void surface_gl_buffer_quad(Surface *surface, gl_flat_vertex quad[4],
+void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
                             GLuint texture_id, GLuint base_texture_id) {
     if (surface->gl_context_count >= FLAT_MAX_CONTEXTS) {
         fprintf(stderr, "too many context (texture/boundary) switches!\n");
@@ -306,10 +302,9 @@ void surface_gl_buffer_quad(Surface *surface, gl_flat_vertex quad[4],
 
     vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
-    int quad_size = sizeof(gl_flat_vertex) * 4;
-    int vertex_offset = surface->gl_flat_count * quad_size;
+    int vertex_offset = surface->gl_flat_count * sizeof(gl_quad);
 
-    glBufferSubData(GL_ARRAY_BUFFER, vertex_offset, quad_size, quad);
+    glBufferSubData(GL_ARRAY_BUFFER, vertex_offset, sizeof(gl_quad), quad);
 
     GLuint index = surface->gl_flat_count * 4;
 
@@ -346,64 +341,63 @@ void surface_gl_buffer_quad(Surface *surface, gl_flat_vertex quad[4],
     }
 }
 
-#if 0
-void surface_gl_buffer_textured_quad(Surface *surface, GLuint texture_array_id,
-                                     int texture_index, int mask_colour,
-                                     int skin_colour, int alpha, int width,
-                                     int height, int (*points)[2],
-                                     float depth_top, float depth_bottom) {
-    GLfloat mask_r = -1.0f;
-    GLfloat mask_g = -1.0f;
-    GLfloat mask_b = -1.0f;
-    GLfloat mask_a = alpha / 255.0f;
+void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
+                           int height, int colour, int alpha) {
+    gl_quad quad = {0};
 
-    if (mask_colour != 0) {
-        mask_r = ((mask_colour >> 16) & 0xff) / 255.0f;
-        mask_g = ((mask_colour >> 8) & 0xff) / 255.0f;
-        mask_b = (mask_colour & 0xff) / 255.0f;
+    surface_gl_quad_new(surface, &quad, x, y, width, height);
+    surface_gl_quad_apply_atlas(&quad, gl_white_atlas_position);
+    surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position);
+    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad), 4, colour, alpha);
+
+    surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
+                           surface->gl_sprite_texture);
+}
+
+void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
+                                 int colour, int font_id, int draw_shadow,
+                                 float depth) {
+    if (character == ' ') {
+        return;
     }
 
-    GLfloat textured_quad[] = {
-        /* top left / northwest */
-        surface_gl_translate_x(surface, points[0][0]),
-        surface_gl_translate_y(surface, points[0][1]), //
-        depth_top,                                     //
-        mask_r, mask_g, mask_b, mask_a,                //
-        skin_r, skin_g, skin_b,                        //
-        0, 0,                                          //
-        texture_index,                                 //
+    int8_t *font_data = game_fonts[font_id];
+    int char_set_index = -1;
 
-        /* top right / northeast */
-        surface_gl_translate_x(surface, points[1][0]),
-        surface_gl_translate_y(surface, points[1][1]), //
-        depth_top,                                     //
-        mask_r, mask_g, mask_b, mask_a,                //
-        skin_r, skin_g, skin_b,                        //
-        width / texture_width, 0,                      //
-        texture_index,                                 //
+    for (int i = 0; i < CHAR_SET_LENGTH; i++) {
+        if (character == CHAR_SET[i]) {
+            char_set_index = i;
+            break;
+        }
+    }
 
-        /* bottom right / southeast */
-        surface_gl_translate_x(surface, points[2][0]),
-        surface_gl_translate_y(surface, points[2][1]),  //
-        depth_bottom,                                   //
-        mask_r, mask_g, mask_b, mask_a,                 //
-        skin_r, skin_g, skin_b,                         //
-        width / texture_width, height / texture_height, //
-        texture_index,                                  //
+    if (char_set_index == -1) {
+        return;
+    }
 
-        /* bottom left / southwest */
-        surface_gl_translate_x(surface, points[3][0]),
-        surface_gl_translate_y(surface, points[3][1]), //
-        depth_bottom,                                  //
-        mask_r, mask_g, mask_b, mask_a,                //
-        skin_r, skin_g, skin_b,                        //
-        0, height / texture_height,                    //
-        texture_index                                  //
-    };
+    int character_offset = character_width[(unsigned)CHAR_SET[char_set_index]];
+    int width = font_data[character_offset + 3] + (draw_shadow ? 1 : 0);
+    int height = font_data[character_offset + 4] + (draw_shadow ? 1 : 0);
 
-    surface_gl_buffer_quad(surface, textured_quad, texture_array_id);
+    x += font_data[character_offset + 5];
+    y -= font_data[character_offset + 6];
+
+    gl_quad quad = {0};
+
+    surface_gl_quad_new(surface, &quad, x, y, width, height);
+
+    gl_atlas_position atlas_position =
+        draw_shadow
+            ? gl_font_shadow_atlas_positions[font_id][char_set_index]
+            : gl_font_atlas_positions[font_id][char_set_index];
+
+    surface_gl_quad_apply_atlas(&quad, atlas_position);
+    surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position);
+    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad), 4, colour, 255);
+
+    surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
+                           surface->gl_sprite_texture);
 }
-#endif
 
 void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int scale_width, int scale_height, int skew_x,
@@ -411,11 +405,10 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int flip, int rotation, float depth_top,
                               float depth_bottom) {
     GLuint texture = 0;
-    gl_atlas_position atlas_position = {0};
-
-    int points[4][2] = {0};
+    //gl_atlas_position *atlas_position = &gl_transparent_atlas_position;
 
 #if 0
+    int points[4][2] = {0};
     if (flip) {
         /* top right */
         points[0][0] = draw_width;
@@ -470,63 +463,6 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 #endif
 }
 
-void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
-                                 int colour, int font_id, int draw_shadow,
-                                 float depth) {
-    if (character == ' ') {
-        return;
-    }
-
-    int8_t *font_data = game_fonts[font_id];
-    int char_set_index = -1;
-
-    for (int i = 0; i < CHAR_SET_LENGTH; i++) {
-        if (character == CHAR_SET[i]) {
-            char_set_index = i;
-            break;
-        }
-    }
-
-    if (char_set_index == -1) {
-        return;
-    }
-
-    int character_offset = character_width[(unsigned)CHAR_SET[char_set_index]];
-    int width = font_data[character_offset + 3] + (draw_shadow ? 1 : 0);
-    int height = font_data[character_offset + 4] + (draw_shadow ? 1 : 0);
-
-    x += font_data[character_offset + 5];
-    y -= font_data[character_offset + 6];
-
-    gl_flat_vertex quad[4] = {0};
-
-    surface_gl_quad_new(surface, quad, x, y, width, height);
-
-    gl_atlas_position atlas_position =
-        draw_shadow
-            ? gl_font_shadow_atlas_positions[font_id][char_set_index]
-            : gl_font_atlas_positions[font_id][char_set_index];
-
-    surface_gl_quad_apply_atlas(quad, atlas_position);
-    surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
-    surface_gl_vertex_apply_colour(quad, 4, colour, 255);
-
-    surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
-                           surface->gl_sprite_texture);
-}
-
-void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
-                           int height, int colour, int alpha) {
-    gl_flat_vertex quad[4] = {0};
-
-    surface_gl_quad_new(surface, quad, x, y, width, height);
-    surface_gl_quad_apply_atlas(quad, gl_white_atlas_position);
-    surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
-    surface_gl_vertex_apply_colour(quad, 4, colour, alpha);
-
-    surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
-                           surface->gl_sprite_texture);
-}
 
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha, float depth) {
@@ -534,58 +470,24 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 
     x -= radius;
     y -= radius;
-
-#if 0
-    GLfloat circle_quad[] = {
-        /* top left / northwest */
-        left_x, top_y, depth, //
-        r, g, b, a,           //
-        -1.0f, -1.0f, -1.0f,  //
-        0, 0,                 //
-        circle_index,         //
-
-        /* top right / northeast */
-        right_x, top_y, depth,                               //
-        r, g, b, a,                                          //
-        -1.0f, -1.0f, -1.0f,                                 //
-        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH, 0, //
-        circle_index,                                        //
-
-        /* bottom right / southeast */
-        right_x, bottom_y, depth,                          //
-        r, g, b, a,                                        //
-        -1.0f, -1.0f, -1.0f,                               //
-        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_WIDTH,  //
-        CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_HEIGHT, //
-        circle_index,                                      //
-
-        /* bottom left / southwest */
-        left_x, bottom_y, depth,                              //
-        r, g, b, a,                                           //
-        -1.0f, -1.0f, -1.0f,                                  //
-        0, CIRCLE_TEXTURE_SIZE / (float)MEDIA_TEXTURE_HEIGHT, //
-        circle_index                                          //
-    };
-
-    surface_gl_buffer_quad(surface, circle_quad,
-                           surface->gl_sprite_media_textures);
-#endif
 }
 
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
                                 int height, int top_colour, int bottom_colour) {
-    gl_flat_vertex quad[4] = {0};
+    gl_quad quad = {0};
 
-    surface_gl_quad_new(surface, quad, x, y, width, height);
-    surface_gl_quad_apply_atlas(quad, gl_white_atlas_position);
+    surface_gl_quad_new(surface, &quad, x, y, width, height);
+    surface_gl_quad_apply_atlas(&quad, gl_white_atlas_position);
     //surface_gl_quad_apply_atlas(quad, gl_media_atlas_positions[1]);
-    surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
+    surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position);
 
     //surface_gl_vertex_apply_colour(quad, 4, 0xffffff, 255);
-    surface_gl_vertex_apply_colour(quad, 2, bottom_colour, 255);
-    surface_gl_vertex_apply_colour(quad + 2, 2, top_colour, 255);
 
-    surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
+    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad), 2, bottom_colour, 255);
+
+    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad) + 2, 2, top_colour, 255);
+
+    surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);
 }
 
