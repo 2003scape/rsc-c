@@ -38,11 +38,6 @@ void init_surface_global() {
             }
         }
 
-        // removed pound sign
-        /*if (index > 63) {
-            index++;
-        }*/
-
         character_width[i] = index * 9;
     }
 
@@ -483,12 +478,6 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
     }
 
     int8_t *font_data = game_fonts[font_id];
-    int slot_size = surface_text_height(font_id);
-
-    if (draw_shadow) {
-        slot_size += 1;
-    }
-
     int char_set_index = -1;
 
     for (int i = 0; i < CHAR_SET_LENGTH; i++) {
@@ -524,53 +513,6 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
 
     surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);
-
-    /*GLfloat left_x = surface_gl_translate_x(surface, x);
-    GLfloat right_x = surface_gl_translate_x(surface, x + width);
-    GLfloat top_y = surface_gl_translate_y(surface, y);
-    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
-
-    GLfloat r = ((colour >> 16) & 0xff) / 255.0f;
-    GLfloat g = ((colour >> 8) & 0xff) / 255.0f;
-    GLfloat b = (colour & 0xff) / 255.0f;
-
-    if (draw_shadow) {
-        font_id += FONT_COUNT;
-    }*/
-
-#if 0
-    GLfloat char_quad[] = {
-        /* top left / northwest */
-        left_x, top_y, depth, //
-        r, g, b, 1.0f,        //
-        -1.0f, -1.0f, -1.0f,  //
-        texture_x, texture_y, //
-        font_id,              //
-
-        /* top right / northeast */
-        right_x, top_y, depth,                //
-        r, g, b, 1.0f,                        //
-        -1.0f, -1.0f, -1.0f,                  //
-        texture_x + texture_width, texture_y, //
-        font_id,                              //
-
-        /* bottom right / southeast */
-        right_x, bottom_y, depth,                              //
-        r, g, b, 1.0f,                                         //
-        -1.0f, -1.0f, -1.0f,                                   //
-        texture_x + texture_width, texture_y + texture_height, //
-        font_id,                                               //
-
-        /* bottom left / southwest */
-        left_x, bottom_y, depth,               //
-        r, g, b, 1.0f,                         //
-        -1.0f, -1.0f, -1.0f,                   //
-        texture_x, texture_y + texture_height, //
-        font_id                                //
-    };
-
-    surface_gl_buffer_quad(surface, char_quad, surface->gl_font_textures);
-#endif
 }
 
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
@@ -639,9 +581,9 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
     //surface_gl_quad_apply_atlas(quad, gl_media_atlas_positions[1]);
     surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
 
-    surface_gl_vertex_apply_colour(quad, 4, 0xffffff, 255);
-    // surface_gl_vertex_apply_colour(quad, 2, bottom_colour, 255);
-    // surface_gl_vertex_apply_colour(quad + 2, 2, top_colour, 255);
+    //surface_gl_vertex_apply_colour(quad, 4, 0xffffff, 255);
+    surface_gl_vertex_apply_colour(quad, 2, bottom_colour, 255);
+    surface_gl_vertex_apply_colour(quad + 2, 2, top_colour, 255);
 
     surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);
@@ -3737,7 +3679,7 @@ void surface_draw_character(Surface *surface, int character_offset, int x,
     int height = font_data[character_offset + 4];
 
     /* position of pixel data for the font (on/off) */
-    int font_pos = font_data[character_offset] * (128 + 128) +
+    int font_pos = font_data[character_offset] * (128 * 128) +
                    font_data[character_offset + 1] * 128 +
                    font_data[character_offset + 2];
 

@@ -3,6 +3,8 @@ src/*.o
 src/lib/*.o
 src/ui/*.o
 src/wii/*.o
+src/gl/*.o
+src/gl/textures/*.o
 mudclient
 *.dol
 *.elf

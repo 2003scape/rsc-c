@@ -729,6 +729,13 @@ void mudclient_draw_login_screens(mudclient *mud) {
     }
     }
 
+    surface_draw_box(mud->surface, 0, 0, 400, 300, 0xeeeee);
+
+    //for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++) {
+        surface_draw_string(mud->surface, "1The quick brown fox Wins wins", 0, (i+1) * 30, i, BLACK);
+    }
+
     mudclient_draw_blue_bar(mud);
 
     if (mud->show_additional_options) {

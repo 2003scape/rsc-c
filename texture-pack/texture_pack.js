@@ -199,6 +199,7 @@ function packSpritesToCanvas(sprites) {
             canvas: { width, height }
         } = sprite;
 
+
         if (width <= 0 && height <= 0) {
             continue;
         }
@@ -233,11 +234,11 @@ function packSpritesToCanvas(sprites) {
             height,
             sprite: { type, index, canvas }
         } of positions) {
-            if (positionTypes[type]) {
-                positionTypes[type][index] = { x, y, width, height };
-            } else {
+            if (!positionTypes[type]) {
                 positionTypes[type] = [];
             }
+
+            positionTypes[type][index] = { x, y, width, height };
 
             const context = canvas.getContext('2d');
 
@@ -311,7 +312,7 @@ async function packMedia() {
 
             const canvas = createCanvas(width, height);
 
-            drawCharacter(canvas, bitmap, '#f0f', 0, 0);
+            drawCharacter(canvas, bitmap, '#fff', 0, 0);
 
             fontSprites.push({
                 type: `glyph-${i}`,
@@ -325,7 +326,7 @@ async function packMedia() {
 
             drawCharacter(shadowCanvas, bitmap, '#000', 1, 0);
             drawCharacter(shadowCanvas, bitmap, '#000', 0, 1);
-            drawCharacter(shadowCanvas, bitmap, '#f0f', 0, 0);
+            drawCharacter(shadowCanvas, bitmap, '#fff', 0, 0);
 
             fontSprites.push({
                 type: `glyph-shadow-${i}`,
@@ -388,7 +389,7 @@ async function packMedia() {
         fontPositions.push(Array.from(glyphs));
 
         const shadowGlyphs = positions[`glyph-shadow-${i}`];
-        shadowGlyphs.length = Fonts.CHARSET.length;
+        shadowGlyphs.length = totalChars;
 
         fontShadowPositions.push(Array.from(shadowGlyphs));
     }
