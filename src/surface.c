@@ -95,9 +95,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     shader_use(&surface->gl_flat_shader);
 
-    vertex_buffer_gl_new(&surface->gl_flat_buffer, sizeof(gl_flat_vertex));
+    vertex_buffer_gl_new(&surface->gl_flat_buffer, sizeof(gl_quad_vertex));
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(gl_flat_vertex) * FLAT_QUAD_COUNT * 4,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(gl_quad_vertex) * GL_MAX_QUADS * 4,
                  NULL, GL_DYNAMIC_DRAW);
 
     int attribute_offset = 0;
@@ -119,7 +119,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
                                    2);
 
     /* two triangles per quad (6 vertex indices) */
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * FLAT_QUAD_COUNT,
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 6 * GL_MAX_QUADS,
                  NULL, GL_DYNAMIC_DRAW);
 
     gl_load_texture(&surface->gl_sprite_texture,
@@ -163,15 +163,15 @@ void surface_new(Surface *surface, int width, int height, int limit,
     AttrInfo_AddLoader(&surface->_3ds_gl_attr_info, 3, GPU_FLOAT, 2);
 
     surface->_3ds_gl_flat_vbo =
-        linearAlloc(FLAT_QUAD_COUNT * sizeof(_3ds_gl_flat_vertex) * 4);
+        linearAlloc(GL_MAX_QUADS * sizeof(_3ds_gl_quad_vertex) * 4);
 
     surface->_3ds_gl_flat_ebo =
-        linearAlloc(FLAT_QUAD_COUNT * sizeof(uint16_t) * 6);
+        linearAlloc(GL_MAX_QUADS * sizeof(uint16_t) * 6);
 
     BufInfo_Init(&surface->_3ds_gl_buf_info);
 
     BufInfo_Add(&surface->_3ds_gl_buf_info, surface->_3ds_gl_flat_vbo,
-                sizeof(_3ds_gl_flat_vertex), 4, 0x3210);
+                sizeof(_3ds_gl_quad_vertex), 4, 0x3210);
 
     _3ds_gl_load_tex(sprites_t3x, sprites_t3x_size,
                      &surface->_3ds_gl_sprites_tex);
@@ -278,7 +278,7 @@ void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
     quad->top_left.base_v = atlas_position.y + atlas_position.height;
 }
 
-void surface_gl_vertex_apply_colour(gl_flat_vertex *vertices, int length,
+void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
                                     int colour, int alpha) {
     float r = ((colour >> 16) & 0xff) / 255.0f;
     float g = ((colour >> 8) & 0xff) / 255.0f;
@@ -348,7 +348,7 @@ void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
     surface_gl_quad_new(surface, &quad, x, y, width, height);
     surface_gl_quad_apply_atlas(&quad, gl_white_atlas_position);
     surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position);
-    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad), 4, colour, alpha);
+    surface_gl_vertex_apply_colour((gl_quad_vertex*)(&quad), 4, colour, alpha);
 
     surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);
@@ -393,7 +393,7 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
 
     surface_gl_quad_apply_atlas(&quad, atlas_position);
     surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position);
-    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad), 4, colour, 255);
+    surface_gl_vertex_apply_colour((gl_quad_vertex*)(&quad), 4, colour, 255);
 
     surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);
@@ -405,8 +405,67 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int flip, int rotation, float depth_top,
                               float depth_bottom) {
     GLuint texture = 0;
-    //gl_atlas_position *atlas_position = &gl_transparent_atlas_position;
+    GLuint base_texture = 0;
+    gl_atlas_position atlas_position = gl_transparent_atlas_position;
 
+    // TODO magic number
+    if (sprite_id >= surface->mud->sprite_media && sprite_id <= 3166) {
+        texture = surface->gl_sprite_texture;
+        base_texture = surface->gl_sprite_texture;
+
+        atlas_position =
+            gl_media_atlas_positions[sprite_id - surface->mud->sprite_media];
+    } else {
+        return;
+    }
+
+    float ratio_x = 1.0;
+    float ratio_y = 1.0;
+    float width_full = surface->sprite_width_full[sprite_id];
+    float height_full = surface->sprite_height_full[sprite_id];
+
+    if (scale_width != -1) {
+        ratio_x = scale_width / width_full;
+        ratio_y = scale_height / height_full;
+    }
+
+    float gl_width = surface->sprite_width[sprite_id] * ratio_x;
+    float gl_height = surface->sprite_height[sprite_id] * ratio_y;
+    float translate_x = surface->sprite_translate_x[sprite_id] * ratio_x;
+    float translate_y = surface->sprite_translate_y[sprite_id] * ratio_y;
+
+    if (surface->sprite_translate[sprite_id]) {
+        x += roundf(translate_x);
+        y += roundf(translate_y);
+    }
+
+    gl_quad quad = {0};
+
+    surface_gl_quad_new(surface, &quad, x, y, gl_width, gl_height);
+
+    float top_left_skew =
+        (1.0f - (translate_y / (height_full * ratio_y))) * (float)skew_x;
+
+    float bottom_left_skew =
+        (1.0f - ((translate_y + gl_height) / (height_full * ratio_y))) *
+        (float)skew_x;
+
+    quad.bottom_left.x += bottom_left_skew;
+    quad.bottom_right.x += bottom_left_skew;
+
+    quad.top_right.x += top_left_skew;
+    quad.top_left.x += top_left_skew;
+
+    surface_gl_quad_apply_atlas(&quad, atlas_position);
+    surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position);
+
+    if (mask_colour == 0) {
+        mask_colour = WHITE;
+    }
+
+    surface_gl_vertex_apply_colour((gl_quad_vertex*)(&quad), 4, mask_colour, alpha);
+
+    surface_gl_buffer_quad(surface, &quad, texture, base_texture);
 #if 0
     int points[4][2] = {0};
     if (flip) {
@@ -483,9 +542,9 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 
     //surface_gl_vertex_apply_colour(quad, 4, 0xffffff, 255);
 
-    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad), 2, bottom_colour, 255);
+    surface_gl_vertex_apply_colour((gl_quad_vertex*)(&quad), 2, bottom_colour, 255);
 
-    surface_gl_vertex_apply_colour((gl_flat_vertex*)(&quad) + 2, 2, top_colour, 255);
+    surface_gl_vertex_apply_colour((gl_quad_vertex*)(&quad) + 2, 2, top_colour, 255);
 
     surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);
@@ -655,21 +714,21 @@ int surface_3ds_gl_is_scissored(Surface *surface) {
     return surface->width != MUD_WIDTH;
 }
 
-void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_flat_vertex quad[4],
+void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_quad_vertex quad[4],
                                 C3D_Tex *texture, C3D_Tex *base_texture) {
-    if (surface->_3ds_gl_context_count >= FLAT_QUAD_COUNT) {
+    if (surface->_3ds_gl_context_count >= GL_MAX_QUADS) {
         fprintf(stderr, "too many context (texture/boundary) switches!\n");
         return;
     }
 
-    if (surface->_3ds_gl_flat_count >= FLAT_QUAD_COUNT) {
+    if (surface->_3ds_gl_flat_count >= GL_MAX_QUADS) {
         fprintf(stderr, "too many quads!\n");
         return;
     }
 
     memcpy(surface->_3ds_gl_flat_vbo +
-               (surface->_3ds_gl_flat_count * sizeof(_3ds_gl_flat_vertex) * 4),
-           quad, sizeof(_3ds_gl_flat_vertex) * 4);
+               (surface->_3ds_gl_flat_count * sizeof(_3ds_gl_quad_vertex) * 4),
+           quad, sizeof(_3ds_gl_quad_vertex) * 4);
 
     uint16_t index = surface->_3ds_gl_flat_count * 4;
 
@@ -712,7 +771,7 @@ void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
     float top_y = (240 - y - height);
     float bottom_y = (240 - y);
 
-    _3ds_gl_flat_vertex box_quad[] = {
+    _3ds_gl_quad_vertex box_quad[] = {
         /* top left / northwest */
         {left_x, top_y, 0, //
          r, g, b, a,       //
@@ -785,7 +844,7 @@ void surface_3ds_gl_buffer_character(Surface *surface, char character, int x,
             ? _3ds_gl_font_shadow_atlas_positions[font_id][char_set_index]
             : _3ds_gl_font_atlas_positions[font_id][char_set_index];
 
-    _3ds_gl_flat_vertex char_quad[] = {
+    _3ds_gl_quad_vertex char_quad[] = {
         /* top left / northwest */
         {left_x, top_y, depth,                        //
          r, g, b, 1.0f,                               //
@@ -913,7 +972,7 @@ void surface_3ds_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         (float)skew_x;
 
     // TODO adjust top/bottom of other 3ds_gl functions
-    _3ds_gl_flat_vertex sprite_quad[] = {
+    _3ds_gl_quad_vertex sprite_quad[] = {
         /* bottom left / southwest */
         {left_x + bottom_left_skew, bottom_y, depth_bottom,      //
          r, g, b, a,                                             //
@@ -958,7 +1017,7 @@ void surface_3ds_gl_buffer_gradient(Surface *surface, int x, int y, int width,
     float bottom_y = (240 - y);
 
     // TODO use constant for transparent pixel
-    _3ds_gl_flat_vertex gradient_quad[] = {
+    _3ds_gl_quad_vertex gradient_quad[] = {
         /* top left / northwest */
         {left_x, top_y, 0,                           //
          bottom_red, bottom_green, bottom_blue, 1.0, //

@@ -16,15 +16,15 @@
 #include "gl/vertex-buffer.h"
 
 // TODO quad_vertex?
-typedef struct gl_flat_vertex {
+typedef struct gl_quad_vertex {
     float x, y, z;
     float r, g, b, a; /* mask colour */
     float u, v;       /* greyscale texture that is coloured by mask colour */
     float base_u, base_v; /* non grey-pixel portion that is added to coloured */
-} gl_flat_vertex;
+} gl_quad_vertex;
 
 typedef struct gl_quad {
-    gl_flat_vertex bottom_left, bottom_right, top_right, top_left;
+    gl_quad_vertex bottom_left, bottom_right, top_right, top_left;
 } gl_quad;
 
 /* atlas positions in ./textures/ to generate UVs */
@@ -36,7 +36,7 @@ typedef struct gl_atlas_position {
 #include "gl/textures/fonts.h"
 #include "gl/textures/media.h"
 
-#define FLAT_QUAD_COUNT 2048
+#define GL_MAX_QUADS 2048
 #define FLAT_MAX_CONTEXTS 1024
 
 // TODO rename
@@ -69,7 +69,7 @@ extern gl_atlas_position gl_transparent_atlas_position;
 #include <citro3d.h>
 #include <tex3ds.h>
 
-#define FLAT_QUAD_COUNT (2048 / 2)
+#define GL_MAX_QUADS (2048 / 2)
 
 #include "flat_shbin.h"
 
@@ -81,12 +81,12 @@ extern gl_atlas_position gl_transparent_atlas_position;
 
 #include "sprites_t3x.h"
 
-typedef struct _3ds_gl_flat_vertex {
+typedef struct _3ds_gl_quad_vertex {
     float x, y, z;
     float r, g, b, a; /* mask colour */
     float u, v;       /* greyscale texture that is coloured by mask colour */
     float base_u, base_v; /* non grey-pixel portion that is added to coloured */
-} _3ds_gl_flat_vertex;
+} _3ds_gl_quad_vertex;
 
 /* atlas positions in ./textures/ to generate UVs */
 typedef struct _3ds_gl_atlas_position {
@@ -223,7 +223,7 @@ typedef struct Surface {
     uint16_t _3ds_gl_flat_count;
 
     /* used for texture array and boundary changes */
-    _3ds_gl_context _3ds_gl_contexts[FLAT_QUAD_COUNT];
+    _3ds_gl_context _3ds_gl_contexts[GL_MAX_QUADS];
     int _3ds_gl_context_count;
 
     C3D_Tex _3ds_gl_sprites_tex;
@@ -246,7 +246,7 @@ void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
                                       atlas_position);
 void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
                             GLuint texture_id, GLuint base_texture_id);
-void surface_gl_vertex_apply_colour(gl_flat_vertex *vertices, int length,
+void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
                                     int colour, int alpha);
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha);
@@ -271,7 +271,7 @@ void surface_gl_draw(Surface *surface, int use_depth);
 #elif defined(RENDER_3DS_GL)
 void surface_3ds_gl_reset_context(Surface *surface);
 int surface_3ds_gl_is_scissored(Surface *surface);
-void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_flat_vertex quad[4],
+void surface_3ds_gl_buffer_quad(Surface *surface, _3ds_gl_quad_vertex quad[4],
                                 C3D_Tex *texture, C3D_Tex *base_texture);
 void surface_3ds_gl_buffer_box(Surface *surface, int x, int y, int width,
                                int height, int colour, int alpha);
