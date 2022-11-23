@@ -30,6 +30,8 @@
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
+
+#define GL_TEXTURE_SIZE 1024.0f
 #endif
 #endif
 

@@ -24,33 +24,15 @@ typedef struct gl_flat_vertex {
 
 /* atlas positions in ./textures/ to generate UVs */
 typedef struct gl_atlas_position {
-    float left_u, right_u;
-    float top_v, bottom_v;
+    float x, y;
+    float width, height;
 } gl_atlas_position;
 
-#include "gl/textures/entities.h"
 #include "gl/textures/fonts.h"
 #include "gl/textures/media.h"
 
 #define FLAT_QUAD_COUNT 2048
 #define FLAT_MAX_CONTEXTS 1024
-
-/*#define ITEM_TEXTURE_WIDTH 48
-#define ITEM_TEXTURE_HEIGHT 32
-
-#define MEDIA_TEXTURE_WIDTH 512
-#define MEDIA_TEXTURE_HEIGHT 256
-
-#define ENTITY_TEXTURE_WIDTH 336
-#define ENTITY_TEXTURE_HEIGHT 256
-
-#define FONT_TEXTURE_WIDTH 300
-#define FONT_TEXTURE_HEIGHT 300
-
-#define MAP_TEXTURE_WIDTH 285
-#define MAP_TEXTURE_HEIGHT 285
-
-#define CIRCLE_TEXTURE_SIZE 256*/
 
 // TODO rename
 typedef struct SurfaceGlContext {
@@ -64,6 +46,8 @@ typedef struct SurfaceGlContext {
     int max_y;
 } SurfaceGlContext;
 
+extern gl_atlas_position gl_white_atlas_position;
+extern gl_atlas_position gl_transparent_atlas_position;
 #endif
 
 #ifdef WII
@@ -209,19 +193,10 @@ typedef struct Surface {
     GLuint gl_entity_textures[5];
     GLuint gl_framebuffer_texture;
 
-    /*GLuint gl_sprite_item_textures;
-    GLuint gl_sprite_media_textures;
-    GLuint gl_sprite_entity_textures;
-    GLuint gl_map_textures;
-    GLuint gl_font_textures;
-    GLuint gl_framebuffer_textures;*/
-
     /* used for texture array and boundary changes */
     SurfaceGlContext gl_contexts[FLAT_MAX_CONTEXTS];
 
     int gl_context_count;
-
-    //int gl_entity_sprite_indices[2000];
 
     int32_t *gl_screen_pixels_reversed;
     int32_t *gl_screen_pixels;
@@ -260,6 +235,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
 float surface_gl_translate_x(Surface *surface, int x);
 float surface_gl_translate_y(Surface *surface, int y);
 void surface_gl_reset_context(Surface *surface);
+void surface_gl_quad_apply_atlas(gl_flat_vertex quad[4], gl_atlas_position
+                                atlas_position);
 void surface_gl_buffer_quad(Surface *surface, gl_flat_vertex quad[4],
                             GLuint texture_id, GLuint base_texture_id);
 #if 0

@@ -1,5 +1,21 @@
 #include "surface.h"
 
+#ifdef RENDER_GL
+gl_atlas_position gl_white_atlas_position = {
+    .x = 0.0f,
+    .y = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
+    .width = 1.0f / GL_TEXTURE_SIZE,
+    .height = 1.0f / GL_TEXTURE_SIZE
+};
+
+gl_atlas_position gl_transparent_atlas_position = {
+    .x = 1.0f / GL_TEXTURE_SIZE,
+    .y = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
+    .width = 1.0f / GL_TEXTURE_SIZE,
+    .height = 1.0f / GL_TEXTURE_SIZE
+};
+#endif
+
 int an_int_346 = 0;
 int an_int_347 = 0;
 int an_int_348 = 0;
@@ -194,83 +210,6 @@ float surface_gl_translate_y(Surface *surface, int y) {
     return gl_translate_y(y, surface->height);
 }
 
-#if 0
-void surface_gl_create_texture_array(GLuint *texture_array_id, int width,
-                                     int height, int length) {
-    glGenTextures(1, texture_array_id);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, *texture_array_id);
-
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, width, height, length);
-}
-
-void surface_gl_create_font_textures(Surface *surface) {
-    glBindTexture(GL_TEXTURE_2D_ARRAY, surface->gl_font_textures);
-
-    int font_area = FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT;
-    int32_t *font_raster = calloc(font_area, sizeof(int32_t));
-
-    /* create two textures for shadow and non-shadow characters */
-    for (int i = 0; i < FONT_COUNT; i++) {
-        surface_gl_create_font_texture(font_raster, i, 0);
-
-        gl_update_texture_array(surface->gl_font_textures, i,
-                                FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
-                                font_raster, 0);
-
-        memset(font_raster, 0, font_area * sizeof(int32_t));
-    }
-
-    for (int i = 0; i < FONT_COUNT; i++) {
-        surface_gl_create_font_texture(font_raster, i, 1);
-
-        gl_update_texture_array(surface->gl_font_textures, FONT_COUNT + i,
-                                FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
-                                font_raster, 0);
-
-        memset(font_raster, 0, font_area * sizeof(int32_t));
-    }
-
-    free(font_raster);
-}
-
-void surface_gl_create_circle_texture(Surface *surface) {
-    surface_draw_box(surface, 0, 0, CIRCLE_TEXTURE_SIZE, CIRCLE_TEXTURE_SIZE,
-                     0);
-
-    surface_draw_circle_software(surface, CIRCLE_TEXTURE_SIZE / 2,
-                                 CIRCLE_TEXTURE_SIZE / 2,
-                                 CIRCLE_TEXTURE_SIZE / 2, 0xffffffff, 255);
-
-    int *circle_pixels =
-        calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(int));
-
-    int circle_index = 0;
-
-    for (int x = 0; x < MEDIA_TEXTURE_WIDTH; x++) {
-        for (int y = 0; y < MEDIA_TEXTURE_HEIGHT; y++) {
-            int colour = surface->pixels[y + x * MEDIA_TEXTURE_HEIGHT];
-
-            if (colour != 0) {
-                colour += 0xff000000;
-            }
-
-            circle_pixels[circle_index++] = colour;
-        }
-    }
-
-    int texture_index = surface->mud->sprite_item - surface->mud->sprite_media;
-
-    gl_update_texture_array(surface->gl_sprite_media_textures, texture_index,
-                            MEDIA_TEXTURE_WIDTH, MEDIA_TEXTURE_HEIGHT,
-                            circle_pixels, 0);
-
-    free(circle_pixels);
-}
-#endif
-
 void surface_gl_reset_context(Surface *surface) {
     surface->gl_flat_count = 0;
 
@@ -283,6 +222,84 @@ void surface_gl_reset_context(Surface *surface) {
     surface->gl_contexts[0].max_y = surface->bounds_max_y;
 
     surface->gl_context_count = 1;
+}
+
+void surface_gl_quad_new(Surface *surface, gl_flat_vertex quad[4], int x, int y, int width,
+                         int height) {
+    float left_x = surface_gl_translate_x(surface, x);
+    float right_x = surface_gl_translate_x(surface, x + width);
+
+    float top_y = surface_gl_translate_y(surface, y);
+    float bottom_y = surface_gl_translate_y(surface, y + height);
+
+    /* bottom left */
+    quad[0].x = left_x;
+    quad[0].y = bottom_y;
+
+    /* bottom right */
+    quad[1].x = right_x;
+    quad[1].y = bottom_y;
+
+    /* top right */
+    quad[2].x = right_x;
+    quad[2].y = top_y;
+
+    /* top left */
+    quad[3].x = left_x;
+    quad[3].y = top_y;
+}
+
+void surface_gl_quad_apply_atlas(gl_flat_vertex quad[4], gl_atlas_position
+                                atlas_position) {
+    /* bottom left */
+    quad[0].u = atlas_position.x;
+    quad[0].v = atlas_position.y;
+
+    /* bottom right */
+    quad[1].u = atlas_position.x + atlas_position.width;
+    quad[1].v = atlas_position.y;
+
+    /* top right */
+    quad[2].u = atlas_position.x + atlas_position.width;
+    quad[2].v = atlas_position.y + atlas_position.height;
+
+    /* top left */
+    quad[3].u = atlas_position.x;
+    quad[3].v = atlas_position.y + atlas_position.height;
+}
+
+void surface_gl_quad_apply_base_atlas(gl_flat_vertex quad[4], gl_atlas_position
+                                      atlas_position) {
+    /* bottom left */
+    quad[0].base_u = atlas_position.x;
+    quad[0].base_v = atlas_position.y;
+
+    /* bottom right */
+    quad[1].base_u = atlas_position.x + atlas_position.width;
+    quad[1].base_v = atlas_position.y;
+
+    /* top right */
+    quad[2].base_u = atlas_position.x + atlas_position.width;
+    quad[2].base_v = atlas_position.y + atlas_position.height;
+
+    /* top left */
+    quad[3].base_u = atlas_position.x;
+    quad[3].base_v = atlas_position.y + atlas_position.height;
+}
+
+void surface_gl_vertex_apply_colour(gl_flat_vertex *vertices, int length,
+                                    int colour, int alpha) {
+    float r = ((colour >> 16) & 0xff) / 255.0f;
+    float g = ((colour >> 8) & 0xff) / 255.0f;
+    float b = (colour & 0xff) / 255.0f;
+    float a = alpha / 255.0f;
+
+    for (int i = 0; i < length; i++) {
+        vertices[i].r = r;
+        vertices[i].g = g;
+        vertices[i].b = b;
+        vertices[i].a = a;
+    }
 }
 
 void surface_gl_buffer_quad(Surface *surface, gl_flat_vertex quad[4],
@@ -542,78 +559,14 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
 
 void surface_gl_buffer_box(Surface *surface, int x, int y, int width,
                            int height, int colour, int alpha) {
-    float r = ((colour >> 16) & 0xff) / 255.0f;
-    float g = ((colour >> 8) & 0xff) / 255.0f;
-    float b = (colour & 0xff) / 255.0f;
-    float a = alpha / 255.0f;
+    gl_flat_vertex quad[4] = {0};
 
-    GLfloat left_x = surface_gl_translate_x(surface, x);
-    GLfloat right_x = surface_gl_translate_x(surface, x + width);
+    surface_gl_quad_new(surface, quad, x, y, width, height);
+    surface_gl_quad_apply_atlas(quad, gl_white_atlas_position);
+    surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
+    surface_gl_vertex_apply_colour(quad, 4, colour, alpha);
 
-    GLfloat top_y = surface_gl_translate_y(surface, y);
-    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
-
-#if 1
-    gl_flat_vertex box_quad[] = {
-        /* bottom left */
-        {left_x, bottom_y, 0, //
-         r, g, b, a,          //
-         /* greyscale texture */
-         0.0f, 1.0f - (1.0f / 1024.0f), //
-         /* base texture */
-         0.001953f, 0.0}, //
-
-        /* bottom right */
-        {right_x, bottom_y, 0,                   //
-         r, g, b, a,                             //
-         0.0009765625f, 1.0f - (1.0f / 1024.0f), //
-         0.001953f, 0.0},                        //
-
-        /* top right */
-        {right_x, top_y, 0,   //
-         r, g, b, a,          //
-         0.0009765625f, 1.0f, //
-         0.001953f, 0.0},     //
-
-        /* top left */
-        {left_x, top_y, 0, //
-         r, g, b, a,       //
-         0.0f, 1.0f,       //
-         0.001953f, 0.0},  //
-    };
-#endif
-
-#if 0
-    gl_flat_vertex box_quad[] = {
-        /* bottom left */
-        {left_x, bottom_y, 0, //
-         r, g, b, a,       //
-         /* greyscale texture */
-         0.0f, 0.0f,             //
-         /* base texture */
-         0.001953f, 0.0},  //
-
-        /* bottom right */
-        {right_x, bottom_y, 0, //
-         r, g, b, a,        //
-         1.0f, 0.0f,              //
-         0.001953f, 0.0},   //
-
-        /* top right */
-        {right_x, top_y, 0, //
-         r, g, b, a,           //
-         1.0f, 1.0f,                 //
-         0.001953f, 0.0},      //
-
-        /* top left */
-        {left_x, top_y, 0, //
-         r, g, b, a,          //
-         0.0f, 1.0f,                //
-         0.001953f, 0.0},     //
-    };
-#endif
-
-    surface_gl_buffer_quad(surface, box_quad, surface->gl_sprite_texture,
+    surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);
 }
 
@@ -623,19 +576,6 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 
     x -= radius;
     y -= radius;
-
-    GLfloat left_x = surface_gl_translate_x(surface, x);
-    GLfloat right_x = surface_gl_translate_x(surface, x + diameter);
-    GLfloat top_y = surface_gl_translate_y(surface, y);
-    GLfloat bottom_y = surface_gl_translate_y(surface, y + diameter);
-
-    float r = ((colour >> 16) & 0xff) / 255.0f;
-    float g = ((colour >> 8) & 0xff) / 255.0f;
-    float b = (colour & 0xff) / 255.0f;
-    float a = alpha / 255.0f;
-
-    int circle_index = surface->mud->sprite_item - surface->mud->sprite_media;
-
 #if 0
     GLfloat circle_quad[] = {
         /* top left / northwest */
@@ -675,59 +615,17 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
                                 int height, int top_colour, int bottom_colour) {
-    float bottom_red = ((bottom_colour >> 16) & 0xff) / 255.0f;
-    float bottom_green = ((bottom_colour >> 8) & 0xff) / 255.0f;
-    float bottom_blue = (bottom_colour & 0xff) / 255.0f;
-    float top_red = ((top_colour >> 16) & 0xff) / 255.0f;
-    float top_green = ((top_colour >> 8) & 0xff) / 255.0f;
-    float top_blue = (top_colour & 0xff) / 255.0f;
+    gl_flat_vertex quad[4] = {0};
 
-    GLfloat left_x = surface_gl_translate_x(surface, x);
-    GLfloat right_x = surface_gl_translate_x(surface, x + width);
-    GLfloat top_y = surface_gl_translate_y(surface, y);
-    GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
+    surface_gl_quad_new(surface, quad, x, y, width, height);
+    surface_gl_quad_apply_atlas(quad, gl_white_atlas_position);
+    surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
 
-#if 0
-    GLfloat gradient_quad[] = {
-        /* top left / northwest */
-        left_x, top_y, 0, //
-        top_red,          //
-        top_green,        //
-        top_blue,         //
-        1.0,              //
-        -1.0, -1.0, -1.0, //
-        0, 0, -1,         //
+    surface_gl_vertex_apply_colour(quad, 2, bottom_colour, 255);
+    surface_gl_vertex_apply_colour(quad + 2, 2, top_colour, 255);
 
-        /* top right / northeast */
-        right_x, top_y, 0, //
-        top_red,           //
-        top_green,         //
-        top_blue,          //
-        1.0,               //
-        -1.0, -1.0, -1.0,  //
-        0, 0, -1,          //
-
-        /* bottom right / southeast */
-        right_x, bottom_y, 0, //
-        bottom_red,           //
-        bottom_green,         //
-        bottom_blue,          //
-        1.0,                  //
-        -1.0, -1.0, -1.0,     //
-        0, 0, -1,             //
-
-        /* bottom left / southwest */
-        left_x, bottom_y, 0, //
-        bottom_red,          //
-        bottom_green,        //
-        bottom_blue,         //
-        1.0,                 //
-        -1.0, -1.0, -1.0,    //
-        0, 0, -1             //
-    };
-
-    surface_gl_buffer_quad(surface, gradient_quad, 0);
-#endif
+    surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
+                           surface->gl_sprite_texture);
 }
 
 void surface_gl_create_framebuffer(Surface *surface) {
