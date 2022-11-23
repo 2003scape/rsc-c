@@ -563,29 +563,6 @@ float gl_translate_y(int y, int range) { return -gl_translate_coord(y, range); }
 #endif
 
 #ifdef RENDER_GL
-#if 0
-void gl_update_texture_array(GLuint texture_array_id, int index, int width,
-                             int height, int32_t *pixels, int convert_bgra) {
-    /* webgl only supports RGBA */
-    if (convert_bgra) {
-        uint8_t *byte_pixels = (uint8_t *)pixels;
-
-        for (int i = 0; i < width * height * 4; i += 4) {
-            int b = byte_pixels[i];
-            int g = byte_pixels[i + 1];
-            int r = byte_pixels[i + 2];
-            int a = byte_pixels[i + 3];
-
-            pixels[i / 4] = (a << 24) | (b << 16) | (g << 8) | r;
-        }
-    }
-
-    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array_id);
-
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, width, height, 1,
-                    GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-}
-#endif
 void gl_load_texture(GLuint *texture_id, char *file) {
     glGenTextures(1, texture_id);
     glBindTexture(GL_TEXTURE_2D, *texture_id);
@@ -593,9 +570,10 @@ void gl_load_texture(GLuint *texture_id, char *file) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    SDL_Surface *texture_image = IMG_Load(file);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-    printf("%d %d\n", texture_image->w, texture_image->h);
+    SDL_Surface *texture_image = IMG_Load(file);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
                  texture_image->w,

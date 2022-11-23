@@ -39,9 +39,9 @@ void init_surface_global() {
         }
 
         // removed pound sign
-        if (index > 63) {
+        /*if (index > 63) {
             index++;
-        }
+        }*/
 
         character_width[i] = index * 9;
     }
@@ -253,19 +253,19 @@ void surface_gl_quad_apply_atlas(gl_flat_vertex quad[4], gl_atlas_position
                                 atlas_position) {
     /* bottom left */
     quad[0].u = atlas_position.x;
-    quad[0].v = atlas_position.y;
+    quad[0].v = atlas_position.y + atlas_position.height;;
 
     /* bottom right */
     quad[1].u = atlas_position.x + atlas_position.width;
-    quad[1].v = atlas_position.y;
+    quad[1].v = atlas_position.y + atlas_position.height;
 
     /* top right */
     quad[2].u = atlas_position.x + atlas_position.width;
-    quad[2].v = atlas_position.y + atlas_position.height;
+    quad[2].v = atlas_position.y;
 
     /* top left */
     quad[3].u = atlas_position.x;
-    quad[3].v = atlas_position.y + atlas_position.height;
+    quad[3].v = atlas_position.y;
 }
 
 void surface_gl_quad_apply_base_atlas(gl_flat_vertex quad[4], gl_atlas_position
@@ -509,7 +509,23 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
     x += font_data[character_offset + 5];
     y -= font_data[character_offset + 6];
 
-    GLfloat left_x = surface_gl_translate_x(surface, x);
+    gl_flat_vertex quad[4] = {0};
+
+    surface_gl_quad_new(surface, quad, x, y, width, height);
+
+    gl_atlas_position atlas_position =
+        draw_shadow
+            ? gl_font_shadow_atlas_positions[font_id][char_set_index]
+            : gl_font_atlas_positions[font_id][char_set_index];
+
+    surface_gl_quad_apply_atlas(quad, atlas_position);
+    surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
+    surface_gl_vertex_apply_colour(quad, 4, colour, 255);
+
+    surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
+                           surface->gl_sprite_texture);
+
+    /*GLfloat left_x = surface_gl_translate_x(surface, x);
     GLfloat right_x = surface_gl_translate_x(surface, x + width);
     GLfloat top_y = surface_gl_translate_y(surface, y);
     GLfloat bottom_y = surface_gl_translate_y(surface, y + height);
@@ -520,7 +536,7 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
 
     if (draw_shadow) {
         font_id += FONT_COUNT;
-    }
+    }*/
 
 #if 0
     GLfloat char_quad[] = {
@@ -576,6 +592,7 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 
     x -= radius;
     y -= radius;
+
 #if 0
     GLfloat circle_quad[] = {
         /* top left / northwest */
@@ -619,10 +636,12 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 
     surface_gl_quad_new(surface, quad, x, y, width, height);
     surface_gl_quad_apply_atlas(quad, gl_white_atlas_position);
+    //surface_gl_quad_apply_atlas(quad, gl_media_atlas_positions[1]);
     surface_gl_quad_apply_base_atlas(quad, gl_transparent_atlas_position);
 
-    surface_gl_vertex_apply_colour(quad, 2, bottom_colour, 255);
-    surface_gl_vertex_apply_colour(quad + 2, 2, top_colour, 255);
+    surface_gl_vertex_apply_colour(quad, 4, 0xffffff, 255);
+    // surface_gl_vertex_apply_colour(quad, 2, bottom_colour, 255);
+    // surface_gl_vertex_apply_colour(quad + 2, 2, top_colour, 255);
 
     surface_gl_buffer_quad(surface, quad, surface->gl_sprite_texture,
                            surface->gl_sprite_texture);

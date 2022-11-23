@@ -55,9 +55,9 @@
 /* disabled pound (£) */
 #define CHAR_SET                                                               \
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567\
-89!\"$%^&*()-_=+[{]};:'@#~,<.>/?\\| "
+89!\"A$%^&*()-_=+[{]};:'@#~,<.>/?\\| "
 
-#define CHAR_SET_LENGTH 94
+#define CHAR_SET_LENGTH 95
 
 #define IS_DIGIT_SEPARATOR(char_code)                                          \
     (char_code == ' ' || char_code == ',' || char_code == '.')

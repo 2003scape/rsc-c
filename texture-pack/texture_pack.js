@@ -61,7 +61,7 @@ function formatUV(uv) {
     return `${(uv / TEXTURE_SIZE).toFixed(6)}f`;
 }
 
-function toAtlasStruct({ x, y, width, height }) {
+function toAtlasStructC({ x, y, width, height }) {
     return `    {${formatUV(x)}, ${formatUV(y)}, ${formatUV(width)}, ${formatUV(
         height
     )}},`;
@@ -98,7 +98,7 @@ async function writeMediaC(name, members) {
         ...Object.entries(members).map(([memberName, positions]) => {
             return (
                 `${memberName} = {\n` +
-                positions.map(toAtlasStruct).join('\n') +
+                positions.map(toAtlasStructC).join('\n') +
                 '\n};\n'
             );
         })
@@ -206,10 +206,10 @@ function packSpritesToCanvas(sprites) {
         const hash = getHash(sprite.canvas);
         const hashSprite = spriteHashes.get(hash);
 
-        if (hashSprite) {
+        /*if (hashSprite) {
             duplicates.set(sprite, hashSprite);
             continue;
-        }
+        }*/
 
         toPack.push({ sprite, width, height });
 
@@ -253,6 +253,18 @@ function packSpritesToCanvas(sprites) {
     });
 
     return { positions: positionTypes, canvases };
+}
+
+function toFontArray(positions) {
+    positions = positions.map((sprite) => sprite || TRANSPARENT_POSITION);
+
+    return (
+        '    {\n' +
+        positions
+            .map((sprite) => `    ${toAtlasStructC(sprite)}`)
+            .join('\n') +
+        '\n    },'
+    );
 }
 
 async function packMedia() {
@@ -391,17 +403,12 @@ async function packMedia() {
         '',
         `gl_atlas_position gl_font_atlas_positions[${totalFonts}]` +
             `[${totalChars}] = {`,
-        ...fontPositions.map((positions) => {
-            positions = positions.map((sprite) => sprite || TRANSPARENT_QUAD);
-
-            return (
-                '    {\n' +
-                positions
-                    .map((sprite) => `    ${toAtlasStruct(sprite)}`)
-                    .join('\n') +
-                '\n    },'
-            );
-        }),
+        ...fontPositions.map(toFontArray),
+        '};',
+        '',
+        `gl_atlas_position gl_font_shadow_atlas_positions[${totalFonts}]` +
+            `[${totalChars}] = {`,
+        ...fontShadowPositions.map(toFontArray),
         '};'
     ].join('\n');
 
