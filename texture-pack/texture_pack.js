@@ -1,19 +1,50 @@
 import crypto from 'crypto';
 import fs from 'fs/promises';
+import url from 'url';
 import { Config } from '@2003scape/rsc-config';
-import { EntitySprites, MediaSprites} from '@2003scape/rsc-sprites';
+import { EntitySprites, MediaSprites } from '@2003scape/rsc-sprites';
 import { Fonts } from '@2003scape/rsc-fonts';
 import { MaxRectsPacker } from 'maxrects-packer';
 import { createCanvas, createImageData } from 'canvas';
-import {cssColor}from '@swiftcarrot/color-fns';
+import { cssColor, hex2rgb, rgb2hex } from '@swiftcarrot/color-fns';
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const TEXTURE_SIZE = 1024;
 
+const ZERO_POSITION = { x: 0, y: 0, width: 0, height: 0 };
 const WHITE_POSITION = { x: 0, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 const TRANSPARENT_POSITION = { x: 1, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 
-// animation indexes that include skin colour
-const SKIN_ANIMATIONS = new Set([0, 1, 2, 6, 56, 3, 4, 5, 7]);
+// animation names that include skin colour
+const SKIN_ANIMATIONS = new Set([
+    'body1',
+    'fbody1',
+    'fhead1',
+    'fplatemailtop',
+    'head1',
+    'head2',
+    'head3',
+    'head4'
+]);
+
+const PLAYER_SKINS = [0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020].map(
+    (hex) => {
+        hex = '#' + hex.toString(16);
+        const { r, g, b } = hex2rgb(hex);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+);
+
+const ENTITY_HEADER = await fs.readFile(
+    `${__dirname}/entities.template.h`,
+    'utf8'
+);
+
+const ENTITY_OBJECT = await fs.readFile(
+    `${__dirname}/entities.template.c`,
+    'utf8'
+);
 
 const cacheDirectory = process.argv[2];
 
@@ -70,6 +101,19 @@ function toAtlasStructC({ x, y, width, height }) {
     return `    {${formatUV(x)}, ${formatUV(y)}, ${formatUV(width)}, ${formatUV(
         height
     )}},`;
+}
+
+function toEntityStructC(position) {
+    if (!position) {
+        position = ZERO_POSITION;
+        position.canvasIndex = -1;
+    }
+
+    const atlas = toAtlasStructC(position)
+        .replace('    ', '')
+        .replace('},', '}');
+
+    return `    {${position.canvasIndex}, ${atlas}},`;
 }
 
 async function writeHeaderC(name, members) {
@@ -224,7 +268,7 @@ function packSpritesToCanvas(sprites) {
     const positions = packer.bins.map(({ rects }) => rects);
     const positionTypes = {};
 
-    const canvases = positions.map((positions) => {
+    const canvases = positions.map((positions, canvasIndex) => {
         const textureCanvas = createCanvas(TEXTURE_SIZE, TEXTURE_SIZE);
         const textureContext = textureCanvas.getContext('2d');
 
@@ -240,7 +284,7 @@ function packSpritesToCanvas(sprites) {
                 positionTypes[type] = [];
             }
 
-            positionTypes[type][index] = { x, y, width, height };
+            positionTypes[type][index] = { x, y, width, height, canvasIndex };
 
             const duplicates = duplicateSprites.get(hash);
 
@@ -253,7 +297,8 @@ function packSpritesToCanvas(sprites) {
                     x,
                     y,
                     width,
-                    height
+                    height,
+                    canvasIndex
                 };
             }
 
@@ -438,23 +483,31 @@ async function packMedia() {
     );
 }
 
+function findSkinSprite(positions) {
+}
+
 async function packEntities() {
     const { npcs } = config;
 
-    // { skinColour: animationIDs }
+    // { skinColour: animationNames }
     const skinColourAnimations = new Map();
+
+    // add all of the skin animations for player skin colours
+    for (const skinColour of PLAYER_SKINS) {
+        skinColourAnimations.set(skinColour, new Set(SKIN_ANIMATIONS));
+    }
 
     const maskedAnimations = new Set();
 
     for (const animation of config.animations) {
         const { r, g, b } = cssColor(animation.colour);
 
-        if (r !== 0 || g !== 0 && b !== 0) {
+        if (r !== 0 || g !== 0 || b !== 0) {
             maskedAnimations.add(animation.name.toLowerCase());
         }
     }
 
-    for (let {animations,skinColour} of npcs) {
+    for (let { animations, skinColour } of npcs) {
         if (!skinColour) {
             continue;
         }
@@ -465,20 +518,25 @@ async function packEntities() {
             skinColour = `rgb(${0xec}, ${0xfe}, ${0xd0})`;
         }
 
+        const animationNames = animations.map((id) =>
+            id ? config.animations[id].name : undefined
+        );
         const mapAnimations = skinColourAnimations.get(skinColour) || new Set();
 
-        for (const animation of animations) {
+        for (const animation of animationNames) {
             if (SKIN_ANIMATIONS.has(animation)) {
-                mapAnimations.add(animation);
+                mapAnimations.add(animation.toLowerCase());
             }
         }
 
         skinColourAnimations.set(skinColour, mapAnimations);
     }
 
+    // used for C array
+    const skinColours = Array.from(skinColourAnimations.keys());
+    const skinSpriteIDs = new Set();
+
     let id = 0;
-    let animationIndex = 0;
-    const skinIDs = new Set();
 
     const sprites = [];
 
@@ -495,6 +553,30 @@ async function packEntities() {
                         type: 'coloured',
                         canvas: colouredSprite
                     });
+
+                    for (const [
+                        skinColour,
+                        skinAnimations
+                    ] of skinColourAnimations) {
+                        if (!skinAnimations.has(animation.toLowerCase())) {
+                            continue;
+                        }
+
+                        const skinColouredSprite =
+                            entitySprites.colourizeSprite(
+                                colouredSprite,
+                                null,
+                                skinColour
+                            );
+
+                        sprites.push({
+                            index: currentID,
+                            type: `skin-${skinColours.indexOf(skinColour)}`,
+                            canvas: skinColouredSprite
+                        });
+
+                        skinSpriteIDs.add(currentID);
+                    }
                 }
             }
 
@@ -504,7 +586,6 @@ async function packEntities() {
         }
 
         id += 27;
-        animationIndex += 1;
     }
 
     const { positions, canvases } = packSpritesToCanvas(sprites);
@@ -518,13 +599,56 @@ async function packEntities() {
 
     for (const [i, canvas] of Object.entries(canvases)) {
         await fs.writeFile(
-            `${texturesDirectory}/entities_${i}.png`, canvas.toBuffer()
+            `${texturesDirectory}/entities_${i}.png`,
+            canvas.toBuffer()
         );
     }
 
-    //console.log(positions, canvases);
+    const entityHeader = ENTITY_HEADER.replace(
+        '$skin_sprite_length',
+        skinSpriteIDs.size
+    ).replace('$skin_colour_length', skinColours.length);
 
-    //console.log(sprites);
+    await fs.writeFile(`${cOutputDirectory}/entities.h`, entityHeader);
+
+    const skinLines = [];
+
+    for (let i = 0; i < skinColours.length; i++) {
+        skinLines.push('    {');
+
+        positions[`skin-${i}`].length = skinSpriteIDs.size;
+
+        for (const position of Array.from(positions[`skin-${i}`])) {
+            skinLines.push('    ' + toEntityStructC(position));
+        }
+
+        skinLines.push('    },');
+    }
+
+    const entityObject = ENTITY_OBJECT.replace(
+        '$skin_sprites',
+        Array.from(skinSpriteIDs).join(', ')
+    )
+        .replace(
+            '$skin_colours',
+            skinColours
+                .map((rgb) => {
+                    const { r, g, b } = cssColor(rgb);
+                    return rgb2hex(r, g, b).replace('#', '0x');
+                })
+                .join(', ')
+        )
+        .replace(
+            '$positions',
+            Array.from(positions.grey).map(toEntityStructC).join('\n')
+        )
+        .replace(
+            '$base_positions',
+            Array.from(positions.coloured).map(toEntityStructC).join('\n')
+        )
+        .replace('$skin_positions', skinLines.join('\n'));
+
+    await fs.writeFile(`${cOutputDirectory}/entities.c`, entityObject);
 }
 
 await packMedia();
