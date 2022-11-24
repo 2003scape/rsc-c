@@ -182,11 +182,8 @@ function createColouredCanvas(canvas) {
 
 // sprites = [ { type, index, canvas } ]
 function packSpritesToCanvas(sprites) {
-    // { spriteHash: sprite }
-    const spriteHashes = new Map();
-
-    // { file: file }
-    const duplicates = new Map();
+    // { hash: [sprite] }
+    const duplicateSprites = new Map();
 
     const toPack = [];
 
@@ -205,22 +202,24 @@ function packSpritesToCanvas(sprites) {
         }
 
         const hash = getHash(sprite.canvas);
-        const hashSprite = spriteHashes.get(hash);
+        const duplicates = duplicateSprites.get(hash);
 
-        /*if (hashSprite) {
-            duplicates.set(sprite, hashSprite);
+        if (duplicates) {
+            duplicates.push(sprite);
             continue;
-        }*/
+        } else {
+            duplicateSprites.set(hash, []);
+        }
 
-        toPack.push({ sprite, width, height });
-
-        spriteHashes.set(hash, sprite);
+        toPack.push({ sprite, width, height, hash });
     }
 
     const packer = new MaxRectsPacker(TEXTURE_SIZE, TEXTURE_SIZE, 0);
     packer.addArray(toPack);
 
     const positions = packer.bins.map(({ rects }) => rects);
+    //console.log(positions);
+
     const positionTypes = {};
 
     const canvases = positions.map((positions) => {
@@ -232,13 +231,31 @@ function packSpritesToCanvas(sprites) {
             y,
             width,
             height,
-            sprite: { type, index, canvas }
+            sprite: { type, index, canvas },
+            hash
         } of positions) {
             if (!positionTypes[type]) {
                 positionTypes[type] = [];
             }
 
             positionTypes[type][index] = { x, y, width, height };
+
+            const duplicates = duplicateSprites.get(hash);
+
+            for (const duplicateSprite of duplicates) {
+                if (!positionTypes[duplicateSprite.type]) {
+                    positionTypes[duplicateSprite.type] = [];
+                }
+
+                positionTypes[duplicateSprite.type][duplicateSprite.index] = {
+                    x, y, width, height
+                };
+            }
+
+            if (duplicates.length) {
+                positionTypes[type]
+                console.log(duplicates);
+            }
 
             const context = canvas.getContext('2d');
 
