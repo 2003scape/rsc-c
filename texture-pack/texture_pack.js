@@ -1,15 +1,19 @@
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import { Config } from '@2003scape/rsc-config';
+import { EntitySprites, MediaSprites} from '@2003scape/rsc-sprites';
 import { Fonts } from '@2003scape/rsc-fonts';
 import { MaxRectsPacker } from 'maxrects-packer';
-import { MediaSprites } from '@2003scape/rsc-sprites';
 import { createCanvas, createImageData } from 'canvas';
+import {cssColor}from '@swiftcarrot/color-fns';
 
 const TEXTURE_SIZE = 1024;
 
 const WHITE_POSITION = { x: 0, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 const TRANSPARENT_POSITION = { x: 1, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
+
+// animation indexes that include skin colour
+const SKIN_ANIMATIONS = new Set([0, 1, 2, 6, 56, 3, 4, 5, 7]);
 
 const cacheDirectory = process.argv[2];
 
@@ -37,6 +41,14 @@ const fonts = new Fonts(Fonts.FONTS);
 await fonts.init();
 fonts.loadArchive(await fs.readFile(`${cacheDirectory}/fonts1.jag`));
 
+const entitySprites = new EntitySprites(config);
+
+entitySprites.trim = true;
+
+await entitySprites.init();
+entitySprites.loadArchive(await fs.readFile(`${cacheDirectory}/entity24.jag`));
+entitySprites.loadArchive(await fs.readFile(`${cacheDirectory}/entity24.mem`));
+
 // used to determine duplicates
 function getHash(image) {
     const { width, height } = image;
@@ -48,13 +60,6 @@ function getHash(image) {
 
 function isGrey(r, g, b, a) {
     return a !== 0 && r !== 0 && r === g && g === b;
-}
-
-// add metadata for packer
-function addSpriteIndex(type) {
-    return function (canvas, index) {
-        return { type, index, canvas };
-    };
 }
 
 function formatUV(uv) {
@@ -196,7 +201,6 @@ function packSpritesToCanvas(sprites) {
             canvas: { width, height }
         } = sprite;
 
-
         if (width <= 0 && height <= 0) {
             continue;
         }
@@ -218,8 +222,6 @@ function packSpritesToCanvas(sprites) {
     packer.addArray(toPack);
 
     const positions = packer.bins.map(({ rects }) => rects);
-    //console.log(positions);
-
     const positionTypes = {};
 
     const canvases = positions.map((positions) => {
@@ -248,13 +250,15 @@ function packSpritesToCanvas(sprites) {
                 }
 
                 positionTypes[duplicateSprite.type][duplicateSprite.index] = {
-                    x, y, width, height
+                    x,
+                    y,
+                    width,
+                    height
                 };
             }
 
             if (duplicates.length) {
-                positionTypes[type]
-                console.log(duplicates);
+                positionTypes[type];
             }
 
             const context = canvas.getContext('2d');
@@ -278,9 +282,7 @@ function toFontArray(positions) {
 
     return (
         '    {\n' +
-        positions
-            .map((sprite) => `    ${toAtlasStructC(sprite)}`)
-            .join('\n') +
+        positions.map((sprite) => `    ${toAtlasStructC(sprite)}`).join('\n') +
         '\n    },'
     );
 }
@@ -289,17 +291,13 @@ async function packMedia() {
     // sprites that the client applies a mask to
     const maskedSprites = new Set();
 
-    // undefined here needs to be white
-    const greySprites = [];
-
-    // undefined here needs to be transparent
-    const colouredSprites = [];
-
     for (const { sprite, colour } of config.items) {
         if (colour) {
             maskedSprites.add(sprite);
         }
     }
+
+    const sprites = [];
 
     for (let i = 0; i < mediaSprites.idSprites.length; i++) {
         const sprite = mediaSprites.idSprites[i];
@@ -309,14 +307,16 @@ async function packMedia() {
             const colouredSprite = createColouredCanvas(sprite);
 
             if (colouredSprite) {
-                colouredSprites[i] = colouredSprite;
+                sprites.push({
+                    type: 'coloured',
+                    index: i,
+                    canvas: colouredSprite
+                });
             }
         }
 
-        greySprites[i] = sprite;
+        sprites.push({ type: 'grey', index: i, canvas: sprite });
     }
-
-    const fontSprites = [];
 
     for (const [i, font] of fonts.fonts.entries()) {
         let index = 0;
@@ -331,7 +331,7 @@ async function packMedia() {
 
             drawCharacter(canvas, bitmap, '#fff', 0, 0);
 
-            fontSprites.push({
+            sprites.push({
                 type: `glyph-${i}`,
                 index,
                 width,
@@ -345,7 +345,7 @@ async function packMedia() {
             drawCharacter(shadowCanvas, bitmap, '#000', 0, 1);
             drawCharacter(shadowCanvas, bitmap, '#fff', 0, 0);
 
-            fontSprites.push({
+            sprites.push({
                 type: `glyph-shadow-${i}`,
                 index,
                 width: width + 1,
@@ -356,12 +356,6 @@ async function packMedia() {
             index += 1;
         }
     }
-
-    const sprites = [
-        ...greySprites.map(addSpriteIndex('grey')),
-        ...colouredSprites.map(addSpriteIndex('coloured')),
-        ...fontSprites
-    ];
 
     const { positions, canvases } = packSpritesToCanvas(sprites);
 
@@ -384,7 +378,6 @@ async function packMedia() {
         (sprite) => sprite || TRANSPARENT_POSITION
     );
 
-    //const fontPositions = positions.grey.map((sprite) => sprite || WHITE_QUAD);
     const mediaMembersC = {
         'gl_atlas_position gl_media_atlas_positions[]': greyPositions,
         'gl_atlas_position gl_media_base_atlas_positions[]': colouredPositions
@@ -437,10 +430,102 @@ async function packMedia() {
     context.fillStyle = '#fff';
     context.fillRect(0, TEXTURE_SIZE - 1, 1, 1);
 
+    // TODO circle
+
     await fs.writeFile(
         `${texturesDirectory}/sprites.png`,
         canvases[0].toBuffer()
     );
 }
 
+async function packEntities() {
+    const { npcs } = config;
+
+    // { skinColour: animationIDs }
+    const skinColourAnimations = new Map();
+
+    const maskedAnimations = new Set();
+
+    for (const animation of config.animations) {
+        const { r, g, b } = cssColor(animation.colour);
+
+        if (r !== 0 || g !== 0 && b !== 0) {
+            maskedAnimations.add(animation.name.toLowerCase());
+        }
+    }
+
+    for (let {animations,skinColour} of npcs) {
+        if (!skinColour) {
+            continue;
+        }
+
+        if (skinColour === `rgb(${0xea}, ${0xde}, ${0xd2})`) {
+            skinColour = `rgb(${0xec}, ${0xde}, ${0xd0})`;
+        } else if (skinColour === `rgb(${0xec}, ${0xff}, ${0xd0})`) {
+            skinColour = `rgb(${0xec}, ${0xfe}, ${0xd0})`;
+        }
+
+        const mapAnimations = skinColourAnimations.get(skinColour) || new Set();
+
+        for (const animation of animations) {
+            if (SKIN_ANIMATIONS.has(animation)) {
+                mapAnimations.add(animation);
+            }
+        }
+
+        skinColourAnimations.set(skinColour, mapAnimations);
+    }
+
+    let id = 0;
+    let animationIndex = 0;
+    const skinIDs = new Set();
+
+    const sprites = [];
+
+    for (const [animation, frames] of entitySprites.sprites) {
+        let currentID = id;
+
+        for (const frame of frames) {
+            if (maskedAnimations.has(animation.toLowerCase())) {
+                const colouredSprite = createColouredCanvas(frame);
+
+                if (colouredSprite) {
+                    sprites.push({
+                        index: currentID,
+                        type: 'coloured',
+                        canvas: colouredSprite
+                    });
+                }
+            }
+
+            sprites.push({ index: currentID, type: 'grey', canvas: frame });
+
+            currentID += 1;
+        }
+
+        id += 27;
+        animationIndex += 1;
+    }
+
+    const { positions, canvases } = packSpritesToCanvas(sprites);
+
+    positions.grey.length = 2000;
+    positions.coloured.length = 2000;
+
+    for (const [type, typePositions] of Object.entries(positions)) {
+        positions[type] = Array.from(typePositions);
+    }
+
+    for (const [i, canvas] of Object.entries(canvases)) {
+        await fs.writeFile(
+            `${texturesDirectory}/entities_${i}.png`, canvas.toBuffer()
+        );
+    }
+
+    //console.log(positions, canvases);
+
+    //console.log(sprites);
+}
+
 await packMedia();
+await packEntities();

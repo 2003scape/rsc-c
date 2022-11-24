@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/2003scape/rsc-c#readme",
   "dependencies": {
+    "@swiftcarrot/color-fns": "^3.2.0",
     "canvas": "^2.10.2",
     "maxrects-packer": "^2.7.3"
   }
