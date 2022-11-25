@@ -534,11 +534,10 @@ async function packEntities() {
 
     // used for C array
     const skinColours = Array.from(skinColourAnimations.keys());
-    const skinSpriteIDs = new Set();
+    let skinSpriteIDs = new Set();
 
     let id = 0;
-
-    const sprites = [];
+    let sprites = [];
 
     for (const [animation, frames] of entitySprites.sprites) {
         let currentID = id;
@@ -588,6 +587,8 @@ async function packEntities() {
         id += 27;
     }
 
+    skinSpriteIDs = Array.from(skinSpriteIDs);
+
     const { positions, canvases } = packSpritesToCanvas(sprites);
 
     positions.grey.length = 2000;
@@ -606,7 +607,7 @@ async function packEntities() {
 
     const entityHeader = ENTITY_HEADER.replace(
         '$skin_sprite_length',
-        skinSpriteIDs.size
+        skinSpriteIDs.length
     ).replace('$skin_colour_length', skinColours.length);
 
     await fs.writeFile(`${cOutputDirectory}/entities.h`, entityHeader);
@@ -616,7 +617,7 @@ async function packEntities() {
     for (let i = 0; i < skinColours.length; i++) {
         skinLines.push('    {');
 
-        positions[`skin-${i}`].length = skinSpriteIDs.size;
+        positions[`skin-${i}`].length = skinSpriteIDs.length;
 
         for (const position of Array.from(positions[`skin-${i}`])) {
             skinLines.push('    ' + toEntityStructC(position));
@@ -627,7 +628,7 @@ async function packEntities() {
 
     const entityObject = ENTITY_OBJECT.replace(
         '$skin_sprites',
-        Array.from(skinSpriteIDs).join(', ')
+        skinSpriteIDs.join(', ')
     )
         .replace(
             '$skin_colours',

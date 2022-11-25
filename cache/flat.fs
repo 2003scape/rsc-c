@@ -20,12 +20,9 @@ void main() {
     }
 
     vec4 texture_colour = texture2D(texture, vertex_texture_position);
-    //vec4 base_texture_colour = texture2D(texture, vertex_base_texture_position);
+    vec4 base_texture_colour = texture2D(texture, vertex_base_texture_position);
 
-    texture_colour *= vertex_colour;
-    //fragment_colour = texture_colour + base_texture_colour;
-
-    fragment_colour = texture_colour;
+    fragment_colour = (texture_colour * vertex_colour) + base_texture_colour;
 
 //    if (vertex_texture_position.z > -1) {
 //        vec4 texture_colour = texture(textures, vertex_texture_position);

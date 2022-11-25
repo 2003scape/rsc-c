@@ -3955,6 +3955,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
             int animation_colour =
                 game_data_animation_character_colour[animation_id];
+
             int skin_colour = player_skin_colours[player->skin_colour];
 
             if (animation_colour == 1) {

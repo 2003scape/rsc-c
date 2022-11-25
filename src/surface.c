@@ -125,6 +125,14 @@ void surface_new(Surface *surface, int width, int height, int limit,
     gl_load_texture(&surface->gl_sprite_texture,
                     "./cache/textures/sprites.png");
 
+    for (int i = 0; i < 5; i++) {
+        char filename[32] = {0};
+        sprintf(filename, "./cache/textures/entities_%d.png", i);
+
+        gl_load_texture(&surface->gl_entity_textures[i],
+                        filename);
+    }
+
     int entity_textures_length =
         sizeof(surface->gl_entity_textures) / sizeof(GLuint);
 
@@ -242,40 +250,32 @@ void surface_gl_quad_new(Surface *surface, gl_quad *quad, int x, int y,
 
 void surface_gl_quad_apply_atlas(gl_quad *quad, gl_atlas_position
                                 atlas_position) {
-    /* bottom left */
     quad->bottom_left.u = atlas_position.x;
     quad->bottom_left.v = atlas_position.y + atlas_position.height;
 
-    /* bottom right */
     quad->bottom_right.u = atlas_position.x + atlas_position.width;
     quad->bottom_right.v = atlas_position.y + atlas_position.height;
 
-    /* top right */
     quad->top_right.u = atlas_position.x + atlas_position.width;
     quad->top_right.v = atlas_position.y;
 
-    /* top left */
     quad->top_left.u = atlas_position.x;
     quad->top_left.v = atlas_position.y;
 }
 
 void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
                                       atlas_position) {
-    /* bottom left */
     quad->bottom_left.base_u = atlas_position.x;
-    quad->bottom_left.base_v = atlas_position.y;
+    quad->bottom_left.base_v = atlas_position.y + atlas_position.height;
 
-    /* bottom right */
     quad->bottom_right.base_u = atlas_position.x + atlas_position.width;
-    quad->bottom_right.base_v = atlas_position.y;
+    quad->bottom_right.base_v = atlas_position.y + atlas_position.height;
 
-    /* top right */
     quad->top_right.base_u = atlas_position.x + atlas_position.width;
-    quad->top_right.base_v = atlas_position.y + atlas_position.height;
+    quad->top_right.base_v = atlas_position.y;
 
-    /* top left */
     quad->top_left.base_u = atlas_position.x;
-    quad->top_left.base_v = atlas_position.y + atlas_position.height;
+    quad->top_left.base_v = atlas_position.y;
 }
 
 void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
@@ -324,7 +324,8 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
         context->max_x == surface->bounds_max_x &&
         context->min_y == surface->bounds_min_y &&
         context->max_y == surface->bounds_max_y &&
-        context->texture_id == texture_id) {
+        context->texture_id == texture_id &&
+        context->base_texture_id == base_texture_id) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];
@@ -335,6 +336,7 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
         context->max_y = surface->bounds_max_y;
 
         context->texture_id = texture_id;
+        context->base_texture_id = texture_id;
         context->quad_count = 1;
 
         surface->gl_context_count++;
@@ -404,17 +406,37 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int mask_colour, int skin_colour, int alpha,
                               int flip, int rotation, float depth_top,
                               float depth_bottom) {
+    skew_x = 0;
+
     GLuint texture = 0;
     GLuint base_texture = 0;
-    gl_atlas_position atlas_position = gl_transparent_atlas_position;
 
-    // TODO magic number
-    if (sprite_id >= surface->mud->sprite_media && sprite_id <= 3166) {
+    gl_atlas_position atlas_position = gl_transparent_atlas_position;
+    gl_atlas_position base_atlas_position = gl_transparent_atlas_position;
+
+    if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
+        gl_entity_texture texture_position =
+            gl_entities_texture_positions[sprite_id];
+
+        texture = surface->gl_entity_textures[texture_position.texture_index];
+
+        atlas_position = texture_position.atlas_position;
+
+        gl_entity_texture base_texture_position =
+            gl_entities_base_texture_positions[sprite_id];
+
+        base_texture = surface->gl_entity_textures[base_texture_position.texture_index];
+
+        base_atlas_position = base_texture_position.atlas_position;
+    } else if (sprite_id >= surface->mud->sprite_media && sprite_id <= 3166) {
+        // TODO magic number ^
         texture = surface->gl_sprite_texture;
         base_texture = surface->gl_sprite_texture;
 
-        atlas_position =
-            gl_media_atlas_positions[sprite_id - surface->mud->sprite_media];
+        int atlas_index = sprite_id - surface->mud->sprite_media;
+
+        atlas_position = gl_media_atlas_positions[atlas_index];
+        base_atlas_position = gl_media_base_atlas_positions[atlas_index];
     } else {
         return;
     }
@@ -457,7 +479,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     quad.top_left.x += top_left_skew;
 
     surface_gl_quad_apply_atlas(&quad, atlas_position);
-    surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position);
+    surface_gl_quad_apply_base_atlas(&quad, base_atlas_position);
 
     if (mask_colour == 0) {
         mask_colour = WHITE;
@@ -468,6 +490,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     surface_gl_buffer_quad(surface, &quad, texture, base_texture);
 #if 0
     int points[4][2] = {0};
+
     if (flip) {
         /* top right */
         points[0][0] = draw_width;
@@ -654,7 +677,6 @@ void surface_gl_draw(Surface *surface, int use_depth) {
                    use_depth ? 0 : is_ui_scaled);
 
     glBindVertexArray(surface->gl_flat_buffer.vao);
-    glActiveTexture(GL_TEXTURE0);
 
     int drawn_quads = 0;
 
@@ -675,7 +697,15 @@ void surface_gl_draw(Surface *surface, int use_depth) {
         GLuint texture_id = context->texture_id;
 
         if (texture_id != 0) {
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture_id);
+        }
+
+        GLuint base_texture_id = context->base_texture_id;
+
+        if (texture_id != 0) {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, base_texture_id);
         }
 
         int quad_count = context->quad_count;

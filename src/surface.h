@@ -33,6 +33,7 @@ typedef struct gl_atlas_position {
     float width, height;
 } gl_atlas_position;
 
+#include "gl/textures/entities.h"
 #include "gl/textures/fonts.h"
 #include "gl/textures/media.h"
 
@@ -42,6 +43,8 @@ typedef struct gl_atlas_position {
 // TODO rename
 typedef struct SurfaceGlContext {
     GLuint texture_id;
+    GLuint base_texture_id;
+
     int quad_count;
 
     /* boundaries for minimap drawing */
@@ -384,9 +387,9 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
 void surface_draw_sprite_transform_mask_software(
     Surface *surface, int x, int y, int draw_width, int draw_height,
     int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip);
-void surface_draw_sprite_transform_mask(Surface *surface, int x, int y, int w,
-                                        int h, int sprite_id, int colour1,
-                                        int colour2, int skew_x, int flag);
+void surface_draw_sprite_transform_mask(Surface *surface, int x, int y, int width,
+                                        int height, int sprite_id, int mask_colour,
+                                        int skin_colour, int skew_x, int flip);
 void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
                                               int draw_width, int draw_height,
                                               int sprite_id, int mask_colour,
