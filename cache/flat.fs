@@ -8,17 +8,7 @@ in vec2 vertex_base_texture_position;
 uniform sampler2D texture;
 uniform sampler2D base_texture;
 
-uniform bool ui_scale;
-
 void main() {
-    float frag_x = gl_FragCoord.x;
-    float frag_y = gl_FragCoord.y;
-
-    if (ui_scale) {
-        frag_x /= 2.0f;
-        frag_y /= 2.0f;
-    }
-
     vec4 texture_colour = texture2D(texture, vertex_texture_position);
 
     vec4 base_texture_colour =

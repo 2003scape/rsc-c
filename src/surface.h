@@ -28,8 +28,10 @@ typedef struct gl_quad {
 
 /* atlas positions in ./textures/ to generate UVs */
 typedef struct gl_atlas_position {
-    float x, y;
-    float width, height;
+    //float x, y;
+    //float width, height;
+    float left_u, right_u;
+    float top_v, bottom_v;
 } gl_atlas_position;
 
 #include "gl/textures/entities.h"
@@ -197,7 +199,7 @@ typedef struct Surface {
 
     /* textures */
     GLuint gl_sprite_texture;
-    GLuint gl_entity_textures[5];
+    GLuint gl_entity_textures[ENTITY_TEXTURE_LENGTH];
     GLuint gl_framebuffer_texture;
 
     /* used for texture array and boundary changes */

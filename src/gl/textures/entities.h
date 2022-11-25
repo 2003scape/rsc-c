@@ -3,6 +3,7 @@
 
 #define SKIN_SPRITE_LENGTH 123
 #define SKIN_COLOUR_LENGTH 31
+#define ENTITY_TEXTURE_LENGTH 6
 
 #include "../../surface.h"
 

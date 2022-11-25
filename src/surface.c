@@ -1,17 +1,19 @@
 #include "surface.h"
 
 #ifdef RENDER_GL
-gl_atlas_position gl_white_atlas_position = {.x = 0.0f,
-                                             .y = (GL_TEXTURE_SIZE - 1.0f) /
-                                                  GL_TEXTURE_SIZE,
-                                             .width = 1.0f / GL_TEXTURE_SIZE,
-                                             .height = 1.0f / GL_TEXTURE_SIZE};
+gl_atlas_position gl_white_atlas_position = {
+    .left_u = 0.0f,
+    .right_u = 1.0f / GL_TEXTURE_SIZE,
+    .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
+    .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE
+};
 
 gl_atlas_position gl_transparent_atlas_position = {
-    .x = 1.0f / GL_TEXTURE_SIZE,
-    .y = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
-    .width = 1.0f / GL_TEXTURE_SIZE,
-    .height = 1.0f / GL_TEXTURE_SIZE};
+    .left_u = 2.0f / GL_TEXTURE_SIZE,
+    .right_u = 3.0f / GL_TEXTURE_SIZE,
+    .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
+    .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE
+};
 #endif
 
 int an_int_346 = 0;
@@ -123,7 +125,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
     gl_load_texture(&surface->gl_sprite_texture,
                     "./cache/textures/sprites.png");
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < ENTITY_TEXTURE_LENGTH; i++) {
         char filename[32] = {0};
         sprintf(filename, "./cache/textures/entities_%d.png", i);
 
@@ -253,48 +255,48 @@ void surface_gl_quad_new(Surface *surface, gl_quad *quad, int x, int y,
 void surface_gl_quad_apply_atlas(gl_quad *quad,
                                  gl_atlas_position atlas_position, int flip) {
     if (flip) {
-        quad->bottom_left.u = atlas_position.x + atlas_position.width;
-        quad->bottom_right.u = atlas_position.x;
+        quad->bottom_left.u = atlas_position.right_u;
+        quad->bottom_right.u = atlas_position.left_u;
 
-        quad->top_right.u = atlas_position.x;
-        quad->top_left.u = atlas_position.x + atlas_position.width;
+        quad->top_left.u = atlas_position.right_u;
+        quad->top_right.u = atlas_position.left_u;
     } else {
-        quad->bottom_left.u = atlas_position.x;
-        quad->bottom_right.u = atlas_position.x + atlas_position.width;
+        quad->bottom_left.u = atlas_position.left_u;
+        quad->bottom_right.u = atlas_position.right_u;
 
-        quad->top_right.u = atlas_position.x + atlas_position.width;
-        quad->top_left.u = atlas_position.x;
+        quad->top_left.u = atlas_position.left_u;
+        quad->top_right.u = atlas_position.right_u;
     }
 
-    quad->bottom_left.v = atlas_position.y + atlas_position.height;
-    quad->bottom_right.v = atlas_position.y + atlas_position.height;
+    quad->bottom_left.v = atlas_position.bottom_v;
+    quad->bottom_right.v = atlas_position.bottom_v;
 
-    quad->top_right.v = atlas_position.y;
-    quad->top_left.v = atlas_position.y;
+    quad->top_right.v = atlas_position.top_v;
+    quad->top_left.v = atlas_position.top_v;
 }
 
 void surface_gl_quad_apply_base_atlas(gl_quad *quad,
                                       gl_atlas_position atlas_position,
                                        int flip) {
     if (flip) {
-        quad->bottom_left.base_u = atlas_position.x + atlas_position.width;
-        quad->bottom_right.base_u = atlas_position.x;
+        quad->bottom_left.base_u = atlas_position.right_u;
+        quad->bottom_right.base_u = atlas_position.left_u;
 
-        quad->top_right.base_u = atlas_position.x;
-        quad->top_left.base_u = atlas_position.x + atlas_position.width;
+        quad->top_left.base_u = atlas_position.right_u;
+        quad->top_right.base_u = atlas_position.left_u;
     } else {
-        quad->bottom_left.base_u = atlas_position.x;
-        quad->bottom_right.base_u = atlas_position.x + atlas_position.width;
+        quad->bottom_left.base_u = atlas_position.left_u;
+        quad->bottom_right.base_u = atlas_position.right_u;
 
-        quad->top_right.base_u = atlas_position.x + atlas_position.width;
-        quad->top_left.base_u = atlas_position.x;
+        quad->top_left.base_u = atlas_position.left_u;
+        quad->top_right.base_u = atlas_position.right_u;
     }
 
-    quad->bottom_left.base_v = atlas_position.y + atlas_position.height;
-    quad->bottom_right.base_v = atlas_position.y + atlas_position.height;
+    quad->bottom_left.base_v = atlas_position.bottom_v;
+    quad->bottom_right.base_v = atlas_position.bottom_v;
 
-    quad->top_right.base_v = atlas_position.y;
-    quad->top_left.base_v = atlas_position.y;
+    quad->top_right.base_v = atlas_position.top_v;
+    quad->top_left.base_v = atlas_position.top_v;
 }
 
 void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
@@ -528,42 +530,6 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     surface_gl_buffer_quad(surface, &quad, texture, base_texture);
 
 #if 0
-    int points[4][2] = {0};
-
-    if (flip) {
-        /* top right */
-        points[0][0] = draw_width;
-        points[0][1] = 0;
-
-        /* top left */
-        points[1][0] = 0;
-        points[1][1] = 0;
-
-        /* bottom left */
-        points[2][0] = 0;
-        points[2][1] = draw_height;
-
-        /* bottom right */
-        points[3][0] = draw_width;
-        points[3][1] = draw_height;
-    } else {
-        /* top left */
-        points[0][0] = 0;
-        points[0][1] = 0;
-
-        /* top right */
-        points[1][0] = draw_width;
-        points[1][1] = 0;
-
-        /* bottom right */
-        points[2][0] = draw_width;
-        points[2][1] = draw_height;
-
-        /* bottom left */
-        points[3][0] = 0;
-        points[3][1] = draw_height;
-    }
-
     if (rotation != 0) {
         // TODO maybe use floats?
         int centre_x = (draw_width - 1) / 2;

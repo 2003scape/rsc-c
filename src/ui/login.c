@@ -731,12 +731,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
-    /*surface_draw_sprite_transform_mask(
-            mud->surface, 20, 200, 150, 150, 3, 0, 0, 0, 1);*/
-
-    surface_draw_sprite_transform_mask(
-            mud->surface, 20, 200, 64, 102, 3, 0, 0, 0, 1);
-
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
 

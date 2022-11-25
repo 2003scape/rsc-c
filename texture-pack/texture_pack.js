@@ -13,8 +13,11 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const TEXTURE_SIZE = 1024;
 
 const ZERO_POSITION = { x: 0, y: 0, width: 0, height: 0 };
+
+//const WHITE_POSITION = { x: 0.5, y: (TEXTURE_SIZE - 1) + 0.5, width: 0.5, height: 0.5 };
 const WHITE_POSITION = { x: 0, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
-const TRANSPARENT_POSITION = { x: 1, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
+
+const TRANSPARENT_POSITION = { x: 2, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 
 // animation names that include skin colour
 const SKIN_ANIMATIONS = new Set([
@@ -98,9 +101,15 @@ function formatUV(uv) {
 }
 
 function toAtlasStructC({ x, y, width, height }) {
-    return `    {${formatUV(x)}, ${formatUV(y)}, ${formatUV(width)}, ${formatUV(
-        height
-    )}},`;
+    const leftU = x;
+    const rightU = x + width;
+
+    const topV = y;
+    const bottomV = y + height;
+
+    return `    {${formatUV(leftU)}, ${formatUV(rightU)}, ${formatUV(
+        topV
+    )}, ${formatUV(bottomV)}},`;
 }
 
 function toEntityStructC(position) {
@@ -137,8 +146,6 @@ async function writeHeaderC(name, members) {
 // members = struct definitions
 // { 'gl_atlas_position gl_media_atlas_positions': [{x, y, width, height}] }
 async function writeMediaC(name, members) {
-    //await writeHeaderC(name, Object.keys(members));
-
     name = name.toLowerCase();
 
     const object = [
@@ -262,7 +269,7 @@ function packSpritesToCanvas(sprites) {
         toPack.push({ sprite, width, height, hash });
     }
 
-    const packer = new MaxRectsPacker(TEXTURE_SIZE, TEXTURE_SIZE, 0);
+    const packer = new MaxRectsPacker(TEXTURE_SIZE, TEXTURE_SIZE, 4);
     packer.addArray(toPack);
 
     const positions = packer.bins.map(({ rects }) => rects);
@@ -473,7 +480,7 @@ async function packMedia() {
     const context = canvases[0].getContext('2d');
 
     context.fillStyle = '#fff';
-    context.fillRect(0, TEXTURE_SIZE - 1, 1, 1);
+    context.fillRect(0, TEXTURE_SIZE - 1, 2, 1);
 
     // TODO circle
 
@@ -481,9 +488,6 @@ async function packMedia() {
         `${texturesDirectory}/sprites.png`,
         canvases[0].toBuffer()
     );
-}
-
-function findSkinSprite(positions) {
 }
 
 async function packEntities() {
@@ -608,7 +612,9 @@ async function packEntities() {
     const entityHeader = ENTITY_HEADER.replace(
         '$skin_sprite_length',
         skinSpriteIDs.length
-    ).replace('$skin_colour_length', skinColours.length);
+    )
+        .replace('$skin_colour_length', skinColours.length)
+        .replace('$entity_texture_length', canvases.length);
 
     await fs.writeFile(`${cOutputDirectory}/entities.h`, entityHeader);
 

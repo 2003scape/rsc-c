@@ -269,10 +269,6 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
-extern char *font_files[];
-extern char *animated_models[];
-extern char login_screen_status[255];
-
 #ifdef WII
 /* these are doubled for the wii */
 #define KEY_WIDTH 23
@@ -289,9 +285,7 @@ void draw_keyboard(uint8_t *framebuffer, int is_shift);
 extern int wii_mouse_x;
 extern int wii_mouse_y;
 extern int wii_mouse_button;
-#endif
-
-#ifdef _3DS
+#elif defined(_3DS)
 #define SOC_ALIGN 0x1000
 #define SOC_BUFFER_SIZE 0x100000
 
@@ -319,11 +313,14 @@ void _3ds_keyboard_thread_callback(void *arg);
 void mudclient_3ds_gl_frame_start(mudclient *mud);
 void mudclient_3ds_gl_frame_end();
 #endif
-#endif
-
-#if !defined(WII) && !defined(_3DS)
+#else
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
 #endif
+
+// TODO this was moved
+extern char *font_files[];
+extern char *animated_models[];
+extern char login_screen_status[255];
 
 typedef struct mudclient {
 #ifdef WII
