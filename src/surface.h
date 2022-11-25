@@ -15,7 +15,6 @@
 #include "shader.h"
 #include "gl/vertex-buffer.h"
 
-// TODO quad_vertex?
 typedef struct gl_quad_vertex {
     float x, y, z;
     float r, g, b, a; /* mask colour */
@@ -244,9 +243,9 @@ float surface_gl_translate_x(Surface *surface, int x);
 float surface_gl_translate_y(Surface *surface, int y);
 void surface_gl_reset_context(Surface *surface);
 void surface_gl_quad_apply_atlas(gl_quad *quad, gl_atlas_position
-                                atlas_position);
+                                atlas_position, int flip);
 void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
-                                      atlas_position);
+                                      atlas_position, int flip);
 void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
                             GLuint texture_id, GLuint base_texture_id);
 void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
