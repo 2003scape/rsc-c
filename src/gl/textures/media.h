@@ -5,4 +5,5 @@
 
 extern gl_atlas_position gl_media_atlas_positions[];
 extern gl_atlas_position gl_media_base_atlas_positions[];
+extern gl_atlas_position gl_circle_atlas_position;
 #endif

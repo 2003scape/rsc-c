@@ -269,7 +269,6 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
-void surface_gl_buffer_framebuffer_quad(Surface *surface);
 float surface_gl_get_layer_depth(Surface *surface);
 void surface_gl_draw(Surface *surface, int use_depth);
 #elif defined(RENDER_3DS_GL)

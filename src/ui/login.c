@@ -731,6 +731,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
+    surface_draw_circle(mud->surface, 50, 50, 50, 0xff00ff, 255, 0);
+
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
 

@@ -1634,79 +1634,6 @@ void mudclient_load_media(mudclient *mud) {
 #endif
 }
 
-#if 0
-/* entity sprite IDs have gaps. */
-int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
-                                           int8_t *entity_jag_mem) {
-    int frame_count = 0;
-    int animation_index = 0;
-
-    int i = 0;
-
-    while (i < game_data_animation_count) {
-    label0:;
-        char *animation_name = game_data_animation_name[i];
-
-        for (int j = 0; j < i; j++) {
-            if (strcmp(game_data_animation_name[j], animation_name) != 0) {
-                continue;
-            }
-
-            game_data_animation_number[i] = game_data_animation_number[j];
-            i++;
-            goto label0;
-        }
-
-        char file_name[255] = {0};
-        sprintf(file_name, "%s.dat", animation_name);
-
-        int8_t *animation_dat = load_data(file_name, 0, entity_jag);
-
-        if (animation_dat == NULL && mud->options->members) {
-            animation_dat = load_data(file_name, 0, entity_jag_mem);
-        }
-
-        if (animation_dat != NULL) {
-            for (int j = 0; j < 15; j++) {
-                mud->surface->gl_entity_sprite_indices[animation_index + j] =
-                    frame_count + j;
-            }
-
-            frame_count += 15;
-
-            if (game_data_animation_has_a[i]) {
-                for (int j = 0; j < 3; j++) {
-                    mud->surface
-                        ->gl_entity_sprite_indices[animation_index + 15 + j] =
-                        frame_count + j;
-                }
-
-                frame_count += 3;
-            }
-
-            if (game_data_animation_has_f[i]) {
-                for (int j = 0; j < 9; j++) {
-                    mud->surface
-                        ->gl_entity_sprite_indices[animation_index + 18 + j] =
-                        frame_count + j;
-                }
-
-                frame_count += 9;
-            }
-
-            free(animation_dat);
-        }
-
-        game_data_animation_number[i] = animation_index;
-        animation_index += 27;
-
-        i++;
-    }
-
-    return frame_count;
-}
-#endif
-
 void mudclient_load_entities(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     int8_t *entity_jag = mudclient_read_data_file(mud, "entity" ENTITY ".jag",
@@ -1732,15 +1659,6 @@ void mudclient_load_entities(mudclient *mud) {
 
         index_dat_mem = load_data("index.dat", 0, entity_jag_mem);
     }
-
-#if 0
-    int texture_array_length =
-        mudclient_update_entity_sprite_indices(mud, entity_jag, entity_jag_mem);
-
-    surface_gl_create_texture_array(&mud->surface->gl_sprite_entity_textures,
-                                    ENTITY_TEXTURE_WIDTH, ENTITY_TEXTURE_HEIGHT,
-                                    texture_array_length);
-#endif
 
     int frame_count = 0;
     int animation_index = 0;
@@ -4737,11 +4655,13 @@ void mudclient_draw_game(mudclient *mud) {
     surface_black_screen(mud->surface);
 
 #if defined(RENDER_GL) && !defined(EMSCRIPTEN)
-    if (mud->options->anti_alias) {
+    /*if (mud->options->anti_alias) {
         glEnable(GL_MULTISAMPLE);
     } else {
         glDisable(GL_MULTISAMPLE);
-    }
+    }*/
+
+    glDisable(GL_MULTISAMPLE);
 #endif
 
 #if defined(_3DS) && defined(RENDER_SW)

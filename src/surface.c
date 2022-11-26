@@ -5,15 +5,13 @@ gl_atlas_position gl_white_atlas_position = {
     .left_u = 0.0f,
     .right_u = 1.0f / GL_TEXTURE_SIZE,
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
-    .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE
-};
+    .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
 
 gl_atlas_position gl_transparent_atlas_position = {
     .left_u = 2.0f / GL_TEXTURE_SIZE,
     .right_u = 3.0f / GL_TEXTURE_SIZE,
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
-    .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE
-};
+    .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
 #endif
 
 int an_int_346 = 0;
@@ -277,7 +275,7 @@ void surface_gl_quad_apply_atlas(gl_quad *quad,
 
 void surface_gl_quad_apply_base_atlas(gl_quad *quad,
                                       gl_atlas_position atlas_position,
-                                       int flip) {
+                                      int flip) {
     if (flip) {
         quad->bottom_left.base_u = atlas_position.right_u;
         quad->bottom_right.base_u = atlas_position.left_u;
@@ -556,6 +554,18 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 
     x -= radius;
     y -= radius;
+
+    gl_quad quad = {0};
+
+    surface_gl_quad_new(surface, &quad, x, y, diameter, diameter);
+
+    surface_gl_quad_apply_atlas(&quad, gl_circle_atlas_position, 0);
+    surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position, 0);
+
+    surface_gl_vertex_apply_colour((gl_quad_vertex *)(&quad), 4, colour, alpha);
+
+    surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
+                           surface->gl_sprite_texture);
 }
 
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
@@ -627,21 +637,6 @@ void surface_gl_update_framebuffer_texture(Surface *surface) {
     gl_update_texture_array(surface->gl_framebuffer_textures, 0,
                             surface->mud->game_width, surface->mud->game_height,
                             surface->gl_screen_pixels, 0);
-#endif
-}
-
-void surface_gl_buffer_framebuffer_quad(Surface *surface) {
-    int points[][2] = {
-        {0, 0},                            //
-        {surface->width, 0},               //
-        {surface->width, surface->height}, //
-        {0, surface->height}               //
-    };
-
-#if 0
-    surface_gl_buffer_textured_quad(surface, surface->gl_framebuffer_textures,
-                                    0, 0, 0, 255, surface->mud->game_width,
-                                    surface->mud->game_height, points, 0, 0);
 #endif
 }
 

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import url from 'url';
 import { Config } from '@2003scape/rsc-config';
-import { EntitySprites, MediaSprites } from '@2003scape/rsc-sprites';
+import { EntitySprites, MediaSprites, Textures } from '@2003scape/rsc-sprites';
 import { Fonts } from '@2003scape/rsc-fonts';
 import { MaxRectsPacker } from 'maxrects-packer';
 import { createCanvas, createImageData } from 'canvas';
@@ -10,13 +10,79 @@ import { cssColor, hex2rgb, rgb2hex } from '@swiftcarrot/color-fns';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
+// TODO get the order correct in rsc-sprites
+const ANIMATIONS = [
+    'head1',
+    'body1',
+    'legs1',
+    'fhead1',
+    'fbody1',
+    'head2',
+    'head3',
+    'head4',
+    'chefshat',
+    'apron',
+    'boots',
+    'fullhelm',
+    'chainmail',
+    'platemailtop',
+    'platemaillegs',
+    'leatherarmour',
+    'leathergloves',
+    'sword',
+    'fplatemailtop',
+    'cape',
+    'mediumhelm',
+    'wizardsrobe',
+    'wizardshat',
+    'necklace',
+    'skirt',
+    'squareshield',
+    'crossbow',
+    'longbow',
+    'battleaxe',
+    'mace',
+    'staff',
+    'rat',
+    'demon',
+    'spider',
+    'camel',
+    'cow',
+    'sheep',
+    'unicorn',
+    'bear',
+    'chicken',
+    'skeleton',
+    'skelweap',
+    'zombie',
+    'zombweap',
+    'ghost',
+    'bat',
+    'goblin',
+    'gobweap',
+    'scorpion',
+    'dragon',
+    'wolf',
+    'partyhat',
+    'eyepatch',
+    'gasmask',
+    'spear',
+    'halloweenmask',
+    'santahat',
+    'ibanstaff',
+    'souless',
+    'bunnyears',
+    'saradominstaff',
+    'scythe'
+];
+
 const TEXTURE_SIZE = 1024;
+const PADDING = 0;
+
+const CIRCLE_SIZE = 128;
 
 const ZERO_POSITION = { x: 0, y: 0, width: 0, height: 0 };
-
-//const WHITE_POSITION = { x: 0.5, y: (TEXTURE_SIZE - 1) + 0.5, width: 0.5, height: 0.5 };
 const WHITE_POSITION = { x: 0, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
-
 const TRANSPARENT_POSITION = { x: 2, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 
 // animation names that include skin colour
@@ -80,8 +146,14 @@ const entitySprites = new EntitySprites(config);
 entitySprites.trim = true;
 
 await entitySprites.init();
+
 entitySprites.loadArchive(await fs.readFile(`${cacheDirectory}/entity24.jag`));
 entitySprites.loadArchive(await fs.readFile(`${cacheDirectory}/entity24.mem`));
+
+const textures = new Textures(config);
+await textures.init();
+
+textures.loadArchive(await fs.readFile(`${cacheDirectory}/textures17.jag`));
 
 // used to determine duplicates
 function getHash(image) {
@@ -145,22 +217,44 @@ async function writeHeaderC(name, members) {
 
 // members = struct definitions
 // { 'gl_atlas_position gl_media_atlas_positions': [{x, y, width, height}] }
-async function writeMediaC(name, members) {
+async function writeAtlasC(name, members) {
     name = name.toLowerCase();
 
     const object = [
         `#include "${name}.h"`,
         '',
         ...Object.entries(members).map(([memberName, positions]) => {
-            return (
-                `${memberName} = {\n` +
-                positions.map(toAtlasStructC).join('\n') +
-                '\n};\n'
-            );
+            const isArray = positions.length > 1;
+
+            const prefix = `${memberName} = ${isArray ? '{': ''}\n`;
+            const suffix = `${isArray ? '\n}' : ''};\n`;
+
+            positions = positions.map(toAtlasStructC).join('\n');
+
+            if (!isArray) {
+                positions = positions.replace('},','}');
+            }
+
+            return prefix + positions + suffix;
         })
     ].join('\n');
 
     await fs.writeFile(`${cOutputDirectory}/${name}.c`, object);
+}
+
+function createCircle() {
+    const canvas = createCanvas(CIRCLE_SIZE, CIRCLE_SIZE);
+    const context = canvas.getContext('2d');
+
+    context.beginPath();
+
+    const radius = CIRCLE_SIZE / 2;
+    context.arc(radius, radius, radius, 0, 2 * Math.PI, false);
+
+    context.fillStyle = '#fff';
+    context.fill();
+
+    return canvas;
 }
 
 function drawCharacter(canvas, bitmap, colour, xOffset, yOffset) {
@@ -269,7 +363,7 @@ function packSpritesToCanvas(sprites) {
         toPack.push({ sprite, width, height, hash });
     }
 
-    const packer = new MaxRectsPacker(TEXTURE_SIZE, TEXTURE_SIZE, 4);
+    const packer = new MaxRectsPacker(TEXTURE_SIZE, TEXTURE_SIZE, PADDING);
     packer.addArray(toPack);
 
     const positions = packer.bins.map(({ rects }) => rects);
@@ -291,7 +385,13 @@ function packSpritesToCanvas(sprites) {
                 positionTypes[type] = [];
             }
 
-            positionTypes[type][index] = { x, y, width, height, canvasIndex };
+            positionTypes[type][index] = {
+                x,
+                y,
+                width,
+                height: height,
+                canvasIndex
+            };
 
             const duplicates = duplicateSprites.get(hash);
 
@@ -304,7 +404,7 @@ function packSpritesToCanvas(sprites) {
                     x,
                     y,
                     width,
-                    height,
+                    height: height,
                     canvasIndex
                 };
             }
@@ -409,6 +509,14 @@ async function packMedia() {
         }
     }
 
+    sprites.push({
+        type: 'circle',
+        index: 0,
+        width: CIRCLE_SIZE,
+        height: CIRCLE_SIZE,
+        canvas: createCircle()
+    });
+
     const { positions, canvases } = packSpritesToCanvas(sprites);
 
     positions.grey.length = mediaSprites.idSprites.length;
@@ -430,13 +538,14 @@ async function packMedia() {
         (sprite) => sprite || TRANSPARENT_POSITION
     );
 
-    const mediaMembersC = {
+    const members = {
         'gl_atlas_position gl_media_atlas_positions[]': greyPositions,
-        'gl_atlas_position gl_media_base_atlas_positions[]': colouredPositions
+        'gl_atlas_position gl_media_base_atlas_positions[]': colouredPositions,
+        'gl_atlas_position gl_circle_atlas_position': positions.circle
     };
 
-    await writeHeaderC('media', Object.keys(mediaMembersC));
-    await writeMediaC('media', mediaMembersC);
+    await writeHeaderC('media', Object.keys(members));
+    await writeAtlasC('media', members);
 
     const fontPositions = [];
     const fontShadowPositions = [];
@@ -543,11 +652,15 @@ async function packEntities() {
     let id = 0;
     let sprites = [];
 
-    for (const [animation, frames] of entitySprites.sprites) {
+    for (let animationName of ANIMATIONS) {
+        animationName = animationName.toLowerCase();
+
+        const frames = entitySprites.sprites.get(animationName);
+
         let currentID = id;
 
         for (const frame of frames) {
-            if (maskedAnimations.has(animation.toLowerCase())) {
+            if (maskedAnimations.has(animationName)) {
                 const colouredSprite = createColouredCanvas(frame);
 
                 if (colouredSprite) {
@@ -557,11 +670,17 @@ async function packEntities() {
                         canvas: colouredSprite
                     });
 
+                    sprites.push({
+                        index: currentID,
+                        type: 'grey',
+                        canvas: frame
+                    });
+
                     for (const [
                         skinColour,
                         skinAnimations
                     ] of skinColourAnimations) {
-                        if (!skinAnimations.has(animation.toLowerCase())) {
+                        if (!skinAnimations.has(animationName)) {
                             continue;
                         }
 
@@ -580,10 +699,16 @@ async function packEntities() {
 
                         skinSpriteIDs.add(currentID);
                     }
+                } else {
+                    sprites.push({
+                        index: currentID,
+                        type: 'grey',
+                        canvas: frame
+                    });
                 }
+            } else {
+                sprites.push({ index: currentID, type: 'grey', canvas: frame });
             }
-
-            sprites.push({ index: currentID, type: 'grey', canvas: frame });
 
             currentID += 1;
         }
@@ -658,5 +783,33 @@ async function packEntities() {
     await fs.writeFile(`${cOutputDirectory}/entities.c`, entityObject);
 }
 
+async function packModelTextures() {
+    const sprites = [];
+
+    for (const [i, { name, subName }] of config.textures.entries()) {
+        const canvas =
+            !subName || !subName.length
+                ? textures.sprites.get(name)
+                : textures.getMergedTexture(name, subName);
+
+        sprites.push({ index: i, type: 'texture', canvas });
+    }
+
+    const { positions, canvases } = packSpritesToCanvas(sprites);
+
+    await fs.writeFile(
+        `${texturesDirectory}/textures.png`,
+        canvases[0].toBuffer()
+    );
+
+    const members = {
+        'gl_atlas_position gl_texture_atlas_positions[]': positions.texture,
+    };
+
+    await writeHeaderC('model_textures', Object.keys(members));
+    await writeAtlasC('model_textures', members);
+}
+
 await packMedia();
 await packEntities();
+await packModelTextures();

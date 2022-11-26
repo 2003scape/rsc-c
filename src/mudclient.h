@@ -950,10 +950,6 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer);
 void mudclient_load_jagex(mudclient *mud);
 void mudclient_load_game_config(mudclient *mud);
 void mudclient_load_media(mudclient *mud);
-#ifdef RENDER_GL
-int mudclient_update_entity_sprite_indices(mudclient *mud, int8_t *entity_jag,
-                                           int8_t *entity_jag_mem);
-#endif
 void mudclient_load_entities(mudclient *mud);
 void mudclient_load_textures(mudclient *mud);
 void mudclient_load_models(mudclient *mud);
@@ -977,7 +973,6 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
 
 void mudclient_update_bank_items(mudclient *mud);
 void mudclient_close_connection(mudclient *mud);
-//void mudclient_move_character(mudclient *mud, GameCharacter *character);
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
 void mudclient_auto_rotate_camera(mudclient *mud);
 void mudclient_handle_camera_zoom(mudclient *mud);
