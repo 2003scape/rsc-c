@@ -1477,25 +1477,37 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                    game_model->vertex_ambience[vertex_index];
 
             float front_texture_x = front_face_us[j];
-            float front_texture_y = /*1.0f - */front_face_vs[j];
+            float front_texture_y = 1.0f - front_face_vs[j];
 
             float back_texture_x = back_face_us[j];
-            float back_texture_y = /*1.0f -*/back_face_vs[j];
+            float back_texture_y = 1.0f - back_face_vs[j];
 
 #ifdef RENDER_GL
             gl_atlas_position front_atlas_position =
-                face_fill_front.texture_index == -1 ?
-                gl_transparent_model_atlas_position :
-                //gl_transparent_model_atlas_position;
-                gl_texture_atlas_positions[face_fill_front.texture_index];
+                gl_transparent_model_atlas_position;
+
+            if (fill_front != COLOUR_TRANSPARENT) {
+                if (face_fill_front.texture_index == -1) {
+                    front_atlas_position = gl_black_model_atlas_position;
+                } else {
+                    front_atlas_position =
+                        gl_texture_atlas_positions[face_fill_front.texture_index];
+                }
+            }
 
             gl_offset_texture_uvs_atlas(front_atlas_position, &front_texture_x, &front_texture_y);
 
             gl_atlas_position back_atlas_position =
-                face_fill_back.texture_index == -1 ?
-                gl_transparent_model_atlas_position :
-                //gl_transparent_model_atlas_position;
-                gl_texture_atlas_positions[face_fill_back.texture_index];
+                gl_transparent_model_atlas_position;
+
+            if (fill_back != COLOUR_TRANSPARENT) {
+                if (face_fill_back.texture_index == -1) {
+                    back_atlas_position = gl_black_model_atlas_position;
+                } else {
+                    back_atlas_position =
+                        gl_texture_atlas_positions[face_fill_back.texture_index];
+                }
+            }
 
             gl_offset_texture_uvs_atlas(back_atlas_position, &back_texture_x, &back_texture_y);
 

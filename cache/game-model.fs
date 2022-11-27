@@ -37,7 +37,7 @@ void main() {
     // check if texture_colour is transparent, then use light_gradient
     // otherwise use texture_gradient
 
-    fragment_colour = vec4(vertex_colour, 1.0) + texture_colour;
+    fragment_colour = vec4(vertex_colour, 0.0) + texture_colour;
 
     if (fragment_colour.w <= 0.0f) {
         discard;

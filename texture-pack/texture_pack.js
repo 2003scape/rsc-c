@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import url from 'url';
@@ -84,13 +86,6 @@ const CIRCLE_SIZE = 128;
 const ZERO_POSITION = { x: 0, y: 0, width: 0, height: 0 };
 const WHITE_POSITION = { x: 0, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 const TRANSPARENT_POSITION = { x: 2, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
-
-const TRANSPARENT_MODEL_POSITION = {
-    x: TEXTURE_SIZE - 33,
-    y: TEXTURE_SIZE - 33,
-    width: 32,
-    height: 32
-};
 
 // animation names that include skin colour
 const SKIN_ANIMATIONS = new Set([
@@ -804,6 +799,18 @@ async function packModelTextures() {
         sprites.push({ index: +i, type: 'texture', canvas });
     }
 
+    const blackCanvas = createCanvas(32, 32);
+    const blackContext = blackCanvas.getContext('2d');
+
+    blackContext.fillStyle = '#000';
+    blackContext.fillRect(0, 0, 32, 32);
+
+    sprites.push({ index: 0, type: 'black', canvas: blackCanvas });
+
+    const transparentCanvas = createCanvas(32, 32);
+
+    sprites.push({ index: 0, type: 'transparent', canvas: transparentCanvas });
+
     const { positions, canvases } = packSpritesToCanvas(sprites);
 
     await fs.writeFile(
@@ -813,8 +820,9 @@ async function packModelTextures() {
 
     const members = {
         'gl_atlas_position gl_texture_atlas_positions[]': positions.texture,
+        'gl_atlas_position gl_black_model_atlas_position': positions.black,
         'gl_atlas_position gl_transparent_model_atlas_position':
-            [TRANSPARENT_MODEL_POSITION]
+            positions.transparent
     };
 
     await writeHeaderC('model_textures', Object.keys(members));
