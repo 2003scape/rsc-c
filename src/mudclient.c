@@ -3998,9 +3998,9 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
             continue;
         }
 
-        /*if (mudclient_should_chop_head(mud, npc, animation_index)) {
+        if (mudclient_should_chop_head(mud, npc, animation_index)) {
             continue;
-        }*/
+        }
 
         int offset_x = 0;
         int offset_y = 0;

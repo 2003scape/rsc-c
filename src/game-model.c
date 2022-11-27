@@ -1435,16 +1435,14 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         float front_face_us[face_vertex_count];
         float front_face_vs[face_vertex_count];
 
-        game_model_gl_unwrap_uvs(game_model, face_vertices,
-                                 face_vertex_count, front_face_us,
-                                 front_face_vs);
+        game_model_gl_unwrap_uvs(game_model, face_vertices, face_vertex_count,
+                                 front_face_us, front_face_vs);
 
         float back_face_us[face_vertex_count];
         float back_face_vs[face_vertex_count];
 
-        game_model_gl_unwrap_uvs(game_model, face_vertices,
-                                 face_vertex_count, back_face_us,
-                                 back_face_vs);
+        game_model_gl_unwrap_uvs(game_model, face_vertices, face_vertex_count,
+                                 back_face_us, back_face_vs);
 
         for (int j = 0; j < face_vertex_count; j++) {
             int vertex_index = face_vertices[j];
@@ -1491,11 +1489,13 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                     front_atlas_position = gl_black_model_atlas_position;
                 } else {
                     front_atlas_position =
-                        gl_texture_atlas_positions[face_fill_front.texture_index];
+                        gl_texture_atlas_positions[face_fill_front
+                                                       .texture_index];
                 }
             }
 
-            gl_offset_texture_uvs_atlas(front_atlas_position, &front_texture_x, &front_texture_y);
+            gl_offset_texture_uvs_atlas(front_atlas_position, &front_texture_x,
+                                        &front_texture_y);
 
             gl_atlas_position back_atlas_position =
                 gl_transparent_model_atlas_position;
@@ -1505,11 +1505,13 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                     back_atlas_position = gl_black_model_atlas_position;
                 } else {
                     back_atlas_position =
-                        gl_texture_atlas_positions[face_fill_back.texture_index];
+                        gl_texture_atlas_positions[face_fill_back
+                                                       .texture_index];
                 }
             }
 
-            gl_offset_texture_uvs_atlas(back_atlas_position, &back_texture_x, &back_texture_y);
+            gl_offset_texture_uvs_atlas(back_atlas_position, &back_texture_x,
+                                        &back_texture_y);
 
             gl_model_vertex vertex = {
                 /* vertex */
@@ -1531,8 +1533,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 face_fill_back.r, face_fill_back.g, face_fill_back.b,
 
                 /* back texture */
-                back_texture_x, back_texture_y
-            };
+                back_texture_x, back_texture_y};
 
             glBufferSubData(GL_ARRAY_BUFFER,
                             ((*vertex_offset) + j) * sizeof(vertex),

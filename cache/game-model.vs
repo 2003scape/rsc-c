@@ -17,7 +17,7 @@ layout(location = 6) in vec2 back_texture_position;
 out vec3 vertex_colour;
 out vec2 vertex_texture_position;
 out float vertex_gradient_index;
-flat out int foggy;
+flat out int is_textured_light;
 
 uniform float scroll_texture;
 
@@ -71,11 +71,12 @@ void main() {
         vertex_texture_position = front_texture_position;
     }
 
-    foggy = 0;
-
     if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
         gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
-        foggy = 1;
+        is_textured_light = 0;
+    } else {
+        is_textured_light = int(vertex_colour.r == 0 && vertex_colour.g == 0 &&
+                                vertex_colour.b == 0);
     }
 
     vertex_gradient_index = float(gradient_index) / float(RAMP_SIZE);
