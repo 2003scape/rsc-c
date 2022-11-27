@@ -85,6 +85,13 @@ const ZERO_POSITION = { x: 0, y: 0, width: 0, height: 0 };
 const WHITE_POSITION = { x: 0, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 const TRANSPARENT_POSITION = { x: 2, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 
+const TRANSPARENT_MODEL_POSITION = {
+    x: TEXTURE_SIZE - 33,
+    y: TEXTURE_SIZE - 33,
+    width: 32,
+    height: 32
+};
+
 // animation names that include skin colour
 const SKIN_ANIMATIONS = new Set([
     'body1',
@@ -413,14 +420,16 @@ function packSpritesToCanvas(sprites) {
                 positionTypes[type];
             }
 
-            const context = canvas.getContext('2d');
+            if (canvas) {
+                const context = canvas.getContext('2d');
 
-            const imageData = createImageData(
-                context.getImageData(0, 0, width, height).data,
-                canvas.width
-            );
+                const imageData = createImageData(
+                    context.getImageData(0, 0, width, height).data,
+                    canvas.width
+                );
 
-            textureContext.putImageData(imageData, x, y);
+                textureContext.putImageData(imageData, x, y);
+            }
         }
 
         return textureCanvas;
@@ -792,18 +801,20 @@ async function packModelTextures() {
                 ? textures.sprites.get(name)
                 : textures.getMergedTexture(name, subName);
 
-        sprites.push({ index: i, type: 'texture', canvas });
+        sprites.push({ index: +i, type: 'texture', canvas });
     }
 
     const { positions, canvases } = packSpritesToCanvas(sprites);
 
     await fs.writeFile(
-        `${texturesDirectory}/textures.png`,
+        `${texturesDirectory}/model_textures.png`,
         canvases[0].toBuffer()
     );
 
     const members = {
         'gl_atlas_position gl_texture_atlas_positions[]': positions.texture,
+        'gl_atlas_position gl_transparent_model_atlas_position':
+            [TRANSPARENT_MODEL_POSITION]
     };
 
     await writeHeaderC('model_textures', Object.keys(members));

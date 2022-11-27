@@ -10,12 +10,12 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 normal;
 layout(location = 2) in vec2 lighting;
 layout(location = 3) in vec3 front_colour;
-layout(location = 4) in vec3 front_texture_position;
+layout(location = 4) in vec2 front_texture_position;
 layout(location = 5) in vec3 back_colour;
-layout(location = 6) in vec3 back_texture_position;
+layout(location = 6) in vec2 back_texture_position;
 
-out vec4 vertex_colour;
-out vec3 vertex_texture_position;
+out vec3 vertex_colour;
+out vec2 vertex_texture_position;
 out float vertex_gradient_index;
 flat out int foggy;
 
@@ -63,11 +63,11 @@ void main() {
 
     if (cull_front) {
         gradient_index += intensity;
-        vertex_colour = vec4(back_colour, 1.0);
+        vertex_colour = back_colour;
         vertex_texture_position = back_texture_position;
     } else {
         gradient_index -= intensity;
-        vertex_colour = vec4(front_colour, 1.0);
+        vertex_colour = front_colour;
         vertex_texture_position = front_texture_position;
     }
 
@@ -80,7 +80,7 @@ void main() {
 
     vertex_gradient_index = float(gradient_index) / float(RAMP_SIZE);
 
-    if (vertex_texture_position.z == FOUNTAIN_ID) {
+    /*if (vertex_texture_position.z == FOUNTAIN_ID) {
         vertex_texture_position.y -= scroll_texture;
-    }
+    }*/
 }

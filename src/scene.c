@@ -147,12 +147,16 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     game_model_gl_create_buffer(&scene->gl_wall_buffer,
                              WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);
 
+    shader_set_int(&scene->game_model_shader, "textures", 0);
+
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
                            scene->light_gradient, RAMP_SIZE);
 
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
 
+    gl_load_texture(&scene->gl_model_texture,
+                    "./cache/textures/model_textures.png");
 #elif defined(RENDER_3DS_GL)
     scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);
@@ -3306,17 +3310,6 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     /* 128x128 rgba */
     scene->texture_colours_128 = calloc(length_128, sizeof(int32_t *));
     scene->length_128 = length_128;
-
-#ifdef RENDER_GL
-    glGenTextures(1, &scene->game_model_textures);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
-
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 128, 128,
-                   game_data_texture_count);
-#endif
 }
 
 void scene_define_texture(Scene *scene, int id, int8_t *colours,
@@ -4317,15 +4310,15 @@ void scene_gl_render(Scene *scene) {
     shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
 
-    shader_set_float(&scene->game_model_shader, "scroll_texture",
+    /*shader_set_float(&scene->game_model_shader, "scroll_texture",
                      scene->gl_scroll_texture_position /
-                         (float)SCROLL_TEXTURE_SIZE);
+                         (float)SCROLL_TEXTURE_SIZE);*/
 
     scene->gl_scroll_texture_position =
         (scene->gl_scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, scene->game_model_textures);
+    glBindTexture(GL_TEXTURE_2D, scene->gl_model_texture);
 
     // TODO is this necessary?
     scene->gl_last_buffer = NULL;

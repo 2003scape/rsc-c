@@ -57,3 +57,6 @@ gl_atlas_position gl_texture_atlas_positions[] = {
     {0.125000f, 0.250000f, 0.125000f, 0.250000f},
     {0.125000f, 0.187500f, 0.625000f, 0.687500f},
 };
+
+gl_atlas_position gl_transparent_model_atlas_position = 
+    {0.967773f, 0.999023f, 0.967773f, 0.999023f};

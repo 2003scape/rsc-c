@@ -190,7 +190,7 @@ typedef struct Scene {
     int gl_pick_face_tag;
 #endif
 
-    GLuint game_model_textures;
+    GLuint gl_model_texture;
 
     /* for game model entities (trees, furniture, etc.) */
     gl_vertex_buffer gl_game_model_buffer;

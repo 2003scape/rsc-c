@@ -17,7 +17,7 @@ extern float gl_quad_face_us[];
 extern float gl_quad_face_vs[];
 
 typedef struct gl_face_fill {
-    float r, g, b, a;
+    float r, g, b;
     int texture_index;
 } gl_face_fill;
 #endif
@@ -34,9 +34,9 @@ typedef struct gl_model_vertex {
     float normal_x, normal_y, normal_z, normal_magnitude;
     float face_intensity, vertex_intensity;
     float front_r, front_g, front_b;
-    float front_texture_u, front_texture_v, remove1;
+    float front_texture_u, front_texture_v;
     float back_r, back_g, back_b;
-    float back_texture_u, back_texture_v, remove2;
+    float back_texture_u, back_texture_v;
 } gl_model_vertex;
 #endif
 
@@ -77,6 +77,10 @@ typedef struct GameModel GameModel;
 
 #include "scene.h"
 #include "utility.h"
+
+#ifdef RENDER_GL
+#include "gl/textures/model_textures.h"
+#endif
 
 #ifdef RENDER_3DS_GL
 #include "textures/model-textures.h"
@@ -249,9 +253,11 @@ void game_model_mask_faces(GameModel *game_model, int *face_fill,
                            int mask_colour);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+void game_model_gl_decode_face_fill(int face_fill, gl_face_fill *vbo_face_fill);
 void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
                               int face_vertex_count, float *us, float *vs);
-void game_model_gl_decode_face_fill(int face_fill, gl_face_fill *vbo_face_fill);
+void gl_offset_texture_uvs_atlas(gl_atlas_position texture_position,
+                                 float *texture_x, float *texture_y);
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset);
 void game_model_get_vertex_ebo_lengths(GameModel **game_models, int length,

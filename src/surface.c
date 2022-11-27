@@ -1645,7 +1645,7 @@ void surface_fade_to_black(Surface *surface) {
         surface_gl_update_framebuffer_texture(surface);
     }
 
-    surface_gl_buffer_framebuffer_quad(surface);
+    //surface_gl_buffer_framebuffer_quad(surface);
 
     surface->gl_fade_to_black = 1;
 
@@ -1698,7 +1698,8 @@ void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
                                width, height, 1);
 
     surface_gl_update_framebuffer_texture(surface);
-    surface_gl_buffer_framebuffer_quad(surface);
+
+    //surface_gl_buffer_framebuffer_quad(surface);
 #endif
 }
 
