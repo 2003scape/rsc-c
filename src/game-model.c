@@ -1671,6 +1671,7 @@ void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
                                  int vbo_length, int ebo_length) {
     vertex_buffer_gl_new(vertex_buffer, sizeof(gl_model_vertex));
 
+    // TODO terrain buffer should be dynamic, add a flag
     glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_model_vertex), NULL,
                  GL_STATIC_DRAW);
 

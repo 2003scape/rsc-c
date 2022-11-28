@@ -2219,7 +2219,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    world_gl_buffer_world_models(world);
+    //world_gl_buffer_world_models(world);
 #endif
 
     game_model_destroy(world->parent_model);
@@ -2349,6 +2349,8 @@ void world_gl_buffer_world_models(World *world) {
                                     world->gl_world_models_offset);
 #endif
 
+    printf("buffer terrain models\n");
+
     free(world->gl_world_models_buffer);
 
     world->gl_world_models_buffer = NULL;
@@ -2359,7 +2361,7 @@ void world_gl_buffer_world_models(World *world) {
 // TODO we can probably only change the necessary memory rather than rebuffering
 // all of the models
 void world_gl_update_terrain_buffers(World *world) {
-    printf("update terrain buffers\n");
+    printf("update terrain buffer lighting\n");
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];

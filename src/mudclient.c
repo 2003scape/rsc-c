@@ -2879,6 +2879,10 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         }
     }
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    world_gl_buffer_world_models(mud->world);
+#endif
+
     for (int i = 0; i < mud->wall_object_count; i++) {
         mud->wall_object_x[i] -= offset_x;
         mud->wall_object_y[i] -= offset_y;
@@ -2912,6 +2916,10 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     }
 
     mudclient_update_ground_item_models(mud);
+
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    //world_gl_buffer_world_models(mud->world);
+#endif
 
     for (int i = 0; i < mud->player_count; i++) {
         GameCharacter *player = mud->players[i];
