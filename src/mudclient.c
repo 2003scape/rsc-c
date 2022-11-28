@@ -119,7 +119,7 @@ int wii_mouse_y = 0;
 int wii_mouse_button = 0;
 
 int update_wii_mouse(WPADData *wiimote_data) {
-    mouse_event me;
+    mouse_event me = {0};
 
     int updated = 0;
     int res = 0;
@@ -4568,7 +4568,8 @@ void mudclient_draw_game(mudclient *mud) {
     }
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        scene_remove_model(mud->scene,
+        // TODO this is really slow!
+        /*scene_remove_model(mud->scene,
                            mud->world->roof_models[mud->last_height_offset][i]);
 
         if (mud->last_height_offset == 0) {
@@ -4595,7 +4596,7 @@ void mudclient_draw_game(mudclient *mud) {
 
                 mud->fog_of_war = 0;
             }
-        }
+        }*/
     }
 
     mudclient_animate_objects(mud);
@@ -4807,7 +4808,7 @@ void mudclient_draw_game(mudclient *mud) {
 
 void mudclient_draw(mudclient *mud) {
 #ifdef EMSCRIPTEN
-    if (get_ticks() - last_canvas_check > 2500) {
+    if (get_ticks() - last_canvas_check > 1000) {
         if (get_canvas_width() != mud->game_width ||
             get_canvas_height() != mud->game_height) {
             mudclient_on_resize(mud);

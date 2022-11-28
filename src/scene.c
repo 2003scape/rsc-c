@@ -1382,6 +1382,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
         scene->surface, x + scene->base_x, y, width, height,
        scene->sprite_id[face], skew_x, (256 << scene->view_distance) /
        project_z, depth_top, depth_bottom);*/
+
     surface_draw_entity_sprite(scene->surface, x + scene->base_x, y, width,
                                height, scene->sprite_id[face], skew_x,
                                (256 * scene->view_distance) / project_z,

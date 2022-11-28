@@ -1734,9 +1734,9 @@ void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
 #ifdef EMSCRIPTEN
 void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
                                    int vbo_length, int ebo_length) {
-    vertex_buffer_gl_new(pick_buffer, sizeof(gl_model_vertex));
+    vertex_buffer_gl_new(pick_buffer, sizeof(gl_pick_vertex));
 
-    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 5, NULL,
+    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_pick_vertex), NULL,
                  GL_DYNAMIC_DRAW);
 
     int attribute_offset = 0;

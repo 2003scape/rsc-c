@@ -2359,6 +2359,8 @@ void world_gl_buffer_world_models(World *world) {
 // TODO we can probably only change the necessary memory rather than rebuffering
 // all of the models
 void world_gl_update_terrain_buffers(World *world) {
+    printf("update terrain buffers\n");
+
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];
 
@@ -2369,7 +2371,30 @@ void world_gl_update_terrain_buffers(World *world) {
         int vertex_offset = game_model->gl_vbo_offset;
         int ebo_offset = game_model->gl_ebo_offset;
 
-        game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
+        for (int j = 0; j < game_model->face_count; j++) {
+            int *face_vertices = game_model->face_vertices[j];
+            int face_vertex_count = game_model->face_vertex_count[j];
+            int face_intensity = game_model->face_intensity[j];
+
+            for (int k = 0; k < face_vertex_count; k++) {
+                int vertex_index = face_vertices[k];
+
+                int vertex_intensity =
+                    game_model->vertex_intensity[vertex_index] +
+                    game_model->vertex_ambience[vertex_index];
+
+                GLfloat lighting[] = {(float)(face_intensity),
+                                      (float)(vertex_intensity)};
+
+                glBufferSubData(
+                    GL_ARRAY_BUFFER,
+                    ((vertex_offset + k) * sizeof(gl_model_vertex)) +
+                        (sizeof(GLfloat) * 7),
+                    (sizeof(GLfloat) * 2), (void *)&lighting);
+            }
+
+            vertex_offset += face_vertex_count;
+        }
     }
 }
 #endif
