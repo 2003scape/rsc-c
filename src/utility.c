@@ -577,6 +577,7 @@ void gl_load_texture(GLuint *texture_id, char *file) {
 
     if (!texture_image) {
         fprintf(stderr, "unable to load %s texture\n", file);
+        fprintf(stderr, "%s\n", IMG_GetError());
         exit(1);
     }
 

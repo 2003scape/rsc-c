@@ -1667,7 +1667,6 @@ float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
 #endif
 
 #ifdef RENDER_GL
-// TODO bind function
 void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
                                  int vbo_length, int ebo_length) {
     vertex_buffer_gl_new(vertex_buffer, sizeof(gl_model_vertex));
@@ -1733,64 +1732,23 @@ void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
 }
 
 #ifdef EMSCRIPTEN
-void game_model_gl_create_pick_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
+void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
                                    int vbo_length, int ebo_length) {
-    if (*vao) {
-        glDeleteVertexArrays(1, vao);
-        glDeleteBuffers(1, vbo);
-        glDeleteBuffers(1, ebo);
-    }
-
-    glGenVertexArrays(1, vao);
-    glBindVertexArray(*vao);
-
-    glGenBuffers(1, vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+    vertex_buffer_gl_new(pick_buffer, sizeof(gl_model_vertex));
 
     glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(GLfloat) * 5, NULL,
                  GL_DYNAMIC_DRAW);
 
-    /* vertex { x, y, z } */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
-                          (void *)0);
+    int attribute_offset = 0;
 
-    glEnableVertexAttribArray(0);
+    /* vertex { x, y, z } */
+    vertex_buffer_gl_add_attribute(pick_buffer, &attribute_offset, 3);
 
     /* colour { r, g } */
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
-                          (void *)(3 * sizeof(GLfloat)));
-
-    glEnableVertexAttribArray(1);
-
-    glGenBuffers(1, ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
+    vertex_buffer_gl_add_attribute(pick_buffer, &attribute_offset, 2);
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
                  GL_DYNAMIC_DRAW);
-}
-
-void game_model_gl_buffer_pick_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
-                                      GameModel **game_models, int length) {
-    int vertex_offset = 0;
-    int ebo_offset = 0;
-
-    game_model_get_vertex_ebo_lengths(game_models, length, &vertex_offset,
-                                      &ebo_offset);
-
-    game_model_gl_create_pick_vao(vao, vbo, ebo, vertex_offset, ebo_offset);
-
-    vertex_offset = 0;
-    ebo_offset = 0;
-
-    for (int i = 0; i < length; i++) {
-        GameModel *game_model = game_models[i];
-
-        game_model->gl_pick_vbo_offset = vertex_offset;
-        game_model->gl_pick_ebo_offset = ebo_offset;
-
-        game_model_gl_buffer_pick_arrays(game_model, &vertex_offset,
-                                         &ebo_offset);
-    }
 }
 
 void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
@@ -1800,6 +1758,7 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
         int face_vertex_count = game_model->face_vertex_count[i];
 
         int face_tag = game_model->face_tag[i] - TILE_FACE_TAG;
+
         float face_tag_r = (face_tag & 0xff) / 255.0f;
         float face_tag_g = ((face_tag >> 8) & 0xff) / 255.0f;
 
@@ -1815,7 +1774,7 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
             GLfloat vertex_z =
                 VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index]);
 
-            GLfloat vertex[] = {
+            gl_pick_vertex vertex = {
                 /* vertex */
                 vertex_x, vertex_y, vertex_z, //
 
@@ -1824,8 +1783,8 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
             };
 
             glBufferSubData(GL_ARRAY_BUFFER,
-                            ((*vertex_offset) + j) * 5 * sizeof(GLfloat),
-                            5 * sizeof(GLfloat), vertex);
+                            ((*vertex_offset) + j) * sizeof(gl_pick_vertex),
+                            sizeof(gl_pick_vertex), (void *)&vertex);
         }
 
         for (int j = 0; j < face_vertex_count - 2; j++) {
@@ -1840,6 +1799,34 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
         }
 
         (*vertex_offset) += face_vertex_count;
+    }
+}
+
+void game_model_gl_buffer_pick_models(gl_vertex_buffer *pick_buffer,
+                                      GameModel **game_models, int length) {
+    int vertex_offset = 0;
+    int ebo_offset = 0;
+
+    game_model_get_vertex_ebo_lengths(game_models, length, &vertex_offset,
+                                      &ebo_offset);
+
+    game_model_gl_create_pick_buffer(pick_buffer, vertex_offset, ebo_offset);
+
+    vertex_offset = 0;
+    ebo_offset = 0;
+
+    for (int i = 0; i < length; i++) {
+        GameModel *game_model = game_models[i];
+
+        if (game_model == NULL) {
+            continue;
+        }
+
+        game_model->gl_pick_vbo_offset = vertex_offset;
+        game_model->gl_pick_ebo_offset = ebo_offset;
+
+        game_model_gl_buffer_pick_arrays(game_model, &vertex_offset,
+                                         &ebo_offset);
     }
 }
 #endif

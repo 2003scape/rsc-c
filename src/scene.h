@@ -155,6 +155,7 @@ typedef struct Scene {
     int gl_terrain_walkable;
 
     /* 0 = no picking, 1 = pick after next render, 2 = finished picking */
+    // TODO enum
     int gl_terrain_pick_step;
 
     /* local_x and local_y for walk_to function */
@@ -183,9 +184,7 @@ typedef struct Scene {
 #ifdef EMSCRIPTEN
     Shader game_model_pick_shader;
 
-    GLuint gl_pick_vao;
-    GLuint gl_pick_vbo;
-    GLuint gl_pick_ebo;
+    gl_vertex_buffer gl_pick_buffer;
 
     int gl_pick_face_tag;
 #endif
@@ -201,6 +200,7 @@ typedef struct Scene {
     /* for wallobjects */
     gl_vertex_buffer gl_wall_buffer;
 
+    // TODO probably remove
     gl_vertex_buffer *gl_last_buffer;
 #elif defined(RENDER_3DS_GL)
     DVLB_s *_3ds_gl_model_shader_dvlb;

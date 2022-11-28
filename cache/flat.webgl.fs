@@ -5,54 +5,21 @@ precision mediump float;
 out vec4 fragment_colour;
 
 in vec4 vertex_colour;
-in vec3 vertex_skin_colour;
-in vec3 vertex_texture_position;
+in vec2 vertex_texture_position;
+in vec2 vertex_base_texture_position;
 
-uniform mediump sampler2DArray textures;
-
-uniform bool interlace;
-uniform bool ui_scale;
+uniform sampler2D sprite_texture;
+uniform sampler2D sprite_base_texture;
 
 void main() {
-    if (interlace && int(gl_FragCoord.y) % 2 == 0) {
+    vec4 texture_colour = texture(sprite_texture, vertex_texture_position.xy);
+
+    vec4 base_texture_colour =
+        texture(sprite_base_texture, vertex_base_texture_position);
+
+    fragment_colour = (texture_colour * vertex_colour) + base_texture_colour;
+
+    /*if (fragment_colour.w <= 0.0) {
         discard;
-    }
-
-    float frag_x = gl_FragCoord.x;
-    float frag_y = gl_FragCoord.y;
-
-    if (ui_scale) {
-        frag_x /= 2.0f;
-        frag_y /= 2.0f;
-    }
-
-    if (vertex_texture_position.z > -1.0f) {
-        vec4 texture_colour = texture(textures, vertex_texture_position);
-
-        /* sprite pixel is not transparent */
-        if (texture_colour.w == 1.0) {
-            /* mask colour is set (-1.0 is no-mask) and texture pixel is grey */
-            if (vertex_colour.x >= 0.0 &&
-                texture_colour.x == texture_colour.y &&
-                texture_colour.x == texture_colour.z) {
-                texture_colour *= vertex_colour;
-            }
-
-            if (vertex_skin_colour.x >= 0.0 && texture_colour.x == 1.0 &&
-                texture_colour.y == texture_colour.z) {
-                texture_colour *= vec4(vertex_skin_colour, 1.0);
-            }
-
-            /* set alpha with or without mask colour */
-            texture_colour.w = vertex_colour.w;
-        }
-
-        fragment_colour = texture_colour;
-    } else {
-        fragment_colour = vertex_colour;
-    }
-
-    if (fragment_colour.w <= 0.0) {
-        discard;
-    }
+    }*/
 }

@@ -38,6 +38,13 @@ typedef struct gl_model_vertex {
     float back_r, back_g, back_b;
     float back_texture_u, back_texture_v;
 } gl_model_vertex;
+
+#ifdef EMSCRIPTEN
+typedef struct gl_pick_vertex {
+    float x, y, z;
+    float r, g;
+} gl_pick_vertex;
+#endif
 #endif
 
 #ifdef RENDER_3DS_GL
@@ -271,11 +278,11 @@ void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
 void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
                                  GameModel **game_models, int length);
 #ifdef EMSCRIPTEN
-void game_model_gl_create_pick_vao(GLuint *vao, GLuint *vbo, GLuint *ebo,
+void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
                                    int vbo_length, int ebo_length);
 void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
                                       int *ebo_offset);
-void game_model_gl_buffer_pick_models(GLuint *vao, GLuint *vbo, GLuint *ebo,
+void game_model_gl_buffer_pick_models(gl_vertex_buffer *pick_buffer,
                                       GameModel **game_models, int length);
 #endif
 #elif defined(RENDER_3DS_GL)

@@ -2,7 +2,7 @@
 
 #define VERTEX_SCALE 100.0
 
-#define FOUNTAIN_ID 17
+#define FOUNTAIN_ID 17.0
 #define RAMP_SIZE 256
 #define USE_GOURAUD 12345678
 

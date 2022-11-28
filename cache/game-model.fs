@@ -9,7 +9,7 @@ in vec2 vertex_texture_position;
 in float vertex_gradient_index;
 flat in int is_textured_light;
 
-uniform sampler2D textures;
+uniform sampler2D model_texture;
 
 uniform float light_gradient[RAMP_SIZE];
 uniform float texture_light_gradient[RAMP_SIZE];
@@ -24,7 +24,7 @@ void main() {
         gradient_index = 0;
     }
 
-    vec4 texture_colour = texture2D(textures, vertex_texture_position);
+    vec4 texture_colour = texture(model_texture, vertex_texture_position);
 
     fragment_colour = vec4(vertex_colour, 0.0) + texture_colour;
 

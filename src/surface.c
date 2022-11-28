@@ -122,6 +122,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     gl_load_texture(&surface->gl_sprite_texture,
                     "./cache/textures/sprites.png");
+                    //"./textures/sprites.png");
 
     for (int i = 0; i < ENTITY_TEXTURE_LENGTH; i++) {
         char filename[32] = {0};
@@ -138,8 +139,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
         sprintf(texture_file, "./cache/textures/entities-%d.png", i);
     }
 
-    shader_set_int(&surface->gl_flat_shader, "texture", 0);
-    shader_set_int(&surface->gl_flat_shader, "base_texture", 1);
+    shader_set_int(&surface->gl_flat_shader, "sprite_texture", 0);
+    shader_set_int(&surface->gl_flat_shader, "sprite_base_texture", 1);
 
     surface_gl_reset_context(surface);
 #elif defined(RENDER_3DS_GL)

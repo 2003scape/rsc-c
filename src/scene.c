@@ -147,7 +147,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     game_model_gl_create_buffer(&scene->gl_wall_buffer,
                              WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);
 
-    shader_set_int(&scene->game_model_shader, "textures", 0);
+    shader_set_int(&scene->game_model_shader, "model_textures", 0);
 
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
                            scene->light_gradient, RAMP_SIZE);
@@ -4360,8 +4360,7 @@ void scene_gl_render(Scene *scene) {
                        scene->interlace);
 
         game_model_gl_buffer_pick_models(
-            &scene->gl_pick_vao, &scene->gl_pick_vbo, &scene->gl_pick_ebo,
-            terrain_picked, terrain_picked_length);
+            &scene->gl_pick_buffer, terrain_picked, terrain_picked_length);
 
         for (int i = 0; i < terrain_picked_length; i++) {
             GameModel *game_model = terrain_picked[i];

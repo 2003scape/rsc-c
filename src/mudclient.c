@@ -4,6 +4,8 @@
 EM_JS(int, get_canvas_width, (), { return canvas.width; });
 EM_JS(int, get_canvas_height, (), { return canvas.height; });
 
+int last_canvas_check = 0;
+
 mudclient *global_mud;
 #endif
 
@@ -453,6 +455,9 @@ void mudclient_new(mudclient *mud) {
     options_new(mud->options);
     options_load(mud->options);
 
+    /*strcpy(mud->options->server, "192.168.100.113");
+    mud->options->port = 43595;*/
+
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
     for (int i = 0; i < MESSAGE_HISTORY_LENGTH; i++) {
@@ -619,9 +624,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->last_keyboard_button = -1;
 
     // console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
-#endif
-
-#ifdef _3DS
+#elif defined(_3DS)
     // gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
 
     atexit(soc_shutdown);
@@ -692,9 +695,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     ndspChnWaveBufAdd(0, &wave_buf[1]);
 
     HIDUSER_EnableGyroscope();
-#endif
-
-#if !defined(WII) && !defined(_3DS)
+#else
     int init = SDL_INIT_VIDEO;
 
     if (mud->options->members) {
@@ -735,6 +736,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->hand_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 
 #ifdef RENDER_GL
+    /*if (IMG_Init(IMG_INIT_PNG) == 0) {
+        fprintf(stderr, "unable to initialize sdl_image: %s\n", IMG_GetError());
+    }*/
+
 #ifdef EMSCRIPTEN
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -4802,9 +4807,13 @@ void mudclient_draw_game(mudclient *mud) {
 
 void mudclient_draw(mudclient *mud) {
 #ifdef EMSCRIPTEN
-    if (get_canvas_width() != mud->game_width ||
-        get_canvas_height() != mud->game_height) {
-        mudclient_on_resize(mud);
+    if (get_ticks() - last_canvas_check > 2500) {
+        if (get_canvas_width() != mud->game_width ||
+            get_canvas_height() != mud->game_height) {
+            mudclient_on_resize(mud);
+        }
+
+        last_canvas_check = get_ticks();
     }
 #endif
 

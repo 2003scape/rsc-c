@@ -2,7 +2,7 @@
 
 #define VERTEX_SCALE 100.0
 
-#define FOUNTAIN_ID 17.0f
+#define FOUNTAIN_ID 17.0
 #define RAMP_SIZE 256
 #define USE_GOURAUD 12345678
 
@@ -10,14 +10,14 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 normal;
 layout(location = 2) in vec2 lighting;
 layout(location = 3) in vec3 front_colour;
-layout(location = 4) in vec3 front_texture_position;
+layout(location = 4) in vec2 front_texture_position;
 layout(location = 5) in vec3 back_colour;
-layout(location = 6) in vec3 back_texture_position;
+layout(location = 6) in vec2 back_texture_position;
 
-out vec4 vertex_colour;
-out vec3 vertex_texture_position;
+out vec3 vertex_colour;
+out vec2 vertex_texture_position;
 out float vertex_gradient_index;
-flat out int foggy;
+flat out int is_textured_light;
 
 uniform float scroll_texture;
 
@@ -55,7 +55,7 @@ void main() {
             (light_diffuse * light_direction_magnitude) / float(RAMP_SIZE);
 
         intensity = int(
-            dot(model_normal * vertex_scale, light_direction * vertex_scale) /
+            dot(model_normal * VERTEX_SCALE, light_direction * VERTEX_SCALE) /
             (divisor * normal_magnitude));
     }
 
@@ -71,16 +71,17 @@ void main() {
         vertex_texture_position = front_texture_position;
     }
 
-    foggy = 0;
-
-    if (gl_Position.z > (float(fog_distance) / vertex_scale)) {
-        gradient_index += int(gl_Position.z * vertex_scale) - fog_distance;
-        foggy = 1;
+    if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
+        gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
+        is_textured_light = 0;
+    } else {
+        is_textured_light = int(vertex_colour.r == 0.0 && vertex_colour.g == 0.0 &&
+                                vertex_colour.b == 0.0);
     }
 
     vertex_gradient_index = float(gradient_index) / float(RAMP_SIZE);
 
-    if (vertex_texture_position.z == FOUNTAIN_ID) {
+    /*if (vertex_texture_position.z == FOUNTAIN_ID) {
         vertex_texture_position.y -= scroll_texture;
-    }
+    }*/
 }
