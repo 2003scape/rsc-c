@@ -1020,12 +1020,7 @@ GameModel *game_model_copy(GameModel *game_model) {
     copy->gl_vbo_offset = game_model->gl_vbo_offset;
     copy->gl_ebo_offset = game_model->gl_ebo_offset;
     copy->gl_ebo_length = game_model->gl_ebo_length;
-#endif
-
-#ifdef RENDER_GL
     copy->gl_buffer = game_model->gl_buffer;
-#elif defined(RENDER_3DS_GL)
-    copy->_3ds_gl_buffer = game_model->_3ds_gl_buffer;
 #endif
 
     free(pieces);
@@ -1047,12 +1042,7 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
     copy->gl_vbo_offset = game_model->gl_vbo_offset;
     copy->gl_ebo_offset = game_model->gl_ebo_offset;
     copy->gl_ebo_length = game_model->gl_ebo_length;
-#endif
-
-#ifdef RENDER_GL
     copy->gl_buffer = game_model->gl_buffer;
-#elif defined(RENDER_3DS_GL)
-    copy->_3ds_gl_buffer = game_model->_3ds_gl_buffer;
 #endif
 
     free(pieces);
@@ -1392,7 +1382,12 @@ void gl_offset_texture_uvs_atlas(gl_atlas_position texture_position,
     *texture_y *= texture_height;
 
     *texture_x += texture_position.left_u;
+
+#ifdef RENDER_GL
     *texture_y += texture_position.top_v;
+#elif defined(RENDER_3DS_GL)
+    *texture_y += 1.0f - texture_position.bottom_v;
+#endif
 }
 
 /* add a game model to VBO and EBO arrays at the specified offsets, then update
@@ -1480,7 +1475,6 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             float back_texture_x = back_face_us[j];
             float back_texture_y = 1.0f - back_face_vs[j];
 
-#ifdef RENDER_GL
             gl_atlas_position front_atlas_position =
                 gl_transparent_model_atlas_position;
 
@@ -1535,49 +1529,13 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                 /* back texture */
                 back_texture_x, back_texture_y};
 
+#ifdef RENDER_GL
             glBufferSubData(GL_ARRAY_BUFFER,
                             ((*vertex_offset) + j) * sizeof(vertex),
                             sizeof(vertex), (void *)&vertex);
 #elif defined(RENDER_3DS_GL)
-            if (face_fill_front.texture_index != -1) {
-                _3ds_gl_offset_texture_uvs_atlas(
-                    model_texture_positions[face_fill_front.texture_index],
-                    &front_texture_x, &front_texture_y);
-            }
-
-            if (face_fill_back.texture_index != -1) {
-                _3ds_gl_offset_texture_uvs_atlas(
-                    model_texture_positions[face_fill_back.texture_index],
-                    &back_texture_x, &back_texture_y);
-            }
-
-            _3ds_gl_model_vertex vertex = {
-                /* vertex */
-                vertex_x, vertex_y, vertex_z, //
-
-                /* normal */
-                normal[0], normal[1], normal[2], (float)(normal_magnitude), //
-
-                /* lighting */
-                (float)(face_intensity), (float)(vertex_intensity), //
-
-                /* front colour */
-                face_fill_front.r, face_fill_front.g, face_fill_front.b,
-                face_fill_front.a, //
-
-                /* back colour */
-                face_fill_back.r, face_fill_back.g, face_fill_back.b,
-                face_fill_back.a, //
-
-                /* front texture */
-                front_texture_x, front_texture_y, //
-
-                /* back texture */
-                back_texture_x, back_texture_y, //
-            };
-
-            memcpy(game_model->_3ds_gl_buffer->vbo +
-                       (((*vertex_offset) + j) * sizeof(vertex)),
+            memcpy(game_model->gl_buffer->vbo +
+                   (((*vertex_offset) + j) * sizeof(vertex)),
                    &vertex, sizeof(vertex));
 #endif
         }
@@ -1594,8 +1552,8 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             uint16_t indices[] = {(*vertex_offset), (*vertex_offset) + j + 1,
                                   (*vertex_offset) + j + 2};
 
-            memcpy(game_model->_3ds_gl_buffer->ebo +
-                       ((*ebo_offset) * sizeof(uint16_t)),
+            memcpy(game_model->gl_buffer->ebo +
+                   ((*ebo_offset) * sizeof(uint16_t)),
                    indices, sizeof(indices));
 #endif
 
@@ -1664,16 +1622,15 @@ float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
 
     return t[9];
 }
-#endif
 
-#ifdef RENDER_GL
 void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
                                  int vbo_length, int ebo_length) {
-    vertex_buffer_gl_new(vertex_buffer, sizeof(gl_model_vertex));
+    vertex_buffer_gl_new(vertex_buffer, sizeof(gl_model_vertex), vbo_length,
+                         ebo_length);
 
     // TODO terrain buffer should be dynamic, add a flag
-    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_model_vertex), NULL,
-                 GL_STATIC_DRAW);
+    /*glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_model_vertex), NULL,
+                 GL_STATIC_DRAW);*/
 
     int attribute_offset = 0;
 
@@ -1698,8 +1655,12 @@ void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
     /* back texture { s, t } */
     vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 2);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
-                 GL_STATIC_DRAW);
+    /*glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
+                 GL_STATIC_DRAW);*/
+#ifdef RENDER_3DS_GL
+    BufInfo_Add(&vertex_buffer->buf_info, vertex_buffer->vbo,
+                sizeof(gl_model_vertex), 7, 0x6543210);
+#endif
 }
 
 /* calculate the length of the VBO and EBO arrays for a list of game models,
@@ -1735,10 +1696,11 @@ void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
 #ifdef EMSCRIPTEN
 void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
                                    int vbo_length, int ebo_length) {
-    vertex_buffer_gl_new(pick_buffer, sizeof(gl_pick_vertex));
+    vertex_buffer_gl_new(pick_buffer, sizeof(gl_pick_vertex), vbo_length,
+                         ebo_length);
 
-    glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_pick_vertex), NULL,
-                 GL_DYNAMIC_DRAW);
+    /*glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_pick_vertex), NULL,
+                 GL_DYNAMIC_DRAW);*/
 
     int attribute_offset = 0;
 
@@ -1748,8 +1710,8 @@ void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
     /* colour { r, g } */
     vertex_buffer_gl_add_attribute(pick_buffer, &attribute_offset, 2);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
-                 GL_DYNAMIC_DRAW);
+    /*glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
+                 GL_DYNAMIC_DRAW);*/
 }
 
 void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
@@ -1833,7 +1795,7 @@ void game_model_gl_buffer_pick_models(gl_vertex_buffer *pick_buffer,
 #endif
 #endif
 
-#ifdef RENDER_3DS_GL
+#if 0
 void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
                                       int vbo_length, int ebo_length) {
     AttrInfo_Init(&buffer->attr_info);
@@ -1861,10 +1823,6 @@ void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
 
     buffer->vbo = linearAlloc(vbo_length * sizeof(_3ds_gl_model_vertex));
     buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
-
-    if (!buffer->vbo || !buffer->ebo) {
-        printf("oh no\n");
-    }
 
     BufInfo_Init(&buffer->buf_info);
 
@@ -1898,21 +1856,5 @@ void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
 
         game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
     }
-}
-
-/* offset UVs for atlas */
-void _3ds_gl_offset_texture_uvs_atlas(_3ds_gl_atlas_position texture_position,
-                                      float *texture_x, float *texture_y) {
-    float texture_width =
-        fabs(texture_position.left_u - texture_position.right_u);
-
-    float texture_height =
-        fabs(texture_position.top_v - texture_position.bottom_v);
-
-    *texture_x *= texture_width;
-    *texture_y *= texture_height;
-
-    *texture_x += texture_position.left_u;
-    *texture_y += texture_position.top_v;
 }
 #endif

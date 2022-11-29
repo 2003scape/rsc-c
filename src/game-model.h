@@ -7,8 +7,19 @@
 #include <stdlib.h>
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-#define CGLM_DEFINE_PRINTS
 #include <cglm/cglm.h>
+
+#include "gl/vertex-buffer.h"
+
+typedef struct gl_model_vertex {
+    float x, y, z;
+    float normal_x, normal_y, normal_z, normal_magnitude;
+    float face_intensity, vertex_intensity;
+    float front_r, front_g, front_b;
+    float front_texture_u, front_texture_v;
+    float back_r, back_g, back_b;
+    float back_texture_u, back_texture_v;
+} gl_model_vertex;
 
 extern float gl_tri_face_us[];
 extern float gl_tri_face_vs[];
@@ -27,46 +38,14 @@ typedef struct gl_face_fill {
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
 
-#include "gl/vertex-buffer.h"
-
-typedef struct gl_model_vertex {
-    float x, y, z;
-    float normal_x, normal_y, normal_z, normal_magnitude;
-    float face_intensity, vertex_intensity;
-    float front_r, front_g, front_b;
-    float front_texture_u, front_texture_v;
-    float back_r, back_g, back_b;
-    float back_texture_u, back_texture_v;
-} gl_model_vertex;
-
 #ifdef EMSCRIPTEN
 typedef struct gl_pick_vertex {
     float x, y, z;
     float r, g;
 } gl_pick_vertex;
 #endif
-#endif
-
-#ifdef RENDER_3DS_GL
+#elif defined(RENDER_3DS_GL)
 #include <citro3d.h>
-
-typedef struct _3ds_gl_model_vertex {
-    float x, y, z;
-    float normal_x, normal_y, normal_z, normal_magnitude;
-    float face_intensity, vertex_intensity;
-    float front_r, front_g, front_b, front_a;
-    float back_r, back_g, back_b, back_a;
-    float front_texture_u, front_texture_v, back_texture_u, back_texture_v;
-} _3ds_gl_model_vertex;
-
-// TODO could also use in surface i guess
-// essentially a vao
-typedef struct _3ds_gl_vertex_buffer {
-    C3D_AttrInfo attr_info;
-    C3D_BufInfo buf_info;
-    void *vbo;
-    void *ebo;
-} _3ds_gl_vertex_buffer;
 #endif
 
 /* states */
@@ -85,12 +64,8 @@ typedef struct GameModel GameModel;
 #include "scene.h"
 #include "utility.h"
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 #include "gl/textures/model_textures.h"
-#endif
-
-#ifdef RENDER_3DS_GL
-#include "textures/model-textures.h"
 #endif
 
 typedef struct GameModel {
@@ -176,16 +151,12 @@ typedef struct GameModel {
     int gl_invisible;
 
     mat4 transform;
-#endif
-#ifdef RENDER_GL
-    gl_vertex_buffer *gl_buffer;
 
-#ifdef EMSCRIPTEN
+    gl_vertex_buffer *gl_buffer;
+#endif
+#if defined(RENDER_GL) && defined(EMSCRIPTEN)
     int gl_pick_vbo_offset;
     int gl_pick_ebo_offset;
-#endif
-#elif defined(RENDER_3DS_GL)
-    _3ds_gl_vertex_buffer *_3ds_gl_buffer;
 #endif
 } GameModel;
 
@@ -271,25 +242,17 @@ void game_model_get_vertex_ebo_lengths(GameModel **game_models, int length,
                                        int *vertex_count, int *ebo_length);
 float game_model_gl_intersects(GameModel *game_model, vec3 ray_start,
                                vec3 ray_end);
-#endif
-#ifdef RENDER_GL
 void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
                                  int vbo_length, int ebo_length);
 void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
                                  GameModel **game_models, int length);
-#ifdef EMSCRIPTEN
+#endif
+#if defined(RENDER_GL) && defined(EMSCRIPTEN)
 void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
                                    int vbo_length, int ebo_length);
 void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
                                       int *ebo_offset);
 void game_model_gl_buffer_pick_models(gl_vertex_buffer *pick_buffer,
                                       GameModel **game_models, int length);
-#endif
-#elif defined(RENDER_3DS_GL)
-void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
-                                      int vbo_length, int ebo_length);
-void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
-                                     GameModel **game_models, int length);
-void _3ds_gl_offset_texture_uvs_atlas(_3ds_gl_atlas_position texture_position, float *texture_x, float *texture_y);
 #endif
 #endif

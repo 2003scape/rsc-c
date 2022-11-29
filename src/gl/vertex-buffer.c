@@ -1,27 +1,55 @@
 #include "vertex-buffer.h"
 
-void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length) {
+// TODO vertex_length = vertex_size
+void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
+                          int vbo_length, int ebo_length) {
     vertex_buffer->vertex_length = vertex_length;
 
-    if (vertex_buffer->vao) {
+    if (vertex_buffer->attribute_index != 0) {
         vertex_buffer->attribute_index = 0;
 
+#ifdef RENDER_GL
         glDeleteVertexArrays(1, &vertex_buffer->vao);
         glDeleteBuffers(1, &vertex_buffer->vbo);
         glDeleteBuffers(1, &vertex_buffer->ebo);
+#elif defined(RENDER_3DS_GL)
+        linearFree(vertex_buffer->vbo);
+        linearFree(vertex_buffer->ebo);
+#endif
     }
 
+#ifdef RENDER_GL
     glGenVertexArrays(1, &vertex_buffer->vao);
     glGenBuffers(1, &vertex_buffer->vbo);
     glGenBuffers(1, &vertex_buffer->ebo);
+#elif defined(RENDER_3DS_GL)
+    vertex_buffer->vbo = linearAlloc(vbo_length * vertex_length);
+    vertex_buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
 
-    vertex_buffer_gl_bind(vertex_buffer);
+    AttrInfo_Init(&vertex_buffer->attr_info);
+    BufInfo_Init(&vertex_buffer->buf_info);
+#endif
+
+    //vertex_buffer_gl_bind(vertex_buffer);
+
+#ifdef RENDER_GL
+    glBufferData(GL_ARRAY_BUFFER, vbo_length * vertex_length, NULL,
+                 GL_DYNAMIC_DRAW);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint),
+                 NULL, GL_DYNAMIC_DRAW);
+#endif
 }
 
 void vertex_buffer_gl_bind(gl_vertex_buffer *vertex_buffer) {
+#ifdef RENDER_GL
     glBindVertexArray(vertex_buffer->vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertex_buffer->ebo);
+#elif defined(RENDER_3DS_GL)
+    C3D_SetAttrInfo(&vertex_buffer->attr_info);
+    C3D_SetBufInfo(&vertex_buffer->buf_info);
+#endif
 }
 
 void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
@@ -32,9 +60,11 @@ void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
                           (void *)((*attribute_offset) * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(vertex_buffer->attribute_index);
+#elif defined(RENDER_3DS_GL)
+    AttrInfo_AddLoader(&vertex_buffer->attr_info, vertex_buffer->attribute_index,
+                       GPU_FLOAT, attribute_length);
+#endif
 
     *attribute_offset += attribute_length;
     vertex_buffer->attribute_index++;
-#endif
 }
-

@@ -1983,14 +1983,13 @@ void mudclient_load_models(mudclient *mud) {
             models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
         }
     }*/
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#if defined(RENDER_3DS_GL)
+    C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
+#endif
+
     game_model_gl_buffer_models(&mud->scene->gl_game_model_buffer,
                                 models_buffer, models_length);
-#elif defined(RENDER_3DS_GL)
-    C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
-
-    game_model_3ds_gl_buffer_models(&mud->scene->_3ds_gl_game_model_buffer,
-                                    models_buffer, models_length);
 #endif
 #endif
 }
@@ -2916,10 +2915,6 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     }
 
     mudclient_update_ground_item_models(mud);
-
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    //world_gl_buffer_world_models(mud->world);
-#endif
 
     for (int i = 0; i < mud->player_count; i++) {
         GameCharacter *player = mud->players[i];

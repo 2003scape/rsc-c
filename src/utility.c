@@ -1,7 +1,7 @@
 #include "utility.h"
 
-int sin_cos_512[512];
-int sin_cos_2048[2048];
+int sin_cos_512[512] = {0};
+int sin_cos_2048[2048] = {0};
 
 int BITMASK[] = {0,          1,          3,         7,         15,
                  31,         63,         127,       255,       511,
@@ -604,7 +604,7 @@ void rotate_point(int centre_x, int centre_y, float angle, int *point) {
     point[1] = y_new + centre_y;
 }
 #elif defined(RENDER_3DS_GL)
-void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex) {
+void _3ds_gl_load_tex(const uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex) {
     Tex3DS_Texture t3x =
         Tex3DS_TextureImport(t3x_data, t3x_size, tex, NULL, false);
 

@@ -66,7 +66,7 @@
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
 
-#include "shader.h"
+#include "gl/shader.h"
 #endif
 #endif
 

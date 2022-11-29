@@ -19,8 +19,9 @@
 .in in_normal v1
 .in in_lighting v2
 .in in_front_colour v3
-.in in_back_colour v4
-.in in_texture_position v5
+.in in_front_texture v4
+.in in_back_colour v5
+.in in_back_texture v6
 
 .proc main
     ; r0.xyz = in_position.xyz, w = 1.0f
@@ -39,11 +40,11 @@
     ifu cull_front
 ;        mov out_colour, myconst.yxyy
         mov out_colour, in_back_colour
-        mov out_texture_position, in_texture_position.zw
+        mov out_texture_position, in_back_texture.xy
     .else
 ;        mov out_colour.xyzw, myconst.yxxy
         mov out_colour, in_front_colour
-        mov out_texture_position, in_texture_position.xy
+        mov out_texture_position, in_front_texture.xy
     .end
 
     end

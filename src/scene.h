@@ -15,7 +15,7 @@
 #include <GL/glu.h>
 #include <SDL2/SDL_opengl.h>
 
-#include "shader.h"
+#include "gl/shader.h"
 #endif
 
 #ifdef RENDER_3DS_GL
@@ -141,6 +141,17 @@ typedef struct Scene {
     int *sprite_translate_x;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    /* for game model entities (trees, furniture, etc.) */
+    gl_vertex_buffer gl_game_model_buffer;
+
+    /* for generated landscape */
+    gl_vertex_buffer gl_terrain_buffer;
+
+    /* for wallobjects */
+    gl_vertex_buffer gl_wall_buffer;
+
+    gl_vertex_buffer *gl_last_buffer;
+
     mat4 gl_view;
     mat4 gl_projection;
     mat4 gl_projection_view;
@@ -190,18 +201,6 @@ typedef struct Scene {
 #endif
 
     GLuint gl_model_texture;
-
-    /* for game model entities (trees, furniture, etc.) */
-    gl_vertex_buffer gl_game_model_buffer;
-
-    /* for generated landscape */
-    gl_vertex_buffer gl_terrain_buffer;
-
-    /* for wallobjects */
-    gl_vertex_buffer gl_wall_buffer;
-
-    // TODO probably remove
-    gl_vertex_buffer *gl_last_buffer;
 #elif defined(RENDER_3DS_GL)
     DVLB_s *_3ds_gl_model_shader_dvlb;
     shaderProgram_s _3ds_gl_model_shader;
@@ -210,13 +209,7 @@ typedef struct Scene {
     int _3ds_gl_projection_view_model_uniform;
     int _3ds_gl_cull_front_uniform;
 
-    _3ds_gl_vertex_buffer _3ds_gl_game_model_buffer;
-    _3ds_gl_vertex_buffer _3ds_gl_terrain_buffer;
-    _3ds_gl_vertex_buffer _3ds_gl_wall_buffer;
-
-    _3ds_gl_vertex_buffer *_3ds_gl_last_buffer;
-
-    C3D_Tex _3ds_gl_models_tex;
+    C3D_Tex gl_model_texture;
 #endif
 } Scene;
 

@@ -30,9 +30,11 @@
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
-
-#define GL_TEXTURE_SIZE 1024.0f
 #endif
+#endif
+
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#define GL_TEXTURE_SIZE 1024.0f
 #endif
 
 #include "lib/bzip.h"
@@ -118,13 +120,11 @@ int get_certificate_item_id(int item_id);
 float gl_translate_coord(int position, int range);
 float gl_translate_x(int x, int range);
 float gl_translate_y(int y, int range);
-void gl_load_texture(GLuint *texture_id, char *file);
 #endif
 #ifdef RENDER_GL
-/*void gl_update_texture_array(GLuint texture_array_id, int index, int width,
-                             int height, int32_t *pixels, int convert_bgra);*/
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
+void gl_load_texture(GLuint *texture_id, char *file);
 #elif defined(RENDER_3DS_GL)
-void _3ds_gl_load_tex(uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
+void _3ds_gl_load_tex(const uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
 #endif
 #endif

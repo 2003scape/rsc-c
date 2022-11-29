@@ -178,7 +178,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         (&scene->_3ds_gl_model_shader)->vertexShader, "cull_front");
 
     _3ds_gl_load_tex(model_textures_t3x, model_textures_t3x_size,
-                     &scene->_3ds_gl_models_tex);
+                     &scene->gl_model_texture);
 #endif
 }
 
@@ -4506,8 +4506,9 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         return;
     }
 
-    C3D_SetAttrInfo(&game_model->_3ds_gl_buffer->attr_info);
-    C3D_SetBufInfo(&game_model->_3ds_gl_buffer->buf_info);
+    // TODO should bind outside of here
+    C3D_SetAttrInfo(&game_model->gl_buffer->attr_info);
+    C3D_SetBufInfo(&game_model->gl_buffer->buf_info);
 
     /*if (scene->_3ds_gl_last_buffer != game_model->_3ds_gl_buffer) {
         C3D_SetAttrInfo(&game_model->_3ds_gl_buffer->attr_info);
@@ -4544,7 +4545,7 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 GPU_TRIANGLES,
 game_model->gl_ebo_length,
 C3D_UNSIGNED_SHORT,
-    game_model->_3ds_gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
+    game_model->gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_cull_front_uniform, 1);
 
@@ -4554,7 +4555,7 @@ C3D_UNSIGNED_SHORT,
 GPU_TRIANGLES,
 game_model->gl_ebo_length,
 C3D_UNSIGNED_SHORT,
-    game_model->_3ds_gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
+    game_model->gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
 
     // light stuff v
     /*shader_set_mat4(&scene->game_model_shader, "projection_view_model",
@@ -4601,9 +4602,6 @@ void scene_3ds_gl_render(Scene *scene) {
 
     scene_initialise_polygons_2d(scene);
 
-    /*qsort(scene->visible_polygons, scene->visible_polygons_count,
-          sizeof(GamePolygon *), scene_polygon_depth_compare);*/
-
     for (int i = 0; i < scene->visible_polygons_count; i++) {
         GamePolygon *polygon = scene->visible_polygons[i];
         scene_render_polygon_2d_face(scene, polygon->face);
@@ -4625,7 +4623,7 @@ void scene_3ds_gl_render(Scene *scene) {
     /* clear the second texenv */
     C3D_TexEnvInit(C3D_GetTexEnv(1));
 
-    C3D_TexBind(0, &scene->_3ds_gl_models_tex);
+    C3D_TexBind(0, &scene->gl_model_texture);
 
     //int offset_y = 13;
     //glViewport(0, offset_y, scene->width, scene_height);
@@ -4640,7 +4638,7 @@ void scene_3ds_gl_render(Scene *scene) {
     scene->gl_scroll_texture_position =
         (scene->gl_scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
 
-    scene->_3ds_gl_last_buffer = NULL;
+    scene->gl_last_buffer = NULL;
 
     // TODO could go in a function
     vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
@@ -4664,11 +4662,6 @@ void scene_3ds_gl_render(Scene *scene) {
     if (scene->gl_terrain_pick_step == 1) {
         int mouse_x = scene->mouse_x + (scene->surface->width / 2);
         int mouse_y = scene->surface->height - scene->mouse_y;
-
-        /* we discard every even row, so there's no depth data either */
-        if (scene->interlace && mouse_y % 2 == 0) {
-            mouse_y -= 1;
-        }
 
         float mouse_z = 0;
 
@@ -4732,12 +4725,12 @@ void scene_3ds_gl_render(Scene *scene) {
 
     //glViewport(0, 1, scene->width, scene_height + 12);
 
-    //surface_gl_draw(scene->surface, 1);
+    surface_gl_draw(scene->surface, 1);
 
     //scene->surface->width = old_width;
     //scene->surface->height = old_height;
 
-    //surface_reset_bounds(scene->surface);
+    surface_reset_bounds(scene->surface);
 
     /*glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);*/

@@ -218,7 +218,6 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
 
 void world_draw_map_tile(World *world, int x, int y, int direction,
                          int face_fill_1, int face_fill_2) {
-//#if defined(RENDER_GL) || defined(RENDER_SW)
 #ifdef RENDER_SW
     int line_x = x * 3;
     int line_y = y * 3;
@@ -230,34 +229,34 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
     colour_2 = colour_2 >> 1 & 0x7f7f7f;
 
     if (direction == 0) {
-        surface_draw_line_horizontal_software(world->surface, line_x, line_y, 3,
+        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
                                               colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x,
+        surface_draw_line_horizontal(world->surface, line_x,
                                               line_y + 1, 2, colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x,
+        surface_draw_line_horizontal(world->surface, line_x,
                                               line_y + 2, 1, colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 2,
+        surface_draw_line_horizontal(world->surface, line_x + 2,
                                               line_y + 1, 1, colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 1,
+        surface_draw_line_horizontal(world->surface, line_x + 1,
                                               line_y + 2, 2, colour_2);
     } else if (direction == 1) {
-        surface_draw_line_horizontal_software(world->surface, line_x, line_y, 3,
+        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
                                               colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 1,
+        surface_draw_line_horizontal(world->surface, line_x + 1,
                                               line_y + 1, 2, colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x + 2,
+        surface_draw_line_horizontal(world->surface, line_x + 2,
                                               line_y + 2, 1, colour_2);
 
-        surface_draw_line_horizontal_software(world->surface, line_x,
+        surface_draw_line_horizontal(world->surface, line_x,
                                               line_y + 1, 1, colour_1);
 
-        surface_draw_line_horizontal_software(world->surface, line_x,
+        surface_draw_line_horizontal(world->surface, line_x,
                                               line_y + 2, 2, colour_1);
     }
 #endif
@@ -1393,8 +1392,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_draw_line_horizontal_software(
+#ifdef RENDER_SW
+                    surface_draw_line_horizontal(
                         world->surface, r_x * 3, r_y * 3, 3, colour);
+#endif
                 }
             }
 
@@ -1415,8 +1416,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_draw_line_vertical_software(world->surface, r_x * 3,
-                                                        r_y * 3, 3, colour);
+#ifdef RENDER_SW
+                    surface_draw_line_vertical(world->surface, r_x * 3,
+                                               r_y * 3, 3, colour);
+#endif
                 }
             }
 
@@ -2219,7 +2222,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    //world_gl_buffer_world_models(world);
+    // world_gl_buffer_world_models(world);
 #endif
 
     game_model_destroy(world->parent_model);
@@ -2339,14 +2342,10 @@ void world_gl_create_gl_world_models_buffer(World *world, int max_models) {
 
 /* create and populate the initial VBO of landscape-related models */
 void world_gl_buffer_world_models(World *world) {
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     game_model_gl_buffer_models(&world->scene->gl_terrain_buffer,
                                 world->gl_world_models_buffer,
                                 world->gl_world_models_offset);
-#elif defined(RENDER_3DS_GL)
-    game_model_3ds_gl_buffer_models(&world->scene->_3ds_gl_terrain_buffer,
-                                    world->gl_world_models_buffer,
-                                    world->gl_world_models_offset);
 #endif
 
     printf("buffer terrain models\n");
@@ -2366,12 +2365,9 @@ void world_gl_update_terrain_buffers(World *world) {
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];
 
-#ifdef RENDER_GL
         vertex_buffer_gl_bind(game_model->gl_buffer);
-#endif
 
         int vertex_offset = game_model->gl_vbo_offset;
-        int ebo_offset = game_model->gl_ebo_offset;
 
         for (int j = 0; j < game_model->face_count; j++) {
             int *face_vertices = game_model->face_vertices[j];
@@ -2385,14 +2381,19 @@ void world_gl_update_terrain_buffers(World *world) {
                     game_model->vertex_intensity[vertex_index] +
                     game_model->vertex_ambience[vertex_index];
 
-                GLfloat lighting[] = {(float)(face_intensity),
-                                      (float)(vertex_intensity)};
+                float lighting[] = {(float)(face_intensity),
+                                    (float)(vertex_intensity)};
 
+#ifdef RENDER_GL
+                // TODO use offsetof
                 glBufferSubData(
                     GL_ARRAY_BUFFER,
                     ((vertex_offset + k) * sizeof(gl_model_vertex)) +
                         (sizeof(GLfloat) * 7),
                     (sizeof(GLfloat) * 2), (void *)&lighting);
+#elif defined(RENDER_3DS_GL)
+                memcpy(game_model->gl_buffer->vbo + ((vertex_offset + k) * sizeof(gl_model_vertex)) + (7 * sizeof(float)), (void*)&lighting, 2 * sizeof(float));
+#endif
             }
 
             vertex_offset += face_vertex_count;
