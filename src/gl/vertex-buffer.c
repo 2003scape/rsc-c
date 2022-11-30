@@ -30,9 +30,9 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
     BufInfo_Init(&vertex_buffer->buf_info);
 #endif
 
-    //vertex_buffer_gl_bind(vertex_buffer);
-
 #ifdef RENDER_GL
+    vertex_buffer_gl_bind(vertex_buffer);
+
     glBufferData(GL_ARRAY_BUFFER, vbo_length * vertex_length, NULL,
                  GL_DYNAMIC_DRAW);
 

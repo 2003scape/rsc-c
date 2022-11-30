@@ -109,10 +109,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_y = calloc(max_sprite_count, sizeof(int));
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
+#endif
 
+#ifdef RENDER_GL
 #ifdef EMSCRIPTEN
     shader_new(&scene->game_model_shader, "./cache/game-model.webgl.vs",
                "./cache/game-model.webgl.fs");
@@ -1024,7 +1026,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->sprite_height[scene->sprite_count] = height;
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     vec4 projected_position = {0};
 
     vec4 bottom_position = {VERTEX_TO_FLOAT(x), VERTEX_TO_FLOAT(y),
@@ -1373,7 +1375,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
     float depth_top = 0;
     float depth_bottom = 0;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     depth_top = scene->gl_sprite_depth_top[face];
     depth_bottom = scene->gl_sprite_depth_bottom[face];
 #endif
@@ -1757,9 +1759,7 @@ void scene_render(Scene *scene) {
             }
         }
     }
-#endif
-
-#ifdef RENDER_GL
+#elif defined(RENDER_GL)
     scene_gl_render(scene);
 #elif defined(RENDER_3DS_GL)
     scene_3ds_gl_render(scene);
@@ -4490,7 +4490,7 @@ void scene_gl_render(Scene *scene) {
 
     glViewport(0, 1, scene->width, scene_height + 12);
 
-    surface_gl_draw(scene->surface, 1);
+    //surface_gl_draw(scene->surface, 1);
 
     scene->surface->width = old_width;
     scene->surface->height = old_height;
@@ -4607,6 +4607,7 @@ void scene_3ds_gl_render(Scene *scene) {
         scene_render_polygon_2d_face(scene, polygon->face);
     }
 
+#if 1
     C3D_BindProgram(&scene->_3ds_gl_model_shader);
 
     // C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
@@ -4722,15 +4723,17 @@ void scene_3ds_gl_render(Scene *scene) {
     }
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
+#endif
 
     //glViewport(0, 1, scene->width, scene_height + 12);
 
-    surface_gl_draw(scene->surface, 1);
+    //printf("drawing %d\n", scene->surface->gl_flat_count);
+    //surface_gl_draw(scene->surface, 1);
 
-    //scene->surface->width = old_width;
-    //scene->surface->height = old_height;
+    /*scene->surface->width = old_width;
+    scene->surface->height = old_height;
 
-    surface_reset_bounds(scene->surface);
+    surface_reset_bounds(scene->surface);*/
 
     /*glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);*/

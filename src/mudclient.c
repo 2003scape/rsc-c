@@ -2035,7 +2035,7 @@ void mudclient_reset_game(mudclient *mud) {
 
     // surface_3ds_gl_reset_context(mud->surface);
 
-#if defined(RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
     mudclient_3ds_gl_frame_start(mud);
     surface_draw(mud->surface);
     mudclient_3ds_gl_frame_end();
@@ -2593,7 +2593,7 @@ void mudclient_update_fov(mudclient *mud) {
 
         mud->scene->view_distance =
             round((float)mud->scene->gl_height *
-                  ((float)view_distance / (float)(MUD_HEIGHT - 12)));
+                  ((float)view_distance / (float)(346 - 12)));
     } else {
         float scaled_scene_height =
             (float)(mud->scene->gl_height - 1) / 1000.0f;
@@ -2711,7 +2711,7 @@ void mudclient_start_game(mudclient *mud) {
 
 #ifdef _3DS
     mud->scene->raster = calloc(400 * 240, sizeof(int32_t));
-    scene_set_bounds(mud->scene, 400, mud->game_height - 12);
+    //scene_set_bounds(mud->scene, 400, mud->game_height - 12);
 #endif
 
 #if !defined(WII) && !defined(_3DS)
@@ -3801,7 +3801,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         j2 = i2 * 3 + character_combat_model_array2[(mud->login_timer / 6) % 8];
     }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     float layer_depth = surface_gl_get_layer_depth(mud->surface);
 #endif
 
@@ -3901,7 +3901,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                 depth_top, depth_bottom);
         }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         depth_top -= layer_depth;
         depth_bottom -= layer_depth;
 #endif
@@ -3920,7 +3920,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
     float damage_depth = 0.0f;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     damage_depth = ((depth_bottom + depth_top) / 2) - (layer_depth * 1.25f);
 #endif
 
@@ -3994,7 +3994,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                   8];
     }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     float layer_depth = surface_gl_get_layer_depth(mud->surface);
 #endif
 
@@ -4057,7 +4057,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 depth_top, depth_bottom);
         }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         depth_top -= layer_depth;
         depth_bottom -= layer_depth;
 #endif
@@ -4067,7 +4067,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
     float damage_depth = 0.0f;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     damage_depth = ((depth_bottom + depth_top) / 2) - layer_depth;
 #endif
 
@@ -4408,8 +4408,10 @@ void mudclient_animate_objects(mudclient *mud) {
     }
 }
 
+// TODO prepare entity sprites
 void mudclient_draw_entity_sprites(mudclient *mud) {
     scene_reduce_sprites(mud->scene, mud->scene_sprite_count);
+
     mud->scene_sprite_count = 0;
 
     for (int i = 0; i < mud->player_count; i++) {
@@ -4687,13 +4689,17 @@ void mudclient_draw_game(mudclient *mud) {
 #endif
 
     scene_render(mud->scene);
+
     mudclient_draw_overhead(mud);
 
 #ifdef _3DS
+#ifdef RENDER_SW
+    // TODO investigate
     mud->surface->width = MUD_WIDTH;
     mud->surface->height = MUD_HEIGHT;
 
     surface_set_bounds(mud->surface, 0, 0, MUD_WIDTH, MUD_HEIGHT);
+#endif
 
 #ifdef RENDER_SW
     mud->surface->pixels = old_pixels;

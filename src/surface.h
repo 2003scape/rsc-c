@@ -196,8 +196,6 @@ typedef struct Surface {
     void *_3ds_gl_flat_vbo;
     void *_3ds_gl_flat_ebo;*/
 
-    uint16_t _3ds_gl_flat_count;
-
     C3D_Tex gl_sprite_texture;
     C3D_Tex gl_entity_textures[ENTITY_TEXTURE_LENGTH];
 #endif

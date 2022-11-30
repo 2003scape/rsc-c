@@ -1,7 +1,13 @@
 #include "./minimap-tab.h"
 
 void mudclient_draw_minimap_entity(mudclient *mud, int x, int y, int colour) {
-    // TODO use a sprite here instead
+    if (x + 2 < mud->surface->bounds_min_x ||
+        x - 2 > mud->surface->bounds_max_x ||
+        y + 2 < mud->surface->bounds_min_y ||
+        y - 2 > mud->surface->bounds_max_y) {
+        return;
+    }
+
     surface_draw_line_vertical(mud->surface, x, y - 1, 3, colour);
     surface_draw_line_horizontal(mud->surface, x - 1, y, 3, colour);
 }

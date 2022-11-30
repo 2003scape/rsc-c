@@ -731,6 +731,11 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
+    //surface_draw_sprite(mud->surface, 50, 50, 5);
+    surface_draw_sprite_transform_mask_depth(
+        mud->surface, 50, 50, 100, 100, 5, 0, 0, 0, 0, 0, 0
+    );
+
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
 
