@@ -455,8 +455,6 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
                               int mask_colour, int skin_colour, int alpha,
                               int flip, int rotation, float depth_top,
                               float depth_bottom) {
-    skew_x = 0;
-
 #ifdef RENDER_GL
     GLuint texture = surface->gl_sprite_texture;
     GLuint base_texture = surface->gl_sprite_texture;
@@ -540,12 +538,21 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     surface_gl_quad_new(surface, &quad, x, y, gl_width, gl_height);
 
     if (skew_x != 0) {
+#ifdef RENDER_GL
         float top_left_skew =
             (1.0f - (translate_y / (height_full * ratio_y))) * (float)skew_x;
 
         float bottom_left_skew =
             (1.0f - ((translate_y + gl_height) / (height_full * ratio_y))) *
             (float)skew_x;
+#elif defined(RENDER_3DS_GL)
+        float bottom_left_skew =
+            (1.0f - (translate_y / (height_full * ratio_y))) * (float)skew_x;
+
+        float top_left_skew =
+            (1.0f - ((translate_y + gl_height) / (height_full * ratio_y))) *
+            (float)skew_x;
+#endif
 
         quad.bottom_left.x =
             surface_gl_translate_x(surface, x + bottom_left_skew);

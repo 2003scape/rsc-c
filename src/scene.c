@@ -4607,11 +4607,11 @@ void scene_3ds_gl_render(Scene *scene) {
         scene_render_polygon_2d_face(scene, polygon->face);
     }
 
-#if 1
     C3D_BindProgram(&scene->_3ds_gl_model_shader);
 
     // C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
 
+    C3D_AlphaTest(true, GPU_GREATER, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
 	C3D_TexEnv* env = C3D_GetTexEnv(0);
@@ -4723,7 +4723,6 @@ void scene_3ds_gl_render(Scene *scene) {
     }
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
-#endif
 
     //glViewport(0, 1, scene->width, scene_height + 12);
 

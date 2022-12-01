@@ -552,6 +552,9 @@ int get_certificate_item_id(int item_id) {
 }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#endif
+
+#ifdef RENDER_GL
 float gl_translate_coord(int position, int range) {
     float half = range / 2.0f;
     return (position - half) / half;
@@ -560,9 +563,7 @@ float gl_translate_coord(int position, int range) {
 float gl_translate_x(int x, int range) { return gl_translate_coord(x, range); }
 
 float gl_translate_y(int y, int range) { return -gl_translate_coord(y, range); }
-#endif
 
-#ifdef RENDER_GL
 void gl_load_texture(GLuint *texture_id, char *file) {
     glGenTextures(1, texture_id);
     glBindTexture(GL_TEXTURE_2D, *texture_id);
@@ -604,6 +605,10 @@ void rotate_point(int centre_x, int centre_y, float angle, int *point) {
     point[1] = y_new + centre_y;
 }
 #elif defined(RENDER_3DS_GL)
+float gl_translate_x(int x, int range) { (void)range; return x; }
+
+float gl_translate_y(int y, int range) { return range - y; }
+
 void _3ds_gl_load_tex(const uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex) {
     Tex3DS_Texture t3x =
         Tex3DS_TextureImport(t3x_data, t3x_size, tex, NULL, false);

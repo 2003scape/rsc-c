@@ -117,11 +117,11 @@ void url_encode(char *s, char *dest);
 int get_certificate_item_id(int item_id);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-float gl_translate_coord(int position, int range);
 float gl_translate_x(int x, int range);
 float gl_translate_y(int y, int range);
 #endif
 #ifdef RENDER_GL
+float gl_translate_coord(int position, int range);
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
 void gl_load_texture(GLuint *texture_id, char *file);
 #elif defined(RENDER_3DS_GL)
