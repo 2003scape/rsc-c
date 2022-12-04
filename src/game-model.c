@@ -594,7 +594,7 @@ void game_model_compute_bounds(GameModel *game_model) {
         int vertex_index = face_vertices[0];
         int face_vertex_count = game_model->face_vertex_count[i];
 
-#if !defined(RENDER_SW) && (defined(RENDER_GL) || defined(RENDER_3DS_GL))
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         vec3 vertex = {VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]),
                        VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]),
                        VERTEX_TO_FLOAT(game_model->vertex_z[vertex_index])};
@@ -617,7 +617,7 @@ void game_model_compute_bounds(GameModel *game_model) {
         for (int j = 0; j < face_vertex_count; j++) {
             vertex_index = face_vertices[j];
 
-#if !defined(RENDER_SW) && (defined(RENDER_GL) || defined(RENDER_3DS_GL))
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
             vec3 vertex = {0};
             vertex[0] = VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
             vertex[1] = VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
@@ -1625,12 +1625,9 @@ float game_model_gl_intersects(GameModel *game_model, vec3 ray_direction,
 
 void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
                                  int vbo_length, int ebo_length) {
+    // TODO terrain buffer should be dynamic, add a flag
     vertex_buffer_gl_new(vertex_buffer, sizeof(gl_model_vertex), vbo_length,
                          ebo_length);
-
-    // TODO terrain buffer should be dynamic, add a flag
-    /*glBufferData(GL_ARRAY_BUFFER, vbo_length * sizeof(gl_model_vertex), NULL,
-                 GL_STATIC_DRAW);*/
 
     int attribute_offset = 0;
 
@@ -1655,8 +1652,6 @@ void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
     /* back texture { s, t } */
     vertex_buffer_gl_add_attribute(vertex_buffer, &attribute_offset, 2);
 
-    /*glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
-                 GL_STATIC_DRAW);*/
 #ifdef RENDER_3DS_GL
     BufInfo_Add(&vertex_buffer->buf_info, vertex_buffer->vbo,
                 sizeof(gl_model_vertex), 7, 0x6543210);
@@ -1793,68 +1788,4 @@ void game_model_gl_buffer_pick_models(gl_vertex_buffer *pick_buffer,
     }
 }
 #endif
-#endif
-
-#if 0
-void game_model_3ds_gl_create_buffers(_3ds_gl_vertex_buffer *buffer,
-                                      int vbo_length, int ebo_length) {
-    AttrInfo_Init(&buffer->attr_info);
-
-    /* vertex { x, y, z } */
-    AttrInfo_AddLoader(&buffer->attr_info, 0, GPU_FLOAT, 3);
-
-    /* normal { x, y, z, magnitude } */
-    AttrInfo_AddLoader(&buffer->attr_info, 1, GPU_FLOAT, 4);
-
-    /* lighting { face, vertex } */
-    AttrInfo_AddLoader(&buffer->attr_info, 2, GPU_FLOAT, 2);
-
-    /* front colour { r, g, b, a } */
-    AttrInfo_AddLoader(&buffer->attr_info, 3, GPU_FLOAT, 4);
-
-    /* back colour { r, g, b, a } */
-    AttrInfo_AddLoader(&buffer->attr_info, 4, GPU_FLOAT, 4);
-
-    /* textures { front_u, front_v, back_u, back_ v } */
-    AttrInfo_AddLoader(&buffer->attr_info, 5, GPU_FLOAT, 4);
-
-    linearFree(buffer->vbo);
-    linearFree(buffer->ebo);
-
-    buffer->vbo = linearAlloc(vbo_length * sizeof(_3ds_gl_model_vertex));
-    buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
-
-    BufInfo_Init(&buffer->buf_info);
-
-    BufInfo_Add(&buffer->buf_info, buffer->vbo, sizeof(_3ds_gl_model_vertex), 6,
-                0x543210);
-}
-
-void game_model_3ds_gl_buffer_models(_3ds_gl_vertex_buffer *buffer,
-                                     GameModel **game_models, int length) {
-    int vbo_offset = 0;
-    int ebo_offset = 0;
-
-    game_model_get_vertex_ebo_lengths(game_models, length, &vbo_offset,
-                                      &ebo_offset);
-
-    game_model_3ds_gl_create_buffers(buffer, vbo_offset, ebo_offset);
-
-    vbo_offset = 0;
-    ebo_offset = 0;
-
-    for (int i = 0; i < length; i++) {
-        GameModel *game_model = game_models[i];
-
-        if (game_model == NULL) {
-            continue;
-        }
-
-        game_model->_3ds_gl_buffer = buffer;
-        game_model->gl_vbo_offset = vbo_offset;
-        game_model->gl_ebo_offset = ebo_offset;
-
-        game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
-    }
-}
 #endif

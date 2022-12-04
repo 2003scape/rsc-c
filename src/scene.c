@@ -1089,7 +1089,7 @@ void scene_set_sprite_translate_x(Scene *scene, int i, int n) {
     scene->sprite_translate_x[i] = n;
 }
 
-void scene_set_mouse_loc(Scene *scene, int x, int y) {
+void scene_set_mouse_location(Scene *scene, int x, int y) {
     scene->mouse_x = x - scene->base_x;
     scene->mouse_y = y;
     scene->mouse_picked_count = 0;
@@ -1099,8 +1099,8 @@ void scene_set_mouse_loc(Scene *scene, int x, int y) {
     scene->gl_mouse_picked_count = 0;
 
     // TODO use inverse_projection_view
-    float gl_x = gl_translate_x(x, scene->width);
-    float gl_y = gl_translate_y(y, scene->gl_height);
+    float gl_x = gl_translate_coord(x, scene->width);
+    float gl_y = -gl_translate_coord(y, scene->gl_height);
 
     vec4 clip = {gl_x, gl_y, -1.0f, 1.0f};
 
@@ -4185,16 +4185,24 @@ void scene_gl_update_camera(Scene *scene) {
     glm_perspective(
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+
+    glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 #elif defined(RENDER_3DS_GL)
     _3ds_gl_perspective(
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+
+    mat4 perspective = {0};
+
+    glm_perspective(
+        scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
+        VERTEX_TO_FLOAT(scene->clip_near), clip_far, perspective);
+
+    glm_mat4_inv(perspective, scene->gl_inverse_projection);
 #endif
 
     // TODO this is needed for 3DS, doesn't seem to affect anything else
     //scene->gl_projection[1][2] = 0.0f;
-
-    glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 
     glm_mat4_mul(scene->gl_projection, scene->gl_view,
                  scene->gl_projection_view);
@@ -4275,8 +4283,6 @@ void scene_gl_render(Scene *scene) {
 
     surface_reset_bounds(scene->surface);
 
-#ifndef RENDER_SW
-    /* if we're also rendering in software, this will already be done */
     game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
                             scene->camera_z, scene->camera_yaw,
                             scene->camera_pitch, scene->camera_roll,
@@ -4293,7 +4299,6 @@ void scene_gl_render(Scene *scene) {
         GamePolygon *polygon = scene->visible_polygons[i];
         scene_render_polygon_2d_face(scene, polygon->face);
     }
-#endif
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -4423,6 +4428,41 @@ void scene_gl_render(Scene *scene) {
 
         glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
                      &mouse_z);
+
+        //float max = 0;
+        //float min = 1000.0f;
+
+        double min = 0.995713;
+        double range = 0.004287000000000041;
+
+        FILE *ppm = fopen("./depth.ppm", "w");
+        fprintf(ppm, "P3\n320 240\n255\n");
+
+        for (int y_ = 0; y_ < MUD_HEIGHT; y_++) {
+            for (int x_ = 0; x_ < MUD_WIDTH; x_++) {
+                float depth = 0;
+
+                glReadPixels(x_, 240 - y_, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
+                             &depth);
+
+                int grey = 255-(int)(((depth - min) / range) * 255);
+                fprintf(ppm, "%d %d %d\n", grey, grey, grey);
+
+                //printf("%d\n", red);
+
+                /*if (depth > max) {
+                    max = depth;
+                }
+
+                if (depth < min) {
+                    min = depth;
+                }*/
+            }
+        }
+
+        fclose(ppm);
+
+        //printf("%f %f\n", max, min);
 
         vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
         vec4 bounds = {0, 0, scene->surface->width, scene->surface->height};
@@ -4641,7 +4681,6 @@ void scene_3ds_gl_render(Scene *scene) {
 
     scene->gl_last_buffer = NULL;
 
-    // TODO could go in a function
     vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
                       VERTEX_TO_FLOAT(scene->camera_y),
                       VERTEX_TO_FLOAT(scene->camera_z)};
@@ -4669,6 +4708,36 @@ void scene_3ds_gl_render(Scene *scene) {
         /*glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
                      &mouse_z);*/
 
+        uint8_t *colour_buf = (uint8_t*)(
+            scene->surface->
+            mud->_3ds_gl_render_target->frameBuf.colorBuf);
+
+#if 1
+        FILE *ppm = fopen("./screenshot.ppm", "w");
+        fprintf(ppm, "P3\n320 240\n255\n");
+
+        int index = 0;
+
+        for (int x = 0; x < MUD_WIDTH; x++) {
+            for (int y = 0; y < MUD_HEIGHT; y++) {
+                int fb_index = _3ds_gl_translate_framebuffer_index(index) * 4;
+
+                int a = colour_buf[fb_index++];
+                int r = colour_buf[fb_index++];
+                int g = colour_buf[fb_index++];
+                int b = colour_buf[fb_index++];
+
+                fprintf(ppm, "%d %d %d\n", r, g, b);
+
+                index++;
+            }
+        }
+
+        fclose(ppm);
+
+        printf("done\n");
+#endif
+
         vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
         vec4 bounds = {0, 0, scene->surface->width, scene->surface->height};
 
@@ -4684,6 +4753,7 @@ void scene_3ds_gl_render(Scene *scene) {
             FLOAT_TO_VERTEX(scene->gl_mouse_world[2]) / MAGIC_LOC;
     }
 
+    // TODO don't bother doing this unless unless click on 3ds
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 

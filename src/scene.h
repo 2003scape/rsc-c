@@ -251,7 +251,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
                      int width, int height, int tag);
 void scene_set_local_player(Scene *scene, int i);
 void scene_set_sprite_translate_x(Scene *scene, int i, int n);
-void scene_set_mouse_loc(Scene *scene, int x, int y);
+void scene_set_mouse_location(Scene *scene, int x, int y);
 void scene_set_bounds(Scene *scene, int width, int height);
 void scene_polygons_intersect_sort(Scene *scene, int step,
                                    GamePolygon **polygons, int count);

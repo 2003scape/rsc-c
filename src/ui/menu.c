@@ -392,15 +392,13 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mud->selected_spell = -1;
         break;
     case MENU_WALK:
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         if (mud->scene->gl_terrain_pick_step == 0) {
             mud->scene->gl_terrain_pick_step = 1;
         }
 
         mud->gl_is_walking = 1;
-#endif
-
-#ifdef RENDER_SW
+#else
         mudclient_walk_to_action_source(mud, mud->local_region_x,
                                         mud->local_region_y, menu_x, menu_y, 0);
 
@@ -1311,7 +1309,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
     int walkable = selected_face != -1;
 
-#if defined(RENDER_GL) && !defined(RENDER_SW)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     walkable = mud->scene->gl_terrain_walkable;
 #endif
 
@@ -1394,7 +1392,7 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
                         mud->menu_y + 12, 1, CYAN);
 
     for (int i = 0; i < mud->menu_items_count; i++) {
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         /* pick and store the position as soon as the right click menu is opened
          * in case the camera moves before they press it */
         if (mud->scene->gl_terrain_pick_step == 0 &&

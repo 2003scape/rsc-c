@@ -83,6 +83,11 @@ extern int BITMASK[];
 
 extern int certificate_items[][2];
 
+#ifdef RENDER_3DS_GL
+extern int _3ds_gl_framebuffer_offsets_x[];
+extern int _3ds_gl_framebuffer_offsets_y[];
+#endif
+
 void init_utility_global();
 
 void strtrim(char *s);
@@ -117,11 +122,11 @@ void url_encode(char *s, char *dest);
 int get_certificate_item_id(int item_id);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+float gl_translate_coord(int position, int range);
 float gl_translate_x(int x, int range);
 float gl_translate_y(int y, int range);
 #endif
 #ifdef RENDER_GL
-float gl_translate_coord(int position, int range);
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
 void gl_load_texture(GLuint *texture_id, char *file);
 #elif defined(RENDER_3DS_GL)

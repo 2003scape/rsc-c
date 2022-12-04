@@ -584,7 +584,7 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || (RENDER_3DS_GL)
         world_gl_update_terrain_buffers(mud->world);
 #endif
         break;

@@ -9,6 +9,8 @@ int last_canvas_check = 0;
 mudclient *global_mud;
 #endif
 
+int dumped = 0;
+
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
@@ -794,7 +796,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
     mud->_3ds_gl_render_target =
-        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+        //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
+        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
+        //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 
     C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target, GFX_BOTTOM, GFX_LEFT,
                               DISPLAY_TRANSFER_FLAGS);
@@ -1464,28 +1468,6 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
     mud->surface->sprite_width_full[sprite_index] = width;
     mud->surface->sprite_height_full[sprite_index] = height;
     mud->surface->surface_pixels[sprite_index] = (int32_t *)pixels;
-
-#if 0
-    uint32_t *texture_pixels =
-        calloc(MEDIA_TEXTURE_WIDTH * MEDIA_TEXTURE_HEIGHT, sizeof(uint32_t));
-
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            texture_pixels[x + y * MEDIA_TEXTURE_WIDTH] =
-                ((uint32_t *)pixels)[x + y * width];
-        }
-    }
-
-    int texture_index =
-        surface_gl_sprite_texture_index(mud->surface, sprite_index);
-
-    gl_update_texture_array(mud->surface->gl_sprite_media_textures,
-                            texture_index, MEDIA_TEXTURE_WIDTH,
-                            MEDIA_TEXTURE_HEIGHT, (int32_t *)texture_pixels, 1);
-
-    free(texture_pixels);
-    free(pixels);
-#endif
 }
 
 void mudclient_load_jagex(mudclient *mud) {
@@ -3432,15 +3414,15 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 
 #ifdef RENDER_GL
-    scene_set_mouse_loc(mud->scene, mud->gl_mouse_x, mud->gl_mouse_y);
+    scene_set_mouse_location(mud->scene, mud->gl_mouse_x, mud->gl_mouse_y);
 #else
     int offset_x = 0;
 
 #ifdef _3DS
-    offset_x = 40;
+    //offset_x = 40;
 #endif
 
-    scene_set_mouse_loc(mud->scene, mud->mouse_x + offset_x, mud->mouse_y);
+    scene_set_mouse_location(mud->scene, mud->mouse_x + offset_x, mud->mouse_y);
 #endif
 
     mud->last_mouse_button_down = 0;
@@ -3572,7 +3554,7 @@ void mudclient_handle_inputs(mudclient *mud) {
     } else if (mud->logged_in == 1) {
         mud->mouse_action_timeout++;
 
-#if defined(RENDER_GL) && !defined(RENDER_SW)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         if (mud->gl_is_walking && mud->scene->gl_terrain_pick_step == 2) {
             mud->gl_is_walking = 0;
             mud->scene->gl_terrain_pick_step = 0;
@@ -4222,7 +4204,7 @@ void mudclient_draw_ui(mudclient *mud) {
             } else {
                 mudclient_create_top_mouse_menu(mud);
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
                 if (!mud->gl_is_walking) {
                     mud->scene->gl_terrain_pick_step = 0;
                 }
@@ -5743,6 +5725,7 @@ void mudclient_play_sound(mudclient *mud, char *name) {
 int mudclient_walk_to(mudclient *mud, int start_x, int start_y, int x1, int y1,
                       int x2, int y2, int check_objects, int walk_to_action,
                       int first_step) {
+    return;
     int steps = world_route(mud->world, start_x, start_y, x1, y1, x2, y2,
                             mud->walk_path_x, mud->walk_path_y, check_objects);
 
