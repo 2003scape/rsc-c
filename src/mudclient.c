@@ -1388,10 +1388,6 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     while (read < archive_size_compressed) {
         int length = archive_size_compressed - read;
 
-        if (length > 1000) {
-            length = 1000;
-        }
-
         fread(archive_data + read, length, 1, archive_stream);
 
         read += length;
