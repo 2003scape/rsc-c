@@ -4612,8 +4612,6 @@ void scene_3ds_gl_render(Scene *scene) {
 
     C3D_BindProgram(&scene->_3ds_gl_model_shader);
 
-    // C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
-
     C3D_AlphaTest(true, GPU_GREATER, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 

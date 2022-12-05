@@ -37,17 +37,20 @@
     ; out_colour = (1.0, 0.0, 1.0, 0.5)
     ; mov out_colour, myconst.yxyw
 
-    mov out_colour, myconst.x
+;    mov out_colour, myconst.x
+    mov r1, zeros
 
     ifu cull_front
-;        mov out_colour, myconst.yxyy
-        mov out_colour.xyz, in_back_colour.xyz
+;        mov out_colour, in_back_colour
+        mov r1.xyz, in_back_colour.xyz
         mov out_texture_position, in_back_texture.xy
     .else
-;        mov out_colour.xyzw, myconst.yxxy
-        mov out_colour.xyz, in_front_colour.xyz
+;        mov out_colour, in_front_colour
+        mov r1.xyz, in_front_colour.xyz
         mov out_texture_position, in_front_texture.xy
     .end
+
+    mov out_colour, r1
 
     end
 .end
