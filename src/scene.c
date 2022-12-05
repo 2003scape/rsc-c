@@ -4192,13 +4192,11 @@ void scene_gl_update_camera(Scene *scene) {
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
 
-    mat4 perspective = {0};
-
     glm_perspective(
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
-        VERTEX_TO_FLOAT(scene->clip_near), clip_far, perspective);
+        VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_original_projection);
 
-    glm_mat4_inv(perspective, scene->gl_inverse_projection);
+    glm_mat4_inv(scene->gl_original_projection, scene->gl_inverse_projection);
 #endif
 
     // TODO this is needed for 3DS, doesn't seem to affect anything else
@@ -4428,41 +4426,6 @@ void scene_gl_render(Scene *scene) {
 
         glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
                      &mouse_z);
-
-        //float max = 0;
-        //float min = 1000.0f;
-
-        double min = 0.995713;
-        double range = 0.004287000000000041;
-
-        FILE *ppm = fopen("./depth.ppm", "w");
-        fprintf(ppm, "P3\n320 240\n255\n");
-
-        for (int y_ = 0; y_ < MUD_HEIGHT; y_++) {
-            for (int x_ = 0; x_ < MUD_WIDTH; x_++) {
-                float depth = 0;
-
-                glReadPixels(x_, 240 - y_, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
-                             &depth);
-
-                int grey = 255-(int)(((depth - min) / range) * 255);
-                fprintf(ppm, "%d %d %d\n", grey, grey, grey);
-
-                //printf("%d\n", red);
-
-                /*if (depth > max) {
-                    max = depth;
-                }
-
-                if (depth < min) {
-                    min = depth;
-                }*/
-            }
-        }
-
-        fclose(ppm);
-
-        //printf("%f %f\n", max, min);
 
         vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
         vec4 bounds = {0, 0, scene->surface->width, scene->surface->height};
@@ -4705,44 +4668,27 @@ void scene_3ds_gl_render(Scene *scene) {
 
         float mouse_z = 0;
 
-        /*glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
-                     &mouse_z);*/
-
-        uint8_t *colour_buf = (uint8_t*)(
+        uint16_t *depth_buf = (uint16_t*)(
             scene->surface->
-            mud->_3ds_gl_render_target->frameBuf.colorBuf);
+            mud->_3ds_gl_render_target->frameBuf.depthBuf);
 
-#if 1
-        FILE *ppm = fopen("./screenshot.ppm", "w");
-        fprintf(ppm, "P3\n320 240\n255\n");
+        int fb_index = _3ds_gl_translate_framebuffer_index(
+            (scene->mouse_y * 320) + mouse_x
+        );
 
-        int index = 0;
+        mouse_z = 1.0f - (depth_buf[fb_index] / 65535.0f);
 
-        for (int x = 0; x < MUD_WIDTH; x++) {
-            for (int y = 0; y < MUD_HEIGHT; y++) {
-                int fb_index = _3ds_gl_translate_framebuffer_index(index) * 4;
-
-                int a = colour_buf[fb_index++];
-                int r = colour_buf[fb_index++];
-                int g = colour_buf[fb_index++];
-                int b = colour_buf[fb_index++];
-
-                fprintf(ppm, "%d %d %d\n", r, g, b);
-
-                index++;
-            }
-        }
-
-        fclose(ppm);
-
-        printf("done\n");
-#endif
+        printf("%f\n", mouse_z);
 
         vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
         vec4 bounds = {0, 0, scene->surface->width, scene->surface->height};
 
-        glm_unproject(position, scene->gl_projection_view, bounds,
-                      scene->gl_mouse_world);
+        mat4 projection_view = {0};
+
+        glm_mat4_mul(scene->gl_original_projection, scene->gl_view,
+                     projection_view);
+
+        glm_unproject(position, projection_view, bounds, scene->gl_mouse_world);
 
         scene->gl_terrain_pick_step = 2;
 

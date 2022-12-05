@@ -131,5 +131,6 @@ void rotate_point(int centre_x, int centre_y, float angle, int *point);
 void gl_load_texture(GLuint *texture_id, char *file);
 #elif defined(RENDER_3DS_GL)
 void _3ds_gl_load_tex(const uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
+int _3ds_gl_translate_framebuffer_index(int index);
 #endif
 #endif

@@ -9,8 +9,6 @@ int last_canvas_check = 0;
 mudclient *global_mud;
 #endif
 
-int dumped = 0;
-
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
@@ -796,8 +794,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
     mud->_3ds_gl_render_target =
-        //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
-        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
+        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
+        //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
         //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 
     C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target, GFX_BOTTOM, GFX_LEFT,
@@ -5725,7 +5723,6 @@ void mudclient_play_sound(mudclient *mud, char *name) {
 int mudclient_walk_to(mudclient *mud, int start_x, int start_y, int x1, int y1,
                       int x2, int y2, int check_objects, int walk_to_action,
                       int first_step) {
-    return;
     int steps = world_route(mud->world, start_x, start_y, x1, y1, x2, y2,
                             mud->walk_path_x, mud->walk_path_y, check_objects);
 

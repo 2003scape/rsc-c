@@ -210,6 +210,8 @@ typedef struct Scene {
     int _3ds_gl_cull_front_uniform;
 
     C3D_Tex gl_model_texture;
+
+    mat4 gl_original_projection;
 #endif
 } Scene;
 
