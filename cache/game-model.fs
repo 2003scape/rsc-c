@@ -7,7 +7,6 @@ out vec4 fragment_colour;
 in vec3 vertex_colour;
 in vec2 vertex_texture_position;
 in float vertex_gradient_index;
-flat in int is_textured_light;
 
 uniform sampler2D model_texture;
 
@@ -30,19 +29,23 @@ void main() {
         discard;
     }
 
-    //fragment_colour = vec4(vertex_colour, 0.0) + texture_colour;
+    bool is_textured_light =
+        !(texture_colour.r == 1.0 && texture_colour.g == 1.0 &&
+          texture_colour.b == 1.0);
+
+    // fragment_colour = vec4(vertex_colour, 0.0) + texture_colour;
     fragment_colour = vec4(vertex_colour, 1.0) * texture_colour;
 
     /*if (fragment_colour.w <= 0.0f) {
         discard;
     }*/
 
-    if (is_textured_light == 1) {
+    if (is_textured_light) {
         lightness = texture_light_gradient[gradient_index];
     } else {
         float reversed = RAMP_SIZE - gradient_index - 1;
         lightness = (reversed * reversed) / 65536.0;
-        //lightness = light_gradient[gradient_index];
+        // lightness = light_gradient[gradient_index];
     }
 
     fragment_colour =
