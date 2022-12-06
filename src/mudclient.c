@@ -688,11 +688,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
     wave_buf[0].data_vaddr = &audio_buffer[0];
     wave_buf[0].nsamples = SAMPLE_BUFFER_SIZE;
 
-    wave_buf[1].data_vaddr = &audio_buffer[SAMPLE_BUFFER_SIZE];
-    wave_buf[1].nsamples = SAMPLE_BUFFER_SIZE;
+    //wave_buf[1].data_vaddr = &audio_buffer[SAMPLE_BUFFER_SIZE];
+    //wave_buf[1].nsamples = SAMPLE_BUFFER_SIZE;
 
     ndspChnWaveBufAdd(0, &wave_buf[0]);
-    ndspChnWaveBufAdd(0, &wave_buf[1]);
+    //ndspChnWaveBufAdd(0, &wave_buf[1]);
 
     HIDUSER_EnableGyroscope();
 #else
@@ -1763,8 +1763,8 @@ void mudclient_load_textures(mudclient *mud) {
         surface_parse_sprite(surface, mud->sprite_texture, texture_dat,
                              index_dat, 1);
 
-        surface_draw_box_software(surface, 0, 0, 128, 128, MAGENTA);
-        surface_draw_sprite_software(surface, 0, 0, mud->sprite_texture);
+        surface_draw_box(surface, 0, 0, 128, 128, MAGENTA);
+        surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
         free(surface->sprite_palette[mud->sprite_texture]);
         surface->sprite_palette[mud->sprite_texture] = NULL;
@@ -1786,8 +1786,7 @@ void mudclient_load_textures(mudclient *mud) {
                 surface_parse_sprite(surface, mud->sprite_texture,
                                      texture_sub_dat, index_dat, 1);
 
-                surface_draw_sprite_software(surface, 0, 0,
-                                             mud->sprite_texture);
+                surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
                 free(surface->sprite_palette[mud->sprite_texture]);
                 surface->sprite_palette[mud->sprite_texture] = NULL;
@@ -4550,7 +4549,7 @@ void mudclient_draw_game(mudclient *mud) {
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         // TODO this is really slow!
-        /*scene_remove_model(mud->scene,
+        scene_remove_model(mud->scene,
                            mud->world->roof_models[mud->last_height_offset][i]);
 
         if (mud->last_height_offset == 0) {
@@ -4577,7 +4576,7 @@ void mudclient_draw_game(mudclient *mud) {
 
                 mud->fog_of_war = 0;
             }
-        }*/
+        }
     }
 
     mudclient_animate_objects(mud);
@@ -5348,7 +5347,7 @@ void mudclient_3ds_flush_audio(mudclient *mud) {
 
         ndspChnWaveBufAdd(0, &wave_buf[fill_block]);
 
-        fill_block = !fill_block;
+        //fill_block = !fill_block;
     }
 }
 
@@ -5686,6 +5685,12 @@ void mudclient_play_sound(mudclient *mud, char *name) {
         return;
     }
 
+#ifdef _3DS
+    if (mud->_3ds_sound_position != -1) {
+        return;
+    }
+#endif
+
     char file_name[strlen(name) + 5];
     sprintf(file_name, "%s.pcm", name);
 
@@ -5697,7 +5702,7 @@ void mudclient_play_sound(mudclient *mud, char *name) {
 
     int length = get_data_file_length(file_name, mud->sound_data);
 
-    memset(mud->pcm_out, 0, 1024 * 50 * 2);
+    memset(mud->pcm_out, 0, PCM_LENGTH * sizeof(uint16_t));
 
     ulaw_to_linear(length, (uint8_t *)mud->sound_data + offset, mud->pcm_out);
 

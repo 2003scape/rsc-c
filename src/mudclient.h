@@ -73,6 +73,7 @@
 #define SAMPLE_RATE 8000
 #define SAMPLE_BUFFER_SIZE 4096
 #define BYTES_PER_SAMPLE 2
+#define PCM_LENGTH (50 * 1024)
 
 #define K_LEFT 37
 #define K_RIGHT 39
@@ -163,10 +164,10 @@
 #define MUD_WIDTH 320
 #define MUD_HEIGHT 240
 #else
-//#define MUD_WIDTH 512
-//#define MUD_HEIGHT 346
-#define MUD_WIDTH 320
-#define MUD_HEIGHT 240
+#define MUD_WIDTH 512
+#define MUD_HEIGHT 346
+//#define MUD_WIDTH 320
+//#define MUD_HEIGHT 240
 #endif
 
 #define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
@@ -760,7 +761,7 @@ typedef struct mudclient {
     int8_t *sound_data;
 
     /* 100 kilobytes of 16-bit linear PCM */
-    int16_t pcm_out[1024 * 50];
+    int16_t pcm_out[PCM_LENGTH];
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int gl_is_walking;
