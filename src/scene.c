@@ -4629,7 +4629,8 @@ void scene_3ds_gl_render(Scene *scene) {
 	/*C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
 	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);*/
 	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_ADD);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
+	//C3D_TexEnvFunc(env, C3D_Both, GPU_ADD);
 
     /* clear the second texenv */
     C3D_TexEnvInit(C3D_GetTexEnv(1));

@@ -53,7 +53,7 @@
     dp4 out_position.z, projection_view_model[2], r0
     dp4 out_position.w, projection_view_model[3], r0
 
-    mov r1, zeros
+    mov r1, ones
 
     ifu cull_front
         mov r1.xyz, in_back_colour.xyz
@@ -63,9 +63,9 @@
         mov out_texture_position, in_front_texture.xy
     .end
 
-    mov r2, lighting_ramp[4]
-
     mov out_colour, r1
+
+    ; mov r2, lighting_ramp[4]
 
     end
 .end
