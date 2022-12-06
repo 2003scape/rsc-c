@@ -9,6 +9,25 @@
 .alias zeros myconst.xxxx
 .alias ones  myconst.yyyy
 
+.constfa lighting_ramp[16]
+.constfa (0.074510,0.074510,0.074510,1.0)
+.constfa (0.090196,0.090196,0.090196,1.0)
+.constfa (0.105882,0.105882,0.105882,1.0)
+.constfa (0.121569,0.121569,0.121569,1.0)
+.constfa (0.149020,0.149020,0.149020,1.0)
+.constfa (0.180392,0.180392,0.180392,1.0)
+.constfa (0.211765,0.211765,0.211765,1.0)
+.constfa (0.243137,0.243137,0.243137,1.0)
+.constfa (0.298039,0.298039,0.298039,1.0)
+.constfa (0.360784,0.360784,0.360784,1.0)
+.constfa (0.423529,0.423529,0.423529,1.0)
+.constfa (0.486275,0.486275,0.486275,1.0)
+.constfa (0.596078,0.596078,0.596078,1.0)
+.constfa (0.721569,0.721569,0.721569,1.0)
+.constfa (0.847059,0.847059,0.847059,1.0)
+.constfa (0.972549,0.972549,0.972549,1.0)
+.end
+
 ; outputs
 .out out_position position
 .out out_colour color
@@ -34,21 +53,17 @@
     dp4 out_position.z, projection_view_model[2], r0
     dp4 out_position.w, projection_view_model[3], r0
 
-    ; out_colour = (1.0, 0.0, 1.0, 0.5)
-    ; mov out_colour, myconst.yxyw
-
-;    mov out_colour, myconst.x
     mov r1, zeros
 
     ifu cull_front
-;        mov out_colour, in_back_colour
         mov r1.xyz, in_back_colour.xyz
         mov out_texture_position, in_back_texture.xy
     .else
-;        mov out_colour, in_front_colour
         mov r1.xyz, in_front_colour.xyz
         mov out_texture_position, in_front_texture.xy
     .end
+
+    mov r2, lighting_ramp[4]
 
     mov out_colour, r1
 

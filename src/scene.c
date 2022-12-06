@@ -132,6 +132,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         scene->light_gradient[gradient_index] =
             (i * i) / (float)(RAMP_SIZE * RAMP_SIZE);
 
+        printf("%d %f\n",
+            i,
+            ((i / 4) * (i / 4)) / (float)(RAMP_SIZE * RAMP_SIZE));
+
         int texture_gradient_index = i / 16;
         int x = texture_gradient_index / 4;
         int y = texture_gradient_index % 4;
@@ -139,6 +143,11 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         /* thanks jorsa */
         scene->texture_light_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
+
+        /*if (i%16 == 0){
+            printf("%f\n",
+                ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f);
+        }*/
 
         /*scene->texture_light_gradient[gradient_index] =
             0.074708f * powf(15.844317f, ((float)i / 255.0f));*/

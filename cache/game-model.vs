@@ -43,11 +43,8 @@ void main() {
     int intensity = 0;
 
     if (unlit) {
-        if (face_intensity == USE_GOURAUD) {
-            intensity = vertex_intensity;
-        } else {
-            intensity = face_intensity;
-        }
+        intensity =
+            face_intensity == USE_GOURAUD ? vertex_intensity : face_intensity;
     } else {
         vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 

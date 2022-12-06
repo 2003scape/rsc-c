@@ -42,8 +42,9 @@ void options_set_server(Options *options) {
     options->port = 43596;
 #endif
 #else
-    strcpy(options->server, "127.0.0.1");
+    //strcpy(options->server, "127.0.0.1");
     //strcpy(options->server, "192.168.100.178");
+    strcpy(options->server, "192.168.100.113");
     options->port = 43594;
 #endif
 }

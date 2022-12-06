@@ -26,16 +26,23 @@ void main() {
 
     vec4 texture_colour = texture(model_texture, vertex_texture_position);
 
-    fragment_colour = vec4(vertex_colour, 0.0) + texture_colour;
-
-    if (fragment_colour.w <= 0.0f) {
+    if (texture_colour.w <= 0.0f) {
         discard;
     }
+
+    //fragment_colour = vec4(vertex_colour, 0.0) + texture_colour;
+    fragment_colour = vec4(vertex_colour, 1.0) * texture_colour;
+
+    /*if (fragment_colour.w <= 0.0f) {
+        discard;
+    }*/
 
     if (is_textured_light == 1) {
         lightness = texture_light_gradient[gradient_index];
     } else {
-        lightness = light_gradient[gradient_index];
+        float reversed = RAMP_SIZE - gradient_index - 1;
+        lightness = (reversed * reversed) / 65536.0;
+        //lightness = light_gradient[gradient_index];
     }
 
     fragment_colour =

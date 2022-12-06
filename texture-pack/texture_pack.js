@@ -799,13 +799,13 @@ async function packModelTextures() {
         sprites.push({ index: +i, type: 'texture', canvas });
     }
 
-    const blackCanvas = createCanvas(32, 32);
-    const blackContext = blackCanvas.getContext('2d');
+    const whiteCanvas = createCanvas(32, 32);
+    const whiteContext = whiteCanvas.getContext('2d');
 
-    blackContext.fillStyle = '#000';
-    blackContext.fillRect(0, 0, 32, 32);
+    whiteContext.fillStyle = '#fff';
+    whiteContext.fillRect(0, 0, 32, 32);
 
-    sprites.push({ index: 0, type: 'black', canvas: blackCanvas });
+    sprites.push({ index: 0, type: 'white', canvas: whiteCanvas });
 
     const transparentCanvas = createCanvas(32, 32);
 
@@ -820,7 +820,7 @@ async function packModelTextures() {
 
     const members = {
         'gl_atlas_position gl_texture_atlas_positions[]': positions.texture,
-        'gl_atlas_position gl_black_model_atlas_position': positions.black,
+        'gl_atlas_position gl_white_model_atlas_position': positions.white,
         'gl_atlas_position gl_transparent_model_atlas_position':
             positions.transparent
     };

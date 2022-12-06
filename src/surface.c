@@ -1861,7 +1861,7 @@ void surface_draw_sprite(Surface *surface, int x, int y, int sprite_id) {
 void surface_draw_sprite_depth(Surface *surface, int x, int y, int sprite_id,
                                float depth_top, float depth_bottom) {
 #ifdef RENDER_SW
-    surface_draw_sprite_software(surface, x, y, sprite_id);
+    surface_draw_sprite(surface, x, y, sprite_id);
     (void)depth_top;
     (void)depth_bottom;
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)

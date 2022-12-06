@@ -330,6 +330,7 @@ int game_model_create_face(GameModel *game_model, int number, int *vertices,
     game_model->face_vertices[game_model->face_count] = vertices;
     game_model->face_fill_front[game_model->face_count] = fill_front;
     game_model->face_fill_back[game_model->face_count] = fill_back;
+
     game_model->transform_state = GAME_MODEL_TRANSFORM_BEGIN;
 
     return game_model->face_count++;
@@ -1251,9 +1252,9 @@ void game_model_mask_faces(GameModel *game_model, int *face_fill,
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void game_model_gl_decode_face_fill(int face_fill,
                                     gl_face_fill *vbo_face_fill) {
-    vbo_face_fill->r = 0.0f;
-    vbo_face_fill->g = 0.0f;
-    vbo_face_fill->b = 0.0f;
+    vbo_face_fill->r = 1.0f;
+    vbo_face_fill->g = 1.0f;
+    vbo_face_fill->b = 1.0f;
 
     vbo_face_fill->texture_index = -1;
 
@@ -1480,7 +1481,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
             if (fill_front != COLOUR_TRANSPARENT) {
                 if (face_fill_front.texture_index == -1) {
-                    front_atlas_position = gl_black_model_atlas_position;
+                    front_atlas_position = gl_white_model_atlas_position;
                 } else {
                     front_atlas_position =
                         gl_texture_atlas_positions[face_fill_front
@@ -1496,7 +1497,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
             if (fill_back != COLOUR_TRANSPARENT) {
                 if (face_fill_back.texture_index == -1) {
-                    back_atlas_position = gl_black_model_atlas_position;
+                    back_atlas_position = gl_white_model_atlas_position;
                 } else {
                     back_atlas_position =
                         gl_texture_atlas_positions[face_fill_back
@@ -1535,7 +1536,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                             sizeof(vertex), (void *)&vertex);
 #elif defined(RENDER_3DS_GL)
             memcpy(game_model->gl_buffer->vbo +
-                   (((*vertex_offset) + j) * sizeof(vertex)),
+                       (((*vertex_offset) + j) * sizeof(vertex)),
                    &vertex, sizeof(vertex));
 #endif
         }
@@ -1553,7 +1554,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                   (*vertex_offset) + j + 2};
 
             memcpy(game_model->gl_buffer->ebo +
-                   ((*ebo_offset) * sizeof(uint16_t)),
+                       ((*ebo_offset) * sizeof(uint16_t)),
                    indices, sizeof(indices));
 #endif
 
@@ -1690,7 +1691,7 @@ void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
 
 #ifdef EMSCRIPTEN
 void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
-                                   int vbo_length, int ebo_length) {
+                                      int vbo_length, int ebo_length) {
     vertex_buffer_gl_new(pick_buffer, sizeof(gl_pick_vertex), vbo_length,
                          ebo_length);
 

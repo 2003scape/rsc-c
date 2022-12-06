@@ -807,6 +807,10 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
 /* assemble a 3D model from world section */
 void world_load_section_from4(World *world, int x, int y, int plane,
                               int is_current_plane) {
+    printf("%d %d %d\n", x, y, plane);
+
+    int start_ticks = get_ticks();
+
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
@@ -1980,6 +1984,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
     }
 
+    printf("loadsection %d\n", get_ticks() - start_ticks);
+
     game_model_destroy(world->parent_model);
 }
 
@@ -2221,9 +2227,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
         world_set_tiles(world);
     }
 
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    // world_gl_buffer_world_models(world);
-#endif
+    //printf("loadsection %d\n", get_ticks() - start_ticks);
 
     game_model_destroy(world->parent_model);
     free(world->parent_model);
