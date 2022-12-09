@@ -2,31 +2,22 @@
 
 ; uniforms
 .fvec model[4], projection_view_model[4]
+
+.fvec light_ambience
+
 .bool cull_front
 
 ; constants
-.constf myconst(0.0, 1.0, -1.0, -0.5)
-.alias zeros myconst.xxxx
-.alias ones  myconst.yyyy
+.constf base_const(0.0, 1.0, -1.0, -0.5)
 
-.constfa lighting_ramp[16]
-.constfa (0.074510,0.074510,0.074510,1.0)
-.constfa (0.090196,0.090196,0.090196,1.0)
-.constfa (0.105882,0.105882,0.105882,1.0)
-.constfa (0.121569,0.121569,0.121569,1.0)
-.constfa (0.149020,0.149020,0.149020,1.0)
-.constfa (0.180392,0.180392,0.180392,1.0)
-.constfa (0.211765,0.211765,0.211765,1.0)
-.constfa (0.243137,0.243137,0.243137,1.0)
-.constfa (0.298039,0.298039,0.298039,1.0)
-.constfa (0.360784,0.360784,0.360784,1.0)
-.constfa (0.423529,0.423529,0.423529,1.0)
-.constfa (0.486275,0.486275,0.486275,1.0)
-.constfa (0.596078,0.596078,0.596078,1.0)
-.constfa (0.721569,0.721569,0.721569,1.0)
-.constfa (0.847059,0.847059,0.847059,1.0)
-.constfa (0.972549,0.972549,0.972549,1.0)
-.end
+.alias zeros base_const.xxxx
+.alias ones base_const.yyyy
+
+; -255
+.constf invert_index(-255.0, -255.0, -255.0, -255.0)
+
+; 1/256
+.constf byte_reciprocal(0.003906, 0.003906, 0.003906, 0.003906)
 
 ; outputs
 .out out_position position
@@ -53,19 +44,46 @@
     dp4 out_position.z, projection_view_model[2], r0
     dp4 out_position.w, projection_view_model[3], r0
 
+    ; r1 = vertex_colour
     mov r1, ones
 
+    ; r2 = gradient_index
+    mov r2, light_ambience.xxxx
+
+    ; r3 = intensity
+    mov r3, in_lighting.yyyy
+
     ifu cull_front
-        mov r1.xyz, in_back_colour.xyz
+        ; add intensity to gradient index
+        add r2, r2, r3
+
+        mov r1.rgb, in_back_colour.rgb
         mov out_texture_position, in_back_texture.xy
     .else
-        mov r1.xyz, in_front_colour.xyz
+        ; add -intensity to gradient index
+        mul r3, base_const.zzzz, r3
+        add r2, r2, r3
+
+        mov r1.rgb, in_front_colour.rgb
         mov out_texture_position, in_front_texture.xy
     .end
 
-    mov out_colour, r1
+    ; gradient_index = 255 - gradient_index
+    add r2, invert_index, r2
+    mul r2, base_const.zzzz, r2
 
-    ; mov r2, lighting_ramp[4]
+    ; gradient_index = gradient_index / 256
+    mul r2, byte_reciprocal, r2
+    mov r2.w, ones
+
+    ; gradient_index = gradient_index * gradient_index
+    mul r2, r2, r2
+    mov r2.w, ones
+
+    ; vertex_colour * gradient_index
+    mul r1, r1, r2
+
+    mov out_colour, r1
 
     end
 .end

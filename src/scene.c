@@ -57,7 +57,7 @@ int scene_polygon_depth_compare(const void *a, const void *b) {
     return polygon_a->depth < polygon_b->depth ? 1 : -1;
 }
 
-#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 int scene_gl_model_time_compare(const void *a, const void *b) {
     GlModelTime model_time_a = *(GlModelTime *)a;
     GlModelTime model_time_b = *(GlModelTime *)b;
@@ -132,9 +132,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         scene->light_gradient[gradient_index] =
             (i * i) / (float)(RAMP_SIZE * RAMP_SIZE);
 
-        printf("%d %f\n",
-            i,
-            ((i / 4) * (i / 4)) / (float)(RAMP_SIZE * RAMP_SIZE));
+        printf("%d %f\n", i,
+               ((i / 4) * (i / 4)) / (float)(RAMP_SIZE * RAMP_SIZE));
 
         int texture_gradient_index = i / 16;
         int x = texture_gradient_index / 4;
@@ -155,8 +154,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_use(&scene->game_model_shader);
 
-    game_model_gl_create_buffer(&scene->gl_wall_buffer,
-                             WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);
+    game_model_gl_create_buffer(&scene->gl_wall_buffer, WALL_OBJECTS_MAX * 4,
+                                WALL_OBJECTS_MAX * 6);
 
     shader_set_int(&scene->game_model_shader, "model_textures", 0);
 
@@ -182,8 +181,13 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->_3ds_gl_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "model");
 
-    scene->_3ds_gl_projection_view_model_uniform = shaderInstanceGetUniformLocation(
-        (&scene->_3ds_gl_model_shader)->vertexShader, "projection_view_model");
+    scene->_3ds_gl_light_ambience_uniform  = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "light_ambience");
+
+    scene->_3ds_gl_projection_view_model_uniform =
+        shaderInstanceGetUniformLocation(
+            (&scene->_3ds_gl_model_shader)->vertexShader,
+            "projection_view_model");
 
     scene->_3ds_gl_cull_front_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "cull_front");
@@ -917,7 +921,8 @@ void scene_gradient_translucent_scanline(int32_t *raster, int i, int raster_idx,
     length = -(i % 16);
 
     for (int i1 = 0; i1 < length; i1++) {
-        raster[raster_idx] = colour + ((raster[raster_idx + 1] >> 1) & 0x7f7f7f);
+        raster[raster_idx] =
+            colour + ((raster[raster_idx + 1] >> 1) & 0x7f7f7f);
 
         raster_idx++;
 
@@ -1430,11 +1435,11 @@ void scene_render(Scene *scene) {
         //(scene->clip_y * scene->clip_far_3d) >> scene->view_distance;
         (scene->clip_y * scene->clip_far_3d) / scene->view_distance;
 
-    scene_frustum_max_x = 0; /* right */
-    scene_frustum_min_x = 0; /* left */
-    scene_frustum_max_y = 0; /* top */
-    scene_frustum_min_y = 0; /* bottom */
-    scene_frustum_far_z = 0; /* far */
+    scene_frustum_max_x = 0;  /* right */
+    scene_frustum_min_x = 0;  /* left */
+    scene_frustum_max_y = 0;  /* top */
+    scene_frustum_min_y = 0;  /* bottom */
+    scene_frustum_far_z = 0;  /* far */
     scene_frustum_near_z = 0; /* near */
 
     scene_set_frustum(scene, -frustum_x, -frustum_y, scene->clip_far_3d);
@@ -4201,15 +4206,16 @@ void scene_gl_update_camera(Scene *scene) {
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
         VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
 
-    glm_perspective(
-        scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
-        VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_original_projection);
+    glm_perspective(scene->gl_fov,
+                    (float)(scene->width) / (float)(scene->gl_height - 1),
+                    VERTEX_TO_FLOAT(scene->clip_near), clip_far,
+                    scene->gl_original_projection);
 
     glm_mat4_inv(scene->gl_original_projection, scene->gl_inverse_projection);
 #endif
 
     // TODO this is needed for 3DS, doesn't seem to affect anything else
-    //scene->gl_projection[1][2] = 0.0f;
+    // scene->gl_projection[1][2] = 0.0f;
 
     glm_mat4_mul(scene->gl_projection, scene->gl_view,
                  scene->gl_projection_view);
@@ -4372,8 +4378,8 @@ void scene_gl_render(Scene *scene) {
         shader_set_int(&scene->game_model_pick_shader, "interlace",
                        scene->interlace);
 
-        game_model_gl_buffer_pick_models(
-            &scene->gl_pick_buffer, terrain_picked, terrain_picked_length);
+        game_model_gl_buffer_pick_models(&scene->gl_pick_buffer, terrain_picked,
+                                         terrain_picked_length);
 
         for (int i = 0; i < terrain_picked_length; i++) {
             GameModel *game_model = terrain_picked[i];
@@ -4502,7 +4508,7 @@ void scene_gl_render(Scene *scene) {
 
     glViewport(0, 1, scene->width, scene_height + 12);
 
-    //surface_gl_draw(scene->surface, 1);
+    // surface_gl_draw(scene->surface, 1);
 
     scene->surface->width = old_width;
     scene->surface->height = old_height;
@@ -4534,7 +4540,7 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     _3ds_gl_mat4_to_pica(pica_model);
 
     C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, scene->_3ds_gl_model_uniform,
-                     (C3D_Mtx*)pica_model);
+                     (C3D_Mtx *)pica_model);
 
     mat4 view_model = {0};
     glm_mat4_mul(scene->gl_view, game_model->transform, view_model);
@@ -4546,38 +4552,35 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 
     C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER,
                      scene->_3ds_gl_projection_view_model_uniform,
-                     (C3D_Mtx*)projection_view_model);
+                     (C3D_Mtx *)projection_view_model);
 
-    C3D_BoolUnifSet(GPU_VERTEX_SHADER,
-                     scene->_3ds_gl_cull_front_uniform, 0);
+    vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
+                            VERTEX_TO_FLOAT(game_model->light_direction_y),
+                            VERTEX_TO_FLOAT(game_model->light_direction_z)};
+
+    C3D_FVUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_light_ambience_uniform,
+            (float)game_model->light_ambience, 0, 0, 0);
+
+    C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_cull_front_uniform, 0);
 
     C3D_CullFace(GPU_CULL_BACK_CCW);
 
-    C3D_DrawElements(
-GPU_TRIANGLES,
-game_model->gl_ebo_length,
-C3D_UNSIGNED_SHORT,
-    game_model->gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
+    C3D_DrawElements(GPU_TRIANGLES, game_model->gl_ebo_length,
+                     C3D_UNSIGNED_SHORT,
+                     game_model->gl_buffer->ebo +
+                         (game_model->gl_ebo_offset * sizeof(uint16_t)));
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_cull_front_uniform, 1);
 
     C3D_CullFace(GPU_CULL_FRONT_CCW);
 
-    C3D_DrawElements(
-GPU_TRIANGLES,
-game_model->gl_ebo_length,
-C3D_UNSIGNED_SHORT,
-    game_model->gl_buffer->ebo + (game_model->gl_ebo_offset * sizeof(uint16_t)));
+    C3D_DrawElements(GPU_TRIANGLES, game_model->gl_ebo_length,
+                     C3D_UNSIGNED_SHORT,
+                     game_model->gl_buffer->ebo +
+                         (game_model->gl_ebo_offset * sizeof(uint16_t)));
 
     // light stuff v
-    /*shader_set_mat4(&scene->game_model_shader, "projection_view_model",
-                    projection_view_model);*/
-
-    /*vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
-                            VERTEX_TO_FLOAT(game_model->light_direction_y),
-                            VERTEX_TO_FLOAT(game_model->light_direction_z)};
-
-    shader_set_int(&scene->game_model_shader, "light_ambience",
+    /*shader_set_int(&scene->game_model_shader, "light_ambience",
                    game_model->light_ambience);
 
     shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
@@ -4624,21 +4627,21 @@ void scene_3ds_gl_render(Scene *scene) {
     C3D_AlphaTest(true, GPU_GREATER, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
-	C3D_TexEnv* env = C3D_GetTexEnv(0);
-	C3D_TexEnvInit(env);
-	/*C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);*/
-	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
-	//C3D_TexEnvFunc(env, C3D_Both, GPU_ADD);
+    C3D_TexEnv *env = C3D_GetTexEnv(0);
+    C3D_TexEnvInit(env);
+    /*C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+    C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);*/
+    C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
+    C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
+    // C3D_TexEnvFunc(env, C3D_Both, GPU_ADD);
 
     /* clear the second texenv */
     C3D_TexEnvInit(C3D_GetTexEnv(1));
 
     C3D_TexBind(0, &scene->gl_model_texture);
 
-    //int offset_y = 13;
-    //glViewport(0, offset_y, scene->width, scene_height);
+    // int offset_y = 13;
+    // glViewport(0, offset_y, scene->width, scene_height);
 
     /*shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
@@ -4676,13 +4679,12 @@ void scene_3ds_gl_render(Scene *scene) {
 
         float mouse_z = 0;
 
-        uint16_t *depth_buf = (uint16_t*)(
-            scene->surface->
-            mud->_3ds_gl_render_target->frameBuf.depthBuf);
+        uint16_t *depth_buf =
+            (uint16_t *)(scene->surface->mud->_3ds_gl_render_target->frameBuf
+                             .depthBuf);
 
         int fb_index = _3ds_gl_translate_framebuffer_index(
-            (scene->mouse_y * 320) + mouse_x
-        );
+            (scene->mouse_y * 320) + mouse_x);
 
         mouse_z = 1.0f - (depth_buf[fb_index] / 65535.0f);
 
@@ -4748,10 +4750,10 @@ void scene_3ds_gl_render(Scene *scene) {
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
 
-    //glViewport(0, 1, scene->width, scene_height + 12);
+    // glViewport(0, 1, scene->width, scene_height + 12);
 
-    //printf("drawing %d\n", scene->surface->gl_flat_count);
-    //surface_gl_draw(scene->surface, 1);
+    // printf("drawing %d\n", scene->surface->gl_flat_count);
+    // surface_gl_draw(scene->surface, 1);
 
     /*scene->surface->width = old_width;
     scene->surface->height = old_height;

@@ -207,6 +207,7 @@ typedef struct Scene {
 
     int _3ds_gl_model_uniform;
     int _3ds_gl_projection_view_model_uniform;
+    int _3ds_gl_light_ambience_uniform;
     int _3ds_gl_cull_front_uniform;
 
     C3D_Tex gl_model_texture;
