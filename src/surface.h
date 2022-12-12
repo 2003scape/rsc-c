@@ -223,6 +223,8 @@ void surface_gl_quad_apply_atlas(gl_quad *quad, gl_atlas_position
                                 atlas_position, int flip);
 void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
                                       atlas_position, int flip);
+void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
+                                   float depth);
 #ifdef RENDER_GL
 void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
                             GLuint texture, GLuint base_texture);

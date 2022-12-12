@@ -3,7 +3,9 @@
 ; uniforms
 .fvec model[4], projection_view_model[4]
 
-.fvec light_ambience
+.fvec light_ambience_diffuse
+.bool unlit
+.fvec light_direction
 
 .bool cull_front
 
@@ -18,6 +20,8 @@
 
 ; 1/256
 .constf byte_reciprocal(0.003906, 0.003906, 0.003906, 0.003906)
+
+.constf use_gouraud(12345.0, 12345.0, 12345.0, 12345.0)
 
 ; outputs
 .out out_position position
@@ -48,10 +52,41 @@
     mov r1, ones
 
     ; r2 = gradient_index
-    mov r2, light_ambience.xxxx
+    mov r2, light_ambience_diffuse.xxxx
 
     ; r3 = intensity
-    mov r3, in_lighting.yyyy
+    ; mov r3, in_lighting.yyyy
+    ; mov r3, base_const.xxxx
+
+    ifu unlit
+        cmp use_gouraud, ge, ge, in_lighting.xxxx
+
+        ifc cmp.x
+            mov r3, in_lighting.xxxx
+        .else
+            mov r3, in_lighting.yyyy
+        .end
+    .else
+        ; r4 = model_normal
+        mov r4, ones
+
+        dp3 r4.x, model[0], in_normal.xyz
+        dp3 r4.y, model[1], in_normal.xyz
+        dp3 r4.z, model[2], in_normal.xyz
+
+        ; r5 = dot(model_normal, light_direction)
+        dp3 r5, light_direction.xyz, r4
+
+        ; r6 = light_diffuse * normal_magnitude
+        mul r6, light_ambience_diffuse.yyyy, in_normal.wwww
+
+        ; r6 = 1/r6
+        rcp r6, r6
+
+        ; intensity = dot(light_direction, model_normal) /
+        ;     (light_diffuse * normal_magnitude)
+        mul r3, r5, r6
+    .end
 
     ifu cull_front
         ; add intensity to gradient index

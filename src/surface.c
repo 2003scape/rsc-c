@@ -311,6 +311,13 @@ void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
     }
 }
 
+void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
+                                   float depth) {
+    for (int i = 0; i < length; i++) {
+        vertices[i].z = depth;
+    }
+}
+
 #ifdef RENDER_GL
 void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, GLuint texture,
                             GLuint base_texture) {
@@ -1965,6 +1972,10 @@ void surface_draw_sprite_scale(Surface *surface, int x, int y, int width,
 void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
+#ifdef RENDER_3DS_GL
+    y += 13;
+#endif
+
     if (sprite_id >= 50000) {
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         float depth = ((depth_top + depth_bottom) / 2) -

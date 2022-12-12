@@ -1456,15 +1456,17 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             int normal_magnitude = 1;
 
             if (face_intensity == GAME_MODEL_USE_GOURAUD) {
-                normal[0] = VERTEX_TO_FLOAT(vertex_normal_x[vertex_index]);
-                normal[1] = VERTEX_TO_FLOAT(vertex_normal_y[vertex_index]);
-                normal[2] = VERTEX_TO_FLOAT(vertex_normal_z[vertex_index]);
+                normal[0] = VERTEX_TO_FLOAT(vertex_normal_x[vertex_index]) * VERTEX_SCALE;
+
+                normal[1] = VERTEX_TO_FLOAT(vertex_normal_y[vertex_index]) * VERTEX_SCALE;
+
+                normal[2] = VERTEX_TO_FLOAT(vertex_normal_z[vertex_index]) * VERTEX_SCALE;
 
                 normal_magnitude = vertex_normal_magnitude[vertex_index];
             } else {
-                normal[0] = VERTEX_TO_FLOAT(face_normal_x[i]);
-                normal[1] = VERTEX_TO_FLOAT(face_normal_y[i]);
-                normal[2] = VERTEX_TO_FLOAT(face_normal_z[i]);
+                normal[0] = VERTEX_TO_FLOAT(face_normal_x[i]) * VERTEX_SCALE;
+                normal[1] = VERTEX_TO_FLOAT(face_normal_y[i]) * VERTEX_SCALE;
+                normal[2] = VERTEX_TO_FLOAT(face_normal_z[i]) * VERTEX_SCALE;
             }
 
             int vertex_intensity = game_model->vertex_intensity[vertex_index] +

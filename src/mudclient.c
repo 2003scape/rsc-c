@@ -6,7 +6,7 @@ EM_JS(int, get_canvas_height, (), { return canvas.height; });
 
 int last_canvas_check = 0;
 
-mudclient *global_mud;
+mudclient *global_mud = NULL;
 #endif
 
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",

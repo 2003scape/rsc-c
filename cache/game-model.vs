@@ -17,6 +17,7 @@ layout(location = 6) in vec2 back_texture_position;
 out vec3 vertex_colour;
 out vec2 vertex_texture_position;
 out float vertex_gradient_index;
+flat out int is_foggy;
 
 uniform float scroll_texture;
 
@@ -26,7 +27,7 @@ uniform mat4 model;
 uniform mat4 projection_view_model;
 
 uniform bool unlit;
-uniform int light_ambience;
+uniform float light_ambience;
 uniform vec3 light_direction;
 uniform float light_diffuse;
 uniform float light_direction_magnitude;
@@ -36,10 +37,11 @@ uniform bool cull_front;
 void main() {
     gl_Position = projection_view_model * vec4(position, 1.0);
 
-    int face_intensity = int(lighting.x);
-    int vertex_intensity = int(lighting.y);
-    float normal_magnitude = normal.w;
-    int intensity = 0;
+    float face_intensity = lighting.x;
+    float vertex_intensity = lighting.y;
+
+    float intensity = lighting.y;
+    float gradient_index = light_ambience;
 
     if (unlit) {
         intensity =
@@ -47,15 +49,10 @@ void main() {
     } else {
         vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 
-        float divisor =
-            (light_diffuse * light_direction_magnitude) / float(RAMP_SIZE);
-
-        intensity = int(
-            dot(model_normal * VERTEX_SCALE, light_direction * VERTEX_SCALE) /
-            (divisor * normal_magnitude));
+        /* normal.w = normal_magnitude */
+        intensity = dot(light_direction, model_normal) /
+                    (light_diffuse * normal.w);
     }
-
-    int gradient_index = light_ambience;
 
     if (cull_front) {
         gradient_index += intensity;
@@ -67,11 +64,19 @@ void main() {
         vertex_texture_position = front_texture_position;
     }
 
+    // TODO replace division with multiplication
     if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
         gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
+        is_foggy = 1;
     }
 
-    vertex_gradient_index = float(gradient_index) / float(RAMP_SIZE);
+    if (gradient_index > (RAMP_SIZE - 1)) {
+        gradient_index = (RAMP_SIZE - 1);
+    } else if (gradient_index < 0) {
+        gradient_index = 0;
+    }
+
+    vertex_gradient_index = gradient_index;
 
     /*if (vertex_texture_position.z == FOUNTAIN_ID) {
         vertex_texture_position.y -= scroll_texture;

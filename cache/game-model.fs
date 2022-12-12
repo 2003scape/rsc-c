@@ -15,13 +15,7 @@ uniform float texture_light_gradient[RAMP_SIZE];
 
 void main() {
     float lightness = 1.0f;
-    int gradient_index = int(round(vertex_gradient_index * float(RAMP_SIZE)));
-
-    if (gradient_index > (RAMP_SIZE - 1)) {
-        gradient_index = (RAMP_SIZE - 1);
-    } else if (gradient_index < 0) {
-        gradient_index = 0;
-    }
+    int gradient_index = int(vertex_gradient_index);
 
     vec4 texture_colour = texture(model_texture, vertex_texture_position);
 
@@ -33,20 +27,16 @@ void main() {
         !(texture_colour.r == 1.0 && texture_colour.g == 1.0 &&
           texture_colour.b == 1.0);
 
-    // fragment_colour = vec4(vertex_colour, 0.0) + texture_colour;
-    fragment_colour = vec4(vertex_colour, 1.0) * texture_colour;
-
-    /*if (fragment_colour.w <= 0.0f) {
-        discard;
-    }*/
-
     if (is_textured_light) {
         lightness = texture_light_gradient[gradient_index];
     } else {
-        float reversed = RAMP_SIZE - gradient_index - 1;
-        lightness = (reversed * reversed) / 65536.0;
-        // lightness = light_gradient[gradient_index];
+        //float reversed = RAMP_SIZE - gradient_index - 1;
+        //lightness = (reversed * reversed) / 65536.0;
+        lightness = light_gradient[gradient_index];
     }
+
+    // TODO add uniform for merlin's crystal
+    fragment_colour = vec4(vertex_colour, 1.0) * texture_colour;
 
     fragment_colour =
         vec4(vec3(fragment_colour) * lightness, fragment_colour.w);

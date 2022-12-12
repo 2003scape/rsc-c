@@ -181,8 +181,16 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->_3ds_gl_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "model");
 
-    scene->_3ds_gl_light_ambience_uniform  = shaderInstanceGetUniformLocation(
-        (&scene->_3ds_gl_model_shader)->vertexShader, "light_ambience");
+    scene->_3ds_gl_light_ambience_diffuse_uniform =
+        shaderInstanceGetUniformLocation(
+            (&scene->_3ds_gl_model_shader)->vertexShader,
+            "light_ambience_diffuse");
+
+    scene->_3ds_gl_unlit_uniform = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "unlit");
+
+    scene->_3ds_gl_light_direction_uniform = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "light_direction");
 
     scene->_3ds_gl_projection_view_model_uniform =
         shaderInstanceGetUniformLocation(
@@ -4246,11 +4254,12 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     shader_set_mat4(&scene->game_model_shader, "projection_view_model",
                     projection_view_model);
 
-    vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
-                            VERTEX_TO_FLOAT(game_model->light_direction_y),
-                            VERTEX_TO_FLOAT(game_model->light_direction_z)};
+    vec3 light_direction = {
+        VERTEX_TO_FLOAT(game_model->light_direction_x) * VERTEX_SCALE,
+        VERTEX_TO_FLOAT(game_model->light_direction_y) * VERTEX_SCALE,
+        VERTEX_TO_FLOAT(game_model->light_direction_z) * VERTEX_SCALE};
 
-    shader_set_int(&scene->game_model_shader, "light_ambience",
+    shader_set_float(&scene->game_model_shader, "light_ambience",
                    game_model->light_ambience);
 
     shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
@@ -4260,10 +4269,13 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                         light_direction);
 
         shader_set_float(&scene->game_model_shader, "light_diffuse",
-                         (float)game_model->light_diffuse);
+                         ((float)game_model->light_diffuse *
+                          (float)game_model->light_direction_magnitude) /
+                             256.0f);
 
-        shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
-                         (float)game_model->light_direction_magnitude);
+        /*shader_set_float(&scene->game_model_shader,
+           "light_direction_magnitude",
+                         (float)game_model->light_direction_magnitude);*/
     }
 
     glCullFace(GL_BACK);
@@ -4324,7 +4336,7 @@ void scene_gl_render(Scene *scene) {
 
     shader_use(&scene->game_model_shader);
 
-    shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
+    //shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
 
     shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
@@ -4554,12 +4566,25 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                      scene->_3ds_gl_projection_view_model_uniform,
                      (C3D_Mtx *)projection_view_model);
 
-    vec3 light_direction = {VERTEX_TO_FLOAT(game_model->light_direction_x),
-                            VERTEX_TO_FLOAT(game_model->light_direction_y),
-                            VERTEX_TO_FLOAT(game_model->light_direction_z)};
+    vec3 light_direction = {
+        VERTEX_TO_FLOAT(game_model->light_direction_x) * VERTEX_SCALE,
+        VERTEX_TO_FLOAT(game_model->light_direction_y) * VERTEX_SCALE,
+        VERTEX_TO_FLOAT(game_model->light_direction_z) * VERTEX_SCALE};
 
-    C3D_FVUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_light_ambience_uniform,
-            (float)game_model->light_ambience, 0, 0, 0);
+    float light_diffuse = ((float)game_model->light_diffuse *
+                          (float)game_model->light_direction_magnitude) /
+                             256.0f;
+
+    C3D_FVUnifSet(GPU_VERTEX_SHADER,
+                  scene->_3ds_gl_light_ambience_diffuse_uniform,
+                  (float)game_model->light_ambience, light_diffuse, 0, 0);
+
+    C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_unlit_uniform,
+                    game_model->unlit);
+
+    C3D_FVUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_light_direction_uniform,
+                  light_direction[0], light_direction[1], light_direction[2],
+                  0);
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_cull_front_uniform, 0);
 
@@ -4569,6 +4594,17 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                      C3D_UNSIGNED_SHORT,
                      game_model->gl_buffer->ebo +
                          (game_model->gl_ebo_offset * sizeof(uint16_t)));
+
+    C3D_FVUnifSet(GPU_VERTEX_SHADER,
+                  scene->_3ds_gl_light_ambience_diffuse_uniform,
+                  (float)game_model->light_ambience, light_diffuse, 0, 0);
+
+    C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_unlit_uniform,
+                    game_model->unlit);
+
+    C3D_FVUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_light_direction_uniform,
+                  light_direction[0], light_direction[1], light_direction[2],
+                  0);
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_cull_front_uniform, 1);
 
@@ -4629,11 +4665,8 @@ void scene_3ds_gl_render(Scene *scene) {
 
     C3D_TexEnv *env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(env);
-    /*C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-    C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);*/
     C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
     C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
-    // C3D_TexEnvFunc(env, C3D_Both, GPU_ADD);
 
     /* clear the second texenv */
     C3D_TexEnvInit(C3D_GetTexEnv(1));
@@ -4687,8 +4720,6 @@ void scene_3ds_gl_render(Scene *scene) {
             (scene->mouse_y * 320) + mouse_x);
 
         mouse_z = 1.0f - (depth_buf[fb_index] / 65535.0f);
-
-        printf("%f\n", mouse_z);
 
         vec3 position = {(float)mouse_x, (float)mouse_y, mouse_z};
         vec4 bounds = {0, 0, scene->surface->width, scene->surface->height};
@@ -4752,7 +4783,6 @@ void scene_3ds_gl_render(Scene *scene) {
 
     // glViewport(0, 1, scene->width, scene_height + 12);
 
-    // printf("drawing %d\n", scene->surface->gl_flat_count);
     // surface_gl_draw(scene->surface, 1);
 
     /*scene->surface->width = old_width;
