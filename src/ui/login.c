@@ -497,7 +497,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                                     mud->surface->width, background_height);
 
 #ifdef RENDER_GL
-    surface_gl_draw(mud->surface, 0);
+    surface_gl_draw(mud->surface);
 #endif
 
 #ifndef RENDER_3DS_GL
@@ -534,7 +534,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                                     mud->surface->width, background_height);
 
 #ifdef RENDER_GL
-    surface_gl_draw(mud->surface, 0);
+    surface_gl_draw(mud->surface);
 #endif
 
 #ifndef RENDER_3DS_GL
@@ -597,7 +597,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                                     mud->surface->width, background_height);
 
 #ifdef RENDER_GL
-    surface_gl_draw(mud->surface, 0);
+    surface_gl_draw(mud->surface);
 #endif
 
 #ifndef RENDER_3DS_GL

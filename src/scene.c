@@ -4222,9 +4222,6 @@ void scene_gl_update_camera(Scene *scene) {
     glm_mat4_inv(scene->gl_original_projection, scene->gl_inverse_projection);
 #endif
 
-    // TODO this is needed for 3DS, doesn't seem to affect anything else
-    // scene->gl_projection[1][2] = 0.0f;
-
     glm_mat4_mul(scene->gl_projection, scene->gl_view,
                  scene->gl_projection_view);
 }
@@ -4281,17 +4278,12 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     glCullFace(GL_BACK);
     shader_set_int(&scene->game_model_shader, "cull_front", 0);
 
-    /*glDrawElements(GL_LINES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
-                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));*/
-
+    /* GL_LINES for polygons */
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
 
     glCullFace(GL_FRONT);
     shader_set_int(&scene->game_model_shader, "cull_front", 1);
-
-    /*glDrawElements(GL_LINES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
-                   (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));*/
 
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));

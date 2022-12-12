@@ -318,6 +318,21 @@ void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
     }
 }
 
+void gl_vertex_apply_rotation(float *x, float *y,
+                              float centre_x, float centre_y, float angle) {
+    *x -= centre_x;
+    *y -= centre_y;
+
+    float sine = sin(angle);
+    float cosine = cos(angle);
+
+    float x_new = (*x) * cosine - (*y) * sine;
+    float y_new = (*x) * sine + (*y) * cosine;
+
+    *x = x_new + centre_x;
+    *y = y_new + centre_y;
+}
+
 #ifdef RENDER_GL
 void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, GLuint texture,
                             GLuint base_texture) {
@@ -447,6 +462,7 @@ void surface_gl_buffer_character(Surface *surface, char character, int x, int y,
     surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position, 0);
 
     surface_gl_vertex_apply_colour((gl_quad_vertex *)(&quad), 4, colour, 255);
+    surface_gl_vertex_apply_depth((gl_quad_vertex *)(&quad), 4, depth);
 
 #ifdef RENDER_GL
     surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
@@ -571,6 +587,27 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
             surface_gl_translate_x(surface, x + gl_width + top_left_skew);
 
         quad.top_left.x = surface_gl_translate_x(surface, x + top_left_skew);
+    } else if (rotation != 0) {
+        float centre_x = (gl_width - 1) / 2.0f;
+        float centre_y = (gl_height - 1) / 2.0f;
+        float angle = TABLE_TO_RADIANS(-rotation, 512);
+
+        float points[][4] = {
+            {0, gl_height}, /* bottom left */
+            {gl_width, gl_height}, /* bottom right */
+            {gl_width, 0}, /* top right */
+            {0, 0}, /* top left */
+        };
+
+        for (int i = 0; i < 4; i++) {
+            gl_quad_vertex *vertex = ((gl_quad_vertex *)(&quad) + i);
+
+            gl_vertex_apply_rotation(&points[i][0], &points[i][1], centre_x,
+                                     centre_y, angle);
+
+            vertex->x = surface_gl_translate_x(surface, x + points[i][0]);
+            vertex->y = surface_gl_translate_y(surface, y + points[i][1]);
+        }
     }
 
     surface_gl_quad_apply_atlas(&quad, atlas_position, flip);
@@ -583,28 +620,10 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     surface_gl_vertex_apply_colour((gl_quad_vertex *)(&quad), 4, mask_colour,
                                    alpha);
 
+    surface_gl_vertex_apply_depth((gl_quad_vertex *)(&quad), 2, depth_bottom);
+    surface_gl_vertex_apply_depth((gl_quad_vertex *)(&quad) + 2, 2, depth_top);
+
     surface_gl_buffer_quad(surface, &quad, texture, base_texture);
-    //surface_gl_buffer_circle(surface, x, y, 2, 0xff00ff, 255, 0);
-
-#if 0
-    if (rotation != 0) {
-        // TODO maybe use floats?
-        int centre_x = (draw_width - 1) / 2;
-        int centre_y = (draw_height - 1) / 2;
-        float angle = TABLE_TO_RADIANS(-rotation, 512);
-
-        for (int i = 0; i < 4; i++) {
-            rotate_point(centre_x, centre_y, angle, points[i]);
-        }
-    }
-
-    for (int i = 0; i < 4; i++) {
-        int *point = points[i];
-
-        point[0] += x + (i < 2 ? skew_x : 0);
-        point[1] += y;
-    }
-#endif
 }
 
 void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
@@ -622,6 +641,7 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
     surface_gl_quad_apply_base_atlas(&quad, gl_transparent_atlas_position, 0);
 
     surface_gl_vertex_apply_colour((gl_quad_vertex *)(&quad), 4, colour, alpha);
+    surface_gl_vertex_apply_depth((gl_quad_vertex *)(&quad), 4, depth);
 
 #ifdef RENDER_GL
     surface_gl_buffer_quad(surface, &quad, surface->gl_sprite_texture,
@@ -725,22 +745,18 @@ float surface_gl_get_layer_depth(Surface *surface) {
     return depth;
 }
 
-void surface_gl_draw(Surface *surface, int use_depth) {
+void surface_gl_draw(Surface *surface) {
 #ifdef RENDER_GL
     glEnable(GL_SCISSOR_TEST);
     glDisable(GL_CULL_FACE);
 
-    if (!use_depth) {
+    /*if (!use_depth) {
         glDisable(GL_DEPTH_TEST);
-    }
+    }*/
 
     shader_use(&surface->gl_flat_shader);
 
     int is_ui_scaled = mudclient_is_ui_scaled(surface->mud);
-
-    /* check the depth so we don't scale the entities */
-    shader_set_int(&surface->gl_flat_shader, "ui_scale",
-                   use_depth ? 0 : is_ui_scaled);
 
     vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
@@ -965,7 +981,7 @@ void surface_draw(Surface *surface) {
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    surface_gl_draw(surface, 0);
+    surface_gl_draw(surface);
 #endif
 }
 
@@ -1374,7 +1390,7 @@ void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
     surface_draw_blur_software(surface, surface->pixels, j, x, y, width, height,
                                1);
 #elif defined(RENDER_GL)
-    surface_gl_draw(surface, 0);
+    surface_gl_draw(surface);
 
     surface_gl_update_framebuffer(surface);
 
@@ -1391,7 +1407,7 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
     surface_fade_to_black(surface);
 
 #ifdef RENDER_GL
-    surface_gl_draw(surface, 0);
+    surface_gl_draw(surface);
 #endif
 
     surface_fade_to_black(surface);

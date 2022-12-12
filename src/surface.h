@@ -225,6 +225,7 @@ void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
                                       atlas_position, int flip);
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth);
+void surface_gl_vertex_apply_rotation(gl_quad_vertex *vertex, float centre_x, float centre_y, float angle);
 #ifdef RENDER_GL
 void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
                             GLuint texture, GLuint base_texture);
@@ -252,7 +253,7 @@ void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
 float surface_gl_get_layer_depth(Surface *surface);
-void surface_gl_draw(Surface *surface, int use_depth);
+void surface_gl_draw(Surface *surface);
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,
