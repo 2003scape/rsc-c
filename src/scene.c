@@ -4206,17 +4206,19 @@ void scene_gl_update_camera(Scene *scene) {
 #ifdef RENDER_GL
     glm_perspective(
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
-        VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+        VERTEX_TO_FLOAT(scene->clip_near), VERTEX_TO_FLOAT(clip_far),
+        scene->gl_projection);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 #elif defined(RENDER_3DS_GL)
     _3ds_gl_perspective(
         scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
-        VERTEX_TO_FLOAT(scene->clip_near), clip_far, scene->gl_projection);
+        VERTEX_TO_FLOAT(scene->clip_near), VERTEX_TO_FLOAT(clip_far),
+        scene->gl_projection);
 
     glm_perspective(scene->gl_fov,
                     (float)(scene->width) / (float)(scene->gl_height - 1),
-                    VERTEX_TO_FLOAT(scene->clip_near), clip_far,
+                    VERTEX_TO_FLOAT(scene->clip_near), VERTEX_TO_FLOAT(clip_far),
                     scene->gl_original_projection);
 
     glm_mat4_inv(scene->gl_original_projection, scene->gl_inverse_projection);

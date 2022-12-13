@@ -313,6 +313,8 @@ void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
 
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth) {
+    return;
+
     for (int i = 0; i < length; i++) {
         vertices[i].z = depth;
     }
@@ -592,11 +594,12 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         float centre_y = (gl_height - 1) / 2.0f;
         float angle = TABLE_TO_RADIANS(-rotation, 512);
 
+#ifdef RENDER_GL
         float points[][4] = {
-            {0, gl_height}, /* bottom left */
-            {gl_width, gl_height}, /* bottom right */
             {gl_width, 0}, /* top right */
             {0, 0}, /* top left */
+            {0, gl_height}, /* bottom left */
+            {gl_width, gl_height}, /* bottom right */
         };
 
         for (int i = 0; i < 4; i++) {
@@ -608,6 +611,24 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
             vertex->x = surface_gl_translate_x(surface, x + points[i][0]);
             vertex->y = surface_gl_translate_y(surface, y + points[i][1]);
         }
+#elif defined(RENDER_3DS_GL)
+        float points[][4] = {
+            {gl_width, gl_height}, /* bottom right */
+            {0, gl_height}, /* bottom left */
+            {0, 0}, /* top left */
+            {gl_width, 0}, /* top right */
+        };
+
+        for (int i = 0; i < 4; i++) {
+            gl_quad_vertex *vertex = ((gl_quad_vertex *)(&quad) + i);
+
+            gl_vertex_apply_rotation(&points[i][0], &points[i][1], centre_x,
+                                     centre_y, angle);
+
+            vertex->x = x + points[i][0];
+            vertex->y = 240 - y - points[i][1];
+        }
+#endif
     }
 
     surface_gl_quad_apply_atlas(&quad, atlas_position, flip);
@@ -820,9 +841,10 @@ void surface_gl_draw(Surface *surface) {
 
     vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
-    // C3D_DepthTest(false, GPU_LESS, GPU_WRITE_ALL);
+    // C3D_DepthTest(true, GPU_LEQUAL, GPU_WRITE_ALL);
     // C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
     C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
+    // C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(tex_env);
