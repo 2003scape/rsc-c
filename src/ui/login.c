@@ -756,8 +756,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {
-    mudclient_login(mud, "farts", "farts", 0);
-    return;
+    /*mudclient_login(mud, "farts", "farts", 0);
+    return;*/
 
     if (mud->show_dialog_confirm) {
         mudclient_handle_confirm_input(mud);

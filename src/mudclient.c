@@ -5367,6 +5367,7 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
 
     mudclient_3ds_draw_framebuffer_top(mud);
 
+#ifndef RENDER_3DS_GL
     for (int x = 0; x < 319; x++) {
         int top_index = ((x + 40) * 240) * 3;
         int bottom_index = (x * 240) * 3;
@@ -5376,6 +5377,7 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
     }
 
     gspWaitForVBlank();
+#endif
 
     int keyboard_type = _3DS_KEYBOARD_NORMAL;
 
@@ -5429,13 +5431,14 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
 }
 
 void mudclient_3ds_draw_top_background(mudclient *mud) {
-    return;
+#ifndef RENDER_3DS_GL
     memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr,
            game_top_bgr_size);
+#endif
 }
 
 void mudclient_3ds_draw_framebuffer_top(mudclient *mud) {
-    return;
+#ifndef RENDER_3DS_GL
     uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
 
     for (int x = 0; x < 400; x++) {
@@ -5447,6 +5450,7 @@ void mudclient_3ds_draw_framebuffer_top(mudclient *mud) {
                    scene_pixels + scene_index, 3);
         }
     }
+#endif
 }
 #endif
 
