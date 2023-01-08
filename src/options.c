@@ -28,7 +28,7 @@ void options_new(Options *options) {
 void options_set_server(Options *options) {
 #if REVISION_177
     /* openrsc preservation */
-    strcpy(options->server, "162.198.202.160");
+    strcpy(options->server, "76.253.184.95");
 
     strcpy(options->rsa_exponent, "00010001");
 
