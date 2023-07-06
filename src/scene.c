@@ -1476,7 +1476,7 @@ void scene_render(Scene *scene) {
                            scene->view_distance, scene->clip_near);
     }
 
-#if RENDER_SW
+#if defined(RENDER_SW)
     scene->visible_polygons_count = 0;
 
     for (int i = 0; i < scene->model_count; i++) {
@@ -4355,6 +4355,7 @@ void scene_gl_render(Scene *scene) {
     vec3 ray_end = {0};
     glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
 
+// TODO i don't think we even need this ifndef
 #ifndef RENDER_SW
 #ifdef EMSCRIPTEN
     /* webgl does not support depth buffer reading :( */

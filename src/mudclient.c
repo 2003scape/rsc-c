@@ -217,6 +217,7 @@ void _3ds_keyboard_thread_callback(void *arg) {
 void mudclient_3ds_gl_frame_start(mudclient *mud) {
     /* crashes on console, faster on citra */
     //C3D_FrameBegin(C3D_FRAME_NONBLOCK);
+
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
     C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
@@ -2684,11 +2685,6 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_reset_login_screen(mud);
     mudclient_render_login_scene_sprites(mud);
 
-#ifdef _3DS
-    mud->scene->raster = calloc(400 * 240, sizeof(int32_t));
-    //scene_set_bounds(mud->scene, 400, mud->game_height - 12);
-#endif
-
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
     SDL_SetWindowResizable(mud->window, 1);
@@ -3710,7 +3706,6 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
                                ANIMATION_INDEX animation_index) {
 #ifdef RENDER_GL
-    /* lmao sorry */
     int roof_id = world_get_wall_roof(mud->world, character->current_x / 128,
                                       character->current_y / 128);
 
@@ -4651,48 +4646,9 @@ void mudclient_draw_game(mudclient *mud) {
     glDisable(GL_MULTISAMPLE);
 #endif
 
-#if defined(_3DS) && defined(RENDER_SW)
-    mud->surface->width = 400;
-    mud->surface->height = 240;
-
-    surface_set_bounds(mud->surface, 0, 0, 400, 240 - 12);
-
-    int32_t *old_pixels = mud->surface->pixels;
-    mud->surface->pixels = mud->scene->raster;
-
-    memset(mud->scene->raster, 0, 400 * 240 * sizeof(int32_t));
-#endif
-
     scene_render(mud->scene);
 
     mudclient_draw_overhead(mud);
-
-#ifdef _3DS
-#ifdef RENDER_SW
-    // TODO investigate
-    mud->surface->width = MUD_WIDTH;
-    mud->surface->height = MUD_HEIGHT;
-
-    surface_set_bounds(mud->surface, 0, 0, MUD_WIDTH, MUD_HEIGHT);
-#endif
-
-#ifdef RENDER_SW
-    mud->surface->pixels = old_pixels;
-
-    uint8_t *scene_pixels = (uint8_t *)mud->scene->raster;
-    uint8_t *surface_pixels = (uint8_t *)mud->surface->pixels;
-
-    /* copy the top screen scene raster to the bottom screen surface */
-    for (int y = 0; y < mud->game_height - 12;
-         y += (mud->surface->interlace ? 2 : 1)) {
-        int top_index = ((y * 400) + 40) * 4;
-        int bottom_index = (y * mud->surface->width) * 4;
-
-        memcpy(surface_pixels + bottom_index, scene_pixels + top_index,
-               320 * 4);
-    }
-#endif
-#endif
 
     /* draw the animated X sprite when clicking */
     if (mud->mouse_click_x_step > 0) {
@@ -4777,16 +4733,9 @@ void mudclient_draw_game(mudclient *mud) {
 
     surface_draw(mud->surface);
 
-#ifdef _3DS
-    /* draw the scene to the top screen */
-    if (mud->_3ds_r_down) {
-        // mudclient_3ds_draw_framebuffer_top(mud);
-    }
-
-#ifdef RENDER_SW
+#if defined(_3DS) && defined(RENDER_SW)
     gfxFlushBuffers();
     gfxSwapBuffers();
-#endif
 #endif
 }
 
@@ -4818,7 +4767,7 @@ void mudclient_draw(mudclient *mud) {
     } else if (mud->logged_in == 1) {
         mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
-#if defined(RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
         mudclient_3ds_gl_frame_end();
 #endif
     }
@@ -5368,7 +5317,7 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
     mudclient_3ds_draw_framebuffer_top(mud);
 
 #ifndef RENDER_3DS_GL
-    for (int x = 0; x < 319; x++) {
+    /*for (int x = 0; x < 319; x++) {
         int top_index = ((x + 40) * 240) * 3;
         int bottom_index = (x * 240) * 3;
 
@@ -5376,7 +5325,7 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
                mud->_3ds_framebuffer_bottom + bottom_index, 240 * 3);
     }
 
-    gspWaitForVBlank();
+    gspWaitForVBlank();*/
 #endif
 
     int keyboard_type = _3DS_KEYBOARD_NORMAL;
@@ -5432,8 +5381,9 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
 
 void mudclient_3ds_draw_top_background(mudclient *mud) {
 #ifndef RENDER_3DS_GL
-    memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr,
-           game_top_bgr_size);
+    // TODO re-enable
+    /*memcpy((uint8_t *)mud->_3ds_framebuffer_top, game_top_bgr,
+           game_top_bgr_size);*/
 #endif
 }
 

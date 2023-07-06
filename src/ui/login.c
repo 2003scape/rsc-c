@@ -11,7 +11,8 @@ void mudclient_create_login_panels(mudclient *mud) {
     int offset_y = MUD_IS_COMPACT ? 17 : 40;
 
     // TODO divorce registration from p2p
-    int show_registration = !mud->options->members || mud->options->registration;
+    int show_registration =
+        !mud->options->members || mud->options->registration;
 
     if (show_registration) {
         int offset_x = MUD_IS_COMPACT ? 16 : 0;
@@ -649,30 +650,30 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
         if (cycle < 1024) {
             surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
-                                      mud->sprite_logo);
+                                mud->sprite_logo);
 
             if (cycle > 768) {
-                surface_draw_sprite_alpha(
-                    mud->surface, 0 + offset_x, 10 + offset_y,
-                    mud->sprite_logo + 1, cycle - 768);
+                surface_draw_sprite_alpha(mud->surface, 0 + offset_x,
+                                          10 + offset_y, mud->sprite_logo + 1,
+                                          cycle - 768);
             }
         } else if (cycle < 2048) {
             surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
-                                      mud->sprite_logo + 1);
+                                mud->sprite_logo + 1);
 
             if (cycle > 1792) {
-                surface_draw_sprite_alpha(
-                    mud->surface, 0 + offset_x, 10 + offset_y,
-                    mud->sprite_media + 10, cycle - 1792);
+                surface_draw_sprite_alpha(mud->surface, 0 + offset_x,
+                                          10 + offset_y, mud->sprite_media + 10,
+                                          cycle - 1792);
             }
         } else {
             surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
-                                      mud->sprite_media + 10);
+                                mud->sprite_media + 10);
 
             if (cycle > 2816) {
                 surface_draw_sprite_alpha(mud->surface, 0 + offset_x,
-                                                10 + offset_y, mud->sprite_logo,
-                                                cycle - 2816);
+                                          10 + offset_y, mud->sprite_logo,
+                                          cycle - 2816);
             }
         }
 
@@ -730,11 +731,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
     }
 
     mudclient_draw_blue_bar(mud);
-
-    //surface_draw_sprite(mud->surface, 50, 50, 5);
-    surface_draw_sprite_transform_mask_depth(
-        mud->surface, 50, 50, 100, 100, 5, 0, 0, 0, 0, 0, 0
-    );
 
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
