@@ -19,13 +19,11 @@
 .in in_base_texture v3
 
 .proc main
-    mov r0.xyzw, in_position
+    mov r0.xyz, in_position
 
     dp4 out_position.x, projection[0], r0
     dp4 out_position.y, projection[1], r0
-    dp4 out_position.z, projection[2], r0
-    dp4 out_position.w, projection[3], r0
-;    mov out_position.w, r0.w
+    mov out_position.z, r0.z
     mov out_position.w, ones
 
     mov out_colour, in_colour
