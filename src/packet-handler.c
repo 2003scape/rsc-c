@@ -20,7 +20,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
     for (int i = 0; i < mud->ground_item_count; i++) {
         int item_id = mud->ground_item_id[i];
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         GameModel *original_model = mud->item_models[item_id];
 
         if (original_model == NULL) {
@@ -76,16 +76,16 @@ void mudclient_gl_update_wall_models(mudclient *mud) {
     for (int i = 0; i < mud->wall_object_count; i++) {
         GameModel *game_model = mud->wall_object_model[i];
 
-        game_model->gl_buffer = &mud->scene->gl_wall_buffer;
+        game_model->gl_buffer = mud->scene->gl_wall_buffers[0];
         game_model->gl_ebo_length = 6;
 
         game_model->gl_vbo_offset = vbo_offset;
         game_model->gl_ebo_offset = ebo_offset;
 
-        glBindVertexArray(mud->scene->gl_wall_buffer.vao);
+        /*glBindVertexArray(mud->scene->gl_wall_buffer.vao);
 
-        glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_buffer.vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_buffer.ebo);
+        glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_buffers[0].vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_buffers[0].ebo);*/
 
         game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
 
@@ -552,6 +552,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     int model_x = ((area_x + area_x + width) * MAGIC_LOC) / 2;
                     int model_y = ((area_y + area_y + height) * MAGIC_LOC) / 2;
                     int model_index = game_data_object_model_index[object_id];
+                    model_index = 317;
 
                     GameModel *model =
                         game_model_copy(mud->game_models[model_index]);

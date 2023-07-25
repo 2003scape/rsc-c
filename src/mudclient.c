@@ -1871,7 +1871,7 @@ void mudclient_load_models(mudclient *mud) {
     }
 
     if (mud->options->ground_item_models) {
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         mud->item_models = calloc(game_data_item_count, sizeof(GameModel *));
 
         for (int i = 0; i < game_data_item_count; i++) {
@@ -1936,35 +1936,34 @@ void mudclient_load_models(mudclient *mud) {
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int models_length = game_data_model_count - 1;
-    //models_length = 2;
+    int item_models_length = game_data_item_count;
 
-    /*if (mud->options->ground_item_models) {
-        models_length += game_data_item_count;
-    }*/
+#ifdef RENDER_3DS_GL
+    /* don't have enough RAM? */
+    //item_models_length = 0;
+#endif
+
+    if (mud->options->ground_item_models) {
+        models_length += item_models_length;
+    }
 
     GameModel *models_buffer[models_length];
 
     for (int i = 0; i < game_data_model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
-
-        /*if (i == 1) {
-            break;
-        }*/
-
-        // GameModel *game_model = mud->game_models[i];
     }
 
-    /*if (mud->options->ground_item_models) {
-        for (int i = 0; i < game_data_item_count; i++) {
+    if (mud->options->ground_item_models) {
+        for (int i = 0; i < item_models_length; i++) {
             models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
         }
-    }*/
+    }
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 #if defined(RENDER_3DS_GL)
     C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
 #endif
 
-    game_model_gl_buffer_models(&mud->scene->gl_game_model_buffer,
+    game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
                                 models_buffer, models_length);
 #endif
 #endif
@@ -2748,7 +2747,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
 
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
-        scene_add_model(mud->scene, game_model);
+        //scene_add_model(mud->scene, game_model);
     }
 
     game_model->key = count + 10000;
@@ -3618,7 +3617,7 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
         int model_index = game_data_get_model_index(model_name);
         GameModel *game_model = game_model_copy(mud->game_models[model_index]);
 
-        scene_add_model(mud->scene, game_model);
+        //scene_add_model(mud->scene, game_model);
 
         game_model_set_light_from6(game_model, 1, 48, 48, -50, -10, -50);
         game_model_copy_position(game_model, mud->object_model[object_index]);
@@ -4560,14 +4559,14 @@ void mudclient_draw_game(mudclient *mud) {
             if (mud->last_height_offset == 0 &&
                 !world_is_under_roof(mud->world, mud->local_player->current_x,
                                      mud->local_player->current_y)) {
-                scene_add_model(
+                /*scene_add_model(
                     mud->scene,
                     mud->world->roof_models[mud->last_height_offset][i]);
 
                 scene_add_model(mud->scene, mud->world->wall_models[1][i]);
                 scene_add_model(mud->scene, mud->world->roof_models[1][i]);
                 scene_add_model(mud->scene, mud->world->wall_models[2][i]);
-                scene_add_model(mud->scene, mud->world->roof_models[2][i]);
+                scene_add_model(mud->scene, mud->world->roof_models[2][i]);*/
 
                 mud->fog_of_war = 0;
             }

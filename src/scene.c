@@ -112,6 +112,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
+
+    scene->gl_wall_buffers = calloc(1, sizeof(gl_vertex_buffer *));
+    scene->gl_wall_buffers[0] = calloc(1, sizeof(gl_vertex_buffer));
+
+    game_model_gl_create_buffer(scene->gl_wall_buffers[0],
+                                WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);
 #endif
 
 #ifdef RENDER_GL
@@ -132,8 +138,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         scene->light_gradient[gradient_index] =
             (i * i) / (float)(RAMP_SIZE * RAMP_SIZE);
 
-        printf("%d %f\n", i,
-               ((i / 4) * (i / 4)) / (float)(RAMP_SIZE * RAMP_SIZE));
+        /*printf("%d %f\n", i,
+               ((i / 4) * (i / 4)) / (float)(RAMP_SIZE * RAMP_SIZE));*/
 
         int texture_gradient_index = i / 16;
         int x = texture_gradient_index / 4;
@@ -143,7 +149,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         scene->texture_light_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
 
-        /*if (i%16 == 0){
+        /*if (i % 16 == 0) {
             printf("%f\n",
                 ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f);
         }*/
@@ -154,8 +160,11 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_use(&scene->game_model_shader);
 
-    game_model_gl_create_buffer(&scene->gl_wall_buffer, WALL_OBJECTS_MAX * 4,
-                                WALL_OBJECTS_MAX * 6);
+    /*scene->gl_wall_buffers = calloc(1, sizeof(gl_vertex_buffer *));
+    scene->gl_wall_buffers[0] = calloc(1, sizeof(gl_vertex_buffer));
+
+    game_model_gl_create_buffer(scene->gl_wall_buffers[0],
+                                WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);*/
 
     shader_set_int(&scene->game_model_shader, "model_textures", 0);
 

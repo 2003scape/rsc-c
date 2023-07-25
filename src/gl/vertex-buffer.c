@@ -18,6 +18,10 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
 #endif
     }
 
+    printf("creating new vertex buffer %d %d: %d\n", vbo_length, vertex_length, vbo_length * vertex_length);
+
+    printf("creating new ebo %d: %d\n", ebo_length, ebo_length * sizeof(uint16_t));
+
 #ifdef RENDER_GL
     glGenVertexArrays(1, &vertex_buffer->vao);
     glGenBuffers(1, &vertex_buffer->vbo);
@@ -25,6 +29,14 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
 #elif defined(RENDER_3DS_GL)
     vertex_buffer->vbo = linearAlloc(vbo_length * vertex_length);
     vertex_buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
+
+    if (!vertex_buffer->vbo) {
+        printf("oh no\n");
+
+        while (1) {
+            delay_ticks(100);
+        }
+    }
 
     AttrInfo_Init(&vertex_buffer->attr_info);
     BufInfo_Init(&vertex_buffer->buf_info);
@@ -36,8 +48,8 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
     glBufferData(GL_ARRAY_BUFFER, vbo_length * vertex_length, NULL,
                  GL_DYNAMIC_DRAW);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint),
-                 NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
+                 GL_DYNAMIC_DRAW);
 #endif
 }
 
@@ -53,7 +65,8 @@ void vertex_buffer_gl_bind(gl_vertex_buffer *vertex_buffer) {
 }
 
 void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
-                                 int *attribute_offset, int attribute_length) {
+                                    int *attribute_offset,
+                                    int attribute_length) {
 #ifdef RENDER_GL
     glVertexAttribPointer(vertex_buffer->attribute_index, attribute_length,
                           GL_FLOAT, GL_FALSE, vertex_buffer->vertex_length,
@@ -61,8 +74,9 @@ void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
 
     glEnableVertexAttribArray(vertex_buffer->attribute_index);
 #elif defined(RENDER_3DS_GL)
-    AttrInfo_AddLoader(&vertex_buffer->attr_info, vertex_buffer->attribute_index,
-                       GPU_FLOAT, attribute_length);
+    AttrInfo_AddLoader(&vertex_buffer->attr_info,
+                       vertex_buffer->attribute_index, GPU_FLOAT,
+                       attribute_length);
 #endif
 
     *attribute_offset += attribute_length;

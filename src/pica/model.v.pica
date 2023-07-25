@@ -92,6 +92,8 @@
         ; add intensity to gradient index
         add r2, r2, r3
 
+        ;mov r1.rgb, in_front_colour.rgb
+        ;mov out_texture_position, in_front_texture.xy
         mov r1.rgb, in_back_colour.rgb
         mov out_texture_position, in_back_texture.xy
     .else

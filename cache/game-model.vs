@@ -58,6 +58,8 @@ void main() {
         gradient_index += intensity;
         vertex_colour = back_colour;
         vertex_texture_position = back_texture_position;
+        //vertex_colour = front_colour;
+        //vertex_texture_position = front_texture_position;
     } else {
         gradient_index -= intensity;
         vertex_colour = front_colour;

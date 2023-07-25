@@ -807,10 +807,6 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
 /* assemble a 3D model from world section */
 void world_load_section_from4(World *world, int x, int y, int plane,
                               int is_current_plane) {
-    printf("%d %d %d\n", x, y, plane);
-
-    int start_ticks = get_ticks();
-
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
@@ -1354,7 +1350,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                          8, 64, 233, 0);
 
         for (int i = 0; i < TERRAIN_COUNT; i++) {
-            scene_add_model(world->scene, world->terrain_models[i]);
+            //scene_add_model(world->scene, world->terrain_models[i]);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
             world->gl_world_models_buffer[world->gl_world_models_offset++] =
@@ -1489,7 +1485,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     /* add walls */
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        scene_add_model(world->scene, world->wall_models[plane][i]);
+        //scene_add_model(world->scene, world->wall_models[plane][i]);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         world->gl_world_models_buffer[world->gl_world_models_offset++] =
@@ -1968,7 +1964,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                      8, 64, 169, 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        scene_add_model(world->scene, world->roof_models[plane][i]);
+        //scene_add_model(world->scene, world->roof_models[plane][i]);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         world->gl_world_models_buffer[world->gl_world_models_offset++] =
@@ -1983,8 +1979,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             }
         }
     }
-
-    printf("loadsection %d\n", get_ticks() - start_ticks);
 
     game_model_destroy(world->parent_model);
 }
@@ -2043,7 +2037,7 @@ void world_add_models(World *world, GameModel **models) {
                                   world_get_tile_direction(world, x, y) * 32,
                                   0);
 
-                scene_add_model(world->scene, game_model);
+                //scene_add_model(world->scene, game_model);
 
                 game_model_set_light_from5(game_model, 48, 48, -50, -10, -50);
 
@@ -2227,8 +2221,6 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
         world_set_tiles(world);
     }
 
-    //printf("loadsection %d\n", get_ticks() - start_ticks);
-
     game_model_destroy(world->parent_model);
     free(world->parent_model);
     world->parent_model = NULL;
@@ -2346,8 +2338,9 @@ void world_gl_create_gl_world_models_buffer(World *world, int max_models) {
 
 /* create and populate the initial VBO of landscape-related models */
 void world_gl_buffer_world_models(World *world) {
+    return;
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    game_model_gl_buffer_models(&world->scene->gl_terrain_buffer,
+    game_model_gl_buffer_models(&world->scene->gl_terrain_buffers,
                                 world->gl_world_models_buffer,
                                 world->gl_world_models_offset);
 #endif
@@ -2364,6 +2357,7 @@ void world_gl_buffer_world_models(World *world) {
 // TODO we can probably only change the necessary memory rather than rebuffering
 // all of the models
 void world_gl_update_terrain_buffers(World *world) {
+    return;
     printf("update terrain buffer lighting\n");
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
