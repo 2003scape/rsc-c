@@ -110,8 +110,11 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    // TODO i want to remove these
     scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
+
+    scene->gl_terrain_buffer_length = 0;
 
     scene->gl_wall_buffers = calloc(1, sizeof(gl_vertex_buffer *));
     scene->gl_wall_buffers[0] = calloc(1, sizeof(gl_vertex_buffer));
@@ -1031,10 +1034,10 @@ void scene_dispose(Scene *scene) {
 void scene_clear(Scene *scene) {
     scene->sprite_count = 0;
 
-    game_model_destroy(scene->view);
+    /*game_model_destroy(scene->view);
 
     game_model_from2(scene->view, scene->max_sprite_count * 2,
-                     scene->max_sprite_count);
+                     scene->max_sprite_count);*/
 }
 
 void scene_reduce_sprites(Scene *scene, int i) {
@@ -1058,6 +1061,8 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    // i think doing this is wrong, we should be re-projecting these
+    // to get proper depths
     vec4 projected_position = {0};
 
     vec4 bottom_position = {VERTEX_TO_FLOAT(x), VERTEX_TO_FLOAT(y),
@@ -1099,6 +1104,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     }
 #endif
 
+#ifdef RENDER_SW
     int *vertices = calloc(2, sizeof(int));
 
     vertices[0] = game_model_create_vertex(scene->view, x, y, z);
@@ -1108,6 +1114,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
     scene->view->face_tag[scene->sprite_count] = tag;
     scene->view->is_local_player[scene->sprite_count++] = 0;
+#endif
 
     return scene->sprite_count - 1;
 }
@@ -1485,7 +1492,7 @@ void scene_render(Scene *scene) {
                            scene->view_distance, scene->clip_near);
     }
 
-#if defined(RENDER_SW)
+#ifdef RENDER_SW
     scene->visible_polygons_count = 0;
 
     for (int i = 0; i < scene->model_count; i++) {
@@ -4311,14 +4318,14 @@ void scene_gl_render(Scene *scene) {
 
     surface_reset_bounds(scene->surface);
 
-    game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
+    /*game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
                             scene->camera_z, scene->camera_yaw,
                             scene->camera_pitch, scene->camera_roll,
                             scene->view_distance, scene->clip_near);
 
     scene->visible_polygons_count = 0;
 
-    scene_initialise_polygons_2d(scene);
+    scene_initialise_polygons_2d(scene);*/
 
     /*qsort(scene->visible_polygons, scene->visible_polygons_count,
           sizeof(GamePolygon *), scene_polygon_depth_compare);*/

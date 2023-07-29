@@ -8,14 +8,7 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
     if (vertex_buffer->attribute_index != 0) {
         vertex_buffer->attribute_index = 0;
 
-#ifdef RENDER_GL
-        glDeleteVertexArrays(1, &vertex_buffer->vao);
-        glDeleteBuffers(1, &vertex_buffer->vbo);
-        glDeleteBuffers(1, &vertex_buffer->ebo);
-#elif defined(RENDER_3DS_GL)
-        linearFree(vertex_buffer->vbo);
-        linearFree(vertex_buffer->ebo);
-#endif
+        vertex_buffer_gl_destroy(vertex_buffer);
     }
 
     printf("creating new vertex buffer %d %d: %d\n", vbo_length, vertex_length, vbo_length * vertex_length);
@@ -31,7 +24,7 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
     vertex_buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
 
     if (!vertex_buffer->vbo) {
-        printf("oh no\n");
+        fprintf(stderr, "oh no\n");
 
         while (1) {
             delay_ticks(100);
@@ -81,4 +74,19 @@ void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
 
     *attribute_offset += attribute_length;
     vertex_buffer->attribute_index++;
+}
+
+void vertex_buffer_gl_destroy(gl_vertex_buffer *vertex_buffer) {
+    if (vertex_buffer == NULL) {
+        return;
+    }
+
+#ifdef RENDER_GL
+        glDeleteVertexArrays(1, &vertex_buffer->vao);
+        glDeleteBuffers(1, &vertex_buffer->vbo);
+        glDeleteBuffers(1, &vertex_buffer->ebo);
+#elif defined(RENDER_3DS_GL)
+        linearFree(vertex_buffer->vbo);
+        linearFree(vertex_buffer->ebo);
+#endif
 }

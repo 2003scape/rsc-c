@@ -1350,7 +1350,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                          8, 64, 233, 0);
 
         for (int i = 0; i < TERRAIN_COUNT; i++) {
-            //scene_add_model(world->scene, world->terrain_models[i]);
+            scene_add_model(world->scene, world->terrain_models[i]);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
             world->gl_world_models_buffer[world->gl_world_models_offset++] =
@@ -1485,7 +1485,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     /* add walls */
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        //scene_add_model(world->scene, world->wall_models[plane][i]);
+        scene_add_model(world->scene, world->wall_models[plane][i]);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         world->gl_world_models_buffer[world->gl_world_models_offset++] =
@@ -1964,7 +1964,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                      8, 64, 169, 1);
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
-        //scene_add_model(world->scene, world->roof_models[plane][i]);
+        scene_add_model(world->scene, world->roof_models[plane][i]);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         world->gl_world_models_buffer[world->gl_world_models_offset++] =
@@ -2037,7 +2037,7 @@ void world_add_models(World *world, GameModel **models) {
                                   world_get_tile_direction(world, x, y) * 32,
                                   0);
 
-                //scene_add_model(world->scene, game_model);
+                scene_add_model(world->scene, game_model);
 
                 game_model_set_light_from5(game_model, 48, 48, -50, -10, -50);
 
@@ -2332,20 +2332,20 @@ int world_is_under_roof(World *world, int x, int y) {
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void world_gl_create_gl_world_models_buffer(World *world, int max_models) {
+    free(world->gl_world_models_buffer);
+
     world->gl_world_models_buffer = calloc(max_models, sizeof(GameModel *));
     world->gl_world_models_offset = 0;
 }
 
 /* create and populate the initial VBO of landscape-related models */
 void world_gl_buffer_world_models(World *world) {
-    return;
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     game_model_gl_buffer_models(&world->scene->gl_terrain_buffers,
+                                &world->scene->gl_terrain_buffer_length,
                                 world->gl_world_models_buffer,
                                 world->gl_world_models_offset);
 #endif
-
-    printf("buffer terrain models\n");
 
     free(world->gl_world_models_buffer);
 

@@ -167,6 +167,7 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     game_model->normal_scale = calloc(face_count, sizeof(int));
     game_model->normal_magnitude = calloc(face_count, sizeof(int));
 
+#ifdef RENDER_SW
     if (!game_model->projected) {
         game_model->project_vertex_x = calloc(vertex_count, sizeof(int));
         game_model->project_vertex_y = calloc(vertex_count, sizeof(int));
@@ -174,6 +175,7 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         game_model->vertex_view_x = calloc(vertex_count, sizeof(int));
         game_model->vertex_view_y = calloc(vertex_count, sizeof(int));
     }
+#endif
 
     if (!game_model->unpickable) {
         game_model->is_local_player = calloc(face_count, sizeof(int8_t));
@@ -810,6 +812,7 @@ void game_model_relight(GameModel *game_model) {
         return;
     }
 
+    // TODO this is only necessary for world-generated models
     game_model_get_face_normals(
         game_model, game_model->vertex_transformed_x,
         game_model->vertex_transformed_y, game_model->vertex_transformed_z,
@@ -822,12 +825,13 @@ void game_model_relight(GameModel *game_model) {
 void game_model_reset_transform(GameModel *game_model) {
     game_model->transform_state = 0;
 
+#ifdef RENDER_SW
     for (int i = 0; i < game_model->vertex_count; i++) {
-        // TODO needs to be removed on 3ds
         game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
         game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
     }
+#endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     glm_mat4_identity(game_model->transform);
@@ -997,11 +1001,13 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
 void game_model_commit(GameModel *game_model) {
     game_model_apply(game_model);
 
+#ifdef RENDER_SW
     for (int i = 0; i < game_model->vertex_count; i++) {
         game_model->vertex_x[i] = game_model->vertex_transformed_x[i];
         game_model->vertex_y[i] = game_model->vertex_transformed_y[i];
         game_model->vertex_z[i] = game_model->vertex_transformed_z[i];
     }
+#endif
 
     game_model_reset(game_model);
 }
@@ -1672,6 +1678,7 @@ void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
 /* calculate the length of the VBO and EBO arrays for a list of game models,
  * then populate them */
 int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
+                                int *vertex_buffers_length,
                                 GameModel **game_models,
                                 int game_models_length) {
     int vertex_offset = 0;
@@ -1680,10 +1687,19 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
     game_model_get_vertex_ebo_lengths(game_models, game_models_length,
                                       &vertex_offset, &ebo_offset);
 
+    printf("deleting %d\n", *vertex_buffers_length);
+
+    for (int i = 0; i < *vertex_buffers_length; i++) {
+        vertex_buffer_gl_destroy((*vertex_buffers)[i]);
+        free((*vertex_buffers)[i]);
+    }
+
+    free(*vertex_buffers);
+
+    // TODO move this to header
     int MAX_VERTEX_INDEX = 65535;
     int total_buffers = ceil((float)ebo_offset / (float)MAX_VERTEX_INDEX);
 
-    // TODO clear old ones
     *vertex_buffers = calloc(total_buffers, sizeof(gl_vertex_buffer *));
 
     for (int i = 0; i < total_buffers; i++) {
@@ -1740,8 +1756,6 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
 
     game_model_gl_create_buffer(vertex_buffer, vertex_offset, ebo_offset);
 
-    gl_vertex_buffer *last_buffer = NULL;
-
     for (int i = 0; i < game_models_length; i++) {
         GameModel *game_model = game_models[i];
 
@@ -1749,28 +1763,15 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
             continue;
         }
 
-        /*game_model->gl_buffer = vertex_buffer;
-        game_model->gl_vbo_offset = vertex_offset;
-        game_model->gl_ebo_offset = ebo_offset;*/
-
         vertex_offset = game_model->gl_vbo_offset;
         ebo_offset = game_model->gl_ebo_offset;
 
-        //printf("%d %d %d\n", i, vertex_offset, ebo_offset);
-
         game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
 
-        //printf("%d %d write: %d %d\n", i, game_model->gl_buffer, vertex_offset, ebo_offset);
-
-        if (last_buffer != NULL &&
-            game_model->gl_buffer != last_buffer) {
-            //printf("%d final write: %d %d\n", i, vertex_offset, ebo_offset);
-        }
-
-        last_buffer = game_model->gl_buffer;
+        //game_model_destroy(game_model);
     }
 
-    //printf("final write: %d %d\n", vertex_offset, ebo_offset);
+    *vertex_buffers_length = total_buffers;
 
     return total_buffers;
 }

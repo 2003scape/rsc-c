@@ -247,7 +247,9 @@ void game_model_gl_create_buffer(gl_vertex_buffer *vertex_buffer,
 /*void game_model_gl_buffer_models(gl_vertex_buffer *vertex_buffer,
                                  GameModel **game_models, int length);*/
 int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
-                                 GameModel **game_models, int game_models_length);
+                                int *vertex_buffers_length,
+                                GameModel **game_models,
+                                int game_models_length);
 #endif
 #if defined(RENDER_GL) && defined(EMSCRIPTEN)
 void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,

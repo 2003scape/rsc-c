@@ -313,6 +313,7 @@ void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
 
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth) {
+    // TODO remove
     return;
 
     for (int i = 0; i < length; i++) {

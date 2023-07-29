@@ -70,6 +70,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
 #ifdef RENDER_GL
 void mudclient_gl_update_wall_models(mudclient *mud) {
+    return;
     int vbo_offset = 0;
     int ebo_offset = 0;
 
@@ -552,7 +553,6 @@ void mudclient_packet_tick(mudclient *mud) {
                     int model_x = ((area_x + area_x + width) * MAGIC_LOC) / 2;
                     int model_y = ((area_y + area_y + height) * MAGIC_LOC) / 2;
                     int model_index = game_data_object_model_index[object_id];
-                    model_index = 317;
 
                     GameModel *model =
                         game_model_copy(mud->game_models[model_index]);

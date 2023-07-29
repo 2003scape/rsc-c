@@ -144,11 +144,11 @@ typedef struct Scene {
     /* for game model entities (trees, furniture, etc.) */
     //gl_vertex_buffer gl_game_model_buffer;
     gl_vertex_buffer **gl_game_model_buffers;
-
-    int game_model_buffer_count;
+    int gl_game_model_buffer_length;
 
     /* for generated landscape */
     gl_vertex_buffer **gl_terrain_buffers;
+    int gl_terrain_buffer_length;
 
     /* for wallobjects */
     gl_vertex_buffer **gl_wall_buffers;
