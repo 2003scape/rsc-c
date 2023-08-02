@@ -1996,7 +1996,7 @@ int world_get_tile_type(World *world, int i, int j) {
 
     int type = game_data_tile_type[decoration - 1];
 
-    return type != 2 ? 0 : 1; // TODO == 2
+    return type == 2;
 }
 
 /* adds login screen models from local game cache */

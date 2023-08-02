@@ -119,8 +119,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->gl_wall_buffers = calloc(1, sizeof(gl_vertex_buffer *));
     scene->gl_wall_buffers[0] = calloc(1, sizeof(gl_vertex_buffer));
 
-    game_model_gl_create_buffer(scene->gl_wall_buffers[0],
-                                WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);
+    game_model_gl_create_buffer(scene->gl_wall_buffers[0], WALL_OBJECTS_MAX * 4,
+                                WALL_OBJECTS_MAX * 6);
 #endif
 
 #ifdef RENDER_GL
@@ -193,10 +193,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->_3ds_gl_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "model");
 
-    scene->_3ds_gl_light_ambience_diffuse_uniform =
+    scene->_3ds_gl_light_ambience_diffuse_fog_uniform =
         shaderInstanceGetUniformLocation(
             (&scene->_3ds_gl_model_shader)->vertexShader,
-            "light_ambience_diffuse");
+            "light_ambience_diffuse_fog");
 
     scene->_3ds_gl_unlit_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "unlit");
@@ -1034,10 +1034,10 @@ void scene_dispose(Scene *scene) {
 void scene_clear(Scene *scene) {
     scene->sprite_count = 0;
 
-    /*game_model_destroy(scene->view);
+    game_model_destroy(scene->view);
 
     game_model_from2(scene->view, scene->max_sprite_count * 2,
-                     scene->max_sprite_count);*/
+                     scene->max_sprite_count);
 }
 
 void scene_reduce_sprites(Scene *scene, int i) {
@@ -1061,8 +1061,6 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->sprite_translate_x[scene->sprite_count] = 0;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    // i think doing this is wrong, we should be re-projecting these
-    // to get proper depths
     vec4 projected_position = {0};
 
     vec4 bottom_position = {VERTEX_TO_FLOAT(x), VERTEX_TO_FLOAT(y),
@@ -1073,6 +1071,8 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
     scene->gl_sprite_depth_bottom[scene->sprite_count] =
         projected_position[2] / projected_position[3];
+
+    //printf("sprite depth: %f\n",scene->gl_sprite_depth_bottom[scene->sprite_count]);
 
     glm_vec4_zero(projected_position);
 
@@ -1087,7 +1087,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
     // TODO use layer depth?
     /* check for overlapping entities and adjust depth so it's on top */
-    for (int i = 0; i < scene->sprite_count; i++) {
+    /*for (int i = 0; i < scene->sprite_count; i++) {
         if (scene->sprite_x[i] == scene->sprite_x[scene->sprite_count] &&
             scene->sprite_y[i] == scene->sprite_y[scene->sprite_count]) {
 
@@ -1101,10 +1101,10 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
             }
             break;
         }
-    }
+    }*/
 #endif
 
-#ifdef RENDER_SW
+//#ifdef RENDER_SW
     int *vertices = calloc(2, sizeof(int));
 
     vertices[0] = game_model_create_vertex(scene->view, x, y, z);
@@ -1114,7 +1114,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
     scene->view->face_tag[scene->sprite_count] = tag;
     scene->view->is_local_player[scene->sprite_count++] = 0;
-#endif
+//#endif
 
     return scene->sprite_count - 1;
 }
@@ -1430,7 +1430,6 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
 
     if (scene->mouse_picking_active &&
         scene->mouse_picked_count < MOUSE_PICKED_MAX) {
-
         // x += (scene->sprite_translate_x[face] << scene->view_distance) /
         // project_z;
         x += (scene->sprite_translate_x[face] * scene->view_distance) /
@@ -1441,7 +1440,6 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
             !scene->view->unpickable &&
             scene->view->is_local_player[face] == 0) {
             scene->mouse_picked_models[scene->mouse_picked_count] = scene->view;
-
             scene->mouse_picked_faces[scene->mouse_picked_count] = face;
             scene->mouse_picked_count++;
         }
@@ -4220,22 +4218,22 @@ void scene_gl_update_camera(Scene *scene) {
         VERTEX_TO_FLOAT(scene->clip_far_3d + scene->fog_z_distance);
 
 #ifdef RENDER_GL
-    glm_perspective(
-        scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
-        VERTEX_TO_FLOAT(scene->clip_near), VERTEX_TO_FLOAT(clip_far),
-        scene->gl_projection);
+    glm_perspective(scene->gl_fov,
+                    (float)(scene->width) / (float)(scene->gl_height - 1),
+                    VERTEX_TO_FLOAT(scene->clip_near),
+                    VERTEX_TO_FLOAT(clip_far), scene->gl_projection);
 
     glm_mat4_inv(scene->gl_projection, scene->gl_inverse_projection);
 #elif defined(RENDER_3DS_GL)
-    _3ds_gl_perspective(
-        scene->gl_fov, (float)(scene->width) / (float)(scene->gl_height - 1),
-        VERTEX_TO_FLOAT(scene->clip_near), VERTEX_TO_FLOAT(clip_far),
-        scene->gl_projection);
+    _3ds_gl_perspective(scene->gl_fov,
+                        (float)(scene->width) / (float)(scene->gl_height - 1),
+                        VERTEX_TO_FLOAT(scene->clip_near),
+                        VERTEX_TO_FLOAT(clip_far), scene->gl_projection);
 
     glm_perspective(scene->gl_fov,
                     (float)(scene->width) / (float)(scene->gl_height - 1),
-                    VERTEX_TO_FLOAT(scene->clip_near), VERTEX_TO_FLOAT(clip_far),
-                    scene->gl_original_projection);
+                    VERTEX_TO_FLOAT(scene->clip_near),
+                    VERTEX_TO_FLOAT(clip_far), scene->gl_original_projection);
 
     glm_mat4_inv(scene->gl_original_projection, scene->gl_inverse_projection);
 #endif
@@ -4275,7 +4273,7 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         VERTEX_TO_FLOAT(game_model->light_direction_z) * VERTEX_SCALE};
 
     shader_set_float(&scene->game_model_shader, "light_ambience",
-                   game_model->light_ambience);
+                     game_model->light_ambience);
 
     shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
 
@@ -4318,14 +4316,14 @@ void scene_gl_render(Scene *scene) {
 
     surface_reset_bounds(scene->surface);
 
-    /*game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
+    game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
                             scene->camera_z, scene->camera_yaw,
                             scene->camera_pitch, scene->camera_roll,
                             scene->view_distance, scene->clip_near);
 
     scene->visible_polygons_count = 0;
 
-    scene_initialise_polygons_2d(scene);*/
+    scene_initialise_polygons_2d(scene);
 
     /*qsort(scene->visible_polygons, scene->visible_polygons_count,
           sizeof(GamePolygon *), scene_polygon_depth_compare);*/
@@ -4346,7 +4344,7 @@ void scene_gl_render(Scene *scene) {
 
     shader_use(&scene->game_model_shader);
 
-    //shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
+    // shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
 
     shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
@@ -4583,12 +4581,17 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         VERTEX_TO_FLOAT(game_model->light_direction_z) * VERTEX_SCALE};
 
     float light_diffuse = ((float)game_model->light_diffuse *
-                          (float)game_model->light_direction_magnitude) /
-                             256.0f;
+                           (float)game_model->light_direction_magnitude) /
+                          256.0f;
+
+    //float fog_z_distance = (float)scene->fog_z_distance / 100.0f;
+    //float fog_z_distance = global_farts_test;
+    float fog_z_distance = (float)scene->fog_z_distance / -1000000.0f;
 
     C3D_FVUnifSet(GPU_VERTEX_SHADER,
-                  scene->_3ds_gl_light_ambience_diffuse_uniform,
-                  (float)game_model->light_ambience, light_diffuse, 0, 0);
+                  scene->_3ds_gl_light_ambience_diffuse_fog_uniform,
+                  (float)game_model->light_ambience, light_diffuse,
+                  fog_z_distance, 0);
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_unlit_uniform,
                     game_model->unlit);
@@ -4607,8 +4610,13 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                          (game_model->gl_ebo_offset * sizeof(uint16_t)));
 
     C3D_FVUnifSet(GPU_VERTEX_SHADER,
-                  scene->_3ds_gl_light_ambience_diffuse_uniform,
-                  (float)game_model->light_ambience, light_diffuse, 0, 0);
+                  scene->_3ds_gl_light_ambience_diffuse_fog_uniform,
+                  (float)game_model->light_ambience, light_diffuse,
+                    fog_z_distance, 0);
+
+    /*printf("fog z distance %f %f\n",
+            fog_z_distance,
+            (float)scene->fog_z_distance / 1000000.0f);*/
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_unlit_uniform,
                     game_model->unlit);
@@ -4625,23 +4633,6 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                      C3D_UNSIGNED_SHORT,
                      game_model->gl_buffer->ebo +
                          (game_model->gl_ebo_offset * sizeof(uint16_t)));
-
-    // light stuff v
-    /*shader_set_int(&scene->game_model_shader, "light_ambience",
-                   game_model->light_ambience);
-
-    shader_set_int(&scene->game_model_shader, "unlit", game_model->unlit);
-
-    if (!game_model->unlit) {
-        shader_set_vec3(&scene->game_model_shader, "light_direction",
-                        light_direction);
-
-        shader_set_float(&scene->game_model_shader, "light_diffuse",
-                         (float)game_model->light_diffuse);
-
-        shader_set_float(&scene->game_model_shader, "light_direction_magnitude",
-                         (float)game_model->light_direction_magnitude);
-    }*/
 }
 
 void scene_3ds_gl_render(Scene *scene) {

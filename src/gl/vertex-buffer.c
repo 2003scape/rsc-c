@@ -82,11 +82,14 @@ void vertex_buffer_gl_destroy(gl_vertex_buffer *vertex_buffer) {
     }
 
 #ifdef RENDER_GL
-        glDeleteVertexArrays(1, &vertex_buffer->vao);
-        glDeleteBuffers(1, &vertex_buffer->vbo);
-        glDeleteBuffers(1, &vertex_buffer->ebo);
+    glDeleteVertexArrays(1, &vertex_buffer->vao);
+    glDeleteBuffers(1, &vertex_buffer->vbo);
+    glDeleteBuffers(1, &vertex_buffer->ebo);
 #elif defined(RENDER_3DS_GL)
-        linearFree(vertex_buffer->vbo);
-        linearFree(vertex_buffer->ebo);
+    linearFree(vertex_buffer->vbo);
+    vertex_buffer->vbo = NULL;
+
+    linearFree(vertex_buffer->ebo);
+    vertex_buffer->ebo = NULL;
 #endif
 }

@@ -210,7 +210,7 @@ typedef struct Scene {
 
     int _3ds_gl_model_uniform;
     int _3ds_gl_projection_view_model_uniform;
-    int _3ds_gl_light_ambience_diffuse_uniform;
+    int _3ds_gl_light_ambience_diffuse_fog_uniform;
     int _3ds_gl_unlit_uniform;
     int _3ds_gl_light_direction_uniform;
     int _3ds_gl_cull_front_uniform;

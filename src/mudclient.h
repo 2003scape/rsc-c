@@ -323,6 +323,8 @@ extern char *font_files[];
 extern char *animated_models[];
 extern char login_screen_status[255];
 
+extern float global_farts_test;
+
 typedef struct mudclient {
 #ifdef WII
     /* store two for double-buffering */

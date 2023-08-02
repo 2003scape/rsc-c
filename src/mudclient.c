@@ -435,6 +435,8 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 }
 #endif
 
+float global_farts_test = -0.0f;
+
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
 
@@ -1939,7 +1941,7 @@ void mudclient_load_models(mudclient *mud) {
     int item_models_length = game_data_item_count;
 
 #ifdef RENDER_3DS_GL
-    /* don't have enough RAM? */
+    /* don't have enough RAM */
     item_models_length = 0;
 #endif
 
@@ -4287,6 +4289,7 @@ void mudclient_draw_overhead(mudclient *mud) {
             y /= 2;
             scale /= 2;
         }
+
         int id = mud->action_bubble_item[i];
         int scale_x = (39 * scale) / 100;
         int scale_y = (27 * scale) / 100;
@@ -5111,9 +5114,11 @@ void mudclient_poll_events(mudclient *mud) {
     } else {
         if (keys_down & KEY_L) {
             mud->_3ds_l_down = 1;
+            global_farts_test -= 0.001f;
         }
 
         if (keys_down & KEY_R) {
+            global_farts_test += 0.001f;
             mud->_3ds_r_down = !mud->_3ds_r_down;
 
             if (!mud->_3ds_r_down) {

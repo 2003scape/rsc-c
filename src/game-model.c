@@ -167,7 +167,8 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     game_model->normal_scale = calloc(face_count, sizeof(int));
     game_model->normal_magnitude = calloc(face_count, sizeof(int));
 
-#ifdef RENDER_SW
+    // TODO only scene->view needs this
+//#ifdef RENDER_SW
     if (!game_model->projected) {
         game_model->project_vertex_x = calloc(vertex_count, sizeof(int));
         game_model->project_vertex_y = calloc(vertex_count, sizeof(int));
@@ -175,7 +176,7 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         game_model->vertex_view_x = calloc(vertex_count, sizeof(int));
         game_model->vertex_view_y = calloc(vertex_count, sizeof(int));
     }
-#endif
+//#endif
 
     if (!game_model->unpickable) {
         game_model->is_local_player = calloc(face_count, sizeof(int8_t));
@@ -187,9 +188,12 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         game_model->vertex_transformed_y = game_model->vertex_y;
         game_model->vertex_transformed_z = game_model->vertex_z;
     } else {
+        // TODO only scene->view needs this
+//#ifdef RENDER_SW
         game_model->vertex_transformed_x = calloc(vertex_count, sizeof(int));
         game_model->vertex_transformed_y = calloc(vertex_count, sizeof(int));
         game_model->vertex_transformed_z = calloc(vertex_count, sizeof(int));
+//#endif
     }
 
     if (!game_model->unlit || !game_model->isolated) {
@@ -812,7 +816,12 @@ void game_model_relight(GameModel *game_model) {
         return;
     }
 
-    // TODO this is only necessary for world-generated models
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    if (!game_model->autocommit) {
+        return;
+    }
+#endif
+
     game_model_get_face_normals(
         game_model, game_model->vertex_transformed_x,
         game_model->vertex_transformed_y, game_model->vertex_transformed_z,
@@ -825,13 +834,14 @@ void game_model_relight(GameModel *game_model) {
 void game_model_reset_transform(GameModel *game_model) {
     game_model->transform_state = 0;
 
-#ifdef RENDER_SW
+    // TODO only scene->view needs this
+//#ifdef RENDER_SW
     for (int i = 0; i < game_model->vertex_count; i++) {
         game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
         game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
     }
-#endif
+//#endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     glm_mat4_identity(game_model->transform);
@@ -880,7 +890,8 @@ void game_model_apply(GameModel *game_model) {
         }
 #endif
 
-#ifdef RENDER_SW
+        // TODO only scene->view needs this
+//#ifdef RENDER_SW
         if (game_model->transform_type >= GAME_MODEL_TRANSFORM_ROTATE) {
             game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
@@ -891,7 +902,7 @@ void game_model_apply(GameModel *game_model) {
             game_model_apply_translate(game_model, game_model->base_x,
                                        game_model->base_y, game_model->base_z);
         }
-#endif
+//#endif
 
         game_model_compute_bounds(game_model);
 
@@ -1001,13 +1012,14 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
 void game_model_commit(GameModel *game_model) {
     game_model_apply(game_model);
 
-#ifdef RENDER_SW
+    // TODO only scene->view needs this
+//#ifdef RENDER_SW
     for (int i = 0; i < game_model->vertex_count; i++) {
         game_model->vertex_x[i] = game_model->vertex_transformed_x[i];
         game_model->vertex_y[i] = game_model->vertex_transformed_y[i];
         game_model->vertex_z[i] = game_model->vertex_transformed_z[i];
     }
-#endif
+//#endif
 
     game_model_reset(game_model);
 }

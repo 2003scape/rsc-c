@@ -58,8 +58,6 @@ void main() {
         gradient_index += intensity;
         vertex_colour = back_colour;
         vertex_texture_position = back_texture_position;
-        //vertex_colour = front_colour;
-        //vertex_texture_position = front_texture_position;
     } else {
         gradient_index -= intensity;
         vertex_colour = front_colour;
@@ -67,8 +65,15 @@ void main() {
     }
 
     // TODO replace division with multiplication
-    if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
+    /*if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
         gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
+        is_foggy = 1;
+    }*/
+
+    if ((float(fog_distance) / VERTEX_SCALE) < gl_Position.z) {
+        //gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
+        gradient_index = 255;
+        //vertex_colour = vec3(1.0, 0, 1.0);
         is_foggy = 1;
     }
 

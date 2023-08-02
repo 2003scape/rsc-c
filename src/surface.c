@@ -314,7 +314,21 @@ void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth) {
     // TODO remove
-    return;
+    //return;
+
+    if (depth != 0) {
+        //depth = -0.1f;
+        //depth = 1.0f - depth;
+        //depth = 0.997657;
+        //printf("wtf: %f\n", depth);
+        //depth = global_farts_test;
+        //printf("%f\n", depth);
+        //depth = 0.997550;
+        depth = -0.002342999999999984;
+        //printf("depth :%f\n", depth);
+    } else {
+        //depth = -1;
+    }
 
     for (int i = 0; i < length; i++) {
         vertices[i].z = depth;
@@ -833,9 +847,7 @@ void surface_gl_draw(Surface *surface) {
 #elif defined(RENDER_3DS_GL)
     C3D_BindProgram(&surface->_3ds_gl_flat_shader);
 
-    //C3D_CullFace(GPU_CULL_BACK_CCW);
     C3D_CullFace(GPU_CULL_FRONT_CCW);
-    //C3D_CullFace(GPU_CULL_NONE);
 
     C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, surface->_3ds_gl_projection_uniform,
                      &surface->_3ds_gl_projection);
@@ -843,8 +855,8 @@ void surface_gl_draw(Surface *surface) {
     vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
     // C3D_DepthTest(true, GPU_LEQUAL, GPU_WRITE_ALL);
-    // C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
-    C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
+    C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
+    // C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
     // C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);

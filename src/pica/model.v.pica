@@ -3,7 +3,7 @@
 ; uniforms
 .fvec model[4], projection_view_model[4]
 
-.fvec light_ambience_diffuse
+.fvec light_ambience_diffuse_fog
 .bool unlit
 .fvec light_direction
 
@@ -11,6 +11,7 @@
 
 ; constants
 .constf base_const(0.0, 1.0, -1.0, -0.5)
+.constf farts(255.0,255.0,255.0,255.0)
 
 .alias zeros base_const.xxxx
 .alias ones base_const.yyyy
@@ -43,16 +44,21 @@
     mov r0.w, ones
 
     ; gl_Position = projection_view_model * vec4(position, 1.0);
-    dp4 out_position.x, projection_view_model[0], r0
-    dp4 out_position.y, projection_view_model[1], r0
-    dp4 out_position.z, projection_view_model[2], r0
-    dp4 out_position.w, projection_view_model[3], r0
+    ;dp4 out_position.x, projection_view_model[0], r0
+    ;dp4 out_position.y, projection_view_model[1], r0
+    ;dp4 out_position.z, projection_view_model[2], r0
+    ;dp4 out_position.w, projection_view_model[3], r0
+
+    dp4 r7.x, projection_view_model[0], r0
+    dp4 r7.y, projection_view_model[1], r0
+    dp4 r7.z, projection_view_model[2], r0
+    dp4 r7.w, projection_view_model[3], r0
 
     ; r1 = vertex_colour
     mov r1, ones
 
     ; r2 = gradient_index
-    mov r2, light_ambience_diffuse.xxxx
+    mov r2, light_ambience_diffuse_fog.xxxx
 
     ; r3 = intensity
     ; mov r3, in_lighting.yyyy
@@ -78,7 +84,7 @@
         dp3 r5, light_direction.xyz, r4
 
         ; r6 = light_diffuse * normal_magnitude
-        mul r6, light_ambience_diffuse.yyyy, in_normal.wwww
+        mul r6, light_ambience_diffuse_fog.yyyy, in_normal.wwww
 
         ; r6 = 1/r6
         rcp r6, r6
@@ -92,8 +98,6 @@
         ; add intensity to gradient index
         add r2, r2, r3
 
-        ;mov r1.rgb, in_front_colour.rgb
-        ;mov out_texture_position, in_front_texture.xy
         mov r1.rgb, in_back_colour.rgb
         mov out_texture_position, in_back_texture.xy
     .else
@@ -103,6 +107,14 @@
 
         mov r1.rgb, in_front_colour.rgb
         mov out_texture_position, in_front_texture.xy
+    .end
+
+    ; if (gl_Position.z > fog_distance)
+    cmp light_ambience_diffuse_fog.zzzz, lt, lt, r7.zzzz
+
+    ifc cmp.x
+        ;mov r1, base_const.yxyy
+        mov r2, farts
     .end
 
     ; gradient_index = 255 - gradient_index
@@ -120,6 +132,7 @@
     ; vertex_colour * gradient_index
     mul r1, r1, r2
 
+    mov out_position, r7
     mov out_colour, r1
 
     end
