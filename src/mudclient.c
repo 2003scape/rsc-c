@@ -2636,7 +2636,11 @@ void mudclient_start_game(mudclient *mud) {
     mud->scene = malloc(sizeof(Scene));
     scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
 
+#ifdef RENDER_3DS_GL
+    scene_set_bounds(mud->scene, mud->game_width, mud->game_height);
+#else
     scene_set_bounds(mud->scene, mud->game_width, mud->game_height - 12);
+#endif
 
     mud->scene->clip_far_3d = 2400;
     mud->scene->clip_far_2d = 2400;
@@ -3874,8 +3878,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-        depth_top -= layer_depth;
-        depth_bottom -= layer_depth;
+        //depth_top += layer_depth;
+        //depth_bottom += layer_depth;
 #endif
     }
 
@@ -5869,6 +5873,10 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
 }
 
 int main(int argc, char **argv) {
+#ifdef _3DS
+    osSetSpeedupEnable(true);
+#endif
+
     srand(0);
 
     init_utility_global();

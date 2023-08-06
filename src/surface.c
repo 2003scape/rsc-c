@@ -323,8 +323,8 @@ void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
         //printf("wtf: %f\n", depth);
         //depth = global_farts_test;
         //printf("%f\n", depth);
-        //depth = 0.997550;
-        depth = -0.002342999999999984;
+        //depth = -0.997550f / 100.0f;
+        //depth = -0.002342999999999984 + 0.002;
         //printf("depth :%f\n", depth);
     } else {
         //depth = -1;
@@ -2023,10 +2023,6 @@ void surface_draw_sprite_scale(Surface *surface, int x, int y, int width,
 void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
-#ifdef RENDER_3DS_GL
-    y += 13;
-#endif
-
     if (sprite_id >= 50000) {
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         float depth = ((depth_top + depth_bottom) / 2) -

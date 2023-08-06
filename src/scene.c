@@ -1072,8 +1072,6 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->gl_sprite_depth_bottom[scene->sprite_count] =
         projected_position[2] / projected_position[3];
 
-    //printf("sprite depth: %f\n",scene->gl_sprite_depth_bottom[scene->sprite_count]);
-
     glm_vec4_zero(projected_position);
 
     vec4 top_position = {VERTEX_TO_FLOAT(x),
@@ -2863,9 +2861,9 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     roll &= 1023;
 
     // TODO remove
-    roll = 0;
+    //roll = 0;
 
-    scene->camera_yaw = (1024 - yaw) & 1023; // pitch
+    scene->camera_yaw = (1024 - yaw) & 1023;
     scene->camera_pitch = (1024 - pitch) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
 
@@ -4529,8 +4527,6 @@ void scene_gl_render(Scene *scene) {
 
     glViewport(0, 1, scene->width, scene_height + 12);
 
-    // surface_gl_draw(scene->surface, 1);
-
     scene->surface->width = old_width;
     scene->surface->height = old_height;
 
@@ -4548,12 +4544,6 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     // TODO should bind outside of here
     C3D_SetAttrInfo(&game_model->gl_buffer->attr_info);
     C3D_SetBufInfo(&game_model->gl_buffer->buf_info);
-
-    /*if (scene->_3ds_gl_last_buffer != game_model->_3ds_gl_buffer) {
-        C3D_SetAttrInfo(&game_model->_3ds_gl_buffer->attr_info);
-        C3D_SetBufInfo(&game_model->_3ds_gl_buffer->buf_info);
-        scene->_3ds_gl_last_buffer = game_model->_3ds_gl_buffer;
-    }*/
 
     mat4 pica_model = {0};
     glm_mat4_copy(game_model->transform, pica_model);
@@ -4614,10 +4604,6 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                   (float)game_model->light_ambience, light_diffuse,
                     fog_z_distance, 0);
 
-    /*printf("fog z distance %f %f\n",
-            fog_z_distance,
-            (float)scene->fog_z_distance / 1000000.0f);*/
-
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_unlit_uniform,
                     game_model->unlit);
 
@@ -4636,16 +4622,6 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
 }
 
 void scene_3ds_gl_render(Scene *scene) {
-    /*int scene_height = scene->gl_height - 1;
-
-    int old_width = scene->surface->width;
-    int old_height = scene->surface->height;
-
-    scene->surface->width = scene->width;
-    scene->surface->height = scene_height + 12;
-
-    surface_reset_bounds(scene->surface);*/
-
     game_model_project_view(scene->view, scene->camera_x, scene->camera_y,
                             scene->camera_z, scene->camera_yaw,
                             scene->camera_pitch, scene->camera_roll,
@@ -4675,13 +4651,7 @@ void scene_3ds_gl_render(Scene *scene) {
 
     C3D_TexBind(0, &scene->gl_model_texture);
 
-    // int offset_y = 13;
-    // glViewport(0, offset_y, scene->width, scene_height);
-
-    /*shader_set_int(&scene->game_model_shader, "fog_distance",
-                   scene->fog_z_distance);
-
-    shader_set_float(&scene->game_model_shader, "scroll_texture",
+    /*shader_set_float(&scene->game_model_shader, "scroll_texture",
                      scene->gl_scroll_texture_position /
                          (float)SCROLL_TEXTURE_SIZE);*/
 
@@ -4782,17 +4752,5 @@ void scene_3ds_gl_render(Scene *scene) {
     }
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
-
-    // glViewport(0, 1, scene->width, scene_height + 12);
-
-    // surface_gl_draw(scene->surface, 1);
-
-    /*scene->surface->width = old_width;
-    scene->surface->height = old_height;
-
-    surface_reset_bounds(scene->surface);*/
-
-    /*glViewport(0, 0, scene->surface->mud->game_width,
-               scene->surface->mud->game_height);*/
 }
 #endif
