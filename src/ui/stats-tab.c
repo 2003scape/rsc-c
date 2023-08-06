@@ -41,13 +41,12 @@ char *members_quests[] = {
 char **quest_names;
 int quests_length = 0;
 
-// char *stats_tabs[] = {"Stats", "Quests"};
 char *stats_tabs[3] = {0};
 
 void init_stats_tab_global() {
     if (MUD_IS_COMPACT) {
         stats_tabs[0] = "Skills";
-        stats_tabs[1] = "Equip";
+        stats_tabs[1] = "Gear";
         stats_tabs[2] = "Quests";
     } else {
         stats_tabs[0] = "Skills";

@@ -43,7 +43,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
 
     int ui_y = MUD_IS_COMPACT
-                   ? 4
+                   ? 4 + (mud->surface->height / 2) - (MUD_HEIGHT / 2)
                    : mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
 
     int x = ui_x + 4;
@@ -529,7 +529,7 @@ void mudclient_draw_additional_options(mudclient *mud) {
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
 
     int ui_y = MUD_IS_COMPACT
-                   ? 4
+                   ? 4 + (mud->surface->height / 2) - (MUD_HEIGHT / 2)
                    : mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
 
     surface_draw_box(mud->surface, ui_x, ui_y, ADDITIONAL_OPTIONS_WIDTH, 12,
@@ -608,7 +608,7 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
     int ui_x = mud->surface->width / 2 - ADDITIONAL_OPTIONS_WIDTH / 2;
 
     int ui_y = MUD_IS_COMPACT
-                   ? 4
+                   ? 4 + (mud->surface->height / 2) - (MUD_HEIGHT / 2)
                    : mud->surface->height / 2 - ADDITIONAL_OPTIONS_HEIGHT / 2;
 
     /* tabs */

@@ -147,7 +147,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
     BufInfo_Add(&surface->gl_flat_buffer.buf_info, surface->gl_flat_buffer.vbo,
                 sizeof(gl_quad_vertex), 4, 0x3210);
 
-    //vertex_buffer_gl_bind(&surface->gl_flat_buffer);
+    // vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
     _3ds_gl_load_tex(sprites_t3x, sprites_t3x_size,
                      &surface->gl_sprite_texture);
@@ -314,20 +314,20 @@ void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth) {
     // TODO remove
-    //return;
+    // return;
 
     if (depth != 0) {
-        //depth = -0.1f;
-        //depth = 1.0f - depth;
-        //depth = 0.997657;
-        //printf("wtf: %f\n", depth);
-        //depth = global_farts_test;
-        //printf("%f\n", depth);
-        //depth = -0.997550f / 100.0f;
-        //depth = -0.002342999999999984 + 0.002;
-        //printf("depth :%f\n", depth);
+        // depth = -0.1f;
+        // depth = 1.0f - depth;
+        // depth = 0.997657;
+        // printf("wtf: %f\n", depth);
+        // depth = global_farts_test;
+        // printf("%f\n", depth);
+        // depth = -0.997550f / 100.0f;
+        // depth = -0.002342999999999984 + 0.002;
+        // printf("depth :%f\n", depth);
     } else {
-        //depth = -1;
+        // depth = -1;
     }
 
     for (int i = 0; i < length; i++) {
@@ -335,8 +335,8 @@ void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
     }
 }
 
-void gl_vertex_apply_rotation(float *x, float *y,
-                              float centre_x, float centre_y, float angle) {
+void gl_vertex_apply_rotation(float *x, float *y, float centre_x,
+                              float centre_y, float angle) {
     *x -= centre_x;
     *y -= centre_y;
 
@@ -354,8 +354,8 @@ void gl_vertex_apply_rotation(float *x, float *y,
 void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, GLuint texture,
                             GLuint base_texture) {
 #elif defined(RENDER_3DS_GL)
-void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
-                            C3D_Tex *texture, C3D_Tex *base_texture) {
+void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, C3D_Tex *texture,
+                            C3D_Tex *base_texture) {
 #endif
     if (surface->gl_context_count >= GL_MAX_QUADS) {
         fprintf(stderr, "too many context (texture/boundary) switches!\n");
@@ -388,7 +388,7 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
                           ebo_index, ebo_index + 2, ebo_index + 3};
 
     memcpy(surface->gl_flat_buffer.ebo +
-           (surface->gl_flat_count * sizeof(indices)),
+               (surface->gl_flat_count * sizeof(indices)),
            indices, sizeof(indices));
 #endif
 
@@ -401,8 +401,7 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
         context->max_x == surface->bounds_max_x &&
         context->min_y == surface->bounds_min_y &&
         context->max_y == surface->bounds_max_y &&
-        context->texture == texture &&
-        context->base_texture == base_texture) {
+        context->texture == texture && context->base_texture == base_texture) {
         context->quad_count++;
     } else {
         context = &surface->gl_contexts[context_index + 1];
@@ -611,9 +610,9 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 
 #ifdef RENDER_GL
         float points[][4] = {
-            {gl_width, 0}, /* top right */
-            {0, 0}, /* top left */
-            {0, gl_height}, /* bottom left */
+            {gl_width, 0},         /* top right */
+            {0, 0},                /* top left */
+            {0, gl_height},        /* bottom left */
             {gl_width, gl_height}, /* bottom right */
         };
 
@@ -629,9 +628,9 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 #elif defined(RENDER_3DS_GL)
         float points[][4] = {
             {gl_width, gl_height}, /* bottom right */
-            {0, gl_height}, /* bottom left */
-            {0, 0}, /* top left */
-            {gl_width, 0}, /* top right */
+            {0, gl_height},        /* bottom left */
+            {0, 0},                /* top left */
+            {gl_width, 0},         /* top right */
         };
 
         for (int i = 0; i < 4; i++) {
@@ -760,11 +759,13 @@ void surface_gl_update_framebuffer(Surface *surface) {
 #endif
 }
 
-void surface_gl_update_framebuffer_texture(Surface *surface) {
-}
+void surface_gl_update_framebuffer_texture(Surface *surface) {}
 
 float surface_gl_get_layer_depth(Surface *surface) {
     // return (-0.00875 * surface->mud->camera_zoom + 11.9375) / 100000.0;
+    return 0.01f;
+
+#if 0
     float min_depth = 0.00001f;
     float max_depth = 0.00008f;
 
@@ -779,6 +780,7 @@ float surface_gl_get_layer_depth(Surface *surface) {
     }
 
     return depth;
+#endif
 }
 
 void surface_gl_draw(Surface *surface) {
@@ -1022,7 +1024,7 @@ void surface_draw(Surface *surface) {
 
 void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
-    //surface->gl_has_faded = 0;
+    // surface->gl_has_faded = 0;
     glClear(GL_COLOR_BUFFER_BIT);
 #elif defined(RENDER_SW)
     int area = surface->width * surface->height;
@@ -1434,7 +1436,7 @@ void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
 
     surface_gl_update_framebuffer_texture(surface);
 
-    //surface_gl_buffer_framebuffer_quad(surface);
+    // surface_gl_buffer_framebuffer_quad(surface);
 #endif
 }
 
@@ -2024,15 +2026,9 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
     if (sprite_id >= 50000) {
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-        float depth = ((depth_top + depth_bottom) / 2) -
-                      ANIMATION_COUNT * surface_gl_get_layer_depth(surface);
-#else
-        float depth = 0.0f;
-#endif
-
         mudclient_draw_teleport_bubble(surface->mud, x, y, width, height,
-                                       sprite_id - 50000, depth);
+                                       sprite_id - 50000,
+                                       (depth_top + depth_bottom) / 2.0f);
 
         return;
     }

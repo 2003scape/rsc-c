@@ -16,7 +16,7 @@ void main() {
 
     fragment_colour = (texture_colour * vertex_colour) + base_texture_colour;
 
-    /*if (fragment_colour.w <= 0.0) {
+    if (fragment_colour.w <= 0.0) {
         discard;
-    }*/
+    }
 }

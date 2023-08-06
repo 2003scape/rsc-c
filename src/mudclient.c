@@ -3778,7 +3778,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    float layer_depth = surface_gl_get_layer_depth(mud->surface);
+    depth_top = (depth_bottom + depth_top) / 2.0f;
+    depth_bottom = depth_top;
 #endif
 
     for (int i = 0; i < ANIMATION_COUNT; i++) {
@@ -3876,11 +3877,6 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
         }
-
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-        //depth_top += layer_depth;
-        //depth_bottom += layer_depth;
-#endif
     }
 
     mudclient_draw_character_message(mud, player, x, y, width);
@@ -3897,7 +3893,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     float damage_depth = 0.0f;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    damage_depth = ((depth_bottom + depth_top) / 2) - (layer_depth * 1.25f);
+    damage_depth = depth_top;
 #endif
 
     mudclient_draw_character_damage(mud, player, x, y, ty, width, height, 0,
@@ -3971,7 +3967,8 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    float layer_depth = surface_gl_get_layer_depth(mud->surface);
+    depth_top = (depth_bottom + depth_top) / 2.0f;
+    depth_bottom = depth_top;
 #endif
 
     for (int i = 0; i < ANIMATION_COUNT; i++) {
@@ -4032,11 +4029,6 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
                 sprite_id, animation_colour, skin_colour, skew_x, flip,
                 depth_top, depth_bottom);
         }
-
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-        depth_top -= layer_depth;
-        depth_bottom -= layer_depth;
-#endif
     }
 
     mudclient_draw_character_message(mud, npc, x, y, width);
@@ -4044,7 +4036,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
     float damage_depth = 0.0f;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    damage_depth = ((depth_bottom + depth_top) / 2) - layer_depth;
+    damage_depth = depth_top;
 #endif
 
     mudclient_draw_character_damage(mud, npc, x, y, ty, width, height, 1,
