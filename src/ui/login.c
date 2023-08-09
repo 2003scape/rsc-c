@@ -459,7 +459,6 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     mud->scene->clip_far_3d = 4100;
     mud->scene->clip_far_2d = 4100;
-    mud->scene->fog_z_falloff = 1;
     mud->scene->fog_z_distance = 4000;
 
 #ifdef RENDER_GL

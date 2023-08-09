@@ -132,5 +132,8 @@ void gl_load_texture(GLuint *texture_id, char *file);
 #elif defined(RENDER_3DS_GL)
 void _3ds_gl_load_tex(const uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);
 int _3ds_gl_translate_framebuffer_index(int index);
+int _3ds_gl_morton_interleave(int x, int y);
+int _3ds_gl_get_morton_offset(int x, int y, int bytes_per_pixel);
+int _3ds_gl_translate_texture_index(int x, int y, int size);
 #endif
 #endif

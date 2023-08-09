@@ -680,4 +680,24 @@ int _3ds_gl_translate_framebuffer_index(int index) {
     return _3ds_gl_framebuffer_offsets_x[x_offset] +
            _3ds_gl_framebuffer_offsets_y[y_offset];
 }
+
+/* https://github.com/xerpi/sf2dlib/blob/master/libsf2d/source/sf2d_texture.c#L643 */
+int _3ds_gl_morton_interleave(int x, int y) {
+    int i = (x & 7) | ((y & 7) << 8); // ---- -210
+    i = (i ^ (i << 2)) & 0x1313; // ---2 --10
+    i = (i ^ (i << 1)) & 0x1515; // ---2 -1-0
+    i = (i | (i >> 7)) & 0x3F;
+    return i;
+}
+
+int _3ds_gl_get_morton_offset(int x, int y, int bytes_per_pixel) {
+    int i = _3ds_gl_morton_interleave(x, y);
+    unsigned int offset = (x & ~7) * 8;
+    return (i + offset) * bytes_per_pixel;
+}
+
+int _3ds_gl_translate_texture_index(int x, int y, int size) {
+    int coarse_y = y & ~7;
+    return _3ds_gl_get_morton_offset(x, y, 3) + coarse_y * size * 3;
+}
 #endif

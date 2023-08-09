@@ -12,6 +12,12 @@ gl_atlas_position gl_transparent_atlas_position = {
     .right_u = 3.0f / GL_TEXTURE_SIZE,
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
     .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
+
+gl_atlas_position test_atlas_position = {
+    .left_u = 0.0f,
+    .right_u = 255.0f / 256.0f,
+    .top_v = 0.0f,
+    .bottom_v = 40.0f/256.0f};
 #endif
 
 int an_int_346 = 0;
@@ -167,6 +173,26 @@ void surface_new(Surface *surface, int width, int height, int limit,
     _3ds_gl_load_tex(entities_4_t3x, entities_4_t3x_size,
                      &surface->gl_entity_textures[4]);
 
+    _3ds_gl_load_tex(sleep_t3x, sleep_t3x_size, &surface->gl_sleep_texture);
+
+    uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
+    int i = 0;
+
+    while (i < 256 * 256 * 3) {
+        //printf("hi %d %d %d\n", data[i], data[i+1], data[i+2]);
+        data[i] = 255;
+        data[i + 1] = 255;
+        data[i + 2] = 255;
+        //printf("hi2 %d\n", data[i]);
+        i += 3;
+    }
+
+    int offset = _3ds_gl_translate_texture_index(1, 1, 256);
+
+    data[offset] = 255;
+    data[offset + 1] = 0;
+    data[offset + 2] = 255;
+
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
 
@@ -313,22 +339,11 @@ void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
 
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth) {
-    // TODO remove
-    // return;
-
-    if (depth != 0) {
-        // depth = -0.1f;
-        // depth = 1.0f - depth;
-        // depth = 0.997657;
-        // printf("wtf: %f\n", depth);
-        // depth = global_farts_test;
-        // printf("%f\n", depth);
-        // depth = -0.997550f / 100.0f;
-        // depth = -0.002342999999999984 + 0.002;
-        // printf("depth :%f\n", depth);
-    } else {
-        // depth = -1;
+#ifdef RENDER_3DS_GL
+    if (depth == 0) {
+        depth = -1.0f;
     }
+#endif
 
     for (int i = 0; i < length; i++) {
         vertices[i].z = depth;
@@ -539,6 +554,14 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 
         atlas_position = gl_media_atlas_positions[atlas_index];
         base_atlas_position = gl_media_base_atlas_positions[atlas_index];
+    } else if (sprite_id == surface->mud->sprite_texture + 1) {
+        //printf("sleep pic!\n");
+#ifdef RENDER_3DS_GL
+        texture = &surface->gl_sleep_texture;
+        atlas_position = test_atlas_position;
+#else
+        return;
+#endif
     } else {
         return;
     }
@@ -610,10 +633,10 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 
 #ifdef RENDER_GL
         float points[][4] = {
-            {gl_width, 0},         /* top right */
-            {0, 0},                /* top left */
             {0, gl_height},        /* bottom left */
             {gl_width, gl_height}, /* bottom right */
+            {gl_width, 0},         /* top right */
+            {0, 0},                /* top left */
         };
 
         for (int i = 0; i < 4; i++) {
@@ -762,8 +785,9 @@ void surface_gl_update_framebuffer(Surface *surface) {
 void surface_gl_update_framebuffer_texture(Surface *surface) {}
 
 float surface_gl_get_layer_depth(Surface *surface) {
+    // TODO remove
+    return 0;
     // return (-0.00875 * surface->mud->camera_zoom + 11.9375) / 100000.0;
-    return 0.01f;
 
 #if 0
     float min_depth = 0.00001f;
@@ -857,8 +881,8 @@ void surface_gl_draw(Surface *surface) {
     vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
     // C3D_DepthTest(true, GPU_LEQUAL, GPU_WRITE_ALL);
-    C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
-    // C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
+    // C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
+    C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
     // C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
@@ -894,16 +918,6 @@ void surface_gl_draw(Surface *surface) {
 
         drawn_quads += context->quad_count;
     }
-
-    /*for (int i = 0; i < surface->_3ds_gl_flat_count; i++) {
-        C3D_DrawElements(GPU_TRIANGLES, 6, C3D_UNSIGNED_SHORT,
-                         surface->_3ds_gl_flat_ebo +
-                             (i * 6) * sizeof(uint16_t));
-    }*/
-
-    /*C3D_DrawElements(GPU_TRIANGLES, surface->_3ds_gl_flat_count * 6,
-                     C3D_UNSIGNED_SHORT, surface->_3ds_gl_flat_ebo);*/
-
 #endif
 
     surface_gl_reset_context(surface);
@@ -1622,6 +1636,32 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
             }
         }
     }
+
+#if RENDER_3DS_GL
+    uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
+    int i = 0;
+
+    while (i < 256 * 256 * 3) {
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        i += 3;
+    }
+
+    int test = 0;
+
+    for (int y = 0; y < SLEEP_HEIGHT; y++) {
+        for (int x = 0; x < SLEEP_WIDTH; x++) {
+            int offset = _3ds_gl_translate_texture_index(x, y, 256);
+            if (pixels[test]) {
+                data[offset] = 255;
+                data[offset + 1] = 255;
+                data[offset + 2] = 255;
+            }
+            test++;
+        }
+    }
+#endif
 }
 
 void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {

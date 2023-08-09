@@ -39,10 +39,12 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     player_y = (player_y * cos - player_x * sin) >> 18;
     player_x = temp_x;
 
-    surface_draw_minimap_sprite(
+    /*surface_draw_minimap_sprite(
         mud->surface, ui_x + (MINIMAP_WIDTH / 2) - player_x,
         ui_y + (MINIMAP_HEIGHT / 2) + player_y, mud->sprite_media - 1,
-        (rotation + 64) & 255, scale);
+        (rotation + 64) & 255, scale);*/
+
+    surface_draw_sprite(mud->surface, ui_x, ui_y, mud->sprite_media - 1);
 
     for (int i = 0; i < mud->object_count; i++) {
         int object_x = ((mud->object_x[i] * MAGIC_LOC + 64 -

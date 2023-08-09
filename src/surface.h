@@ -29,6 +29,8 @@
 #include "entities_2_t3x.h"
 #include "entities_3_t3x.h"
 #include "entities_4_t3x.h"
+
+#include "sleep_t3x.h"
 #endif
 #endif
 
@@ -91,6 +93,8 @@ typedef struct SurfaceGlContext {
 
 extern gl_atlas_position gl_white_atlas_position;
 extern gl_atlas_position gl_transparent_atlas_position;
+
+extern gl_atlas_position test_atlas_position;
 #endif
 
 #define SLEEP_WIDTH 255
@@ -191,13 +195,9 @@ typedef struct Surface {
 
     C3D_Mtx _3ds_gl_projection;
 
-    /*C3D_AttrInfo _3ds_gl_attr_info;
-    C3D_BufInfo _3ds_gl_buf_info;
-    void *_3ds_gl_flat_vbo;
-    void *_3ds_gl_flat_ebo;*/
-
     C3D_Tex gl_sprite_texture;
     C3D_Tex gl_entity_textures[ENTITY_TEXTURE_LENGTH];
+    C3D_Tex gl_sleep_texture;
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)

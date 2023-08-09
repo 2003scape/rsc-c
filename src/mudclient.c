@@ -495,6 +495,7 @@ void mudclient_new(mudclient *mud) {
     mud->sprite_item = mud->sprite_util + 50;
     mud->sprite_logo = mud->sprite_item + 1000;
     mud->sprite_projectile = mud->sprite_logo + 10;
+    // TODO this is also used for sleep word
     mud->sprite_texture = mud->sprite_projectile + 50;
     mud->sprite_texture_world = mud->sprite_texture + 10;
 }
@@ -2644,7 +2645,6 @@ void mudclient_start_game(mudclient *mud) {
 
     mud->scene->clip_far_3d = 2400;
     mud->scene->clip_far_2d = 2400;
-    mud->scene->fog_z_falloff = 1;
     mud->scene->fog_z_distance = 2300;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -2654,8 +2654,10 @@ void mudclient_start_game(mudclient *mud) {
     mud->world = malloc(sizeof(World));
     world_new(mud->world, mud->scene, mud->surface);
 
-    mud->world->thick_walls = mud->options->thick_walls;
+    /* used for storing minimap sprite */
     mud->world->base_media_sprite = mud->sprite_media;
+
+    mud->world->thick_walls = mud->options->thick_walls;
 
     mudclient_load_textures(mud);
 

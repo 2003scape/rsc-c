@@ -33,7 +33,6 @@ void world_new(World *world, Scene *scene, Surface *surface) {
     world->scene = scene;
     world->surface = surface;
     world->player_alive = 0;
-    world->base_media_sprite = 750;
 }
 
 int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,

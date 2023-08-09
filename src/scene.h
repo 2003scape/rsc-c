@@ -76,7 +76,6 @@ typedef struct Scene {
     int clip_near;
     int clip_far_3d;
     int clip_far_2d;
-    int fog_z_falloff;
     int fog_z_distance;
     int model_count;
     int max_model_count;
@@ -142,7 +141,6 @@ typedef struct Scene {
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     /* for game model entities (trees, furniture, etc.) */
-    //gl_vertex_buffer gl_game_model_buffer;
     gl_vertex_buffer **gl_game_model_buffers;
     int gl_game_model_buffer_length;
 

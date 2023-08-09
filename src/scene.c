@@ -1667,8 +1667,7 @@ void scene_render(Scene *scene) {
                         scene->fog_z_distance) {
                         scene->vertex_shade[k8] +=
                             (game_model->project_vertex_z[vertex_index] -
-                             scene->fog_z_distance) /
-                            scene->fog_z_falloff;
+                             scene->fog_z_distance);
                     }
 
                     k8++;

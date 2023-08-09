@@ -33,8 +33,12 @@ void mudclient_draw_sleep(mudclient *mud) {
     }
 
     int x = mud->surface->width / 2;
+
     int y = (mud->surface->height / 2) - (MUD_HEIGHT / 2) +
             (MUD_IS_COMPACT ? 28 : 50);
+
+    surface_draw_box(mud->surface, x - 100, y + 74 + (MUD_IS_COMPACT ? 0 : 36),
+                     200, (MUD_IS_COMPACT ? 36 : 40), BLACK);
 
     surface_draw_string_centre(mud->surface, "You are sleeping", x, y, 7,
                                YELLOW);
@@ -67,9 +71,6 @@ void mudclient_draw_sleep(mudclient *mud) {
 
     char formatted_input[strlen(mud->input_text_current) + 2];
     sprintf(formatted_input, "%s*", mud->input_text_current);
-
-    surface_draw_box(mud->surface, x - 100, y, 200, (MUD_IS_COMPACT ? 36 : 40),
-                     BLACK);
 
     y += 20;
 
