@@ -13,11 +13,16 @@ gl_atlas_position gl_transparent_atlas_position = {
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
     .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
 
-gl_atlas_position test_atlas_position = {
+/*gl_atlas_position test_atlas_position = {
     .left_u = 0.0f,
     .right_u = 255.0f / 256.0f,
     .top_v = 0.0f,
-    .bottom_v = 40.0f/256.0f};
+    .bottom_v = 40.0f/256.0f};*/
+gl_atlas_position test_atlas_position = {
+    .left_u = (GL_TEXTURE_SIZE - SLEEP_WIDTH) / GL_TEXTURE_SIZE,
+    .right_u = GL_TEXTURE_SIZE / GL_TEXTURE_SIZE,
+    .top_v = (GL_TEXTURE_SIZE - SLEEP_HEIGHT) / GL_TEXTURE_SIZE,
+    .bottom_v = GL_TEXTURE_SIZE / GL_TEXTURE_SIZE};
 #endif
 
 int an_int_346 = 0;
@@ -184,28 +189,36 @@ void surface_new(Surface *surface, int width, int height, int limit,
         data[i + 2] = 255;
         i += 3;
     }*/
-
-#if 1
+#if 0
+    printf("sf: %ld\n", linearSpaceFree());
     C3D_TexInitParams params = {0};
     params.width = 256;
-	params.height = 256;
-	params.maxLevel = 1;
-    params.format = GPU_RGB8;
-	params.type = GPU_TEX_2D;
+    params.height = 256;
+    params.maxLevel = 0;
+    params.format = GPU_RGBA5551;
+    // params.format = GPU_RGB8;
+    params.type = GPU_TEX_2D;
     params.onVram = false;
 
-    size_t base_texsize = C3D_TexCalcTotalSize(256, 1);
-    printf("base texsize: %d\n", base_texsize);
-
-    //C3D_Tex *tex = malloc(sizeof(C3D_Tex));
+    // C3D_Tex *tex = malloc(sizeof(C3D_Tex));
     C3D_TexInitWithParams(&surface->gl_sleep_texture, NULL, params);
+    printf("sf: %ld\n", linearSpaceFree());
 
-    //printf("%p\n", tex->data);
+    /*C3D_TexInitParams params2 = {0};
+    params2.width = 512;
+        params2.height = 512;
+        params2.maxLevel = 1;
+    params2.format = GPU_RGB8;
+        params2.type = GPU_TEX_2D;
+    params2.onVram = false;
+
+    C3D_Tex *tex = malloc(sizeof(C3D_Tex));
+    C3D_TexInitWithParams(tex, NULL, params2);*/
 #endif
 
-    //u32 size = 0;
-    //void* data = C3D_Tex2DGetImagePtr(tex, -1, &size);
-    //printf("%p %p\n", data, tex->data);
+    // u32 size = 0;
+    // void* data = C3D_Tex2DGetImagePtr(tex, -1, &size);
+    // printf("%p %p\n", data, tex->data);
 
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
@@ -569,9 +582,10 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         atlas_position = gl_media_atlas_positions[atlas_index];
         base_atlas_position = gl_media_base_atlas_positions[atlas_index];
     } else if (sprite_id == surface->mud->sprite_texture + 1) {
-        //printf("sleep pic!\n");
+        // printf("sleep pic!\n");
 #ifdef RENDER_3DS_GL
-        texture = &surface->gl_sleep_texture;
+        //texture = &surface->gl_sleep_texture;
+        texture = &surface->gl_sprite_texture;
         atlas_position = test_atlas_position;
 #else
         return;
@@ -1652,25 +1666,31 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
     }
 
 #if RENDER_3DS_GL
-    uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
-    int i = 0;
+    // uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
+    uint8_t *data = (uint8_t *)surface->gl_sprite_texture.data;
 
-    while (i < 256 * 256 * 3) {
+    /*int i = 0;
+    while (i < 256 * 256 * 2) {
         data[i] = 0;
         data[i + 1] = 0;
-        data[i + 2] = 0;
-        i += 3;
-    }
+        i += 2;
+    }*/
 
+    int offset_x = 1024-255;
+    int offset_y = 1024-40;
     int test = 0;
 
     for (int y = 0; y < SLEEP_HEIGHT; y++) {
         for (int x = 0; x < SLEEP_WIDTH; x++) {
-            int offset = _3ds_gl_translate_texture_index(x, y, 256);
+            int offset = _3ds_gl_translate_texture_index(x + offset_x,
+                                                         y + offset_y, 1024);
+
             if (pixels[test]) {
                 data[offset] = 255;
                 data[offset + 1] = 255;
-                data[offset + 2] = 255;
+            } else {
+                data[offset] = 0;
+                data[offset + 1] = 1;
             }
             test++;
         }

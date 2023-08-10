@@ -698,6 +698,6 @@ int _3ds_gl_get_morton_offset(int x, int y, int bytes_per_pixel) {
 
 int _3ds_gl_translate_texture_index(int x, int y, int size) {
     int coarse_y = y & ~7;
-    return _3ds_gl_get_morton_offset(x, y, 3) + coarse_y * size * 3;
+    return _3ds_gl_get_morton_offset(x, y, 2) + coarse_y * size * 2;
 }
 #endif
