@@ -173,25 +173,39 @@ void surface_new(Surface *surface, int width, int height, int limit,
     _3ds_gl_load_tex(entities_4_t3x, entities_4_t3x_size,
                      &surface->gl_entity_textures[4]);
 
-    _3ds_gl_load_tex(sleep_t3x, sleep_t3x_size, &surface->gl_sleep_texture);
+    //_3ds_gl_load_tex(sleep_t3x, sleep_t3x_size, &surface->gl_sleep_texture);
 
-    uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
+    /*uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
     int i = 0;
 
     while (i < 256 * 256 * 3) {
-        //printf("hi %d %d %d\n", data[i], data[i+1], data[i+2]);
         data[i] = 255;
         data[i + 1] = 255;
         data[i + 2] = 255;
-        //printf("hi2 %d\n", data[i]);
         i += 3;
-    }
+    }*/
 
-    int offset = _3ds_gl_translate_texture_index(1, 1, 256);
+#if 1
+    C3D_TexInitParams params = {0};
+    params.width = 256;
+	params.height = 256;
+	params.maxLevel = 1;
+    params.format = GPU_RGB8;
+	params.type = GPU_TEX_2D;
+    params.onVram = false;
 
-    data[offset] = 255;
-    data[offset + 1] = 0;
-    data[offset + 2] = 255;
+    size_t base_texsize = C3D_TexCalcTotalSize(256, 1);
+    printf("base texsize: %d\n", base_texsize);
+
+    //C3D_Tex *tex = malloc(sizeof(C3D_Tex));
+    C3D_TexInitWithParams(&surface->gl_sleep_texture, NULL, params);
+
+    //printf("%p\n", tex->data);
+#endif
+
+    //u32 size = 0;
+    //void* data = C3D_Tex2DGetImagePtr(tex, -1, &size);
+    //printf("%p %p\n", data, tex->data);
 
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
