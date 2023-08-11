@@ -700,4 +700,35 @@ int _3ds_gl_translate_texture_index(int x, int y, int size) {
     int coarse_y = y & ~7;
     return _3ds_gl_get_morton_offset(x, y, 2) + coarse_y * size * 2;
 }
+
+/* 32 bit colour 0xrrggbb to 16 bit rgba5551 colour */
+uint16_t _3ds_gl_rgb32_to_rgba5551(int colour32) {
+    /* extract individual colour channels */
+    uint8_t r = (colour32 >> 16) & 0xFF;
+    uint8_t g = (colour32 >> 8) & 0xFF;
+    uint8_t b = colour32 & 0xFF;
+
+    /* convert each channel to 5 bits */
+    uint8_t r5 = (r >> 3) & 0x1F;
+    uint8_t g5 = (g >> 3) & 0x1F;
+    uint8_t b5 = (b >> 3) & 0x1F;
+
+    // pack the channels into the 16-bit colour format with alpha bit
+    return (r5 << 11) | (g5 << 6) | (b5 << 1) | 0x01;
+}
+
+int _3ds_gl_rgba5551_to_rgb32(uint16_t colour16) {
+    /* extract individual color channels */
+    uint8_t r5 = (colour16 >> 11) & 0x1F;
+    uint8_t g5 = (colour16 >> 6) & 0x1F;
+    uint8_t b5 = (colour16 >> 1) & 0x1F;
+
+    /* expand each channel to 8 bits */
+    uint8_t r8 = (r5 << 3) | (r5 >> 2);
+    uint8_t g8 = (g5 << 3) | (g5 >> 2);
+    uint8_t b8 = (b5 << 3) | (b5 >> 2);
+
+    /* combine channels into a 32-bit color value */
+    return (r8 << 16) | (g8 << 8) | b8;
+}
 #endif

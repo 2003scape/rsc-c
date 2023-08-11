@@ -215,9 +215,46 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
     }
 }
 
+void world_map_set_pixel(World *world, int x, int y, int colour) {
+#ifdef RENDER_SW
+    surface_set_pixel(world->surface, x, y, colour);
+#elif defined(RENDER_3DS_GL)
+    uint16_t *data = (uint16_t *)world->surface->gl_sprite_texture.data;
+
+    int offset =
+        _3ds_gl_translate_texture_index(x + GL_SPRITE_MINIMAP_OFFSET_X,
+                                        y + GL_SPRITE_MINIMAP_OFFSET_Y, 1024) /
+        2;
+
+    data[offset] = _3ds_gl_rgb32_to_rgba5551(colour);
+#endif
+}
+
+void world_map_line_horizontal(World *world, int x, int y, int width,
+                               int colour) {
+#ifdef RENDER_SW
+    surface_draw_line_horizontal(world->surface, x, y, width, colour);
+#elif defined(RENDER_3DS_GL)
+    for (int i = 0; i < width; i++) {
+        world_map_set_pixel(world, x + i, y, colour);
+    }
+#endif
+}
+
+void world_map_line_vertical(World *world, int x, int y, int height,
+                             int colour) {
+#ifdef RENDER_SW
+    surface_draw_line_vertical(world->surface, x, y, height, colour);
+#elif defined(RENDER_3DS_GL)
+    for (int i = 0; i < height; i++) {
+        world_map_set_pixel(world, x, y + i, colour);
+    }
+#endif
+
+}
+
 void world_draw_map_tile(World *world, int x, int y, int direction,
                          int face_fill_1, int face_fill_2) {
-#ifdef RENDER_SW
     int line_x = x * 3;
     int line_y = y * 3;
     int colour_1 = scene_get_fill_colour(world->scene, face_fill_1);
@@ -228,37 +265,18 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
     colour_2 = colour_2 >> 1 & 0x7f7f7f;
 
     if (direction == 0) {
-        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
-                                              colour_1);
-
-        surface_draw_line_horizontal(world->surface, line_x,
-                                              line_y + 1, 2, colour_1);
-
-        surface_draw_line_horizontal(world->surface, line_x,
-                                              line_y + 2, 1, colour_1);
-
-        surface_draw_line_horizontal(world->surface, line_x + 2,
-                                              line_y + 1, 1, colour_2);
-
-        surface_draw_line_horizontal(world->surface, line_x + 1,
-                                              line_y + 2, 2, colour_2);
+        world_map_line_horizontal(world, line_x, line_y, 3, colour_1);
+        world_map_line_horizontal(world, line_x, line_y + 1, 2, colour_1);
+        world_map_line_horizontal(world, line_x, line_y + 2, 1, colour_1);
+        world_map_line_horizontal(world, line_x + 2, line_y + 1, 1, colour_2);
+        world_map_line_horizontal(world, line_x + 1, line_y + 2, 2, colour_2);
     } else if (direction == 1) {
-        surface_draw_line_horizontal(world->surface, line_x, line_y, 3,
-                                              colour_2);
-
-        surface_draw_line_horizontal(world->surface, line_x + 1,
-                                              line_y + 1, 2, colour_2);
-
-        surface_draw_line_horizontal(world->surface, line_x + 2,
-                                              line_y + 2, 1, colour_2);
-
-        surface_draw_line_horizontal(world->surface, line_x,
-                                              line_y + 1, 1, colour_1);
-
-        surface_draw_line_horizontal(world->surface, line_x,
-                                              line_y + 2, 2, colour_1);
+        world_map_line_horizontal(world, line_x, line_y, 3, colour_2);
+        world_map_line_horizontal(world, line_x + 1, line_y + 1, 2, colour_2);
+        world_map_line_horizontal(world, line_x + 2, line_y + 2, 1, colour_2);
+        world_map_line_horizontal(world, line_x, line_y + 1, 1, colour_1);
+        world_map_line_horizontal(world, line_x, line_y + 2, 2, colour_1);
     }
-#endif
 }
 
 /* TODO rename to read map files? */
@@ -1391,10 +1409,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-#ifdef RENDER_SW
-                    surface_draw_line_horizontal(
-                        world->surface, r_x * 3, r_y * 3, 3, colour);
-#endif
+                    world_map_line_horizontal(world, r_x * 3, r_y * 3, 3,
+                                              colour);
                 }
             }
 
@@ -1415,10 +1431,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-#ifdef RENDER_SW
-                    surface_draw_line_vertical(world->surface, r_x * 3,
-                                               r_y * 3, 3, colour);
-#endif
+                    world_map_line_vertical(world, r_x * 3, r_y * 3, 3, colour);
                 }
             }
 
@@ -1435,13 +1448,13 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_set_pixel(world->surface, r_x * 3, r_y * 3, colour);
+                    world_map_set_pixel(world, r_x * 3, r_y * 3, colour);
 
-                    surface_set_pixel(world->surface, r_x * 3 + 1, r_y * 3 + 1,
-                                      colour);
+                    world_map_set_pixel(world, r_x * 3 + 1, r_y * 3 + 1,
+                                        colour);
 
-                    surface_set_pixel(world->surface, r_x * 3 + 2, r_y * 3 + 2,
-                                      colour);
+                    world_map_set_pixel(world, r_x * 3 + 2, r_y * 3 + 2,
+                                        colour);
                 }
             } else if (wall > 12000 && wall < 24000 &&
                        game_data_wall_object_invisible[wall - 12001] == 0) {
@@ -1454,14 +1467,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 }
 
                 if (is_current_plane) {
-                    surface_set_pixel(world->surface, r_x * 3 + 2, r_y * 3,
-                                      colour);
+                    world_map_set_pixel(world, r_x * 3 + 2, r_y * 3, colour);
 
-                    surface_set_pixel(world->surface, r_x * 3 + 1, r_y * 3 + 1,
-                                      colour);
+                    world_map_set_pixel(world, r_x * 3 + 1, r_y * 3 + 1,
+                                        colour);
 
-                    surface_set_pixel(world->surface, r_x * 3, r_y * 3 + 2,
-                                      colour);
+                    world_map_set_pixel(world, r_x * 3, r_y * 3 + 2, colour);
                 }
             }
         }
@@ -1469,7 +1480,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
     if (is_current_plane) {
         surface_draw_sprite_reversed(
-            world->surface, world->base_media_sprite - 1, 0, 0, 285, 285);
+            world->surface, world->base_media_sprite - 1, 0, 0,
+            MINIMAP_SPRITE_WIDTH, MINIMAP_SPRITE_WIDTH);
     }
 
     game_model_set_light_from6(world->parent_model, 0, 60, 24, -50, -10, -50);
@@ -1663,6 +1675,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             if (world_has_roof(world, r_x, south_y) &&
                 terrain_south_height < PLANE_HEIGHT) {
                 terrain_south_height += roof_height + PLANE_HEIGHT;
+
                 world->terrain_height_local[r_x][south_y] =
                     terrain_south_height;
             }
@@ -2179,7 +2192,6 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         top_vertices[2] = parallel_vertices[2];
         top_vertices[3] = vertices[2];
 
-        // int top_wall_face =
         game_model_create_face(game_model, 4, top_vertices, -7400, -7400);
     }
 }
@@ -2389,7 +2401,10 @@ void world_gl_update_terrain_buffers(World *world) {
                         (sizeof(GLfloat) * 7),
                     (sizeof(GLfloat) * 2), (void *)&lighting);
 #elif defined(RENDER_3DS_GL)
-                memcpy(game_model->gl_buffer->vbo + ((vertex_offset + k) * sizeof(gl_model_vertex)) + (7 * sizeof(float)), (void*)&lighting, 2 * sizeof(float));
+                memcpy(game_model->gl_buffer->vbo +
+                           ((vertex_offset + k) * sizeof(gl_model_vertex)) +
+                           (7 * sizeof(float)),
+                       (void *)&lighting, 2 * sizeof(float));
 #endif
             }
 

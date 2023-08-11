@@ -100,6 +100,11 @@ int world_get_elevation(World *world, int x, int y);
 int world_get_wall_diagonal(World *world, int x, int y);
 void world_remove_object2(World *world, int x, int y, int id);
 void world_remove_wall_object(World *world, int x, int y, int k, int id);
+void world_map_set_pixel(World *world, int x, int y, int colour);
+void world_map_line_horizontal(World *world, int x, int y, int width,
+                               int colour);
+void world_map_line_vertical(World *world, int x, int y, int height,
+                             int colour);
 void world_draw_map_tile(World *world, int i, int j, int k, int l,
                          int texture_id_2);
 void world_load_section_from4i(World *world, int x, int y, int plane,

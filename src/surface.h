@@ -93,6 +93,10 @@ extern gl_atlas_position gl_white_atlas_position;
 extern gl_atlas_position gl_transparent_atlas_position;
 
 extern gl_atlas_position test_atlas_position;
+extern gl_atlas_position test2_atlas_position;
+
+#define GL_SPRITE_MINIMAP_OFFSET_X 0
+#define GL_SPRITE_MINIMAP_OFFSET_Y (1024 - MINIMAP_SPRITE_HEIGHT - 3)
 #endif
 
 #define SLEEP_WIDTH 255
@@ -109,6 +113,9 @@ extern gl_atlas_position test_atlas_position;
 #define SCRUB_LEFT_COLOUR 0xc8d0e8
 #define SCRUB_MIDDLE_COLOUR 0x6081b8
 #define SCRUB_RIGHT_COLOUR 0x355f73
+
+#define MINIMAP_SPRITE_WIDTH 285
+#define MINIMAP_SPRITE_HEIGHT MINIMAP_SPRITE_WIDTH
 
 typedef enum {
     FONT_REGULAR_11 = 0,
@@ -195,7 +202,6 @@ typedef struct Surface {
 
     C3D_Tex gl_sprite_texture;
     C3D_Tex gl_entity_textures[ENTITY_TEXTURE_LENGTH];
-    C3D_Tex gl_sleep_texture;
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -374,10 +380,10 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
                                             int l, int i1, int j1, int k1,
                                             int l1, int i2, int j2, int k2,
                                             int l2, int i3, int j3);
+#ifdef RENDER_SW
 void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
                          int font_pos, int dest_pos, int width, int height,
                          int dest_offset, int font_data_offset);
-#ifdef RENDER_SW
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
 #endif
@@ -393,8 +399,8 @@ void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
                                 FONT_STYLE font, int colour);
 void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
                             FONT_STYLE font, int colour, int max);
-int surface_text_height(FONT_STYLE font);
 int surface_text_height_font(FONT_STYLE font);
+int surface_text_height(FONT_STYLE font);
 int surface_text_width(char *text, FONT_STYLE font);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);

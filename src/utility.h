@@ -135,5 +135,7 @@ int _3ds_gl_translate_framebuffer_index(int index);
 int _3ds_gl_morton_interleave(int x, int y);
 int _3ds_gl_get_morton_offset(int x, int y, int bytes_per_pixel);
 int _3ds_gl_translate_texture_index(int x, int y, int size);
+uint16_t _3ds_gl_rgb32_to_rgba5551(int colour32);
+int _3ds_gl_rgba5551_to_rgb32(uint16_t colour16);
 #endif
 #endif

@@ -152,11 +152,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
         scene->texture_light_gradient[gradient_index] =
             ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
 
-        /*if (i % 16 == 0) {
-            printf("%f\n",
-                ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f);
-        }*/
-
         /*scene->texture_light_gradient[gradient_index] =
             0.074708f * powf(15.844317f, ((float)i / 255.0f));*/
     }
@@ -3511,11 +3506,27 @@ int scene_get_fill_colour(Scene *scene, int face_fill) {
         return 0;
     }
 
+#ifdef RENDER_SW
     scene_prepare_texture(scene, face_fill);
 
     if (face_fill >= 0) {
         return scene->texture_pixels[face_fill][0];
     }
+#elif defined (RENDER_3DS_GL)
+    if (face_fill >= 0) {
+        gl_atlas_position atlas_position =
+            gl_texture_atlas_positions[face_fill];
+
+        int x = (int)(atlas_position.left_u * GL_TEXTURE_SIZE);
+        int y = (int)(atlas_position.top_v * GL_TEXTURE_SIZE);
+
+        int offset = _3ds_gl_translate_texture_index(x, y, 1024) / 2;
+        uint16_t *data = (uint16_t *)scene->gl_model_texture.data;
+        uint16_t colour16 = data[offset];
+
+        return _3ds_gl_rgba5551_to_rgb32(colour16);
+    }
+#endif
 
     if (face_fill < 0) {
         face_fill = -(face_fill + 1);

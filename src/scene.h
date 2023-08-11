@@ -38,6 +38,10 @@ typedef struct Scene Scene;
 #include "surface.h"
 #include "utility.h"
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#include "gl/textures/model_textures.h"
+#endif
+
 #define VERTEX_COUNT 40 // ambigious
 #define RAMP_COUNT 50
 #define RAMP_SIZE 256

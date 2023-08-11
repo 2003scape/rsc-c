@@ -13,16 +13,18 @@ gl_atlas_position gl_transparent_atlas_position = {
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
     .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
 
-/*gl_atlas_position test_atlas_position = {
-    .left_u = 0.0f,
-    .right_u = 255.0f / 256.0f,
-    .top_v = 0.0f,
-    .bottom_v = 40.0f/256.0f};*/
 gl_atlas_position test_atlas_position = {
     .left_u = (GL_TEXTURE_SIZE - SLEEP_WIDTH) / GL_TEXTURE_SIZE,
     .right_u = GL_TEXTURE_SIZE / GL_TEXTURE_SIZE,
     .top_v = (GL_TEXTURE_SIZE - SLEEP_HEIGHT) / GL_TEXTURE_SIZE,
     .bottom_v = GL_TEXTURE_SIZE / GL_TEXTURE_SIZE};
+
+gl_atlas_position test2_atlas_position = {
+    .left_u = 0.0f,
+    .right_u = (float)MINIMAP_SPRITE_WIDTH / GL_TEXTURE_SIZE,
+    .top_v = (float)GL_SPRITE_MINIMAP_OFFSET_Y / GL_TEXTURE_SIZE,
+    .bottom_v = (float)(GL_SPRITE_MINIMAP_OFFSET_Y + MINIMAP_SPRITE_HEIGHT) /
+                GL_TEXTURE_SIZE};
 #endif
 
 int an_int_346 = 0;
@@ -177,48 +179,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     _3ds_gl_load_tex(entities_4_t3x, entities_4_t3x_size,
                      &surface->gl_entity_textures[4]);
-
-    //_3ds_gl_load_tex(sleep_t3x, sleep_t3x_size, &surface->gl_sleep_texture);
-
-    /*uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
-    int i = 0;
-
-    while (i < 256 * 256 * 3) {
-        data[i] = 255;
-        data[i + 1] = 255;
-        data[i + 2] = 255;
-        i += 3;
-    }*/
-#if 0
-    printf("sf: %ld\n", linearSpaceFree());
-    C3D_TexInitParams params = {0};
-    params.width = 256;
-    params.height = 256;
-    params.maxLevel = 0;
-    params.format = GPU_RGBA5551;
-    // params.format = GPU_RGB8;
-    params.type = GPU_TEX_2D;
-    params.onVram = false;
-
-    // C3D_Tex *tex = malloc(sizeof(C3D_Tex));
-    C3D_TexInitWithParams(&surface->gl_sleep_texture, NULL, params);
-    printf("sf: %ld\n", linearSpaceFree());
-
-    /*C3D_TexInitParams params2 = {0};
-    params2.width = 512;
-        params2.height = 512;
-        params2.maxLevel = 1;
-    params2.format = GPU_RGB8;
-        params2.type = GPU_TEX_2D;
-    params2.onVram = false;
-
-    C3D_Tex *tex = malloc(sizeof(C3D_Tex));
-    C3D_TexInitWithParams(tex, NULL, params2);*/
-#endif
-
-    // u32 size = 0;
-    // void* data = C3D_Tex2DGetImagePtr(tex, -1, &size);
-    // printf("%p %p\n", data, tex->data);
 
     Mtx_OrthoTilt(&surface->_3ds_gl_projection, 0.0, 320.0, 0.0, 240.0, 0.0,
                   1.0, true);
@@ -547,7 +507,10 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     gl_atlas_position atlas_position = gl_transparent_atlas_position;
     gl_atlas_position base_atlas_position = gl_transparent_atlas_position;
 
-    if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
+    if (sprite_id == surface->mud->sprite_media - 1) {
+        texture = &surface->gl_sprite_texture;
+        atlas_position = test2_atlas_position;
+    } else if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
         gl_entity_texture texture_position =
             gl_entities_texture_positions[sprite_id];
 
@@ -582,9 +545,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         atlas_position = gl_media_atlas_positions[atlas_index];
         base_atlas_position = gl_media_base_atlas_positions[atlas_index];
     } else if (sprite_id == surface->mud->sprite_texture + 1) {
-        // printf("sleep pic!\n");
 #ifdef RENDER_3DS_GL
-        //texture = &surface->gl_sleep_texture;
         texture = &surface->gl_sprite_texture;
         atlas_position = test_atlas_position;
 #else
@@ -936,6 +897,8 @@ void surface_gl_draw(Surface *surface) {
         if (context->quad_count <= 0) {
             continue;
         }
+
+        // C3D_SetScissor
 
         C3D_TexBind(0, context->texture);
         C3D_TexBind(1, context->base_texture);
@@ -1506,6 +1469,7 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
     }
 }
 
+// TODO remove this
 void surface_clear(Surface *surface) {
     for (int i = 0; i < surface->limit; i++) {
         free(surface->surface_pixels[i]);
@@ -1666,32 +1630,24 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
     }
 
 #if RENDER_3DS_GL
-    // uint8_t *data = (uint8_t*)surface->gl_sleep_texture.data;
-    uint8_t *data = (uint8_t *)surface->gl_sprite_texture.data;
+    uint16_t *data = (uint16_t *)surface->gl_sprite_texture.data;
 
-    /*int i = 0;
-    while (i < 256 * 256 * 2) {
-        data[i] = 0;
-        data[i + 1] = 0;
-        i += 2;
-    }*/
-
-    int offset_x = 1024-255;
-    int offset_y = 1024-40;
+    int offset_x = 1024 - 255;
+    int offset_y = 1024 - 40;
     int test = 0;
 
     for (int y = 0; y < SLEEP_HEIGHT; y++) {
         for (int x = 0; x < SLEEP_WIDTH; x++) {
             int offset = _3ds_gl_translate_texture_index(x + offset_x,
-                                                         y + offset_y, 1024);
+                                                         y + offset_y, 1024) /
+                         sizeof(uint16_t);
 
             if (pixels[test]) {
-                data[offset] = 255;
-                data[offset + 1] = 255;
+                data[offset] = 65535;
             } else {
-                data[offset] = 0;
-                data[offset + 1] = 1;
+                data[offset] = 1;
             }
+
             test++;
         }
     }
@@ -1868,7 +1824,6 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
 // TODO not draw - load from raster reversed
 void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
                                   int width, int height) {
-#if defined(RENDER_GL) || defined(RENDER_SW)
     surface->sprite_width[sprite_id] = width;
     surface->sprite_height[sprite_id] = height;
     surface->sprite_translate[sprite_id] = 0;
@@ -1877,6 +1832,7 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
     surface->sprite_width_full[sprite_id] = width;
     surface->sprite_height_full[sprite_id] = height;
 
+#if defined(RENDER_GL) || defined(RENDER_SW)
     free(surface->surface_pixels[sprite_id]);
 
     surface->surface_pixels[sprite_id] =
@@ -1996,6 +1952,7 @@ void surface_draw_sprite_depth(Surface *surface, int x, int y, int sprite_id,
                                float depth_top, float depth_bottom) {
 #ifdef RENDER_SW
     surface_draw_sprite(surface, x, y, sprite_id);
+
     (void)depth_top;
     (void)depth_bottom;
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -2328,6 +2285,7 @@ void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
 
         x += (surface->sprite_translate_x[sprite_id] * width + width_full - 1) /
              width_full;
+
         y += (surface->sprite_translate_y[sprite_id] * height + height_full -
               1) /
              height_full;
@@ -3168,6 +3126,7 @@ void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
     surface_draw_sprite_transform_mask_software(
         surface, x, y, draw_width, draw_height, sprite_id, mask_colour,
         skin_colour, skew_x, flip);
+
     (void)depth_top;
     (void)depth_bottom;
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -3432,6 +3391,23 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
 }
 
 #ifdef RENDER_SW
+void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
+                         int font_pos, int dest_pos, int width, int height,
+                         int dest_offset, int font_data_offset) {
+    for (int y = -height; y < 0; y++) {
+        for (int x = -width; x < 0; x++) {
+            if (font_data[font_pos++] != 0) {
+                dest[dest_pos++] = colour;
+            } else {
+                dest_pos++;
+            }
+        }
+
+        dest_pos += dest_offset;
+        font_pos += font_data_offset;
+    }
+}
+
 void surface_draw_character(Surface *surface, int character_offset, int x,
                             int y, int colour, int8_t *font_data) {
     /* baseline and kerning offsets */
@@ -3486,23 +3462,6 @@ void surface_draw_character(Surface *surface, int character_offset, int x,
     }
 }
 #endif
-
-void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
-                         int font_pos, int dest_pos, int width, int height,
-                         int dest_offset, int font_data_offset) {
-    for (int y = -height; y < 0; y++) {
-        for (int x = -width; x < 0; x++) {
-            if (font_data[font_pos++] != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
-            }
-        }
-
-        dest_pos += dest_offset;
-        font_pos += font_data_offset;
-    }
-}
 
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                FONT_STYLE font, int colour, float depth) {
@@ -3709,35 +3668,33 @@ void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
     }
 }
 
-int surface_text_height(FONT_STYLE font) {
-    switch (font) {
-    case 0:
-        return 12;
-    case 1:
-        return 14;
-    case 2:
-        return 14;
-    case 3:
-        return 15;
-    case 4:
-        return 15;
-    case 5:
-        return 19;
-    case 6:
-        return 24;
-    case 7:
-        return 29;
-    default:
-        return surface_text_height_font(font);
-    }
-}
-
 int surface_text_height_font(FONT_STYLE font) {
     if (font == 0) {
         return game_fonts[font][8] - 2;
     }
 
     return game_fonts[font][8] - 1;
+}
+
+int surface_text_height(FONT_STYLE font) {
+    switch (font) {
+    case FONT_REGULAR_11:
+        return 12;
+    case FONT_BOLD_12:
+    case FONT_REGULAR_12:
+        return 14;
+    case FONT_BOLD_13:
+    case FONT_BOLD_14:
+        return 15;
+    case FONT_BOLD_16:
+        return 19;
+    case FONT_BOLD_20:
+        return 24;
+    case FONT_BOLD_24:
+        return 29;
+    default:
+        return surface_text_height_font(font);
+    }
 }
 
 int surface_text_width(char *text, FONT_STYLE font) {
