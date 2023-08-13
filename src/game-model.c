@@ -1699,7 +1699,7 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
     game_model_get_vertex_ebo_lengths(game_models, game_models_length,
                                       &vertex_offset, &ebo_offset);
 
-    printf("deleting %d %ld\n", *vertex_buffers_length, linearSpaceFree());
+    //printf("deleting %d %ld\n", *vertex_buffers_length, linearSpaceFree());
 
     for (int i = 0; i < *vertex_buffers_length; i++) {
         vertex_buffer_gl_destroy((*vertex_buffers)[i]);

@@ -623,7 +623,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
 void mudclient_draw_login_screens(mudclient *mud) {
 #ifdef RENDER_3DS_GL
-    mudclient_3ds_gl_frame_start(mud);
+    mudclient_3ds_gl_frame_start(mud, 1);
 #endif
 
     mud->welcome_screen_already_shown = 0;

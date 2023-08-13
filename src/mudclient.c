@@ -214,13 +214,18 @@ void _3ds_keyboard_thread_callback(void *arg) {
 }
 
 #ifdef RENDER_3DS_GL
-void mudclient_3ds_gl_frame_start(mudclient *mud) {
+void mudclient_3ds_gl_frame_start(mudclient *mud, int clear) {
     /* crashes on console, faster on citra */
-    //C3D_FrameBegin(C3D_FRAME_NONBLOCK);
+    // C3D_FrameBegin(C3D_FRAME_NONBLOCK);
 
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
-    C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK, 0);
+    // TODO this can probably go into surface_black_screen
+    if (clear) {
+        C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK,
+                              0);
+    }
+
     C3D_FrameDrawOn(mud->_3ds_gl_render_target);
 }
 
@@ -692,11 +697,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
     wave_buf[0].data_vaddr = &audio_buffer[0];
     wave_buf[0].nsamples = SAMPLE_BUFFER_SIZE;
 
-    //wave_buf[1].data_vaddr = &audio_buffer[SAMPLE_BUFFER_SIZE];
-    //wave_buf[1].nsamples = SAMPLE_BUFFER_SIZE;
+    // wave_buf[1].data_vaddr = &audio_buffer[SAMPLE_BUFFER_SIZE];
+    // wave_buf[1].nsamples = SAMPLE_BUFFER_SIZE;
 
     ndspChnWaveBufAdd(0, &wave_buf[0]);
-    //ndspChnWaveBufAdd(0, &wave_buf[1]);
+    // ndspChnWaveBufAdd(0, &wave_buf[1]);
 
     HIDUSER_EnableGyroscope();
 #else
@@ -799,8 +804,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     mud->_3ds_gl_render_target =
         C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
-        //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
-        //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+    // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
+    // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+
+    mud->_3ds_gl_offscreen_render_target =
+        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA5551, GPU_RB_DEPTH16);
 
     C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target, GFX_BOTTOM, GFX_LEFT,
                               DISPLAY_TRANSFER_FLAGS);
@@ -1298,7 +1306,7 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
         surface_gl_reset_context(mud->surface);
     }
 #elif defined(RENDER_3DS_GL)
-    mudclient_3ds_gl_frame_start(mud);
+    mudclient_3ds_gl_frame_start(mud, 1);
     surface_draw(mud->surface);
     mudclient_3ds_gl_frame_end();
 #else
@@ -2015,7 +2023,7 @@ void mudclient_reset_game(mudclient *mud) {
     // surface_3ds_gl_reset_context(mud->surface);
 
 #ifdef RENDER_3DS_GL
-    mudclient_3ds_gl_frame_start(mud);
+    mudclient_3ds_gl_frame_start(mud, 1);
     surface_draw(mud->surface);
     mudclient_3ds_gl_frame_end();
 #else
@@ -2789,7 +2797,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     mudclient_draw_chat_message_tabs(mud);
 
 #if defined(RENDER_3DS_GL)
-    mudclient_3ds_gl_frame_start(mud);
+    mudclient_3ds_gl_frame_start(mud, 0);
     surface_draw(mud->surface);
     mudclient_3ds_gl_frame_end();
 #else
@@ -3416,7 +3424,7 @@ void mudclient_handle_game_input(mudclient *mud) {
     int offset_x = 0;
 
 #ifdef _3DS
-    //offset_x = 40;
+    // offset_x = 40;
 #endif
 
     scene_set_mouse_location(mud->scene, mud->mouse_x + offset_x, mud->mouse_y);
@@ -3785,7 +3793,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 #endif
 
     for (int i = 0; i < ANIMATION_COUNT; i++) {
-        ANIMATION_INDEX animation_index = character_animation_array[animation_order][i];
+        ANIMATION_INDEX animation_index =
+            character_animation_array[animation_order][i];
 
         int animation_id = player->animations[animation_index] - 1;
 
@@ -3804,37 +3813,43 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         if (flip && i2 >= 1 && i2 <= 3) {
             if (game_data_animation_has_f[animation_id] == 1) {
                 j5 += 15;
-            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND && i2 == 1) {
+            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND &&
+                       i2 == 1) {
                 offset_x = -22;
                 offset_y = -3;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND && i2 == 2) {
+            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND &&
+                       i2 == 2) {
                 offset_x = 0;
                 offset_y = -8;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND && i2 == 3) {
+            } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND &&
+                       i2 == 3) {
                 offset_x = 26;
                 offset_y = -5;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND && i2 == 1) {
+            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND &&
+                       i2 == 1) {
                 offset_x = 22;
                 offset_y = 3;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND && i2 == 2) {
+            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND &&
+                       i2 == 2) {
                 offset_x = 0;
                 offset_y = 8;
 
                 j5 = i2 * 3 +
                      character_walk_model[(2 + (player->step_count / 6)) % 4];
-            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND && i2 == 3) {
+            } else if (animation_index == ANIMATION_INDEX_LEFT_HAND &&
+                       i2 == 3) {
                 offset_x = -26;
                 offset_y = 5;
 
@@ -4513,7 +4528,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
 
 void mudclient_draw_game(mudclient *mud) {
 #ifdef RENDER_3DS_GL
-    mudclient_3ds_gl_frame_start(mud);
+    mudclient_3ds_gl_frame_start(mud, 1);
 #endif
 
     if (mud->death_screen_timeout != 0) {
@@ -5299,7 +5314,7 @@ void mudclient_3ds_flush_audio(mudclient *mud) {
 
         ndspChnWaveBufAdd(0, &wave_buf[fill_block]);
 
-        //fill_block = !fill_block;
+        // fill_block = !fill_block;
     }
 }
 

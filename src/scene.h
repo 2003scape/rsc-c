@@ -68,6 +68,17 @@ extern int scene_frustum_near_z;
 extern int64_t scene_texture_count_loaded;
 
 #if defined(RENDER_GL) || defined (RENDER_3DS_GL)
+typedef enum {
+    /* no picking */
+    GL_PICK_STEP_NONE = 0,
+
+    /* pick after next render */
+    GL_PICK_STEP_SAMPLE = 1,
+
+    /* finished picking */
+    GL_PICK_STEP_FINISHED = 2
+} GL_PICK_STEP;
+
 typedef struct GlModelTime {
     GameModel *game_model;
     float time;
@@ -170,9 +181,7 @@ typedef struct Scene {
     /* are we picking a terrain model? */
     int gl_terrain_walkable;
 
-    /* 0 = no picking, 1 = pick after next render, 2 = finished picking */
-    // TODO enum
-    int gl_terrain_pick_step;
+    GL_PICK_STEP gl_terrain_pick_step;
 
     /* local_x and local_y for walk_to function */
     int gl_terrain_pick_x;

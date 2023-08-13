@@ -1097,7 +1097,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     }*/
 #endif
 
-//#ifdef RENDER_SW
+    //#ifdef RENDER_SW
     int *vertices = calloc(2, sizeof(int));
 
     vertices[0] = game_model_create_vertex(scene->view, x, y, z);
@@ -1107,7 +1107,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
     scene->view->face_tag[scene->sprite_count] = tag;
     scene->view->is_local_player[scene->sprite_count++] = 0;
-//#endif
+    //#endif
 
     return scene->sprite_count - 1;
 }
@@ -2855,7 +2855,7 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     roll &= 1023;
 
     // TODO remove
-    //roll = 0;
+    // roll = 0;
 
     scene->camera_yaw = (1024 - yaw) & 1023;
     scene->camera_pitch = (1024 - pitch) & 1023;
@@ -3512,7 +3512,7 @@ int scene_get_fill_colour(Scene *scene, int face_fill) {
     if (face_fill >= 0) {
         return scene->texture_pixels[face_fill][0];
     }
-#elif defined (RENDER_3DS_GL)
+#elif defined(RENDER_3DS_GL)
     if (face_fill >= 0) {
         gl_atlas_position atlas_position =
             gl_texture_atlas_positions[face_fill];
@@ -4381,7 +4381,7 @@ void scene_gl_render(Scene *scene) {
 #ifndef RENDER_SW
 #ifdef EMSCRIPTEN
     /* webgl does not support depth buffer reading :( */
-    if (scene->gl_terrain_pick_step == 1) {
+    if (scene->gl_terrain_pick_step == GL_PICK_STEP_SAMPLE) {
         GameModel *terrain_picked[4] = {0};
         int terrain_picked_length = 0;
 
@@ -4438,7 +4438,7 @@ void scene_gl_render(Scene *scene) {
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        scene->gl_terrain_pick_step = 2;
+        scene->gl_terrain_pick_step = GL_PICK_STEP_FINISHED;
         scene->gl_pick_face_tag = (pick_colour[1] << 8) + pick_colour[0];
 
         shader_use(&scene->game_model_shader);
@@ -4457,11 +4457,12 @@ void scene_gl_render(Scene *scene) {
         }
     }
 
-    if (scene->gl_terrain_pick_step == 1) {
+    if (scene->gl_terrain_pick_step == GL_PICK_STEP_SAMPLE) {
         int mouse_x = scene->mouse_x + (scene->surface->width / 2);
         int mouse_y = scene->surface->height - scene->mouse_y;
 
         /* we discard every even row, so there's no depth data either */
+        // TODO probably remove this? i don't think interlace works on gl
         if (scene->interlace && mouse_y % 2 == 0) {
             mouse_y -= 1;
         }
@@ -4477,7 +4478,7 @@ void scene_gl_render(Scene *scene) {
         glm_unproject(position, scene->gl_projection_view, bounds,
                       scene->gl_mouse_world);
 
-        scene->gl_terrain_pick_step = 2;
+        scene->gl_terrain_pick_step = GL_PICK_STEP_FINISHED;
 
         scene->gl_terrain_pick_x =
             FLOAT_TO_VERTEX(scene->gl_mouse_world[0]) / MAGIC_LOC;
@@ -4584,14 +4585,13 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                            (float)game_model->light_direction_magnitude) /
                           256.0f;
 
-    //float fog_z_distance = (float)scene->fog_z_distance / 100.0f;
-    //float fog_z_distance = global_farts_test;
+    // float fog_z_distance = (float)scene->fog_z_distance / 100.0f;
+    // float fog_z_distance = global_farts_test;
     float fog_z_distance = (float)scene->fog_z_distance / -1000000.0f;
 
-    C3D_FVUnifSet(GPU_VERTEX_SHADER,
-                  scene->_3ds_gl_light_ambience_diffuse_fog_uniform,
-                  (float)game_model->light_ambience, light_diffuse,
-                  fog_z_distance, 0);
+    C3D_FVUnifSet(
+        GPU_VERTEX_SHADER, scene->_3ds_gl_light_ambience_diffuse_fog_uniform,
+        (float)game_model->light_ambience, light_diffuse, fog_z_distance, 0);
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_unlit_uniform,
                     game_model->unlit);
@@ -4609,10 +4609,9 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                      game_model->gl_buffer->ebo +
                          (game_model->gl_ebo_offset * sizeof(uint16_t)));
 
-    C3D_FVUnifSet(GPU_VERTEX_SHADER,
-                  scene->_3ds_gl_light_ambience_diffuse_fog_uniform,
-                  (float)game_model->light_ambience, light_diffuse,
-                    fog_z_distance, 0);
+    C3D_FVUnifSet(
+        GPU_VERTEX_SHADER, scene->_3ds_gl_light_ambience_diffuse_fog_uniform,
+        (float)game_model->light_ambience, light_diffuse, fog_z_distance, 0);
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_unlit_uniform,
                     game_model->unlit);
@@ -4677,26 +4676,27 @@ void scene_3ds_gl_render(Scene *scene) {
     vec3 ray_end = {0};
     glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
 
-    /* draw the terrain first for potential mouse picking, since we can click
-     * through the unpickable models */
-    for (int i = 0; i < scene->model_count; i++) {
-        GameModel *game_model = scene->models[i];
+    if (scene->gl_terrain_pick_step == GL_PICK_STEP_SAMPLE) {
+        C3D_FrameDrawOn(scene->surface->mud->_3ds_gl_offscreen_render_target);
 
-        if (game_model->autocommit && !game_model->unpickable) {
-            scene_3ds_gl_draw_game_model(scene, game_model);
-            game_model->gl_invisible = 1;
+        /* draw the terrain first for potential mouse picking, since we can
+         * click through the unpickable models */
+        for (int i = 0; i < scene->model_count; i++) {
+            GameModel *game_model = scene->models[i];
+
+            if (game_model->autocommit && !game_model->unpickable) {
+                scene_3ds_gl_draw_game_model(scene, game_model);
+            }
         }
-    }
 
-    if (scene->gl_terrain_pick_step == 1) {
         int mouse_x = scene->mouse_x + (scene->surface->width / 2);
         int mouse_y = scene->surface->height - scene->mouse_y;
 
         float mouse_z = 0;
 
         uint16_t *depth_buf =
-            (uint16_t *)(scene->surface->mud->_3ds_gl_render_target->frameBuf
-                             .depthBuf);
+            (uint16_t *)(scene->surface->mud->_3ds_gl_offscreen_render_target
+                             ->frameBuf.depthBuf);
 
         int fb_index = _3ds_gl_translate_framebuffer_index(
             (scene->mouse_y * 320) + mouse_x);
@@ -4720,9 +4720,14 @@ void scene_3ds_gl_render(Scene *scene) {
 
         scene->gl_terrain_pick_y =
             FLOAT_TO_VERTEX(scene->gl_mouse_world[2]) / MAGIC_LOC;
+
+        C3D_RenderTargetClear(
+            scene->surface->mud->_3ds_gl_offscreen_render_target, C3D_CLEAR_ALL,
+            BLACK, 0);
+
+        C3D_FrameDrawOn(scene->surface->mud->_3ds_gl_render_target);
     }
 
-    // TODO don't bother doing this unless unless click on 3ds
     for (int i = 0; i < scene->model_count; i++) {
         GameModel *game_model = scene->models[i];
 

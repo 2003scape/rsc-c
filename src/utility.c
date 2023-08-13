@@ -713,7 +713,7 @@ uint16_t _3ds_gl_rgb32_to_rgba5551(int colour32) {
     uint8_t g5 = (g >> 3) & 0x1F;
     uint8_t b5 = (b >> 3) & 0x1F;
 
-    // pack the channels into the 16-bit colour format with alpha bit
+    /* pack the channels into the 16-bit value with alpha bit */
     return (r5 << 11) | (g5 << 6) | (b5 << 1) | 0x01;
 }
 
@@ -723,7 +723,7 @@ int _3ds_gl_rgba5551_to_rgb32(uint16_t colour16) {
     uint8_t g5 = (colour16 >> 6) & 0x1F;
     uint8_t b5 = (colour16 >> 1) & 0x1F;
 
-    /* expand each channel to 8 bits */
+    /* convert each channel to 8 bits */
     uint8_t r8 = (r5 << 3) | (r5 >> 2);
     uint8_t g8 = (g5 << 3) | (g5 >> 2);
     uint8_t b8 = (b5 << 3) | (b5 >> 2);

@@ -898,7 +898,9 @@ void surface_gl_draw(Surface *surface) {
             continue;
         }
 
-        // C3D_SetScissor
+        C3D_SetScissor(GPU_SCISSOR_NORMAL, 240 - context->max_y,
+                       320 - context->max_x, 240 - context->min_y,
+                       320 - context->min_x);
 
         C3D_TexBind(0, context->texture);
         C3D_TexBind(1, context->base_texture);

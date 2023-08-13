@@ -222,8 +222,8 @@ void world_map_set_pixel(World *world, int x, int y, int colour) {
     uint16_t *data = (uint16_t *)world->surface->gl_sprite_texture.data;
 
     int offset =
-        _3ds_gl_translate_texture_index(x + GL_SPRITE_MINIMAP_OFFSET_X,
-                                        y + GL_SPRITE_MINIMAP_OFFSET_Y, 1024) /
+        _3ds_gl_translate_texture_index(y + GL_SPRITE_MINIMAP_OFFSET_X,
+                                        x + GL_SPRITE_MINIMAP_OFFSET_Y, 1024) /
         2;
 
     data[offset] = _3ds_gl_rgb32_to_rgba5551(colour);
@@ -250,7 +250,6 @@ void world_map_line_vertical(World *world, int x, int y, int height,
         world_map_set_pixel(world, x, y + i, colour);
     }
 #endif
-
 }
 
 void world_draw_map_tile(World *world, int x, int y, int direction,

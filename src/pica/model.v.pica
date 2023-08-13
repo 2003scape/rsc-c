@@ -113,7 +113,6 @@
     cmp light_ambience_diffuse_fog.zzzz, lt, lt, r7.zzzz
 
     ifc cmp.x
-        ;mov r1, base_const.yxyy
         mov r2, farts
     .end
 
