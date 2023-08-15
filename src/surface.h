@@ -94,6 +94,7 @@ extern gl_atlas_position gl_transparent_atlas_position;
 
 extern gl_atlas_position test_atlas_position;
 extern gl_atlas_position test2_atlas_position;
+extern gl_atlas_position test3_atlas_position;
 
 #define GL_SPRITE_MINIMAP_OFFSET_X 0
 #define GL_SPRITE_MINIMAP_OFFSET_Y (1024 - MINIMAP_SPRITE_HEIGHT - 3)

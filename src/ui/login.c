@@ -437,7 +437,7 @@ void mudclient_reset_login_screen(mudclient *mud) {
 }
 
 void mudclient_render_login_scene_sprites(mudclient *mud) {
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int old_fov = mud->options->field_of_view;
     mud->options->field_of_view = 0;
     mudclient_update_fov(mud);
@@ -452,6 +452,10 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     world_add_models(mud->world, mud->game_models);
 
+#ifdef RENDER_3DS_GL
+    world_gl_buffer_world_models(mud->world);
+#endif
+
     int x = 9728;
     int y = 6400;
     int zoom = 1100;
@@ -461,7 +465,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     mud->scene->clip_far_2d = 4100;
     mud->scene->fog_z_distance = 4000;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     /* clear the previous buffer */
     surface_gl_reset_context(mud->surface);
 #endif
@@ -471,9 +475,17 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifndef RENDER_3DS_GL
-    scene_render(mud->scene);
+#ifdef RENDER_3DS_GL
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
+    C3D_RenderTargetClear(mud->_3ds_gl_offscreen_render_target, C3D_CLEAR_ALL,
+                          BLACK, 0);
+
+    C3D_FrameDrawOn(mud->_3ds_gl_offscreen_render_target);
+    //mudclient_3ds_gl_frame_start(mud, 1);
 #endif
+
+    scene_render(mud->scene);
 
     int background_height = (int)((200 / 512.0f) * (float)(MUD_WIDTH));
 
@@ -493,12 +505,20 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
         mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
-    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
-                                    mud->surface->width, background_height);
-
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_gl_draw(mud->surface);
 #endif
+
+#ifdef RENDER_3DS_GL
+    // TODO for some reason this produces wonky results on real hardware if it's
+    // called before surface_screen_raster_to_sprite
+    C3D_FrameEnd(0);
+#endif
+
+    delay_ticks(1000);
+
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
+                                    mud->surface->width, background_height);
 
 #ifndef RENDER_3DS_GL
     surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo);
@@ -615,7 +635,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     mud->scene->model_count = 0;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     mud->options->field_of_view = old_fov;
     mudclient_update_fov(mud);
 #endif
@@ -641,6 +661,13 @@ void mudclient_draw_login_screens(mudclient *mud) {
                           mud->login_screen <= LOGIN_STAGE_REGISTER;
     }
 
+    int offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
+    int offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
+
+    surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
+                        mud->sprite_logo);
+
+#if 0
     if (show_background) {
         int offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
         int offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
@@ -698,6 +725,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
             }
         }
     }
+#endif
 
     switch (mud->login_screen) {
     case LOGIN_STAGE_WELCOME:

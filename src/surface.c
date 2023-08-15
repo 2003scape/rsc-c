@@ -25,6 +25,12 @@ gl_atlas_position test2_atlas_position = {
     .top_v = (float)GL_SPRITE_MINIMAP_OFFSET_Y / GL_TEXTURE_SIZE,
     .bottom_v = (float)(GL_SPRITE_MINIMAP_OFFSET_Y + MINIMAP_SPRITE_HEIGHT) /
                 GL_TEXTURE_SIZE};
+
+gl_atlas_position test3_atlas_position = {
+    .left_u = (float)MINIMAP_SPRITE_WIDTH / GL_TEXTURE_SIZE,
+    .right_u = (float)(MINIMAP_SPRITE_WIDTH + 320) / GL_TEXTURE_SIZE,
+    .top_v = (GL_TEXTURE_SIZE - 125.0f) / GL_TEXTURE_SIZE,
+    .bottom_v = GL_TEXTURE_SIZE / GL_TEXTURE_SIZE};
 #endif
 
 int an_int_346 = 0;
@@ -507,8 +513,11 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     gl_atlas_position atlas_position = gl_transparent_atlas_position;
     gl_atlas_position base_atlas_position = gl_transparent_atlas_position;
 
-    if (sprite_id == surface->mud->sprite_media - 1) {
+    if (sprite_id == surface->mud->sprite_logo) {
         texture = &surface->gl_sprite_texture;
+        atlas_position = test3_atlas_position;
+    } else if (sprite_id == surface->mud->sprite_media - 1) {
+        //texture = &surface->gl_sprite_texture;
         atlas_position = test2_atlas_position;
     } else if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
         gl_entity_texture texture_position =
@@ -546,7 +555,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         base_atlas_position = gl_media_base_atlas_positions[atlas_index];
     } else if (sprite_id == surface->mud->sprite_texture + 1) {
 #ifdef RENDER_3DS_GL
-        texture = &surface->gl_sprite_texture;
+        //texture = &surface->gl_sprite_texture;
         atlas_position = test_atlas_position;
 #else
         return;
@@ -1792,7 +1801,6 @@ void surface_load_sprite(Surface *surface, int sprite_id) {
 
 void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
                                      int y, int width, int height) {
-#if defined(RENDER_GL) || defined(RENDER_SW)
     surface->sprite_width[sprite_id] = width;
     surface->sprite_height[sprite_id] = height;
     surface->sprite_translate[sprite_id] = 0;
@@ -1801,16 +1809,17 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
     surface->sprite_width_full[sprite_id] = width;
     surface->sprite_height_full[sprite_id] = height;
 
+#if defined(RENDER_GL) || defined(RENDER_SW)
     free(surface->surface_pixels[sprite_id]);
 
     surface->surface_pixels[sprite_id] =
         calloc(width * height, sizeof(int32_t));
 
-    int pixel = 0;
+    int pixel_index = 0;
 
     for (int yy = y; yy < y + height; yy++) {
         for (int xx = x; xx < x + width; xx++) {
-            surface->surface_pixels[sprite_id][pixel++] =
+            surface->surface_pixels[sprite_id][pixel_index++] =
                 surface->pixels[xx + yy * surface->width];
         }
     }
@@ -1820,6 +1829,32 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
 
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
+#elif defined(RENDER_3DS_GL)
+    if (sprite_id == surface->mud->sprite_logo) {
+        uint16_t *colour_buf =
+            (uint16_t *)(surface->mud->_3ds_gl_offscreen_render_target->frameBuf
+                             .colorBuf);
+
+        uint16_t *data = (uint16_t *)surface->gl_sprite_texture.data;
+
+        int offset_x = 285;
+        int offset_y = 1024 - 125;
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int framebuffer_offset =
+                    _3ds_gl_translate_framebuffer_index((y * 320) + x);
+
+                int texture_offset = _3ds_gl_translate_texture_index(
+                                         x + offset_x, y + offset_y, 1024) /
+                                     sizeof(uint16_t);
+
+                data[texture_offset] = colour_buf[framebuffer_offset];
+                //data[texture_offset] = _3ds_gl_rgb32_to_rgba5551(colour_buf[framebuffer_offset]);
+                //data[texture_offset] = 65535;
+            }
+        }
+    }
 #endif
 }
 

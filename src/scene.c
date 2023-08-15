@@ -4749,11 +4749,7 @@ void scene_3ds_gl_render(Scene *scene) {
             }
         }
 
-        if (!game_model->gl_invisible) {
-            scene_3ds_gl_draw_game_model(scene, game_model);
-        }
-
-        game_model->gl_invisible = 0;
+        scene_3ds_gl_draw_game_model(scene, game_model);
     }
 
     qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,

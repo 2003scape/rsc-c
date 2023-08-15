@@ -477,7 +477,7 @@ void delay_ticks(int ticks) {
 #endif
 
 #ifdef _3DS
-    svcSleepThread(ticks * 1000);
+    svcSleepThread((s64)ticks * (s64)1000000);
     /*int end = get_ticks() + ticks;
 
     while (get_ticks() != end)
