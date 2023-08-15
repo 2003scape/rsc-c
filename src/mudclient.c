@@ -4748,6 +4748,8 @@ void mudclient_draw_game(mudclient *mud) {
 
     mudclient_draw_chat_message_tabs(mud);
 
+    surface_draw_blur(mud->surface, 6, 0, 0, mud->surface->width, mud->surface->height);
+
     surface_draw(mud->surface);
 
 #if defined(_3DS) && defined(RENDER_SW)

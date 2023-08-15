@@ -510,15 +510,18 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 #endif
 
 #ifdef RENDER_3DS_GL
-    // TODO for some reason this produces wonky results on real hardware if it's
-    // called before surface_screen_raster_to_sprite
     C3D_FrameEnd(0);
-#endif
 
+    /* stupid hack but it works */
     delay_ticks(1000);
+#endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
                                     mud->surface->width, background_height);
+
+#ifdef RENDER_3DS_GL
+    surface_3ds_gl_blur_texture(mud->surface, mud->sprite_logo, 8, 0, 0, 25);
+#endif
 
 #ifndef RENDER_3DS_GL
     surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo);

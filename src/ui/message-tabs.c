@@ -26,7 +26,6 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
 }
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
-    return;
     int x = 0;
     int y = mud->surface->height - 16;
 

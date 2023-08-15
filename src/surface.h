@@ -285,9 +285,9 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour);
 void surface_fade_to_black_software(Surface *surface, int32_t *dest,
                                     int add_alpha);
 void surface_fade_to_black(Surface *surface);
-void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
+void surface_draw_blur_software(Surface *surface, int32_t *dest, int blur_height, int x,
                                 int y, int width, int height, int add_alpha);
-void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
+void surface_draw_blur(Surface *surface, int blur_height, int x, int y, int width,
                        int height);
 void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
@@ -416,4 +416,8 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour);
+#ifdef RENDER_3DS_GL
+void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
+                                 int blur_height, int x, int y, int height);
+#endif
 #endif

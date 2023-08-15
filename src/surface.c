@@ -517,7 +517,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         texture = &surface->gl_sprite_texture;
         atlas_position = test3_atlas_position;
     } else if (sprite_id == surface->mud->sprite_media - 1) {
-        //texture = &surface->gl_sprite_texture;
+        // texture = &surface->gl_sprite_texture;
         atlas_position = test2_atlas_position;
     } else if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
         gl_entity_texture texture_position =
@@ -555,7 +555,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         base_atlas_position = gl_media_base_atlas_positions[atlas_index];
     } else if (sprite_id == surface->mud->sprite_texture + 1) {
 #ifdef RENDER_3DS_GL
-        //texture = &surface->gl_sprite_texture;
+        // texture = &surface->gl_sprite_texture;
         atlas_position = test_atlas_position;
 #else
         return;
@@ -1406,8 +1406,9 @@ void surface_fade_to_black(Surface *surface) {
 #endif
 }
 
-void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
-                                int y, int width, int height, int add_alpha) {
+void surface_draw_blur_software(Surface *surface, int32_t *dest,
+                                int blur_height, int x, int y, int width,
+                                int height, int add_alpha) {
     for (int xx = x; xx < x + width; xx++) {
         for (int yy = y; yy < y + height; yy++) {
             int r = 0;
@@ -1415,11 +1416,12 @@ void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
             int b = 0;
             int a = 0;
 
-            for (int i2 = xx; i2 <= xx; i2++) {
-                if (i2 >= 0 && i2 < surface->width) {
-                    for (int j2 = yy - j; j2 <= yy + j; j2++) {
-                        if (j2 >= 0 && j2 < surface->height) {
-                            int32_t pixel = dest[i2 + surface->width * j2];
+            for (int x2 = xx; x2 <= xx; x2++) {
+                if (x2 >= 0 && x2 < surface->width) {
+                    for (int y2 = yy - blur_height; y2 <= yy + blur_height;
+                         y2++) {
+                        if (y2 >= 0 && y2 < surface->height) {
+                            int32_t pixel = dest[x2 + surface->width * y2];
 
                             r += (pixel >> 16) & 0xff;
                             g += (pixel >> 8) & 0xff;
@@ -1437,11 +1439,11 @@ void surface_draw_blur_software(Surface *surface, int32_t *dest, int j, int x,
     }
 }
 
-void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
-                       int height) {
+void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
+                       int width, int height) {
 #ifdef RENDER_SW
-    surface_draw_blur_software(surface, surface->pixels, j, x, y, width, height,
-                               1);
+    surface_draw_blur_software(surface, surface->pixels, blur_height, x, y,
+                               width, height, 1);
 #elif defined(RENDER_GL)
     surface_gl_draw(surface);
 
@@ -1457,15 +1459,17 @@ void surface_draw_blur(Surface *surface, int j, int x, int y, int width,
 }
 
 void surface_apply_login_filter(Surface *surface, int background_height) {
-    surface_fade_to_black(surface);
+    //surface_fade_to_black(surface);
 
 #ifdef RENDER_GL
     surface_gl_draw(surface);
 #endif
 
-    surface_fade_to_black(surface);
+    surface_draw_blur(surface, 8, 0, 0, surface->width, 25);
 
-    surface_draw_box(surface, 0, 0, surface->width, 6, BLACK);
+    //surface_fade_to_black(surface);
+
+    /*surface_draw_box(surface, 0, 0, surface->width, 6, BLACK);
 
     for (int i = 6; i >= 1; i--) {
         surface_draw_blur(surface, i, 0, i, surface->width, 8);
@@ -1477,7 +1481,7 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
     for (int i = 6; i >= 1; i--) {
         surface_draw_blur(surface, i, 0, background_height - 6 - i,
                           surface->width, 8);
-    }
+    }*/
 }
 
 // TODO remove this
@@ -1850,8 +1854,6 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
                                      sizeof(uint16_t);
 
                 data[texture_offset] = colour_buf[framebuffer_offset];
-                //data[texture_offset] = _3ds_gl_rgb32_to_rgba5551(colour_buf[framebuffer_offset]);
-                //data[texture_offset] = 65535;
             }
         }
     }
@@ -3923,3 +3925,45 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
     surface_draw_string_centre(surface, formatted_status, x + (width / 2),
                                y + 12, 0, WHITE);
 }
+
+#ifdef RENDER_3DS_GL
+void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
+                                 int blur_height, int x, int y, int height) {
+    int width = 320;
+
+    uint16_t *data = (uint16_t *)surface->gl_sprite_texture.data;
+
+    int offset_x = 285;
+    int offset_y = 1024 - 125;
+
+    for (int xx = x; xx < x + width; xx++) {
+        for (int yy = y; yy < y + height; yy++) {
+            int r = 0;
+            int g = 0;
+            int b = 0;
+            int a = 0;
+
+            for (int x2 = xx; x2 <= xx; x2++) {
+                if (x2 >= 0 && x2 < surface->width) {
+                    for (int y2 = yy - blur_height; y2 <= yy + blur_height;
+                         y2++) {
+                        if (y2 >= 0 && y2 < surface->height) {
+                            int32_t pixel = _3ds_gl_rgba5551_to_rgb32(
+                                data[_3ds_gl_translate_texture_index(
+                                    x2 + offset_x, y2 + offset_y, 1024) / 2]);
+
+                            r += (pixel >> 16) & 0xff;
+                            g += (pixel >> 8) & 0xff;
+                            b += pixel & 0xff;
+                            a++;
+                        }
+                    }
+                }
+            }
+
+            data[_3ds_gl_translate_texture_index(xx + offset_x, yy + offset_y, 1024) / 2] =
+                _3ds_gl_rgb32_to_rgba5551(((r / a) << 16) + ((g / a) << 8) + (b / a));
+        }
+    }
+}
+#endif
