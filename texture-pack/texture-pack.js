@@ -6,11 +6,33 @@ import url from 'url';
 import { Config } from '@2003scape/rsc-config';
 import { EntitySprites, MediaSprites, Textures } from '@2003scape/rsc-sprites';
 import { Fonts } from '@2003scape/rsc-fonts';
+import { JagArchive } from '@2003scape/rsc-archiver';
 import { MaxRectsPacker } from 'maxrects-packer';
 import { createCanvas, createImageData } from 'canvas';
 import { cssColor, hex2rgb, rgb2hex } from '@swiftcarrot/color-fns';
 
+global.document = {
+    createElement() {
+        return {
+            getContext() {
+                return { createImageData };
+            }
+        };
+    }
+}
+
+import TgaLoader from 'tga-js';
+
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+
+const SLEEP_WIDTH = 255;
+const SLEEP_HEIGHT = 40;
+
+const LOGIN_WIDTH = 320;
+const LOGIN_HEIGHT = 125;
+
+const MAP_WIDTH = 285;
+const MAP_HEIGHT = MAP_WIDTH;
 
 // TODO get the order correct in rsc-sprites
 const ANIMATIONS = [
@@ -157,6 +179,20 @@ await textures.init();
 
 textures.loadArchive(await fs.readFile(`${cacheDirectory}/textures17.jag`));
 
+const jag = new JagArchive();
+await jag.init();
+
+jag.readArchive(await fs.readFile(`${cacheDirectory}/jagex.jag`));
+
+const tga = new TgaLoader();
+
+tga.load(jag.getEntry('logo.tga'));
+
+const jagexCanvas = createCanvas(tga.header.width, tga.header.height);
+const jagexContext = jagexCanvas.getContext('2d')
+
+jagexContext.putImageData(tga.getImageData(), 0, 0);
+
 // used to determine duplicates
 function getHash(image) {
     const { width, height } = image;
@@ -228,13 +264,13 @@ async function writeAtlasC(name, members) {
         ...Object.entries(members).map(([memberName, positions]) => {
             const isArray = positions.length > 1;
 
-            const prefix = `${memberName} = ${isArray ? '{': ''}\n`;
+            const prefix = `${memberName} = ${isArray ? '{' : ''}\n`;
             const suffix = `${isArray ? '\n}' : ''};\n`;
 
             positions = positions.map(toAtlasStructC).join('\n');
 
             if (!isArray) {
-                positions = positions.replace('},','}');
+                positions = positions.replace('},', '}');
             }
 
             return prefix + positions + suffix;
@@ -261,6 +297,7 @@ function createCircle() {
 
 function drawCharacter(canvas, bitmap, colour, xOffset, yOffset) {
     const context = canvas.getContext('2d');
+
     context.fillStyle = colour;
 
     for (let y = 0; y < bitmap.length; y++) {
@@ -391,7 +428,7 @@ function packSpritesToCanvas(sprites) {
                 x,
                 y,
                 width,
-                height: height,
+                height,
                 canvasIndex
             };
 
@@ -406,7 +443,7 @@ function packSpritesToCanvas(sprites) {
                     x,
                     y,
                     width,
-                    height: height,
+                    height,
                     canvasIndex
                 };
             }
@@ -487,13 +524,7 @@ async function packMedia() {
 
             drawCharacter(canvas, bitmap, '#fff', 0, 0);
 
-            sprites.push({
-                type: `glyph-${i}`,
-                index,
-                width,
-                height,
-                canvas
-            });
+            sprites.push({ type: `glyph-${i}`, index, width, height, canvas });
 
             const shadowCanvas = createCanvas(width + 1, height + 1);
 
@@ -521,6 +552,42 @@ async function packMedia() {
         canvas: createCircle()
     });
 
+    const loginCanvas = createCanvas(LOGIN_WIDTH, LOGIN_HEIGHT);
+
+    for (let i = 0; i < 3; i++) {
+        sprites.push({
+            type: 'login',
+            index: i,
+            width: LOGIN_WIDTH,
+            height: LOGIN_HEIGHT,
+            canvas: loginCanvas
+        });
+    }
+
+    sprites.push({
+        type: 'map',
+        index: 0,
+        width: MAP_WIDTH,
+        height: MAP_WIDTH,
+        canvas: createCanvas(MAP_WIDTH, MAP_HEIGHT)
+    });
+
+    sprites.push({
+        type: 'sleep',
+        index: 0,
+        width: SLEEP_WIDTH,
+        height: SLEEP_HEIGHT,
+        canvas: createCanvas(SLEEP_WIDTH, SLEEP_HEIGHT)
+    });
+
+    sprites.push({
+        type: 'logo',
+        index: 0,
+        width: jagexCanvas.width,
+        height: jagexCanvas.height,
+        canvas: jagexCanvas
+    });
+
     const { positions, canvases } = packSpritesToCanvas(sprites);
 
     positions.grey.length = mediaSprites.idSprites.length;
@@ -545,7 +612,11 @@ async function packMedia() {
     const members = {
         'gl_atlas_position gl_media_atlas_positions[]': greyPositions,
         'gl_atlas_position gl_media_base_atlas_positions[]': colouredPositions,
-        'gl_atlas_position gl_circle_atlas_position': positions.circle
+        'gl_atlas_position gl_logo_atlas_position': positions.logo,
+        'gl_atlas_position gl_login_atlas_positions[]': positions.login,
+        'gl_atlas_position gl_map_atlas_position': positions.map,
+        'gl_atlas_position gl_circle_atlas_position': positions.circle,
+        'gl_atlas_position gl_sleep_atlas_position': positions.sleep
     };
 
     await writeHeaderC('media', Object.keys(members));
@@ -595,8 +666,6 @@ async function packMedia() {
     context.fillStyle = '#fff';
     context.fillRect(0, TEXTURE_SIZE - 1, 2, 1);
 
-    // TODO circle
-
     await fs.writeFile(
         `${texturesDirectory}/sprites.png`,
         canvases[0].toBuffer()
@@ -638,6 +707,7 @@ async function packEntities() {
         const animationNames = animations.map((id) =>
             id ? config.animations[id].name : undefined
         );
+
         const mapAnimations = skinColourAnimations.get(skinColour) || new Set();
 
         for (const animation of animationNames) {

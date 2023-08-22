@@ -25,8 +25,10 @@
   },
   "homepage": "https://github.com/2003scape/rsc-c#readme",
   "dependencies": {
+    "@2003scape/rsc-config": "^2.0.0",
     "@swiftcarrot/color-fns": "^3.2.0",
     "canvas": "^2.10.2",
-    "maxrects-packer": "^2.7.3"
+    "maxrects-packer": "^2.7.3",
+    "tga-js": "^1.1.1"
   }
 }
