@@ -19,13 +19,6 @@ gl_atlas_position test_atlas_position = {
     .top_v = (GL_TEXTURE_SIZE - SLEEP_HEIGHT) / GL_TEXTURE_SIZE,
     .bottom_v = GL_TEXTURE_SIZE / GL_TEXTURE_SIZE};
 
-gl_atlas_position test2_atlas_position = {
-    .left_u = 0.0f,
-    .right_u = (float)MINIMAP_SPRITE_WIDTH / GL_TEXTURE_SIZE,
-    .top_v = (float)GL_SPRITE_MINIMAP_OFFSET_Y / GL_TEXTURE_SIZE,
-    .bottom_v = (float)(GL_SPRITE_MINIMAP_OFFSET_Y + MINIMAP_SPRITE_HEIGHT) /
-                GL_TEXTURE_SIZE};
-
 gl_atlas_position test3_atlas_position = {
     .left_u = (float)MINIMAP_SPRITE_WIDTH / GL_TEXTURE_SIZE,
     .right_u = (float)(MINIMAP_SPRITE_WIDTH + 320) / GL_TEXTURE_SIZE,
@@ -514,11 +507,9 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     gl_atlas_position base_atlas_position = gl_transparent_atlas_position;
 
     if (sprite_id == surface->mud->sprite_logo) {
-        texture = &surface->gl_sprite_texture;
-        atlas_position = test3_atlas_position;
+        atlas_position = gl_login_atlas_positions[0];
     } else if (sprite_id == surface->mud->sprite_media - 1) {
-        // texture = &surface->gl_sprite_texture;
-        atlas_position = test2_atlas_position;
+        atlas_position = gl_map_atlas_position;
     } else if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
         gl_entity_texture texture_position =
             gl_entities_texture_positions[sprite_id];
@@ -555,7 +546,6 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         base_atlas_position = gl_media_base_atlas_positions[atlas_index];
     } else if (sprite_id == surface->mud->sprite_texture + 1) {
 #ifdef RENDER_3DS_GL
-        // texture = &surface->gl_sprite_texture;
         atlas_position = test_atlas_position;
 #else
         return;
@@ -1449,8 +1439,8 @@ void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
 
     surface_gl_update_framebuffer(surface);
 
-    surface_draw_blur_software(surface, surface->gl_screen_pixels, j, x, y,
-                               width, height, 1);
+    surface_draw_blur_software(surface, surface->gl_screen_pixels, blur_height,
+                               x, y, width, height, 1);
 
     surface_gl_update_framebuffer_texture(surface);
 
@@ -1459,7 +1449,7 @@ void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
 }
 
 void surface_apply_login_filter(Surface *surface, int background_height) {
-    //surface_fade_to_black(surface);
+    // surface_fade_to_black(surface);
 
 #ifdef RENDER_GL
     surface_gl_draw(surface);
@@ -1467,7 +1457,7 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
 
     surface_draw_blur(surface, 8, 0, 0, surface->width, 25);
 
-    //surface_fade_to_black(surface);
+    // surface_fade_to_black(surface);
 
     /*surface_draw_box(surface, 0, 0, surface->width, 6, BLACK);
 
@@ -1834,27 +1824,30 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
 #elif defined(RENDER_3DS_GL)
-    if (sprite_id == surface->mud->sprite_logo) {
-        uint16_t *colour_buf =
-            (uint16_t *)(surface->mud->_3ds_gl_offscreen_render_target->frameBuf
-                             .colorBuf);
+    int offset_x = 0;
+    int offset_y = 0;
 
-        uint16_t *data = (uint16_t *)surface->gl_sprite_texture.data;
+    if (!surface_3ds_gl_get_sprite_texture_offsets(surface, sprite_id,
+                                                   &offset_x, &offset_y)) {
+        return;
+    }
 
-        int offset_x = 285;
-        int offset_y = 1024 - 125;
+    uint16_t *colour_buf =
+        (uint16_t *)(surface->mud->_3ds_gl_offscreen_render_target->frameBuf
+                         .colorBuf);
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int framebuffer_offset =
-                    _3ds_gl_translate_framebuffer_index((y * 320) + x);
+    uint16_t *data = (uint16_t *)surface->gl_sprite_texture.data;
 
-                int texture_offset = _3ds_gl_translate_texture_index(
-                                         x + offset_x, y + offset_y, 1024) /
-                                     sizeof(uint16_t);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int framebuffer_offset =
+                _3ds_gl_translate_framebuffer_index((y * 320) + x);
 
-                data[texture_offset] = colour_buf[framebuffer_offset];
-            }
+            int texture_offset = _3ds_gl_translate_texture_index(
+                                     x + offset_x, y + offset_y, 1024) /
+                                 sizeof(uint16_t);
+
+            data[texture_offset] = colour_buf[framebuffer_offset];
         }
     }
 #endif
@@ -3927,16 +3920,38 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
 }
 
 #ifdef RENDER_3DS_GL
+int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface,
+                                              int sprite_id, int *offset_x,
+                                              int *offset_y) {
+    gl_atlas_position *atlas_position = NULL;
+
+    if (sprite_id == surface->mud->sprite_logo) {
+        atlas_position = &gl_login_atlas_positions[0];
+    }
+
+    if (!atlas_position) {
+        return 0;
+    }
+
+    *offset_x = (int)(atlas_position->left_u * GL_TEXTURE_SIZE);
+    *offset_y = (int)(atlas_position->top_v * GL_TEXTURE_SIZE);
+
+    return 1;
+}
+
 void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
                                  int blur_height, int x, int y, int height) {
-    int width = 320;
+    int offset_x = 0;
+    int offset_y = 0;
+
+    if (!surface_3ds_gl_get_sprite_texture_offsets(surface, sprite_id, &offset_x,
+                                                  &offset_y)) {
+        return;
+    }
 
     uint16_t *data = (uint16_t *)surface->gl_sprite_texture.data;
 
-    int offset_x = 285;
-    int offset_y = 1024 - 125;
-
-    for (int xx = x; xx < x + width; xx++) {
+    for (int xx = x; xx < x + surface->sprite_width[sprite_id]; xx++) {
         for (int yy = y; yy < y + height; yy++) {
             int r = 0;
             int g = 0;
@@ -3950,7 +3965,8 @@ void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
                         if (y2 >= 0 && y2 < surface->height) {
                             int32_t pixel = _3ds_gl_rgba5551_to_rgb32(
                                 data[_3ds_gl_translate_texture_index(
-                                    x2 + offset_x, y2 + offset_y, 1024) / 2]);
+                                         x2 + offset_x, y2 + offset_y, 1024) /
+                                     2]);
 
                             r += (pixel >> 16) & 0xff;
                             g += (pixel >> 8) & 0xff;
@@ -3961,8 +3977,10 @@ void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
                 }
             }
 
-            data[_3ds_gl_translate_texture_index(xx + offset_x, yy + offset_y, 1024) / 2] =
-                _3ds_gl_rgb32_to_rgba5551(((r / a) << 16) + ((g / a) << 8) + (b / a));
+            data[_3ds_gl_translate_texture_index(xx + offset_x, yy + offset_y,
+                                                 1024) /
+                 2] = _3ds_gl_rgb32_to_rgba5551(((r / a) << 16) +
+                                                ((g / a) << 8) + (b / a));
         }
     }
 }

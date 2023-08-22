@@ -96,6 +96,7 @@ extern gl_atlas_position test_atlas_position;
 extern gl_atlas_position test2_atlas_position;
 extern gl_atlas_position test3_atlas_position;
 
+// TODO remove
 #define GL_SPRITE_MINIMAP_OFFSET_X 0
 #define GL_SPRITE_MINIMAP_OFFSET_Y (1024 - MINIMAP_SPRITE_HEIGHT - 3)
 #endif
@@ -417,6 +418,9 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour);
 #ifdef RENDER_3DS_GL
+int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface,
+                                              int sprite_id, int *offset_x,
+                                              int *offset_y);
 void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
                                  int blur_height, int x, int y, int height);
 #endif

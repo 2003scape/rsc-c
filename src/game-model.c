@@ -1699,8 +1699,6 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
     game_model_get_vertex_ebo_lengths(game_models, game_models_length,
                                       &vertex_offset, &ebo_offset);
 
-    //printf("deleting %d %ld\n", *vertex_buffers_length, linearSpaceFree());
-
     for (int i = 0; i < *vertex_buffers_length; i++) {
         vertex_buffer_gl_destroy((*vertex_buffers)[i]);
         free((*vertex_buffers)[i]);
@@ -1710,6 +1708,7 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
 
     // TODO move this to header
     int MAX_VERTEX_INDEX = 65535;
+    //int MAX_VERTEX_INDEX = 2147483647;
     int total_buffers = ceil((float)ebo_offset / (float)MAX_VERTEX_INDEX);
 
     *vertex_buffers = calloc(total_buffers, sizeof(gl_vertex_buffer *));
@@ -1723,6 +1722,9 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
     vertex_offset = 0;
     ebo_offset = 0;
 
+    int next_vertex_offset = vertex_offset;
+    int next_ebo_offset = ebo_offset;
+
     gl_vertex_buffer *vertex_buffer = (*vertex_buffers)[vertex_buffer_index];
 
     for (int i = 0; i < game_models_length; i++) {
@@ -1732,8 +1734,8 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
             continue;
         }
 
-        int next_vertex_offset = vertex_offset;
-        int next_ebo_offset = ebo_offset;
+        next_vertex_offset = vertex_offset;
+        next_ebo_offset = ebo_offset;
 
         for (int j = 0; j < game_model->face_count; j++) {
             int face_vertex_count = game_model->face_vertex_count[j];
@@ -1747,14 +1749,13 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
                                         ebo_offset);
 
             vertex_buffer_index++;
-
             vertex_buffer = (*vertex_buffers)[vertex_buffer_index];
 
-            vertex_offset = 0;
-            ebo_offset = 0;
+            game_model->gl_vbo_offset = 0;
+            game_model->gl_ebo_offset = 0;
 
-            game_model->gl_vbo_offset = vertex_offset;
-            game_model->gl_ebo_offset = ebo_offset;
+            vertex_offset = next_vertex_offset - vertex_offset;
+            ebo_offset = next_ebo_offset - ebo_offset;
         } else {
             game_model->gl_vbo_offset = vertex_offset;
             game_model->gl_ebo_offset = ebo_offset;

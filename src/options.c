@@ -28,7 +28,7 @@ void options_new(Options *options) {
 void options_set_server(Options *options) {
 #if REVISION_177
     /* openrsc preservation */
-    strcpy(options->server, "76.253.184.95");
+    strcpy(options->server, "206.251.222.229");
     options->port = 43596;
 
     strcpy(options->rsa_exponent, "00010001");

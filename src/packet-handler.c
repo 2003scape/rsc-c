@@ -585,7 +585,15 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-#if defined(RENDER_GL) || (RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
+        if (mud->object_count > 0) {
+            game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
+                                        &mud->scene->gl_game_model_buffer_length,
+                                        mud->object_model, mud->object_count);
+        }
+#endif
+
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         world_gl_update_terrain_buffers(mud->world);
 #endif
         break;

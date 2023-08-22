@@ -192,7 +192,7 @@ SwkbdButton _3ds_keyboard_button;
 
 void _3ds_keyboard_thread_callback(void *arg) {
     static SwkbdState swkbd;
-    swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 3, -1);
+    swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 2, -1);
     swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
     swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
 
@@ -1946,14 +1946,9 @@ void mudclient_load_models(mudclient *mud) {
 
     free(models_jag);
 
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#ifdef RENDER_GL
     int models_length = game_data_model_count - 1;
     int item_models_length = game_data_item_count;
-
-#ifdef RENDER_3DS_GL
-    /* don't have enough RAM */
-    item_models_length = 0;
-#endif
 
     if (mud->options->ground_item_models) {
         models_length += item_models_length;
@@ -1970,15 +1965,10 @@ void mudclient_load_models(mudclient *mud) {
             models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
         }
     }
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-#if defined(RENDER_3DS_GL)
-    C3D_BindProgram(&mud->scene->_3ds_gl_model_shader);
-#endif
 
     game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
                                 &mud->scene->gl_game_model_buffer_length,
                                 models_buffer, models_length);
-#endif
 #endif
 }
 
@@ -4747,8 +4737,6 @@ void mudclient_draw_game(mudclient *mud) {
     mud->surface->draw_string_shadow = 0;
 
     mudclient_draw_chat_message_tabs(mud);
-
-    surface_draw_blur(mud->surface, 6, 0, 0, mud->surface->width, mud->surface->height);
 
     surface_draw(mud->surface);
 

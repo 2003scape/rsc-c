@@ -4,9 +4,10 @@ void mudclient_create_login_panels(mudclient *mud) {
     mud->panel_login_welcome = malloc(sizeof(Panel));
     panel_new(mud->panel_login_welcome, mud->surface, 50);
 
+    printf("lh %d\n", LOGIN_BACKGROUND_HEIGHT);
+
     int x = mud->surface->width / 2;
     int y = 40;
-    int background_height = (int)((200 / 512.0f) * (float)(MUD_WIDTH));
 
     int offset_y = MUD_IS_COMPACT ? 17 : 40;
 
@@ -18,32 +19,33 @@ void mudclient_create_login_panels(mudclient *mud) {
         int offset_x = MUD_IS_COMPACT ? 16 : 0;
 
         panel_add_text_centre(mud->panel_login_welcome, x,
-                              background_height + y - (MUD_IS_COMPACT ? 20 : 0),
+                              LOGIN_BACKGROUND_HEIGHT + y -
+                                  (MUD_IS_COMPACT ? 20 : 0),
                               "Click on an option", 5, 1);
 
-        panel_add_button_background(mud->panel_login_welcome,
-                                    x - 100 + offset_x,
-                                    background_height + offset_y + y, 120, 35);
+        panel_add_button_background(
+            mud->panel_login_welcome, x - 100 + offset_x,
+            LOGIN_BACKGROUND_HEIGHT + offset_y + y, 120, 35);
 
         panel_add_text_centre(mud->panel_login_welcome, x - 100 + offset_x,
-                              background_height + offset_y + y, "New User", 5,
-                              0);
+                              LOGIN_BACKGROUND_HEIGHT + offset_y + y,
+                              "New User", 5, 0);
 
         mud->control_welcome_new_user =
             panel_add_button(mud->panel_login_welcome, x - 100 + offset_x,
-                             background_height + offset_y + y, 120, 35);
+                             LOGIN_BACKGROUND_HEIGHT + offset_y + y, 120, 35);
 
-        panel_add_button_background(mud->panel_login_welcome,
-                                    x + 100 - offset_x,
-                                    background_height + offset_y + y, 120, 35);
+        panel_add_button_background(
+            mud->panel_login_welcome, x + 100 - offset_x,
+            LOGIN_BACKGROUND_HEIGHT + offset_y + y, 120, 35);
 
         panel_add_text_centre(mud->panel_login_welcome, x + 100 - offset_x,
-                              background_height + offset_y + y, "Existing User",
-                              5, 0);
+                              LOGIN_BACKGROUND_HEIGHT + offset_y + y,
+                              "Existing User", 5, 0);
 
         mud->control_welcome_existing_user =
             panel_add_button(mud->panel_login_welcome, x + 100 - offset_x,
-                             background_height + offset_y + y, 120, 35);
+                             LOGIN_BACKGROUND_HEIGHT + offset_y + y, 120, 35);
     } else {
         int font_size = 4;
         int button_width = 200;
@@ -55,24 +57,24 @@ void mudclient_create_login_panels(mudclient *mud) {
         }
 
         panel_add_text_centre(mud->panel_login_welcome, x,
-                              background_height + y, "Welcome to RuneScape",
-                              font_size, 1);
+                              LOGIN_BACKGROUND_HEIGHT + y,
+                              "Welcome to RuneScape", font_size, 1);
 
         panel_add_text_centre(
-            mud->panel_login_welcome, x, background_height + 15 + y,
+            mud->panel_login_welcome, x, LOGIN_BACKGROUND_HEIGHT + 15 + y,
             "You need a members account to use this server", font_size, 1);
 
         panel_add_button_background(mud->panel_login_welcome, x,
-                                    background_height + 50 + y, button_width,
-                                    35);
+                                    LOGIN_BACKGROUND_HEIGHT + 50 + y,
+                                    button_width, 35);
 
         panel_add_text_centre(mud->panel_login_welcome, x,
-                              background_height + 50 + y, "Click here to login",
-                              5, 0);
+                              LOGIN_BACKGROUND_HEIGHT + 50 + y,
+                              "Click here to login", 5, 0);
 
-        mud->control_welcome_existing_user =
-            panel_add_button(mud->panel_login_welcome, x,
-                             background_height + 50 + y, button_width, 35);
+        mud->control_welcome_existing_user = panel_add_button(
+            mud->panel_login_welcome, x, LOGIN_BACKGROUND_HEIGHT + 50 + y,
+            button_width, 35);
     }
 
     if (mud->options->show_additional_options) {
@@ -260,7 +262,7 @@ void mudclient_create_login_panels(mudclient *mud) {
     mud->panel_login_existing_user = malloc(sizeof(Panel));
     panel_new(mud->panel_login_existing_user, mud->surface, 50);
 
-    y = background_height + 30;
+    y = LOGIN_BACKGROUND_HEIGHT + 30;
 
     if (MUD_IS_COMPACT) {
         y -= 34;
@@ -482,14 +484,12 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                           BLACK, 0);
 
     C3D_FrameDrawOn(mud->_3ds_gl_offscreen_render_target);
-    //mudclient_3ds_gl_frame_start(mud, 1);
+    // mudclient_3ds_gl_frame_start(mud, 1);
 #endif
 
     scene_render(mud->scene);
 
-    int background_height = (int)((200 / 512.0f) * (float)(MUD_WIDTH));
-
-    surface_apply_login_filter(mud->surface, background_height);
+    surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 
     /*surface_draw_sprite(
         mud->surface,
@@ -499,7 +499,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     int logo_width = MUD_WIDTH;
     int logo_height = (int)((logo_width / 512.0f) * 146.0f);
-    int offset_y = (background_height / 2) - logo_height / 2;
+    int offset_y = (LOGIN_BACKGROUND_HEIGHT / 2) - logo_height / 2;
 
     surface_draw_sprite_transform_mask(
         mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
@@ -517,7 +517,8 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 #endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
-                                    mud->surface->width, background_height);
+                                    mud->surface->width,
+                                    LOGIN_BACKGROUND_HEIGHT);
 
 #ifdef RENDER_3DS_GL
     surface_3ds_gl_blur_texture(mud->surface, mud->sprite_logo, 8, 0, 0, 25);
@@ -541,7 +542,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_render(mud->scene);
 #endif
 
-    surface_apply_login_filter(mud->surface, background_height);
+    surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 
     /*surface_draw_sprite(
         mud->surface,
@@ -554,7 +555,8 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1, 0, 0,
-                                    mud->surface->width, background_height);
+                                    mud->surface->width,
+                                    LOGIN_BACKGROUND_HEIGHT);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface);
@@ -604,7 +606,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_render(mud->scene);
 #endif
 
-    surface_apply_login_filter(mud->surface, background_height);
+    surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 
     /*surface_draw_sprite(
         mud->surface,
@@ -617,7 +619,8 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10, 0, 0,
-                                    mud->surface->width, background_height);
+                                    mud->surface->width,
+                                    LOGIN_BACKGROUND_HEIGHT);
 
 #ifdef RENDER_GL
     surface_gl_draw(mud->surface);
@@ -710,7 +713,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
         if (offset_x > 0) {
             int background_width = mud->surface->sprite_width[mud->sprite_logo];
 
-            int background_height =
+            int LOGIN_BACKGROUND_HEIGHT =
                 mud->surface->sprite_height[mud->sprite_logo];
 
             for (int i = 0; i < 3; i++) {
@@ -718,13 +721,13 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
                 /* left */
                 surface_draw_box_alpha(mud->surface, (i * 2) + offset_x,
-                                       10 + offset_y, 2, background_height,
+                                       10 + offset_y, 2, LOGIN_BACKGROUND_HEIGHT,
                                        BLACK, alpha);
 
                 /* right */
                 surface_draw_box_alpha(
                     mud->surface, background_width - (i * 2) + offset_x,
-                    10 + offset_y, 2, background_height, BLACK, alpha);
+                    10 + offset_y, 2, LOGIN_BACKGROUND_HEIGHT, BLACK, alpha);
             }
         }
     }
@@ -739,8 +742,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
         break;
     case LOGIN_STAGE_EXISTING: {
         if (MUD_IS_COMPACT) {
-            int background_height = (int)((200 / 512.0f) * (float)(MUD_WIDTH));
-
             int box_height = 12;
 
             if (strlen(panel_get_text(mud->panel_login_existing_user,
@@ -750,7 +751,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
             surface_draw_box_alpha(
                 mud->surface, 0,
-                background_height - box_height +
+                LOGIN_BACKGROUND_HEIGHT - box_height +
                     ((mud->surface->height / 2) - (MUD_HEIGHT / 2)),
                 mud->surface->width, box_height + 4, 0, 128);
         }
@@ -782,9 +783,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
 }
 
 void mudclient_handle_login_screen_input(mudclient *mud) {
-    /*mudclient_login(mud, "farts", "farts", 0);
-    return;*/
-
     if (mud->show_dialog_confirm) {
         mudclient_handle_confirm_input(mud);
         return;

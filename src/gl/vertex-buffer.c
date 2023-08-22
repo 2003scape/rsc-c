@@ -11,6 +11,8 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
         vertex_buffer_gl_destroy(vertex_buffer);
     }
 
+    //printf("creating new vertex buffer %p\n", vertex_buffer);
+
     printf("creating new vertex buffer %d %d: %d\n", vbo_length, vertex_length, vbo_length * vertex_length);
 
     printf("creating new ebo %d: %d\n", ebo_length, ebo_length * sizeof(uint16_t));

@@ -2367,7 +2367,6 @@ void world_gl_buffer_world_models(World *world) {
 // TODO we can probably only change the necessary memory rather than rebuffering
 // all of the models
 void world_gl_update_terrain_buffers(World *world) {
-    return;
     printf("update terrain buffer lighting\n");
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {

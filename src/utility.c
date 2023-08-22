@@ -457,8 +457,8 @@ int get_ticks() {
 #endif
 
 #ifdef _3DS
-    return (int)osGetTime();
-    // return (int)(svcGetSystemTick() / CPU_TICKS_PER_MSEC);
+    //return (int)osGetTime();
+    return (int)(svcGetSystemTick() / CPU_TICKS_PER_MSEC);
 #endif
 
 #ifdef WII

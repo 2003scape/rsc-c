@@ -531,7 +531,7 @@ typedef struct mudclient {
     int control_login_cancel;
     int control_login_recover;
 
-    int login_screen;
+    LOGIN_STAGE login_screen;
     char login_username[USERNAME_LENGTH + 1];
     char login_pass[PASSWORD_LENGTH + 1];
     char *login_prompt;
