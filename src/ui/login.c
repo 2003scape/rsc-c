@@ -4,8 +4,6 @@ void mudclient_create_login_panels(mudclient *mud) {
     mud->panel_login_welcome = malloc(sizeof(Panel));
     panel_new(mud->panel_login_welcome, mud->surface, 50);
 
-    printf("lh %d\n", LOGIN_BACKGROUND_HEIGHT);
-
     int x = mud->surface->width / 2;
     int y = 40;
 
@@ -484,25 +482,21 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                           BLACK, 0);
 
     C3D_FrameDrawOn(mud->_3ds_gl_offscreen_render_target);
-    // mudclient_3ds_gl_frame_start(mud, 1);
 #endif
 
     scene_render(mud->scene);
 
+#ifndef RENDER_3DS_GL
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
+#endif
 
-    /*surface_draw_sprite(
-        mud->surface,
-        (mud->surface->width / 2) -
-            (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);*/
-
-    int logo_width = MUD_WIDTH;
-    int logo_height = (int)((logo_width / 512.0f) * 146.0f);
-    int offset_y = (LOGIN_BACKGROUND_HEIGHT / 2) - logo_height / 2;
+    int logo_width = MUD_WIDTH - 29;
+    int logo_height = (int)((logo_width / 483.0f) * 146.0f);
+    int offset_x = (mud->surface->width / 2) - logo_width / 2;
+    int offset_y = 15;
 
     surface_draw_sprite_transform_mask(
-        mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
+        mud->surface, offset_x, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -521,7 +515,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                                     LOGIN_BACKGROUND_HEIGHT);
 
 #ifdef RENDER_3DS_GL
-    surface_3ds_gl_blur_texture(mud->surface, mud->sprite_logo, 8, 0, 0, 25);
+    surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo);
 #endif
 
 #ifndef RENDER_3DS_GL
@@ -540,18 +534,12 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
 #ifndef RENDER_3DS_GL
     scene_render(mud->scene);
-#endif
 
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
-
-    /*surface_draw_sprite(
-        mud->surface,
-        (mud->surface->width / 2) -
-            (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);*/
+#endif
 
     surface_draw_sprite_transform_mask(
-        mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
+        mud->surface, offset_x, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1, 0, 0,
@@ -608,17 +596,11 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 
-    /*surface_draw_sprite(
-        mud->surface,
-        (mud->surface->width / 2) -
-            (mud->surface->sprite_width[mud->sprite_media + 10] / 2),
-        15, mud->sprite_media + 10);*/
-
     surface_draw_sprite_transform_mask(
-        mud->surface, (mud->surface->width / 2) - logo_width / 2, offset_y,
+        mud->surface, offset_x, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
-    surface_screen_raster_to_sprite(mud->surface, mud->sprite_media + 10, 0, 0,
+    surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 2, 0, 0,
                                     mud->surface->width,
                                     LOGIN_BACKGROUND_HEIGHT);
 
@@ -628,7 +610,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
 #ifndef RENDER_3DS_GL
     surface_screen_raster_to_palette_sprite(mud->surface,
-                                            mud->sprite_media + 10);
+                                            mud->sprite_logo + 2);
 #endif
 
     world_reset(mud->world, 0);
@@ -667,13 +649,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
                           mud->login_screen <= LOGIN_STAGE_REGISTER;
     }
 
-    int offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
-    int offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
-
-    surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
-                        mud->sprite_logo);
-
-#if 0
+#if 1
     if (show_background) {
         int offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
         int offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
@@ -695,12 +671,12 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
             if (cycle > 1792) {
                 surface_draw_sprite_alpha(mud->surface, 0 + offset_x,
-                                          10 + offset_y, mud->sprite_media + 10,
+                                          10 + offset_y, mud->sprite_logo + 2,
                                           cycle - 1792);
             }
         } else {
             surface_draw_sprite(mud->surface, 0 + offset_x, 10 + offset_y,
-                                mud->sprite_media + 10);
+                                mud->sprite_logo + 2);
 
             if (cycle > 2816) {
                 surface_draw_sprite_alpha(mud->surface, 0 + offset_x,
@@ -712,9 +688,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
         /* fade the left/right of the login scene if the width exceeds 512 */
         if (offset_x > 0) {
             int background_width = mud->surface->sprite_width[mud->sprite_logo];
-
-            int LOGIN_BACKGROUND_HEIGHT =
-                mud->surface->sprite_height[mud->sprite_logo];
 
             for (int i = 0; i < 3; i++) {
                 int alpha = 192 - (i * 64);
