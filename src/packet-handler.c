@@ -1,6 +1,7 @@
 #include "packet-handler.h"
 
 void mudclient_update_ground_item_models(mudclient *mud) {
+    return;
     for (int i = 0; i < GROUND_ITEMS_MAX; i++) {
         if (mud->ground_item_model[i] == NULL) {
             continue;
@@ -86,7 +87,8 @@ void mudclient_gl_update_wall_models(mudclient *mud) {
         /*glBindVertexArray(mud->scene->gl_wall_buffer.vao);
 
         glBindBuffer(GL_ARRAY_BUFFER, mud->scene->gl_wall_buffers[0].vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mud->scene->gl_wall_buffers[0].ebo);*/
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,
+        mud->scene->gl_wall_buffers[0].ebo);*/
 
         game_model_gl_buffer_arrays(game_model, &vbo_offset, &ebo_offset);
 
@@ -488,7 +490,9 @@ void mudclient_packet_tick(mudclient *mud) {
                                             mud->object_y[i],
                                             mud->object_id[i]);
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
                         game_model_destroy(mud->object_model[i]);
+#endif
                         free(mud->object_model[i]);
                         mud->object_model[i] = NULL;
                     }
@@ -527,7 +531,9 @@ void mudclient_packet_tick(mudclient *mud) {
                                             mud->object_y[i],
                                             mud->object_id[i]);
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
                         game_model_destroy(mud->object_model[i]);
+#endif
                         free(mud->object_model[i]);
                         mud->object_model[i] = NULL;
                     }
@@ -587,9 +593,10 @@ void mudclient_packet_tick(mudclient *mud) {
 
 #ifdef RENDER_3DS_GL
         if (mud->object_count > 0) {
-            game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
-                                        &mud->scene->gl_game_model_buffer_length,
-                                        mud->object_model, mud->object_count);
+            game_model_gl_buffer_models(
+                &mud->scene->gl_game_model_buffers,
+                &mud->scene->gl_game_model_buffer_length, mud->object_model,
+                mud->object_count);
         }
 #endif
 
@@ -819,7 +826,9 @@ void mudclient_packet_tick(mudclient *mud) {
                     world_remove_object(mud->world, mud->object_x[j],
                                         mud->object_y[j], mud->object_id[j]);
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
                     game_model_destroy(mud->object_model[j]);
+#endif
                     free(mud->object_model[j]);
                     mud->object_model[j] = NULL;
                 }
@@ -1703,7 +1712,7 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_GAME_SETTINGS: {
         mud->settings_camera_auto = data[1];
         mud->settings_mouse_button_one = data[2];
-        mud->settings_sound_disabled= data[3];
+        mud->settings_sound_disabled = data[3];
         break;
     }
     case SERVER_PRIVACY_SETTINGS: {

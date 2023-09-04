@@ -42,7 +42,7 @@ typedef struct Scene Scene;
 #include "gl/textures/model_textures.h"
 #endif
 
-#define VERTEX_COUNT 40 // ambigious
+#define VERTEX_COUNT 40 // ambigious - SCENE_VERTEX_COUNT ?
 #define RAMP_COUNT 50
 #define RAMP_SIZE 256
 
@@ -165,8 +165,6 @@ typedef struct Scene {
 
     /* for wallobjects */
     gl_vertex_buffer **gl_wall_buffers;
-
-    gl_vertex_buffer *gl_last_buffer;
 
     mat4 gl_view;
     mat4 gl_projection;

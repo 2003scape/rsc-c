@@ -311,6 +311,7 @@ extern SwkbdButton _3ds_keyboard_button;
 void _3ds_keyboard_thread_callback(void *arg);
 
 #ifdef RENDER_3DS_GL
+void mudclient_3ds_gl_offscreen_frame_start(mudclient *mud);
 void mudclient_3ds_gl_frame_start(mudclient *mud, int clear);
 void mudclient_3ds_gl_frame_end();
 #endif

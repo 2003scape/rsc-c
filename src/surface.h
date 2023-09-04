@@ -91,14 +91,6 @@ typedef struct SurfaceGlContext {
 
 extern gl_atlas_position gl_white_atlas_position;
 extern gl_atlas_position gl_transparent_atlas_position;
-
-extern gl_atlas_position test_atlas_position;
-extern gl_atlas_position test2_atlas_position;
-extern gl_atlas_position test3_atlas_position;
-
-// TODO remove
-#define GL_SPRITE_MINIMAP_OFFSET_X 0
-#define GL_SPRITE_MINIMAP_OFFSET_Y (1024 - MINIMAP_SPRITE_HEIGHT - 3)
 #endif
 
 #define SLEEP_WIDTH 255
@@ -423,5 +415,6 @@ int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface,
                                               int *offset_y);
 void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
                                  int blur_height, int x, int y, int height);
+void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id);
 #endif
 #endif

@@ -168,7 +168,7 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     game_model->normal_magnitude = calloc(face_count, sizeof(int));
 
     // TODO only scene->view needs this
-//#ifdef RENDER_SW
+    //#ifdef RENDER_SW
     if (!game_model->projected) {
         game_model->project_vertex_x = calloc(vertex_count, sizeof(int));
         game_model->project_vertex_y = calloc(vertex_count, sizeof(int));
@@ -176,7 +176,7 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         game_model->vertex_view_x = calloc(vertex_count, sizeof(int));
         game_model->vertex_view_y = calloc(vertex_count, sizeof(int));
     }
-//#endif
+    //#endif
 
     if (!game_model->unpickable) {
         game_model->is_local_player = calloc(face_count, sizeof(int8_t));
@@ -189,11 +189,11 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         game_model->vertex_transformed_z = game_model->vertex_z;
     } else {
         // TODO only scene->view needs this
-//#ifdef RENDER_SW
+        //#ifdef RENDER_SW
         game_model->vertex_transformed_x = calloc(vertex_count, sizeof(int));
         game_model->vertex_transformed_y = calloc(vertex_count, sizeof(int));
         game_model->vertex_transformed_z = calloc(vertex_count, sizeof(int));
-//#endif
+        //#endif
     }
 
     if (!game_model->unlit || !game_model->isolated) {
@@ -785,6 +785,8 @@ void game_model_light(GameModel *game_model) {
         }
     }
 
+    // TODO we could probably re-use a global variable for this instead of
+    // allocating and freeing so many arrays
     int *normal_x = calloc(game_model->vertex_count, sizeof(int));
     int *normal_y = calloc(game_model->vertex_count, sizeof(int));
     int *normal_z = calloc(game_model->vertex_count, sizeof(int));
@@ -835,13 +837,13 @@ void game_model_reset_transform(GameModel *game_model) {
     game_model->transform_state = 0;
 
     // TODO only scene->view needs this
-//#ifdef RENDER_SW
+    //#ifdef RENDER_SW
     for (int i = 0; i < game_model->vertex_count; i++) {
         game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
         game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
         game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
     }
-//#endif
+    //#endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     glm_mat4_identity(game_model->transform);
@@ -891,7 +893,7 @@ void game_model_apply(GameModel *game_model) {
 #endif
 
         // TODO only scene->view needs this
-//#ifdef RENDER_SW
+        //#ifdef RENDER_SW
         if (game_model->transform_type >= GAME_MODEL_TRANSFORM_ROTATE) {
             game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
@@ -902,7 +904,7 @@ void game_model_apply(GameModel *game_model) {
             game_model_apply_translate(game_model, game_model->base_x,
                                        game_model->base_y, game_model->base_z);
         }
-//#endif
+        //#endif
 
         game_model_compute_bounds(game_model);
 
@@ -1013,36 +1015,74 @@ void game_model_commit(GameModel *game_model) {
     game_model_apply(game_model);
 
     // TODO only scene->view needs this
-//#ifdef RENDER_SW
+    //#ifdef RENDER_SW
     for (int i = 0; i < game_model->vertex_count; i++) {
         game_model->vertex_x[i] = game_model->vertex_transformed_x[i];
         game_model->vertex_y[i] = game_model->vertex_transformed_y[i];
         game_model->vertex_z[i] = game_model->vertex_transformed_z[i];
     }
-//#endif
+    //#endif
 
     game_model_reset(game_model);
 }
 
 GameModel *game_model_copy(GameModel *game_model) {
+    GameModel *copy = calloc(1, sizeof(GameModel));
+
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    copy->vertex_count = game_model->vertex_count;
+    copy->face_count = game_model->face_count;
+
+    copy->vertex_x = game_model->vertex_x;
+    copy->vertex_y = game_model->vertex_y;
+    copy->vertex_z = game_model->vertex_z;
+
+    copy->vertex_intensity = game_model->vertex_intensity;
+    copy->vertex_ambience = game_model->vertex_ambience;
+    copy->face_vertex_count = game_model->face_vertex_count;
+    copy->face_vertices = game_model->face_vertices;
+    copy->face_fill_front = game_model->face_fill_front;
+    copy->face_fill_back = game_model->face_fill_back;
+    copy->face_intensity = game_model->face_intensity;
+    copy->normal_scale = game_model->normal_scale;
+    copy->normal_magnitude = game_model->normal_magnitude;
+
+    copy->light_ambience = game_model->light_ambience;
+    copy->light_diffuse = game_model->light_diffuse;
+    copy->light_direction_x = game_model->light_direction_x;
+    copy->light_direction_y = game_model->light_direction_y;
+    copy->light_direction_z = game_model->light_direction_z;
+
+    copy->face_normal_x = game_model->face_normal_x;
+    copy->face_normal_y = game_model->face_normal_y;
+    copy->face_normal_z = game_model->face_normal_z;
+
+    // TODO remove?
+    copy->vertex_transformed_x = game_model->vertex_transformed_x;
+    copy->vertex_transformed_y = game_model->vertex_transformed_y;
+    copy->vertex_transformed_z = game_model->vertex_transformed_z;
+
+    copy->light_direction_magnitude = game_model->light_direction_magnitude;
+
+    copy->gl_ebo_offset = -1;
+    // copy->gl_ebo_length = 0;
+    // copy->gl_buffer = game_model->gl_buffer;
+
+    /*copy->gl_vbo_offset = game_model->gl_vbo_offset;
+    copy->gl_ebo_offset = game_model->gl_ebo_offset;
+    copy->gl_ebo_length = game_model->gl_ebo_length;
+    copy->gl_buffer = game_model->gl_buffer;*/
+#else
     GameModel **pieces = malloc(sizeof(GameModel *));
     pieces[0] = game_model;
-
-    GameModel *copy = malloc(sizeof(GameModel));
 
     game_model_from2a(copy, pieces, 1);
 
     copy->depth = game_model->depth;
     copy->transparent = game_model->transparent;
 
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    copy->gl_vbo_offset = game_model->gl_vbo_offset;
-    copy->gl_ebo_offset = game_model->gl_ebo_offset;
-    copy->gl_ebo_length = game_model->gl_ebo_length;
-    copy->gl_buffer = game_model->gl_buffer;
-#endif
-
     free(pieces);
+#endif
 
     return copy;
 }
@@ -1175,21 +1215,6 @@ void game_model_destroy(GameModel *game_model) {
     free(game_model->face_tag);
     game_model->face_tag = NULL;
 
-    free(game_model->vertex_transformed_y);
-    game_model->vertex_transformed_y = NULL;
-
-    free(game_model->vertex_transformed_z);
-    game_model->vertex_transformed_z = NULL;
-
-    free(game_model->vertex_transformed_x);
-    game_model->vertex_transformed_x = NULL;
-
-    free(game_model->vertex_transformed_y);
-    game_model->vertex_transformed_y = NULL;
-
-    free(game_model->vertex_transformed_z);
-    game_model->vertex_transformed_z = NULL;
-
     free(game_model->face_normal_x);
     game_model->face_normal_x = NULL;
 
@@ -1198,21 +1223,6 @@ void game_model_destroy(GameModel *game_model) {
 
     free(game_model->face_normal_z);
     game_model->face_normal_z = NULL;
-
-    free(game_model->project_vertex_x);
-    game_model->project_vertex_x = NULL;
-
-    free(game_model->project_vertex_y);
-    game_model->project_vertex_y = NULL;
-
-    free(game_model->project_vertex_z);
-    game_model->project_vertex_z = NULL;
-
-    free(game_model->vertex_view_x);
-    game_model->vertex_view_x = NULL;
-
-    free(game_model->vertex_view_y);
-    game_model->vertex_view_y = NULL;
 }
 
 void game_model_dump(GameModel *game_model, char *file_name) {
@@ -1413,6 +1423,10 @@ void gl_offset_texture_uvs_atlas(gl_atlas_position texture_position,
  * those offsets to new ones */
 void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  int *ebo_offset) {
+    if (!game_model->gl_buffer) {
+        return;
+    }
+
     int *face_normal_x = calloc(game_model->face_count, sizeof(int));
     int *face_normal_y = calloc(game_model->face_count, sizeof(int));
     int *face_normal_z = calloc(game_model->face_count, sizeof(int));
@@ -1433,10 +1447,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                   vertex_normal_y, vertex_normal_z,
                                   vertex_normal_magnitude);
 
-#ifdef RENDER_GL
-    //glBindVertexArray(game_model->gl_buffer->vao);
     vertex_buffer_gl_bind(game_model->gl_buffer);
-#endif
 
     for (int i = 0; i < game_model->face_count; i++) {
         int *face_vertices = game_model->face_vertices[i];
@@ -1708,7 +1719,7 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
 
     // TODO move this to header
     int MAX_VERTEX_INDEX = 65535;
-    //int MAX_VERTEX_INDEX = 2147483647;
+    // int MAX_VERTEX_INDEX = 2147483647;
     int total_buffers = ceil((float)ebo_offset / (float)MAX_VERTEX_INDEX);
 
     *vertex_buffers = calloc(total_buffers, sizeof(gl_vertex_buffer *));
@@ -1732,6 +1743,19 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
 
         if (game_model == NULL) {
             continue;
+        }
+
+        int dupe = 0;
+
+        for (int j = 0; j < i; j++) {
+            GameModel *game_model_b = game_models[j];
+
+            if (game_model_b != NULL && game_model_b->vertex_count > 0 &&
+                game_model != game_model_b &&
+                game_model->vertex_x == game_model_b->vertex_x) {
+                dupe = 1;
+                break;
+            }
         }
 
         next_vertex_offset = vertex_offset;
@@ -1765,6 +1789,12 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
         }
 
         game_model->gl_buffer = vertex_buffer;
+
+        if (dupe) {
+            // printf("huh\n");
+            //game_model->gl_buffer = NULL;
+            //game_model->gl_ebo_offset = -1;
+        }
     }
 
     game_model_gl_create_buffer(vertex_buffer, vertex_offset, ebo_offset);
@@ -1781,7 +1811,7 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
 
         game_model_gl_buffer_arrays(game_model, &vertex_offset, &ebo_offset);
 
-        //game_model_destroy(game_model);
+        // game_model_destroy(game_model);
     }
 
     *vertex_buffers_length = total_buffers;

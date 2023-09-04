@@ -1029,10 +1029,11 @@ void scene_dispose(Scene *scene) {
 void scene_clear(Scene *scene) {
     scene->sprite_count = 0;
 
-    game_model_destroy(scene->view);
+    for (int i = 0; i < scene->view->face_count; i++) {
+        free(scene->view->face_vertices[i]);
+    }
 
-    game_model_from2(scene->view, scene->max_sprite_count * 2,
-                     scene->max_sprite_count);
+    game_model_clear(scene->view);
 }
 
 void scene_reduce_sprites(Scene *scene, int i) {
@@ -1047,6 +1048,10 @@ void scene_reduce_sprites(Scene *scene, int i) {
 
 int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
                      int width, int height, int tag) {
+    if (scene->sprite_count >= 1) {
+        return;
+    }
+
     scene->sprite_id[scene->sprite_count] = sprite_id;
     scene->sprite_x[scene->sprite_count] = x;
     scene->sprite_z[scene->sprite_count] = y;
@@ -1070,7 +1075,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     glm_vec4_zero(projected_position);
 
     vec4 top_position = {VERTEX_TO_FLOAT(x),
-                         VERTEX_TO_FLOAT(y) - (VERTEX_TO_FLOAT(height) * 0.75f),
+                         VERTEX_TO_FLOAT(y) - VERTEX_TO_FLOAT(height),
                          VERTEX_TO_FLOAT(z), 1.0f};
 
     glm_mat4_mulv(scene->gl_projection_view, top_position, projected_position);
@@ -1078,23 +1083,18 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->gl_sprite_depth_top[scene->sprite_count] =
         projected_position[2] / projected_position[3];
 
-    // TODO use layer depth?
-    /* check for overlapping entities and adjust depth so it's on top */
-    /*for (int i = 0; i < scene->sprite_count; i++) {
-        if (scene->sprite_x[i] == scene->sprite_x[scene->sprite_count] &&
-            scene->sprite_y[i] == scene->sprite_y[scene->sprite_count]) {
+    /*printf("glm position: %f %f %f\n",
+            projected_position[0],
+            projected_position[1],
+            projected_position[3]);*/
 
-            if (scene->visible_polygons[i]->depth >=
-                scene->visible_polygons[scene->sprite_count]->depth) {
-                scene->gl_sprite_depth_bottom[i] *= 0.9999f;
-                scene->gl_sprite_depth_top[i] *= 0.9999f;
-            } else {
-                scene->gl_sprite_depth_bottom[scene->sprite_count] *= 0.9999f;
-                scene->gl_sprite_depth_top[scene->sprite_count] *= 0.9999f;
-            }
-            break;
-        }
-    }*/
+    //glm_mat4_mulv(scene->gl_view, top_position, projected_position);
+
+    /*printf("glm position: %f %f %f\n",
+            ((((projected_position[0] / projected_position[3]) + 0) / 2.0f) *
+            scene->width),
+            projected_position[0] / projected_position[3],
+            projected_position[3]);*/
 #endif
 
     //#ifdef RENDER_SW
@@ -1348,9 +1348,9 @@ void scene_initialise_polygons_2d(Scene *scene) {
     for (int face = 0; face < scene->view->face_count; face++) {
         int *face_vertices = scene->view->face_vertices[face];
         int face_vertex_index = face_vertices[0];
-        int view_z = scene->view->project_vertex_z[face_vertex_index];
+        int project_z = scene->view->project_vertex_z[face_vertex_index];
 
-        if (view_z < scene->clip_near || view_z > scene->clip_far_2d) {
+        if (project_z < scene->clip_near || project_z > scene->clip_far_2d) {
             continue;
         }
 
@@ -1359,16 +1359,15 @@ void scene_initialise_polygons_2d(Scene *scene) {
 
         int view_width =
             //(scene->sprite_width[face] << scene->view_distance) / view_z;
-            (scene->sprite_width[face] * scene->view_distance) / view_z;
+            (scene->sprite_width[face] * scene->view_distance) / project_z;
 
         int view_height =
             //(scene->sprite_height[face] << scene->view_distance) / view_z;
-            (scene->sprite_height[face] * scene->view_distance) / view_z;
+            (scene->sprite_height[face] * scene->view_distance) / project_z;
 
         if (view_x - (view_width / 2) <= scene->clip_x &&
             view_x + (view_width / 2) >= -scene->clip_x &&
             view_y - view_height <= scene->clip_y && view_y >= -scene->clip_y) {
-
             GamePolygon *polygon =
                 scene->visible_polygons[scene->visible_polygons_count];
 
@@ -1378,7 +1377,7 @@ void scene_initialise_polygons_2d(Scene *scene) {
             scene_initialise_polygon_2d(scene, scene->visible_polygons_count);
 
             polygon->depth =
-                (view_z + scene->view->project_vertex_z[face_vertices[1]]) / 2;
+                (project_z + scene->view->project_vertex_z[face_vertices[1]]) / 2;
 
             scene->visible_polygons_count++;
         }
@@ -1415,6 +1414,8 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
         scene->surface, x + scene->base_x, y, width, height,
        scene->sprite_id[face], skew_x, (256 << scene->view_distance) /
        project_z, depth_top, depth_bottom);*/
+
+    //printf("software position: %d %d\n", x, view_x);
 
     surface_draw_entity_sprite(scene->surface, x + scene->base_x, y, width,
                                height, scene->sprite_id[face], skew_x,
@@ -2854,9 +2855,6 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     pitch &= 1023;
     roll &= 1023;
 
-    // TODO remove
-    // roll = 0;
-
     scene->camera_yaw = (1024 - yaw) & 1023;
     scene->camera_pitch = (1024 - pitch) & 1023;
     scene->camera_roll = (1024 - roll) & 1023;
@@ -4257,11 +4255,6 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         return;
     }
 
-    /*if (scene->gl_last_buffer != game_model->gl_buffer) {
-        glBindVertexArray(game_model->gl_buffer->vao);
-        scene->gl_last_buffer = game_model->gl_buffer;
-    }*/
-
     glBindVertexArray(game_model->gl_buffer->vao);
 
     shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
@@ -4333,9 +4326,6 @@ void scene_gl_render(Scene *scene) {
 
     scene_initialise_polygons_2d(scene);
 
-    /*qsort(scene->visible_polygons, scene->visible_polygons_count,
-          sizeof(GamePolygon *), scene_polygon_depth_compare);*/
-
     for (int i = 0; i < scene->visible_polygons_count; i++) {
         GamePolygon *polygon = scene->visible_polygons[i];
         scene_render_polygon_2d_face(scene, polygon->face);
@@ -4367,9 +4357,6 @@ void scene_gl_render(Scene *scene) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, scene->gl_model_texture);
 
-    // TODO is this necessary?
-    scene->gl_last_buffer = NULL;
-
     vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
                       VERTEX_TO_FLOAT(scene->camera_y),
                       VERTEX_TO_FLOAT(scene->camera_z)};
@@ -4377,8 +4364,6 @@ void scene_gl_render(Scene *scene) {
     vec3 ray_end = {0};
     glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
 
-// TODO i don't think we even need this ifndef
-#ifndef RENDER_SW
 #ifdef EMSCRIPTEN
     /* webgl does not support depth buffer reading :( */
     if (scene->gl_terrain_pick_step == GL_PICK_STEP_SAMPLE) {
@@ -4486,7 +4471,6 @@ void scene_gl_render(Scene *scene) {
         scene->gl_terrain_pick_y =
             FLOAT_TO_VERTEX(scene->gl_mouse_world[2]) / MAGIC_LOC;
     }
-#endif
 #endif
 
     for (int i = 0; i < scene->model_count; i++) {
@@ -4666,8 +4650,6 @@ void scene_3ds_gl_render(Scene *scene) {
 
     scene->gl_scroll_texture_position =
         (scene->gl_scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
-
-    scene->gl_last_buffer = NULL;
 
     vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
                       VERTEX_TO_FLOAT(scene->camera_y),

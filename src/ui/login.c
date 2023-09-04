@@ -454,6 +454,30 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
 #ifdef RENDER_3DS_GL
     world_gl_buffer_world_models(mud->world);
+
+    int model_index = 0;
+
+    for (int i = 0; i < mud->scene->model_count; i++) {
+        if (mud->scene->models[i]->gl_ebo_offset == -1) {
+            model_index++;
+        }
+    }
+
+    GameModel *world_models[model_index];
+
+    model_index = 0;
+
+    for (int i = 0; i < mud->scene->model_count; i++) {
+        GameModel *game_model = mud->scene->models[i];
+        if (game_model->gl_ebo_offset == -1) {
+            world_models[model_index++] = game_model;
+        }
+    }
+
+    game_model_gl_buffer_models(
+        &mud->scene->gl_game_model_buffers,
+        &mud->scene->gl_game_model_buffer_length, world_models,
+        model_index);
 #endif
 
     int x = 9728;
@@ -476,12 +500,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                      912, rotation, 0, zoom * 2);
 
 #ifdef RENDER_3DS_GL
-    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-
-    C3D_RenderTargetClear(mud->_3ds_gl_offscreen_render_target, C3D_CLEAR_ALL,
-                          BLACK, 0);
-
-    C3D_FrameDrawOn(mud->_3ds_gl_offscreen_render_target);
+    mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 
     scene_render(mud->scene);
@@ -507,6 +526,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     C3D_FrameEnd(0);
 
     /* stupid hack but it works */
+    // TODO try with smaller value on real hardware
     delay_ticks(1000);
 #endif
 
@@ -532,9 +552,13 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_3DS_GL
+    mudclient_3ds_gl_offscreen_frame_start(mud);
+#endif
+
     scene_render(mud->scene);
 
+#ifndef RENDER_3DS_GL
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 #endif
 
@@ -542,12 +566,22 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
         mud->surface, offset_x, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    surface_gl_draw(mud->surface);
+#endif
+
+#ifdef RENDER_3DS_GL
+    C3D_FrameEnd(0);
+
+    delay_ticks(1000);
+#endif
+
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1, 0, 0,
                                     mud->surface->width,
                                     LOGIN_BACKGROUND_HEIGHT);
 
-#ifdef RENDER_GL
-    surface_gl_draw(mud->surface);
+#ifdef RENDER_3DS_GL
+    surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo + 1);
 #endif
 
 #ifndef RENDER_3DS_GL
@@ -590,22 +624,38 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifndef RENDER_3DS_GL
-    scene_render(mud->scene);
+#ifdef RENDER_3DS_GL
+    mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 
+    scene_render(mud->scene);
+
+#ifndef RENDER_3DS_GL
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
+#endif
 
     surface_draw_sprite_transform_mask(
         mud->surface, offset_x, offset_y,
         logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    surface_gl_draw(mud->surface);
+#endif
+
+#ifdef RENDER_3DS_GL
+    C3D_FrameEnd(0);
+
+    /* stupid hack but it works */
+    // TODO try with smaller value on real hardware
+    delay_ticks(1000);
+#endif
+
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 2, 0, 0,
                                     mud->surface->width,
                                     LOGIN_BACKGROUND_HEIGHT);
 
-#ifdef RENDER_GL
-    surface_gl_draw(mud->surface);
+#ifdef RENDER_3DS_GL
+    surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo + 2);
 #endif
 
 #ifndef RENDER_3DS_GL
@@ -649,7 +699,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
                           mud->login_screen <= LOGIN_STAGE_REGISTER;
     }
 
-#if 1
     if (show_background) {
         int offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
         int offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
@@ -704,7 +753,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
             }
         }
     }
-#endif
 
     switch (mud->login_screen) {
     case LOGIN_STAGE_WELCOME:

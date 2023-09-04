@@ -33,7 +33,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
     int button_offset_x = MUD_IS_COMPACT ? 41 : 54;
 
     int bar_width =
-        MUD_IS_COMPACT ? MUD_WIDTH + (MUD_WIDTH / 5) + 12 : HBAR_WIDTH;
+        MUD_IS_COMPACT ? MUD_WIDTH + (MUD_WIDTH / 5) + 13 : HBAR_WIDTH;
 
     if (MUD_IS_COMPACT) {
         surface_draw_sprite_transform_mask(mud->surface, x, y, bar_width, 15,

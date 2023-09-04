@@ -552,9 +552,13 @@ async function packMedia() {
         canvas: createCircle()
     });
 
-    const loginCanvas = createCanvas(LOGIN_WIDTH, LOGIN_HEIGHT);
-
     for (let i = 0; i < 3; i++) {
+        const loginCanvas = createCanvas(LOGIN_WIDTH, LOGIN_HEIGHT);
+        const loginContext = loginCanvas.getContext('2d');
+
+        loginContext.fillStyle = `rgb(${(i + 1) * 85}, 0, ${(i + 1) * 85})`;
+        loginContext.fillRect(0, 0, loginCanvas.width, loginCanvas.height);
+
         sprites.push({
             type: 'login',
             index: i,

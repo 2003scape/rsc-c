@@ -214,6 +214,15 @@ void _3ds_keyboard_thread_callback(void *arg) {
 }
 
 #ifdef RENDER_3DS_GL
+void mudclient_3ds_gl_offscreen_frame_start(mudclient *mud) {
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
+    C3D_RenderTargetClear(mud->_3ds_gl_offscreen_render_target, C3D_CLEAR_ALL,
+                          BLACK, 0);
+
+    C3D_FrameDrawOn(mud->_3ds_gl_offscreen_render_target);
+}
+
 void mudclient_3ds_gl_frame_start(mudclient *mud, int clear) {
     /* crashes on console, faster on citra */
     // C3D_FrameBegin(C3D_FRAME_NONBLOCK);
@@ -1238,13 +1247,21 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     /* jagex logo */
     int logo_sprite_id = SPRITE_LIMIT - 1;
 
-    int logo_x = (mud->game_width / 2) -
-                 (mud->surface->sprite_width[logo_sprite_id] / 2) - 19;
+    if (mud->surface->sprite_width[logo_sprite_id]) {
+        int offset_x = 19;
 
-    int logo_y = (mud->game_height / 2) -
-                 (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
+#if defined (RENDER_GL) || defined (RENDER_3DS_GL)
+        offset_x = 2;
+#endif
 
-    surface_draw_sprite(mud->surface, logo_x, logo_y, logo_sprite_id);
+        int logo_x = (mud->game_width / 2) -
+                     (mud->surface->sprite_width[logo_sprite_id] / 2) - offset_x;
+
+        int logo_y = (mud->game_height / 2) -
+                     (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
+
+        surface_draw_sprite(mud->surface, logo_x, logo_y, logo_sprite_id);
+    }
 
     /* loading bar */
     int bar_x = (mud->game_width / 2.0f) - (LOADING_WIDTH / 2.0f);
@@ -1472,13 +1489,11 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
 
     mud->surface->sprite_width[sprite_index] = width;
     mud->surface->sprite_height[sprite_index] = height;
-    mud->surface->sprite_width_full[sprite_index] = width;
-    mud->surface->sprite_height_full[sprite_index] = height;
     mud->surface->surface_pixels[sprite_index] = (int32_t *)pixels;
 }
 
 void mudclient_load_jagex(mudclient *mud) {
-#if defined(RENDER_GL) || defined(RENDER_SW)
+#if defined(RENDER_SW)
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
@@ -1491,6 +1506,11 @@ void mudclient_load_jagex(mudclient *mud) {
         free(jagex_jag);
 #endif
     }
+#elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    int sprite_index = SPRITE_LIMIT - 1;
+
+    mud->surface->sprite_width[sprite_index] = 281;
+    mud->surface->sprite_height[sprite_index] = 85;
 #endif
 
     int8_t *fonts_jag =
@@ -1529,7 +1549,7 @@ void mudclient_load_game_config(mudclient *mud) {
 }
 
 void mudclient_load_media(mudclient *mud) {
-#if defined(RENDER_GL) || defined(RENDER_SW) || RENDER_3DS_GL
+#if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     int8_t *media_jag =
         mudclient_read_data_file(mud, "media" MEDIA ".jag", "2d graphics", 20);
 
@@ -1966,9 +1986,9 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
-    game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
+    /*game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
                                 &mud->scene->gl_game_model_buffer_length,
-                                models_buffer, models_length);
+                                models_buffer, models_length);*/
 #endif
 }
 
@@ -2027,7 +2047,9 @@ void mudclient_reset_game(mudclient *mud) {
         world_remove_object(mud->world, mud->object_x[i], mud->object_y[i],
                             mud->object_id[i]);
 
+#if !defined(RENDER_GL) || !defined(RENDER_SW)
         game_model_destroy(mud->object_model[i]);
+#endif
         free(mud->object_model[i]);
         mud->object_model[i] = NULL;
     }
@@ -2049,7 +2071,7 @@ void mudclient_reset_game(mudclient *mud) {
     mud->ground_item_count = 0;
     mud->player_count = 0;
 
-    GameCharacter *freed_characters[5000] = {0};
+    GameCharacter *freed_characters[NPCS_SERVER_MAX] = {0};
     int freed_count = 0;
 
     for (int i = 0; i < PLAYERS_SERVER_MAX; i++) {
@@ -2067,7 +2089,7 @@ void mudclient_reset_game(mudclient *mud) {
         GameCharacter *player = mud->players[i];
 
         if (player) {
-            for (int j = 0; j < 5000; j++) {
+            for (int j = 0; j < NPCS_SERVER_MAX; j++) {
                 if (freed_characters[j] == player) {
                     mud->players[i] = NULL;
                     i++;
@@ -2083,7 +2105,7 @@ void mudclient_reset_game(mudclient *mud) {
     mud->local_player = malloc(sizeof(GameCharacter));
     game_character_new(mud->local_player);
 
-    memset(freed_characters, 0, sizeof(GameCharacter *) * 5000);
+    memset(freed_characters, 0, sizeof(GameCharacter *) * NPCS_SERVER_MAX);
     freed_count = 0;
 
     mud->npc_count = 0;
@@ -3412,13 +3434,7 @@ void mudclient_handle_game_input(mudclient *mud) {
 #ifdef RENDER_GL
     scene_set_mouse_location(mud->scene, mud->gl_mouse_x, mud->gl_mouse_y);
 #else
-    int offset_x = 0;
-
-#ifdef _3DS
-    // offset_x = 40;
-#endif
-
-    scene_set_mouse_location(mud->scene, mud->mouse_x + offset_x, mud->mouse_y);
+    scene_set_mouse_location(mud->scene, mud->mouse_x, mud->mouse_y);
 #endif
 
     mud->last_mouse_button_down = 0;
@@ -3712,7 +3728,7 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 // TODO make sure it's a human
 int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
                                ANIMATION_INDEX animation_index) {
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int roof_id = world_get_wall_roof(mud->world, character->current_x / 128,
                                       character->current_y / 128);
 

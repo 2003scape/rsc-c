@@ -219,14 +219,21 @@ void world_map_set_pixel(World *world, int x, int y, int colour) {
 #ifdef RENDER_SW
     surface_set_pixel(world->surface, x, y, colour);
 #elif defined(RENDER_3DS_GL)
-    uint16_t *data = (uint16_t *)world->surface->gl_sprite_texture.data;
+    uint16_t *texture_data = (uint16_t *)world->surface->gl_sprite_texture.data;
+
+    int offset_x = 0;
+    int offset_y = 0;
+
+    if (!surface_3ds_gl_get_sprite_texture_offsets(world->surface,
+                                                   world->base_media_sprite - 1,
+                                                   &offset_x, &offset_y)) {
+        return;
+    }
 
     int offset =
-        _3ds_gl_translate_texture_index(y + GL_SPRITE_MINIMAP_OFFSET_X,
-                                        x + GL_SPRITE_MINIMAP_OFFSET_Y, 1024) /
-        2;
+        _3ds_gl_translate_texture_index(y + offset_x, x + offset_y, 1024) / 2;
 
-    data[offset] = _3ds_gl_rgb32_to_rgba5551(colour);
+    texture_data[offset] = _3ds_gl_rgb32_to_rgba5551(colour);
 #endif
 }
 
@@ -2350,12 +2357,10 @@ void world_gl_create_gl_world_models_buffer(World *world, int max_models) {
 
 /* create and populate the initial VBO of landscape-related models */
 void world_gl_buffer_world_models(World *world) {
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     game_model_gl_buffer_models(&world->scene->gl_terrain_buffers,
                                 &world->scene->gl_terrain_buffer_length,
                                 world->gl_world_models_buffer,
                                 world->gl_world_models_offset);
-#endif
 
     free(world->gl_world_models_buffer);
 
@@ -2364,13 +2369,16 @@ void world_gl_buffer_world_models(World *world) {
 }
 
 /* update the terrain model VBOs after ambience changes */
-// TODO we can probably only change the necessary memory rather than rebuffering
-// all of the models
 void world_gl_update_terrain_buffers(World *world) {
+    return;
     printf("update terrain buffer lighting\n");
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];
+
+        if (!game_model->gl_buffer || game_model->vertex_count <= 0) {
+            continue;
+        }
 
         vertex_buffer_gl_bind(game_model->gl_buffer);
 
