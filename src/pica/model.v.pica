@@ -61,8 +61,7 @@
     mov r2, light_ambience_diffuse_fog.xxxx
 
     ; r3 = intensity
-    ; mov r3, in_lighting.yyyy
-    ; mov r3, base_const.xxxx
+    mov r3, in_lighting.yyyy
 
     ifu unlit
         cmp use_gouraud, ge, ge, in_lighting.xxxx
@@ -115,6 +114,10 @@
     ifc cmp.x
         mov r2, farts
     .end
+
+    ; gradient_index = max(0, min(gradient_index, 255));
+    min r2, farts.xxxx, r2
+    max r2, base_const.xxxx, r2
 
     ; gradient_index = 255 - gradient_index
     add r2, invert_index, r2
