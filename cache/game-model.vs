@@ -17,7 +17,6 @@ layout(location = 6) in vec2 back_texture_position;
 out vec3 vertex_colour;
 out vec2 vertex_texture_position;
 out float vertex_gradient_index;
-flat out int is_foggy;
 
 uniform float scroll_texture;
 
@@ -49,6 +48,12 @@ void main() {
     } else {
         vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 
+        float r5 = dot(vec3(light_direction), model_normal);
+        float r6 = light_diffuse * normal.w;
+        r6 = 1.0f/r6;
+
+        //intensity = r6 * r5
+
         /* normal.w = normal_magnitude */
         intensity = dot(light_direction, model_normal) /
                     (light_diffuse * normal.w);
@@ -65,23 +70,17 @@ void main() {
     }
 
     // TODO replace division with multiplication
-    /*if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
+    if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
         gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
-        is_foggy = 1;
+    }
+
+    /*if ((float(fog_distance) / VERTEX_SCALE) < gl_Position.z) {
+        //gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
+        //gradient_index = 255;
+        //vertex_colour = vec3(1.0, 0, 1.0);
     }*/
 
-    if ((float(fog_distance) / VERTEX_SCALE) < gl_Position.z) {
-        //gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
-        gradient_index = 255;
-        //vertex_colour = vec3(1.0, 0, 1.0);
-        is_foggy = 1;
-    }
-
-    if (gradient_index > (RAMP_SIZE - 1)) {
-        gradient_index = (RAMP_SIZE - 1);
-    } else if (gradient_index < 0) {
-        gradient_index = 0;
-    }
+    gradient_index = max(0, min(gradient_index, RAMP_SIZE - 1));
 
     vertex_gradient_index = gradient_index;
 

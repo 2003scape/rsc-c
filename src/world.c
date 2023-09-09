@@ -2370,7 +2370,6 @@ void world_gl_buffer_world_models(World *world) {
 
 /* update the terrain model VBOs after ambience changes */
 void world_gl_update_terrain_buffers(World *world) {
-    return;
     printf("update terrain buffer lighting\n");
 
     for (int i = 0; i < TERRAIN_COUNT; i++) {

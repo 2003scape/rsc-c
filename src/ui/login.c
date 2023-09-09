@@ -439,7 +439,7 @@ void mudclient_reset_login_screen(mudclient *mud) {
 void mudclient_render_login_scene_sprites(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int old_fov = mud->options->field_of_view;
-    mud->options->field_of_view = 0;
+    mud->options->field_of_view = 360;
     mudclient_update_fov(mud);
 #endif
 
@@ -527,7 +527,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     /* stupid hack but it works */
     // TODO try with smaller value on real hardware
-    delay_ticks(1000);
+    delay_ticks(LOGIN_RENDER_DELAY);
 #endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo, 0, 0,
@@ -573,7 +573,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 #ifdef RENDER_3DS_GL
     C3D_FrameEnd(0);
 
-    delay_ticks(1000);
+    delay_ticks(LOGIN_RENDER_DELAY);
 #endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 1, 0, 0,
@@ -647,7 +647,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     /* stupid hack but it works */
     // TODO try with smaller value on real hardware
-    delay_ticks(1000);
+    delay_ticks(LOGIN_RENDER_DELAY);
 #endif
 
     surface_screen_raster_to_sprite(mud->surface, mud->sprite_logo + 2, 0, 0,

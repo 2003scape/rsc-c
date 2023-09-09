@@ -13,6 +13,10 @@ typedef enum {
 
 #define LOGIN_BACKGROUND_HEIGHT ((int)((200 / 512.0f) * (float)(MUD_WIDTH)))
 
+#ifdef RENDER_3DS_GL
+#define LOGIN_RENDER_DELAY 250
+#endif
+
 void mudclient_create_login_panels(mudclient *mud);
 void mudclient_show_login_screen_status(mudclient *mud, char *s, char *s1);
 void mudclient_reset_login_screen(mudclient *mud);

@@ -1064,9 +1064,9 @@ GameModel *game_model_copy(GameModel *game_model) {
 
     copy->light_direction_magnitude = game_model->light_direction_magnitude;
 
-    copy->gl_ebo_offset = -1;
-    // copy->gl_ebo_length = 0;
-    // copy->gl_buffer = game_model->gl_buffer;
+    copy->gl_ebo_offset = game_model->gl_ebo_offset;
+    copy->gl_ebo_length = game_model->gl_ebo_length;
+    copy->gl_buffer = game_model->gl_buffer;
 
     /*copy->gl_vbo_offset = game_model->gl_vbo_offset;
     copy->gl_ebo_offset = game_model->gl_ebo_offset;

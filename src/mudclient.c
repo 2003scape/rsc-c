@@ -1986,9 +1986,9 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
-    /*game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
+    game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
                                 &mud->scene->gl_game_model_buffer_length,
-                                models_buffer, models_length);*/
+                                models_buffer, models_length);
 #endif
 }
 
@@ -2047,7 +2047,7 @@ void mudclient_reset_game(mudclient *mud) {
         world_remove_object(mud->world, mud->object_x[i], mud->object_y[i],
                             mud->object_id[i]);
 
-#if !defined(RENDER_GL) || !defined(RENDER_SW)
+#ifdef RENDER_SW
         game_model_destroy(mud->object_model[i]);
 #endif
         free(mud->object_model[i]);
@@ -2809,7 +2809,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 
     mudclient_draw_chat_message_tabs(mud);
 
-#if defined(RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
     mudclient_3ds_gl_frame_start(mud, 0);
     surface_draw(mud->surface);
     mudclient_3ds_gl_frame_end();
@@ -4759,6 +4759,7 @@ void mudclient_draw_game(mudclient *mud) {
 #if defined(_3DS) && defined(RENDER_SW)
     gfxFlushBuffers();
     gfxSwapBuffers();
+    // TODO move to where gl_swapwindow is
 #endif
 }
 
@@ -4785,6 +4786,9 @@ void mudclient_draw(mudclient *mud) {
 #endif
 
     if (mud->logged_in == 0) {
+#ifdef RENDER_GL
+        glClear(GL_DEPTH_BUFFER_BIT);
+#endif
         mud->surface->draw_string_shadow = 0;
         mudclient_draw_login_screens(mud);
     } else if (mud->logged_in == 1) {
@@ -4812,13 +4816,6 @@ void mudclient_on_resize(mudclient *mud) {
 #elif defined(RENDER_GL)
     SDL_SetWindowSize(mud->gl_window, new_width, new_height);
 #endif
-#elif defined(RENDER_GL) && defined(RENDER_SW) && !defined(_3DS) &&            \
-    !defined(WII)
-    if (event.window.windowID == SDL_GetWindowID(mud->window)) {
-        SDL_GetWindowSize(mud->window, &new_width, &new_height);
-    } else {
-        SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
-    }
 #elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
     SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
