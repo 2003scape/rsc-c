@@ -1,14 +1,15 @@
 #include "packet-handler.h"
 
 void mudclient_update_ground_item_models(mudclient *mud) {
-    return;
     for (int i = 0; i < GROUND_ITEMS_MAX; i++) {
         if (mud->ground_item_model[i] == NULL) {
             continue;
         }
 
         scene_remove_model(mud->scene, mud->ground_item_model[i]);
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
         game_model_destroy(mud->ground_item_model[i]);
+#endif
         free(mud->ground_item_model[i]);
 
         mud->ground_item_model[i] = NULL;
@@ -67,6 +68,15 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
         mud->ground_item_model[i] = model;
     }
+
+#ifdef RENDER_3DS_GL
+    if (mud->ground_item_count > 0) {
+        game_model_gl_buffer_models(
+            &mud->scene->gl_item_buffers,
+            &mud->scene->gl_item_buffer_length, mud->ground_item_model,
+            mud->ground_item_count);
+    }
+#endif
 }
 
 #if defined(RENDER_GL) || defined (RENDER_3DS_GL)

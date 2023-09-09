@@ -214,6 +214,9 @@ typedef struct Scene {
 
     GLuint gl_model_texture;
 #elif defined(RENDER_3DS_GL)
+    gl_vertex_buffer **gl_item_buffers;
+    int gl_item_buffer_length;
+
     DVLB_s *_3ds_gl_model_shader_dvlb;
     shaderProgram_s _3ds_gl_model_shader;
 

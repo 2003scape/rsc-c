@@ -4785,10 +4785,11 @@ void mudclient_draw(mudclient *mud) {
     draw_background(mud->framebuffer, 0);
 #endif
 
-    if (mud->logged_in == 0) {
 #ifdef RENDER_GL
         glClear(GL_DEPTH_BUFFER_BIT);
 #endif
+
+    if (mud->logged_in == 0) {
         mud->surface->draw_string_shadow = 0;
         mudclient_draw_login_screens(mud);
     } else if (mud->logged_in == 1) {

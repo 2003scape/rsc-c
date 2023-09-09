@@ -1048,10 +1048,6 @@ void scene_reduce_sprites(Scene *scene, int i) {
 
 int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
                      int width, int height, int tag) {
-    if (scene->sprite_count >= 1) {
-        return;
-    }
-
     scene->sprite_id[scene->sprite_count] = sprite_id;
     scene->sprite_x[scene->sprite_count] = x;
     scene->sprite_z[scene->sprite_count] = y;
@@ -1083,18 +1079,6 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
     scene->gl_sprite_depth_top[scene->sprite_count] =
         projected_position[2] / projected_position[3];
 
-    /*printf("glm position: %f %f %f\n",
-            projected_position[0],
-            projected_position[1],
-            projected_position[3]);*/
-
-    //glm_mat4_mulv(scene->gl_view, top_position, projected_position);
-
-    /*printf("glm position: %f %f %f\n",
-            ((((projected_position[0] / projected_position[3]) + 0) / 2.0f) *
-            scene->width),
-            projected_position[0] / projected_position[3],
-            projected_position[3]);*/
 #endif
 
     //#ifdef RENDER_SW
@@ -4334,7 +4318,7 @@ void scene_gl_render(Scene *scene) {
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_DEPTH_BUFFER_BIT);
 
     int offset_y = 13;
 
