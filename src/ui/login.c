@@ -784,14 +784,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     mudclient_draw_blue_bar(mud);
 
-    int sprite_id_test = 17;
-    //int sprite_id_test = 498;
-    //int skin_colour_test = 0xecded0;
-    int skin_colour_test = 0x997326;
-
-    surface_draw_sprite_transform_mask(
-            mud->surface, 50, 50, 200, 200, sprite_id_test, 0, skin_colour_test, 0, 0);
-
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
 

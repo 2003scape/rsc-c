@@ -201,6 +201,8 @@ void surface_gl_reset_context(Surface *surface) {
     surface->gl_contexts[0].min_y = surface->bounds_min_y;
     surface->gl_contexts[0].max_y = surface->bounds_max_y;
 
+    surface->gl_contexts[0].use_depth = 0;
+
     surface->gl_context_count = 1;
 }
 
@@ -313,12 +315,6 @@ void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
 
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth) {
-#ifdef RENDER_3DS_GL
-    if (depth == 0) {
-        depth = -1.0f;
-    }
-#endif
-
     for (int i = 0; i < length; i++) {
         vertices[i].z = depth;
     }
@@ -386,7 +382,8 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, C3D_Tex *texture,
     int context_index = surface->gl_context_count - 1;
     SurfaceGlContext *context = &surface->gl_contexts[context_index];
 
-    if (context->min_x == surface->bounds_min_x &&
+    if (context->use_depth == 0 && quad->bottom_left.z == 0 &&
+        context->min_x == surface->bounds_min_x &&
         context->max_x == surface->bounds_max_x &&
         context->min_y == surface->bounds_min_y &&
         context->max_y == surface->bounds_max_y &&
@@ -402,6 +399,8 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, C3D_Tex *texture,
 
         context->texture = texture;
         context->base_texture = base_texture;
+
+        context->use_depth = quad->bottom_left.z != 0;
 
         context->quad_count = 1;
 
@@ -787,10 +786,6 @@ void surface_gl_draw(Surface *surface) {
     glEnable(GL_SCISSOR_TEST);
     glDisable(GL_CULL_FACE);
 
-    /*if (!use_depth) {
-        glDisable(GL_DEPTH_TEST);
-    }*/
-
     shader_use(&surface->gl_flat_shader);
 
     int is_ui_scaled = mudclient_is_ui_scaled(surface->mud);
@@ -857,8 +852,6 @@ void surface_gl_draw(Surface *surface) {
 
     // C3D_DepthTest(true, GPU_LEQUAL, GPU_WRITE_ALL);
     // C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
-    C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
-    // C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(tex_env);
@@ -882,6 +875,12 @@ void surface_gl_draw(Surface *surface) {
 
         if (context->quad_count <= 0) {
             continue;
+        }
+
+        if (context->use_depth) {
+            C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
+        } else {
+            C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
         }
 
         C3D_SetScissor(GPU_SCISSOR_NORMAL, 240 - context->max_y,
