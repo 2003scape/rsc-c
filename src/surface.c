@@ -522,6 +522,17 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         gl_entity_texture base_texture_position =
             gl_entities_base_texture_positions[sprite_id];
 
+        if (skin_colour != 0) {
+            int skin_index = gl_get_entity_skin_index(skin_colour);
+            int skin_sprite_index = gl_get_entity_sprite_index(sprite_id);
+
+            if (skin_sprite_index != -1 && skin_index != -1) {
+                base_texture_position =
+                    gl_entities_skin_texture_positions[skin_index]
+                                                      [skin_sprite_index];
+            }
+        }
+
         int base_texture_index = base_texture_position.texture_index;
 
         if (base_texture_index >= 0) {
@@ -653,6 +664,11 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     surface_gl_quad_apply_atlas(&quad, atlas_position, flip);
     surface_gl_quad_apply_base_atlas(&quad, base_atlas_position, flip);
 
+    /* bald head sprites - TODO magic #s */
+    if (sprite_id >= 189 && sprite_id <= 216) {
+        mask_colour = skin_colour;
+    }
+
     if (mask_colour == 0) {
         mask_colour = WHITE;
     }
@@ -765,29 +781,6 @@ void surface_gl_update_framebuffer(Surface *surface) {
 }
 
 void surface_gl_update_framebuffer_texture(Surface *surface) {}
-
-float surface_gl_get_layer_depth(Surface *surface) {
-    // TODO remove
-    return 0;
-    // return (-0.00875 * surface->mud->camera_zoom + 11.9375) / 100000.0;
-
-#if 0
-    float min_depth = 0.00001f;
-    float max_depth = 0.00008f;
-
-    float zoom_scale = 1.0f - ((surface->mud->camera_zoom - ZOOM_MIN) /
-                               //(float)(ZOOM_MAX - ZOOM_MIN));
-                               800.0f);
-
-    float depth = (zoom_scale * (max_depth - min_depth)) + min_depth;
-
-    if (depth < 0.0f) {
-        return min_depth / 2;
-    }
-
-    return depth;
-#endif
-}
 
 void surface_gl_draw(Surface *surface) {
 #ifdef RENDER_GL

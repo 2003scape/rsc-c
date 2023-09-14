@@ -826,9 +826,10 @@ async function packEntities() {
     for (let i = 0; i < skinColours.length; i++) {
         skinLines.push('    {');
 
-        positions[`skin-${i}`].length = skinSpriteIDs.length;
+        const skinPositions =
+            skinSpriteIDs.map((id) => positions[`skin-${i}`][id]);
 
-        for (const position of Array.from(positions[`skin-${i}`])) {
+        for (const position of skinPositions) {
             skinLines.push('    ' + toEntityStructC(position));
         }
 

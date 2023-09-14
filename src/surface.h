@@ -70,7 +70,6 @@ typedef struct gl_atlas_position {
 
 #define GL_MAX_QUADS 2048
 
-// TODO rename
 typedef struct SurfaceGlContext {
 #ifdef RENDER_GL
     GLuint texture;
@@ -87,6 +86,8 @@ typedef struct SurfaceGlContext {
     int max_x;
     int min_y;
     int max_y;
+
+    int use_depth;
 } SurfaceGlContext;
 
 extern gl_atlas_position gl_white_atlas_position;
@@ -250,7 +251,6 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
-float surface_gl_get_layer_depth(Surface *surface);
 void surface_gl_draw(Surface *surface);
 #endif
 
