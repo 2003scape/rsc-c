@@ -1407,6 +1407,12 @@ void gl_offset_texture_uvs_atlas(gl_atlas_position texture_position,
     float texture_height =
         fabs(texture_position.top_v - texture_position.bottom_v);
 
+    /* for fountain texture */
+    if (texture_width * 1024 == 64 &&
+        texture_height * 1024 == 128) {
+        texture_height /= 2;
+    }
+
     *texture_x *= texture_width;
     *texture_y *= texture_height;
 
@@ -1546,6 +1552,16 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
             gl_offset_texture_uvs_atlas(back_atlas_position, &back_texture_x,
                                         &back_texture_y);
+
+            if (face_fill_front.texture_index == 17) {
+                front_texture_x *= -1;
+                front_texture_y *= -1;
+            }
+
+            if (face_fill_back.texture_index == 17) {
+                back_texture_x *= -1;
+                back_texture_y *= -1;
+            }
 
             gl_model_vertex vertex = {
                 /* vertex */

@@ -220,6 +220,7 @@ typedef struct Scene {
     DVLB_s *_3ds_gl_model_shader_dvlb;
     shaderProgram_s _3ds_gl_model_shader;
 
+    int _3ds_gl_scroll_texture_uniform;
     int _3ds_gl_model_uniform;
     int _3ds_gl_projection_view_model_uniform;
     int _3ds_gl_light_ambience_diffuse_fog_uniform;

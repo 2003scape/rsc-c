@@ -449,8 +449,6 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
 }
 #endif
 
-float global_farts_test = -0.0f;
-
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
 
@@ -5132,11 +5130,9 @@ void mudclient_poll_events(mudclient *mud) {
     } else {
         if (keys_down & KEY_L) {
             mud->_3ds_l_down = 1;
-            global_farts_test -= 0.001f;
         }
 
         if (keys_down & KEY_R) {
-            global_farts_test += 0.001f;
             mud->_3ds_r_down = !mud->_3ds_r_down;
 
             if (!mud->_3ds_r_down) {

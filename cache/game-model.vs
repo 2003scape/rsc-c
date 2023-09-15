@@ -48,12 +48,6 @@ void main() {
     } else {
         vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 
-        float r5 = dot(vec3(light_direction), model_normal);
-        float r6 = light_diffuse * normal.w;
-        r6 = 1.0f/r6;
-
-        //intensity = r6 * r5
-
         /* normal.w = normal_magnitude */
         intensity = dot(light_direction, model_normal) /
                     (light_diffuse * normal.w);
@@ -84,7 +78,10 @@ void main() {
 
     vertex_gradient_index = gradient_index;
 
-    /*if (vertex_texture_position.z == FOUNTAIN_ID) {
-        vertex_texture_position.y -= scroll_texture;
-    }*/
+    if (vertex_texture_position.x < 0) {
+        vertex_texture_position.x *= -1;
+        vertex_texture_position.y *= -1;
+
+        vertex_texture_position.y += scroll_texture;
+    }
 }

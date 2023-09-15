@@ -186,6 +186,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     C3D_BindProgram(&scene->_3ds_gl_model_shader);
 
     scene->_3ds_gl_model_uniform = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "scroll_texture");
+
+    scene->_3ds_gl_model_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "model");
 
     scene->_3ds_gl_light_ambience_diffuse_fog_uniform =
@@ -1361,7 +1364,8 @@ void scene_initialise_polygons_2d(Scene *scene) {
             scene_initialise_polygon_2d(scene, scene->visible_polygons_count);
 
             polygon->depth =
-                (project_z + scene->view->project_vertex_z[face_vertices[1]]) / 2;
+                (project_z + scene->view->project_vertex_z[face_vertices[1]]) /
+                2;
 
             scene->visible_polygons_count++;
         }
@@ -1399,7 +1403,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
        scene->sprite_id[face], skew_x, (256 << scene->view_distance) /
        project_z, depth_top, depth_bottom);*/
 
-    //printf("software position: %d %d\n", x, view_x);
+    // printf("software position: %d %d\n", x, view_x);
 
     surface_draw_entity_sprite(scene->surface, x + scene->base_x, y, width,
                                height, scene->sprite_id[face], skew_x,
@@ -4318,7 +4322,7 @@ void scene_gl_render(Scene *scene) {
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    //glClear(GL_DEPTH_BUFFER_BIT);
+    // glClear(GL_DEPTH_BUFFER_BIT);
 
     int offset_y = 13;
 
@@ -4331,12 +4335,14 @@ void scene_gl_render(Scene *scene) {
     shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
 
-    /*shader_set_float(&scene->game_model_shader, "scroll_texture",
-                     scene->gl_scroll_texture_position /
-                         (float)SCROLL_TEXTURE_SIZE);*/
+    shader_set_float(&scene->game_model_shader, "scroll_texture",
+                     scene->gl_scroll_texture_position / GL_TEXTURE_SIZE);
 
-    scene->gl_scroll_texture_position =
-        (scene->gl_scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
+    if (scene->gl_scroll_texture_position <= 0) {
+        scene->gl_scroll_texture_position = SCROLL_TEXTURE_SIZE;
+    }
+
+    scene->gl_scroll_texture_position--;
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, scene->gl_model_texture);
@@ -4554,7 +4560,6 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                           256.0f;
 
     // float fog_z_distance = (float)scene->fog_z_distance / 100.0f;
-    // float fog_z_distance = global_farts_test;
     float fog_z_distance = (float)scene->fog_z_distance / -1000000.0f;
 
     C3D_FVUnifSet(
@@ -4628,12 +4633,15 @@ void scene_3ds_gl_render(Scene *scene) {
 
     C3D_TexBind(0, &scene->gl_model_texture);
 
-    /*shader_set_float(&scene->game_model_shader, "scroll_texture",
-                     scene->gl_scroll_texture_position /
-                         (float)SCROLL_TEXTURE_SIZE);*/
+    C3D_FVUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_scroll_texture_uniform,
+                  0.0f, scene->gl_scroll_texture_position / GL_TEXTURE_SIZE,
+                  0.0f, 0.0f);
 
-    scene->gl_scroll_texture_position =
-        (scene->gl_scroll_texture_position + 1) % SCROLL_TEXTURE_SIZE;
+    scene->gl_scroll_texture_position++;
+
+    if (scene->gl_scroll_texture_position >= SCROLL_TEXTURE_SIZE) {
+        scene->gl_scroll_texture_position = 0;
+    }
 
     vec3 ray_start = {VERTEX_TO_FLOAT(scene->camera_x),
                       VERTEX_TO_FLOAT(scene->camera_y),

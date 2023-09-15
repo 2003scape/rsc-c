@@ -583,8 +583,8 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     float translate_y = surface->sprite_translate_y[sprite_id] * ratio_y;
 
     if (surface->sprite_translate[sprite_id]) {
-        x += roundf(translate_x);
-        y += roundf(translate_y);
+        x += floorf(translate_x);
+        y += floorf(translate_y);
     }
 
     gl_quad quad = {0};

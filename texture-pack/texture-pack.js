@@ -19,7 +19,7 @@ global.document = {
             }
         };
     }
-}
+};
 
 import TgaLoader from 'tga-js';
 
@@ -189,7 +189,7 @@ const tga = new TgaLoader();
 tga.load(jag.getEntry('logo.tga'));
 
 const jagexCanvas = createCanvas(tga.header.width, tga.header.height);
-const jagexContext = jagexCanvas.getContext('2d')
+const jagexContext = jagexCanvas.getContext('2d');
 
 jagexContext.putImageData(tga.getImageData(), 0, 0);
 
@@ -826,8 +826,9 @@ async function packEntities() {
     for (let i = 0; i < skinColours.length; i++) {
         skinLines.push('    {');
 
-        const skinPositions =
-            skinSpriteIDs.map((id) => positions[`skin-${i}`][id]);
+        const skinPositions = skinSpriteIDs.map(
+            (id) => positions[`skin-${i}`][id]
+        );
 
         for (const position of skinPositions) {
             skinLines.push('    ' + toEntityStructC(position));
@@ -871,7 +872,43 @@ async function packModelTextures() {
                 ? textures.sprites.get(name)
                 : textures.getMergedTexture(name, subName);
 
-        sprites.push({ index: +i, type: 'texture', canvas });
+        const sprite = { index: +i, type: 'texture', canvas };
+
+        if (+i === 17) {
+            const imageData = createImageData(
+                canvas
+                    .getContext('2d')
+                    .getImageData(0, 0, canvas.width, canvas.height).data,
+                canvas.width
+            );
+
+            const tallCanvas = createCanvas(canvas.width, canvas.height * 2);
+            const tallContext = tallCanvas.getContext('2d');
+
+            tallContext.putImageData(
+                imageData,
+                0,
+                0,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            tallContext.putImageData(
+                imageData,
+                0,
+                canvas.height,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            sprite.canvas = tallCanvas;
+        }
+
+        sprites.push(sprite);
     }
 
     const whiteCanvas = createCanvas(32, 32);
