@@ -1626,8 +1626,6 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
         return;
     }
 
-    printf("%d %d\n", offset_x, offset_y);
-
     uint16_t *texture_data = (uint16_t *)surface->gl_sprite_texture.data;
 
     pixel_index = 0;

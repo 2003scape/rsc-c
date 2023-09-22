@@ -1761,7 +1761,7 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
             continue;
         }
 
-        int dupe = 0;
+        GameModel *dupe = NULL;
 
         for (int j = 0; j < i; j++) {
             GameModel *game_model_b = game_models[j];
@@ -1769,9 +1769,16 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
             if (game_model_b != NULL && game_model_b->vertex_count > 0 &&
                 game_model != game_model_b &&
                 game_model->vertex_x == game_model_b->vertex_x) {
-                dupe = 1;
+                dupe = game_model_b;
                 break;
             }
+        }
+
+        if (dupe) {
+            game_model->gl_buffer = dupe->gl_buffer;
+            game_model->gl_vbo_offset = dupe->gl_vbo_offset;
+            game_model->gl_ebo_offset = dupe->gl_ebo_offset;
+            continue;
         }
 
         next_vertex_offset = vertex_offset;
@@ -1805,12 +1812,6 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
         }
 
         game_model->gl_buffer = vertex_buffer;
-
-        if (dupe) {
-            // printf("huh\n");
-            //game_model->gl_buffer = NULL;
-            //game_model->gl_ebo_offset = -1;
-        }
     }
 
     game_model_gl_create_buffer(vertex_buffer, vertex_offset, ebo_offset);

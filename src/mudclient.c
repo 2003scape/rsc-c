@@ -1505,17 +1505,17 @@ void mudclient_load_jagex(mudclient *mud) {
 #endif
     }
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    int sprite_index = SPRITE_LIMIT - 1;
+    int logo_sprite_id = SPRITE_LIMIT - 1;
 
-    mud->surface->sprite_width[sprite_index] = 281;
-    mud->surface->sprite_height[sprite_index] = 85;
+    mud->surface->sprite_width[logo_sprite_id] = 281;
+    mud->surface->sprite_height[logo_sprite_id] = 85;
 #endif
 
     int8_t *fonts_jag =
         mudclient_read_data_file(mud, "fonts" FONTS ".jag", "Game fonts", 5);
 
     if (fonts_jag != NULL) {
-        for (int i = 0; i < FONT_COUNT; i++) {
+        for (int i = 0; i < FONT_FILES_LENGTH; i++) {
             create_font(load_data(font_files[i], 0, fonts_jag), i);
         }
 
@@ -1862,7 +1862,7 @@ void mudclient_load_textures(mudclient *mud) {
 }
 
 void mudclient_load_models(mudclient *mud) {
-    for (int i = 0; i < ANIMATED_MODELS_COUNT; i++) {
+    for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
         char name_length = strlen(animated_models[i]);
         char *name = malloc(name_length + 1);
         strcpy(name, animated_models[i]);
@@ -2903,7 +2903,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         mud->wall_object_model[i] = wall_object_model;
     }
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     mudclient_gl_update_wall_models(mud);
 #endif
 
@@ -3646,7 +3646,9 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
 
         game_model->key = object_index;
 
+#ifdef RENDER_SW
         game_model_destroy(mud->object_model[object_index]);
+#endif
         free(mud->object_model[object_index]);
 
         mud->object_model[object_index] = game_model;
@@ -4368,6 +4370,7 @@ void mudclient_animate_objects(mudclient *mud) {
             } else if (mud->object_id[i] == SPELL_CHARGE_ID) {
                 sprintf(name, "spellcharge%d",
                         (mud->object_animation_cycle + 1));
+
                 mudclient_update_object_animation(mud, i, name);
             }
         }

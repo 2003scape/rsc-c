@@ -119,8 +119,9 @@
 
 #define MAGIC_LOC 128
 
-#define FONT_COUNT 8
-#define ANIMATED_MODELS_COUNT 20
+#define FONT_FILES_LENGTH (sizeof(font_files) / sizeof(font_files[0]))
+
+#define ANIMATED_MODELS_LENGTH 20
 
 #define SOCIAL_LIST_MAX 100
 

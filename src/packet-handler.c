@@ -72,14 +72,13 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 #ifdef RENDER_3DS_GL
     if (mud->ground_item_count > 0) {
         game_model_gl_buffer_models(
-            &mud->scene->gl_item_buffers,
-            &mud->scene->gl_item_buffer_length, mud->ground_item_model,
-            mud->ground_item_count);
+            &mud->scene->gl_item_buffers, &mud->scene->gl_item_buffer_length,
+            mud->ground_item_model, mud->ground_item_count);
     }
 #endif
 }
 
-#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void mudclient_gl_update_wall_models(mudclient *mud) {
     int vbo_offset = 0;
     int ebo_offset = 0;
@@ -596,10 +595,39 @@ void mudclient_packet_tick(mudclient *mud) {
 
 #ifdef RENDER_3DS_GL
         if (mud->object_count > 0) {
+            int object_count = mud->object_count + ANIMATED_MODELS_LENGTH + 8;
+            GameModel *object_model[object_count];
+
+            memcpy(object_model, mud->object_model,
+                   sizeof(GameModel *) * mud->object_count);
+
+            int first_animated_index = 0;
+
+            for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
+                int model_index = game_data_get_model_index(animated_models[i]);
+
+                object_model[mud->object_count + i] =
+                    mud->game_models[model_index];
+
+                int name_length = strlen(animated_models[i]);
+                char model_name[name_length + 1];
+
+                strcpy(model_name, animated_models[i]);
+
+                if (model_name[name_length - 1] == '2') {
+                    model_name[name_length - 1] = '1';
+                    object_model[mud->object_count + ANIMATED_MODELS_LENGTH +
+                                 first_animated_index] =
+                        mud->game_models[game_data_get_model_index(model_name)];
+
+                    first_animated_index++;
+                }
+            }
+
             game_model_gl_buffer_models(
                 &mud->scene->gl_game_model_buffers,
-                &mud->scene->gl_game_model_buffer_length, mud->object_model,
-                mud->object_count);
+                &mud->scene->gl_game_model_buffer_length, object_model,
+                object_count);
         }
 #endif
 
@@ -882,7 +910,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
             mud->wall_object_count = entity_count;
 
-#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
             mudclient_gl_update_wall_models(mud);
 #endif
         }
@@ -998,7 +1026,7 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         mudclient_gl_update_wall_models(mud);
 #endif
         break;
