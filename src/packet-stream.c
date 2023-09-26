@@ -119,7 +119,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     ret = net_connect(packet_stream->socket, (struct sockaddr *)&server_addr,
                       sizeof(server_addr));
 #else
-#ifdef WIN32
+#if defined(WIN32)
     setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, (char *)&set,
                sizeof(set));
 #else
@@ -274,7 +274,7 @@ void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
     if (!packet_stream->closed) {
 #ifdef WII
         net_write(packet_stream->socket, buffer + offset, length);
-#elif defined(WIN32)
+#elif defined(WIN32) || defined(__SWITCH__)
         send(packet_stream->socket, buffer + offset, length, 0);
 #else
         write(packet_stream->socket, buffer + offset, length);

@@ -36,6 +36,8 @@
 
 #define GAME_OFFSET_X 64
 #define GAME_OFFSET_Y 54
+#elif defined(__SWITCH__)
+#include <switch.h>
 #elif defined(_3DS)
 #include <3ds.h>
 

@@ -21,6 +21,12 @@ char *animated_models[] = {
 
 char login_screen_status[255] = {0};
 
+#ifdef __SWITCH__
+SDL_Joystick *joystick;
+SwkbdConfig kbd;
+char tmpoutstr[16] = {0};
+#endif
+
 #ifdef WII
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
@@ -712,6 +718,16 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     HIDUSER_EnableGyroscope();
 #else
+
+    #ifdef __SWITCH__
+    Result romfs_res = romfsInit();
+
+    if (romfs_res) {
+        fprintf(stderr, "romfsInit: %08lX\n", romfs_res);
+        exit(1);
+    }
+    #endif
+
     int init = SDL_INIT_VIDEO;
 
     if (mud->options->members) {
@@ -722,6 +738,12 @@ void mudclient_start_application(mudclient *mud, char *title) {
         fprintf(stderr, "SDL_Init(): %s\n", SDL_GetError());
         exit(1);
     }
+
+    #ifdef __SWITCH__
+        SDL_Init(SDL_INIT_EVERYTHING);
+        SDL_JoystickEventState(SDL_ENABLE);
+        joystick = SDL_JoystickOpen(0);
+    #endif
 
     if (mud->options->members) {
         SDL_AudioSpec wanted_audio;
@@ -1378,7 +1400,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 #else
     int file_length = strlen(file);
 
-#ifdef _3DS
+#if defined(_3DS) || defined(__SWITCH__)
     char *prefix = "romfs:";
 #else
     char *prefix = "./cache";
@@ -5279,6 +5301,35 @@ void mudclient_poll_events(mudclient *mud) {
                 }
             }
             break;
+        case SDL_FINGERMOTION:
+            mudclient_mouse_moved(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT));
+            break;
+        case SDL_FINGERDOWN:
+            mudclient_mouse_pressed(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), 1);
+            break;
+        case SDL_FINGERUP:
+            mudclient_mouse_released(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), 1);
+            break;
+        #ifdef __SWITCH__
+        case SDL_JOYBUTTONDOWN:
+            if ( event.jbutton.button == 0 ) 
+            {
+                swkbdCreate(&kbd, 0);
+                swkbdConfigMakePresetDefault(&kbd);
+                swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
+                
+                for (int i = 0; i < sizeof(tmpoutstr); i++)
+                mudclient_handle_key_press(mud, tmpoutstr[i]);
+
+                swkbdClose(&kbd);
+            }
+            if ( event.jbutton.button == 1 ) 
+            {                
+                for (int i = 0; i < 256; i++)
+                mudclient_handle_key_press(mud, '\b');
+            }
+            break;
+        #endif
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 mudclient_on_resize(mud);
