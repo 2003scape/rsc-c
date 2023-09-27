@@ -27,6 +27,8 @@ SwkbdConfig kbd;
 char tmpoutstr[200] = {0};
 #endif
 
+uint8_t curMouseBtn = 1;
+
 #ifdef WII
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
@@ -5305,10 +5307,10 @@ void mudclient_poll_events(mudclient *mud) {
             mudclient_mouse_moved(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT));
             break;
         case SDL_FINGERDOWN:
-            mudclient_mouse_pressed(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), 1);
+            mudclient_mouse_pressed(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), curMouseBtn);
             break;
         case SDL_FINGERUP:
-            mudclient_mouse_released(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), 1);
+            mudclient_mouse_released(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), curMouseBtn);
             break;
         #ifdef __SWITCH__
         case SDL_JOYBUTTONDOWN:
@@ -5328,6 +5330,9 @@ void mudclient_poll_events(mudclient *mud) {
                     break;
                 case 6: //L Button
                     mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
+                    break;
+                case 7:
+                    curMouseBtn = 3;
                     break;
                 case 11: //Minus Button?
                     mudclient_key_pressed(mud, K_F1, -1);
@@ -5378,6 +5383,9 @@ void mudclient_poll_events(mudclient *mud) {
                     break;
                 case 6: //L Button
                     mudclient_key_released(mud, K_BACKSPACE);
+                    break;
+                case 7:
+                    curMouseBtn = 1;
                     break;
                 case 11: //Minus Button?
                     mudclient_key_released(mud, K_F1);

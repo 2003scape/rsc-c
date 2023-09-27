@@ -122,7 +122,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     ret = net_connect(packet_stream->socket, (struct sockaddr *)&server_addr,
                       sizeof(server_addr));
 #else
-#if defined(WIN32)
+#ifdef WIN32
     setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, (char *)&set,
                sizeof(set));
 #else
