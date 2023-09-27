@@ -109,7 +109,7 @@ see `./build-3ds.sh` for building for 3DS.
 
 install
 [switch-dev package in devkitPro](https://devkitpro.org/wiki/Getting_Started),
-switch-sdl2, and, switch-bzip to build
+switch-sdl2, and, switch-bzip2 to build
 an [`.nro` file](https://switchbrew.org/wiki/Homebrew_Applications). use
 [yuzu](https://yuzu-emu.org/) to test locally.
 
