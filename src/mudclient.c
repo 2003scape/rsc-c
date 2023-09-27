@@ -5319,14 +5319,18 @@ void mudclient_poll_events(mudclient *mud) {
                 swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
                 
                 for (int i = 0; i < sizeof(tmpoutstr); i++)
-                mudclient_handle_key_press(mud, tmpoutstr[i]);
+                    mudclient_key_pressed(mud, -1, tmpoutstr[i]);
 
                 swkbdClose(&kbd);
             }
             if ( event.jbutton.button == 1 ) 
             {                
                 for (int i = 0; i < 256; i++)
-                mudclient_handle_key_press(mud, '\b');
+                    mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
+            }
+            if ( event.jbutton.button == 2 ) 
+            {                
+                    mudclient_key_pressed(mud, K_ENTER, K_ENTER);
             }
             break;
         #endif
