@@ -24,7 +24,7 @@ char login_screen_status[255] = {0};
 #ifdef __SWITCH__
 SDL_Joystick *joystick;
 SwkbdConfig kbd;
-char tmpoutstr[16] = {0};
+char tmpoutstr[200] = {0};
 #endif
 
 #ifdef WII
@@ -5312,25 +5312,60 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         #ifdef __SWITCH__
         case SDL_JOYBUTTONDOWN:
-            if ( event.jbutton.button == 0 ) 
+            switch (event.jbutton.button)
             {
-                swkbdCreate(&kbd, 0);
-                swkbdConfigMakePresetDefault(&kbd);
-                swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
-                
-                for (int i = 0; i < sizeof(tmpoutstr); i++)
-                    mudclient_key_pressed(mud, -1, tmpoutstr[i]);
+                case 0:
+                    swkbdCreate(&kbd, 0);
+                    swkbdConfigMakePresetDefault(&kbd);
+                    swkbdConfigSetOkButtonText(&kbd, "Submit");
+                    swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
+                    
+                    for (int i = 0; i < sizeof(tmpoutstr); i++)
+                        mudclient_key_pressed(mud, -1, tmpoutstr[i]);
 
-                swkbdClose(&kbd);
-            }
-            if ( event.jbutton.button == 1 ) 
-            {                
-                for (int i = 0; i < 256; i++)
+                    swkbdClose(&kbd);
+                    break;
+                case 1:
                     mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
-            }
-            if ( event.jbutton.button == 2 ) 
-            {                
+                    break;
+                case 2:
                     mudclient_key_pressed(mud, K_ENTER, K_ENTER);
+                    break;
+                case 12:
+                    mudclient_key_pressed(mud, K_LEFT, -1);
+                    break;
+                case 13:
+                    mudclient_key_pressed(mud, K_UP, -1);
+                    break;
+                case 14:
+                    mudclient_key_pressed(mud, K_RIGHT, -1);
+                    break;
+                case 15:
+                    mudclient_key_pressed(mud, K_DOWN, -1);
+                    break;
+            }
+            break;
+        case SDL_JOYBUTTONUP:
+            switch (event.jbutton.button)
+            {
+                case 1:
+                    mudclient_key_released(mud, K_BACKSPACE);
+                    break;
+                case 2:
+                    mudclient_key_released(mud, K_ENTER);
+                    break;
+                case 12:
+                    mudclient_key_released(mud, K_LEFT);
+                    break;
+                case 13:
+                    mudclient_key_released(mud, K_UP);
+                    break;
+                case 14:
+                    mudclient_key_released(mud, K_RIGHT);
+                    break;
+                case 15:
+                    mudclient_key_released(mud, K_DOWN);
+                    break;
             }
             break;
         #endif
