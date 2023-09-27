@@ -5314,7 +5314,25 @@ void mudclient_poll_events(mudclient *mud) {
         case SDL_JOYBUTTONDOWN:
             switch (event.jbutton.button)
             {
-                case 0:
+                case 0: //A Button
+                    mudclient_key_pressed(mud, K_HOME, -1);
+                    break;
+                case 1: //B Button
+                    mudclient_key_released(mud, K_PAGE_DOWN);
+                    break;
+                case 2: //X Button
+                    mudclient_key_released(mud, K_PAGE_UP);
+                    break;
+                case 3: //Y Button
+                    mudclient_key_pressed(mud, K_ENTER, K_ENTER);
+                    break;
+                case 6: //L Button
+                    mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
+                    break;
+                case 11: //Minus Button?
+                    mudclient_key_pressed(mud, K_F1, -1);
+                    break;
+                case 10: //Plus Button
                     swkbdCreate(&kbd, 0);
                     swkbdConfigMakePresetDefault(&kbd);
                     swkbdConfigSetOkButtonText(&kbd, "Submit");
@@ -5325,45 +5343,59 @@ void mudclient_poll_events(mudclient *mud) {
 
                     swkbdClose(&kbd);
                     break;
-                case 1:
-                    mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
-                    break;
-                case 2:
-                    mudclient_key_pressed(mud, K_ENTER, K_ENTER);
-                    break;
-                case 12:
+                case 12: //DPAD LEFT
+                case 16: //Left Stick Left
                     mudclient_key_pressed(mud, K_LEFT, -1);
                     break;
-                case 13:
+                case 13: //DPAD UP
+                case 17: //Left Stick Up
                     mudclient_key_pressed(mud, K_UP, -1);
                     break;
-                case 14:
+                case 14: //DPAD RIGHT
+                case 18: //Left Stick Right
                     mudclient_key_pressed(mud, K_RIGHT, -1);
                     break;
-                case 15:
+                case 15: //DPAD DOWN
+                case 19: //Left Stick Down
                     mudclient_key_pressed(mud, K_DOWN, -1);
-                    break;
+                    break;                 
             }
             break;
         case SDL_JOYBUTTONUP:
             switch (event.jbutton.button)
             {
-                case 1:
-                    mudclient_key_released(mud, K_BACKSPACE);
+                case 0: //A Button
+                    mudclient_key_released(mud, K_HOME);
                     break;
-                case 2:
+                case 1: //B Button
+                    mudclient_key_released(mud, K_PAGE_DOWN);
+                    break;
+                case 2: //X Button
+                    mudclient_key_released(mud, K_PAGE_UP);
+                    break;
+                case 3: //Y Button
                     mudclient_key_released(mud, K_ENTER);
                     break;
-                case 12:
+                case 6: //L Button
+                    mudclient_key_released(mud, K_BACKSPACE);
+                    break;
+                case 11: //Minus Button?
+                    mudclient_key_released(mud, K_F1);
+                    break;
+                case 12: //DPAD LEFT
+                case 16: //Left Stick Left
                     mudclient_key_released(mud, K_LEFT);
                     break;
-                case 13:
+                case 13: //DPAD UP
+                case 17: //Left Stick Up
                     mudclient_key_released(mud, K_UP);
                     break;
-                case 14:
+                case 14: //DPAD RIGHT
+                case 18: //Left Stick Right
                     mudclient_key_released(mud, K_RIGHT);
                     break;
-                case 15:
+                case 15: //DPAD DOWN
+                case 19: //Left Stick Down
                     mudclient_key_released(mud, K_DOWN);
                     break;
             }
