@@ -102,6 +102,9 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #ifdef WII
     packet_stream->socket = net_socket(AF_INET, SOCK_STREAM, 0);
 #else
+    #ifdef __SWITCH__
+        socketInitializeDefault();              // Initialize sockets
+    #endif
     packet_stream->socket = socket(AF_INET, SOCK_STREAM, 0);
 #endif
 
