@@ -45,6 +45,7 @@ a USB keyboard and mouse can also be used.
 
 * d-pad/left stick to control camera
 * touch screen for mouse input
+* hold R whilst tapping touch screen for right click
 * plus to toggle on-screen keyboard
 * minus to toggle F1/interlace mode
 
