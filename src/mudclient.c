@@ -5334,7 +5334,7 @@ void mudclient_poll_events(mudclient *mud) {
                 case 7:
                     curMouseBtn = 3;
                     break;
-                case 11: //Minus Button?
+                case 11: //Minus Button
                     mudclient_key_pressed(mud, K_F1, -1);
                     break;
                 case 10: //Plus Button
@@ -5387,7 +5387,7 @@ void mudclient_poll_events(mudclient *mud) {
                 case 7:
                     curMouseBtn = 1;
                     break;
-                case 11: //Minus Button?
+                case 11: //Minus Button
                     mudclient_key_released(mud, K_F1);
                     break;
                 case 12: //DPAD LEFT
