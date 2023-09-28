@@ -53,8 +53,8 @@ a USB keyboard and mouse can also be used.
 * ZR is reserved for future use
 * touch screen for mouse input
 * hold ZL whilst tapping touch screen for right click
-* + to toggle on-screen keyboard
-* - to toggle F1/interlace mode
+* \+ to toggle on-screen keyboard
+* \- to toggle F1/interlace mode
 
 ## build (linux)
 
