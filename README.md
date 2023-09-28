@@ -48,9 +48,11 @@ a USB keyboard and mouse can also be used.
 * B for Backspace
 * X for Tab
 * Y for Home
-* R for Escape
+* L for Escape
+* R to toggle fps display
+* ZR is reserved for future use
 * touch screen for mouse input
-* hold L whilst tapping touch screen for right click
+* hold ZL whilst tapping touch screen for right click
 * + to toggle on-screen keyboard
 * - to toggle F1/interlace mode
 
