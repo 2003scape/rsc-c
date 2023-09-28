@@ -44,10 +44,15 @@ a USB keyboard and mouse can also be used.
 ### controls (switch):
 
 * d-pad/left stick to control camera
+* A for Enter
+* B for Backspace
+* X for Tab
+* Y for Home
+* R for Escape
 * touch screen for mouse input
-* hold R whilst tapping touch screen for right click
-* plus to toggle on-screen keyboard
-* minus to toggle F1/interlace mode
+* hold L whilst tapping touch screen for right click
+* + to toggle on-screen keyboard
+* - to toggle F1/interlace mode
 
 ## build (linux)
 

@@ -23,8 +23,9 @@ char login_screen_status[255] = {0};
 
 #ifdef __SWITCH__
 SDL_Joystick *joystick;
+#define MAX_KBD_STR_SIZE 200
 SwkbdConfig kbd;
-char tmpoutstr[200] = {0};
+char tmpoutstr[MAX_KBD_STR_SIZE] = {0};
 #endif
 
 uint8_t curMouseBtn = 1;
@@ -5317,29 +5318,42 @@ void mudclient_poll_events(mudclient *mud) {
             switch (event.jbutton.button)
             {
                 case 0: //A Button
-                    mudclient_key_pressed(mud, K_HOME, -1);
-                    break;
-                case 1: //B Button
-                    mudclient_key_released(mud, K_PAGE_DOWN);
-                    break;
-                case 2: //X Button
-                    mudclient_key_released(mud, K_PAGE_UP);
-                    break;
-                case 3: //Y Button
                     mudclient_key_pressed(mud, K_ENTER, K_ENTER);
                     break;
-                case 6: //L Button
+                case 1: //B Button
                     mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
                     break;
-                case 7:
+                case 2: //X Button
+                    mudclient_key_pressed(mud, K_TAB, -1);
+                    break;
+                case 3: //Y Button
+                    mudclient_key_pressed(mud, K_HOME, -1);
+                    break;
+                case 6: //L Button
+                    mudclient_key_pressed(mud, K_ESCAPE, -1);
+                    break;
+                case 7: //R Button
+                    if (mud->options->display_fps == 0)
+                        mud->options->display_fps = 1;
+                    else
+                        mud->options->display_fps = 0;
+                    break;
+                case 8: // ZL
                     curMouseBtn = 3;
+                    break;
+                case 9: // ZR
+                    //Reserved
                     break;
                 case 11: //Minus Button
                     mudclient_key_pressed(mud, K_F1, -1);
                     break;
                 case 10: //Plus Button
                     swkbdCreate(&kbd, 0);
-                    swkbdConfigMakePresetDefault(&kbd);
+                    swkbdConfigSetType(&kbd, SwkbdType_QWERTY);
+                    swkbdConfigSetBlurBackground(&kbd, 0);
+                    swkbdConfigSetTextDrawType(&kbd, SwkbdTextDrawType_Box);
+                    swkbdConfigSetReturnButtonFlag(&kbd, 0);
+                    swkbdConfigSetStringLenMax(&kbd, MAX_KBD_STR_SIZE);
                     swkbdConfigSetOkButtonText(&kbd, "Submit");
                     swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
                     
@@ -5363,29 +5377,44 @@ void mudclient_poll_events(mudclient *mud) {
                 case 15: //DPAD DOWN
                 case 19: //Left Stick Down
                     mudclient_key_pressed(mud, K_DOWN, -1);
-                    break;                 
+                    break;
+                case 20: //Right Stick Left
+                    break;
+                case 21: //Right Stick Up
+                    mudclient_key_pressed(mud, K_PAGE_UP, -1);
+                    break;
+                case 22: //Right Stick Right
+                    break;
+                case 23: //Right Stick Down
+                    mudclient_key_pressed(mud, K_PAGE_DOWN, -1);
+                    break; 
             }
             break;
         case SDL_JOYBUTTONUP:
             switch (event.jbutton.button)
             {
                 case 0: //A Button
-                    mudclient_key_released(mud, K_HOME);
-                    break;
-                case 1: //B Button
-                    mudclient_key_released(mud, K_PAGE_DOWN);
-                    break;
-                case 2: //X Button
-                    mudclient_key_released(mud, K_PAGE_UP);
-                    break;
-                case 3: //Y Button
                     mudclient_key_released(mud, K_ENTER);
                     break;
-                case 6: //L Button
+                case 1: //B Button
                     mudclient_key_released(mud, K_BACKSPACE);
                     break;
-                case 7:
+                case 2: //X Button
+                    mudclient_key_released(mud, K_TAB);
+                    break;
+                case 3: //Y Button
+                    mudclient_key_released(mud, K_HOME);
+                    break;
+                case 6: //L Button
+                    mudclient_key_released(mud, K_ESCAPE);
+                    break;
+                case 7: //R Button
+                    break;
+                case 8: //ZL
                     curMouseBtn = 1;
+                    break;
+                case 9: //ZR
+                    //Reserved
                     break;
                 case 11: //Minus Button
                     mudclient_key_released(mud, K_F1);
@@ -5405,6 +5434,16 @@ void mudclient_poll_events(mudclient *mud) {
                 case 15: //DPAD DOWN
                 case 19: //Left Stick Down
                     mudclient_key_released(mud, K_DOWN);
+                    break;
+                case 20: //Right Stick Left
+                    break;
+                case 21: //Right Stick Up
+                    mudclient_key_released(mud, K_PAGE_UP);
+                    break;
+                case 22: //Right Stick Right
+                    break;
+                case 23: //Right Stick Down
+                    mudclient_key_released(mud, K_PAGE_DOWN);
                     break;
             }
             break;
