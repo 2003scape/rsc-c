@@ -850,14 +850,10 @@ void surface_gl_draw(Surface *surface) {
 
     vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
-    // C3D_DepthTest(true, GPU_LEQUAL, GPU_WRITE_ALL);
-    // C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
-
     C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
     C3D_TexEnvInit(tex_env);
 
     /* multiply the primary colour by the first texture colour */
-    // C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
     C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
     C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
 
@@ -1018,6 +1014,9 @@ void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
     // surface->gl_has_faded = 0;
     glClear(GL_COLOR_BUFFER_BIT);
+#elif defined RENDER_3DS_GL
+    C3D_RenderTargetClear(surface->mud->_3ds_gl_render_target, C3D_CLEAR_ALL,
+                          BLACK, 0);
 #elif defined(RENDER_SW)
     int area = surface->width * surface->height;
 
@@ -1379,6 +1378,9 @@ void surface_fade_to_black(Surface *surface) {
     surface->gl_fade_to_black = 1;*/
 
     glClear(GL_COLOR_BUFFER_BIT);
+#elif RENDER_3DS_GL
+    surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height,
+            BLACK, 16);
 #endif
 }
 
@@ -1441,7 +1443,7 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
     surface_gl_draw(surface);
 #endif
 
-    surface_fade_to_black(surface);
+    //surface_fade_to_black(surface);
 
     surface_draw_box(surface, 0, 0, surface->width, 6, BLACK);
 
@@ -3988,6 +3990,33 @@ void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
         }
     }
 }
+
+#if 0
+void surface_3ds_gl_darken_texture(Surface *surface, int sprite_id) {
+    int offset_x = 0;
+    int offset_y = 0;
+
+    if (!surface_3ds_gl_get_sprite_texture_offsets(surface, sprite_id,
+                                                   &offset_x, &offset_y)) {
+        return;
+    }
+
+    uint16_t *texture_data = (uint16_t *)surface->gl_sprite_texture.data;
+
+    /*int area =
+        surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];*/
+
+    for (int x = 0; x < area; i++) {
+        int texture_index = _3ds_gl_translate_texture_index(offset_x + x, offset_y + y, 1024) / 2;
+
+        int32_t pixel = _3ds_gl_rgba5551_to_rgb32(texture_data[i]) & 0xffffff;
+
+        texture_data[i] = _3ds_gl_rgb32_to_rgba5551(
+            ((pixel >> 1) & 0x7f7f7f) + ((pixel >> 2) & 0x3f3f3f) +
+            ((pixel >> 3) & 0x1f1f1f) + ((pixel >> 4) & 0xf0f0f));
+    }
+}
+#endif
 
 void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id) {
     for (int i = 6; i >= 1; i--) {

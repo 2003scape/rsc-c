@@ -415,6 +415,7 @@ int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface,
                                               int *offset_y);
 void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
                                  int blur_height, int x, int y, int height);
+//void surface_3ds_gl_darken_texture(Surface *surface, int sprite_id);
 void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id);
 #endif
 #endif

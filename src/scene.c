@@ -4620,7 +4620,7 @@ void scene_3ds_gl_render(Scene *scene) {
 
     C3D_BindProgram(&scene->_3ds_gl_model_shader);
 
-    C3D_AlphaTest(true, GPU_GREATER, GPU_WRITE_ALL);
+    C3D_AlphaTest(true, GPU_GREATER, 0);
     C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
 
     C3D_TexEnv *env = C3D_GetTexEnv(0);

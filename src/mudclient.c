@@ -231,8 +231,8 @@ void mudclient_3ds_gl_frame_start(mudclient *mud, int clear) {
 
     // TODO this can probably go into surface_black_screen
     if (clear) {
-        C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL, BLACK,
-                              0);
+        /*C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL,
+           BLACK, 0);*/
     }
 
     C3D_FrameDrawOn(mud->_3ds_gl_render_target);
@@ -811,7 +811,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     mud->_3ds_gl_render_target =
         C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
-        //C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
     // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
     // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 
@@ -1235,9 +1234,7 @@ void mudclient_stop(mudclient *mud) {
 }
 
 void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
-#ifdef RENDER_GL
-    glClear(GL_COLOR_BUFFER_BIT);
-#endif
+    surface_black_screen(mud->surface);
 
     /* hide the previously drawn textures */
     surface_draw_box(mud->surface, 0, 0, 128, 128, BLACK);
@@ -1248,12 +1245,13 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     if (mud->surface->sprite_width[logo_sprite_id]) {
         int offset_x = 19;
 
-#if defined (RENDER_GL) || defined (RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         offset_x = 2;
 #endif
 
         int logo_x = (mud->game_width / 2) -
-                     (mud->surface->sprite_width[logo_sprite_id] / 2) - offset_x;
+                     (mud->surface->sprite_width[logo_sprite_id] / 2) -
+                     offset_x;
 
         int logo_y = (mud->game_height / 2) -
                      (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
@@ -1877,7 +1875,7 @@ void mudclient_load_models(mudclient *mud) {
         return;
     }
 
-    for (int i = 0; i < game_data_model_count - 1; i++) {
+    for (int i = 0; i < game_data_model_count; i++) {
         char *model_name = game_data_model_name[i];
 
         char file_name[strlen(model_name) + 5];
@@ -4787,7 +4785,7 @@ void mudclient_draw(mudclient *mud) {
 #endif
 
 #ifdef RENDER_GL
-        glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 #endif
 
     if (mud->logged_in == 0) {
