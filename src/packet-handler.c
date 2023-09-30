@@ -604,18 +604,19 @@ void mudclient_packet_tick(mudclient *mud) {
             int first_animated_index = 0;
 
             for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
-                int model_index = game_data_get_model_index(animated_models[i]);
-
-                object_model[mud->object_count + i] =
-                    mud->game_models[model_index];
-
                 int name_length = strlen(animated_models[i]);
                 char model_name[name_length + 1];
 
                 strcpy(model_name, animated_models[i]);
 
+                int model_index = game_data_get_model_index(model_name);
+
+                object_model[mud->object_count + i] =
+                    mud->game_models[model_index];
+
                 if (model_name[name_length - 1] == '2') {
                     model_name[name_length - 1] = '1';
+
                     object_model[mud->object_count + ANIMATED_MODELS_LENGTH +
                                  first_animated_index] =
                         mud->game_models[game_data_get_model_index(model_name)];

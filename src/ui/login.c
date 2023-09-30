@@ -2,6 +2,7 @@
 
 void mudclient_create_login_panels(mudclient *mud) {
     mud->panel_login_welcome = malloc(sizeof(Panel));
+
     panel_new(mud->panel_login_welcome, mud->surface, 50);
 
     int x = mud->surface->width / 2;
@@ -505,7 +506,10 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     scene_render(mud->scene);
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_3DS_GL
+    surface_fade_to_black(mud->surface);
+    surface_fade_to_black(mud->surface);
+#else
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 #endif
 
@@ -558,7 +562,10 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     scene_render(mud->scene);
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_3DS_GL
+    surface_fade_to_black(mud->surface);
+    surface_fade_to_black(mud->surface);
+#else
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 #endif
 
@@ -630,7 +637,10 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     scene_render(mud->scene);
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_3DS_GL
+    surface_fade_to_black(mud->surface);
+    surface_fade_to_black(mud->surface);
+#else
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 #endif
 
