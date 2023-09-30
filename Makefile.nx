@@ -38,17 +38,16 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
-BUILD			:=	build
+BUILD		:=	build
 SOURCES		:=	src src/lib src/ui
-DATA			:=
-#INCLUDES : = include
+DATA		:=
 INCLUDES	:=	src cglm/include
-GRAPHICS	:=	gfx
-GFXBUILD	:=	$(BUILD)
-ROMFS			:=	cache
+ROMFS		:=	cache
 
 APP_TITLE   := RSC-C Switch
+APP_TITLEID := 050A580214A30000
 ICON   	 	:= switch/icon.png
+#CONFIG_JSON := switch/nsp_conf.json
 
 # options for code generation
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft

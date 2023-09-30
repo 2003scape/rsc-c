@@ -20,3 +20,6 @@ rsc-c.smdh
 texture-pack/node_modules
 *.nacp
 *.nro
+*.npdm
+*.nso
+*.nsp

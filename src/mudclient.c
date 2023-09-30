@@ -737,13 +737,16 @@ void mudclient_start_application(mudclient *mud, char *title) {
         init |= SDL_INIT_AUDIO;
     }
 
+    #ifdef __SWITCH__
+        init |= SDL_INIT_JOYSTICK;
+    #endif
+
     if (SDL_Init(init) < 0) {
         fprintf(stderr, "SDL_Init(): %s\n", SDL_GetError());
         exit(1);
     }
 
     #ifdef __SWITCH__
-        SDL_Init(SDL_INIT_EVERYTHING);
         SDL_JoystickEventState(SDL_ENABLE);
         joystick = SDL_JoystickOpen(0);
     #endif
