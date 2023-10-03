@@ -607,6 +607,40 @@ int get_certificate_item_id(int item_id) {
     return -1;
 }
 
+int is_ip_address(char *address) {
+    int len = strlen(address);
+    int segment = 0;
+    int segment_count = 0;
+
+    for (int i = 0; i < len; i++) {
+        char c = address[i];
+
+        if (isdigit(c)) {
+            segment = segment * 10 + (c - '0');
+
+            if (segment > 255) {
+                return 0;
+            }
+        } else if (c == '.') {
+            segment_count++;
+
+            if (segment_count > 3) {
+                return 0;
+            }
+
+            segment = 0;
+        } else {
+            return 0;
+        }
+    }
+
+    if (segment_count != 3) {
+        return 0;
+    }
+
+    return 1;
+}
+
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range) {
     float half = range / 2.0f;
@@ -619,7 +653,7 @@ float gl_translate_x(int x, int range) { return gl_translate_coord(x, range); }
 
 float gl_translate_y(int y, int range) { return -gl_translate_coord(y, range); }
 
-void gl_load_texture(GLuint *texture_id, char *file) {
+void gl_create_texture(GLuint *texture_id) {
     glGenTextures(1, texture_id);
     glBindTexture(GL_TEXTURE_2D, *texture_id);
 
@@ -628,6 +662,10 @@ void gl_load_texture(GLuint *texture_id, char *file) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+}
+
+void gl_load_texture(GLuint *texture_id, char *file) {
+    gl_create_texture(texture_id);
 
     SDL_Surface *texture_image = IMG_Load(file);
 

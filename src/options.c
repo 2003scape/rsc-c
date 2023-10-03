@@ -28,7 +28,7 @@ void options_new(Options *options) {
 void options_set_server(Options *options) {
 #if REVISION_177
     /* openrsc preservation */
-    strcpy(options->server, "206.251.222.229");
+    strcpy(options->server, "game.openrsc.com"); // 206.251.222.229
     options->port = 43596;
 
     strcpy(options->rsa_exponent, "00010001");
@@ -252,7 +252,7 @@ void options_load(Options *options) {
     }
 
     /* connection */
-    OPTION_INI_STR("server", options->server, 15);
+    OPTION_INI_STR("server", options->server, 255);
     OPTION_INI_INT("port", options->port, 0, 65535);
     OPTION_INI_INT("members", options->members, 0, 1);
     OPTION_INI_INT("registration", options->members, 0, 1);

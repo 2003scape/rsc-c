@@ -57,7 +57,7 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     int control = mudclient_add_option_panel_string(
         mud->panel_connection_options, "@whi@Server: ", mud->options->server,
-        15, x, y);
+        255, x, y);
 
     mud->connection_options[control] = &mud->options->server;
     mud->connection_option_types[control] = ADDITIONAL_OPTIONS_STRING;
