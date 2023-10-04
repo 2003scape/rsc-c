@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "utility.h"
+
 #ifdef WII
 #include <gccore.h>
 
@@ -181,7 +183,7 @@ typedef struct Surface {
 
     GLuint gl_sprite_texture;
     GLuint gl_entity_textures[ENTITY_TEXTURE_LENGTH];
-    GLuint gl_framebuffer_texture;
+    // GLuint gl_framebuffer_texture;
 
     int32_t *gl_screen_pixels_reversed;
     int32_t *gl_screen_pixels;
@@ -249,7 +251,6 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
                                 int height, int top_colour, int bottom_colour);
 void surface_gl_create_framebuffer(Surface *surface);
-void surface_gl_update_framebuffer(Surface *surface);
 void surface_gl_update_framebuffer_texture(Surface *surface);
 void surface_gl_draw(Surface *surface);
 #endif

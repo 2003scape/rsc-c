@@ -35,12 +35,13 @@ typedef struct World World;
 /* length of the portion of the roof hanging over the building */
 #define ROOF_SLOPE 16
 
-// TODO enum
 /* https://github.com/2003scape/rsc-config/blob/master/res/types.json#L14 */
-#define FLOOR_TILE_TYPE 2
-#define LIQUID_TILE_TYPE 3
-#define BRIDGE_TILE_TYPE 4
-#define HOLE_TILE_TYPE 5
+typedef enum TILE_TIPE {
+    FLOOR_TILE_TYPE = 2,
+    LIQUID_TILE_TYPE = 3,
+    BRIDGE_TILE_TYPE = 4,
+    HOLE_TILE_TYPE = 5
+} TILE_TYPE;
 
 /* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
 #define BRIDGE_TILE_DECORATION 12

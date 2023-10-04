@@ -36,19 +36,19 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         MUD_IS_COMPACT ? MUD_WIDTH + (MUD_WIDTH / 5) + 13 : HBAR_WIDTH;
 
     if (MUD_IS_COMPACT) {
-        surface_draw_sprite_transform_mask(mud->surface, x, y, bar_width, 15,
-                                      mud->sprite_media + HBAR_SPRITE_OFFSET, 0,
-                                      0, 0, 0);
+        surface_draw_sprite_transform_mask(
+            mud->surface, x, y, bar_width, 15,
+            mud->sprite_media + HBAR_SPRITE_OFFSET, 0, 0, 0, 0);
     } else {
         surface_draw_sprite(mud->surface, x, y,
-                                  mud->sprite_media + HBAR_SPRITE_OFFSET);
+                            mud->sprite_media + HBAR_SPRITE_OFFSET);
     }
 
     if (!MUD_IS_COMPACT && mud->surface->width > HBAR_WIDTH) {
         for (int i = 0; i < mud->surface->width / HBAR_WIDTH; i++) {
             surface_draw_sprite(mud->surface,
-                                      (x + HBAR_WIDTH) + (HBAR_WIDTH * i),
-                                      y + 4, mud->sprite_media + 22);
+                                (x + HBAR_WIDTH) + (HBAR_WIDTH * i), y + 4,
+                                mud->sprite_media + 22);
         }
 
         surface_draw_line_horizontal(mud->surface, 503,
@@ -343,11 +343,13 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
 
     int max_text_width = MUD_WIDTH - 15;
 
-    if (MUD_IS_COMPACT && surface_text_width(message, 1) >= max_text_width) {
+    if (MUD_IS_COMPACT &&
+        surface_text_width(message, FONT_BOLD_12) >= max_text_width) {
         char message1[message_length + 1];
         memset(message1, '\0', message_length + 1);
 
         int last_space = -1;
+        char last_colour[3] = {0};
 
         for (int i = 0; i < message_length; i++) {
             message1[i] = message[i];
@@ -356,12 +358,21 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
                 last_space = i;
             }
 
-            if (surface_text_width(message1, 1) >= max_text_width) {
+            if (message[i] == '@' && (message_length - i) >= 4 &&
+                message[i + 4] == '@') {
+                memcpy(last_colour, message + i + 1, 3);
+            }
+
+            if (surface_text_width(message1, FONT_BOLD_12) >= max_text_width) {
                 int position = last_space == -1 ? i : last_space;
                 message1[position] = '\0';
 
                 int message2_length = message_length - position;
                 mudclient_show_message(mud, message1, type);
+
+                if (last_colour[0] != 0) {
+                    message2_length += 5;
+                }
 
                 char message2[message2_length + 6];
                 memset(message2, '\0', message2_length + 6);
@@ -372,8 +383,15 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
                     message2_offset = 5;
                 }
 
-                strncpy(message2 + message2_offset,
-                        message + position + 1, message2_length);
+                if (last_colour[0] != 0) {
+                    message2[message2_offset] = '@';
+                    memcpy(message2 + message2_offset + 1, last_colour, 3);
+                    message2[message2_offset + 4] = '@';
+                    message2_offset += 5;
+                }
+
+                strncpy(message2 + message2_offset, message + position + 1,
+                        message2_length);
 
                 mudclient_show_message(mud, message2, type);
                 return;

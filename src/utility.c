@@ -608,11 +608,11 @@ int get_certificate_item_id(int item_id) {
 }
 
 int is_ip_address(char *address) {
-    int len = strlen(address);
+    int length = strlen(address);
     int segment = 0;
     int segment_count = 0;
 
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < length; i++) {
         char c = address[i];
 
         if (isdigit(c)) {
@@ -634,12 +634,55 @@ int is_ip_address(char *address) {
         }
     }
 
-    if (segment_count != 3) {
-        return 0;
+    return segment_count == 3;
+}
+
+/* turn @colour@ into integer colour */
+int colour_str_to_colour(char *colour_str) {
+    int colour = -1;
+
+    if (strcmp(colour_str, "red") == 0) {
+        colour = STRING_RED;
+    } else if (strcmp(colour_str, "lre") == 0) {
+        colour = STRING_LRE;
+    } else if (strcmp(colour_str, "yel") == 0) {
+        colour = STRING_YEL;
+    } else if (strcmp(colour_str, "gre") == 0) {
+        colour = STRING_GRE;
+    } else if (strcmp(colour_str, "blu") == 0) {
+        colour = STRING_BLU;
+    } else if (strcmp(colour_str, "cya") == 0) {
+        colour = STRING_CYA;
+    } else if (strcmp(colour_str, "mag") == 0) {
+        colour = STRING_MAG;
+    } else if (strcmp(colour_str, "whi") == 0) {
+        colour = STRING_WHI;
+    } else if (strcmp(colour_str, "bla") == 0) {
+        colour = STRING_BLA;
+    } else if (strcmp(colour_str, "dre") == 0) {
+        colour = STRING_DRE;
+    } else if (strcmp(colour_str, "ora") == 0) {
+        colour = STRING_ORA;
+    } else if (strcmp(colour_str, "ran") == 0) {
+        colour =
+            (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+    } else if (strcmp(colour_str, "or1") == 0) {
+        colour = STRING_OR1;
+    } else if (strcmp(colour_str, "or2") == 0) {
+        colour = STRING_OR2;
+    } else if (strcmp(colour_str, "or3") == 0) {
+        colour = STRING_OR3;
+    } else if (strcmp(colour_str, "gr1") == 0) {
+        colour = STRING_GR1;
+    } else if (strcmp(colour_str, "gr2") == 0) {
+        colour = STRING_GR2;
+    } else if (strcmp(colour_str, "gr3") == 0) {
+        colour = STRING_GR3;
     }
 
-    return 1;
+    return colour;
 }
+
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range) {

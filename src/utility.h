@@ -37,6 +37,7 @@
 #define GL_TEXTURE_SIZE 1024.0f
 #endif
 
+#include "colours.h"
 #include "lib/bzip.h"
 
 /* for audio conversion */
@@ -121,6 +122,7 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
 void url_encode(char *s, char *dest);
 int get_certificate_item_id(int item_id);
 int is_ip_address(char *address);
+int colour_str_to_colour(char *colour_str);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range);

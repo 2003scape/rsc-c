@@ -147,8 +147,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
     BufInfo_Add(&surface->gl_flat_buffer.buf_info, surface->gl_flat_buffer.vbo,
                 sizeof(gl_quad_vertex), 4, 0x3210);
 
-    // vertex_buffer_gl_bind(&surface->gl_flat_buffer);
-
     _3ds_gl_load_tex(sprites_t3x, sprites_t3x_size,
                      &surface->gl_sprite_texture);
 
@@ -1361,26 +1359,10 @@ void surface_fade_to_black_software(Surface *surface, int32_t *dest,
 void surface_fade_to_black(Surface *surface) {
 #ifdef RENDER_SW
     surface_fade_to_black_software(surface, surface->pixels, 0);
-#elif defined(RENDER_GL)
+#elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
     // TODO this leaves some sort of residue. https://imgur.com/a/35sqk7v
-
-    /*surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height,
-                          BLACK, 16);*/
-
-    /*if (!surface->gl_has_faded) {
-        surface_gl_update_framebuffer(surface);
-        surface_fade_to_black_software(surface, surface->gl_screen_pixels, 1);
-        surface_gl_update_framebuffer_texture(surface);
-    }
-
-    //surface_gl_buffer_framebuffer_quad(surface);
-
-    surface->gl_fade_to_black = 1;*/
-
-    glClear(GL_COLOR_BUFFER_BIT);
-#elif RENDER_3DS_GL
     surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height,
-            BLACK, 16);
+                          BLACK, 16);
 #endif
 }
 
@@ -3494,7 +3476,6 @@ void surface_draw_character(Surface *surface, int character_offset, int x,
 
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                FONT_STYLE font, int colour, float depth) {
-    // TODO 8 is maximum font ID
     int8_t *font_data = game_fonts[font];
     int text_length = strlen(text);
 
@@ -3509,43 +3490,10 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
             strncpy(sliced, text + start, end - start);
             strtolower(sliced);
 
-            if (strcmp(sliced, "red") == 0) {
-                colour = STRING_RED;
-            } else if (strcmp(sliced, "lre") == 0) {
-                colour = STRING_LRE;
-            } else if (strcmp(sliced, "yel") == 0) {
-                colour = STRING_YEL;
-            } else if (strcmp(sliced, "gre") == 0) {
-                colour = STRING_GRE;
-            } else if (strcmp(sliced, "blu") == 0) {
-                colour = STRING_BLU;
-            } else if (strcmp(sliced, "cya") == 0) {
-                colour = STRING_CYA;
-            } else if (strcmp(sliced, "mag") == 0) {
-                colour = STRING_MAG;
-            } else if (strcmp(sliced, "whi") == 0) {
-                colour = STRING_WHI;
-            } else if (strcmp(sliced, "bla") == 0) {
-                colour = STRING_BLA;
-            } else if (strcmp(sliced, "dre") == 0) {
-                colour = STRING_DRE;
-            } else if (strcmp(sliced, "ora") == 0) {
-                colour = STRING_ORA;
-            } else if (strcmp(sliced, "ran") == 0) {
-                colour =
-                    (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
-            } else if (strcmp(sliced, "or1") == 0) {
-                colour = STRING_OR1;
-            } else if (strcmp(sliced, "or2") == 0) {
-                colour = STRING_OR2;
-            } else if (strcmp(sliced, "or3") == 0) {
-                colour = STRING_OR3;
-            } else if (strcmp(sliced, "gr1") == 0) {
-                colour = STRING_GR1;
-            } else if (strcmp(sliced, "gr2") == 0) {
-                colour = STRING_GR2;
-            } else if (strcmp(sliced, "gr3") == 0) {
-                colour = STRING_GR3;
+            int string_colour = colour_str_to_colour(sliced);
+
+            if (string_colour >= 0) {
+                colour = string_colour;
             }
 
             i += 4;
