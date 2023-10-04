@@ -349,7 +349,7 @@ function createColouredCanvas(canvas) {
         }
     }
 
-    if (hasGrey && hasColour) {
+    if (/*hasGrey &&*/ hasColour) {
         colouredSpriteContext.putImageData(colouredSpriteData, 0, 0);
 
         for (let i = 0; i < canvas.width * canvas.height * 4; i += 4) {
