@@ -109,6 +109,8 @@ const ZERO_POSITION = { x: 0, y: 0, width: 0, height: 0 };
 const WHITE_POSITION = { x: 0, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 const TRANSPARENT_POSITION = { x: 2, y: TEXTURE_SIZE - 1, width: 1, height: 1 };
 
+// 0xfceee0
+
 // animation names that include skin colour
 const SKIN_ANIMATIONS = new Set([
     'body1',
@@ -311,7 +313,7 @@ function drawCharacter(canvas, bitmap, colour, xOffset, yOffset) {
 
 // remove coloured (non-grey) pixels and return a new canvas with only
 // coloured pixels
-function createColouredCanvas(canvas) {
+function createColouredCanvas(canvas, ignoreGrey = false) {
     const spriteContext = canvas.getContext('2d');
 
     const spriteData = spriteContext.getImageData(
@@ -349,7 +351,7 @@ function createColouredCanvas(canvas) {
         }
     }
 
-    if (/*hasGrey &&*/ hasColour) {
+    if ((ignoreGrey ? true : hasGrey) && hasColour) {
         colouredSpriteContext.putImageData(colouredSpriteData, 0, 0);
 
         for (let i = 0; i < canvas.width * canvas.height * 4; i += 4) {
@@ -497,7 +499,7 @@ async function packMedia() {
 
         // handle creating grey masks for inventory item sprites
         if (maskedSprites.has(i - MediaSprites.OBJECTS_OFFSET)) {
-            const colouredSprite = createColouredCanvas(sprite);
+            const colouredSprite = createColouredCanvas(sprite, true);
 
             if (colouredSprite) {
                 sprites.push({
@@ -535,8 +537,6 @@ async function packMedia() {
             sprites.push({
                 type: `glyph-shadow-${i}`,
                 index,
-                width: width + 1,
-                height: height + 1,
                 canvas: shadowCanvas
             });
 
@@ -547,23 +547,19 @@ async function packMedia() {
     sprites.push({
         type: 'circle',
         index: 0,
-        width: CIRCLE_SIZE,
-        height: CIRCLE_SIZE,
         canvas: createCircle()
     });
 
     for (let i = 0; i < 3; i++) {
-        const loginCanvas = createCanvas(LOGIN_WIDTH, LOGIN_HEIGHT);
+        const loginCanvas = createCanvas(LOGIN_WIDTH, LOGIN_HEIGHT + 1);
         const loginContext = loginCanvas.getContext('2d');
 
         loginContext.fillStyle = `rgb(${(i + 1) * 85}, 0, ${(i + 1) * 85})`;
-        loginContext.fillRect(0, 0, loginCanvas.width, loginCanvas.height);
+        loginContext.fillRect(0, 0, loginCanvas.width, loginCanvas.height - 1);
 
         sprites.push({
             type: 'login',
             index: i,
-            width: LOGIN_WIDTH,
-            height: LOGIN_HEIGHT,
             canvas: loginCanvas
         });
     }
@@ -571,24 +567,18 @@ async function packMedia() {
     sprites.push({
         type: 'map',
         index: 0,
-        width: MAP_WIDTH,
-        height: MAP_WIDTH,
         canvas: createCanvas(MAP_WIDTH, MAP_HEIGHT)
     });
 
     sprites.push({
         type: 'sleep',
         index: 0,
-        width: SLEEP_WIDTH,
-        height: SLEEP_HEIGHT,
         canvas: createCanvas(SLEEP_WIDTH, SLEEP_HEIGHT)
     });
 
     sprites.push({
         type: 'logo',
         index: 0,
-        width: jagexCanvas.width,
-        height: jagexCanvas.height,
         canvas: jagexCanvas
     });
 
@@ -709,7 +699,7 @@ async function packEntities() {
         }
 
         const animationNames = animations.map((id) =>
-            id ? config.animations[id].name : undefined
+            typeof id === 'number' ? config.animations[id].name : undefined
         );
 
         const mapAnimations = skinColourAnimations.get(skinColour) || new Set();
@@ -722,6 +712,8 @@ async function packEntities() {
 
         skinColourAnimations.set(skinColour, mapAnimations);
     }
+
+    console.log(skinColourAnimations);
 
     // used for C array
     const skinColours = Array.from(skinColourAnimations.keys());
