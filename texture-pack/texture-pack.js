@@ -713,8 +713,6 @@ async function packEntities() {
         skinColourAnimations.set(skinColour, mapAnimations);
     }
 
-    console.log(skinColourAnimations);
-
     // used for C array
     const skinColours = Array.from(skinColourAnimations.keys());
     let skinSpriteIDs = new Set();

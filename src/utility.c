@@ -713,13 +713,16 @@ void gl_load_texture(GLuint *texture_id, char *file) {
     SDL_Surface *texture_image = IMG_Load(file);
 
     if (!texture_image) {
-        fprintf(stderr, "unable to load %s texture\n", file);
-        fprintf(stderr, "%s\n", IMG_GetError());
+        fprintf(stderr, "unable to load %s texture\n%s\n", file,
+                IMG_GetError());
+
         exit(1);
     }
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture_image->w, texture_image->h,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image->pixels);
+
+    SDL_FreeSurface(texture_image);
 }
 
 // TODO gl_

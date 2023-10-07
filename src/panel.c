@@ -595,7 +595,7 @@ int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
 
     for (int i = 0; i < max_length; i++) {
         panel->control_list_entries[panel->control_count][i] =
-            calloc(128, sizeof(char));
+            calloc(255, sizeof(char));
     }
 
     return panel_prepare_component(panel, PANEL_TEXT_LIST, x, y);
@@ -646,7 +646,7 @@ int panel_add_text_list_interactive(Panel *panel, int x, int y, int width,
 
     for (int i = 0; i < max_length + 1; i++) {
         panel->control_list_entries[panel->control_count][i] =
-            calloc(128, sizeof(char));
+            calloc(255, sizeof(char));
     }
 
     panel->control_activated[panel->control_count] = -1;

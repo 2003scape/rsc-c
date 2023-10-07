@@ -212,6 +212,7 @@ typedef struct Scene {
     int gl_pick_face_tag;
 #endif
 
+    SDL_Surface *gl_model_surface;
     GLuint gl_model_texture;
 #elif defined(RENDER_3DS_GL)
     gl_vertex_buffer **gl_item_buffers;

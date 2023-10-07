@@ -218,6 +218,13 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
 void world_map_set_pixel(World *world, int x, int y, int colour) {
 #ifdef RENDER_SW
     surface_set_pixel(world->surface, x, y, colour);
+#elif defined(RENDER_GL)
+    uint8_t *texture_data = world->surface->gl_dynamic_texture_buffer;
+    int offset = ((SLEEP_HEIGHT + x) * 1024 + y) * 3;
+
+    texture_data[offset] = (colour >> 16) & 0xff;
+    texture_data[offset + 1] = (colour >> 8) & 0xff;
+    texture_data[offset + 2] = colour & 0xff;
 #elif defined(RENDER_3DS_GL)
     uint16_t *texture_data = (uint16_t *)world->surface->gl_sprite_texture.data;
 
@@ -241,7 +248,7 @@ void world_map_line_horizontal(World *world, int x, int y, int width,
                                int colour) {
 #ifdef RENDER_SW
     surface_draw_line_horizontal(world->surface, x, y, width, colour);
-#elif defined(RENDER_3DS_GL)
+#elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
     for (int i = 0; i < width; i++) {
         world_map_set_pixel(world, x + i, y, colour);
     }
@@ -252,7 +259,7 @@ void world_map_line_vertical(World *world, int x, int y, int height,
                              int colour) {
 #ifdef RENDER_SW
     surface_draw_line_vertical(world->surface, x, y, height, colour);
-#elif defined(RENDER_3DS_GL)
+#elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
     for (int i = 0; i < height; i++) {
         world_map_set_pixel(world, x, y + i, colour);
     }
@@ -1485,6 +1492,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     if (is_current_plane) {
+#ifdef RENDER_GL
+        surface_gl_update_dynamic_texture(world->surface);
+#endif
+
         surface_draw_sprite_reversed(
             world->surface, world->base_media_sprite - 1, 0, 0,
             MINIMAP_SPRITE_WIDTH, MINIMAP_SPRITE_WIDTH);

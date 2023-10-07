@@ -144,9 +144,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     gl_create_texture(&surface->gl_dynamic_texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, surface->gl_dynamic_texture_buffer);
-
     surface_gl_reset_context(surface);
 #elif defined(RENDER_3DS_GL)
     surface->_3ds_gl_projection_uniform = shaderInstanceGetUniformLocation(
@@ -508,7 +505,18 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     } else if (sprite_id == surface->mud->sprite_logo + 2) {
         atlas_position = gl_login_atlas_positions[2];
     } else if (sprite_id == surface->mud->sprite_media - 1) {
+#ifdef RENDER_GL
+        gl_atlas_position test = {
+            0.0f,
+            (float)MINIMAP_SPRITE_WIDTH / 1024.0f,
+            (float)SLEEP_HEIGHT / 1024.0f,
+            (float)(SLEEP_HEIGHT + MINIMAP_SPRITE_HEIGHT) / 1024.0f};
+
+        base_texture = surface->gl_dynamic_texture;
+        base_atlas_position = test;
+#elif defined(RENDER_3DS_GL)
         atlas_position = gl_map_atlas_position;
+#endif
     } else if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
         gl_entity_texture texture_position =
             gl_entities_texture_positions[sprite_id];
@@ -1636,10 +1644,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
         }
     }
 
-    glBindTexture(GL_TEXTURE_2D, surface->gl_dynamic_texture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, surface->gl_dynamic_texture_buffer);
+    surface_gl_update_framebuffer_texture(surface);
 #elif defined(RENDER_3DS_GL)
     int offset_x = 0;
     int offset_y = 0;
@@ -1888,20 +1893,11 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
     surface->surface_pixels[sprite_id] =
         calloc(width * height, sizeof(int32_t));
 
-#ifdef RENDER_GL
-    int32_t *texture_pixels = calloc(width * height, sizeof(int32_t));
-#endif
-
     int index = 0;
 
     for (int xx = x; xx < x + width; xx++) {
         for (int yy = y; yy < y + height; yy++) {
             int colour = surface->pixels[xx + yy * surface->width];
-
-#ifdef RENDER_GL
-            texture_pixels[index] = colour + 0xff000000;
-#endif
-
             surface->surface_pixels[sprite_id][index++] = colour;
         }
     }
@@ -1911,14 +1907,6 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
 
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
-
-#ifdef RENDER_GL
-#if 0
-    gl_update_texture_array(texture_array_id, 0, width, height, texture_pixels,
-                            1);
-#endif
-    free(texture_pixels);
-#endif
 #endif
 }
 
@@ -3903,6 +3891,15 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
                                y + 12, 0, WHITE);
 }
 
+#ifdef RENDER_GL
+void surface_gl_update_dynamic_texture(Surface *surface) {
+    glBindTexture(GL_TEXTURE_2D, surface->gl_dynamic_texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, surface->gl_dynamic_texture_buffer);
+}
+#endif
+
 #ifdef RENDER_3DS_GL
 int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface, int sprite_id,
                                               int *offset_x, int *offset_y) {
@@ -3977,33 +3974,6 @@ void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
         }
     }
 }
-
-#if 0
-void surface_3ds_gl_darken_texture(Surface *surface, int sprite_id) {
-    int offset_x = 0;
-    int offset_y = 0;
-
-    if (!surface_3ds_gl_get_sprite_texture_offsets(surface, sprite_id,
-                                                   &offset_x, &offset_y)) {
-        return;
-    }
-
-    uint16_t *texture_data = (uint16_t *)surface->gl_sprite_texture.data;
-
-    /*int area =
-        surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];*/
-
-    for (int x = 0; x < area; i++) {
-        int texture_index = _3ds_gl_translate_texture_index(offset_x + x, offset_y + y, 1024) / 2;
-
-        int32_t pixel = _3ds_gl_rgba5551_to_rgb32(texture_data[i]) & 0xffffff;
-
-        texture_data[i] = _3ds_gl_rgb32_to_rgba5551(
-            ((pixel >> 1) & 0x7f7f7f) + ((pixel >> 2) & 0x3f3f3f) +
-            ((pixel >> 3) & 0x1f1f1f) + ((pixel >> 4) & 0xf0f0f));
-    }
-}
-#endif
 
 void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id) {
     for (int i = 6; i >= 1; i--) {

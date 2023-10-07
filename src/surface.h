@@ -413,13 +413,15 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour);
+#ifdef RENDER_GL
+void surface_gl_update_dynamic_texture(Surface *surface);
+#endif
 #ifdef RENDER_3DS_GL
 int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface,
                                               int sprite_id, int *offset_x,
                                               int *offset_y);
 void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
                                  int blur_height, int x, int y, int height);
-//void surface_3ds_gl_darken_texture(Surface *surface, int sprite_id);
 void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id);
 #endif
 #endif

@@ -542,7 +542,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo);
 #endif
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_SW
     surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo);
 #endif
 
@@ -591,7 +591,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo + 1);
 #endif
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_SW
     surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo + 1);
 #endif
 
@@ -668,7 +668,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo + 2);
 #endif
 
-#ifndef RENDER_3DS_GL
+#ifdef RENDER_SW
     surface_screen_raster_to_palette_sprite(mud->surface,
                                             mud->sprite_logo + 2);
 #endif
