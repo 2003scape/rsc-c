@@ -31,8 +31,9 @@ void mudclient_add_bank_menus(mudclient *mud, int type, int item_id,
                               int item_amount, char *item_name);
 void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
                                  int y);
-void mudclient_handle_bank_amounts_input(mudclient *mud, int amount, int last_x,
-                                         int x, int y, int transaction_opcode);
+void mudclient_handle_bank_amounts_input(mudclient *mud, int item_id,
+                                         int amount, int last_x, int x, int y,
+                                         int transaction_opcode);
 void mudclient_draw_bank(mudclient *mud);
 
 #endif
