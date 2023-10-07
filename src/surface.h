@@ -183,10 +183,13 @@ typedef struct Surface {
 
     GLuint gl_sprite_texture;
     GLuint gl_entity_textures[ENTITY_TEXTURE_LENGTH];
+
+    uint8_t *gl_dynamic_texture_buffer;
+    GLuint gl_dynamic_texture;
     // GLuint gl_framebuffer_texture;
 
-    int32_t *gl_screen_pixels_reversed;
-    int32_t *gl_screen_pixels;
+    //int32_t *gl_screen_pixels_reversed;
+    //int32_t *gl_screen_pixels;
     int gl_last_screen_width;
     int gl_last_screen_height;
 #elif defined(RENDER_3DS_GL)
@@ -289,7 +292,6 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
 void surface_read_sleep_word(Surface *surface, int sprite_id,
                              int8_t *sprite_data);
-void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id);
 int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id,
                                           int add_alpha);
 void surface_load_sprite(Surface *surface, int sprite_id);
@@ -376,6 +378,7 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
                                             int l1, int i2, int j2, int k2,
                                             int l2, int i3, int j3);
 #ifdef RENDER_SW
+void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id);
 void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
                          int font_pos, int dest_pos, int width, int height,
                          int dest_offset, int font_data_offset);
