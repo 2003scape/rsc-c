@@ -62,7 +62,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #ifdef RENDER_SW
     surface->pixels = mud->pixel_surface->pixels;
 #elif defined(RENDER_GL)
-    surface->pixels = calloc(width * height, sizeof(int32_t));
+    // surface->pixels = calloc(width * height, sizeof(int32_t));
 #endif
 #endif
 
@@ -139,6 +139,11 @@ void surface_new(Surface *surface, int width, int height, int limit,
         gl_load_texture(&surface->gl_entity_textures[i], filename);
     }
 
+    surface->gl_dynamic_texture_buffer =
+        calloc(1024 * 1024 * 3, sizeof(uint8_t));
+
+    gl_create_texture(&surface->gl_dynamic_texture);
+
     surface_gl_reset_context(surface);
 #elif defined(RENDER_3DS_GL)
     surface->_3ds_gl_projection_uniform = shaderInstanceGetUniformLocation(
@@ -146,8 +151,6 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     BufInfo_Add(&surface->gl_flat_buffer.buf_info, surface->gl_flat_buffer.vbo,
                 sizeof(gl_quad_vertex), 4, 0x3210);
-
-    // vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
     _3ds_gl_load_tex(sprites_t3x, sprites_t3x_size,
                      &surface->gl_sprite_texture);
@@ -502,7 +505,18 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
     } else if (sprite_id == surface->mud->sprite_logo + 2) {
         atlas_position = gl_login_atlas_positions[2];
     } else if (sprite_id == surface->mud->sprite_media - 1) {
+#ifdef RENDER_GL
+        gl_atlas_position test = {
+            0.0f,
+            (float)MINIMAP_SPRITE_WIDTH / 1024.0f,
+            (float)SLEEP_HEIGHT / 1024.0f,
+            (float)(SLEEP_HEIGHT + MINIMAP_SPRITE_HEIGHT) / 1024.0f};
+
+        base_texture = surface->gl_dynamic_texture;
+        base_atlas_position = test;
+#elif defined(RENDER_3DS_GL)
         atlas_position = gl_map_atlas_position;
+#endif
     } else if (sprite_id >= 0 && sprite_id < surface->mud->sprite_media) {
         gl_entity_texture texture_position =
             gl_entities_texture_positions[sprite_id];
@@ -549,7 +563,14 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
         atlas_position = gl_media_atlas_positions[atlas_index];
         base_atlas_position = gl_media_base_atlas_positions[atlas_index];
     } else if (sprite_id == surface->mud->sprite_texture + 1) {
-#ifdef RENDER_3DS_GL
+#ifdef RENDER_GL
+        base_texture = surface->gl_dynamic_texture;
+
+        gl_atlas_position test = {0.0f, (float)SLEEP_WIDTH / 1024.0f, 0.0f,
+                                  (float)SLEEP_HEIGHT / 1024.0f};
+
+        base_atlas_position = test;
+#elif defined(RENDER_3DS_GL)
         atlas_position = gl_sleep_atlas_position;
 #else
         return;
@@ -732,7 +753,7 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 
 void surface_gl_create_framebuffer(Surface *surface) {
     // TODO might not need this
-#ifdef RENDER_GL
+#if 0
     free(surface->gl_screen_pixels_reversed);
 
     surface->gl_screen_pixels_reversed = calloc(
@@ -1012,7 +1033,6 @@ void surface_draw(Surface *surface) {
 
 void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
-    // surface->gl_has_faded = 0;
     glClear(GL_COLOR_BUFFER_BIT);
 #elif defined RENDER_3DS_GL
     C3D_RenderTargetClear(surface->mud->_3ds_gl_render_target, C3D_CLEAR_ALL,
@@ -1361,26 +1381,10 @@ void surface_fade_to_black_software(Surface *surface, int32_t *dest,
 void surface_fade_to_black(Surface *surface) {
 #ifdef RENDER_SW
     surface_fade_to_black_software(surface, surface->pixels, 0);
-#elif defined(RENDER_GL)
+#elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
     // TODO this leaves some sort of residue. https://imgur.com/a/35sqk7v
-
-    /*surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height,
-                          BLACK, 16);*/
-
-    /*if (!surface->gl_has_faded) {
-        surface_gl_update_framebuffer(surface);
-        surface_fade_to_black_software(surface, surface->gl_screen_pixels, 1);
-        surface_gl_update_framebuffer_texture(surface);
-    }
-
-    //surface_gl_buffer_framebuffer_quad(surface);
-
-    surface->gl_fade_to_black = 1;*/
-
-    glClear(GL_COLOR_BUFFER_BIT);
-#elif RENDER_3DS_GL
-    surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height,
-            BLACK, 16);
+    surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height, BLACK,
+                          16);
 #endif
 }
 
@@ -1427,8 +1431,8 @@ void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
 
     surface_gl_update_framebuffer(surface);
 
-    surface_draw_blur_software(surface, surface->gl_screen_pixels, blur_height,
-                               x, y, width, height, 1);
+    /*surface_draw_blur_software(surface, surface->gl_screen_pixels,
+       blur_height, x, y, width, height, 1);*/
 
     surface_gl_update_framebuffer_texture(surface);
 
@@ -1443,7 +1447,7 @@ void surface_apply_login_filter(Surface *surface, int background_height) {
     surface_gl_draw(surface);
 #endif
 
-    //surface_fade_to_black(surface);
+    surface_fade_to_black(surface);
 
     surface_draw_box(surface, 0, 0, surface->width, 6, BLACK);
 
@@ -1619,7 +1623,29 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
         }
     }
 
-#if RENDER_3DS_GL
+#ifdef RENDER_GL
+    pixel_index = 0;
+
+    for (int y = 0; y < SLEEP_HEIGHT; y++) {
+        for (int x = 0; x < SLEEP_WIDTH; x++) {
+            int offset = (y * 1024 + x) * 3;
+
+            if (pixels[pixel_index]) {
+                surface->gl_dynamic_texture_buffer[offset] = 255;
+                surface->gl_dynamic_texture_buffer[offset + 1] = 255;
+                surface->gl_dynamic_texture_buffer[offset + 2] = 255;
+            } else {
+                surface->gl_dynamic_texture_buffer[offset] = 0;
+                surface->gl_dynamic_texture_buffer[offset + 1] = 0;
+                surface->gl_dynamic_texture_buffer[offset + 2] = 0;
+            }
+
+            pixel_index++;
+        }
+    }
+
+    surface_gl_update_framebuffer_texture(surface);
+#elif defined(RENDER_3DS_GL)
     int offset_x = 0;
     int offset_y = 0;
 
@@ -1794,7 +1820,7 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
     surface->sprite_width_full[sprite_id] = width;
     surface->sprite_height_full[sprite_id] = height;
 
-#if defined(RENDER_GL) || defined(RENDER_SW)
+#if defined(RENDER_SW)
     free(surface->surface_pixels[sprite_id]);
 
     surface->surface_pixels[sprite_id] =
@@ -1861,26 +1887,17 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
     surface->sprite_width_full[sprite_id] = width;
     surface->sprite_height_full[sprite_id] = height;
 
-#if defined(RENDER_GL) || defined(RENDER_SW)
+#if defined(RENDER_SW)
     free(surface->surface_pixels[sprite_id]);
 
     surface->surface_pixels[sprite_id] =
         calloc(width * height, sizeof(int32_t));
-
-#ifdef RENDER_GL
-    int32_t *texture_pixels = calloc(width * height, sizeof(int32_t));
-#endif
 
     int index = 0;
 
     for (int xx = x; xx < x + width; xx++) {
         for (int yy = y; yy < y + height; yy++) {
             int colour = surface->pixels[xx + yy * surface->width];
-
-#ifdef RENDER_GL
-            texture_pixels[index] = colour + 0xff000000;
-#endif
-
             surface->surface_pixels[sprite_id][index++] = colour;
         }
     }
@@ -1890,14 +1907,6 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
 
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
-
-#ifdef RENDER_GL
-#if 0
-    gl_update_texture_array(texture_array_id, 0, width, height, texture_pixels,
-                            1);
-#endif
-    free(texture_pixels);
-#endif
 #endif
 }
 
@@ -3494,7 +3503,6 @@ void surface_draw_character(Surface *surface, int character_offset, int x,
 
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                FONT_STYLE font, int colour, float depth) {
-    // TODO 8 is maximum font ID
     int8_t *font_data = game_fonts[font];
     int text_length = strlen(text);
 
@@ -3509,43 +3517,10 @@ void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
             strncpy(sliced, text + start, end - start);
             strtolower(sliced);
 
-            if (strcmp(sliced, "red") == 0) {
-                colour = STRING_RED;
-            } else if (strcmp(sliced, "lre") == 0) {
-                colour = STRING_LRE;
-            } else if (strcmp(sliced, "yel") == 0) {
-                colour = STRING_YEL;
-            } else if (strcmp(sliced, "gre") == 0) {
-                colour = STRING_GRE;
-            } else if (strcmp(sliced, "blu") == 0) {
-                colour = STRING_BLU;
-            } else if (strcmp(sliced, "cya") == 0) {
-                colour = STRING_CYA;
-            } else if (strcmp(sliced, "mag") == 0) {
-                colour = STRING_MAG;
-            } else if (strcmp(sliced, "whi") == 0) {
-                colour = STRING_WHI;
-            } else if (strcmp(sliced, "bla") == 0) {
-                colour = STRING_BLA;
-            } else if (strcmp(sliced, "dre") == 0) {
-                colour = STRING_DRE;
-            } else if (strcmp(sliced, "ora") == 0) {
-                colour = STRING_ORA;
-            } else if (strcmp(sliced, "ran") == 0) {
-                colour =
-                    (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
-            } else if (strcmp(sliced, "or1") == 0) {
-                colour = STRING_OR1;
-            } else if (strcmp(sliced, "or2") == 0) {
-                colour = STRING_OR2;
-            } else if (strcmp(sliced, "or3") == 0) {
-                colour = STRING_OR3;
-            } else if (strcmp(sliced, "gr1") == 0) {
-                colour = STRING_GR1;
-            } else if (strcmp(sliced, "gr2") == 0) {
-                colour = STRING_GR2;
-            } else if (strcmp(sliced, "gr3") == 0) {
-                colour = STRING_GR3;
+            int string_colour = colour_str_to_colour(sliced);
+
+            if (string_colour >= 0) {
+                colour = string_colour;
             }
 
             i += 4;
@@ -3916,6 +3891,15 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
                                y + 12, 0, WHITE);
 }
 
+#ifdef RENDER_GL
+void surface_gl_update_dynamic_texture(Surface *surface) {
+    glBindTexture(GL_TEXTURE_2D, surface->gl_dynamic_texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, surface->gl_dynamic_texture_buffer);
+}
+#endif
+
 #ifdef RENDER_3DS_GL
 int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface, int sprite_id,
                                               int *offset_x, int *offset_y) {
@@ -3990,33 +3974,6 @@ void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
         }
     }
 }
-
-#if 0
-void surface_3ds_gl_darken_texture(Surface *surface, int sprite_id) {
-    int offset_x = 0;
-    int offset_y = 0;
-
-    if (!surface_3ds_gl_get_sprite_texture_offsets(surface, sprite_id,
-                                                   &offset_x, &offset_y)) {
-        return;
-    }
-
-    uint16_t *texture_data = (uint16_t *)surface->gl_sprite_texture.data;
-
-    /*int area =
-        surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];*/
-
-    for (int x = 0; x < area; i++) {
-        int texture_index = _3ds_gl_translate_texture_index(offset_x + x, offset_y + y, 1024) / 2;
-
-        int32_t pixel = _3ds_gl_rgba5551_to_rgb32(texture_data[i]) & 0xffffff;
-
-        texture_data[i] = _3ds_gl_rgb32_to_rgba5551(
-            ((pixel >> 1) & 0x7f7f7f) + ((pixel >> 2) & 0x3f3f3f) +
-            ((pixel >> 3) & 0x1f1f1f) + ((pixel >> 4) & 0xf0f0f));
-    }
-}
-#endif
 
 void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id) {
     for (int i = 6; i >= 1; i--) {

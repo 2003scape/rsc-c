@@ -37,6 +37,7 @@
 #define GL_TEXTURE_SIZE 1024.0f
 #endif
 
+#include "colours.h"
 #include "lib/bzip.h"
 
 /* for audio conversion */
@@ -120,6 +121,8 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
                           int use_commas, char *dest);
 void url_encode(char *s, char *dest);
 int get_certificate_item_id(int item_id);
+int is_ip_address(char *address);
+int colour_str_to_colour(char *colour_str);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range);
@@ -128,6 +131,7 @@ float gl_translate_y(int y, int range);
 #endif
 #ifdef RENDER_GL
 void rotate_point(int centre_x, int centre_y, float angle, int *point);
+void gl_create_texture(GLuint *texture_id);
 void gl_load_texture(GLuint *texture_id, char *file);
 #elif defined(RENDER_3DS_GL)
 void _3ds_gl_load_tex(const uint8_t *t3x_data, size_t t3x_size, C3D_Tex *tex);

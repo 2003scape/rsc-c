@@ -137,7 +137,7 @@ extern int wii_fat_enabled;
 
 typedef struct Options {
     /* configurable options: */
-    char server[16];
+    char server[256];
     int port;
 
     /* disable registration and load sounds, P2P landscape and items (requires

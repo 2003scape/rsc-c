@@ -41,7 +41,7 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
 
     /* select the item if it isn't already */
     if (mud->bank_selected_item != item_id) {
-        memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
+        //memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
         memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
 
         for (int i = 0; i < mud->bank_item_count; i++) {
@@ -210,9 +210,10 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
     }
 }
 
-void mudclient_handle_bank_amounts_input(mudclient *mud, int amount, int last_x,
+void mudclient_handle_bank_amounts_input(mudclient *mud, int item_id,
+                                         int amount, int last_x,
                                          int x, int y, int transaction_opcode) {
-    int item_id = mud->bank_items[mud->bank_selected_item_slot];
+    //int item_id = mud->bank_items[mud->bank_selected_item_slot];
     int offset_x = 0;
 
     if (mud->mouse_x >= x && mud->mouse_y >= y && mud->mouse_x < x + 30 &&
@@ -608,7 +609,7 @@ void mudclient_draw_bank(mudclient *mud) {
 
         if (bank_count > 0) {
             mudclient_handle_bank_amounts_input(
-                mud, bank_count, mud->bank_last_withdraw_offer,
+                mud, item_id, bank_count, mud->bank_last_withdraw_offer,
                 ui_x + 220 - offset_x,
                 ui_y + item_grid_height + (MUD_IS_COMPACT ? 20 : 34),
                 CLIENT_BANK_WITHDRAW);
@@ -618,7 +619,8 @@ void mudclient_draw_bank(mudclient *mud) {
 
         if (inventory_count > 0) {
             mudclient_handle_bank_amounts_input(
-                mud, inventory_count, mud->bank_last_deposit_offer,
+                mud, item_id,
+                inventory_count, mud->bank_last_deposit_offer,
                 ui_x + 220 - offset_x,
                 ui_y + item_grid_height + (MUD_IS_COMPACT ? 39 : 59),
                 CLIENT_BANK_DEPOSIT);

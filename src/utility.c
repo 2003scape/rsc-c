@@ -607,6 +607,83 @@ int get_certificate_item_id(int item_id) {
     return -1;
 }
 
+int is_ip_address(char *address) {
+    int length = strlen(address);
+    int segment = 0;
+    int segment_count = 0;
+
+    for (int i = 0; i < length; i++) {
+        char c = address[i];
+
+        if (isdigit(c)) {
+            segment = segment * 10 + (c - '0');
+
+            if (segment > 255) {
+                return 0;
+            }
+        } else if (c == '.') {
+            segment_count++;
+
+            if (segment_count > 3) {
+                return 0;
+            }
+
+            segment = 0;
+        } else {
+            return 0;
+        }
+    }
+
+    return segment_count == 3;
+}
+
+/* turn @colour@ into integer colour */
+int colour_str_to_colour(char *colour_str) {
+    int colour = -1;
+
+    if (strcmp(colour_str, "red") == 0) {
+        colour = STRING_RED;
+    } else if (strcmp(colour_str, "lre") == 0) {
+        colour = STRING_LRE;
+    } else if (strcmp(colour_str, "yel") == 0) {
+        colour = STRING_YEL;
+    } else if (strcmp(colour_str, "gre") == 0) {
+        colour = STRING_GRE;
+    } else if (strcmp(colour_str, "blu") == 0) {
+        colour = STRING_BLU;
+    } else if (strcmp(colour_str, "cya") == 0) {
+        colour = STRING_CYA;
+    } else if (strcmp(colour_str, "mag") == 0) {
+        colour = STRING_MAG;
+    } else if (strcmp(colour_str, "whi") == 0) {
+        colour = STRING_WHI;
+    } else if (strcmp(colour_str, "bla") == 0) {
+        colour = STRING_BLA;
+    } else if (strcmp(colour_str, "dre") == 0) {
+        colour = STRING_DRE;
+    } else if (strcmp(colour_str, "ora") == 0) {
+        colour = STRING_ORA;
+    } else if (strcmp(colour_str, "ran") == 0) {
+        colour =
+            (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+    } else if (strcmp(colour_str, "or1") == 0) {
+        colour = STRING_OR1;
+    } else if (strcmp(colour_str, "or2") == 0) {
+        colour = STRING_OR2;
+    } else if (strcmp(colour_str, "or3") == 0) {
+        colour = STRING_OR3;
+    } else if (strcmp(colour_str, "gr1") == 0) {
+        colour = STRING_GR1;
+    } else if (strcmp(colour_str, "gr2") == 0) {
+        colour = STRING_GR2;
+    } else if (strcmp(colour_str, "gr3") == 0) {
+        colour = STRING_GR3;
+    }
+
+    return colour;
+}
+
+
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range) {
     float half = range / 2.0f;
@@ -619,7 +696,7 @@ float gl_translate_x(int x, int range) { return gl_translate_coord(x, range); }
 
 float gl_translate_y(int y, int range) { return -gl_translate_coord(y, range); }
 
-void gl_load_texture(GLuint *texture_id, char *file) {
+void gl_create_texture(GLuint *texture_id) {
     glGenTextures(1, texture_id);
     glBindTexture(GL_TEXTURE_2D, *texture_id);
 
@@ -628,17 +705,24 @@ void gl_load_texture(GLuint *texture_id, char *file) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+}
+
+void gl_load_texture(GLuint *texture_id, char *file) {
+    gl_create_texture(texture_id);
 
     SDL_Surface *texture_image = IMG_Load(file);
 
     if (!texture_image) {
-        fprintf(stderr, "unable to load %s texture\n", file);
-        fprintf(stderr, "%s\n", IMG_GetError());
+        fprintf(stderr, "unable to load %s texture\n%s\n", file,
+                IMG_GetError());
+
         exit(1);
     }
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture_image->w, texture_image->h,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image->pixels);
+
+    SDL_FreeSurface(texture_image);
 }
 
 // TODO gl_

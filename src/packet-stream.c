@@ -61,14 +61,14 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     packet_stream->rsa_modulus = mud->options->rsa_modulus;
 #endif
 
-    int ret;
+    int ret = 0;
 
 #ifdef WII
-    char localip[16] = {0};
+    char local_ip[16] = {0};
     char gateway[16] = {0};
     char netmask[16] = {0};
 
-    ret = if_config(localip, netmask, gateway, TRUE, 20);
+    ret = if_config(local_ip, netmask, gateway, TRUE, 20);
 
     if (ret < 0) {
         fprintf(stderr, "if_config(): %d\n", ret);
@@ -80,8 +80,48 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(mud->options->port);
 
+    char server_ip[16] = {0};
+
+    if (is_ip_address(mud->options->server)) {
+        strcpy(server_ip, mud->options->server);
+    } else {
+#ifdef WII
+        struct hostent *host_addr = net_gethostbyname(mud->options->server);
+
+        struct in_addr addr = {0};
+        memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
+        strcpy(server_ip, inet_ntoa(addr));
+#else
+        struct addrinfo hints = {0};
+        struct addrinfo *result = {0};
+
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+
+        int status = getaddrinfo(mud->options->server, NULL, &hints, &result);
+
+        if (status != 0) {
+            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+            exit(1);
+        }
+
+        for (struct addrinfo *rp = result; rp != NULL; rp = rp->ai_next) {
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr;
+
+            inet_ntop(rp->ai_family, &(ipv4->sin_addr), server_ip,
+                      sizeof(server_ip));
+
+            if (strlen(server_ip)) {
+                break;
+            }
+        }
+
+        freeaddrinfo(result);
+#endif
+    }
+
 #ifdef WIN32
-    WSADATA wsa_data;
+    WSADATA wsa_data = {0};
     ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
 
     if (ret != 0) {
@@ -89,9 +129,9 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         exit(1);
     }
 
-    ret = InetPton(AF_INET, mud->options->server, &server_addr.sin_addr);
+    ret = InetPton(AF_INET, server_ip, &server_addr.sin_addr);
 #else
-    ret = inet_aton(mud->options->server, &server_addr.sin_addr);
+    ret = inet_aton(server_ip, &server_addr.sin_addr);
 #endif
 
     if (ret == 0) {

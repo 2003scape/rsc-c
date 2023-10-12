@@ -174,6 +174,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     gl_load_texture(&scene->gl_model_texture,
                     "./cache/textures/model_textures.png");
+
+    scene->gl_model_surface = IMG_Load("./cache/textures/model_textures.png");
 #elif defined(RENDER_3DS_GL)
     scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);
@@ -3498,6 +3500,22 @@ int scene_get_fill_colour(Scene *scene, int face_fill) {
     if (face_fill >= 0) {
         return scene->texture_pixels[face_fill][0];
     }
+#elif defined(RENDER_GL)
+    if (face_fill >= 0) {
+        gl_atlas_position atlas_position =
+            gl_texture_atlas_positions[face_fill];
+
+        int x = (int)(atlas_position.left_u * GL_TEXTURE_SIZE);
+        int y = (int)(atlas_position.top_v * GL_TEXTURE_SIZE);
+
+        uint32_t *texture_pixels = (uint32_t *)scene->gl_model_surface->pixels;
+        uint32_t pixel = texture_pixels[(y * 1024) + x];
+
+        uint8_t r, g, b;
+        SDL_GetRGB(pixel, scene->gl_model_surface->format, &r, &g, &b);
+
+        return (r << 16 | g << 8 | b);
+    }
 #elif defined(RENDER_3DS_GL)
     if (face_fill >= 0) {
         gl_atlas_position atlas_position =
@@ -4321,8 +4339,6 @@ void scene_gl_render(Scene *scene) {
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-
-    // glClear(GL_DEPTH_BUFFER_BIT);
 
     int offset_y = 13;
 
