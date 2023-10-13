@@ -83,7 +83,7 @@ int chat_message_encode(char *message) {
     int left_shift = -1;
 
     for (int i = 0; i < message_length; i++) {
-        char current_char = tolower(message[i]);
+        char current_char = tolower((unsigned char)message[i]);
         int char_map_index = 0;
 
         for (int j = 0; j < CHAT_MESSAGE_CHAR_MAP_LENGTH; j++) {
