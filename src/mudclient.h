@@ -59,12 +59,12 @@
 #endif
 
 #if !defined(WII) && !defined(_3DS)
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL_opengl.h>
 
 #include "gl/shader.h"
 #endif

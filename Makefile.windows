@@ -3,7 +3,7 @@ CC = x86_64-w64-mingw32-gcc
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
 CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_SW -DREVISION_177
-CFLAGS += -I ./SDL2-2.0.20/x86_64-w64-mingw32/include #-fPIE
+CFLAGS += -I ./SDL2-2.0.20/x86_64-w64-mingw32/include/SDL2 #-fPIE
 LDFLAGS = -lm -L ./SDL2-2.0.20/x86_64-w64-mingw32/lib -lmingw32
 LDFLAGS += -L ./glew-2.1.0/lib/Release/x64/ -lopengl32 -lglu32 -lglew32
 LDFLAGS += -lSDL2main -lSDL2 -lwsock32 -lws2_32 -mwindows
