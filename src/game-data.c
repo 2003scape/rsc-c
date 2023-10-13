@@ -102,14 +102,7 @@ int game_data_string_offset;
 int game_data_offset;
 
 int game_data_get_model_index(char *name) {
-    {
-        int i = 0;
-
-        while (name[i]) {
-            name[i] = tolower(name[i]);
-            i++;
-        }
-    }
+    strtolower(name);
 
     if (strcmp(name, "na") == 0) {
         return 0;
@@ -389,12 +382,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     for (i = 0; i < game_data_animation_count; i++) {
         char *name = game_data_get_string();
-        int j = 0;
-
-        while (name[j]) {
-            name[j] = tolower(name[j]);
-            j++;
-        }
+        strtolower(name);
 
         game_data_animation_name[i] = name;
     }

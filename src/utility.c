@@ -89,8 +89,8 @@ int _3ds_gl_framebuffer_offsets_y[] = {
 #endif
 
 void strtrim(char *s) {
-    char *p = s;
-    int l = strlen(p);
+    unsigned char *p = (unsigned char *)s;
+    int l = strlen(s);
 
     while (isspace(p[l - 1])) {
         p[--l] = 0;
@@ -106,7 +106,7 @@ void strtrim(char *s) {
 
 void strtolower(char *s) {
     for (int i = 0; s[i]; i++) {
-        s[i] = tolower(s[i]);
+        s[i] = tolower((unsigned char)s[i]);
     }
 }
 
@@ -291,7 +291,7 @@ static int32_t hash_file_name(char *file_name) {
     char upper_file_name[strlen(file_name) + 1];
 
     while (file_name[i]) {
-        upper_file_name[i] = toupper(file_name[i]);
+        upper_file_name[i] = toupper((unsigned char)file_name[i]);
         i++;
     }
 
