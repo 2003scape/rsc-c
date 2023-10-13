@@ -165,10 +165,10 @@
 #define MUD_WIDTH 320
 #define MUD_HEIGHT 240
 #else
-#define MUD_WIDTH 512
-#define MUD_HEIGHT 346
-//#define MUD_WIDTH 320
-//#define MUD_HEIGHT 240
+//#define MUD_WIDTH 512
+//#define MUD_HEIGHT 346
+#define MUD_WIDTH 320
+#define MUD_HEIGHT 240
 #endif
 
 #define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
@@ -824,7 +824,11 @@ typedef struct mudclient {
     /* ./ui/server-message.c */
     int8_t show_dialog_server_message;
     int server_message_box_top;
-    char server_message[1024];
+    char server_message[4096];
+
+    /* extra page for compact mode */
+    int server_message_page;
+    char server_message_next[4096];
 
     /* ./ui/bank.c */
     int8_t show_dialog_bank;

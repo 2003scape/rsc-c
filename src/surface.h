@@ -176,8 +176,8 @@ typedef struct Surface {
     int *rotations_5;
     int rotations_length;
 #elif defined(RENDER_GL)
-    //int8_t gl_fade_to_black;
-    //int8_t gl_has_faded;
+    // int8_t gl_fade_to_black;
+    // int8_t gl_has_faded;
 
     Shader gl_flat_shader;
 
@@ -188,10 +188,10 @@ typedef struct Surface {
     GLuint gl_dynamic_texture;
     // GLuint gl_framebuffer_texture;
 
-    //int32_t *gl_screen_pixels_reversed;
-    //int32_t *gl_screen_pixels;
-    int gl_last_screen_width;
-    int gl_last_screen_height;
+    // int32_t *gl_screen_pixels_reversed;
+    int32_t *gl_screen_pixels;
+    // int gl_last_screen_width;
+    // int gl_last_screen_height;
 #elif defined(RENDER_3DS_GL)
     DVLB_s *_3ds_gl_flat_shader_dvlb;
     shaderProgram_s _3ds_gl_flat_shader;
@@ -223,19 +223,21 @@ void surface_new(Surface *surface, int width, int height, int limit,
 float surface_gl_translate_x(Surface *surface, int x);
 float surface_gl_translate_y(Surface *surface, int y);
 void surface_gl_reset_context(Surface *surface);
-void surface_gl_quad_apply_atlas(gl_quad *quad, gl_atlas_position
-                                atlas_position, int flip);
-void surface_gl_quad_apply_base_atlas(gl_quad *quad, gl_atlas_position
-                                      atlas_position, int flip);
+void surface_gl_quad_apply_atlas(gl_quad *quad,
+                                 gl_atlas_position atlas_position, int flip);
+void surface_gl_quad_apply_base_atlas(gl_quad *quad,
+                                      gl_atlas_position atlas_position,
+                                      int flip);
 void surface_gl_vertex_apply_depth(gl_quad_vertex *vertices, int length,
                                    float depth);
-void surface_gl_vertex_apply_rotation(gl_quad_vertex *vertex, float centre_x, float centre_y, float angle);
+void surface_gl_vertex_apply_rotation(gl_quad_vertex *vertex, float centre_x,
+                                      float centre_y, float angle);
 #ifdef RENDER_GL
-void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
-                            GLuint texture, GLuint base_texture);
+void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, GLuint texture,
+                            GLuint base_texture);
 #elif defined(RENDER_3DS_GL)
-void surface_gl_buffer_quad(Surface *surface, gl_quad *quad,
-                            C3D_Tex *texture, C3D_Tex *base_texture);
+void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, C3D_Tex *texture,
+                            C3D_Tex *base_texture);
 #endif
 void surface_gl_vertex_apply_colour(gl_quad_vertex *vertices, int length,
                                     int colour, int alpha);
@@ -253,9 +255,10 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha, float depth);
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
                                 int height, int top_colour, int bottom_colour);
-void surface_gl_create_framebuffer(Surface *surface);
-void surface_gl_update_framebuffer_texture(Surface *surface);
 void surface_gl_draw(Surface *surface);
+void surface_gl_blur_texture(Surface *surface, int sprite_id,
+                                 int blur_height, int x, int y, int height);
+void surface_gl_apply_login_filter(Surface *surface, int sprite_id);
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,
@@ -282,10 +285,11 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour);
 void surface_fade_to_black_software(Surface *surface, int32_t *dest,
                                     int add_alpha);
 void surface_fade_to_black(Surface *surface);
-void surface_draw_blur_software(Surface *surface, int32_t *dest, int blur_height, int x,
-                                int y, int width, int height, int add_alpha);
-void surface_draw_blur(Surface *surface, int blur_height, int x, int y, int width,
-                       int height);
+void surface_draw_blur_software(Surface *surface, int32_t *dest,
+                                int blur_height, int x, int y, int width,
+                                int height, int add_alpha);
+void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
+                       int width, int height);
 void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
@@ -346,9 +350,10 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
 void surface_draw_sprite_transform_mask_software(
     Surface *surface, int x, int y, int draw_width, int draw_height,
     int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip);
-void surface_draw_sprite_transform_mask(Surface *surface, int x, int y, int width,
-                                        int height, int sprite_id, int mask_colour,
-                                        int skin_colour, int skew_x, int flip);
+void surface_draw_sprite_transform_mask(Surface *surface, int x, int y,
+                                        int width, int height, int sprite_id,
+                                        int mask_colour, int skin_colour,
+                                        int skew_x, int flip);
 void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
                                               int draw_width, int draw_height,
                                               int sprite_id, int mask_colour,
@@ -387,14 +392,17 @@ void surface_draw_character(Surface *surface, int font_offset, int x, int y,
 #endif
 void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
                                FONT_STYLE font, int colour, float depth);
-void surface_draw_string(Surface *surface, char *text, int x, int y, FONT_STYLE font,
-                         int colour);
+void surface_draw_string(Surface *surface, char *text, int x, int y,
+                         FONT_STYLE font, int colour);
 void surface_draw_string_right(Surface *surface, char *text, int x, int y,
                                FONT_STYLE font, int colour);
 void surface_draw_string_centre_depth(Surface *surface, char *text, int x,
-                                      int y, FONT_STYLE font, int colour, float depth);
+                                      int y, FONT_STYLE font, int colour,
+                                      float depth);
 void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
                                 FONT_STYLE font, int colour);
+int surface_paragraph_height(Surface *surface, char *text, FONT_STYLE font,
+                             int max, int max_height);
 void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
                             FONT_STYLE font, int colour, int max);
 int surface_text_height_font(FONT_STYLE font);
@@ -414,14 +422,11 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour);
 #ifdef RENDER_GL
+void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_dynamic_texture(Surface *surface);
 #endif
 #ifdef RENDER_3DS_GL
-int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface,
-                                              int sprite_id, int *offset_x,
-                                              int *offset_y);
-void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
-                                 int blur_height, int x, int y, int height);
-void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id);
+int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface, int sprite_id,
+                                              int *offset_x, int *offset_y);
 #endif
 #endif

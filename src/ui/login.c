@@ -453,9 +453,11 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     world_add_models(mud->world, mud->game_models);
 
-#ifdef RENDER_3DS_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     world_gl_buffer_world_models(mud->world);
+#endif
 
+#ifdef RENDER_3DS_GL
     int model_index = 0;
 
     for (int i = 0; i < mud->scene->model_count; i++) {
@@ -470,6 +472,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     for (int i = 0; i < mud->scene->model_count; i++) {
         GameModel *game_model = mud->scene->models[i];
+
         if (game_model->gl_ebo_offset == -1) {
             world_models[model_index++] = game_model;
         }
@@ -500,18 +503,15 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifdef RENDER_3DS_GL
+#ifdef RENDER_GL
+    glClear(GL_DEPTH_BUFFER_BIT);
+#elif defined(RENDER_3DS_GL)
     mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 
     scene_render(mud->scene);
 
-#ifdef RENDER_3DS_GL
-    surface_fade_to_black(mud->surface);
-    surface_fade_to_black(mud->surface);
-#else
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
-#endif
 
     int logo_width = MUD_WIDTH - 29;
     int logo_height = (int)((logo_width / 483.0f) * 146.0f);
@@ -538,8 +538,8 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                                     mud->surface->width,
                                     LOGIN_BACKGROUND_HEIGHT);
 
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo);
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    surface_gl_apply_login_filter(mud->surface, mud->sprite_logo);
 #endif
 
 #ifdef RENDER_SW
@@ -556,18 +556,15 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifdef RENDER_3DS_GL
+#ifdef RENDER_GL
+    glClear(GL_DEPTH_BUFFER_BIT);
+#elif defined(RENDER_3DS_GL)
     mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 
     scene_render(mud->scene);
 
-#ifdef RENDER_3DS_GL
-    surface_fade_to_black(mud->surface);
-    surface_fade_to_black(mud->surface);
-#else
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
-#endif
 
     surface_draw_sprite_transform_mask(
         mud->surface, offset_x, offset_y,
@@ -587,8 +584,8 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                                     mud->surface->width,
                                     LOGIN_BACKGROUND_HEIGHT);
 
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo + 1);
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    surface_gl_apply_login_filter(mud->surface, mud->sprite_logo + 1);
 #endif
 
 #ifdef RENDER_SW
@@ -631,18 +628,15 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifdef RENDER_3DS_GL
+#ifdef RENDER_GL
+    glClear(GL_DEPTH_BUFFER_BIT);
+#elif defined(RENDER_3DS_GL)
     mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 
     scene_render(mud->scene);
 
-#ifdef RENDER_3DS_GL
-    surface_fade_to_black(mud->surface);
-    surface_fade_to_black(mud->surface);
-#else
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
-#endif
 
     surface_draw_sprite_transform_mask(
         mud->surface, offset_x, offset_y,
@@ -664,8 +658,8 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
                                     mud->surface->width,
                                     LOGIN_BACKGROUND_HEIGHT);
 
-#ifdef RENDER_3DS_GL
-    surface_3ds_gl_apply_login_filter(mud->surface, mud->sprite_logo + 2);
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    surface_gl_apply_login_filter(mud->surface, mud->sprite_logo + 2);
 #endif
 
 #ifdef RENDER_SW

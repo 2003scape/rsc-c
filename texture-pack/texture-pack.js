@@ -195,6 +195,21 @@ const jagexContext = jagexCanvas.getContext('2d');
 
 jagexContext.putImageData(tga.getImageData(), 0, 0);
 
+function isCanvasEmpty(canvas) {
+    const context = canvas.getContext('2d');
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const { data } = imageData;
+
+    for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] !== 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // used to determine duplicates
 function getHash(image) {
     const { width, height } = image;
@@ -729,7 +744,7 @@ async function packEntities() {
 
         for (const frame of frames) {
             if (maskedAnimations.has(animationName)) {
-                const colouredSprite = createColouredCanvas(frame);
+                const colouredSprite = createColouredCanvas(frame, true);
 
                 if (colouredSprite) {
                     sprites.push({
@@ -738,11 +753,13 @@ async function packEntities() {
                         canvas: colouredSprite
                     });
 
-                    sprites.push({
-                        index: currentID,
-                        type: 'grey',
-                        canvas: frame
-                    });
+                    if (!isCanvasEmpty(frame)) {
+                        sprites.push({
+                            index: currentID,
+                            type: 'grey',
+                            canvas: frame
+                        });
+                    }
 
                     for (const [
                         skinColour,

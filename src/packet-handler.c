@@ -1421,8 +1421,16 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_SERVER_MESSAGE_ONTOP: {
         strncpy(mud->server_message, (char *)data + 1, size);
         mud->server_message[size] = '\0';
+
+        /*strcpy(
+            mud->server_message,
+            "                                                                                                                                                                                                                                                                                                           *                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   *                                                                                                                                                                                                                                               *                                                                                                                                                                                                                                                                                                                                                                   *                                                                                                                                                                                                                                                                 *                                 "
+        );*/
+
         mud->show_dialog_server_message = 1;
         mud->server_message_box_top = opcode == SERVER_SERVER_MESSAGE_ONTOP;
+        strcpy(mud->server_message_next, "");
+        mud->server_message_page = 0;
         break;
     }
     case SERVER_BANK_OPEN: {

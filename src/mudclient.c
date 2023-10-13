@@ -803,6 +803,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     /* transparent textures */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisable(GL_MULTISAMPLE);
 #endif
 #endif
 
@@ -4664,8 +4666,6 @@ void mudclient_draw_game(mudclient *mud) {
     } else {
         glDisable(GL_MULTISAMPLE);
     }*/
-
-    glDisable(GL_MULTISAMPLE);
 #endif
 
     scene_render(mud->scene);
@@ -4830,6 +4830,12 @@ void mudclient_on_resize(mudclient *mud) {
     mud->game_height = new_height;
 
     if (mud->surface != NULL) {
+#ifdef RENDER_GL
+        // TODO we actually don't need to do this since we only generate
+        // the login scenes on boot
+        //surface_gl_create_framebuffer(mud->surface);
+#endif
+
         if (mudclient_is_ui_scaled(mud)) {
             mud->surface->width = new_width / 2;
             mud->surface->height = new_height / 2;

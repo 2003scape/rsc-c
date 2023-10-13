@@ -158,12 +158,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_use(&scene->game_model_shader);
 
-    /*scene->gl_wall_buffers = calloc(1, sizeof(gl_vertex_buffer *));
-    scene->gl_wall_buffers[0] = calloc(1, sizeof(gl_vertex_buffer));
-
-    game_model_gl_create_buffer(scene->gl_wall_buffers[0],
-                                WALL_OBJECTS_MAX * 4, WALL_OBJECTS_MAX * 6);*/
-
     shader_set_int(&scene->game_model_shader, "model_textures", 0);
 
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
