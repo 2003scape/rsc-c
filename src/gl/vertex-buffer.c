@@ -1,4 +1,5 @@
 #include "vertex-buffer.h"
+#include <stdio.h>
 
 // TODO vertex_length = vertex_size
 void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
@@ -15,7 +16,7 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
 
     printf("creating new vertex buffer %d %d: %d\n", vbo_length, vertex_length, vbo_length * vertex_length);
 
-    printf("creating new ebo %d: %d\n", ebo_length, ebo_length * sizeof(uint16_t));
+    printf("creating new ebo %lu: %d\n", ebo_length, ebo_length * sizeof(uint16_t));
 
 #ifdef RENDER_GL
     glGenVertexArrays(1, &vertex_buffer->vao);
