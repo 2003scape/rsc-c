@@ -24,8 +24,8 @@
 #include <tex3ds.h>
 #endif
 #else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 
 #ifdef RENDER_GL
 #include <GL/glew.h>

@@ -4,8 +4,14 @@ DEBUG = 1
 #SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/gl/*.c src/gl/textures/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -I ./cglm/include -DRENDER_GL #-DRENDER_SW #-DREVISION_177
-LDFLAGS = -lm -lSDL2 -lSDL2_image -lGLEW -lGL
+CFLAGS += -I ./cglm/include -DRENDER_GL #-DRENDER_SW #-DREVISION_177
+CFLAGS += $(shell sdl2-config --cflags)
+CFLAGS += $(shell pkg-config --cflags SDL2_image)
+CFLAGS += $(shell pkg-config --cflags glew)
+LDFLAGS += -lm
+LDFLAGS += $(shell sdl2-config --libs)
+LDFLAGS += $(shell pkg-config --libs SDL2_image)
+LDFLAGS += $(shell pkg-config --libs glew)
 
 ifdef DEBUG
 CFLAGS += -Wall -Wextra -pedantic -g

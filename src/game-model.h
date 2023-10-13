@@ -36,7 +36,7 @@ typedef struct gl_face_fill {
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL_opengl.h>
 
 #ifdef EMSCRIPTEN
 typedef struct gl_pick_vertex {
