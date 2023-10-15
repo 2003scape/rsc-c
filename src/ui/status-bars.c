@@ -44,4 +44,15 @@ void mudclient_draw_status_bars(mudclient *mud) {
                                 (STATUS_BAR_WIDTH * 2) + 3, STATUS_BAR_HEIGHT,
                                 RED, GREEN);
     }
+
+    if (!mud->is_sleeping) {
+        x = ui_x + 2;
+        y += STATUS_BAR_HEIGHT + 14;
+
+        char formatted_fatigue[24];
+        snprintf(formatted_fatigue, sizeof(formatted_fatigue),
+                 "Fatigue: %.2f%%", (mud->stat_fatigue * 100.0f) / 750.0f);
+        surface_draw_string(mud->surface, formatted_fatigue,
+                            x, y, FONT_REGULAR_11, WHITE);
+    }
 }
