@@ -2395,7 +2395,7 @@ void world_gl_update_terrain_buffers(World *world) {
         int vertex_offset = game_model->gl_vbo_offset;
 
         for (int j = 0; j < game_model->face_count; j++) {
-            int *face_vertices = game_model->face_vertices[j];
+            uint16_t *face_vertices = game_model->face_vertices[j];
             int face_vertex_count = game_model->face_vertex_count[j];
             int face_intensity = game_model->face_intensity[j];
 
