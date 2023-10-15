@@ -120,7 +120,7 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
 
     for (int i = 0; i < face_count; i++) {
         game_model->face_vertices[i] =
-            malloc(game_model->face_vertex_count[i] * sizeof(int));
+            calloc(game_model->face_vertex_count[i], sizeof(uint16_t));
 
         for (int j = 0; j < game_model->face_vertex_count[i]; j++) {
             if (vertex_count < 256) {
@@ -154,13 +154,13 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         return;
     }
 
-    game_model->vertex_x = calloc(vertex_count, sizeof(int));
-    game_model->vertex_y = calloc(vertex_count, sizeof(int));
-    game_model->vertex_z = calloc(vertex_count, sizeof(int));
+    game_model->vertex_x = calloc(vertex_count, sizeof(int16_t));
+    game_model->vertex_y = calloc(vertex_count, sizeof(int16_t));
+    game_model->vertex_z = calloc(vertex_count, sizeof(int16_t));
     game_model->vertex_intensity = calloc(vertex_count, sizeof(int));
     game_model->vertex_ambience = calloc(vertex_count, sizeof(int8_t));
-    game_model->face_vertex_count = calloc(face_count, sizeof(int));
-    game_model->face_vertices = calloc(face_count, sizeof(int *));
+    game_model->face_vertex_count = calloc(face_count, sizeof(uint8_t));
+    game_model->face_vertices = calloc(face_count, sizeof(uint16_t *));
     game_model->face_fill_front = calloc(face_count, sizeof(int));
     game_model->face_fill_back = calloc(face_count, sizeof(int));
     game_model->face_intensity = calloc(face_count, sizeof(int));
@@ -190,9 +190,9 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     } else {
         // TODO only scene->view needs this
         //#ifdef RENDER_SW
-        game_model->vertex_transformed_x = calloc(vertex_count, sizeof(int));
-        game_model->vertex_transformed_y = calloc(vertex_count, sizeof(int));
-        game_model->vertex_transformed_z = calloc(vertex_count, sizeof(int));
+        game_model->vertex_transformed_x = calloc(vertex_count, sizeof(int16_t));
+        game_model->vertex_transformed_y = calloc(vertex_count, sizeof(int16_t));
+        game_model->vertex_transformed_z = calloc(vertex_count, sizeof(int16_t));
         //#endif
     }
 
@@ -277,10 +277,10 @@ void game_model_merge(GameModel *game_model, GameModel **pieces, int count) {
             source->light_direction_magnitude;
 
         for (int src_f = 0; src_f < source->face_count; src_f++) {
-            int *dst_vs =
-                malloc(source->face_vertex_count[src_f] * sizeof(int));
+            uint16_t *dst_vs =
+                calloc(source->face_vertex_count[src_f], sizeof(uint16_t));
 
-            int *src_vs = source->face_vertices[src_f];
+            uint16_t *src_vs = source->face_vertices[src_f];
 
             for (int v = 0; v < source->face_vertex_count[src_f]; v++) {
                 dst_vs[v] = game_model_vertex_at(
@@ -326,7 +326,7 @@ int game_model_create_vertex(GameModel *game_model, int x, int y, int z) {
     return game_model->vertex_count++;
 }
 
-int game_model_create_face(GameModel *game_model, int number, int *vertices,
+int game_model_create_face(GameModel *game_model, int number, uint16_t *vertices,
                            int fill_front, int fill_back) {
     if (game_model->face_count >= game_model->max_faces) {
         return -1;
@@ -354,7 +354,7 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
         int sum_x = 0;
         int sum_z = 0;
         int face_vertex_count = game_model->face_vertex_count[i];
-        int *vertices = game_model->face_vertices[i];
+        uint16_t *vertices = game_model->face_vertices[i];
 
         for (int i = 0; i < face_vertex_count; i++) {
             sum_x += game_model->vertex_x[vertices[i]];
@@ -390,7 +390,7 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
         int sum_x = 0;
         int sum_z = 0;
         int face_vertex_count = game_model->face_vertex_count[i];
-        int *vertices = game_model->face_vertices[i];
+        uint16_t *vertices = game_model->face_vertices[i];
 
         for (int i = 0; i < face_vertex_count; i++) {
             sum_x += game_model->vertex_x[vertices[i]];
@@ -411,9 +411,9 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
 }
 
 void game_model_copy_lighting(GameModel *game_model, GameModel *model,
-                              int *src_vertices, int vertex_count,
+                              uint16_t *src_vertices, int vertex_count,
                               int in_face) {
-    int *dest_vertices = malloc(vertex_count * sizeof(int));
+    uint16_t *dest_vertices = malloc(vertex_count * sizeof(uint16_t));
 
     for (int i = 0; i < vertex_count; i++) {
         int vertex =
@@ -597,7 +597,7 @@ void game_model_compute_bounds(GameModel *game_model) {
     game_model->max_z = -999999;
 
     for (int i = 0; i < game_model->face_count; i++) {
-        int *face_vertices = game_model->face_vertices[i];
+        uint16_t *face_vertices = game_model->face_vertices[i];
         int vertex_index = face_vertices[0];
         int face_vertex_count = game_model->face_vertex_count[i];
 
@@ -694,12 +694,12 @@ void game_model_compute_bounds(GameModel *game_model) {
     }
 }
 
-void game_model_get_face_normals(GameModel *game_model, int *vertex_x,
-                                 int *vertex_y, int *vertex_z,
+void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
+                                 int16_t *vertex_y, int16_t *vertex_z,
                                  int *face_normal_x, int *face_normal_y,
                                  int *face_normal_z, int reset_scale) {
     for (int i = 0; i < game_model->face_count; i++) {
-        int *face_vertices = game_model->face_vertices[i];
+        uint16_t *face_vertices = game_model->face_vertices[i];
 
         int vertex_x_a = vertex_x[face_vertices[0]];
         int vertex_y_a = vertex_y[face_vertices[0]];
@@ -754,7 +754,7 @@ void game_model_get_vertex_normals(GameModel *game_model, int *face_normal_x,
     for (int i = 0; i < game_model->face_count; i++) {
         if (game_model->face_intensity[i] == GAME_MODEL_USE_GOURAUD) {
             for (int j = 0; j < game_model->face_vertex_count[i]; j++) {
-                int vertex_index = game_model->face_vertices[i][j];
+                uint16_t vertex_index = game_model->face_vertices[i][j];
 
                 normal_x[vertex_index] += face_normal_x[i];
                 normal_y[vertex_index] += face_normal_y[i];
@@ -1299,7 +1299,7 @@ void game_model_gl_decode_face_fill(int face_fill,
     }
 }
 
-void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
+void game_model_gl_unwrap_uvs(GameModel *game_model, uint16_t *face_vertices,
                               int face_vertex_count, float *us, float *vs) {
     if (face_vertex_count <= 4) {
         float *face_us = NULL;
@@ -1328,7 +1328,7 @@ void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
     vec3 vertices[face_vertex_count];
 
     for (int i = 0; i < face_vertex_count; i++) {
-        int vertex_index = face_vertices[i];
+        uint16_t vertex_index = face_vertices[i];
 
         vertices[i][0] = VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
         vertices[i][1] = VERTEX_TO_FLOAT(game_model->vertex_y[vertex_index]);
@@ -1456,7 +1456,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
     vertex_buffer_gl_bind(game_model->gl_buffer);
 
     for (int i = 0; i < game_model->face_count; i++) {
-        int *face_vertices = game_model->face_vertices[i];
+        uint16_t *face_vertices = game_model->face_vertices[i];
         int face_vertex_count = game_model->face_vertex_count[i];
         int face_intensity = game_model->face_intensity[i];
         int fill_front = game_model->face_fill_front[i];
@@ -1481,7 +1481,7 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                  back_face_us, back_face_vs);
 
         for (int j = 0; j < face_vertex_count; j++) {
-            int vertex_index = face_vertices[j];
+            uint16_t vertex_index = face_vertices[j];
 
             float vertex_x =
                 VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
@@ -1860,7 +1860,7 @@ void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
 void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
                                       int *ebo_offset) {
     for (int i = 0; i < game_model->face_count; i++) {
-        int *face_vertices = game_model->face_vertices[i];
+        uint16_t *face_vertices = game_model->face_vertices[i];
         int face_vertex_count = game_model->face_vertex_count[i];
 
         int face_tag = game_model->face_tag[i] - TILE_FACE_TAG;
@@ -1869,7 +1869,7 @@ void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
         float face_tag_g = ((face_tag >> 8) & 0xff) / 255.0f;
 
         for (int j = 0; j < face_vertex_count; j++) {
-            int vertex_index = face_vertices[j];
+            uint16_t vertex_index = face_vertices[j];
 
             GLfloat vertex_x =
                 VERTEX_TO_FLOAT(game_model->vertex_x[vertex_index]);
