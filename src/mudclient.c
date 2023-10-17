@@ -1911,12 +1911,12 @@ void mudclient_load_models(mudclient *mud) {
         char file_name[strlen(model_name) + 5];
         sprintf(file_name, "%s.ob3", model_name);
 
-        int offset = get_data_file_offset(file_name, models_jag);
+        uint32_t offset = get_data_file_offset(file_name, models_jag);
 
         GameModel *game_model = malloc(sizeof(GameModel));
 
         if (offset != 0) {
-            game_model_from_bytes(game_model, models_jag, offset);
+            game_model_from_bytes(game_model, models_jag + offset);
         } else {
             game_model_from2(game_model, 1, 1);
         }
@@ -1938,14 +1938,14 @@ void mudclient_load_models(mudclient *mud) {
             char file_name[21] = {0};
             sprintf(file_name, "item-%d.ob3", sprite_id);
 
-            int offset = get_data_file_offset(file_name, models_jag);
+            uint32_t offset = get_data_file_offset(file_name, models_jag);
 
             if (offset == 0) {
                 continue;
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag, offset);
+            game_model_from_bytes(game_model, models_jag + offset);
 
             int mask_colour = game_data_item_mask[i];
 
@@ -1976,14 +1976,14 @@ void mudclient_load_models(mudclient *mud) {
             char file_name[21] = {0};
             sprintf(file_name, "item-%d.ob3", i);
 
-            int offset = get_data_file_offset(file_name, models_jag);
+            uint32_t offset = get_data_file_offset(file_name, models_jag);
 
             if (offset == 0) {
                 continue;
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag, offset);
+            game_model_from_bytes(game_model, models_jag + offset);
 
             mud->item_models[i] = game_model;
         }
@@ -5840,13 +5840,13 @@ void mudclient_play_sound(mudclient *mud, char *name) {
     char file_name[strlen(name) + 5];
     sprintf(file_name, "%s.pcm", name);
 
-    int offset = get_data_file_offset(file_name, mud->sound_data);
+    uint32_t offset = get_data_file_offset(file_name, mud->sound_data);
 
     if (offset == 0) {
         return;
     }
 
-    int length = get_data_file_length(file_name, mud->sound_data);
+    uint32_t length = get_data_file_length(file_name, mud->sound_data);
 
     memset(mud->pcm_out, 0, PCM_LENGTH * sizeof(uint16_t));
 

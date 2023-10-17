@@ -63,7 +63,9 @@ void game_model_from7(GameModel *game_model, int vertex_count, int face_count,
     game_model_allocate(game_model, vertex_count, face_count);
 }
 
-void game_model_from_bytes(GameModel *game_model, int8_t *data, int offset) {
+void game_model_from_bytes(GameModel *game_model, int8_t *data) {
+    size_t offset = 0;
+
     game_model_new(game_model);
 
     int vertex_count = get_unsigned_short(data, offset);

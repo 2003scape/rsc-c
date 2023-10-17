@@ -285,7 +285,7 @@ void decode_username(int64_t encoded, char *decoded) {
     decoded[length++] = '\0';
 }
 
-static int32_t hash_file_name(char *file_name) {
+static uint32_t hash_file_name(const char *file_name) {
     int i = 0;
 
     char upper_file_name[strlen(file_name) + 1];
@@ -298,7 +298,7 @@ static int32_t hash_file_name(char *file_name) {
     file_name = upper_file_name;
 
     int file_name_length = i;
-    int32_t hash = 0;
+    uint32_t hash = 0;
 
     for (int i = 0; i < file_name_length; i++) {
         hash = hash * 61 + file_name[i] - 32;
@@ -307,33 +307,34 @@ static int32_t hash_file_name(char *file_name) {
     return hash;
 }
 
-static int32_t get_file_hash(int8_t *buffer, int entry) {
-    return (buffer[entry * 10 + 2] & 0xff) * 0x1000000 +
-           (buffer[entry * 10 + 3] & 0xff) * 0x10000 +
-           (buffer[entry * 10 + 4] & 0xff) * 0x100 +
-           (buffer[entry * 10 + 5] & 0xff);
+static uint32_t get_file_hash(void *b, int entry) {
+    uint8_t *buffer = b;
+    return (uint32_t)(buffer[entry * 10 + 2] & 0xff) << 24 |
+           (uint32_t)(buffer[entry * 10 + 3] & 0xff) << 16 |
+           (uint32_t)(buffer[entry * 10 + 4] & 0xff) << 8 |
+           (uint32_t)(buffer[entry * 10 + 5] & 0xff);
 }
 
-static int get_file_size(int8_t *buffer, int entry) {
-    return (buffer[entry * 10 + 6] & 0xff) * 0x10000 +
-           (buffer[entry * 10 + 7] & 0xff) * 0x100 +
-           (buffer[entry * 10 + 8] & 0xff);
+static uint32_t get_file_size(int8_t *buffer, int entry) {
+    return (uint32_t)(buffer[entry * 10 + 6] & 0xff) << 16 |
+           (uint32_t)(buffer[entry * 10 + 7] & 0xff) << 8 |
+           (uint32_t)(buffer[entry * 10 + 8] & 0xff);
 }
 
-static int get_archive_size(int8_t *buffer, int entry) {
-    return (buffer[entry * 10 + 9] & 0xff) * 0x10000 +
-           (buffer[entry * 10 + 10] & 0xff) * 0x100 +
-           (buffer[entry * 10 + 11] & 0xff);
+static uint32_t get_archive_size(int8_t *buffer, int entry) {
+    return (uint32_t)(buffer[entry * 10 + 9] & 0xff) << 16 |
+           (uint32_t)(buffer[entry * 10 + 10] & 0xff) << 8 |
+           (uint32_t)(buffer[entry * 10 + 11] & 0xff);
 }
 
-int get_data_file_offset(char *file_name, int8_t *buffer) {
+uint32_t get_data_file_offset(const char *file_name, int8_t *buffer) {
     int num_entries = get_unsigned_short(buffer, 0);
-    int32_t wanted_hash = hash_file_name(file_name);
-    int offset = 2 + num_entries * 10;
+    uint32_t wanted_hash = hash_file_name(file_name);
+    size_t offset = 2 + num_entries * 10;
 
     for (int entry = 0; entry < num_entries; entry++) {
-        int32_t file_hash = get_file_hash(buffer, entry);
-        int archive_size = get_archive_size(buffer, entry);
+        uint32_t file_hash = get_file_hash(buffer, entry);
+        uint32_t archive_size = get_archive_size(buffer, entry);
 
         if (file_hash == wanted_hash) {
             return offset;
@@ -345,13 +346,13 @@ int get_data_file_offset(char *file_name, int8_t *buffer) {
     return 0;
 }
 
-int get_data_file_length(char *file_name, int8_t *buffer) {
+uint32_t get_data_file_length(const char *file_name, int8_t *buffer) {
     int num_entries = get_unsigned_short(buffer, 0);
-    int32_t wanted_hash = hash_file_name(file_name);
+    uint32_t wanted_hash = hash_file_name(file_name);
 
     for (int entry = 0; entry < num_entries; entry++) {
-        int32_t file_hash = get_file_hash(buffer, entry);
-        int file_size = get_file_size(buffer, entry);
+        uint32_t file_hash = get_file_hash(buffer, entry);
+        uint32_t file_size = get_file_size(buffer, entry);
 
         if (file_hash == wanted_hash) {
             return file_size;
@@ -361,16 +362,16 @@ int get_data_file_length(char *file_name, int8_t *buffer) {
     return 0;
 }
 
-int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
+int8_t *unpack_data(const char *file_name, int extra_size, int8_t *archive_data,
                     int8_t *file_data) {
     int num_entries = get_unsigned_short(archive_data, 0);
-    int32_t wanted_hash = hash_file_name(file_name);
-    int offset = 2 + num_entries * 10;
+    uint32_t wanted_hash = hash_file_name(file_name);
+    uint32_t offset = 2 + num_entries * 10;
 
     for (int entry = 0; entry < num_entries; entry++) {
-        int32_t file_hash = get_file_hash(archive_data, entry);
-        int file_size = get_file_size(archive_data, entry);
-        int archive_size = get_archive_size(archive_data, entry);
+        uint32_t file_hash = get_file_hash(archive_data, entry);
+        uint32_t file_size = get_file_size(archive_data, entry);
+        uint32_t archive_size = get_archive_size(archive_data, entry);
 
         if (file_hash == wanted_hash) {
             if (file_data == NULL) {
@@ -381,7 +382,7 @@ int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
                 bzip_decompress(file_data, file_size, archive_data,
                                 archive_size, offset);
             } else {
-                for (int i = 0; i < file_size; i++) {
+                for (size_t i = 0; i < file_size; i++) {
                     file_data[i] = archive_data[offset + i];
                 }
             }

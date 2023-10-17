@@ -106,9 +106,9 @@ void format_auth_string(char *raw, int max_length, char *formatted);
 void ip_to_string(int32_t ip, char *ip_string);
 int64_t encode_username(char *username);
 void decode_username(int64_t encoded, char *decoded);
-int get_data_file_offset(char *file_name, int8_t *buffer);
-int get_data_file_length(char *file_name, int8_t *buffer);
-int8_t *unpack_data(char *file_name, int extra_size, int8_t *archive_data,
+uint32_t get_data_file_offset(const char *file_name, int8_t *buffer);
+uint32_t get_data_file_length(const char *file_name, int8_t *buffer);
+int8_t *unpack_data(const char *file_name, int extra_size, int8_t *archive_data,
                     int8_t *file_data);
 int8_t *load_data(char *file_name, int extra_size, int8_t *archive_data);
 void format_confirm_amount(int amount, char *formatted);
