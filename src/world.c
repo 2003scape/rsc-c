@@ -1522,7 +1522,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     for (int r_x = 0; r_x < REGION_WIDTH - 1; r_x++) {
-        for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
+        for (int r_y = 0; r_y < REGION_HEIGHT - 1; r_y++) {
             int wall_object_id = world_get_wall_east_west(world, r_x, r_y);
 
             if (wall_object_id > 0) {
