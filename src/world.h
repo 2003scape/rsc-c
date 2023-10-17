@@ -64,7 +64,7 @@ typedef struct World {
     int object_adjacency[REGION_WIDTH][REGION_HEIGHT];
     int route_via[REGION_WIDTH][REGION_HEIGHT];
     int terrain_height_local[REGION_WIDTH][REGION_HEIGHT];
-    int walls_diagonal[PLANE_COUNT][TILE_COUNT];
+    uint16_t walls_diagonal[PLANE_COUNT][TILE_COUNT];
     GameModel *terrain_models[TERRAIN_COUNT];
     int8_t terrain_colour[PLANE_COUNT][TILE_COUNT];
     int8_t terrain_height[PLANE_COUNT][TILE_COUNT];

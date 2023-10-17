@@ -2755,7 +2755,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     x2 *= MAGIC_LOC;
     y2 *= MAGIC_LOC;
 
-    int *vertices = malloc(4 * sizeof(int));
+    uint16_t *vertices = malloc(4 * sizeof(uint16_t));
 
     vertices[0] = game_model_vertex_at(
         game_model, x1, -world_get_elevation(mud->world, x1, y1), y1);

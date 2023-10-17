@@ -1081,7 +1081,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 #endif
 
     //#ifdef RENDER_SW
-    int *vertices = calloc(2, sizeof(int));
+    uint16_t *vertices = calloc(2, sizeof(int));
 
     vertices[0] = game_model_create_vertex(scene->view, x, y, z);
     vertices[1] = game_model_create_vertex(scene->view, x, y - height, z);
@@ -1329,8 +1329,8 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
 
 void scene_initialise_polygons_2d(Scene *scene) {
     for (int face = 0; face < scene->view->face_count; face++) {
-        int *face_vertices = scene->view->face_vertices[face];
-        int face_vertex_index = face_vertices[0];
+        uint16_t *face_vertices = scene->view->face_vertices[face];
+        uint16_t face_vertex_index = face_vertices[0];
         int project_z = scene->view->project_vertex_z[face_vertex_index];
 
         if (project_z < scene->clip_near || project_z > scene->clip_far_2d) {
@@ -1369,8 +1369,8 @@ void scene_initialise_polygons_2d(Scene *scene) {
 }
 
 void scene_render_polygon_2d_face(Scene *scene, int face) {
-    int *face_vertices = scene->view->face_vertices[face];
-    int face_0 = face_vertices[0];
+    uint16_t *face_vertices = scene->view->face_vertices[face];
+    uint16_t face_0 = face_vertices[0];
     int view_x = scene->view->vertex_view_x[face_0];
     int view_y = scene->view->vertex_view_y[face_0];
     int project_z = scene->view->project_vertex_z[face_0];
@@ -1479,8 +1479,8 @@ void scene_render(Scene *scene) {
         }
 
         for (int face = 0; face < game_model->face_count; face++) {
-            int vertex_count = game_model->face_vertex_count[face];
-            int *face_vertices = game_model->face_vertices[face];
+            uint16_t vertex_count = game_model->face_vertex_count[face];
+            uint16_t *face_vertices = game_model->face_vertices[face];
             int visible = 0;
 
             for (int vertex = 0; vertex < vertex_count; vertex++) {
@@ -1598,8 +1598,8 @@ void scene_render(Scene *scene) {
         } else {
             int k8 = 0;
             int vertex_shade = 0;
-            int face_vertex_count = game_model->face_vertex_count[face];
-            int *face_vertices = game_model->face_vertices[face];
+            uint16_t face_vertex_count = game_model->face_vertex_count[face];
+            uint16_t *face_vertices = game_model->face_vertices[face];
 
             if (game_model->face_intensity[face] != GAME_MODEL_USE_GOURAUD) {
                 if (polygon->visibility < 0) {
@@ -1612,7 +1612,7 @@ void scene_render(Scene *scene) {
             }
 
             for (int j = 0; j < face_vertex_count; j++) {
-                int vertex_index = face_vertices[j];
+                uint16_t vertex_index = face_vertices[j];
 
                 scene->vertex_x[j] = game_model->project_vertex_x[vertex_index];
                 scene->vertex_y[j] = game_model->project_vertex_y[vertex_index];
@@ -1652,7 +1652,7 @@ void scene_render(Scene *scene) {
 
                     k8++;
                 } else {
-                    int previous_vertex_index = 0;
+                    uint16_t previous_vertex_index = 0;
 
                     if (j == 0) {
                         previous_vertex_index =
@@ -2884,8 +2884,8 @@ void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     GamePolygon *polygon = scene->visible_polygons[polygon_index];
     GameModel *game_model = polygon->model;
     int face = polygon->face;
-    int *face_vertices = game_model->face_vertices[face];
-    int face_vertex_count = game_model->face_vertex_count[face];
+    uint16_t *face_vertices = game_model->face_vertices[face];
+    uint8_t face_vertex_count = game_model->face_vertex_count[face];
     int normal_scale = game_model->normal_scale[face];
     int vcx = game_model->project_vertex_x[face_vertices[0]];
     int vcy = game_model->project_vertex_y[face_vertices[0]];
@@ -2974,7 +2974,7 @@ void scene_initialise_polygon_2d(Scene *scene, int polygon_index) {
     GamePolygon *polygon = scene->visible_polygons[polygon_index];
     GameModel *game_model = polygon->model;
     int face = polygon->face;
-    int *face_vertices = game_model->face_vertices[face];
+    uint16_t *face_vertices = game_model->face_vertices[face];
 
     game_model->normal_magnitude[face] = 1;
     game_model->normal_scale[face] = 0;
@@ -3058,8 +3058,8 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     GameModel *game_model_b = polygon_b->model;
     int face_a = polygon_a->face;
     int face_b = polygon_b->face;
-    int *face_vertices_a = game_model_a->face_vertices[face_a];
-    int *face_vertices_b = game_model_b->face_vertices[face_b];
+    uint16_t *face_vertices_a = game_model_a->face_vertices[face_a];
+    uint16_t *face_vertices_b = game_model_b->face_vertices[face_b];
     int face_vertex_count_a = game_model_a->face_vertex_count[face_a];
     int face_vertex_count_b = game_model_b->face_vertex_count[face_b];
 
@@ -3226,8 +3226,8 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
     GameModel *game_model_b = polygon_b->model;
     int face_a = polygon_a->face;
     int face_b = polygon_b->face;
-    int *face_vertices_a = game_model_a->face_vertices[face_a];
-    int *face_vertices_b = game_model_b->face_vertices[face_b];
+    uint16_t *face_vertices_a = game_model_a->face_vertices[face_a];
+    uint16_t *face_vertices_b = game_model_b->face_vertices[face_b];
     int face_vertex_count_a = game_model_a->face_vertex_count[face_a];
     int face_vertex_count_b = game_model_b->face_vertex_count[face_b];
 

@@ -78,8 +78,8 @@ typedef struct GameModel {
     int *vertex_intensity;
     int8_t *vertex_ambience;
     uint16_t face_count;
-    int *face_vertex_count;
-    int **face_vertices;
+    uint8_t *face_vertex_count;
+    uint16_t **face_vertices;
     int *face_fill_front;
     int *face_fill_back;
     int *normal_magnitude;
@@ -113,12 +113,12 @@ typedef struct GameModel {
     int8_t isolated;
     int8_t projected;
     uint16_t max_vertices;
-    int *vertex_x;
-    int *vertex_y;
-    int *vertex_z;
-    int *vertex_transformed_x;
-    int *vertex_transformed_y;
-    int *vertex_transformed_z;
+    int16_t *vertex_x;
+    int16_t *vertex_y;
+    int16_t *vertex_z;
+    int16_t *vertex_transformed_x;
+    int16_t *vertex_transformed_y;
+    int16_t *vertex_transformed_z;
 
     int8_t unlit;
     int light_ambience;
@@ -179,13 +179,13 @@ void game_model_reduce(GameModel *game_model, int delta_faces,
 void game_model_merge(GameModel *game_model, GameModel **pieces, int count);
 int game_model_vertex_at(GameModel *game_model, int x, int y, int z);
 int game_model_create_vertex(GameModel *game_model, int x, int y, int z);
-int game_model_create_face(GameModel *game_model, int number, int *vertices,
+int game_model_create_face(GameModel *game_model, int number, uint16_t *vertices,
                            int fill_front, int fill_back);
 void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
                       int piece_dz, int rows, int count, int piece_max_vertices,
                       int pickable);
 void game_model_copy_lighting(GameModel *game_model, GameModel *model,
-                              int *src_vertices, int vertex_count, int in_face);
+                              uint16_t *src_vertices, int vertex_count, int in_face);
 void game_model_set_light_from3(GameModel *game_model, int x, int y, int z);
 void game_model_set_light_from5(GameModel *game_model, int ambience,
                                 int diffuse, int x, int y, int z);
@@ -202,8 +202,8 @@ void game_model_apply_translate(GameModel *game_model, int dx, int dy, int dz);
 void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
                                int pitch);
 void game_model_compute_bounds(GameModel *game_model);
-void game_model_get_face_normals(GameModel *game_model, int *vertex_x,
-                                 int *vertex_y, int *vertex_z,
+void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
+                                 int16_t *vertex_y, int16_t *vertex_z,
                                  int *face_normal_x, int *face_normal_y,
                                  int *face_normal_z, int reset_scale);
 void game_model_get_vertex_normals(GameModel *game_model, int *face_normal_x,
@@ -232,7 +232,7 @@ void game_model_mask_faces(GameModel *game_model, int *face_fill,
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void game_model_gl_decode_face_fill(int face_fill, gl_face_fill *vbo_face_fill);
-void game_model_gl_unwrap_uvs(GameModel *game_model, int *face_vertices,
+void game_model_gl_unwrap_uvs(GameModel *game_model, uint16_t *face_vertices,
                               int face_vertex_count, float *us, float *vs);
 void gl_offset_texture_uvs_atlas(gl_atlas_position texture_position,
                                  float *texture_x, float *texture_y);
