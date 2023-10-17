@@ -19,7 +19,7 @@
 #include "social-tab.h"
 #include "stats-tab.h"
 
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
 void mudclient_3ds_toggle_ui_tab(mudclient *mud, int tab);
 #endif
 void mudclient_set_active_ui_tab(mudclient *mud, int no_menus);

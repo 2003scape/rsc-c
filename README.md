@@ -5,7 +5,7 @@ portable, enhanced runescape classic client ported to C. supports 204 and 177
 mudclient204 java source refactored by v0rtex/xetr0v and Isaac Eggsampler.
 
 prominent new features include:
-* native ports for 3ds, wii, web browser and desktop
+* native ports for 3ds, switch, wii, web browser and desktop
 * opengl/webgl renderer with customizable
 [field of view](https://en.wikipedia.org/wiki/Field_of_view)
 * dynamic resizable mode with interface scaling and new minimum resolution of
@@ -40,6 +40,21 @@ a USB keyboard and mouse can also be used.
 * hold L whilst using d-pad or analogue stick to pan top screen zoom
 * start to toggle on-screen keyboard
 * select to toggle F1/interlace mode
+
+### controls (switch):
+
+* d-pad/left stick to control camera
+* A for Enter
+* B for Backspace
+* X for Tab
+* Y for Home
+* L for Escape
+* R to toggle fps display
+* ZR is reserved for future use
+* touch screen for mouse input
+* hold ZL whilst tapping touch screen for right click
+* \+ to toggle on-screen keyboard
+* \- to toggle F1/interlace mode
 
 ## build (linux)
 
@@ -99,6 +114,16 @@ an [installable `.cia` file](https://www.3dbrew.org/wiki/CIA). use
 [citra](https://citra-emu.org/download/) to test locally.
 
 see `./build-3ds.sh` for building for 3DS.
+
+## build (switch)
+
+install
+[switch-dev package in devkitPro](https://devkitpro.org/wiki/Getting_Started),
+switch-sdl2, and, switch-bzip2 to build
+an [`.nro` file](https://switchbrew.org/wiki/NRO). use
+[yuzu](https://yuzu-emu.org/) to test locally.
+
+see `./build-switch.sh` for building for Switch.
 
 ## usage
 

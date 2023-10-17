@@ -1,6 +1,6 @@
 #include "ui-tabs.h"
 
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
 void mudclient_3ds_toggle_ui_tab(mudclient *mud, int tab) {
     if (mud->mouse_button_click != 0) {
         if (mud->show_ui_tab == tab) {
@@ -18,7 +18,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
         mudclient_3ds_toggle_ui_tab(mud, INVENTORY_TAB);
 #else
         if (mud->show_ui_tab == 0) {
@@ -34,7 +34,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 33 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 36 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
         mudclient_3ds_toggle_ui_tab(mud, MAP_TAB);
 #else
         if (mud->show_ui_tab == 0) {
@@ -58,7 +58,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 66 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 66 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
         mudclient_3ds_toggle_ui_tab(mud, STATS_TAB);
 #else
         if (mud->show_ui_tab == 0) {
@@ -74,7 +74,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 99 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 99 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
         mudclient_3ds_toggle_ui_tab(mud, MAGIC_TAB);
 #else
         if (mud->show_ui_tab == 0) {
@@ -90,7 +90,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 132 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 132 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
         mudclient_3ds_toggle_ui_tab(mud, SOCIAL_TAB);
 #else
         if (mud->show_ui_tab == 0) {
@@ -106,7 +106,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 165 &&
         mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 165 &&
         mud->mouse_y < UI_BUTTON_SIZE) {
-#ifdef _3DS
+#if defined (_3DS) || defined (__SWITCH__)
         mudclient_3ds_toggle_ui_tab(mud, OPTIONS_TAB);
 #else
         if (mud->show_ui_tab == 0) {

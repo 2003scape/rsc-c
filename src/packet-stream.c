@@ -142,6 +142,9 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #ifdef WII
     packet_stream->socket = net_socket(AF_INET, SOCK_STREAM, 0);
 #else
+    #ifdef __SWITCH__
+        socketInitializeDefault();              // Initialize sockets
+    #endif
     packet_stream->socket = socket(AF_INET, SOCK_STREAM, 0);
 #endif
 
@@ -314,7 +317,7 @@ void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
     if (!packet_stream->closed) {
 #ifdef WII
         net_write(packet_stream->socket, buffer + offset, length);
-#elif defined(WIN32)
+#elif defined(WIN32) || defined(__SWITCH__)
         send(packet_stream->socket, buffer + offset, length, 0);
 #else
         write(packet_stream->socket, buffer + offset, length);

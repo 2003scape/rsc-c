@@ -21,6 +21,15 @@ char *animated_models[] = {
 
 char login_screen_status[255] = {0};
 
+#ifdef __SWITCH__
+SDL_Joystick *joystick;
+#define MAX_KBD_STR_SIZE 200
+SwkbdConfig kbd;
+char tmpoutstr[MAX_KBD_STR_SIZE] = {0};
+#endif
+
+uint8_t curMouseBtn = 1;
+
 #ifdef WII
 char keyboard_buttons[5][10] = {
     {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'},
@@ -712,16 +721,35 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     HIDUSER_EnableGyroscope();
 #else
+
+    #ifdef __SWITCH__
+    Result romfs_res = romfsInit();
+
+    if (romfs_res) {
+        fprintf(stderr, "romfsInit: %08lX\n", romfs_res);
+        exit(1);
+    }
+    #endif
+
     int init = SDL_INIT_VIDEO;
 
     if (mud->options->members) {
         init |= SDL_INIT_AUDIO;
     }
 
+    #ifdef __SWITCH__
+        init |= SDL_INIT_JOYSTICK;
+    #endif
+
     if (SDL_Init(init) < 0) {
         fprintf(stderr, "SDL_Init(): %s\n", SDL_GetError());
         exit(1);
     }
+
+    #ifdef __SWITCH__
+        SDL_JoystickEventState(SDL_ENABLE);
+        joystick = SDL_JoystickOpen(0);
+    #endif
 
     if (mud->options->members) {
         SDL_AudioSpec wanted_audio;
@@ -1378,7 +1406,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 #else
     int file_length = strlen(file);
 
-#ifdef _3DS
+#if defined(_3DS) || defined(__SWITCH__)
     char *prefix = "romfs:";
 #else
     char *prefix = "./cache";
@@ -5272,6 +5300,150 @@ void mudclient_poll_events(mudclient *mud) {
                 }
             }
             break;
+        case SDL_FINGERMOTION:
+            mudclient_mouse_moved(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT));
+            break;
+        case SDL_FINGERDOWN:
+            mudclient_mouse_pressed(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), curMouseBtn);
+            break;
+        case SDL_FINGERUP:
+            mudclient_mouse_released(mud, (int)(event.tfinger.x * MUD_WIDTH), (int)(event.tfinger.y * MUD_HEIGHT), curMouseBtn);
+            break;
+        #ifdef __SWITCH__
+        case SDL_JOYBUTTONDOWN:
+            switch (event.jbutton.button)
+            {
+                case 0: //A Button
+                    mudclient_key_pressed(mud, K_ENTER, K_ENTER);
+                    break;
+                case 1: //B Button
+                    mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
+                    break;
+                case 2: //X Button
+                    mudclient_key_pressed(mud, K_TAB, -1);
+                    break;
+                case 3: //Y Button
+                    mudclient_key_pressed(mud, K_HOME, -1);
+                    break;
+                case 6: //L Button
+                    mudclient_key_pressed(mud, K_ESCAPE, -1);
+                    break;
+                case 7: //R Button
+                    if (mud->options->display_fps == 0)
+                        mud->options->display_fps = 1;
+                    else
+                        mud->options->display_fps = 0;
+                    break;
+                case 8: // ZL
+                    curMouseBtn = 3;
+                    break;
+                case 9: // ZR
+                    //Reserved
+                    break;
+                case 11: //Minus Button
+                    mudclient_key_pressed(mud, K_F1, -1);
+                    break;
+                case 10: //Plus Button
+                    swkbdCreate(&kbd, 0);
+                    swkbdConfigSetType(&kbd, SwkbdType_QWERTY);
+                    swkbdConfigSetBlurBackground(&kbd, 0);
+                    swkbdConfigSetTextDrawType(&kbd, SwkbdTextDrawType_Box);
+                    swkbdConfigSetReturnButtonFlag(&kbd, 0);
+                    swkbdConfigSetStringLenMax(&kbd, MAX_KBD_STR_SIZE);
+                    swkbdConfigSetOkButtonText(&kbd, "Submit");
+                    swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
+                    
+                    for (int i = 0; i < sizeof(tmpoutstr); i++)
+                        mudclient_key_pressed(mud, -1, tmpoutstr[i]);
+
+                    swkbdClose(&kbd);
+                    break;
+                case 12: //DPAD LEFT
+                case 16: //Left Stick Left
+                    mudclient_key_pressed(mud, K_LEFT, -1);
+                    break;
+                case 13: //DPAD UP
+                case 17: //Left Stick Up
+                    mudclient_key_pressed(mud, K_UP, -1);
+                    break;
+                case 14: //DPAD RIGHT
+                case 18: //Left Stick Right
+                    mudclient_key_pressed(mud, K_RIGHT, -1);
+                    break;
+                case 15: //DPAD DOWN
+                case 19: //Left Stick Down
+                    mudclient_key_pressed(mud, K_DOWN, -1);
+                    break;
+                case 20: //Right Stick Left
+                    break;
+                case 21: //Right Stick Up
+                    mudclient_key_pressed(mud, K_PAGE_UP, -1);
+                    break;
+                case 22: //Right Stick Right
+                    break;
+                case 23: //Right Stick Down
+                    mudclient_key_pressed(mud, K_PAGE_DOWN, -1);
+                    break; 
+            }
+            break;
+        case SDL_JOYBUTTONUP:
+            switch (event.jbutton.button)
+            {
+                case 0: //A Button
+                    mudclient_key_released(mud, K_ENTER);
+                    break;
+                case 1: //B Button
+                    mudclient_key_released(mud, K_BACKSPACE);
+                    break;
+                case 2: //X Button
+                    mudclient_key_released(mud, K_TAB);
+                    break;
+                case 3: //Y Button
+                    mudclient_key_released(mud, K_HOME);
+                    break;
+                case 6: //L Button
+                    mudclient_key_released(mud, K_ESCAPE);
+                    break;
+                case 7: //R Button
+                    break;
+                case 8: //ZL
+                    curMouseBtn = 1;
+                    break;
+                case 9: //ZR
+                    //Reserved
+                    break;
+                case 11: //Minus Button
+                    mudclient_key_released(mud, K_F1);
+                    break;
+                case 12: //DPAD LEFT
+                case 16: //Left Stick Left
+                    mudclient_key_released(mud, K_LEFT);
+                    break;
+                case 13: //DPAD UP
+                case 17: //Left Stick Up
+                    mudclient_key_released(mud, K_UP);
+                    break;
+                case 14: //DPAD RIGHT
+                case 18: //Left Stick Right
+                    mudclient_key_released(mud, K_RIGHT);
+                    break;
+                case 15: //DPAD DOWN
+                case 19: //Left Stick Down
+                    mudclient_key_released(mud, K_DOWN);
+                    break;
+                case 20: //Right Stick Left
+                    break;
+                case 21: //Right Stick Up
+                    mudclient_key_released(mud, K_PAGE_UP);
+                    break;
+                case 22: //Right Stick Right
+                    break;
+                case 23: //Right Stick Down
+                    mudclient_key_released(mud, K_PAGE_DOWN);
+                    break;
+            }
+            break;
+        #endif
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 mudclient_on_resize(mud);
