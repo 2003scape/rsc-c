@@ -55,7 +55,9 @@
      "; Add another button to perform the last offer x amount\n"               \
      "last_offer_x = %d\n"                                                     \
      "; Add RuneScape Wiki lookup button instead of report abuse\n"            \
-     "wiki_lookup = %d\n\n"                                                    \
+     "wiki_lookup = %d\n"                                                      \
+     "; Combat style menu is usable outside of combat\n"                       \
+     "combat_style_always = %d\n\n"                                            \
                                                                                \
      "; F1 mode - only render every second scanline\n"                         \
      "interlace = %d\n"                                                        \
@@ -198,6 +200,9 @@ typedef struct Options {
 
     /* add runescape wiki lookup button instead of report abuse */
     int wiki_lookup;
+
+    /* combat style menu is usable outside of combat */
+    int combat_style_always;
 
     /* F1 mode - only render every second scanline */
     int interlace;

@@ -4226,7 +4226,8 @@ void mudclient_draw_ui(mudclient *mud) {
 
         mudclient_set_active_ui_tab(mud, no_menus);
 
-        if (mudclient_is_in_combat(mud)) {
+        if (mudclient_is_in_combat(mud) ||
+            mud->options->combat_style_always) {
             mudclient_draw_combat_style(mud);
         }
 

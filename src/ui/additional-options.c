@@ -205,6 +205,16 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->control_options[control] = &mud->options->wiki_lookup;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_control_options,
+        "@whi@Style outside combat: ",
+        mud->options->combat_style_always, x, y);
+
+    mud->control_options[control] = &mud->options->combat_style_always;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
     /* display */
     x = ui_x + 4;
     y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
