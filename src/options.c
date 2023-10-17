@@ -83,7 +83,7 @@ void options_set_defaults(Options *options) {
     options->offer_x = 1;
     options->last_offer_x = 1;
     options->wiki_lookup = 1;
-    options->combat_style_always = 1;
+    options->combat_style_always = (MUD_IS_COMPACT ? 0 : 1);
 
     /* display */
     options->interlace = 0;
