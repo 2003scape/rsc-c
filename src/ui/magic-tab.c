@@ -20,6 +20,15 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     surface_draw_tabs(mud->surface, ui_x, ui_y, MAGIC_WIDTH, MAGIC_TAB_HEIGHT,
                       magic_tabs, 2, mud->ui_tab_magic_sub_tab);
 
+    int mouse_x = mud->mouse_x - ui_x;
+    int mouse_y = mud->mouse_y - ui_y;
+
+#ifdef _3DS
+    panel_handle_mouse(mud->panel_magic, mouse_x + ui_x, mouse_y + ui_y,
+                       mud->last_mouse_button_down, mud->mouse_button_down,
+                       mud->mouse_scroll_delta);
+#endif
+
     if (mud->ui_tab_magic_sub_tab == 0) {
         panel_clear_list(mud->panel_magic, mud->control_list_magic);
 
@@ -173,9 +182,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
         return;
     }
 
-    int mouse_x = mud->mouse_x - ui_x;
-    int mouse_y = mud->mouse_y - ui_y;
-
+#ifndef _3DS
     int is_within_x = mud->options->off_handle_scroll_drag
                           ? 1
                           : mouse_x >= 0 && mouse_x < MAGIC_WIDTH;
@@ -187,6 +194,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     panel_handle_mouse(mud->panel_magic, mouse_x + ui_x, mouse_y + ui_y,
                        mud->last_mouse_button_down, mud->mouse_button_down,
                        mud->mouse_scroll_delta);
+#endif
 
     if (mouse_y <= MAGIC_TAB_HEIGHT && mud->mouse_button_click == 1) {
         if (mouse_x < (MAGIC_WIDTH / 2) && mud->ui_tab_magic_sub_tab == 1) {

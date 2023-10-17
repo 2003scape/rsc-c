@@ -144,7 +144,7 @@ void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
 int world_is_under_roof(World *world, int x, int y);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-void world_gl_create_gl_world_models_buffer(World *world, int max_models);
+void world_gl_create_world_models_buffer(World *world, int max_models);
 void world_gl_buffer_world_models(World *world);
 void world_gl_update_terrain_buffers(World *world);
 #endif

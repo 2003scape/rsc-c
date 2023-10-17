@@ -830,8 +830,6 @@ void mudclient_packet_tick(mudclient *mud) {
                 }
             }
 
-            mudclient_update_ground_item_models(mud);
-
             mud->ground_item_count = entity_count;
             entity_count = 0;
 
@@ -910,11 +908,13 @@ void mudclient_packet_tick(mudclient *mud) {
             }
 
             mud->wall_object_count = entity_count;
+        }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-            mudclient_gl_update_wall_models(mud);
+        mudclient_gl_update_wall_models(mud);
 #endif
-        }
+
+        mudclient_update_ground_item_models(mud);
         break;
     }
     case SERVER_REGION_WALL_OBJECTS: {

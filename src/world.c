@@ -2230,7 +2230,7 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
         max_models *= 3;
     }
 
-    world_gl_create_gl_world_models_buffer(world, max_models);
+    world_gl_create_world_models_buffer(world, max_models);
 #endif
 
     world_load_section_from4(world, x, y, plane, 1);
@@ -2359,7 +2359,7 @@ int world_is_under_roof(World *world, int x, int y) {
 }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-void world_gl_create_gl_world_models_buffer(World *world, int max_models) {
+void world_gl_create_world_models_buffer(World *world, int max_models) {
     free(world->gl_world_models_buffer);
 
     world->gl_world_models_buffer = calloc(max_models, sizeof(GameModel *));

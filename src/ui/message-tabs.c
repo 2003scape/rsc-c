@@ -227,7 +227,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
                        mud->last_mouse_button_down, mud->mouse_button_down,
                        mud->mouse_scroll_delta);
 
-    if (mud->message_tab_selected > 0 && mud->mouse_x >= 494 &&
+    if (mud->message_tab_selected > 0 && mud->mouse_x >= (MUD_WIDTH - 18) &&
         mud->mouse_y >= mud->surface->height - 78) {
         mud->last_mouse_button_down = 0;
     }
