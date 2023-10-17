@@ -1150,12 +1150,7 @@ void scene_set_bounds(Scene *scene, int width, int height) {
 #ifdef RENDER_SW
     int scanlines_length = clip_y + base_y;
 
-    scene->scanlines = calloc(scanlines_length, sizeof(Scanline *));
-
-    for (int i = 0; i < scanlines_length; i++) {
-        Scanline *scanline = calloc(1, sizeof(Scanline));
-        scene->scanlines[i] = scanline;
-    }
+    scene->scanlines = calloc(scanlines_length, sizeof(Scanline));
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -1971,7 +1966,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                 l19 += j20;
             }
 
-            Scanline *scanline_6 = scene->scanlines[y];
+            Scanline *scanline_6 = &scene->scanlines[y];
             scanline_6->start_x = start_x;
             scanline_6->end_x = end_x;
             scanline_6->start_s = start_s;
@@ -2222,7 +2217,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                 j23 += k23;
             }
 
-            Scanline *scanline_7 = scene->scanlines[y];
+            Scanline *scanline_7 = &scene->scanlines[y];
             scanline_7->start_x = start_x;
             scanline_7->end_x = end_x;
             scanline_7->start_s = start_s;
@@ -2258,7 +2253,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         }
 
         for (int y = scene->min_y; y < scene->max_y; y++) {
-            Scanline *scanline = scene->scanlines[y];
+            Scanline *scanline = &scene->scanlines[y];
             scanline->start_x = 655360;
             scanline->end_x = -655360;
         }
@@ -2284,7 +2279,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
             }
 
             for (int y = i3; y <= i4; y++) {
-                Scanline *scanline_2 = scene->scanlines[y];
+                Scanline *scanline_2 = &scene->scanlines[y];
                 scanline_2->start_x = scanline_2->end_x = i5;
                 scanline_2->start_s = scanline_2->end_s = l7;
                 i5 += j6;
@@ -2307,7 +2302,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
             }
 
             for (int y = i4; y <= i3; y++) {
-                Scanline *scanline_3 = scene->scanlines[y];
+                Scanline *scanline_3 = &scene->scanlines[y];
                 scanline_3->start_x = j5;
                 scanline_3->end_x = j5;
                 scanline_3->start_s = i8;
@@ -2340,7 +2335,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                 }
 
                 for (int l11 = j3; l11 <= j4; l11++) {
-                    Scanline *scanline_4 = scene->scanlines[l11];
+                    Scanline *scanline_4 = &scene->scanlines[l11];
 
                     if (l6 < scanline_4->start_x) {
                         scanline_4->start_x = l6;
@@ -2373,7 +2368,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                 }
 
                 for (int i12 = j4; i12 <= j3; i12++) {
-                    Scanline *scanline_5 = scene->scanlines[i12];
+                    Scanline *scanline_5 = &scene->scanlines[i12];
 
                     if (i7 < scanline_5->start_x) {
                         scanline_5->start_x = i7;
@@ -2399,7 +2394,7 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
     if (scene->mouse_picking_active &&
         scene->mouse_picked_count < MOUSE_PICKED_MAX &&
         scene->mouse_y >= scene->min_y && scene->mouse_y < scene->max_y) {
-        Scanline *scanline_1 = scene->scanlines[scene->mouse_y];
+        Scanline *scanline_1 = &scene->scanlines[scene->mouse_y];
 
         if (scene->mouse_x >= scanline_1->start_x >> 8 &&
             scene->mouse_x <= scanline_1->end_x >> 8 &&
@@ -2503,7 +2498,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
             if (!scene->texture_back_transparent[face_fill]) {
                 for (int i = scene->min_y; i < scene->max_y;
                      i += scanline_inc) {
-                    Scanline *scanline_4 = scene->scanlines[i];
+                    Scanline *scanline_4 = &scene->scanlines[i];
                     int j = scanline_4->start_x >> 8;
                     int i18 = scanline_4->end_x >> 8;
                     int l20 = i18 - j;
@@ -2544,7 +2539,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
             }
 
             for (int i = scene->min_y; i < scene->max_y; i += scanline_inc) {
-                Scanline *scanline_5 = scene->scanlines[i];
+                Scanline *scanline_5 = &scene->scanlines[i];
                 int j = scanline_5->start_x >> 8;
                 int k18 = scanline_5->end_x >> 8;
                 int i21 = k18 - j;
@@ -2643,7 +2638,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
 
         if (!scene->texture_back_transparent[face_fill]) {
             for (int i = scene->min_y; i < scene->max_y; i += scanline_inc) {
-                Scanline *scanline_7 = scene->scanlines[i];
+                Scanline *scanline_7 = &scene->scanlines[i];
                 int j = scanline_7->start_x >> 8;
                 int k19 = scanline_7->end_x >> 8;
                 int k21 = k19 - j;
@@ -2683,7 +2678,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
         }
 
         for (int i = scene->min_y; i < scene->max_y; i += scanline_inc) {
-            Scanline *scanline = scene->scanlines[i];
+            Scanline *scanline = &scene->scanlines[i];
             int j = scanline->start_x >> 8;
             int i20 = scanline->end_x >> 8;
             int l21 = i20 - j;
@@ -2770,7 +2765,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
 
     if (game_model->transparent) {
         for (int i = scene->min_y; i < scene->max_y; i += scanline_inc) {
-            Scanline *scanline = scene->scanlines[i];
+            Scanline *scanline = &scene->scanlines[i];
             int j = scanline->start_x >> 8;
             int k4 = scanline->end_x >> 8;
             int k6 = k4 - j;
@@ -2803,7 +2798,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
     }
 
     for (int i = scene->min_y; i < scene->max_y; i += scanline_inc) {
-        Scanline *scanline = scene->scanlines[i];
+        Scanline *scanline = &scene->scanlines[i];
         int j = scanline->start_x >> 8;
         int k5 = scanline->end_x >> 8;
         int i7 = k5 - j;

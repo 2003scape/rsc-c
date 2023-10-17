@@ -4822,10 +4822,6 @@ void mudclient_on_resize(mudclient *mud) {
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
 #endif
 
-#ifdef RENDER_SW
-    int old_height = mud->game_height - 12;
-#endif
-
     mud->game_width = new_width;
     mud->game_height = new_height;
 
@@ -4849,13 +4845,6 @@ void mudclient_on_resize(mudclient *mud) {
 
     if (mud->scene != NULL) {
 #ifdef RENDER_SW
-        int scanlines_length = (old_height / 2) * 2;
-
-        for (int i = 0; i < scanlines_length; i++) {
-            free(mud->scene->scanlines[i]);
-            mud->scene->scanlines[i] = NULL;
-        }
-
         free(mud->scene->scanlines);
 #endif
 

@@ -112,7 +112,7 @@ typedef struct Scene {
     int32_t **texture_colours_128;
     int length_128;
     Surface *surface;
-    Scanline **scanlines;
+    Scanline *scanlines;
     int min_y;
     int max_y;
     int32_t plane_x[VERTEX_COUNT];
