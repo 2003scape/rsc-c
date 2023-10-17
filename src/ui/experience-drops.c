@@ -22,15 +22,22 @@ void mudclient_draw_experience_drops(mudclient *mud) {
 
     for (int i = 0; i < mud->experience_drop_count; i++) {
         int drop_y = (int)mud->experience_drop_y[i];
-        int experience = mud->experience_drop_amount[i];
+        int experience = mud->experience_drop_amount[i] / 4;
+
+        char formatted_remainder[5] = {0};
+
+        sprintf(formatted_remainder, "%.2f",
+                (mud->experience_drop_amount[i] % 4) / 4.0f);
 
         char formatted_amount[15] = {0};
-        mudclient_format_number_commas(mud, experience / 4, formatted_amount);
+        mudclient_format_number_commas(mud, experience, formatted_amount);
 
         char *skill_name = skill_names[mud->experience_drop_skill[i]];
 
         char formatted_drop[strlen(skill_name) + strlen(formatted_amount) + 5];
-        sprintf(formatted_drop, "%s %s XP", formatted_amount, skill_name);
+
+        sprintf(formatted_drop, "%s%s %s XP", formatted_amount,
+                formatted_remainder + 1, skill_name);
 
         surface_draw_string_centre(mud->surface, formatted_drop, x, drop_y, 1,
                                    WHITE);
