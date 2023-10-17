@@ -239,6 +239,10 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                 if (i == game_data_spell_runes_required[spell_index]) {
                     mud->selected_spell = spell_index;
                     mud->selected_item_inventory_index = -1;
+
+                    if (MUD_IS_COMPACT) {
+                        mud->show_ui_tab = 0;
+                    }
                 }
             }
         }
