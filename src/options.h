@@ -8,6 +8,9 @@
 #include <fat.h>
 #endif
 
+typedef struct Options Options;
+
+#include "mudclient.h"
 #include "lib/ini.h"
 
 #define OPTIONS_INI_TEMPLATE                                                   \
