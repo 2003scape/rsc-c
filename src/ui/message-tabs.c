@@ -27,7 +27,7 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
     int x = 0;
-    int y = mud->surface->height - 16;
+    int y = mud->surface->height - 16 + (MUD_IS_COMPACT ? 1 : 0);
 
     int button_width = MUD_IS_COMPACT ? 78 : 100;
     int button_offset_x = MUD_IS_COMPACT ? 41 : 54;
@@ -66,7 +66,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         surface_draw_box(mud->surface, x + 413, y + 8, 90, 3, MESSAGE_TAB_WIKI);
     }
 
-    y = mud->surface->height - 6;
+    y = mud->surface->height - 6 + (MUD_IS_COMPACT ? 1 : 0);
 
     int text_colour = MESSAGE_TAB_PURPLE;
 
