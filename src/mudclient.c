@@ -4456,8 +4456,8 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
                 int dx = character->current_x;
                 int dy = character->current_y;
 
-                int delev = -(world_get_elevation(mud->world, dx, dy) -
-                              game_data_npc_height[character->npc_id] / 2);
+                int delev = -world_get_elevation(mud->world, dx, dy) -
+                              (game_data_npc_height[character->npc_id] / 2);
 
                 int rx =
                     (sx * player->projectile_range +
