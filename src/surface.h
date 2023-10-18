@@ -390,24 +390,24 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
 #endif
-void surface_draw_string_depth(Surface *surface, char *text, int x, int y,
+void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
                                FONT_STYLE font, int colour, float depth);
-void surface_draw_string(Surface *surface, char *text, int x, int y,
+void surface_draw_string(Surface *surface, const char *text, int x, int y,
                          FONT_STYLE font, int colour);
-void surface_draw_string_right(Surface *surface, char *text, int x, int y,
+void surface_draw_string_right(Surface *surface, const char *text, int x, int y,
                                FONT_STYLE font, int colour);
-void surface_draw_string_centre_depth(Surface *surface, char *text, int x,
+void surface_draw_string_centre_depth(Surface *surface, const char *text, int x,
                                       int y, FONT_STYLE font, int colour,
                                       float depth);
-void surface_draw_string_centre(Surface *surface, char *text, int x, int y,
+void surface_draw_string_centre(Surface *surface, const char *text, int x, int y,
                                 FONT_STYLE font, int colour);
-int surface_paragraph_height(Surface *surface, char *text, FONT_STYLE font,
+int surface_paragraph_height(Surface *surface, const char *text, FONT_STYLE font,
                              int max, int max_height);
-void surface_draw_paragraph(Surface *surface, char *text, int x, int y,
+void surface_draw_paragraph(Surface *surface, const char *text, int x, int y,
                             FONT_STYLE font, int colour, int max);
 int surface_text_height_font(FONT_STYLE font);
 int surface_text_height(FONT_STYLE font);
-int surface_text_width(char *text, FONT_STYLE font);
+int surface_text_width(const char *text, FONT_STYLE font);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected);
 void surface_draw_item(Surface *surface, int x, int y, int slot_width,
