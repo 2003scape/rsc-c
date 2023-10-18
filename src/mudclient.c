@@ -3425,7 +3425,9 @@ void mudclient_handle_game_input(mudclient *mud) {
         mud->last_mouse_button_down = 0;
     }
 
-    if (mud->show_dialog_trade || mud->show_dialog_duel) {
+    if (mud->show_dialog_trade || mud->show_dialog_duel ||
+        mud->show_dialog_shop) {
+
         if (mud->mouse_button_down != 0) {
             mud->mouse_button_down_time++;
         } else {
