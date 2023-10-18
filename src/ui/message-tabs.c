@@ -324,8 +324,9 @@ void mudclient_show_message(mudclient *mud, char *message, int type) {
         }
 
         if (colon_index != -1) {
-            char username[colon_index];
-            strncpy(username, message, colon_index);
+            /* ensure space for null terminator */
+            char username[colon_index + 1];
+            memcpy(username, message, colon_index);
 
             int64_t encoded_username = encode_username(username);
 
