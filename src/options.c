@@ -84,6 +84,7 @@ void options_set_defaults(Options *options) {
     options->last_offer_x = 1;
     options->wiki_lookup = 1;
     options->combat_style_always = (MUD_IS_COMPACT ? 0 : 1);
+    options->hold_to_buy = 1;
 
     /* display */
     options->interlace = 0;
@@ -141,6 +142,7 @@ void options_set_vanilla(Options *options) {
     options->last_offer_x = 0;
     options->wiki_lookup = 0;
     options->combat_style_always = 0;
+    options->hold_to_buy = 0;
 
     /* display */
     options->interlace = 0;
@@ -212,6 +214,7 @@ void options_save(Options *options) {
             options->last_offer_x,          //
             options->wiki_lookup,           //
             options->combat_style_always,   //
+            options->hold_to_buy,           //
                                             //
             options->interlace,             //
             options->display_fps,           //
@@ -280,6 +283,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("last_offer_x", options->last_offer_x, 0, 1);
     OPTION_INI_INT("wiki_lookup", options->wiki_lookup, 0, 1);
     OPTION_INI_INT("combat_style_always", options->combat_style_always, 0, 1);
+    OPTION_INI_INT("hold_to_buy", options->hold_to_buy, 0, 1);
 
     /* display */
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
