@@ -60,7 +60,9 @@ typedef struct Options Options;
      "; Add RuneScape Wiki lookup button instead of report abuse\n"            \
      "wiki_lookup = %d\n"                                                      \
      "; Combat style menu is usable outside of combat\n"                       \
-     "combat_style_always = %d\n\n"                                            \
+     "combat_style_always = %d\n"                                              \
+     "; Hold to buy/sell items from shops in bulk (matches trade screen)\n"    \
+     "hold_to_buy = %d\n\n"                                                    \
                                                                                \
      "; F1 mode - only render every second scanline\n"                         \
      "interlace = %d\n"                                                        \
@@ -206,6 +208,9 @@ typedef struct Options {
 
     /* combat style menu is usable outside of combat */
     int combat_style_always;
+
+    /* hold to buy/sell items from shops in bulk (matches trade screen) */
+    int hold_to_buy;
 
     /* F1 mode - only render every second scanline */
     int interlace;

@@ -4,12 +4,74 @@ void mudclient_draw_shop(mudclient *mud) {
     int x = (mud->surface->width / 2) - (SHOP_WIDTH / 2);
     int y = (mud->surface->height / 2) - (SHOP_HEIGHT / 2) - 6;
     int item_grid_height = SHOP_SLOT_HEIGHT * SHOP_ROWS;
+    int mouse_x = mud->mouse_x - x;
+    int mouse_y = mud->mouse_y - y;
+
+    if (mud->shop_selected_item_index >= 0 &&
+        (mud->mouse_button_click || mud->mouse_item_count_increment)) {
+
+        int item_id = mud->shop_items[mud->shop_selected_item_index];
+        if (item_id != -1) {
+            if (mud->shop_items_count[mud->shop_selected_item_index] > 0 &&
+                (MUD_IS_COMPACT ? (mouse_x > x && mouse_x < SHOP_WIDTH)
+                : (mouse_x > SHOP_WIDTH - 110 && mouse_x < SHOP_WIDTH)) &&
+                mouse_y >= item_grid_height + 34 &&
+                mouse_y <= item_grid_height + 45) {
+
+                int price_mod = mud->shop_buy_price_mod +
+                    mud->shop_items_price[mud->shop_selected_item_index];
+
+                if (price_mod < 10) {
+                    price_mod = 10;
+                }
+
+                int item_price =
+                    (price_mod * game_data_item_base_price[item_id]) /
+                    100;
+
+                packet_stream_new_packet(mud->packet_stream,
+                                         CLIENT_SHOP_BUY);
+
+                packet_stream_put_short(mud->packet_stream,
+                    mud->shop_items[mud->shop_selected_item_index]);
+
+                packet_stream_put_int(mud->packet_stream, item_price);
+                packet_stream_send_packet(mud->packet_stream);
+            } else if (mudclient_get_inventory_count(mud, item_id) > 0 &&
+               (MUD_IS_COMPACT ? (mouse_x > x && mouse_x < SHOP_WIDTH)
+                : (mouse_x > 2 && mouse_x < 112)) &&
+                mouse_y >= item_grid_height + 59 &&
+                mouse_y <= item_grid_height + 70) {
+
+                int price_mod = mud->shop_sell_price_mod +
+                                mud->shop_items_price
+                                    [mud->shop_selected_item_index];
+
+                if (price_mod < 10) {
+                    price_mod = 10;
+                }
+
+                int item_price =
+                    (price_mod * game_data_item_base_price[item_id]) /
+                    100;
+
+                packet_stream_new_packet(mud->packet_stream,
+                                         CLIENT_SHOP_SELL);
+
+                packet_stream_put_short(
+                    mud->packet_stream,
+                    mud->shop_items[mud->shop_selected_item_index]);
+
+                packet_stream_put_int(mud->packet_stream, item_price);
+                packet_stream_send_packet(mud->packet_stream);
+            } else {
+                mud->mouse_item_count_increment = 0;
+            }
+        }
+    }
 
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
-
-        int mouse_x = mud->mouse_x - x;
-        int mouse_y = mud->mouse_y - y;
 
         if (mouse_x >= 0 && mouse_y >= 12 && mouse_x < SHOP_WIDTH &&
             mouse_y < SHOP_HEIGHT) {
@@ -32,70 +94,6 @@ void mudclient_draw_shop(mudclient *mud) {
                     }
 
                     item_index++;
-                }
-            }
-
-            if (mud->shop_selected_item_index >= 0) {
-                int item_id = mud->shop_items[mud->shop_selected_item_index];
-
-                if (item_id != -1) {
-                    if (mud->shop_items_count[mud->shop_selected_item_index] >
-                            0 &&
-                        (MUD_IS_COMPACT ? (mouse_x > x && mouse_x < SHOP_WIDTH)
-                                        : (mouse_x > SHOP_WIDTH - 110 &&
-                                           mouse_x < SHOP_WIDTH)) &&
-                        mouse_y >= item_grid_height + 34 &&
-                        mouse_y <= item_grid_height + 45) {
-                        int price_mod = mud->shop_buy_price_mod +
-                                        mud->shop_items_price
-                                            [mud->shop_selected_item_index];
-
-                        if (price_mod < 10) {
-                            price_mod = 10;
-                        }
-
-                        int item_price =
-                            (price_mod * game_data_item_base_price[item_id]) /
-                            100;
-
-                        packet_stream_new_packet(mud->packet_stream,
-                                                 CLIENT_SHOP_BUY);
-
-                        packet_stream_put_short(
-                            mud->packet_stream,
-                            mud->shop_items[mud->shop_selected_item_index]);
-
-                        packet_stream_put_int(mud->packet_stream, item_price);
-                        packet_stream_send_packet(mud->packet_stream);
-                    }
-
-                    if (mudclient_get_inventory_count(mud, item_id) > 0 &&
-                        (MUD_IS_COMPACT ? (mouse_x > x && mouse_x < SHOP_WIDTH)
-                                        : (mouse_x > 2 && mouse_x < 112)) &&
-                        mouse_y >= item_grid_height + 59 &&
-                        mouse_y <= item_grid_height + 70) {
-                        int price_mod = mud->shop_sell_price_mod +
-                                        mud->shop_items_price
-                                            [mud->shop_selected_item_index];
-
-                        if (price_mod < 10) {
-                            price_mod = 10;
-                        }
-
-                        int item_price =
-                            (price_mod * game_data_item_base_price[item_id]) /
-                            100;
-
-                        packet_stream_new_packet(mud->packet_stream,
-                                                 CLIENT_SHOP_SELL);
-
-                        packet_stream_put_short(
-                            mud->packet_stream,
-                            mud->shop_items[mud->shop_selected_item_index]);
-
-                        packet_stream_put_int(mud->packet_stream, item_price);
-                        packet_stream_send_packet(mud->packet_stream);
-                    }
                 }
             }
         } else {
