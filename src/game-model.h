@@ -168,7 +168,7 @@ void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
 void game_model_from7(GameModel *game_model, int vertex_count, int face_count,
                       int autocommit, int isolated, int unlit, int unpickable,
                       int projected);
-void game_model_from_bytes(GameModel *game_model, int8_t *data);
+void game_model_from_bytes(GameModel *game_model, int8_t *data, size_t len);
 void game_model_reset(GameModel *game_model);
 void game_model_allocate(GameModel *game_model, int vertex_count,
                          int face_count);

@@ -1526,12 +1526,14 @@ void surface_clear(Surface *surface) {
 
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count) {
-    int index_offset = get_unsigned_short(sprite_data, 0);
+    /* FIXME: unsafe unchecked access */
 
-    int full_width = get_unsigned_short(index_data, index_offset);
+    int index_offset = get_unsigned_short(sprite_data, 0, SIZE_MAX);
+
+    int full_width = get_unsigned_short(index_data, index_offset, SIZE_MAX);
     index_offset += 2;
 
-    int full_height = get_unsigned_short(index_data, index_offset);
+    int full_height = get_unsigned_short(index_data, index_offset, SIZE_MAX);
     index_offset += 2;
 
     int colour_count = index_data[index_offset++] & 0xff;
@@ -1562,11 +1564,12 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         surface->sprite_translate_x[i] = index_data[index_offset++] & 0xff;
         surface->sprite_translate_y[i] = index_data[index_offset++] & 0xff;
 
-        surface->sprite_width[i] = get_unsigned_short(index_data, index_offset);
+        surface->sprite_width[i] =
+            get_unsigned_short(index_data, index_offset, SIZE_MAX);
         index_offset += 2;
 
         surface->sprite_height[i] =
-            get_unsigned_short(index_data, index_offset);
+            get_unsigned_short(index_data, index_offset, SIZE_MAX);
 
         index_offset += 2;
 

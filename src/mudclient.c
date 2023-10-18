@@ -1524,7 +1524,7 @@ void mudclient_load_jagex(mudclient *mud) {
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
-        int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag);
+        int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, NULL);
         mudclient_load_jagex_tga_sprite(mud, logo_tga);
         free(logo_tga);
 
@@ -1544,7 +1544,7 @@ void mudclient_load_jagex(mudclient *mud) {
 
     if (fonts_jag != NULL) {
         for (int i = 0; i < FONT_FILES_LENGTH; i++) {
-            create_font(load_data(font_files[i], 0, fonts_jag), i);
+            create_font(load_data(font_files[i], 0, fonts_jag, NULL), i);
         }
 
         free(fonts_jag);
@@ -1584,51 +1584,63 @@ void mudclient_load_media(mudclient *mud) {
         return;
     }
 
-    int8_t *index_dat = load_data("index.dat", 0, media_jag);
+    int8_t *index_dat = load_data("index.dat", 0, media_jag, NULL);
 
     surface_parse_sprite(mud->surface, mud->sprite_media,
-                         load_data("inv1.dat", 0, media_jag), index_dat, 1);
+                         load_data("inv1.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 1,
-                         load_data("inv2.dat", 0, media_jag), index_dat, 6);
+                         load_data("inv2.dat", 0, media_jag, NULL),
+                         index_dat, 6);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 9,
-                         load_data("bubble.dat", 0, media_jag), index_dat, 1);
+                         load_data("bubble.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 10,
-                         load_data("runescape.dat", 0, media_jag), index_dat,
-                         1);
+                         load_data("runescape.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 11,
-                         load_data("splat.dat", 0, media_jag), index_dat, 3);
+                         load_data("splat.dat", 0, media_jag, NULL),
+                         index_dat, 3);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 14,
-                         load_data("icon.dat", 0, media_jag), index_dat, 8);
+                         load_data("icon.dat", 0, media_jag, NULL),
+                         index_dat, 8);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 22,
-                         load_data("hbar.dat", 0, media_jag), index_dat, 1);
+                         load_data("hbar.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 23,
-                         load_data("hbar2.dat", 0, media_jag), index_dat, 1);
+                         load_data("hbar2.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 24,
-                         load_data("compass.dat", 0, media_jag), index_dat, 1);
+                         load_data("compass.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 25,
-                         load_data("buttons.dat", 0, media_jag), index_dat, 2);
+                         load_data("buttons.dat", 0, media_jag, NULL),
+                         index_dat, 2);
 
     surface_parse_sprite(mud->surface, mud->sprite_util,
-                         load_data("scrollbar.dat", 0, media_jag), index_dat,
-                         2);
+                         load_data("scrollbar.dat", 0, media_jag, NULL),
+                         index_dat, 2);
 
     surface_parse_sprite(mud->surface, mud->sprite_util + 2,
-                         load_data("corners.dat", 0, media_jag), index_dat, 4);
+                         load_data("corners.dat", 0, media_jag, NULL),
+                         index_dat, 4);
 
     surface_parse_sprite(mud->surface, mud->sprite_util + 6,
-                         load_data("arrows.dat", 0, media_jag), index_dat, 2);
+                         load_data("arrows.dat", 0, media_jag, NULL),
+                         index_dat, 2);
 
     surface_parse_sprite(mud->surface, mud->sprite_projectile,
-                         load_data("projectile.dat", 0, media_jag), index_dat,
+                         load_data("projectile.dat", 0, media_jag, NULL),
+                         index_dat,
                          game_data_projectile_sprite);
 
     int sprite_count = game_data_item_sprite_count;
@@ -1645,7 +1657,8 @@ void mudclient_load_media(mudclient *mud) {
         }
 
         surface_parse_sprite(mud->surface, mud->sprite_item + (i - 1) * 30,
-                             load_data(file_name, 0, media_jag), index_dat,
+                             load_data(file_name, 0, media_jag, NULL),
+                             index_dat,
                              current_sprite_count);
     }
 
@@ -1684,7 +1697,7 @@ void mudclient_load_entities(mudclient *mud) {
         return;
     }
 
-    int8_t *index_dat = load_data("index.dat", 0, entity_jag);
+    int8_t *index_dat = load_data("index.dat", 0, entity_jag, NULL);
     int8_t *entity_jag_mem = NULL;
     int8_t *index_dat_mem = NULL;
 
@@ -1697,7 +1710,7 @@ void mudclient_load_entities(mudclient *mud) {
             return;
         }
 
-        index_dat_mem = load_data("index.dat", 0, entity_jag_mem);
+        index_dat_mem = load_data("index.dat", 0, entity_jag_mem, NULL);
     }
 
     int frame_count = 0;
@@ -1722,11 +1735,11 @@ void mudclient_load_entities(mudclient *mud) {
         char file_name[255] = {0};
         sprintf(file_name, "%s.dat", animation_name);
 
-        int8_t *animation_dat = load_data(file_name, 0, entity_jag);
+        int8_t *animation_dat = load_data(file_name, 0, entity_jag, NULL);
         int8_t *animation_index_dat = index_dat;
 
         if (animation_dat == NULL && mud->options->members) {
-            animation_dat = load_data(file_name, 0, entity_jag_mem);
+            animation_dat = load_data(file_name, 0, entity_jag_mem, NULL);
             animation_index_dat = index_dat_mem;
         }
 
@@ -1739,11 +1752,11 @@ void mudclient_load_entities(mudclient *mud) {
             if (game_data_animation_has_a[i]) {
                 sprintf(file_name, "%sa.dat", animation_name);
 
-                int8_t *a_dat = load_data(file_name, 0, entity_jag);
+                int8_t *a_dat = load_data(file_name, 0, entity_jag, NULL);
                 int8_t *a_index_dat = index_dat;
 
                 if (a_dat == NULL && mud->options->members) {
-                    a_dat = load_data(file_name, 0, entity_jag_mem);
+                    a_dat = load_data(file_name, 0, entity_jag_mem, NULL);
                     a_index_dat = index_dat_mem;
                 }
 
@@ -1756,11 +1769,11 @@ void mudclient_load_entities(mudclient *mud) {
             if (game_data_animation_has_f[i]) {
                 sprintf(file_name, "%sf.dat", animation_name);
 
-                int8_t *f_dat = load_data(file_name, 0, entity_jag);
+                int8_t *f_dat = load_data(file_name, 0, entity_jag, NULL);
                 int8_t *f_index_dat = index_dat;
 
                 if (f_dat == NULL && mud->options->members) {
-                    f_dat = load_data(file_name, 0, entity_jag_mem);
+                    f_dat = load_data(file_name, 0, entity_jag_mem, NULL);
                     f_index_dat = index_dat_mem;
                 }
 
@@ -1806,7 +1819,7 @@ void mudclient_load_textures(mudclient *mud) {
         return;
     }
 
-    int8_t *index_dat = load_data("index.dat", 0, textures_jag);
+    int8_t *index_dat = load_data("index.dat", 0, textures_jag, NULL);
 
     scene_allocate_textures(mud->scene, game_data_texture_count, 7, 11);
 
@@ -1817,7 +1830,7 @@ void mudclient_load_textures(mudclient *mud) {
     for (int i = 0; i < game_data_texture_count; i++) {
         sprintf(file_name, "%s.dat", game_data_texture_name[i]);
 
-        int8_t *texture_dat = load_data(file_name, 0, textures_jag);
+        int8_t *texture_dat = load_data(file_name, 0, textures_jag, NULL);
 
         surface_parse_sprite(surface, mud->sprite_texture, texture_dat,
                              index_dat, 1);
@@ -1840,7 +1853,7 @@ void mudclient_load_textures(mudclient *mud) {
             if (sub_length) {
                 sprintf(file_name, "%s.dat", name_sub);
 
-                int8_t *texture_sub_dat = load_data(file_name, 0, textures_jag);
+                int8_t *texture_sub_dat = load_data(file_name, 0, textures_jag, NULL);
 
                 surface_parse_sprite(surface, mud->sprite_texture,
                                      texture_sub_dat, index_dat, 1);
@@ -1912,12 +1925,14 @@ void mudclient_load_models(mudclient *mud) {
         sprintf(file_name, "%s.ob3", model_name);
 
         uint32_t offset = get_data_file_offset(file_name, models_jag);
+        uint32_t len = get_data_file_length(file_name, models_jag);
 
         GameModel *game_model = malloc(sizeof(GameModel));
 
         if (offset != 0) {
-            game_model_from_bytes(game_model, models_jag + offset);
+            game_model_from_bytes(game_model, models_jag + offset, len);
         } else {
+            printf("not correct!!!\n");
             game_model_from2(game_model, 1, 1);
         }
 
@@ -1939,13 +1954,14 @@ void mudclient_load_models(mudclient *mud) {
             sprintf(file_name, "item-%d.ob3", sprite_id);
 
             uint32_t offset = get_data_file_offset(file_name, models_jag);
+            uint32_t len = get_data_file_length(file_name, models_jag);
 
             if (offset == 0) {
                 continue;
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag + offset);
+            game_model_from_bytes(game_model, models_jag + offset, len);
 
             int mask_colour = game_data_item_mask[i];
 
@@ -1977,13 +1993,14 @@ void mudclient_load_models(mudclient *mud) {
             sprintf(file_name, "item-%d.ob3", i);
 
             uint32_t offset = get_data_file_offset(file_name, models_jag);
+            uint32_t len = get_data_file_length(file_name, models_jag);
 
             if (offset == 0) {
                 continue;
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag + offset);
+            game_model_from_bytes(game_model, models_jag + offset, len);
 
             mud->item_models[i] = game_model;
         }

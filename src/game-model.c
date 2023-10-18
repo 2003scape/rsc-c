@@ -63,42 +63,43 @@ void game_model_from7(GameModel *game_model, int vertex_count, int face_count,
     game_model_allocate(game_model, vertex_count, face_count);
 }
 
-void game_model_from_bytes(GameModel *game_model, int8_t *data) {
+void game_model_from_bytes(GameModel *game_model, int8_t *data, size_t len) {
     size_t offset = 0;
 
     game_model_new(game_model);
 
-    int vertex_count = get_unsigned_short(data, offset);
+    int vertex_count = get_unsigned_short(data, offset, len);
     offset += 2;
 
-    int face_count = get_unsigned_short(data, offset);
+    int face_count = get_unsigned_short(data, offset, len);
     offset += 2;
 
     game_model_allocate(game_model, vertex_count, face_count);
 
     for (int i = 0; i < vertex_count; i++) {
-        game_model->vertex_x[i] = get_signed_short(data, offset);
+        game_model->vertex_x[i] = get_signed_short(data, offset, len);
         offset += 2;
     }
 
     for (int i = 0; i < vertex_count; i++) {
-        game_model->vertex_y[i] = get_signed_short(data, offset);
+        game_model->vertex_y[i] = get_signed_short(data, offset, len);
         offset += 2;
     }
 
     for (int i = 0; i < vertex_count; i++) {
-        game_model->vertex_z[i] = get_signed_short(data, offset);
+        game_model->vertex_z[i] = get_signed_short(data, offset, len);
         offset += 2;
     }
 
     game_model->vertex_count = vertex_count;
 
     for (int i = 0; i < face_count; i++) {
+        /* FIXME: unsafe */
         game_model->face_vertex_count[i] = data[offset++] & 0xff;
     }
 
     for (int i = 0; i < face_count; i++) {
-        game_model->face_fill_front[i] = get_signed_short(data, offset);
+        game_model->face_fill_front[i] = get_signed_short(data, offset, len);
         offset += 2;
 
         if (game_model->face_fill_front[i] == 32767) {
@@ -107,7 +108,7 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data) {
     }
 
     for (int i = 0; i < face_count; i++) {
-        game_model->face_fill_back[i] = get_signed_short(data, offset);
+        game_model->face_fill_back[i] = get_signed_short(data, offset, len);
         offset += 2;
 
         if (game_model->face_fill_back[i] == 32767) {
@@ -116,7 +117,7 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data) {
     }
 
     for (int i = 0; i < face_count; i++) {
-        int is_gouraud = data[offset++] & 0xff;
+        int is_gouraud = data[offset++] & 0xff; /* FIXME: unsafe */
         game_model->face_intensity[i] = is_gouraud ? GAME_MODEL_USE_GOURAUD : 0;
     }
 
@@ -126,10 +127,11 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data) {
 
         for (int j = 0; j < game_model->face_vertex_count[i]; j++) {
             if (vertex_count < 256) {
+                /* FIXME: unsafe */
                 game_model->face_vertices[i][j] = data[offset++] & 0xff;
             } else {
                 game_model->face_vertices[i][j] =
-                    get_unsigned_short(data, offset);
+                    get_unsigned_short(data, offset, len);
 
                 offset += 2;
             }

@@ -97,7 +97,9 @@ int game_data_model_count;
 int game_data_projectile_sprite;
 
 int8_t *game_data_data_string;
+size_t game_data_data_string_len;
 int8_t *game_data_data_integer;
+size_t game_data_data_integer_len;
 int game_data_string_offset;
 int game_data_offset;
 
@@ -120,17 +122,20 @@ int game_data_get_model_index(char *name) {
 }
 
 int game_data_get_unsigned_byte() {
+    /* FIXME: unsafe */
     return game_data_data_integer[game_data_offset++] & 0xff;
 }
 
 int game_data_get_unsigned_short() {
-    int i = get_unsigned_short(game_data_data_integer, game_data_offset);
+    int i = get_unsigned_short(game_data_data_integer, game_data_offset,
+                               game_data_data_integer_len);
     game_data_offset += 2;
     return i;
 }
 
 int game_data_get_unsigned_int() {
-    int i = get_unsigned_int(game_data_data_integer, game_data_offset);
+    int i = get_unsigned_int(game_data_data_integer, game_data_offset,
+                             game_data_data_integer_len);
     game_data_offset += 4;
 
     if (i > 99999999) {
@@ -161,9 +166,11 @@ char *game_data_get_string() {
 void game_data_load_data(int8_t *buffer, int is_members) {
     memset(game_data_model_name, 0, 5000 * sizeof(char *));
 
-    game_data_data_string = load_data("string.dat", 0, buffer);
+    game_data_data_string = load_data("string.dat", 0, buffer,
+                                      &game_data_data_string_len);
     game_data_string_offset = 0;
-    game_data_data_integer = load_data("integer.dat", 0, buffer);
+    game_data_data_integer = load_data("integer.dat", 0, buffer,
+                                       &game_data_data_integer_len);
     game_data_offset = 0;
 
     int i = 0;

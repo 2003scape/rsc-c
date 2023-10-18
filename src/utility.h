@@ -94,23 +94,24 @@ void init_utility_global();
 void strtrim(char *s);
 void strtolower(char *s);
 
-int get_unsigned_byte(int8_t i);
-int get_unsigned_short(int8_t *buffer, int offset);
-int get_unsigned_int(int8_t *buffer, int offset);
-int64_t get_unsigned_long(int8_t *buffer, int offset);
-int get_signed_short(int8_t *buffer, int offset);
-int get_stack_int(int8_t *buffer, int offset);
+int get_unsigned_byte(void *, size_t, size_t);
+int get_unsigned_short(void *, size_t, size_t);
+int get_unsigned_int(void *, size_t, size_t);
+int64_t get_unsigned_long(void *, size_t, size_t);
+int get_signed_short(void *, size_t, size_t);
+int get_stack_int(void *, size_t, size_t);
 int get_bit_mask(int8_t *buffer, int offset, int length);
 void write_unsigned_int(int8_t *buffer, int index, int i);
 void format_auth_string(char *raw, int max_length, char *formatted);
 void ip_to_string(int32_t ip, char *ip_string);
 int64_t encode_username(char *username);
 void decode_username(int64_t encoded, char *decoded);
-uint32_t get_data_file_offset(const char *file_name, int8_t *buffer);
-uint32_t get_data_file_length(const char *file_name, int8_t *buffer);
-int8_t *unpack_data(const char *file_name, int extra_size, int8_t *archive_data,
-                    int8_t *file_data);
-int8_t *load_data(char *file_name, int extra_size, int8_t *archive_data);
+uint32_t get_data_file_offset(const char *file_name, void *buffer);
+uint32_t get_data_file_length(const char *file_name, void *buffer);
+void *unpack_data(const char *file_name, size_t extra_size, void *archive_data,
+                  void *data_out, size_t *size_out);
+void *load_data(const char *file_name, size_t extra_size,
+                  void *archive_data, size_t *size_out);
 void format_confirm_amount(int amount, char *formatted);
 int get_ticks();
 void delay_ticks(int ticks);

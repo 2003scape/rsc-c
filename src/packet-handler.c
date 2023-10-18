@@ -128,11 +128,11 @@ void mudclient_packet_tick(mudclient *mud) {
     switch (opcode) {
     case SERVER_WORLD_INFO:
         mud->loading_area = 1;
-        mud->local_player_server_index = get_unsigned_short(data, 1);
-        mud->plane_width = get_unsigned_short(data, 3);
-        mud->plane_height = get_unsigned_short(data, 5);
-        mud->plane_index = get_unsigned_short(data, 7);
-        mud->plane_multiplier = get_unsigned_short(data, 9);
+        mud->local_player_server_index = get_unsigned_short(data, 1, size);
+        mud->plane_width = get_unsigned_short(data, 3, size);
+        mud->plane_height = get_unsigned_short(data, 5, size);
+        mud->plane_index = get_unsigned_short(data, 7, size);
+        mud->plane_multiplier = get_unsigned_short(data, 9, size);
         mud->plane_height -= mud->plane_index * mud->plane_multiplier;
         break;
     case SERVER_REGION_PLAYERS: {
@@ -293,19 +293,20 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_REGION_PLAYER_UPDATE: {
-        int length = get_unsigned_short(data, 1);
+        int length = get_unsigned_short(data, 1, size);
         int offset = 3;
 
         for (int i = 0; i < length; i++) {
-            int player_index = get_unsigned_short(data, offset);
+            int player_index = get_unsigned_short(data, offset, size);
             offset += 2;
 
             GameCharacter *player = mud->player_server[player_index];
+            /* FIXME: unchecked unsafe access */
             int update_type = data[offset++];
 
             if (update_type == 0) {
                 /* action bubble with an item in it */
-                int item_id = get_unsigned_short(data, offset);
+                int item_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
                 if (player != NULL) {
@@ -314,6 +315,7 @@ void mudclient_packet_tick(mudclient *mud) {
                 }
             } else if (update_type == 1) {
                 /* chat */
+                /* FIXME: unchecked unsafe access */
                 int message_length = data[offset++];
 
                 if (player != NULL) {
@@ -351,9 +353,9 @@ void mudclient_packet_tick(mudclient *mud) {
                 offset += message_length;
             } else if (update_type == 2) {
                 /* combat damage and hp */
-                int damage = get_unsigned_byte(data[offset++]);
-                int current = get_unsigned_byte(data[offset++]);
-                int max = get_unsigned_byte(data[offset++]);
+                int damage = get_unsigned_byte(data, offset++, size);
+                int current = get_unsigned_byte(data, offset++, size);
+                int max = get_unsigned_byte(data, offset++, size);
 
                 if (player != NULL) {
                     player->damage_taken = damage;
@@ -370,10 +372,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 }
             } else if (update_type == 3) {
                 /* new incoming projectile to npc */
-                int projectile_sprite = get_unsigned_short(data, offset);
+                int projectile_sprite = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int npc_index = get_unsigned_short(data, offset);
+                int npc_index = get_unsigned_short(data, offset, size);
                 offset += 2;
 
                 if (player != NULL) {
@@ -384,10 +386,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 }
             } else if (update_type == 4) {
                 /* new incoming projectile from player */
-                int projectile_sprite = get_unsigned_short(data, offset);
+                int projectile_sprite = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int opponent_index = get_unsigned_short(data, offset);
+                int opponent_index = get_unsigned_short(data, offset, size);
                 offset += 2;
 
                 if (player != NULL) {
@@ -399,26 +401,27 @@ void mudclient_packet_tick(mudclient *mud) {
             } else if (update_type == 5) {
                 /* player appearance update */
                 if (player != NULL) {
-                    player->server_id = get_unsigned_short(data, offset);
+                    player->server_id = get_unsigned_short(data, offset, size);
                     offset += 2;
 
-                    player->encoded_username = get_unsigned_long(data, offset);
+                    player->encoded_username = get_unsigned_long(data, offset, size);
                     offset += 8;
 
                     decode_username(player->encoded_username, player->name);
 
-                    int equipped_count = get_unsigned_byte(data[offset]);
+                    int equipped_count = get_unsigned_byte(data, offset, size);
                     offset++;
 
                     for (int j = 0; j < equipped_count; j++) {
                         player->animations[j] =
-                            get_unsigned_byte(data[offset++]);
+                            get_unsigned_byte(data, offset++, size);
                     }
 
                     for (int j = equipped_count; j < ANIMATION_COUNT; j++) {
                         player->animations[j] = 0;
                     }
 
+                    /* FIXME: unsafe unchecked access */
                     player->hair_colour = data[offset++] & 0xff;
                     player->top_colour = data[offset++] & 0xff;
                     player->bottom_colour = data[offset++] & 0xff;
@@ -428,11 +431,12 @@ void mudclient_packet_tick(mudclient *mud) {
                 } else {
                     offset += 14;
 
-                    int unused = get_unsigned_byte(data[offset]);
+                    int unused = get_unsigned_byte(data, offset, size);
                     offset += unused + 1;
                 }
             } else if (update_type == 6) {
                 /* public chat */
+                /* FIXME: unsafe unchecked access */
                 int message_length = data[offset++];
 
                 if (player != NULL) {
@@ -461,8 +465,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_REGION_OBJECTS: {
         for (int offset = 1; offset < size;) {
-            if (get_unsigned_byte(data[offset]) == 255) {
+            if (get_unsigned_byte(data, offset, size) == 255) {
                 int index = 0;
+                /* FIXME: unsafe unchecked access */
                 int l14 = (mud->local_region_x + data[offset + 1]) / 8;
                 int k19 = (mud->local_region_y + data[offset + 2]) / 8;
 
@@ -502,9 +507,10 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 mud->object_count = index;
             } else {
-                int object_id = get_unsigned_short(data, offset);
+                int object_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
+                /* FIXME: unsafe unchecked access */
                 int area_x = mud->local_region_x + data[offset++];
                 int area_y = mud->local_region_y + data[offset++];
                 int object_index = 0;
@@ -741,21 +747,22 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_REGION_NPC_UPDATE: {
-        int length = get_unsigned_short(data, 1);
+        int length = get_unsigned_short(data, 1, size);
 
         int offset = 3;
 
         for (int i = 0; i < length; i++) {
-            int server_index = get_unsigned_short(data, offset);
+            int server_index = get_unsigned_short(data, offset, size);
             offset += 2;
 
             GameCharacter *npc = mud->npcs_server[server_index];
-            int update_type = get_unsigned_byte(data[offset++]);
+            int update_type = get_unsigned_byte(data, offset++, size);
 
             if (update_type == 1) {
-                int target_index = get_unsigned_short(data, offset);
+                int target_index = get_unsigned_short(data, offset, size);
                 offset += 2;
 
+                /* FIXME: unsafe unchecked access */
                 int encoded_length = data[offset++];
 
                 if (npc != NULL) {
@@ -781,9 +788,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 offset += encoded_length;
             } else if (update_type == 2) {
-                int damage_taken = get_unsigned_byte(data[offset++]);
-                int current_health = get_unsigned_byte(data[offset++]);
-                int max_health = get_unsigned_byte(data[offset++]);
+                int damage_taken = get_unsigned_byte(data, offset++, size);
+                int current_health = get_unsigned_byte(data, offset++, size);
+                int max_health = get_unsigned_byte(data, offset++, size);
 
                 if (npc != NULL) {
                     npc->damage_taken = damage_taken;
@@ -800,10 +807,10 @@ void mudclient_packet_tick(mudclient *mud) {
 
         for (int i = 0; i < length; i++) {
             int delta_x =
-                (mud->local_region_x + get_signed_short(data, 1 + i * 4)) / 8;
+                (mud->local_region_x + get_signed_short(data, 1 + i * 4, size)) / 8;
 
             int delta_y =
-                (mud->local_region_y + get_signed_short(data, 3 + i * 4)) / 8;
+                (mud->local_region_y + get_signed_short(data, 3 + i * 4, size)) / 8;
 
             int entity_count = 0;
 
@@ -919,8 +926,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_REGION_WALL_OBJECTS: {
         for (int offset = 1; offset < size;) {
-            if (get_unsigned_byte(data[offset]) == 255) {
+            if (get_unsigned_byte(data, offset, size) == 255) {
                 int index = 0;
+                /* FIXME: unsafe unchecked access */
                 int l_x = (mud->local_region_x + data[offset + 1]) / 8;
                 int l_y = (mud->local_region_y + data[offset + 2]) / 8;
 
@@ -964,9 +972,10 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 mud->wall_object_count = index;
             } else {
-                int id = get_unsigned_short(data, offset);
+                int id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
+                /* FIXME: unsafe unchecked access */
                 int l_x = mud->local_region_x + data[offset++];
                 int l_y = mud->local_region_y + data[offset++];
                 int direction = data[offset++];
@@ -1034,8 +1043,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_REGION_GROUND_ITEMS: {
         for (int offset = 1; offset < size;) {
-            if (get_unsigned_byte(data[offset]) == 255) {
+            if (get_unsigned_byte(data, offset, size) == 255) {
                 int index = 0;
+	            /* FIXME: unsafe unchecked access */
                 int j14 = (mud->local_region_x + data[offset + 1]) / 8;
                 int i19 = (mud->local_region_y + data[offset + 2]) / 8;
 
@@ -1059,9 +1069,10 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 mud->ground_item_count = index;
             } else {
-                int item_id = get_unsigned_short(data, offset);
+                int item_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
+	            /* FIXME: unsafe unchecked access */
                 int area_x = mud->local_region_x + data[offset++];
                 int area_y = mud->local_region_y + data[offset++];
 
@@ -1131,10 +1142,11 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_INVENTORY_ITEMS: {
         int offset = 1;
 
+        /* FIXME: unsafe unchecked access */
         mud->inventory_items_count = data[offset++] & 0xff;
 
         for (int i = 0; i < mud->inventory_items_count; i++) {
-            int id_equip = get_unsigned_short(data, offset);
+            int id_equip = get_unsigned_short(data, offset, size);
             offset += 2;
 
             mud->inventory_item_id[i] = id_equip & 32767;
@@ -1142,7 +1154,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
             if (game_data_item_stackable[id_equip & 32767] == 0) {
                 mud->inventory_item_stack_count[i] =
-                    get_stack_int(data, offset);
+                    get_stack_int(data, offset, size);
 
                 if (mud->inventory_item_stack_count[i] >= 128) {
                     offset += 4;
@@ -1159,13 +1171,14 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
         int stack = 1;
 
+	/* FIXME: unsafe unchecked access */
         int index = data[offset++] & 0xff;
 
-        int id = get_unsigned_short(data, offset);
+        int id = get_unsigned_short(data, offset, size);
         offset += 2;
 
         if (game_data_item_stackable[id & 32767] == 0) {
-            stack = get_stack_int(data, offset);
+            stack = get_stack_int(data, offset, size);
 
             if (stack >= 128) {
                 offset += 4;
@@ -1184,6 +1197,7 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_INVENTORY_ITEM_REMOVE: {
+	/* FIXME: unsafe unchecked access */
         int index = data[1] & 0xff;
 
         mud->inventory_items_count--;
@@ -1202,33 +1216,34 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         for (int i = 0; i < skills_length; i++) {
-            mud->player_skill_current[i] = get_unsigned_byte(data[offset++]);
+            mud->player_skill_current[i] = get_unsigned_byte(data, offset++, size);
         }
 
         for (int i = 0; i < skills_length; i++) {
-            mud->player_skill_base[i] = get_unsigned_byte(data[offset++]);
+            mud->player_skill_base[i] = get_unsigned_byte(data, offset++, size);
         }
 
         for (int i = 0; i < skills_length; i++) {
-            mud->player_experience[i] = get_unsigned_int(data, offset);
+            mud->player_experience[i] = get_unsigned_int(data, offset, size);
             offset += 4;
         }
 
-        mud->player_quest_points = get_unsigned_byte(data[offset++]);
+        mud->player_quest_points = get_unsigned_byte(data, offset++, size);
         break;
     }
     case SERVER_PLAYER_STAT_EQUIPMENT_BONUS: {
         for (int i = 0; i < 5; i++) {
-            mud->player_stat_equipment[i] = get_unsigned_byte(data[1 + i]);
+            mud->player_stat_equipment[i] = get_unsigned_byte(data, 1 + i, size);
         }
 
         break;
     }
     case SERVER_PLAYER_STAT_EXPERIENCE_UPDATE: {
+	/* FIXME: unsafe unchecked access */
         int skill_index = data[1] & 0xff;
 
         int old_experience = mud->player_experience[skill_index];
-        mud->player_experience[skill_index] = get_unsigned_int(data, 2);
+        mud->player_experience[skill_index] = get_unsigned_int(data, 2, size);
 
         mudclient_drop_experience(mud, skill_index,
                                   mud->player_experience[skill_index] -
@@ -1237,40 +1252,42 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_PLAYER_STAT_UPDATE: {
         int offset = 1;
+    	/* FIXME: unsafe unchecked access */
         int skill_index = data[offset++] & 0xff;
 
         mud->player_skill_current[skill_index] =
-            get_unsigned_byte(data[offset++]);
+            get_unsigned_byte(data, offset++, size);
 
-        mud->player_skill_base[skill_index] = get_unsigned_byte(data[offset++]);
+        mud->player_skill_base[skill_index] = get_unsigned_byte(data, offset++, size);
 
-        mud->player_experience[skill_index] = get_unsigned_int(data, offset);
+        mud->player_experience[skill_index] = get_unsigned_int(data, offset, size);
         break;
     }
     case SERVER_PLAYER_STAT_FATIGUE: {
-        mud->stat_fatigue = get_unsigned_short(data, 1);
+        mud->stat_fatigue = get_unsigned_short(data, 1, size);
         break;
     }
     case SERVER_PLAYER_QUEST_LIST: {
+        /* FIXME: unchecked unsafe access */
         for (int i = 0; i < quests_length; i++) {
             mud->quest_complete[i] = data[i + 1];
         }
         break;
     }
     case SERVER_FRIEND_LIST: {
-        mud->friend_list_count = get_unsigned_byte(data[1]);
+        mud->friend_list_count = get_unsigned_byte(data, 1, size);
 
         for (int i = 0; i < mud->friend_list_count; i++) {
-            mud->friend_list[i] = get_unsigned_long(data, 2 + i * 9);
-            mud->friend_list_online[i] = get_unsigned_byte(data[10 + i * 9]);
+            mud->friend_list[i] = get_unsigned_long(data, 2 + i * 9, size);
+            mud->friend_list_online[i] = get_unsigned_byte(data, 10 + i * 9, size);
         }
 
         mudclient_sort_friends(mud);
         break;
     }
     case SERVER_FRIEND_STATUS_CHANGE: {
-        int64_t encoded_username = get_unsigned_long(data, 1);
-        int world = data[9] & 0xff;
+        int64_t encoded_username = get_unsigned_long(data, 1, size);
+        int world = data[9] & 0xff; /* FIXME: unsafe */
 
         for (int i = 0; i < mud->friend_list_count; i++) {
             if (mud->friend_list[i] == encoded_username) {
@@ -1311,7 +1328,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_FRIEND_MESSAGE: {
 #ifdef REVISION_177
-        int64_t from = get_unsigned_long(data, 1);
+        int64_t from = get_unsigned_long(data, 1, size);
         char from_username[USERNAME_LENGTH + 1];
         decode_username(from, from_username);
 
@@ -1326,10 +1343,10 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_IGNORE_LIST: {
-        mud->ignore_list_count = get_unsigned_byte(data[1]);
+        mud->ignore_list_count = get_unsigned_byte(data, 1, size);
 
         for (int i = 0; i < mud->ignore_list_count; i++) {
-            mud->ignore_list[i] = get_unsigned_long(data, 2 + i * 8);
+            mud->ignore_list[i] = get_unsigned_long(data, 2 + i * 8, size);
         }
         break;
     }
@@ -1371,11 +1388,11 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_PLAYER_STAT_FATIGUE_ASLEEP: {
-        mud->fatigue_sleeping = get_unsigned_short(data, 1);
+        mud->fatigue_sleeping = get_unsigned_short(data, 1, size);
         break;
     }
     case SERVER_OPTION_LIST: {
-        int count = get_unsigned_byte(data[1]);
+        int count = get_unsigned_byte(data, 1, size);
 
         mud->show_option_menu = 1;
         mud->option_menu_count = count;
@@ -1383,7 +1400,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 2;
 
         for (int i = 0; i < count; i++) {
-            int entry_length = get_unsigned_byte(data[offset++]);
+            int entry_length = get_unsigned_byte(data, offset++, size);
 
             strncpy(mud->option_menu_entry[i], (char *)data + offset,
                     entry_length);
@@ -1400,14 +1417,14 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_WELCOME: {
 #ifdef REVISION_177
-        mud->welcome_days_ago = get_unsigned_int(data, 1);
-        mud->welcome_recovery_set_days = get_unsigned_int(data, 5);
-        mud->welcome_last_ip = get_unsigned_int(data, 9);
+        mud->welcome_days_ago = get_unsigned_int(data, 1, size);
+        mud->welcome_recovery_set_days = get_unsigned_int(data, 5, size);
+        mud->welcome_last_ip = get_unsigned_int(data, 9, size);
 #else
-        mud->welcome_last_ip = get_unsigned_int(data, 1);
-        mud->welcome_days_ago = get_unsigned_int(data, 5);
-        mud->welcome_recovery_set_days = data[7] & 0xff;
-        mud->welcome_unread_messages = get_unsigned_int(data, 8);
+        mud->welcome_last_ip = get_unsigned_int(data, 1, size);
+        mud->welcome_days_ago = get_unsigned_int(data, 5, size);
+        mud->welcome_recovery_set_days = data[7] & 0xff; /* FIXME: unsafe */
+        mud->welcome_unread_messages = get_unsigned_int(data, 8, size);
 #endif
 
         mud->show_dialog_welcome = 1;
@@ -1447,14 +1464,15 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
 
+        /* FIXME: unchecked unsafe access */
         mud->new_bank_item_count = data[offset++] & 0xff;
         mud->bank_items_max = data[offset++] & 0xff;
 
         for (int i = 0; i < mud->new_bank_item_count; i++) {
-            mud->new_bank_items[i] = get_unsigned_short(data, offset);
+            mud->new_bank_items[i] = get_unsigned_short(data, offset, size);
             offset += 2;
 
-            mud->new_bank_items_count[i] = get_stack_int(data, offset);
+            mud->new_bank_items_count[i] = get_stack_int(data, offset, size);
 
             if (mud->new_bank_items_count[i] >= 128) {
                 offset += 4;
@@ -1477,11 +1495,12 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_BANK_UPDATE: {
         int offset = 1;
+        /* FIXME: unchecked unsafe access */
         int item_index = data[offset++] & 0xff;
-        int item = get_unsigned_short(data, offset);
+        int item = get_unsigned_short(data, offset, size);
         offset += 2;
 
-        int item_count = get_stack_int(data, offset);
+        int item_count = get_stack_int(data, offset, size);
 
         if (item_count >= 128) {
             offset += 4;
@@ -1512,9 +1531,11 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->show_dialog_shop = 1;
 
         int offset = 1;
+        /* FIXME: unchecked unsafe access */
         int new_item_count = data[offset++] & 0xff;
         int is_general = data[offset++];
 
+        /* FIXME: unchecked unsafe access */
         mud->shop_sell_price_mod = data[offset++] & 0xff;
         mud->shop_buy_price_mod = data[offset++] & 0xff;
 
@@ -1523,10 +1544,10 @@ void mudclient_packet_tick(mudclient *mud) {
         }
 
         for (int i = 0; i < new_item_count; i++) {
-            mud->shop_items[i] = get_unsigned_short(data, offset);
+            mud->shop_items[i] = get_unsigned_short(data, offset, size);
             offset += 2;
 
-            mud->shop_items_count[i] = get_unsigned_short(data, offset);
+            mud->shop_items_count[i] = get_unsigned_short(data, offset, size);
             offset += 2;
 
             mud->shop_items_price[i] = data[offset++];
@@ -1581,7 +1602,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TRADE_OPEN:
     case SERVER_DUEL_OPEN: {
-        int player_index = get_unsigned_short(data, 1);
+        int player_index = get_unsigned_short(data, 1, size);
 
         if (mud->player_server[player_index] != NULL) {
             strcpy(mud->transaction_recipient_name,
@@ -1623,12 +1644,12 @@ void mudclient_packet_tick(mudclient *mud) {
 
         for (int i = 0; i < mud->transaction_recipient_item_count; i++) {
             mud->transaction_recipient_items[i] =
-                get_unsigned_short(data, offset);
+                get_unsigned_short(data, offset, size);
 
             offset += 2;
 
             mud->transaction_recipient_items_count[i] =
-                get_unsigned_int(data, offset);
+                get_unsigned_int(data, offset, size);
 
             offset += 4;
         }
@@ -1639,11 +1660,13 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TRADE_RECIPIENT_ACCEPTED:
     case SERVER_DUEL_RECIPIENT_ACCEPTED: {
+        /* FIXME: unchecked unsafe access */
         mud->transaction_recipient_accepted = data[1];
         break;
     }
     case SERVER_TRADE_ACCEPTED:
     case SERVER_DUEL_ACCEPTED: {
+        /* FIXME: unchecked unsafe access */
         mud->transaction_accepted = data[1];
         break;
     }
@@ -1662,7 +1685,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->transaction_recipient_confirm_name =
-            get_unsigned_long(data, offset);
+            get_unsigned_long(data, offset, size);
 
         offset += 8;
 
@@ -1671,12 +1694,12 @@ void mudclient_packet_tick(mudclient *mud) {
         for (int i = 0; i < mud->transaction_recipient_confirm_item_count;
              i++) {
             mud->transaction_recipient_confirm_items[i] =
-                get_unsigned_short(data, offset);
+                get_unsigned_short(data, offset, size);
 
             offset += 2;
 
             mud->transaction_recipient_confirm_items_count[i] =
-                get_unsigned_int(data, offset);
+                get_unsigned_int(data, offset, size);
 
             offset += 4;
         }
@@ -1685,18 +1708,19 @@ void mudclient_packet_tick(mudclient *mud) {
 
         for (int i = 0; i < mud->transaction_confirm_item_count; i++) {
             mud->transaction_confirm_items[i] =
-                get_unsigned_short(data, offset);
+                get_unsigned_short(data, offset, size);
 
             offset += 2;
 
             mud->transaction_confirm_items_count[i] =
-                get_unsigned_int(data, offset);
+                get_unsigned_int(data, offset, size);
 
             offset += 4;
         }
         break;
     }
     case SERVER_DUEL_SETTINGS: {
+        /* FIXME: unchecked unsafe access */
         mud->duel_option_retreat = data[1] & 0xff;
         mud->duel_option_magic = data[2] & 0xff;
         mud->duel_option_prayer = data[3] & 0xff;
@@ -1724,6 +1748,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TELEPORT_BUBBLE: {
         if (mud->teleport_bubble_count < TELEPORT_BUBBLE_MAX) {
+            /* FIXME: unchecked unsafe access */
             int type = data[1] & 0xff;
             int x = data[2] + mud->local_region_x;
             int y = data[3] + mud->local_region_y;
@@ -1750,12 +1775,14 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_GAME_SETTINGS: {
+        /* FIXME: unchecked unsafe access */
         mud->settings_camera_auto = data[1];
         mud->settings_mouse_button_one = data[2];
         mud->settings_sound_disabled = data[3];
         break;
     }
     case SERVER_PRIVACY_SETTINGS: {
+        /* FIXME: unchecked unsafe access */
         mud->settings_block_chat = data[1];
         mud->settings_block_private = data[2];
         mud->settings_block_trade = data[3];
@@ -1764,7 +1791,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
 #ifndef REVISION_177
     case SERVER_SYSTEM_UPDATE: {
-        mud->system_update = get_unsigned_short(data, 1) * 32;
+        mud->system_update = get_unsigned_short(data, 1, size) * 32;
         break;
     }
 #endif

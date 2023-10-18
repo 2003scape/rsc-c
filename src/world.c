@@ -305,11 +305,13 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
     strcpy(map_name + map_name_length, ".hei");
 
-    int8_t *map_data = load_data(map_name, 0, world->landscape_pack);
+    int8_t *map_data = load_data(map_name, 0, world->landscape_pack, NULL);
 
     if (map_data == NULL && world->member_landscape_pack != NULL) {
-        map_data = load_data(map_name, 0, world->member_landscape_pack);
+        map_data = load_data(map_name, 0, world->member_landscape_pack, NULL);
     }
+
+    /* FIXME: full of unsafe buffer access */
 
     if (map_data != NULL) {
         int offset = 0;
@@ -381,10 +383,10 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
     strcpy(map_name + map_name_length, ".dat");
 
-    map_data = load_data(map_name, 0, world->map_pack);
+    map_data = load_data(map_name, 0, world->map_pack, NULL);
 
     if (map_data == NULL && world->member_map_pack != NULL) {
-        map_data = load_data(map_name, 0, world->member_map_pack);
+        map_data = load_data(map_name, 0, world->member_map_pack, NULL);
     }
 
     if (map_data != NULL) {
@@ -453,7 +455,7 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
         strcpy(map_name + map_name_length, ".loc");
 
-        map_data = load_data(map_name, 0, world->map_pack);
+        map_data = load_data(map_name, 0, world->map_pack, NULL);
 
         if (map_data != NULL) {
             offset = 0;
