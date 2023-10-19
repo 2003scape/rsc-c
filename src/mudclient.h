@@ -111,7 +111,7 @@
 #ifdef REVISION_177
 #define VERSION 177
 #else
-#define VERSION 204
+#define VERSION 203
 #endif
 
 #define ZOOM_MIN 450
@@ -130,9 +130,6 @@
 #define INPUT_TEXT_LENGTH 20
 #define INPUT_PM_LENGTH 80
 #define INPUT_DIGITS_LENGTH 14 /* 2,147,483,647m */
-
-#define USERNAME_LENGTH 20
-#define PASSWORD_LENGTH 20
 
 #define GAME_OBJECTS_MAX 1000
 #define WALL_OBJECTS_MAX 500

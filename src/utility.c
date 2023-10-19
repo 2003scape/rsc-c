@@ -172,11 +172,13 @@ int get_bit_mask(int8_t *buffer, int offset, int length) {
     return bits;
 }
 
-void write_unsigned_int(int8_t *buffer, int index, int i) {
-    buffer[index] = (int8_t)(i >> 24);
-    buffer[index + 1] = (int8_t)(i >> 16);
-    buffer[index + 2] = (int8_t)(i >> 8);
-    buffer[index + 3] = (int8_t)i;
+void write_unsigned_int(void *buffer, size_t index, int i) {
+    uint8_t *b = buffer;
+
+    b[index] = (uint8_t)(i >> 24);
+    b[index + 1] = (uint8_t)(i >> 16);
+    b[index + 2] = (uint8_t)(i >> 8);
+    b[index + 3] = (uint8_t)i;
 }
 
 void format_auth_string(char *raw, int max_length, char *formatted) {

@@ -26,8 +26,19 @@
 #endif
 
 #ifdef REVISION_177
+#define NO_ISAAC
+#endif
+
+#ifndef NO_ISAAC
+#include "lib/isaac.h"
+#endif
+
+#ifndef NO_RSA
 #include "lib/bn.h"
 #endif
+
+#define USERNAME_LENGTH 20
+#define PASSWORD_LENGTH 20
 
 #define PACKET_BUFFER_LENGTH 5000
 
@@ -64,10 +75,18 @@ typedef struct PacketStream {
     int available_length;
     int available_offset;
 
-#ifdef REVISION_177
+#ifndef NO_RSA
     char *rsa_exponent;
     char *rsa_modulus;
+#endif
 
+#ifndef NO_ISAAC
+    struct isaac isaac_in;
+    struct isaac isaac_out;
+    int isaac_ready;
+#endif
+
+#ifdef REVISION_177
     /*int decode_key;
     int decode_threat_index;
 
@@ -92,7 +111,7 @@ void packet_stream_new_packet(PacketStream *packet_stream,
 /*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);*/
 void packet_stream_write_packet(PacketStream *packet_stream, int i);
 void packet_stream_send_packet(PacketStream *packet_stream);
-void packet_stream_put_bytes(PacketStream *packet_stream, int8_t *src,
+void packet_stream_put_bytes(PacketStream *packet_stream, void *src,
                              int offset, int length);
 void packet_stream_put_byte(PacketStream *packet_stream, int i);
 void packet_stream_put_short(PacketStream *packet_stream, int i);
@@ -102,6 +121,10 @@ void packet_stream_put_string(PacketStream *packet_stream, char *s);
 #ifdef REVISION_177
 void packet_stream_put_password(PacketStream *packet_stream, int session_id,
                                 char *password);
+#else
+void packet_stream_put_login_block(PacketStream *packet_stream,
+                const char *username, const char *password,
+                uint32_t *isaac_keys, uint32_t uuid);
 #endif
 int packet_stream_get_byte(PacketStream *packet_stream);
 int packet_stream_get_short(PacketStream *packet_stream);

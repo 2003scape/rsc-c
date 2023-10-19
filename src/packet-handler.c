@@ -123,7 +123,13 @@ void mudclient_packet_tick(mudclient *mud) {
     }
 
     int8_t *data = mud->incoming_packet;
-    SERVER_OPCODE opcode = data[0] & 0xff; /* TODO isaac */
+    SERVER_OPCODE opcode = data[0] & 0xff;
+
+#ifndef NO_ISAAC
+    if (mud->packet_stream->isaac_ready) {
+        opcode = (opcode - isaac_next(&mud->packet_stream->isaac_in)) & 0xff;
+    }
+#endif
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
