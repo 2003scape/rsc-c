@@ -27,15 +27,8 @@ void main() {
         !(texture_colour.r == 1.0 && texture_colour.g == 1.0 &&
           texture_colour.b == 1.0);
 
-    if (is_textured_light) {
-        lightness = texture_light_gradient[gradient_index];
-    } else {
-        lightness = light_gradient[gradient_index];
-    }
-
-    /*float reversed = RAMP_SIZE - gradient_index ;//- 1;
-    lightness = (reversed * reversed) / 65536.0;
-    lightness = (reversed / 256.0f) * (reversed / 256.0f);*/
+    lightness = is_textured_light ? texture_light_gradient[gradient_index]
+                                  : light_gradient[gradient_index];
 
     // TODO add uniform for merlin's crystal
     fragment_colour = vec4(vertex_colour, 1.0) * texture_colour;
