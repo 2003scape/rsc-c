@@ -462,18 +462,20 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_REGION_OBJECTS: {
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data, offset, size) == 255) {
+                /* remove the object */
                 int index = 0;
-                /* FIXME: unsafe unchecked access */
-                int l14 = (mud->local_region_x + data[offset + 1]) / 8;
-                int k19 = (mud->local_region_y + data[offset + 2]) / 8;
+                int l_x = (mud->local_region_x +
+                    get_signed_byte(data, offset + 1, size)) / 8;
+                int l_y = (mud->local_region_y +
+                    get_signed_byte(data, offset + 2, size)) / 8;
 
                 offset += 3;
 
                 for (int i = 0; i < mud->object_count; i++) {
-                    int l26 = (mud->object_x[i] / 8) - l14;
-                    int k29 = (mud->object_y[i] / 8) - k19;
+                    int o_x = (mud->object_x[i] / 8) - l_x;
+                    int o_y = (mud->object_y[i] / 8) - l_y;
 
-                    if (l26 != 0 || k29 != 0) {
+                    if (o_x != 0 || o_y != 0) {
                         if (i != index) {
                             mud->object_model[index] = mud->object_model[i];
                             mud->object_model[index]->key = index;
@@ -506,9 +508,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int object_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                /* FIXME: unsafe unchecked access */
-                int area_x = mud->local_region_x + data[offset++];
-                int area_y = mud->local_region_y + data[offset++];
+                int area_x = mud->local_region_x +
+                    get_signed_byte(data, offset++, size);
+                int area_y = mud->local_region_y +
+                    get_signed_byte(data, offset++, size);
                 int object_index = 0;
 
                 for (int i = 0; i < mud->object_count; i++) {
@@ -922,10 +925,12 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_REGION_WALL_OBJECTS: {
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data, offset, size) == 255) {
+                /* remove the bound */
                 int index = 0;
-                /* FIXME: unsafe unchecked access */
-                int l_x = (mud->local_region_x + data[offset + 1]) / 8;
-                int l_y = (mud->local_region_y + data[offset + 2]) / 8;
+                int l_x = (mud->local_region_x +
+                    get_signed_byte(data, offset + 1, size)) / 8;
+                int l_y = (mud->local_region_y +
+                    get_signed_byte(data, offset + 2, size)) / 8;
 
                 offset += 3;
 
@@ -970,10 +975,11 @@ void mudclient_packet_tick(mudclient *mud) {
                 int id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                /* FIXME: unsafe unchecked access */
-                int l_x = mud->local_region_x + data[offset++];
-                int l_y = mud->local_region_y + data[offset++];
-                int direction = data[offset++];
+                int l_x = mud->local_region_x +
+                    get_signed_byte(data, offset++, size);
+                int l_y = mud->local_region_y +
+                    get_signed_byte(data, offset++, size);
+                int direction = get_signed_byte(data, offset++, size);
                 int count = 0;
 
                 for (int i = 0; i < mud->wall_object_count; i++) {
@@ -1039,18 +1045,20 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_REGION_GROUND_ITEMS: {
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data, offset, size) == 255) {
+                /* remove the item */
                 int index = 0;
-                /* FIXME: unsafe unchecked access */
-                int j14 = (mud->local_region_x + data[offset + 1]) / 8;
-                int i19 = (mud->local_region_y + data[offset + 2]) / 8;
+                int l_x = (mud->local_region_x +
+                    get_signed_byte(data, offset + 1, size)) / 8;
+                int l_y = (mud->local_region_y +
+                    get_signed_byte(data, offset + 2, size)) / 8;
 
                 offset += 3;
 
                 for (int i = 0; i < mud->ground_item_count; i++) {
-                    int j26 = (mud->ground_item_x[i] / 8) - j14;
-                    int j29 = (mud->ground_item_y[i] / 8) - i19;
+                    int g_x = (mud->ground_item_x[i] / 8) - l_x;
+                    int g_y = (mud->ground_item_y[i] / 8) - l_y;
 
-                    if (j26 != 0 || j29 != 0) {
+                    if (g_x != 0 || g_y != 0) {
                         if (i != index) {
                             mud->ground_item_x[index] = mud->ground_item_x[i];
                             mud->ground_item_y[index] = mud->ground_item_y[i];
@@ -1067,9 +1075,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int item_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                /* FIXME: unsafe unchecked access */
-                int area_x = mud->local_region_x + data[offset++];
-                int area_y = mud->local_region_y + data[offset++];
+                int area_x = mud->local_region_x +
+                    get_signed_byte(data, offset++, size);
+                int area_y = mud->local_region_y +
+                    get_signed_byte(data, offset++, size);
 
                 if ((item_id & 32768) == 0) {
                     mud->ground_item_x[mud->ground_item_count] = area_x;
@@ -1535,7 +1544,7 @@ void mudclient_packet_tick(mudclient *mud) {
             mud->shop_items_count[i] = get_unsigned_short(data, offset, size);
             offset += 2;
 
-            mud->shop_items_price[i] = data[offset++]; /* FIXME: unsafe */
+            mud->shop_items_price[i] = get_signed_byte(data, offset++, size);
         }
 
         if (is_general == 1) {
@@ -1734,9 +1743,8 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_TELEPORT_BUBBLE: {
         if (mud->teleport_bubble_count < TELEPORT_BUBBLE_MAX) {
             int type = get_unsigned_byte(data, 1, size);
-            /* FIXME: unchecked unsafe access */
-            int x = data[2] + mud->local_region_x;
-            int y = data[3] + mud->local_region_y;
+            int x = get_signed_byte(data, 2, size) + mud->local_region_x;
+            int y = get_signed_byte(data, 3, size) + mud->local_region_y;
 
             mud->teleport_bubble_type[mud->teleport_bubble_count] = type;
             mud->teleport_bubble_time[mud->teleport_bubble_count] = 0;

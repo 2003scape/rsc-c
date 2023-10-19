@@ -111,6 +111,16 @@ void strtolower(char *s) {
     }
 }
 
+int get_signed_byte(void *b, size_t offset, size_t buflen) {
+    int8_t *buffer = b;
+    if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
+        fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+        assert(0);
+        return 0;
+    }
+    return buffer[offset];
+}
+
 int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {

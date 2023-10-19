@@ -94,6 +94,7 @@ void init_utility_global();
 void strtrim(char *s);
 void strtolower(char *s);
 
+int get_signed_byte(void *, size_t, size_t);
 int get_unsigned_byte(void *, size_t, size_t);
 int get_unsigned_short(void *, size_t, size_t);
 int get_unsigned_int(void *, size_t, size_t);
