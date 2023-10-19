@@ -317,7 +317,7 @@ void mudclient_packet_tick(mudclient *mud) {
                 /* chat */
                 int message_length = get_unsigned_byte(data, offset++, size);
 
-                if (player != NULL) {
+                if (player != NULL && message_length <= (size - offset)) {
                     char *message =
                         chat_message_decode(data, offset, message_length);
 
@@ -436,7 +436,7 @@ void mudclient_packet_tick(mudclient *mud) {
                 /* public chat */
                 int message_length = get_unsigned_byte(data, offset++, size);
 
-                if (player != NULL) {
+                if (player != NULL && message_length <= (size - offset)) {
                     char *message =
                         chat_message_decode(data, offset, message_length);
 
@@ -764,7 +764,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 int encoded_length = get_unsigned_byte(data, offset++, size);
 
-                if (npc != NULL) {
+                if (npc != NULL && encoded_length <= (size - offset)) {
                     char *message =
                         chat_message_decode(data, offset, encoded_length);
 
