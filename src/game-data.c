@@ -122,8 +122,8 @@ int game_data_get_model_index(char *name) {
 }
 
 int game_data_get_unsigned_byte() {
-    /* FIXME: unsafe */
-    return game_data_data_integer[game_data_offset++] & 0xff;
+    return get_unsigned_byte(game_data_data_integer, game_data_offset++,
+                             game_data_data_integer_len);
 }
 
 int game_data_get_unsigned_short() {

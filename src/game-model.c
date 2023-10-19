@@ -94,8 +94,8 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, size_t len) {
     game_model->vertex_count = vertex_count;
 
     for (int i = 0; i < face_count; i++) {
-        /* FIXME: unsafe */
-        game_model->face_vertex_count[i] = data[offset++] & 0xff;
+        game_model->face_vertex_count[i] =
+            get_unsigned_byte(data, offset++, len);
     }
 
     for (int i = 0; i < face_count; i++) {
@@ -117,7 +117,7 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, size_t len) {
     }
 
     for (int i = 0; i < face_count; i++) {
-        int is_gouraud = data[offset++] & 0xff; /* FIXME: unsafe */
+        int is_gouraud = get_unsigned_byte(data, offset++, len);
         game_model->face_intensity[i] = is_gouraud ? GAME_MODEL_USE_GOURAUD : 0;
     }
 
@@ -127,8 +127,8 @@ void game_model_from_bytes(GameModel *game_model, int8_t *data, size_t len) {
 
         for (int j = 0; j < game_model->face_vertex_count[i]; j++) {
             if (vertex_count < 256) {
-                /* FIXME: unsafe */
-                game_model->face_vertices[i][j] = data[offset++] & 0xff;
+                game_model->face_vertices[i][j] =
+                    get_unsigned_byte(data, offset++, len);
             } else {
                 game_model->face_vertices[i][j] =
                     get_unsigned_short(data, offset, len);
