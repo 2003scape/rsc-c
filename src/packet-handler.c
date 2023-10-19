@@ -1400,7 +1400,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
         for (int i = 0; i < count; i++) {
             int entry_length = get_unsigned_byte(data, offset++, size);
-
+            if (entry_length > (size - offset)) {
+                break;
+            }
             strncpy(mud->option_menu_entry[i], (char *)data + offset,
                     entry_length);
 
