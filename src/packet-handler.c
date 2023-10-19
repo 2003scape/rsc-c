@@ -301,9 +301,8 @@ void mudclient_packet_tick(mudclient *mud) {
             offset += 2;
 
             GameCharacter *player = mud->player_server[player_index];
-            /* FIXME: unchecked unsafe access */
-            int update_type = data[offset++];
 
+            int update_type = get_unsigned_byte(data, offset++, size);
             if (update_type == 0) {
                 /* action bubble with an item in it */
                 int item_id = get_unsigned_short(data, offset, size);
@@ -315,8 +314,7 @@ void mudclient_packet_tick(mudclient *mud) {
                 }
             } else if (update_type == 1) {
                 /* chat */
-                /* FIXME: unchecked unsafe access */
-                int message_length = data[offset++];
+                int message_length = get_unsigned_byte(data, offset++, size);
 
                 if (player != NULL) {
                     char *message =
@@ -421,13 +419,12 @@ void mudclient_packet_tick(mudclient *mud) {
                         player->animations[j] = 0;
                     }
 
-                    /* FIXME: unsafe unchecked access */
-                    player->hair_colour = data[offset++] & 0xff;
-                    player->top_colour = data[offset++] & 0xff;
-                    player->bottom_colour = data[offset++] & 0xff;
-                    player->skin_colour = data[offset++] & 0xff;
-                    player->level = data[offset++] & 0xff;
-                    player->skull_visible = data[offset++] & 0xff;
+                    player->hair_colour = get_unsigned_byte(data, offset++, size);
+                    player->top_colour = get_unsigned_byte(data, offset++, size);
+                    player->bottom_colour = get_unsigned_byte(data, offset++, size);
+                    player->skin_colour = get_unsigned_byte(data, offset++, size);
+                    player->level = get_unsigned_byte(data, offset++, size);
+                    player->skull_visible = get_unsigned_byte(data, offset++, size);
                 } else {
                     offset += 14;
 
@@ -436,8 +433,7 @@ void mudclient_packet_tick(mudclient *mud) {
                 }
             } else if (update_type == 6) {
                 /* public chat */
-                /* FIXME: unsafe unchecked access */
-                int message_length = data[offset++];
+                int message_length = get_unsigned_byte(data, offset++, size);
 
                 if (player != NULL) {
                     char *message =
@@ -762,8 +758,7 @@ void mudclient_packet_tick(mudclient *mud) {
                 int target_index = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                /* FIXME: unsafe unchecked access */
-                int encoded_length = data[offset++];
+                int encoded_length = get_unsigned_byte(data, offset++, size);
 
                 if (npc != NULL) {
                     char *message =
@@ -1045,7 +1040,7 @@ void mudclient_packet_tick(mudclient *mud) {
         for (int offset = 1; offset < size;) {
             if (get_unsigned_byte(data, offset, size) == 255) {
                 int index = 0;
-	            /* FIXME: unsafe unchecked access */
+                /* FIXME: unsafe unchecked access */
                 int j14 = (mud->local_region_x + data[offset + 1]) / 8;
                 int i19 = (mud->local_region_y + data[offset + 2]) / 8;
 
@@ -1072,7 +1067,7 @@ void mudclient_packet_tick(mudclient *mud) {
                 int item_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-	            /* FIXME: unsafe unchecked access */
+                /* FIXME: unsafe unchecked access */
                 int area_x = mud->local_region_x + data[offset++];
                 int area_y = mud->local_region_y + data[offset++];
 
@@ -1142,8 +1137,7 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_INVENTORY_ITEMS: {
         int offset = 1;
 
-        /* FIXME: unsafe unchecked access */
-        mud->inventory_items_count = data[offset++] & 0xff;
+        mud->inventory_items_count = get_unsigned_byte(data, offset++, size);
 
         for (int i = 0; i < mud->inventory_items_count; i++) {
             int id_equip = get_unsigned_short(data, offset, size);
@@ -1171,8 +1165,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
         int stack = 1;
 
-	/* FIXME: unsafe unchecked access */
-        int index = data[offset++] & 0xff;
+        int index = get_unsigned_byte(data, offset++, size);
 
         int id = get_unsigned_short(data, offset, size);
         offset += 2;
@@ -1197,8 +1190,7 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_INVENTORY_ITEM_REMOVE: {
-	/* FIXME: unsafe unchecked access */
-        int index = data[1] & 0xff;
+        int index = get_unsigned_byte(data, 1, size);
 
         mud->inventory_items_count--;
 
@@ -1239,8 +1231,7 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_PLAYER_STAT_EXPERIENCE_UPDATE: {
-	/* FIXME: unsafe unchecked access */
-        int skill_index = data[1] & 0xff;
+        int skill_index = get_unsigned_byte(data, 1, size);
 
         int old_experience = mud->player_experience[skill_index];
         mud->player_experience[skill_index] = get_unsigned_int(data, 2, size);
@@ -1252,8 +1243,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_PLAYER_STAT_UPDATE: {
         int offset = 1;
-    	/* FIXME: unsafe unchecked access */
-        int skill_index = data[offset++] & 0xff;
+        int skill_index = get_unsigned_byte(data, offset++, size);
 
         mud->player_skill_current[skill_index] =
             get_unsigned_byte(data, offset++, size);
@@ -1268,9 +1258,8 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_PLAYER_QUEST_LIST: {
-        /* FIXME: unchecked unsafe access */
         for (int i = 0; i < quests_length; i++) {
-            mud->quest_complete[i] = data[i + 1];
+            mud->quest_complete[i] = get_unsigned_byte(data, i + 1, size);
         }
         break;
     }
@@ -1287,7 +1276,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_FRIEND_STATUS_CHANGE: {
         int64_t encoded_username = get_unsigned_long(data, 1, size);
-        int world = data[9] & 0xff; /* FIXME: unsafe */
+        int world = get_unsigned_byte(data, 9, size);
 
         for (int i = 0; i < mud->friend_list_count; i++) {
             if (mud->friend_list[i] == encoded_username) {
@@ -1423,7 +1412,7 @@ void mudclient_packet_tick(mudclient *mud) {
 #else
         mud->welcome_last_ip = get_unsigned_int(data, 1, size);
         mud->welcome_days_ago = get_unsigned_int(data, 5, size);
-        mud->welcome_recovery_set_days = data[7] & 0xff; /* FIXME: unsafe */
+        mud->welcome_recovery_set_days = get_unsigned_byte(data, 7, size);
         mud->welcome_unread_messages = get_unsigned_int(data, 8, size);
 #endif
 
@@ -1464,9 +1453,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
 
-        /* FIXME: unchecked unsafe access */
-        mud->new_bank_item_count = data[offset++] & 0xff;
-        mud->bank_items_max = data[offset++] & 0xff;
+        mud->new_bank_item_count = get_unsigned_byte(data, offset++, size);
+        mud->bank_items_max = get_unsigned_byte(data, offset++, size);
 
         for (int i = 0; i < mud->new_bank_item_count; i++) {
             mud->new_bank_items[i] = get_unsigned_short(data, offset, size);
@@ -1495,8 +1483,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_BANK_UPDATE: {
         int offset = 1;
-        /* FIXME: unchecked unsafe access */
-        int item_index = data[offset++] & 0xff;
+        int item_index = get_unsigned_byte(data, offset++, size);
         int item = get_unsigned_short(data, offset, size);
         offset += 2;
 
@@ -1531,13 +1518,11 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->show_dialog_shop = 1;
 
         int offset = 1;
-        /* FIXME: unchecked unsafe access */
-        int new_item_count = data[offset++] & 0xff;
-        int is_general = data[offset++];
+        int new_item_count = get_unsigned_byte(data, offset++, size);
+        int is_general = get_unsigned_byte(data, offset++, size);
 
-        /* FIXME: unchecked unsafe access */
-        mud->shop_sell_price_mod = data[offset++] & 0xff;
-        mud->shop_buy_price_mod = data[offset++] & 0xff;
+        mud->shop_sell_price_mod = get_unsigned_byte(data, offset++, size);
+        mud->shop_buy_price_mod = get_unsigned_byte(data, offset++, size);
 
         for (int i = 0; i < 40; i++) {
             mud->shop_items[i] = -1;
@@ -1550,7 +1535,7 @@ void mudclient_packet_tick(mudclient *mud) {
             mud->shop_items_count[i] = get_unsigned_short(data, offset, size);
             offset += 2;
 
-            mud->shop_items_price[i] = data[offset++];
+            mud->shop_items_price[i] = data[offset++]; /* FIXME: unsafe */
         }
 
         if (is_general == 1) {
@@ -1638,7 +1623,8 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TRADE_ITEMS:
     case SERVER_DUEL_ITEMS: {
-        mud->transaction_recipient_item_count = data[1] & 0xff;
+        mud->transaction_recipient_item_count =
+            get_unsigned_byte(data, 1, size);
 
         int offset = 2;
 
@@ -1660,14 +1646,12 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TRADE_RECIPIENT_ACCEPTED:
     case SERVER_DUEL_RECIPIENT_ACCEPTED: {
-        /* FIXME: unchecked unsafe access */
-        mud->transaction_recipient_accepted = data[1];
+        mud->transaction_recipient_accepted = get_unsigned_byte(data, 1, size);
         break;
     }
     case SERVER_TRADE_ACCEPTED:
     case SERVER_DUEL_ACCEPTED: {
-        /* FIXME: unchecked unsafe access */
-        mud->transaction_accepted = data[1];
+        mud->transaction_accepted = get_unsigned_byte(data, 1, size);
         break;
     }
     case SERVER_TRADE_CONFIRM_OPEN:
@@ -1689,7 +1673,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
         offset += 8;
 
-        mud->transaction_recipient_confirm_item_count = data[offset++] & 0xff;
+        mud->transaction_recipient_confirm_item_count =
+            get_unsigned_byte(data, offset++, size);
 
         for (int i = 0; i < mud->transaction_recipient_confirm_item_count;
              i++) {
@@ -1704,7 +1689,8 @@ void mudclient_packet_tick(mudclient *mud) {
             offset += 4;
         }
 
-        mud->transaction_confirm_item_count = data[offset++] & 0xff;
+        mud->transaction_confirm_item_count =
+            get_unsigned_byte(data, offset++, size);
 
         for (int i = 0; i < mud->transaction_confirm_item_count; i++) {
             mud->transaction_confirm_items[i] =
@@ -1720,11 +1706,10 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_DUEL_SETTINGS: {
-        /* FIXME: unchecked unsafe access */
-        mud->duel_option_retreat = data[1] & 0xff;
-        mud->duel_option_magic = data[2] & 0xff;
-        mud->duel_option_prayer = data[3] & 0xff;
-        mud->duel_option_weapons = data[4] & 0xff;
+        mud->duel_option_retreat = get_unsigned_byte(data, 1, size);
+        mud->duel_option_magic = get_unsigned_byte(data, 2, size);
+        mud->duel_option_prayer = get_unsigned_byte(data, 3, size);
+        mud->duel_option_weapons = get_unsigned_byte(data, 4, size);
 
         mud->transaction_recipient_accepted = 0;
         mud->transaction_accepted = 0;
@@ -1748,8 +1733,8 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TELEPORT_BUBBLE: {
         if (mud->teleport_bubble_count < TELEPORT_BUBBLE_MAX) {
+            int type = get_unsigned_byte(data, 1, size);
             /* FIXME: unchecked unsafe access */
-            int type = data[1] & 0xff;
             int x = data[2] + mud->local_region_x;
             int y = data[3] + mud->local_region_y;
 
@@ -1775,18 +1760,16 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_GAME_SETTINGS: {
-        /* FIXME: unchecked unsafe access */
-        mud->settings_camera_auto = data[1];
-        mud->settings_mouse_button_one = data[2];
-        mud->settings_sound_disabled = data[3];
+        mud->settings_camera_auto = get_unsigned_byte(data, 1, size);
+        mud->settings_mouse_button_one = get_unsigned_byte(data, 2, size);
+        mud->settings_sound_disabled = get_unsigned_byte(data, 3, size);
         break;
     }
     case SERVER_PRIVACY_SETTINGS: {
-        /* FIXME: unchecked unsafe access */
-        mud->settings_block_chat = data[1];
-        mud->settings_block_private = data[2];
-        mud->settings_block_trade = data[3];
-        mud->settings_block_duel = data[4];
+        mud->settings_block_chat = get_unsigned_byte(data, 1, size);
+        mud->settings_block_private = get_unsigned_byte(data, 2, size);
+        mud->settings_block_trade = get_unsigned_byte(data, 3, size);
+        mud->settings_block_duel = get_unsigned_byte(data, 4, size);
         break;
     }
 #ifndef REVISION_177
