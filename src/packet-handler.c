@@ -144,13 +144,13 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 8;
 
-        mud->local_region_x = get_bit_mask(data, offset, 11);
+        mud->local_region_x = get_bit_mask(data, offset, size, 11);
         offset += 11;
 
-        mud->local_region_y = get_bit_mask(data, offset, 13);
+        mud->local_region_y = get_bit_mask(data, offset, size, 13);
         offset += 13;
 
-        int sprite = get_bit_mask(data, offset, 4);
+        int sprite = get_bit_mask(data, offset, size, 4);
         offset += 4;
 
         int has_loaded_region = mudclient_load_next_region(
@@ -178,21 +178,21 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->local_player = mudclient_add_player(
             mud, mud->local_player_server_index, player_x, player_y, sprite);
 
-        int length = get_bit_mask(data, offset, 8);
+        int length = get_bit_mask(data, offset, size, 8);
         offset += 8;
 
         for (int i = 0; i < length; i++) {
             GameCharacter *player = mud->known_players[i + 1];
-            int has_updated = get_bit_mask(data, offset, 1);
+            int has_updated = get_bit_mask(data, offset, size, 1);
 
             offset++;
 
             if (has_updated != 0) {
-                int update_type = get_bit_mask(data, offset, 1);
+                int update_type = get_bit_mask(data, offset, size, 1);
                 offset++;
 
                 if (update_type == 0) {
-                    int sprite = get_bit_mask(data, offset, 3);
+                    int sprite = get_bit_mask(data, offset, size, 3);
                     offset += 3;
 
                     int waypoint_current = player->waypoint_current;
@@ -223,14 +223,15 @@ void mudclient_packet_tick(mudclient *mud) {
                     player->waypoints_x[waypoint_current] = player_x;
                     player->waypoints_y[waypoint_current] = player_y;
                 } else {
-                    int sprite = get_bit_mask(data, offset, 4);
+                    int sprite = get_bit_mask(data, offset, size, 4);
 
                     if ((sprite & 12) == 12) {
                         offset += 2;
                         continue;
                     }
 
-                    player->next_animation = get_bit_mask(data, offset, 4);
+                    player->next_animation =
+                        get_bit_mask(data, offset, size, 4);
                     offset += 4;
                 }
             }
@@ -241,27 +242,27 @@ void mudclient_packet_tick(mudclient *mud) {
         int player_count = 0;
 
         while (offset + 24 < size * 8) {
-            int server_index = get_bit_mask(data, offset, 11);
+            int server_index = get_bit_mask(data, offset, size, 11);
             offset += 11;
 
-            int area_x = get_bit_mask(data, offset, 5);
+            int area_x = get_bit_mask(data, offset, size, 5);
             offset += 5;
 
             if (area_x > 15) {
                 area_x -= 32;
             }
 
-            int area_y = get_bit_mask(data, offset, 5);
+            int area_y = get_bit_mask(data, offset, size, 5);
             offset += 5;
 
             if (area_y > 15) {
                 area_y -= 32;
             }
 
-            int sprite = get_bit_mask(data, offset, 4);
+            int sprite = get_bit_mask(data, offset, size, 4);
             offset += 4;
 
-            int is_player_known = get_bit_mask(data, offset, 1);
+            int is_player_known = get_bit_mask(data, offset, size, 1);
             offset++;
 
             int x = (mud->local_region_x + area_x) * MAGIC_LOC + 64;
@@ -652,18 +653,18 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 8;
 
-        int length = get_bit_mask(data, offset, 8);
+        int length = get_bit_mask(data, offset, size, 8);
         offset += 8;
 
         for (int i = 0; i < length; i++) {
             GameCharacter *npc = mud->known_npcs[i];
-            int has_updated = get_bit_mask(data, offset++, 1);
+            int has_updated = get_bit_mask(data, offset++, size, 1);
 
             if (has_updated != 0) {
-                int has_moved = get_bit_mask(data, offset++, 1);
+                int has_moved = get_bit_mask(data, offset++, size, 1);
 
                 if (has_moved == 0) {
-                    int sprite = get_bit_mask(data, offset, 3);
+                    int sprite = get_bit_mask(data, offset, size, 3);
                     offset += 3;
 
                     int waypoint_current = npc->waypoint_current;
@@ -694,14 +695,14 @@ void mudclient_packet_tick(mudclient *mud) {
                     npc->waypoints_x[waypoint_current] = npc_x;
                     npc->waypoints_y[waypoint_current] = npc_y;
                 } else {
-                    int sprite = get_bit_mask(data, offset, 4);
+                    int sprite = get_bit_mask(data, offset, size, 4);
 
                     if ((sprite & 12) == 12) {
                         offset += 2;
                         continue;
                     }
 
-                    npc->next_animation = get_bit_mask(data, offset, 4);
+                    npc->next_animation = get_bit_mask(data, offset, size, 4);
                     offset += 4;
                 }
             }
@@ -711,30 +712,30 @@ void mudclient_packet_tick(mudclient *mud) {
 
         /* adding new NPCS */
         while (offset + 34 < size * 8) {
-            int server_index = get_bit_mask(data, offset, 12);
+            int server_index = get_bit_mask(data, offset, size, 12);
             offset += 12;
 
-            int area_x = get_bit_mask(data, offset, 5);
+            int area_x = get_bit_mask(data, offset, size, 5);
             offset += 5;
 
             if (area_x > 15) {
                 area_x -= 32;
             }
 
-            int area_y = get_bit_mask(data, offset, 5);
+            int area_y = get_bit_mask(data, offset, size, 5);
             offset += 5;
 
             if (area_y > 15) {
                 area_y -= 32;
             }
 
-            int sprite = get_bit_mask(data, offset, 4);
+            int sprite = get_bit_mask(data, offset, size, 4);
             offset += 4;
 
             int x = (mud->local_region_x + area_x) * MAGIC_LOC + 64;
             int y = (mud->local_region_y + area_y) * MAGIC_LOC + 64;
 
-            int npc_id = get_bit_mask(data, offset, 10);
+            int npc_id = get_bit_mask(data, offset, size, 10);
             offset += 10;
 
             if (npc_id >= game_data_npc_count) {

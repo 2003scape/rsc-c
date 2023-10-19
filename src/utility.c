@@ -196,23 +196,29 @@ int get_stack_int(void *b, size_t offset, size_t buflen) {
            ((buffer[offset + 2] & 0xff) << 8) + (buffer[offset + 3] & 0xff);
 }
 
-int get_bit_mask(int8_t *buffer, int offset, int length) {
-    int byte_offset = offset >> 3;
-    int bit_offset = 8 - (offset & 7);
+int get_bit_mask(void *b, size_t offset, size_t buflen, size_t nbits) {
+    uint8_t *buffer = b;
+    size_t byte_offset = offset >> 3;
+    size_t bit_offset = 8 - (offset & 7);
     int bits = 0;
 
-    for (; length > bit_offset; bit_offset = 8) {
+    for (; nbits > bit_offset; bit_offset = 8) {
+        if (byte_offset > (SIZE_MAX - 1) || (buflen - byte_offset) < 1) {
+            fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+            assert(0);
+            return 0;
+        }
         bits += (buffer[byte_offset++] & BITMASK[bit_offset])
-                << (length - bit_offset);
+                << (nbits - bit_offset);
 
-        length -= bit_offset;
+        nbits -= bit_offset;
     }
 
-    if (length == bit_offset) {
+    if (nbits == bit_offset) {
         bits += buffer[byte_offset] & BITMASK[bit_offset];
     } else {
         bits +=
-            (buffer[byte_offset] >> (bit_offset - length)) & BITMASK[length];
+            (buffer[byte_offset] >> (bit_offset - nbits)) & BITMASK[nbits];
     }
 
     return bits;

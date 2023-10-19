@@ -101,7 +101,7 @@ int get_unsigned_int(void *, size_t, size_t);
 int64_t get_unsigned_long(void *, size_t, size_t);
 int get_signed_short(void *, size_t, size_t);
 int get_stack_int(void *, size_t, size_t);
-int get_bit_mask(int8_t *buffer, int offset, int length);
+int get_bit_mask(void *, size_t, size_t, size_t);
 void write_unsigned_int(int8_t *buffer, int index, int i);
 void format_auth_string(char *raw, int max_length, char *formatted);
 void ip_to_string(int32_t ip, char *ip_string);
