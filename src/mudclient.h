@@ -110,8 +110,14 @@
 
 #ifdef REVISION_177
 #define VERSION 177
-#else
+#elif !defined(NO_RSA) && !defined(NO_ISAAC)
 #define VERSION 203
+#else
+/*
+ * 2003scape server compatiblity. Actual Jagex "204" clients identify
+ * as 203.
+ */
+#define VERSION 204
 #endif
 
 #define ZOOM_MIN 450
