@@ -590,10 +590,12 @@ void packet_stream_put_login_block(PacketStream *packet_stream,
 
     *(p++) = '\n'; /* Magic for sanity checks by the server. */
 
+#ifndef NO_ISAAC
     memset(packet_stream->isaac_in.randrsl, 0,
            sizeof(packet_stream->isaac_in.randrsl));
     memset(packet_stream->isaac_out.randrsl, 0,
            sizeof(packet_stream->isaac_out.randrsl));
+#endif
 
     for (unsigned int i = 0; i < 4; ++i) {
 #ifndef NO_ISAAC
