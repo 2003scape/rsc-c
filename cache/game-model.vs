@@ -2,9 +2,8 @@
 
 #define VERTEX_SCALE 100.0
 
-#define FOUNTAIN_ID 17.0
-#define RAMP_SIZE 256
-#define USE_GOURAUD 12345678
+#define RAMP_SIZE 256.0
+#define USE_GOURAUD 12345678.0
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 normal;
@@ -49,8 +48,8 @@ void main() {
         vec3 model_normal = vec3(model * vec4(vec3(normal), 0.0));
 
         /* normal.w = normal_magnitude */
-        intensity = dot(light_direction, model_normal) /
-                    (light_diffuse * normal.w);
+        intensity =
+            dot(light_direction, model_normal) / (light_diffuse * normal.w);
     }
 
     if (cull_front) {
@@ -65,22 +64,16 @@ void main() {
 
     // TODO replace division with multiplication
     if (gl_Position.z > (float(fog_distance) / VERTEX_SCALE)) {
-        gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
+        gradient_index += gl_Position.z * VERTEX_SCALE - float(fog_distance);
     }
-
-    /*if ((float(fog_distance) / VERTEX_SCALE) < gl_Position.z) {
-        //gradient_index += int(gl_Position.z * VERTEX_SCALE) - fog_distance;
-        //gradient_index = 255;
-        //vertex_colour = vec3(1.0, 0, 1.0);
-    }*/
 
     gradient_index = max(0, min(gradient_index, RAMP_SIZE - 1));
 
     vertex_gradient_index = gradient_index;
 
-    if (vertex_texture_position.x < 0) {
-        vertex_texture_position.x *= -1;
-        vertex_texture_position.y *= -1;
+    if (vertex_texture_position.x < 0.0) {
+        vertex_texture_position.x *= -1.0;
+        vertex_texture_position.y *= -1.0;
 
         vertex_texture_position.y += scroll_texture;
     }

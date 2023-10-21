@@ -110,7 +110,13 @@
 
 #ifdef REVISION_177
 #define VERSION 177
+#elif !defined(NO_RSA) && !defined(NO_ISAAC)
+#define VERSION 203
 #else
+/*
+ * 2003scape server compatiblity. Actual Jagex "204" clients identify
+ * as 203.
+ */
 #define VERSION 204
 #endif
 
@@ -130,9 +136,6 @@
 #define INPUT_TEXT_LENGTH 20
 #define INPUT_PM_LENGTH 80
 #define INPUT_DIGITS_LENGTH 14 /* 2,147,483,647m */
-
-#define USERNAME_LENGTH 20
-#define PASSWORD_LENGTH 20
 
 #define GAME_OBJECTS_MAX 1000
 #define WALL_OBJECTS_MAX 500

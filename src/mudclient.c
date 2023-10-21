@@ -2302,7 +2302,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     printf("Verb: Session id: %ld\n", session_id);
 #endif
 
-    int32_t keys[4] = {0};
+    uint32_t keys[4] = {0};
     keys[0] = (int)(((float)rand() / (float)RAND_MAX) * (float)99999999);
     keys[1] = (int)(((float)rand() / (float)RAND_MAX) * (float)99999999);
     keys[2] = (int32_t)(session_id >> 32);
@@ -2311,15 +2311,11 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     packet_stream_new_packet(mud->packet_stream, CLIENT_LOGIN);
     packet_stream_put_byte(mud->packet_stream, reconnecting);
     packet_stream_put_short(mud->packet_stream, VERSION);
-    packet_stream_put_byte(mud->packet_stream, 0);
-    packet_stream_put_byte(mud->packet_stream, 10);
-    packet_stream_put_int(mud->packet_stream, keys[0]);
-    packet_stream_put_int(mud->packet_stream, keys[1]);
-    packet_stream_put_int(mud->packet_stream, keys[2]);
-    packet_stream_put_int(mud->packet_stream, keys[3]);
-    packet_stream_put_int(mud->packet_stream, 0); // uuid
-    packet_stream_put_string(mud->packet_stream, formatted_username);
-    packet_stream_put_string(mud->packet_stream, formatted_password);
+    packet_stream_put_byte(mud->packet_stream, 0); /* limit30 */
+
+    packet_stream_put_login_block(mud->packet_stream,
+                                  formatted_username, formatted_password,
+                                  keys, 0);
 
     packet_stream_flush_packet(mud->packet_stream);
 
