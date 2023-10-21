@@ -305,10 +305,11 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
     strcpy(map_name + map_name_length, ".hei");
 
-    int8_t *map_data = load_data(map_name, 0, world->landscape_pack);
+    size_t len;
+    int8_t *map_data = load_data(map_name, 0, world->landscape_pack, &len);
 
     if (map_data == NULL && world->member_landscape_pack != NULL) {
-        map_data = load_data(map_name, 0, world->member_landscape_pack);
+        map_data = load_data(map_name, 0, world->member_landscape_pack, NULL);
     }
 
     if (map_data != NULL) {
@@ -316,7 +317,7 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
         int last_val = 0;
 
         for (int tile = 0; tile < TILE_COUNT;) {
-            int val = map_data[offset++] & 0xff;
+            int val = get_unsigned_byte(map_data, offset++, len);
 
             if (val < 128) {
                 world->terrain_height[chunk][tile++] = (int8_t)val;
@@ -345,7 +346,7 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
         last_val = 0;
 
         for (int tile = 0; tile < TILE_COUNT;) {
-            int val = map_data[offset++] & 0xff;
+            int val = get_unsigned_byte(map_data, offset++, len);
 
             if (val < 128) {
                 world->terrain_colour[chunk][tile++] = (int8_t)val;
@@ -381,29 +382,32 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
     strcpy(map_name + map_name_length, ".dat");
 
-    map_data = load_data(map_name, 0, world->map_pack);
+    map_data = load_data(map_name, 0, world->map_pack, &len);
 
     if (map_data == NULL && world->member_map_pack != NULL) {
-        map_data = load_data(map_name, 0, world->member_map_pack);
+        map_data = load_data(map_name, 0, world->member_map_pack, &len);
     }
 
     if (map_data != NULL) {
         int offset = 0;
 
         for (int tile = 0; tile < TILE_COUNT; tile++) {
-            world->walls_north_south[chunk][tile] = map_data[offset++];
+            world->walls_north_south[chunk][tile] =
+                get_signed_byte(map_data, offset++, len);
         }
 
         for (int tile = 0; tile < TILE_COUNT; tile++) {
-            world->walls_east_west[chunk][tile] = map_data[offset++];
+            world->walls_east_west[chunk][tile] =
+                get_signed_byte(map_data, offset++, len);
         }
 
         for (int tile = 0; tile < TILE_COUNT; tile++) {
-            world->walls_diagonal[chunk][tile] = map_data[offset++] & 0xff;
+            world->walls_diagonal[chunk][tile] =
+                get_unsigned_byte(map_data, offset++, len);
         }
 
         for (int tile = 0; tile < TILE_COUNT; tile++) {
-            int val = map_data[offset++] & 0xff;
+            int val = get_unsigned_byte(map_data, offset++, len);
 
             if (val > 0) {
                 world->walls_diagonal[chunk][tile] = val + 12000;
@@ -411,7 +415,7 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
         }
 
         for (int tile = 0; tile < TILE_COUNT;) {
-            int val = map_data[offset++] & 0xff;
+            int val = get_unsigned_byte(map_data, offset++, len);
 
             if (val < 128) {
                 world->walls_roof[chunk][tile++] = (int8_t)val;
@@ -425,7 +429,7 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
         int last_val = 0;
 
         for (int tile = 0; tile < TILE_COUNT;) {
-            int val = map_data[offset++] & 0xff;
+            int val = get_unsigned_byte(map_data, offset++, len);
 
             if (val < 128) {
                 world->tile_decoration[chunk][tile++] = (int8_t)val;
@@ -438,7 +442,7 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
         }
 
         for (int tile = 0; tile < TILE_COUNT;) {
-            int val = map_data[offset++] & 0xff;
+            int val = get_unsigned_byte(map_data, offset++, len);
 
             if (val < 128) {
                 world->tile_direction[chunk][tile++] = (int8_t)val;
@@ -453,13 +457,13 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
         strcpy(map_name + map_name_length, ".loc");
 
-        map_data = load_data(map_name, 0, world->map_pack);
+        map_data = load_data(map_name, 0, world->map_pack, NULL);
 
         if (map_data != NULL) {
             offset = 0;
 
             for (int tile = 0; tile < TILE_COUNT;) {
-                int val = map_data[offset++] & 0xff;
+                int val = get_unsigned_byte(map_data, offset++, len);
 
                 if (val < 128) {
                     world->walls_diagonal[chunk][tile++] = val + 48000;

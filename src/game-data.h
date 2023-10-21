@@ -106,7 +106,9 @@ extern int game_data_model_count;
 extern int game_data_projectile_sprite;
 
 extern int8_t *game_data_data_string;
+extern size_t game_data_data_string_len;
 extern int8_t *game_data_data_integer;
+extern size_t game_data_data_integer_len;
 extern int game_data_string_offset;
 extern int game_data_offset;
 

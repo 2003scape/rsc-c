@@ -1,4 +1,5 @@
 #include "utility.h"
+#include <assert.h>
 
 int sin_cos_512[512] = {0};
 int sin_cos_2048[2048] = {0};
@@ -110,26 +111,57 @@ void strtolower(char *s) {
     }
 }
 
-int get_unsigned_byte(int8_t i) { return i & 0xff; }
+int get_signed_byte(void *b, size_t offset, size_t buflen) {
+    int8_t *buffer = b;
+    if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
+        fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+        assert(0);
+        return 0;
+    }
+    return buffer[offset];
+}
 
-int get_unsigned_short(int8_t *buffer, int offset) {
+int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
+    int8_t *buffer = b;
+    if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
+        fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+        assert(0);
+        return 0;
+    }
+    return buffer[offset] & 0xff;
+}
+
+int get_unsigned_short(void *b, size_t offset, size_t buflen) {
+    int8_t *buffer = b;
+    if (offset > (SIZE_MAX - 2) || (buflen - offset) < 2) {
+        fprintf(stderr, "WARNING: tried to read excess short from buffer, off %zu len %zu\n", offset, buflen);
+        assert(0);
+        return 0;
+    }
     return ((buffer[offset] & 0xff) << 8) + (buffer[offset + 1] & 0xff);
 }
 
-int get_unsigned_int(int8_t *buffer, int offset) {
+int get_unsigned_int(void *b, size_t offset, size_t buflen) {
+    int8_t *buffer = b;
+    if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
+        fprintf(stderr, "WARNING: tried to read excess int from buffer, off %zu len %zu\n", offset, buflen);
+        assert(0);
+        return 0;
+    }
     return ((buffer[offset] & 0xff) << 24) +
            ((buffer[offset + 1] & 0xff) << 16) +
            ((buffer[offset + 2] & 0xff) << 8) + (buffer[offset + 3] & 0xff);
 }
 
-int64_t get_unsigned_long(int8_t *buffer, int offset) {
-    return (((int64_t)get_unsigned_int(buffer, offset) & 0xffffffff) << 32) +
-           ((int64_t)get_unsigned_int(buffer, offset + 4) & 0xffffffff);
+/* XXX: actually signed */
+int64_t get_unsigned_long(void *buffer, size_t offset, size_t buflen) {
+    return (((int64_t)get_unsigned_int(buffer, offset, buflen) & 0xffffffff) << 32) +
+           ((int64_t)get_unsigned_int(buffer, offset + 4, buflen) & 0xffffffff);
 }
 
-int get_signed_short(int8_t *buffer, int offset) {
-    int i = get_unsigned_byte(buffer[offset]) * 256 +
-            get_unsigned_byte(buffer[offset + 1]);
+int get_signed_short(void *buffer, size_t offset, size_t buflen) {
+    int i = get_unsigned_byte(buffer, offset, buflen) * 256 +
+            get_unsigned_byte(buffer, offset + 1, buflen);
 
     if (i > 32767) {
         i -= 0x10000;
@@ -140,9 +172,23 @@ int get_signed_short(int8_t *buffer, int offset) {
 
 /* used for inventory and bank items, since most of the time there's less than
  * 128 */
-int get_stack_int(int8_t *buffer, int offset) {
+int get_stack_int(void *b, size_t offset, size_t buflen) {
+    uint8_t *buffer = b;
+    if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
+        fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+        assert(0);
+        return 0;
+    }
+
+
     if ((buffer[offset] & 0xff) < 128) {
         return buffer[offset];
+    }
+
+    if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
+        fprintf(stderr, "WARNING: tried to read excess int from buffer, off %zu len %zu\n", offset, buflen);
+        assert(0);
+        return 0;
     }
 
     return (((buffer[offset] & 0xff) - 128) << 24) +
@@ -150,23 +196,29 @@ int get_stack_int(int8_t *buffer, int offset) {
            ((buffer[offset + 2] & 0xff) << 8) + (buffer[offset + 3] & 0xff);
 }
 
-int get_bit_mask(int8_t *buffer, int offset, int length) {
-    int byte_offset = offset >> 3;
-    int bit_offset = 8 - (offset & 7);
+int get_bit_mask(void *b, size_t offset, size_t buflen, size_t nbits) {
+    uint8_t *buffer = b;
+    size_t byte_offset = offset >> 3;
+    size_t bit_offset = 8 - (offset & 7);
     int bits = 0;
 
-    for (; length > bit_offset; bit_offset = 8) {
+    for (; nbits > bit_offset; bit_offset = 8) {
+        if (byte_offset > (SIZE_MAX - 1) || (buflen - byte_offset) < 1) {
+            fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+            assert(0);
+            return 0;
+        }
         bits += (buffer[byte_offset++] & BITMASK[bit_offset])
-                << (length - bit_offset);
+                << (nbits - bit_offset);
 
-        length -= bit_offset;
+        nbits -= bit_offset;
     }
 
-    if (length == bit_offset) {
+    if (nbits == bit_offset) {
         bits += buffer[byte_offset] & BITMASK[bit_offset];
     } else {
         bits +=
-            (buffer[byte_offset] >> (bit_offset - length)) & BITMASK[length];
+            (buffer[byte_offset] >> (bit_offset - nbits)) & BITMASK[nbits];
     }
 
     return bits;
@@ -317,20 +369,23 @@ static uint32_t get_file_hash(void *b, int entry) {
            (uint32_t)(buffer[entry * 10 + 5] & 0xff);
 }
 
-static uint32_t get_file_size(int8_t *buffer, int entry) {
+static uint32_t get_file_size(void *b, int entry) {
+    uint8_t *buffer = b;
     return (uint32_t)(buffer[entry * 10 + 6] & 0xff) << 16 |
            (uint32_t)(buffer[entry * 10 + 7] & 0xff) << 8 |
            (uint32_t)(buffer[entry * 10 + 8] & 0xff);
 }
 
-static uint32_t get_archive_size(int8_t *buffer, int entry) {
+static uint32_t get_archive_size(void *b, int entry) {
+    uint8_t *buffer = b;
     return (uint32_t)(buffer[entry * 10 + 9] & 0xff) << 16 |
            (uint32_t)(buffer[entry * 10 + 10] & 0xff) << 8 |
            (uint32_t)(buffer[entry * 10 + 11] & 0xff);
 }
 
-uint32_t get_data_file_offset(const char *file_name, int8_t *buffer) {
-    int num_entries = get_unsigned_short(buffer, 0);
+uint32_t get_data_file_offset(const char *file_name, void *buffer) {
+    /* FIXME: unsafe, need to know buffer size */
+    uint16_t num_entries = get_unsigned_short(buffer, 0, SIZE_MAX);
     uint32_t wanted_hash = hash_file_name(file_name);
     size_t offset = 2 + num_entries * 10;
 
@@ -348,8 +403,9 @@ uint32_t get_data_file_offset(const char *file_name, int8_t *buffer) {
     return 0;
 }
 
-uint32_t get_data_file_length(const char *file_name, int8_t *buffer) {
-    int num_entries = get_unsigned_short(buffer, 0);
+uint32_t get_data_file_length(const char *file_name, void *buffer) {
+    /* FIXME: unsafe, need to know buffer size */
+    uint16_t num_entries = get_unsigned_short(buffer, 0, SIZE_MAX);
     uint32_t wanted_hash = hash_file_name(file_name);
 
     for (int entry = 0; entry < num_entries; entry++) {
@@ -364,10 +420,12 @@ uint32_t get_data_file_length(const char *file_name, int8_t *buffer) {
     return 0;
 }
 
-int8_t *unpack_data(const char *file_name, int extra_size, int8_t *archive_data,
-                    int8_t *file_data) {
-    int num_entries = get_unsigned_short(archive_data, 0);
+void *unpack_data(const char *file_name, size_t extra_size,
+                  void *archive_data, void *data_out, size_t *size_out) {
+    /* FIXME: unsafe, need to know buffer size */
+    uint16_t num_entries = get_unsigned_short(archive_data, 0, SIZE_MAX);
     uint32_t wanted_hash = hash_file_name(file_name);
+
     uint32_t offset = 2 + num_entries * 10;
 
     for (int entry = 0; entry < num_entries; entry++) {
@@ -376,20 +434,22 @@ int8_t *unpack_data(const char *file_name, int extra_size, int8_t *archive_data,
         uint32_t archive_size = get_archive_size(archive_data, entry);
 
         if (file_hash == wanted_hash) {
-            if (file_data == NULL) {
-                file_data = malloc(file_size + extra_size);
+            if (data_out == NULL) {
+                data_out = malloc(file_size + extra_size);
+                /* FIXME: does not check malloc return value */
             }
 
             if (file_size != archive_size) {
-                bzip_decompress(file_data, file_size, archive_data,
+                bzip_decompress(data_out, file_size, (int8_t *)archive_data,
                                 archive_size, offset);
             } else {
-                for (size_t i = 0; i < file_size; i++) {
-                    file_data[i] = archive_data[offset + i];
-                }
+                memcpy(data_out, ((uint8_t *)archive_data + offset), file_size);
             }
 
-            return file_data;
+            if (size_out != NULL) {
+                *size_out = file_size;
+            }
+            return data_out;
         }
 
         offset += archive_size;
@@ -398,12 +458,13 @@ int8_t *unpack_data(const char *file_name, int extra_size, int8_t *archive_data,
     return NULL;
 }
 
-int8_t *load_data(char *file_name, int extra_size, int8_t *archive_data) {
+void *load_data(const char *file_name, size_t extra_size,
+                void *archive_data, size_t *size_out) {
     if (archive_data == NULL) {
         return NULL;
     }
 
-    return unpack_data(file_name, extra_size, archive_data, NULL);
+    return unpack_data(file_name, extra_size, archive_data, NULL, size_out);
 }
 
 void format_confirm_amount(int amount, char *formatted) {
