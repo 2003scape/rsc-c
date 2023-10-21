@@ -810,6 +810,8 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
                 mud->surface,
                 "There is NO WAY to reverse a trade if you change your mind.",
                 dialog_x + (TRANSACTION_WIDTH / 2), dialog_y + y, 1, WHITE);
+        } else {
+            y += 15;
         }
 
         y += 15;
