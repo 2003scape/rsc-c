@@ -399,9 +399,11 @@ void packet_stream_new_packet(PacketStream *packet_stream, CLIENT_OPCODE opcode)
         packet_stream_write_packet(packet_stream, 0);
     }
 
+#ifndef NO_ISAAC
     if (packet_stream->isaac_ready) {
         opcode = opcode + isaac_next(&packet_stream->isaac_out);
     }
+#endif
 
     packet_stream->packet_data[packet_stream->packet_start + 2] = opcode & 0xff;
     packet_stream->packet_data[packet_stream->packet_start + 3] = 0;
