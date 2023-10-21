@@ -533,6 +533,7 @@ void packet_stream_put_string(PacketStream *packet_stream, char *s) {
     packet_stream_put_bytes(packet_stream, (int8_t *)s, 0, strlen(s));
 }
 
+#ifndef NO_RSA
 static void packet_stream_put_rsa(PacketStream *packet_stream,
                                   const void *input, size_t input_len) {
     const uint8_t *unencoded = input;
@@ -574,6 +575,7 @@ static void packet_stream_put_rsa(PacketStream *packet_stream,
         packet_stream_put_byte(packet_stream, result.array[i]);
     }
 }
+#endif
 
 #ifndef REVISION_177
 void packet_stream_put_login_block(PacketStream *packet_stream,
@@ -653,7 +655,12 @@ void packet_stream_put_password(PacketStream *packet_stream, int session_id,
         }
 
         password_index += 7;
+#ifndef NO_RSA
         packet_stream_put_rsa(packet_stream, encoded, sizeof(encoded));
+#else
+        packet_stream_put_byte(packet_stream, sizeof(encoded));
+        packet_stream_put_bytes(packet_stream, encoded, 0, sizeof(encoded));
+#endif
     }
 }
 #endif
