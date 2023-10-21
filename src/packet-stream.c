@@ -56,7 +56,9 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #ifdef REVISION_177
     /*packet_stream->decode_key = 3141592;
     packet_stream->encode_key = 3141592;*/
+#endif
 
+#ifndef NO_RSA
     packet_stream->rsa_exponent = mud->options->rsa_exponent;
     packet_stream->rsa_modulus = mud->options->rsa_modulus;
 #endif
@@ -397,6 +399,12 @@ void packet_stream_new_packet(PacketStream *packet_stream, CLIENT_OPCODE opcode)
         packet_stream_write_packet(packet_stream, 0);
     }
 
+#ifndef NO_ISAAC
+    if (packet_stream->isaac_ready) {
+        opcode = opcode + isaac_next(&packet_stream->isaac_out);
+    }
+#endif
+
     packet_stream->packet_data[packet_stream->packet_start + 2] = opcode & 0xff;
     packet_stream->packet_data[packet_stream->packet_start + 3] = 0;
     packet_stream->packet_end = packet_stream->packet_start + 3;
@@ -490,9 +498,11 @@ void packet_stream_flush_packet(PacketStream *packet_stream) {
     packet_stream_write_packet(packet_stream, 0);
 }
 
-void packet_stream_put_bytes(PacketStream *packet_stream, int8_t *src,
+void packet_stream_put_bytes(PacketStream *packet_stream, void *src,
                              int offset, int length) {
-    memcpy(packet_stream->packet_data + packet_stream->packet_end, src + offset,
+    uint8_t *p = src;
+
+    memcpy(packet_stream->packet_data + packet_stream->packet_end, p + offset,
            length);
 
     packet_stream->packet_end += length;
@@ -523,13 +533,10 @@ void packet_stream_put_string(PacketStream *packet_stream, char *s) {
     packet_stream_put_bytes(packet_stream, (int8_t *)s, 0, strlen(s));
 }
 
-#ifdef REVISION_177
-void packet_stream_put_password(PacketStream *packet_stream, int session_id,
-                                char *password) {
-    int8_t encoded[15] = {0};
-
-    int password_length = strlen(password);
-    int password_index = 0;
+#ifndef NO_RSA
+static void packet_stream_put_rsa(PacketStream *packet_stream,
+                                  const void *input, size_t input_len) {
+    const uint8_t *unencoded = input;
 
     struct bn exponent = {0};
     bignum_init(&exponent);
@@ -542,6 +549,96 @@ void packet_stream_put_password(PacketStream *packet_stream, int session_id,
 
     bignum_from_string(&modulus, packet_stream->rsa_modulus,
                        strlen(packet_stream->rsa_modulus));
+
+    struct bn bn = {0};
+    bignum_init(&bn);
+    for (size_t i = 0; i < input_len; i++) {
+        bn.array[i] = unencoded[input_len - 1 - i];
+    }
+
+    struct bn result = {0};
+    bignum_init(&result);
+    bignum_pow_mod(&bn, &exponent, &modulus, &result);
+
+    int result_length = 0;
+
+    for (int i = (BN_ARRAY_SIZE - 1); i >= 0; i--) {
+        if (result.array[i] != 0) {
+            result_length = i + 1;
+            break;
+        }
+    }
+
+    packet_stream_put_byte(packet_stream, result_length);
+
+    for (int i = result_length - 1; i >= 0; i--) {
+        packet_stream_put_byte(packet_stream, result.array[i]);
+    }
+}
+#endif
+
+#ifndef REVISION_177
+void packet_stream_put_login_block(PacketStream *packet_stream,
+                const char *username, const char *password,
+                uint32_t *isaac_keys, uint32_t uuid)
+{
+    uint8_t input_block[16 + (sizeof(uint32_t) * 4) + 4 +
+                        USERNAME_LENGTH + PASSWORD_LENGTH];
+    size_t username_len = strlen(username);
+    size_t password_len = strlen(password);
+    uint8_t *p = input_block;
+
+    *(p++) = '\n'; /* Magic for sanity checks by the server. */
+
+#ifndef NO_ISAAC
+    memset(packet_stream->isaac_in.randrsl, 0,
+           sizeof(packet_stream->isaac_in.randrsl));
+    memset(packet_stream->isaac_out.randrsl, 0,
+           sizeof(packet_stream->isaac_out.randrsl));
+#endif
+
+    for (unsigned int i = 0; i < 4; ++i) {
+#ifndef NO_ISAAC
+        packet_stream->isaac_in.randrsl[i] = isaac_keys[i];
+        packet_stream->isaac_out.randrsl[i] = isaac_keys[i];
+#endif
+        write_unsigned_int(p, 0, isaac_keys[i]);
+        p += 4;
+    }
+
+    write_unsigned_int(p, 0, uuid);
+    p += 4;
+
+    memcpy(p, username, username_len);
+    p += username_len;
+    *(p++) = '\n';
+
+    memcpy(p, password, password_len);
+    p += password_len;
+    *(p++) = '\n';
+
+#ifndef NO_ISAAC
+    isaac_init(&packet_stream->isaac_in, 1);
+    isaac_init(&packet_stream->isaac_out, 1);
+    packet_stream->isaac_ready = 1;
+#endif
+
+#ifndef NO_RSA
+    packet_stream_put_rsa(packet_stream, input_block, p - input_block);
+#else
+    packet_stream_put_byte(packet_stream, p - input_block);
+    packet_stream_put_bytes(packet_stream, input_block, 0, p - input_block);
+#endif
+}
+#endif
+
+#ifdef REVISION_177
+void packet_stream_put_password(PacketStream *packet_stream, int session_id,
+                                char *password) {
+    int8_t encoded[15] = {0};
+
+    int password_length = strlen(password);
+    int password_index = 0;
 
     while (password_index < password_length) {
         encoded[0] = (int8_t)(1 + ((float)rand() / (float)RAND_MAX) * 127);
@@ -560,33 +657,12 @@ void packet_stream_put_password(PacketStream *packet_stream, int session_id,
         }
 
         password_index += 7;
-
-        struct bn input = {0};
-        bignum_init(&input);
-
-        for (int i = 0; i < 15; i++) {
-            input.array[i] = (uint8_t)encoded[14 - i];
-        }
-
-        struct bn result = {0};
-        bignum_init(&result);
-
-        bignum_pow_mod(&input, &exponent, &modulus, &result);
-
-        int result_length = 0;
-
-        for (int i = 127; i >= 0; i--) {
-            if (result.array[i] != 0) {
-                result_length = i + 1;
-                break;
-            }
-        }
-
-        packet_stream_put_byte(packet_stream, result_length);
-
-        for (int i = result_length - 1; i >= 0; i--) {
-            packet_stream_put_byte(packet_stream, result.array[i]);
-        }
+#ifndef NO_RSA
+        packet_stream_put_rsa(packet_stream, encoded, sizeof(encoded));
+#else
+        packet_stream_put_byte(packet_stream, sizeof(encoded));
+        packet_stream_put_bytes(packet_stream, encoded, 0, sizeof(encoded));
+#endif
     }
 }
 #endif
