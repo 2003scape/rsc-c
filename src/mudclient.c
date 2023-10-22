@@ -1932,7 +1932,7 @@ void mudclient_load_models(mudclient *mud) {
         if (offset != 0) {
             game_model_from_bytes(game_model, models_jag + offset, len);
         } else {
-            printf("not correct!!!\n");
+            printf("Failed to find 3D model %s\n", file_name);
             game_model_from2(game_model, 1, 1);
         }
 
