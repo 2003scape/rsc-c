@@ -1,4 +1,5 @@
 #include "mudclient.h"
+#include "lib/mulaw.h"
 
 #ifdef EMSCRIPTEN
 EM_JS(int, get_canvas_width, (), { return canvas.width; });
@@ -5865,7 +5866,7 @@ void mudclient_play_sound(mudclient *mud, char *name) {
 
     memset(mud->pcm_out, 0, PCM_LENGTH * sizeof(uint16_t));
 
-    ulaw_to_linear(length, (uint8_t *)mud->sound_data + offset, mud->pcm_out);
+    audio_mulaw_to_linear16(mud->pcm_out, (uint8_t *)mud->sound_data + offset, length);
 
 #ifdef WII
     // ASND_StopVoice(0);
