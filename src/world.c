@@ -305,11 +305,11 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
 
     strcpy(map_name + map_name_length, ".hei");
 
-    size_t len;
+    size_t len = 0;
     int8_t *map_data = load_data(map_name, 0, world->landscape_pack, &len);
 
     if (map_data == NULL && world->member_landscape_pack != NULL) {
-        map_data = load_data(map_name, 0, world->member_landscape_pack, NULL);
+        map_data = load_data(map_name, 0, world->member_landscape_pack, &len);
     }
 
     if (map_data != NULL) {
