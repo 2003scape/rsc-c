@@ -55,4 +55,43 @@ void mudclient_draw_status_bars(mudclient *mud) {
         surface_draw_string(mud->surface, formatted_fatigue,
                             x, y, FONT_REGULAR_11, WHITE);
     }
+
+    y = 48;
+
+    /* Display drained / boosted skills */
+    for (int i = 0; i < PLAYER_SKILL_COUNT; ++i) {
+        if (i == SKILL_PRAYER || i == SKILL_HITS) {
+            continue;
+        }
+        if (mud->player_skill_current[i] == mud->player_skill_base[i]) {
+            continue;
+        }
+        const char *colour = "";
+        float p = mud->player_skill_current[i] /
+                (float)mud->player_skill_base[i];
+        if (p >= 1.15f) { /* super potion */
+                colour = "@gre@";
+        } else if (p >= 1.1f) { /* normal potion */
+                colour = "@gr3@";
+        } else if (p >= 1.05f) { /* cocktails */
+                colour = "@gr2@";
+        } else if (p >= 1.0f) {
+                colour = "@gr1@";
+        } else if (p <= 0.9f) { /* enfeeble */
+                colour = "@red@";
+        } else if (p <= 0.95f) {
+                colour = "@or3@";
+        } else if (p <= 0.975f) {
+                colour = "@or2@";
+        } else {
+                colour = "@or1@";
+        }
+        char formatted_effect[32];
+        snprintf(formatted_effect, sizeof(formatted_effect),
+                "%s%s: %d/%d", colour, skill_names[i],
+                mud->player_skill_current[i], mud->player_skill_base[i]);
+        surface_draw_string_right(mud->surface, formatted_effect,
+                mud->game_width - 2, y, FONT_REGULAR_11, WHITE);
+        y += 14;
+    }
 }
