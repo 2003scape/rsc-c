@@ -4668,7 +4668,7 @@ void mudclient_draw_game(mudclient *mud) {
         mudclient_auto_rotate_camera(mud);
     }
 
-    if (mud->camera_zoom > ZOOM_OUTDOORS) {
+    if (mud->options->zoom_camera) {
         int clip_far =
             (int)((2400.0f / ZOOM_OUTDOORS) * (float)mud->camera_zoom);
 
@@ -4686,6 +4686,20 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->clip_far_2d -= 200;
         mud->scene->fog_z_distance -= 200;
     }
+
+    /*
+     * Keep the fog roughly "feeling the same" as the vanilla
+     * 512x346 client when resized beyond that.
+     */
+    if (mud->game_height > MUD_VANILLA_HEIGHT) {
+        int clip_far = mud->scene->clip_far_3d;
+
+        clip_far /= (MUD_VANILLA_HEIGHT / (float)mud->game_height);
+        mud->scene->clip_far_3d = clip_far;
+        mud->scene->clip_far_2d = clip_far;
+        mud->scene->fog_z_distance = clip_far - 100;
+    }
+
 
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
