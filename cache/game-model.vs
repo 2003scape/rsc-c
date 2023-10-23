@@ -28,7 +28,6 @@ uniform bool unlit;
 uniform float light_ambience;
 uniform vec3 light_direction;
 uniform float light_diffuse;
-uniform float light_direction_magnitude;
 
 uniform bool cull_front;
 

@@ -83,7 +83,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->view_distance = 512;
     scene->normal_magnitude = 4;
 
+#ifdef RENDER_SW
     scene->raster = surface->pixels;
+#endif
 
     scene->models = calloc(model_count, sizeof(GameModel *));
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
@@ -1080,7 +1082,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
 #endif
 
-    //#ifdef RENDER_SW
+    // #ifdef RENDER_SW
     uint16_t *vertices = calloc(2, sizeof(int));
 
     vertices[0] = game_model_create_vertex(scene->view, x, y, z);
@@ -1090,7 +1092,7 @@ int scene_add_sprite(Scene *scene, int sprite_id, int x, int y, int z,
 
     scene->view->face_tag[scene->sprite_count] = tag;
     scene->view->is_local_player[scene->sprite_count++] = 0;
-    //#endif
+    // #endif
 
     return scene->sprite_count - 1;
 }
@@ -4287,6 +4289,9 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                          (float)game_model->light_direction_magnitude);*/
     }
 
+    shader_set_float(&scene->game_model_shader, "opacity",
+                     game_model->transparent ? 0.66f : 1.0f);
+
     glCullFace(GL_BACK);
     shader_set_int(&scene->game_model_shader, "cull_front", 0);
 
@@ -4308,7 +4313,9 @@ void scene_gl_render(Scene *scene) {
     int old_height = scene->surface->height;
 
     scene->surface->width = scene->width;
-    scene->surface->height = scene_height + 12;
+
+    scene->surface->height = scene_height + 12 -
+        mudclient_is_ui_scaled(scene->surface->mud);
 
     surface_reset_bounds(scene->surface);
 
@@ -4329,13 +4336,9 @@ void scene_gl_render(Scene *scene) {
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    int offset_y = 13;
-
-    glViewport(0, offset_y, scene->width, scene_height);
+    glViewport(0, 13, scene->width, scene_height);
 
     shader_use(&scene->game_model_shader);
-
-    // shader_set_int(&scene->game_model_shader, "interlace", scene->interlace);
 
     shader_set_int(&scene->game_model_shader, "fog_distance",
                    scene->fog_z_distance);
@@ -4357,6 +4360,7 @@ void scene_gl_render(Scene *scene) {
                       VERTEX_TO_FLOAT(scene->camera_z)};
 
     vec3 ray_end = {0};
+
     glm_vec3_add(ray_start, scene->gl_mouse_ray, ray_end);
 
 #ifdef EMSCRIPTEN
@@ -4383,9 +4387,6 @@ void scene_gl_render(Scene *scene) {
         glDisable(GL_CULL_FACE);
 
         shader_use(&scene->game_model_pick_shader);
-
-        shader_set_int(&scene->game_model_pick_shader, "interlace",
-                       scene->interlace);
 
         game_model_gl_buffer_pick_models(&scene->gl_pick_buffer, terrain_picked,
                                          terrain_picked_length);
@@ -4479,29 +4480,23 @@ void scene_gl_render(Scene *scene) {
                 if (game_model->autocommit) {
                     scene->gl_terrain_walkable = 1;
                 } else {
-#ifndef RENDER_SW
-                    /* only pick if software is disabled, so we don't pick
-                     * twice */
                     GlModelTime model_time = {game_model, time};
 
                     scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
                         model_time;
 
                     scene->gl_mouse_picked_count++;
-#endif
                 }
             }
         }
 
-        if (!game_model->gl_invisible) {
+        if (!game_model->gl_invisible && !game_model->transparent) {
             scene_gl_draw_game_model(scene, game_model);
         }
 
         game_model->gl_invisible = 0;
     }
 
-#ifndef RENDER_SW
-    /* mousepicking is already done in software */
     qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,
           sizeof(GlModelTime), scene_gl_model_time_compare);
 
@@ -4513,9 +4508,6 @@ void scene_gl_render(Scene *scene) {
     }
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
-#endif
-
-    glViewport(0, 1, scene->width, scene_height + 12);
 
     scene->surface->width = old_width;
     scene->surface->height = old_height;
@@ -4524,6 +4516,33 @@ void scene_gl_render(Scene *scene) {
 
     glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);
+}
+
+/* draw translucent models (giant crystal) */
+void scene_gl_render_transparent_models(Scene *scene) {
+    int scene_height = scene->gl_height - 1;
+
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+
+    glViewport(0, 13, scene->width, scene_height);
+
+    shader_use(&scene->game_model_shader);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, scene->gl_model_texture);
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (game_model->transparent) {
+            scene_gl_draw_game_model(scene, game_model);
+        }
+    }
+
+    glViewport(0, 0, scene->surface->mud->game_width,
+               scene->surface->mud->game_height);
+
 }
 #elif defined(RENDER_3DS_GL)
 void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {

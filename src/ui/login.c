@@ -503,9 +503,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifdef RENDER_GL
-    glClear(GL_DEPTH_BUFFER_BIT);
-#elif defined(RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
     mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 
@@ -556,9 +554,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifdef RENDER_GL
-    glClear(GL_DEPTH_BUFFER_BIT);
-#elif defined(RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
     mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 
@@ -628,9 +624,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     scene_set_camera(mud->scene, x, -world_get_elevation(mud->world, x, y), y,
                      912, rotation, 0, zoom * 2);
 
-#ifdef RENDER_GL
-    glClear(GL_DEPTH_BUFFER_BIT);
-#elif defined(RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
     mudclient_3ds_gl_offscreen_frame_start(mud);
 #endif
 

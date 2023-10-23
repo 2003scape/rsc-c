@@ -1071,11 +1071,6 @@ GameModel *game_model_copy(GameModel *game_model) {
     copy->gl_ebo_offset = game_model->gl_ebo_offset;
     copy->gl_ebo_length = game_model->gl_ebo_length;
     copy->gl_buffer = game_model->gl_buffer;
-
-    /*copy->gl_vbo_offset = game_model->gl_vbo_offset;
-    copy->gl_ebo_offset = game_model->gl_ebo_offset;
-    copy->gl_ebo_length = game_model->gl_ebo_length;
-    copy->gl_buffer = game_model->gl_buffer;*/
 #else
     GameModel **pieces = malloc(sizeof(GameModel *));
     pieces[0] = game_model;
@@ -1083,10 +1078,11 @@ GameModel *game_model_copy(GameModel *game_model) {
     game_model_from2a(copy, pieces, 1);
 
     copy->depth = game_model->depth;
-    copy->transparent = game_model->transparent;
 
     free(pieces);
 #endif
+
+    copy->transparent = game_model->transparent;
 
     return copy;
 }

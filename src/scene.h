@@ -321,6 +321,7 @@ void scene_gl_update_camera(Scene *scene);
 #ifdef RENDER_GL
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model);
 void scene_gl_render(Scene *scene);
+void scene_gl_render_transparent_models(Scene *scene);
 #elif defined(RENDER_3DS_GL)
 void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model);
 void scene_3ds_gl_render(Scene *scene);

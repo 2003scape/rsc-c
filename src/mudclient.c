@@ -1587,36 +1587,36 @@ void mudclient_load_media(mudclient *mud) {
     int8_t *index_dat = load_data("index.dat", 0, media_jag, NULL);
 
     surface_parse_sprite(mud->surface, mud->sprite_media,
-                         load_data("inv1.dat", 0, media_jag, NULL),
-                         index_dat, 1);
+                         load_data("inv1.dat", 0, media_jag, NULL), index_dat,
+                         1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 1,
-                         load_data("inv2.dat", 0, media_jag, NULL),
-                         index_dat, 6);
+                         load_data("inv2.dat", 0, media_jag, NULL), index_dat,
+                         6);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 9,
-                         load_data("bubble.dat", 0, media_jag, NULL),
-                         index_dat, 1);
+                         load_data("bubble.dat", 0, media_jag, NULL), index_dat,
+                         1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 10,
                          load_data("runescape.dat", 0, media_jag, NULL),
                          index_dat, 1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 11,
-                         load_data("splat.dat", 0, media_jag, NULL),
-                         index_dat, 3);
+                         load_data("splat.dat", 0, media_jag, NULL), index_dat,
+                         3);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 14,
-                         load_data("icon.dat", 0, media_jag, NULL),
-                         index_dat, 8);
+                         load_data("icon.dat", 0, media_jag, NULL), index_dat,
+                         8);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 22,
-                         load_data("hbar.dat", 0, media_jag, NULL),
-                         index_dat, 1);
+                         load_data("hbar.dat", 0, media_jag, NULL), index_dat,
+                         1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 23,
-                         load_data("hbar2.dat", 0, media_jag, NULL),
-                         index_dat, 1);
+                         load_data("hbar2.dat", 0, media_jag, NULL), index_dat,
+                         1);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 24,
                          load_data("compass.dat", 0, media_jag, NULL),
@@ -1635,13 +1635,12 @@ void mudclient_load_media(mudclient *mud) {
                          index_dat, 4);
 
     surface_parse_sprite(mud->surface, mud->sprite_util + 6,
-                         load_data("arrows.dat", 0, media_jag, NULL),
-                         index_dat, 2);
+                         load_data("arrows.dat", 0, media_jag, NULL), index_dat,
+                         2);
 
     surface_parse_sprite(mud->surface, mud->sprite_projectile,
                          load_data("projectile.dat", 0, media_jag, NULL),
-                         index_dat,
-                         game_data_projectile_sprite);
+                         index_dat, game_data_projectile_sprite);
 
     int sprite_count = game_data_item_sprite_count;
 
@@ -1658,8 +1657,7 @@ void mudclient_load_media(mudclient *mud) {
 
         surface_parse_sprite(mud->surface, mud->sprite_item + (i - 1) * 30,
                              load_data(file_name, 0, media_jag, NULL),
-                             index_dat,
-                             current_sprite_count);
+                             index_dat, current_sprite_count);
     }
 
     free(index_dat);
@@ -1853,7 +1851,8 @@ void mudclient_load_textures(mudclient *mud) {
             if (sub_length) {
                 sprintf(file_name, "%s.dat", name_sub);
 
-                int8_t *texture_sub_dat = load_data(file_name, 0, textures_jag, NULL);
+                int8_t *texture_sub_dat =
+                    load_data(file_name, 0, textures_jag, NULL);
 
                 surface_parse_sprite(surface, mud->sprite_texture,
                                      texture_sub_dat, index_dat, 1);
@@ -1910,8 +1909,10 @@ void mudclient_load_models(mudclient *mud) {
         game_data_get_model_index(name);
     }
 
+    char *models_filename = "models" MODELS ".jag";
+
     int8_t *models_jag =
-        mudclient_read_data_file(mud, "models" MODELS ".jag", "3d models", 60);
+        mudclient_read_data_file(mud, models_filename, "3d models", 60);
 
     if (models_jag == NULL) {
         mud->error_loading_data = 1;
@@ -1932,7 +1933,9 @@ void mudclient_load_models(mudclient *mud) {
         if (offset != 0) {
             game_model_from_bytes(game_model, models_jag + offset, len);
         } else {
-            printf("not correct!!!\n");
+            fprintf(stderr, "missing model \"%s.ob3\" from %s\n", model_name,
+                    models_filename);
+
             game_model_from2(game_model, 1, 1);
         }
 
@@ -2313,9 +2316,8 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     packet_stream_put_short(mud->packet_stream, VERSION);
     packet_stream_put_byte(mud->packet_stream, 0); /* limit30 */
 
-    packet_stream_put_login_block(mud->packet_stream,
-                                  formatted_username, formatted_password,
-                                  keys, 0);
+    packet_stream_put_login_block(mud->packet_stream, formatted_username,
+                                  formatted_password, keys, 0);
 
     packet_stream_flush_packet(mud->packet_stream);
 
@@ -4242,8 +4244,7 @@ void mudclient_draw_ui(mudclient *mud) {
 
         mudclient_set_active_ui_tab(mud, no_menus);
 
-        if (mudclient_is_in_combat(mud) ||
-            mud->options->combat_style_always) {
+        if (mudclient_is_in_combat(mud) || mud->options->combat_style_always) {
             mudclient_draw_combat_style(mud);
         }
 
@@ -4700,7 +4701,6 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance = clip_far - 100;
     }
 
-
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
@@ -4813,6 +4813,10 @@ void mudclient_draw_game(mudclient *mud) {
     mudclient_draw_chat_message_tabs(mud);
 
     surface_draw(mud->surface);
+
+#ifdef RENDER_GL
+    scene_gl_render_transparent_models(mud->scene);
+#endif
 
 #if defined(_3DS) && defined(RENDER_SW)
     gfxFlushBuffers();

@@ -15,6 +15,8 @@ uniform sampler2D model_texture;
 uniform float light_gradient[RAMP_SIZE];
 uniform float texture_light_gradient[RAMP_SIZE];
 
+uniform float opacity;
+
 void main() {
     float lightness = 1.0f;
     int gradient_index = int(vertex_gradient_index);
@@ -32,8 +34,7 @@ void main() {
     lightness = is_textured_light ? texture_light_gradient[gradient_index]
                                   : light_gradient[gradient_index];
 
-    // TODO add uniform for merlin's crystal
-    fragment_colour = vec4(vertex_colour, 1.0) * texture_colour;
+    fragment_colour = vec4(vertex_colour, opacity) * texture_colour;
 
     fragment_colour =
         vec4(vec3(fragment_colour) * lightness, fragment_colour.w);

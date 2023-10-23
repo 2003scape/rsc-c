@@ -784,8 +784,6 @@ void surface_gl_draw(Surface *surface) {
 
     shader_use(&surface->gl_flat_shader);
 
-    int is_ui_scaled = mudclient_is_ui_scaled(surface->mud);
-
     vertex_buffer_gl_bind(&surface->gl_flat_buffer);
 
     int drawn_quads = 0;
@@ -796,6 +794,10 @@ void surface_gl_draw(Surface *surface) {
         if (context->quad_count <= 0) {
             continue;
         }
+
+        /* don't apply UI scaling to entities that are drawn within the world */
+        int is_ui_scaled =
+            context->use_depth ? 0 : mudclient_is_ui_scaled(surface->mud);
 
         int min_y = context->min_y * (is_ui_scaled + 1);
         int max_y = context->max_y * (is_ui_scaled + 1);
@@ -1094,7 +1096,7 @@ void surface_draw(Surface *surface) {
 
 void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #elif defined(RENDER_3DS_GL)
     C3D_RenderTargetClear(surface->mud->_3ds_gl_render_target, C3D_CLEAR_ALL,
                           BLACK, 0);
@@ -3693,15 +3695,15 @@ void surface_draw_string_centre_depth(Surface *surface, const char *text, int x,
                               font, colour, depth);
 }
 
-void surface_draw_string_centre(Surface *surface, const char *text, int x, int y,
-                                FONT_STYLE font, int colour) {
+void surface_draw_string_centre(Surface *surface, const char *text, int x,
+                                int y, FONT_STYLE font, int colour) {
     surface_draw_string(surface, text,
                         x - (int)(surface_text_width(text, font) / 2), y, font,
                         colour);
 }
 
-int surface_paragraph_height(Surface *surface, const char *text, FONT_STYLE font,
-                             int max, int max_height) {
+int surface_paragraph_height(Surface *surface, const char *text,
+                             FONT_STYLE font, int max, int max_height) {
     int y = 0;
     int width = 0;
     int8_t *font_data = game_fonts[font];
@@ -3994,8 +3996,7 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour) {
-    int current_width = current >= max ? width :
-                        (current / (float)max) * width;
+    int current_width = current >= max ? width : (current / (float)max) * width;
 
     surface_draw_box_alpha(surface, x, y, current_width, height,
                            foreground_colour, 128);
