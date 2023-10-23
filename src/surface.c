@@ -3994,7 +3994,8 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
                              int background_colour, int foreground_colour) {
-    int current_width = (current / (float)max) * width;
+    int current_width = current >= max ? width :
+                        (current / (float)max) * width;
 
     surface_draw_box_alpha(surface, x, y, current_width, height,
                            foreground_colour, 128);

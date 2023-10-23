@@ -1429,9 +1429,9 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->welcome_last_ip = get_unsigned_int(data, 9, size);
 #else
         mud->welcome_last_ip = get_unsigned_int(data, 1, size);
-        mud->welcome_days_ago = get_unsigned_int(data, 5, size);
+        mud->welcome_days_ago = get_unsigned_short(data, 5, size);
         mud->welcome_recovery_set_days = get_unsigned_byte(data, 7, size);
-        mud->welcome_unread_messages = get_unsigned_int(data, 8, size);
+        mud->welcome_unread_messages = get_unsigned_short(data, 8, size);
 #endif
 
         mud->show_dialog_welcome = 1;
