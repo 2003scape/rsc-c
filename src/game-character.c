@@ -65,6 +65,7 @@ int player_skin_colours[] = {0xecded0, 0xccb366, 0xb38c40, 0x997326, 0x906020};
 
 void game_character_new(GameCharacter* game_character) {
     memset(game_character, 0, sizeof(GameCharacter));
+    game_character->npc_id = -1;
     game_character->level = -1;
 }
 
