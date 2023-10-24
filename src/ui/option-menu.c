@@ -40,10 +40,18 @@ void mudclient_draw_option_menu(mudclient *mud) {
 
     if (mud->mouse_button_click != 0) {
         for (int i = 0; i < mud->option_menu_count; i++) {
+#ifdef _3DS
+            char entry[strlen(mud->option_menu_entry[i]) + 5];
+
+            sprintf(entry, "(%c) %s", _3ds_option_buttons[i],
+                    mud->option_menu_entry[i]);
+#else
+            char *entry = mud->option_menu_entry[i];
+#endif
+
             if (mud->mouse_x < ui_x - 6 ||
-                mud->mouse_x >= ui_x - 6 +
-                                    surface_text_width(
-                                        mud->option_menu_entry[i], font_size) ||
+                mud->mouse_x >=
+                    ui_x - 6 + surface_text_width(entry, font_size) ||
                 mud->mouse_y <= ui_y + i * font_height ||
                 mud->mouse_y >= ui_y + (font_height + i * font_height)) {
                 continue;
@@ -63,16 +71,23 @@ void mudclient_draw_option_menu(mudclient *mud) {
     for (int i = 0; i < mud->option_menu_count; i++) {
         int text_colour = CYAN;
 
+#ifdef _3DS
+            char entry[strlen(mud->option_menu_entry[i]) + 5];
+
+            sprintf(entry, "(%c) %s", _3ds_option_buttons[i],
+                    mud->option_menu_entry[i]);
+#else
+            char *entry = mud->option_menu_entry[i];
+#endif
+
         if (mud->mouse_x > ui_x - 6 &&
-            mud->mouse_x <
-                ui_x - 6 +
-                    surface_text_width(mud->option_menu_entry[i], font_size) &&
+            mud->mouse_x < ui_x - 6 + surface_text_width(entry, font_size) &&
             mud->mouse_y > ui_y + i * font_height &&
             mud->mouse_y < ui_y + (i * font_height + font_height)) {
             text_colour = RED;
         }
 
-        surface_draw_string(mud->surface, mud->option_menu_entry[i], ui_x,
+        surface_draw_string(mud->surface, entry, ui_x,
                             ui_y + (font_height + i * font_height), font_size,
                             text_colour);
     }
