@@ -809,7 +809,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                 "@whi@%s%s", mud->players[index]->name,
                                 level_text);
 
-                        mud->spell_target_character = player;
+                        mud->combat_target = player;
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_CAST_PLAYER;
@@ -862,6 +862,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             level_difference >= 0 && level_difference < 5
                                 ? MENU_PLAYER_ATTACK1
                                 : MENU_PLAYER_ATTACK2;
+
+                        mud->combat_target = player;
 
                         mud->menu_item_x[mud->menu_items_count] =
                             player->current_x;
@@ -972,7 +974,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                         strcpy(mud->menu_item_text2[mud->menu_items_count],
                                formatted_npc_name);
 
-                        mud->spell_target_character = npc;
+                        mud->combat_target = npc;
 
                         mud->menu_type[mud->menu_items_count] = MENU_CAST_NPC;
 
@@ -1004,6 +1006,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                 "@yel@%s%s",
                                 game_data_npc_name[mud->npcs[index]->npc_id],
                                 level_text);
+
+                        mud->combat_target = npc;
 
                         if (level_difference >= 0) {
                             mud->menu_type[mud->menu_items_count] =
