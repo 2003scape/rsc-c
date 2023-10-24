@@ -151,9 +151,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - STATS_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite(mud->surface,
-                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
-                              mud->sprite_media + STATS_TAB_SPRITE_OFFSET);
+    surface_draw_sprite(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
+                        3, mud->sprite_media + STATS_TAB_SPRITE_OFFSET);
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + STATS_TAB_HEIGHT,
                            STATS_WIDTH, height - STATS_TAB_HEIGHT, GREY_DC,
@@ -343,10 +342,16 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             if (mud->options->remaining_experience) {
                 y += STATS_LINE_BREAK;
 
-                mudclient_format_number_commas(
-                    mud, (next_level_at - total_xp) / 4, formatted_number);
+                int remaining_xp = (next_level_at - total_xp);
 
-                sprintf(formatted_next, "Remaining xp: %s", formatted_number);
+                mudclient_format_number_commas(mud, remaining_xp / 4,
+                                               formatted_number);
+
+                char formatted_remainder[5] = {0};
+                sprintf(formatted_remainder, "%.2f", (remaining_xp % 4) / 4.0f);
+
+                sprintf(formatted_next, "Remaining xp: %s%s", formatted_number,
+                        formatted_remainder + 1);
 
                 surface_draw_string(mud->surface, formatted_next, ui_x + 5, y,
                                     1, WHITE);
