@@ -173,10 +173,10 @@
 #define MUD_WIDTH 320
 #define MUD_HEIGHT 240
 #else
-//#define MUD_WIDTH MUD_VANILLA_WIDTH
-//#define MUD_HEIGHT MUD_VANILLA_HEIGHT
-#define MUD_WIDTH 320
-#define MUD_HEIGHT 240
+#define MUD_WIDTH MUD_VANILLA_WIDTH
+#define MUD_HEIGHT MUD_VANILLA_HEIGHT
+//#define MUD_WIDTH 320
+//#define MUD_HEIGHT 240
 #endif
 
 #define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
@@ -316,6 +316,8 @@ extern Thread _3ds_keyboard_thread;
 extern char _3ds_keyboard_buffer[255];
 extern volatile int _3ds_keyboard_received_input;
 extern SwkbdButton _3ds_keyboard_button;
+
+extern char _3ds_option_buttons[5];
 
 void _3ds_keyboard_thread_callback(void *arg);
 

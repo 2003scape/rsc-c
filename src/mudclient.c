@@ -199,6 +199,8 @@ char _3ds_keyboard_buffer[255] = {0};
 volatile int _3ds_keyboard_received_input = 0;
 SwkbdButton _3ds_keyboard_button;
 
+char _3ds_option_buttons[] = {'X', 'A', 'B', 'Y', 'R'};
+
 void _3ds_keyboard_thread_callback(void *arg) {
     static SwkbdState swkbd;
     swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 2, -1);
@@ -235,15 +237,7 @@ void mudclient_3ds_gl_offscreen_frame_start(mudclient *mud) {
 void mudclient_3ds_gl_frame_start(mudclient *mud, int clear) {
     /* crashes on console, faster on citra */
     // C3D_FrameBegin(C3D_FRAME_NONBLOCK);
-
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-
-    // TODO this can probably go into surface_black_screen
-    if (clear) {
-        /*C3D_RenderTargetClear(mud->_3ds_gl_render_target, C3D_CLEAR_ALL,
-           BLACK, 0);*/
-    }
-
     C3D_FrameDrawOn(mud->_3ds_gl_render_target);
 }
 
@@ -656,7 +650,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     gfxInitDefault();
 
-    consoleInit(GFX_TOP, NULL);
+    //consoleInit(GFX_TOP, NULL);
 
     Result romfs_res = romfsInit();
 
@@ -666,7 +660,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     }
 
     gfxSetDoubleBuffering(GFX_BOTTOM, 0);
-    gfxSetDoubleBuffering(GFX_TOP, 0);
+    //gfxSetDoubleBuffering(GFX_TOP, 0);
 
     mud->_3ds_framebuffer_top =
         gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
@@ -861,6 +855,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     printf("Started application\n");
 
 #ifdef _3DS
+    gspLcdInit();
+    GSPLCD_PowerOffBacklight(GSPLCD_SCREEN_TOP);
+    gspLcdExit();
+
     mudclient_3ds_draw_top_background(mud);
     // gspWaitForVBlank();
 #endif
@@ -5197,19 +5195,43 @@ void mudclient_poll_events(mudclient *mud) {
             if (!mud->_3ds_r_down) {
                 mudclient_3ds_draw_top_background(mud);
             }
+
+            if (mud->show_option_menu) {
+                mudclient_key_pressed(mud, K_5, K_5);
+            }
         }
     }
 
-    if (keys_down & KEY_A || keys_down & KEY_Y) {
-        mudclient_key_pressed(mud, K_HOME, -1);
+    if (keys_down & KEY_A) {
+        if (mud->show_option_menu) {
+            mudclient_key_pressed(mud, K_2, K_2);
+        } else {
+            mudclient_key_pressed(mud, K_HOME, -1);
+        }
+    }
+
+    if (keys_down & KEY_Y) {
+        if (mud->show_option_menu) {
+            mudclient_key_pressed(mud, K_4, K_4);
+        } else {
+            mudclient_key_pressed(mud, K_HOME, -1);
+        }
     }
 
     if (keys_down & KEY_X) {
-        mudclient_key_pressed(mud, K_PAGE_UP, -1);
+        if (mud->show_option_menu) {
+            mudclient_key_pressed(mud, K_1, K_1);
+        } else {
+            mudclient_key_pressed(mud, K_PAGE_UP, -1);
+        }
     }
 
     if (keys_down & KEY_B) {
-        mudclient_key_pressed(mud, K_PAGE_DOWN, -1);
+        if (mud->show_option_menu) {
+            mudclient_key_pressed(mud, K_3, K_3);
+        } else {
+            mudclient_key_pressed(mud, K_PAGE_DOWN, -1);
+        }
     }
 
     u32 keys_up = hidKeysUp();
@@ -5237,18 +5259,23 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_up & KEY_R) {
         mud->_3ds_gyro_down = 0;
+        mudclient_key_released(mud, K_5);
     }
 
     if (keys_up & KEY_A || keys_up & KEY_Y) {
         mudclient_key_released(mud, K_HOME);
+        mudclient_key_released(mud, K_2);
+        mudclient_key_released(mud, K_4);
     }
 
     if (keys_up & KEY_X) {
         mudclient_key_released(mud, K_PAGE_UP);
+        mudclient_key_released(mud, K_1);
     }
 
     if (keys_up & KEY_B) {
         mudclient_key_released(mud, K_PAGE_DOWN);
+        mudclient_key_released(mud, K_3);
     }
 
     touchPosition touch = {0};
@@ -5581,27 +5608,25 @@ void mudclient_3ds_handle_keyboard(mudclient *mud) {
     mud->keyboard_open = 0;
     _3ds_keyboard_received_input = 0;
 
-    mudclient_3ds_draw_top_background(mud);
-
     for (int i = 0; i < 10; i++) {
         mud->timings[i] = get_ticks();
     }
 
-    int input_length = strlen(_3ds_keyboard_buffer);
+    if (_3ds_keyboard_button == SWKBD_BUTTON_RIGHT) {
+        for (int i = 0; i < 255; i++) {
+            mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
+        }
 
-    if (input_length <= 0) {
-        return;
+        int input_length = strlen(_3ds_keyboard_buffer);
+
+        for (int i = 0; i < input_length; i++) {
+            mudclient_key_pressed(mud, -1, _3ds_keyboard_buffer[i]);
+        }
+
+        if (input_length > 0) {
+            mudclient_key_pressed(mud, K_ENTER, K_ENTER);
+        }
     }
-
-    for (int i = 0; i < 255; i++) {
-        mudclient_key_pressed(mud, K_BACKSPACE, K_BACKSPACE);
-    }
-
-    for (int i = 0; i < input_length; i++) {
-        mudclient_key_pressed(mud, -1, _3ds_keyboard_buffer[i]);
-    }
-
-    mudclient_key_pressed(mud, K_ENTER, K_ENTER);
 }
 
 void mudclient_3ds_draw_top_background(mudclient *mud) {
