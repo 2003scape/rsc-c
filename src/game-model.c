@@ -462,10 +462,6 @@ void game_model_set_light_from3(GameModel *game_model, int x, int y, int z) {
 
 void game_model_set_light_from5(GameModel *game_model, int ambience,
                                 int diffuse, int x, int y, int z) {
-    if (game_model->unlit) {
-        return;
-    }
-
     game_model->light_ambience = 256 - ambience * 4;
     game_model->light_diffuse = (64 - diffuse) * 16 + 128;
 
