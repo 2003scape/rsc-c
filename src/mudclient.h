@@ -611,6 +611,7 @@ typedef struct mudclient {
     /* the player we're controlling */
     int local_player_server_index;
     GameCharacter *local_player;
+    GameCharacter *combat_target;
 
     GameCharacter *npcs_server[NPCS_SERVER_MAX];
 

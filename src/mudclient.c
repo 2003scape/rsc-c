@@ -4133,6 +4133,27 @@ int mudclient_is_in_combat(mudclient *mud) {
 
 GameCharacter *mudclient_get_opponent(mudclient *mud) {
     if (!mudclient_is_in_combat(mud)) {
+        if (mud->combat_target != NULL) {
+            if (mud->combat_target->max_hits <= 0) {
+                return NULL;
+            }
+            /*
+             * if there is a target, check that they are still in view
+             */
+            if (mud->combat_target->npc_id != -1) {
+                for (int i = 0; i < mud->known_npc_count; i++) {
+                    if (mud->known_npcs[i] == mud->combat_target) {
+                        return mud->combat_target;
+                    }
+                }
+            } else {
+                for (int i = 0; i < mud->known_player_count; i++) {
+                    if (mud->known_players[i] == mud->combat_target) {
+                        return mud->combat_target;
+                    }
+                }
+            }
+        }
         return NULL;
     }
 
