@@ -4135,6 +4135,25 @@ int mudclient_is_in_combat(mudclient *mud) {
 
 GameCharacter *mudclient_get_opponent(mudclient *mud) {
     if (!mudclient_is_in_combat(mud)) {
+        if (mud->spell_target_character != NULL) {
+            /*
+             * if there is a spell target, check that they are still
+             * in view
+             */
+            if (mud->spell_target_character->npc_id != -1) {
+                for (int i = 0; i < mud->known_npc_count; i++) {
+                    if (mud->known_npcs[i] == mud->spell_target_character) {
+                        return mud->spell_target_character;
+                    }
+                }
+            } else {
+                for (int i = 0; i < mud->known_player_count; i++) {
+                    if (mud->known_players[i] == mud->spell_target_character) {
+                        return mud->spell_target_character;
+                    }
+                }
+            }
+        }
         return NULL;
     }
 

@@ -173,10 +173,8 @@
 #define MUD_WIDTH 320
 #define MUD_HEIGHT 240
 #else
-//#define MUD_WIDTH MUD_VANILLA_WIDTH
-//#define MUD_HEIGHT MUD_VANILLA_HEIGHT
-#define MUD_WIDTH 320
-#define MUD_HEIGHT 240
+#define MUD_WIDTH MUD_VANILLA_WIDTH
+#define MUD_HEIGHT MUD_VANILLA_HEIGHT
 #endif
 
 #define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
@@ -609,6 +607,7 @@ typedef struct mudclient {
     /* the player we're controlling */
     int local_player_server_index;
     GameCharacter *local_player;
+    GameCharacter *spell_target_character;
 
     GameCharacter *npcs_server[NPCS_SERVER_MAX];
 

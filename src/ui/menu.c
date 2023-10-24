@@ -809,6 +809,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                                 "@whi@%s%s", mud->players[index]->name,
                                 level_text);
 
+                        mud->spell_target_character = player;
+
                         mud->menu_type[mud->menu_items_count] =
                             MENU_CAST_PLAYER;
 
@@ -969,6 +971,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                         strcpy(mud->menu_item_text2[mud->menu_items_count],
                                formatted_npc_name);
+
+                        mud->spell_target_character = npc;
 
                         mud->menu_type[mud->menu_items_count] = MENU_CAST_NPC;
 
