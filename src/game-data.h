@@ -43,6 +43,7 @@ struct NpcConfig {
     char *name;
     char *description;
     char *command;
+    int16_t sprites[NPC_SPRITE_COUNT];
     uint16_t width;
     uint16_t height;
     uint8_t walk_speed; /* animation playback speed */
@@ -53,7 +54,6 @@ struct NpcConfig {
     uint8_t hits;
     uint8_t defense;
     uint8_t attackable; /* 3 == aggressive, 2 == blocks? */
-    int sprites[NPC_SPRITE_COUNT];
     int hair_colour;
     int top_colour;
     int bottom_colour;
