@@ -1638,9 +1638,9 @@ void mudclient_load_media(mudclient *mud) {
 
     surface_parse_sprite(mud->surface, mud->sprite_projectile,
                          load_data("projectile.dat", 0, media_jag, NULL),
-                         index_dat, game_data_projectile_sprite);
+                         index_dat, game_data.projectile_sprite);
 
-    int sprite_count = game_data_item_sprite_count;
+    int sprite_count = game_data.item_sprite_count;
 
     for (int i = 1; sprite_count > 0; i++) {
         char file_name[20] = {0};
@@ -1673,11 +1673,11 @@ void mudclient_load_media(mudclient *mud) {
         surface_load_sprite(mud->surface, mud->sprite_media + i);
     }
 
-    for (int i = 0; i < game_data_projectile_sprite; i++) {
+    for (int i = 0; i < game_data.projectile_sprite; i++) {
         surface_load_sprite(mud->surface, mud->sprite_projectile + i);
     }
 
-    for (int i = 0; i < game_data_item_sprite_count; i++) {
+    for (int i = 0; i < game_data.item_sprite_count; i++) {
         surface_load_sprite(mud->surface, mud->sprite_item + i);
     }
 #endif
@@ -1714,16 +1714,16 @@ void mudclient_load_entities(mudclient *mud) {
 
     int i = 0;
 
-    while (i < game_data_animation_count) {
+    while (i < game_data.animation_count) {
     label0:;
-        char *animation_name = game_data_animation_name[i];
+        char *animation_name = game_data.animations[i].name;
 
         for (int j = 0; j < i; j++) {
-            if (strcmp(game_data_animation_name[j], animation_name) != 0) {
+            if (strcmp(game_data.animations[j].name, animation_name) != 0) {
                 continue;
             }
 
-            game_data_animation_number[i] = game_data_animation_number[j];
+            game_data.animations[i].number = game_data.animations[j].number;
             i++;
             goto label0;
         }
@@ -1745,7 +1745,7 @@ void mudclient_load_entities(mudclient *mud) {
 
             frame_count += 15;
 
-            if (game_data_animation_has_a[i]) {
+            if (game_data.animations[i].has_a) {
                 sprintf(file_name, "%sa.dat", animation_name);
 
                 int8_t *a_dat = load_data(file_name, 0, entity_jag, NULL);
@@ -1762,7 +1762,7 @@ void mudclient_load_entities(mudclient *mud) {
                 frame_count += 3;
             }
 
-            if (game_data_animation_has_f[i]) {
+            if (game_data.animations[i].has_f) {
                 sprintf(file_name, "%sf.dat", animation_name);
 
                 int8_t *f_dat = load_data(file_name, 0, entity_jag, NULL);
@@ -1780,14 +1780,14 @@ void mudclient_load_entities(mudclient *mud) {
             }
 
             /* TODO why? */
-            if (game_data_animation_gender[i] != 0) {
+            if (game_data.animations[i].gender != 0) {
                 for (int j = animation_index; j < animation_index + 27; j++) {
                     surface_load_sprite(mud->surface, j);
                 }
             }
         }
 
-        game_data_animation_number[i] = animation_index;
+        game_data.animations[i].number = animation_index;
         animation_index += 27;
 
         i++;
@@ -1817,14 +1817,14 @@ void mudclient_load_textures(mudclient *mud) {
 
     int8_t *index_dat = load_data("index.dat", 0, textures_jag, NULL);
 
-    scene_allocate_textures(mud->scene, game_data_texture_count, 7, 11);
+    scene_allocate_textures(mud->scene, game_data.texture_count, 7, 11);
 
     char file_name[255] = {0};
 
     Surface *surface = mud->surface;
 
-    for (int i = 0; i < game_data_texture_count; i++) {
-        sprintf(file_name, "%s.dat", game_data_texture_name[i]);
+    for (int i = 0; i < game_data.texture_count; i++) {
+        sprintf(file_name, "%s.dat", game_data.textures[i].name);
 
         int8_t *texture_dat = load_data(file_name, 0, textures_jag, NULL);
 
@@ -1841,7 +1841,7 @@ void mudclient_load_textures(mudclient *mud) {
         surface->sprite_colours[mud->sprite_texture] = NULL;
 
         int texture_size = surface->sprite_width_full[mud->sprite_texture];
-        char *name_sub = game_data_texture_subtype_name[i];
+        char *name_sub = game_data.textures[i].subtype_name;
 
         if (name_sub) {
             int sub_length = strlen(name_sub);
@@ -1917,8 +1917,8 @@ void mudclient_load_models(mudclient *mud) {
         return;
     }
 
-    for (int i = 0; i < game_data_model_count; i++) {
-        char *model_name = game_data_model_name[i];
+    for (int i = 0; i < game_data.model_count; i++) {
+        char *model_name = game_data.model_name[i];
 
         char file_name[strlen(model_name) + 5];
         sprintf(file_name, "%s.ob3", model_name);
@@ -1946,10 +1946,10 @@ void mudclient_load_models(mudclient *mud) {
 
     if (mud->options->ground_item_models) {
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-        mud->item_models = calloc(game_data_item_count, sizeof(GameModel *));
+        mud->item_models = calloc(game_data.item_count, sizeof(GameModel *));
 
-        for (int i = 0; i < game_data_item_count; i++) {
-            int sprite_id = game_data_item_sprite[i];
+        for (int i = 0; i < game_data.item_count; i++) {
+            int sprite_id = game_data.items[i].sprite;
 
             char file_name[21] = {0};
             sprintf(file_name, "item-%d.ob3", sprite_id);
@@ -1964,7 +1964,7 @@ void mudclient_load_models(mudclient *mud) {
             GameModel *game_model = malloc(sizeof(GameModel));
             game_model_from_bytes(game_model, models_jag + offset, len);
 
-            int mask_colour = game_data_item_mask[i];
+            int mask_colour = game_data.items[i].mask;
 
             if (mask_colour != 0) {
                 game_model_mask_faces(game_model, game_model->face_fill_back,
@@ -1979,8 +1979,8 @@ void mudclient_load_models(mudclient *mud) {
 #else
         int max_sprite_id = 0;
 
-        for (int i = 0; i < game_data_item_count; i++) {
-            int sprite_id = game_data_item_sprite[i];
+        for (int i = 0; i < game_data.item_count; i++) {
+            int sprite_id = game_data.items[i].sprite;
 
             if (sprite_id > max_sprite_id) {
                 max_sprite_id = sprite_id;
@@ -2011,8 +2011,8 @@ void mudclient_load_models(mudclient *mud) {
     free(models_jag);
 
 #ifdef RENDER_GL
-    int models_length = game_data_model_count - 1;
-    int item_models_length = game_data_item_count;
+    int models_length = game_data.model_count - 1;
+    int item_models_length = game_data.item_count;
 
     if (mud->options->ground_item_models) {
         models_length += item_models_length;
@@ -2020,13 +2020,13 @@ void mudclient_load_models(mudclient *mud) {
 
     GameModel *models_buffer[models_length];
 
-    for (int i = 0; i < game_data_model_count - 1; i++) {
+    for (int i = 0; i < game_data.model_count - 1; i++) {
         models_buffer[i] = mud->game_models[i];
     }
 
     if (mud->options->ground_item_models) {
         for (int i = 0; i < item_models_length; i++) {
-            models_buffer[game_data_model_count - 1 + i] = mud->item_models[i];
+            models_buffer[game_data.model_count - 1 + i] = mud->item_models[i];
         }
     }
 
@@ -2772,9 +2772,9 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     int x2 = x;
     int y2 = y;
 
-    int front_texture = game_data_wall_object_texture_front[id];
-    int back_texture = game_data_wall_object_texture_back[id];
-    int height = game_data_wall_object_height[id];
+    int front_texture = game_data.wall_objects[id].texture_front;
+    int back_texture = game_data.wall_objects[id].texture_back;
+    int height = game_data.wall_objects[id].height;
 
     GameModel *game_model = malloc(sizeof(GameModel));
     game_model_from2(game_model, 4, 1);
@@ -2892,11 +2892,11 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         int object_height = 0;
 
         if (object_direction == 0 || object_direction == 4) {
-            object_width = game_data_object_width[object_id];
-            object_height = game_data_object_height[object_id];
+            object_width = game_data.objects[object_id].width;
+            object_height = game_data.objects[object_id].height;
         } else {
-            object_height = game_data_object_width[object_id];
-            object_width = game_data_object_height[object_id];
+            object_height = game_data.objects[object_id].width;
+            object_width = game_data.objects[object_id].height;
         }
 
         int base_x = ((object_x + object_x + object_width) * MAGIC_LOC) / 2;
@@ -3779,7 +3779,7 @@ int mudclient_should_chop_head(mudclient *mud, GameCharacter *character,
     return (mud->options->show_roofs && roof_id > 0 &&
             /* check if he's smol */
             (character->npc_id > -1
-                 ? game_data_npc_height[character->npc_id] >= 200
+                 ? game_data.npcs[character->npc_id].height >= 200
                  : 1) &&
             (animation_index == ANIMATION_INDEX_HEAD ||
              animation_index == ANIMATION_INDEX_HEAD_OVERLAY) &&
@@ -3862,7 +3862,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         int j5 = j2;
 
         if (flip && i2 >= 1 && i2 <= 3) {
-            if (game_data_animation_has_f[animation_id] == 1) {
+            if (game_data.animations[animation_id].has_f == 1) {
                 j5 += 15;
             } else if (animation_index == ANIMATION_INDEX_RIGHT_HAND &&
                        i2 == 1) {
@@ -3909,8 +3909,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             }
         }
 
-        if (i2 != 5 || game_data_animation_has_a[animation_id] == 1) {
-            int sprite_id = j5 + game_data_animation_number[animation_id];
+        if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
+            int sprite_id = j5 + game_data.animations[animation_id].number;
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -3921,12 +3921,12 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             int clip_width =
                 (width * mud->surface->sprite_width_full[sprite_id]) /
                 mud->surface->sprite_width_full
-                    [game_data_animation_number[animation_id]];
+                    [game_data.animations[animation_id].number];
 
             offset_x -= (clip_width - width) / 2;
 
             int animation_colour =
-                game_data_animation_character_colour[animation_id];
+                game_data.animations[animation_id].colour;
 
             int skin_colour = player_skin_colours[player->skin_colour];
 
@@ -4009,28 +4009,28 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
     int j2 =
         i2 * 3 + character_walk_model[(npc->step_count /
-                                       game_data_npc_walk_model[npc->npc_id]) %
+                                       game_data.npcs[npc->npc_id].walk_speed) %
                                       4];
 
     if (npc->current_animation == 8) {
         i2 = 5;
         animation_order = 2;
         flip = 0;
-        x -= (game_data_npc_combat_animation[npc->npc_id] * ty) / 100;
+        x -= (game_data.npcs[npc->npc_id].combat_width * ty) / 100;
         j2 = i2 * 3 + character_combat_model_array1
                           [((mud->login_timer /
-                                 (game_data_npc_combat_model[npc->npc_id]) -
+                                 (game_data.npcs[npc->npc_id].combat_speed) -
                              1)) %
                            8];
     } else if (npc->current_animation == 9) {
         i2 = 5;
         animation_order = 2;
         flip = 1;
-        x += (game_data_npc_combat_animation[npc->npc_id] * ty) / 100;
+        x += (game_data.npcs[npc->npc_id].combat_width * ty) / 100;
 
         j2 = i2 * 3 +
              character_combat_model_array2
-                 [(mud->login_timer / game_data_npc_combat_model[npc->npc_id]) %
+                 [(mud->login_timer / game_data.npcs[npc->npc_id].combat_speed) %
                   8];
     }
 
@@ -4041,7 +4041,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
     for (int i = 0; i < ANIMATION_COUNT; i++) {
         int animation_index = character_animation_array[animation_order][i];
-        int animation_id = game_data_npc_sprite[npc->npc_id][animation_index];
+        int animation_id = game_data.npcs[npc->npc_id].sprites[animation_index];
 
         if (animation_id < 0) {
             continue;
@@ -4056,12 +4056,12 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
         int k4 = j2;
 
         if (flip && i2 >= 1 && i2 <= 3 &&
-            game_data_animation_has_f[animation_id] == 1) {
+            game_data.animations[animation_id].has_f == 1) {
             k4 += 15;
         }
 
-        if (i2 != 5 || game_data_animation_has_a[animation_id] == 1) {
-            int sprite_id = k4 + game_data_animation_number[animation_id];
+        if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
+            int sprite_id = k4 + game_data.animations[animation_id].number;
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -4072,24 +4072,24 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
             int clip_width =
                 (width * mud->surface->sprite_width_full[sprite_id]) /
                 mud->surface->sprite_width_full
-                    [game_data_animation_number[animation_id]];
+                    [game_data.animations[animation_id].number];
 
             offset_x -= (clip_width - width) / 2;
 
             int animation_colour =
-                game_data_animation_character_colour[animation_id];
+                game_data.animations[animation_id].colour;
 
             int skin_colour = 0;
 
             if (animation_colour == 1) {
-                animation_colour = game_data_npc_hair_colour[npc->npc_id];
-                skin_colour = game_data_npc_skin_colour[npc->npc_id];
+                animation_colour = game_data.npcs[npc->npc_id].hair_colour;
+                skin_colour = game_data.npcs[npc->npc_id].skin_colour;
             } else if (animation_colour == 2) {
-                animation_colour = game_data_npc_top_colour[npc->npc_id];
-                skin_colour = game_data_npc_skin_colour[npc->npc_id];
+                animation_colour = game_data.npcs[npc->npc_id].top_colour;
+                skin_colour = game_data.npcs[npc->npc_id].skin_colour;
             } else if (animation_colour == 3) {
-                animation_colour = game_data_npc_bottom_colour[npc->npc_id];
-                skin_colour = game_data_npc_skin_colour[npc->npc_id];
+                animation_colour = game_data.npcs[npc->npc_id].bottom_colour;
+                skin_colour = game_data.npcs[npc->npc_id].skin_colour;
             }
 
             surface_draw_sprite_transform_mask_depth(
@@ -4390,8 +4390,8 @@ void mudclient_draw_overhead(mudclient *mud) {
 
         surface_draw_sprite_transform_mask(
             mud->surface, final_x, final_y, scale_x_clip, scale_y_clip,
-            game_data_item_sprite[id] + mud->sprite_item,
-            game_data_item_mask[id], 0, 0, 0);
+            game_data.items[id].sprite + mud->sprite_item,
+            game_data.items[id].mask, 0, 0, 0);
     }
 
     for (int i = 0; i < mud->health_bar_count; i++) {
@@ -4522,7 +4522,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
                 int dy = character->current_y;
 
                 int delev = -world_get_elevation(mud->world, dx, dy) -
-                            (game_data_npc_height[character->npc_id] / 2);
+                            (game_data.npcs[character->npc_id].height / 2);
 
                 int rx =
                     (sx * player->projectile_range +
@@ -4558,8 +4558,8 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
 
         // TODO put this in a function
         int sprite_id = scene_add_sprite(mud->scene, 20000 + i, x, elevation, y,
-                                         game_data_npc_width[npc->npc_id],
-                                         game_data_npc_height[npc->npc_id],
+                                         game_data.npcs[npc->npc_id].width,
+                                         game_data.npcs[npc->npc_id].height,
                                          i + NPC_FACE_TAG);
 
         mud->scene_sprite_count++;
@@ -5813,8 +5813,8 @@ void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
                                 float depth_bottom) {
-    int picture = game_data_item_sprite[id] + mud->sprite_item;
-    int mask = game_data_item_mask[id];
+    int picture = game_data.items[id].sprite + mud->sprite_item;
+    int mask = game_data.items[id].mask;
 
     surface_draw_sprite_transform_mask_depth(mud->surface, x, y, width, height,
                                              picture, mask, 0, 0, 0, depth_top,
@@ -5836,7 +5836,7 @@ int mudclient_get_inventory_count(mudclient *mud, int id) {
 
     for (int i = 0; i < mud->inventory_items_count; i++) {
         if (mud->inventory_item_id[i] == id) {
-            if (game_data_item_stackable[id] == 1) {
+            if (game_data.items[id].stackable == 1) {
                 count++;
             } else {
                 count += mud->inventory_item_stack_count[i];
@@ -6037,14 +6037,14 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
     int height = 0;
 
     if (direction == 0 || direction == 4) {
-        width = game_data_object_width[id];
-        height = game_data_object_height[id];
+        width = game_data.objects[id].width;
+        height = game_data.objects[id].height;
     } else {
-        height = game_data_object_width[id];
-        width = game_data_object_height[id];
+        height = game_data.objects[id].width;
+        width = game_data.objects[id].height;
     }
 
-    if (game_data_object_type[id] == 2 || game_data_object_type[id] == 3) {
+    if (game_data.objects[id].type == 2 || game_data.objects[id].type == 3) {
         if (direction == 0) {
             x--;
             width++;
@@ -6129,8 +6129,8 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
             mud->surface, x + 4 + og_width * 0.125f, y + 2 + og_height * 0.125f,
             og_width * 0.75f, og_height * 0.75f,
             mud->surface->mud->sprite_item +
-                game_data_item_sprite[certificate_item_id],
-            game_data_item_mask[certificate_item_id], 0, 0, 0);
+                game_data.items[certificate_item_id].sprite,
+            game_data.items[certificate_item_id].mask, 0, 0, 0);
     }
 }
 

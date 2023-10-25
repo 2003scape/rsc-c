@@ -26,7 +26,7 @@ void mudclient_draw_shop(mudclient *mud) {
                 }
 
                 int item_price =
-                    (price_mod * game_data_item_base_price[item_id]) /
+                    (price_mod * game_data.items[item_id].base_price) /
                     100;
 
                 packet_stream_new_packet(mud->packet_stream,
@@ -52,7 +52,7 @@ void mudclient_draw_shop(mudclient *mud) {
                 }
 
                 int item_price =
-                    (price_mod * game_data_item_base_price[item_id]) /
+                    (price_mod * game_data.items[item_id].base_price) /
                     100;
 
                 packet_stream_new_packet(mud->packet_stream,
@@ -188,9 +188,9 @@ void mudclient_draw_shop(mudclient *mud) {
             }
 
             int item_price =
-                (price_mod * game_data_item_base_price[selected_item_id]) / 100;
+                (price_mod * game_data.items[selected_item_id].base_price) / 100;
 
-            char *item_name = game_data_item_name[selected_item_id];
+            char *item_name = game_data.items[selected_item_id].name;
 
             char formatted_buy[strlen(item_name) + 30];
 
@@ -244,9 +244,9 @@ void mudclient_draw_shop(mudclient *mud) {
             }
 
             int item_price =
-                (price_mod * game_data_item_base_price[selected_item_id]) / 100;
+                (price_mod * game_data.items[selected_item_id].base_price) / 100;
 
-            char *item_name = game_data_item_name[selected_item_id];
+            char *item_name = game_data.items[selected_item_id].name;
 
             char formatted_sell[strlen(item_name) + 29];
 

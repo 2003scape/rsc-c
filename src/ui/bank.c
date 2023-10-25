@@ -5,7 +5,7 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
                                 int opcode) {
     int is_withdraw = opcode == CLIENT_BANK_WITHDRAW;
 
-    if (is_withdraw && game_data_item_stackable[item_id] != 0 &&
+    if (is_withdraw && game_data.items[item_id].stackable != 0 &&
         amount + mud->inventory_items_count >= INVENTORY_ITEMS_MAX) {
         amount = INVENTORY_ITEMS_MAX - mud->inventory_items_count;
 
@@ -361,7 +361,7 @@ void mudclient_draw_bank(mudclient *mud) {
         int contains_match_length = 0;
 
         for (int i = 0; i < mud->bank_item_count; i++) {
-            char *item_name = game_data_item_name[mud->bank_items[i]];
+            char *item_name = game_data.items[mud->bank_items[i]].name;
             char lower_item_name[strlen(item_name) + 1];
             strcpy(lower_item_name, item_name);
             strtolower(lower_item_name);
@@ -568,7 +568,7 @@ void mudclient_draw_bank(mudclient *mud) {
                         mud->bank_selected_item_slot = slot_index;
                     }
 
-                    char *item_name = game_data_item_name[selected_item_id];
+                    char *item_name = game_data.items[selected_item_id].name;
 
                     char formatted_item_name[strlen(item_name) + 6];
                     sprintf(formatted_item_name, "@lre@%s", item_name);
@@ -601,7 +601,7 @@ void mudclient_draw_bank(mudclient *mud) {
         int bank_count = bank_items_count[mud->bank_selected_item_slot];
 
         if (!mud->options->bank_unstackble_withdraw &&
-            game_data_item_stackable[item_id] == 1 && bank_count > 1) {
+            game_data.items[item_id].stackable == 1 && bank_count > 1) {
             bank_count = 1;
         }
 
@@ -800,7 +800,7 @@ void mudclient_draw_bank(mudclient *mud) {
             for (int i = 0; i < mud->bank_item_count; i++) {
                 for (int j = 0; j < mud->bank_items_count[i]; j++) {
                     total_value +=
-                        game_data_item_base_price[mud->bank_items[i]];
+                        game_data.items[mud->bank_items[i]].base_price;
                 }
 
                 /* overflow */
@@ -886,14 +886,14 @@ void mudclient_draw_bank(mudclient *mud) {
         int bank_count = bank_items_count[mud->bank_selected_item_slot];
 
         if (!mud->options->bank_unstackble_withdraw &&
-            game_data_item_stackable[item_id] == 1 && bank_count > 1) {
+            game_data.items[item_id].stackable == 1 && bank_count > 1) {
             bank_count = 1;
         }
 
         int offset_x = MUD_IS_COMPACT ? 100 : 0;
 
         if (bank_count > 0) {
-            char *item_name = game_data_item_name[item_id];
+            char *item_name = game_data.items[item_id].name;
             char formatted_withdraw[strlen(item_name) + 10];
 
             sprintf(formatted_withdraw, "Withdraw %s",
@@ -912,7 +912,7 @@ void mudclient_draw_bank(mudclient *mud) {
         int inventory_count = mudclient_get_inventory_count(mud, item_id);
 
         if (inventory_count > 0) {
-            char *item_name = game_data_item_name[item_id];
+            char *item_name = game_data.items[item_id].name;
             char formatted_deposit[strlen(item_name) + 9];
 
             sprintf(formatted_deposit, "Deposit %s",
