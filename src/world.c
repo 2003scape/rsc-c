@@ -2159,11 +2159,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         game_model_create_face(game_model, 4, vertices, front,
                                thick_walls ? COLOUR_TRANSPARENT : back);
 
-    if (game_data.wall_objects[wall_object_id].interactive == 5) {
-        game_model->face_tag[wall_face] = WALL_FACE_TAG + wall_object_id;
-    } else {
-        game_model->face_tag[wall_face] = 0;
-    }
+    game_model->face_tag[wall_face] = 0;
 
     if (thick_walls) {
         uint16_t *parallel_vertices = calloc(4, sizeof(uint16_t));
@@ -2200,12 +2196,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         int parallel_wall_face = game_model_create_face(
             game_model, 4, parallel_vertices, COLOUR_TRANSPARENT, back);
 
-        if (game_data.wall_objects[wall_object_id].interactive == 5) {
-            game_model->face_tag[parallel_wall_face] =
-                WALL_FACE_TAG + wall_object_id;
-        } else {
-            game_model->face_tag[parallel_wall_face] = 0;
-        }
+        game_model->face_tag[parallel_wall_face] = 0;
 
         uint16_t *top_vertices = calloc(4, sizeof(uint16_t));
         top_vertices[0] = vertices[1];
