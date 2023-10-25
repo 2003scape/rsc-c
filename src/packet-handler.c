@@ -621,7 +621,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 strcpy(model_name, animated_models[i]);
 
-                int model_index = game_data.get_model_index(model_name);
+                int model_index = game_data_get_model_index(model_name);
 
                 object_model[mud->object_count + i] =
                     mud->game_models[model_index];
@@ -631,7 +631,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     object_model[mud->object_count + ANIMATED_MODELS_LENGTH +
                                  first_animated_index] =
-                        mud->game_models[game_data.get_model_index(model_name)];
+                        mud->game_models[game_data_get_model_index(model_name)];
 
                     first_animated_index++;
                 }
