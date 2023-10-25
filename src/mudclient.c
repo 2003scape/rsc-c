@@ -1723,7 +1723,7 @@ void mudclient_load_entities(mudclient *mud) {
                 continue;
             }
 
-            game_data.animations[i].number = game_data.animations[j].number;
+            game_data.animations[i].file_id = game_data.animations[j].file_id;
             i++;
             goto label0;
         }
@@ -1787,7 +1787,7 @@ void mudclient_load_entities(mudclient *mud) {
             }
         }
 
-        game_data.animations[i].number = animation_index;
+        game_data.animations[i].file_id = animation_index;
         animation_index += 27;
 
         i++;
@@ -3910,7 +3910,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         }
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
-            int sprite_id = j5 + game_data.animations[animation_id].number;
+            int sprite_id = j5 + game_data.animations[animation_id].file_id;
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -3921,7 +3921,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
             int clip_width =
                 (width * mud->surface->sprite_width_full[sprite_id]) /
                 mud->surface->sprite_width_full
-                    [game_data.animations[animation_id].number];
+                    [game_data.animations[animation_id].file_id];
 
             offset_x -= (clip_width - width) / 2;
 
@@ -4061,7 +4061,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
         }
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
-            int sprite_id = k4 + game_data.animations[animation_id].number;
+            int sprite_id = k4 + game_data.animations[animation_id].file_id;
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -4072,7 +4072,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
             int clip_width =
                 (width * mud->surface->sprite_width_full[sprite_id]) /
                 mud->surface->sprite_width_full
-                    [game_data.animations[animation_id].number];
+                    [game_data.animations[animation_id].file_id];
 
             offset_x -= (clip_width - width) / 2;
 

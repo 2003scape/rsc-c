@@ -267,7 +267,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data.animation_count; i++) {
-        game_data.animations[i].number = game_data_get_unsigned_byte();
+        game_data.animations[i].file_id = game_data_get_unsigned_byte();
     }
 
     game_data.object_count = game_data_get_unsigned_short();

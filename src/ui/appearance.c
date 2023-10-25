@@ -268,58 +268,58 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
     surface_draw_sprite_scale_mask(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data.animations[ANIMATION_INDEX_LEGS].number,
+        game_data.animations[ANIMATION_INDEX_LEGS].file_id,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data.animations[mud->appearance_body_type].number,
+        game_data.animations[mud->appearance_body_type].file_id,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data.animations[mud->appearance_head_type].number,
+        game_data.animations[mud->appearance_head_type].file_id,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_scale_mask(
         mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
-        APPEARANCE_CHARACTER_HEIGHT, game_data.animations[2].number + 6,
+        APPEARANCE_CHARACTER_HEIGHT, game_data.animations[2].file_id + 6,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data.animations[mud->appearance_body_type].number + 6,
+        game_data.animations[mud->appearance_body_type].file_id + 6,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data.animations[mud->appearance_head_type].number + 6,
+        game_data.animations[mud->appearance_head_type].file_id + 6,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_scale_mask(
         mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
-        APPEARANCE_CHARACTER_HEIGHT, game_data.animations[2].number + 12,
+        APPEARANCE_CHARACTER_HEIGHT, game_data.animations[2].file_id + 12,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data.animations[mud->appearance_body_type].number + 12,
+        game_data.animations[mud->appearance_body_type].file_id + 12,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data.animations[mud->appearance_head_type].number + 12,
+        game_data.animations[mud->appearance_head_type].file_id + 12,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 

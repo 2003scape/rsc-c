@@ -81,7 +81,7 @@ struct ItemConfig {
     uint16_t sprite;
     uint32_t mask;
     uint32_t base_price;
-    uint16_t wearable; /* equpipment slot */
+    uint16_t wearable; /* equipment slot */
     uint8_t stackable;
     uint8_t special; /* untradable */
     uint8_t members;
@@ -99,7 +99,7 @@ struct AnimConfig {
     uint8_t gender;
     uint8_t has_a;
     uint8_t has_f;
-    uint16_t number; /* picture ID */
+    uint16_t file_id;
 };
 
 struct PrayerConfig {
