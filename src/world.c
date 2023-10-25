@@ -192,7 +192,7 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
         return;
     }
 
-    if (game_data.wall_objects[id].adjacent == 1) {
+    if (game_data.wall_objects[id].blocking == 1) {
         if (k == 0) {
             world->object_adjacency[x][y] &= 0xfffe;
 
@@ -815,7 +815,7 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
         return;
     }
 
-    if (game_data.wall_objects[id].adjacent == 1) {
+    if (game_data.wall_objects[id].blocking == 1) {
         if (dir == 0) {
             world->object_adjacency[x][y] |= 1;
 
@@ -1037,7 +1037,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
                     }
 
-                    if (game_data.tiles[decoration - 1].adjacent != 0) {
+                    if (game_data.tiles[decoration - 1].blocking != 0) {
                         world->object_adjacency[r_x][r_y] |= 0x40;
                     }
 
@@ -1411,12 +1411,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         for (int r_y = 0; r_y < REGION_HEIGHT - 1; r_y++) {
             int wall = world_get_wall_east_west(world, r_x, r_y);
 
-            if (wall > 0 && game_data.wall_objects[wall - 1].invisible == 0) {
+            if (wall > 0 && game_data.wall_objects[wall - 1].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 1, r_x,
                                   r_y, r_x + 1, r_y);
 
                 if (is_current_plane &&
-                    game_data.wall_objects[wall - 1].adjacent != 0) {
+                    game_data.wall_objects[wall - 1].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 1;
 
                     if (r_y > 0) {
@@ -1433,12 +1433,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
             wall = world_get_wall_north_south(world, r_x, r_y);
 
-            if (wall > 0 && game_data.wall_objects[wall - 1].invisible == 0) {
+            if (wall > 0 && game_data.wall_objects[wall - 1].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 1, r_x,
                                   r_y, r_x, r_y + 1);
 
                 if (is_current_plane &&
-                    game_data.wall_objects[wall - 1].adjacent != 0) {
+                    game_data.wall_objects[wall - 1].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 2;
 
                     if (r_x > 0) {
@@ -1455,12 +1455,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             wall = world_get_wall_diagonal(world, r_x, r_y);
 
             if (wall > 0 && wall < 12000 &&
-                game_data.wall_objects[wall - 1].invisible == 0) {
+                game_data.wall_objects[wall - 1].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 1, r_x,
                                   r_y, r_x + 1, r_y + 1);
 
                 if (is_current_plane &&
-                    game_data.wall_objects[wall - 1].adjacent != 0) {
+                    game_data.wall_objects[wall - 1].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 0x20;
                 }
 
@@ -1474,12 +1474,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                         colour);
                 }
             } else if (wall > 12000 && wall < 24000 &&
-                       game_data.wall_objects[wall - 12001].invisible == 0) {
+                       game_data.wall_objects[wall - 12001].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 12001,
                                   r_x + 1, r_y, r_x, r_y + 1);
 
                 if (is_current_plane &&
-                    game_data.wall_objects[wall - 12001].adjacent != 0) {
+                    game_data.wall_objects[wall - 12001].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 0x10;
                 }
 
@@ -2159,7 +2159,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         game_model_create_face(game_model, 4, vertices, front,
                                thick_walls ? COLOUR_TRANSPARENT : back);
 
-    if (game_data.wall_objects[wall_object_id].invisible == 5) {
+    if (game_data.wall_objects[wall_object_id].interactive == 5) {
         game_model->face_tag[wall_face] = WALL_FACE_TAG + wall_object_id;
     } else {
         game_model->face_tag[wall_face] = 0;
@@ -2200,7 +2200,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         int parallel_wall_face = game_model_create_face(
             game_model, 4, parallel_vertices, COLOUR_TRANSPARENT, back);
 
-        if (game_data.wall_objects[wall_object_id].invisible == 5) {
+        if (game_data.wall_objects[wall_object_id].interactive == 5) {
             game_model->face_tag[parallel_wall_face] =
                 WALL_FACE_TAG + wall_object_id;
         } else {

@@ -35,8 +35,8 @@ struct WallConfig {
     int texture_front;
     int texture_back;
     uint16_t height;
-    uint8_t adjacent; /* blocks */
-    uint8_t invisible;
+    uint8_t blocking;
+    uint8_t interactive;
 };
 
 struct NpcConfig {
@@ -90,7 +90,7 @@ struct ItemConfig {
 struct TileConfig {
     int decoration;
     uint8_t type;
-    uint8_t adjacent; /* blocks */
+    uint8_t blocking;
 };
 
 struct AnimConfig {

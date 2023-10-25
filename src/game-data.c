@@ -351,11 +351,11 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data.wall_object_count; i++) {
-        game_data.wall_objects[i].adjacent = game_data_get_unsigned_byte();
+        game_data.wall_objects[i].blocking = game_data_get_unsigned_byte();
     }
 
     for (i = 0; i < game_data.wall_object_count; i++) {
-        game_data.wall_objects[i].invisible = game_data_get_unsigned_byte();
+        game_data.wall_objects[i].interactive = game_data_get_unsigned_byte();
     }
 
     game_data.roof_count = game_data_get_unsigned_short();
@@ -381,7 +381,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data.tile_count; i++) {
-        game_data.tiles[i].adjacent = game_data_get_unsigned_byte();
+        game_data.tiles[i].blocking = game_data_get_unsigned_byte();
     }
 
     game_data.projectile_sprite = game_data_get_unsigned_short();
