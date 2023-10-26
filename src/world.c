@@ -137,23 +137,23 @@ void world_remove_object2(World *world, int x, int y, int id) {
         return;
     }
 
-    if (game_data_object_type[id] == 1 || game_data_object_type[id] == 2) {
+    if (game_data.objects[id].type == 1 || game_data.objects[id].type == 2) {
         int tile_direction = world_get_tile_direction(world, x, y);
         int model_width = 0;
         int model_height = 0;
 
         // TODO make cardinal TILE_DIRs
         if (tile_direction == 0 || tile_direction == 4) {
-            model_width = game_data_object_width[id];
-            model_height = game_data_object_height[id];
+            model_width = game_data.objects[id].width;
+            model_height = game_data.objects[id].height;
         } else {
-            model_height = game_data_object_width[id];
-            model_width = game_data_object_height[id];
+            model_height = game_data.objects[id].width;
+            model_width = game_data.objects[id].height;
         }
 
         for (int mx = x; mx < x + model_width; mx++) {
             for (int my = y; my < y + model_height; my++) {
-                if (game_data_object_type[id] == 1) {
+                if (game_data.objects[id].type == 1) {
                     world->object_adjacency[mx][my] |= 0x40;
                 } else if (tile_direction == 0) {
                     world->object_adjacency[mx][my] |= 2;
@@ -192,7 +192,7 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
         return;
     }
 
-    if (game_data_wall_object_adjacent[id] == 1) {
+    if (game_data.wall_objects[id].blocking == 1) {
         if (k == 0) {
             world->object_adjacency[x][y] &= 0xfffe;
 
@@ -616,7 +616,7 @@ int world_get_tile_decoration_from4(World *world, int x, int y, int colour) {
         return colour;
     }
 
-    return game_data_tile_decoration[decoration - 1];
+    return game_data.tiles[decoration - 1].decoration;
 }
 
 void world_set_tile_decoration(World *world, int x, int y, int decoration) {
@@ -815,7 +815,7 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
         return;
     }
 
-    if (game_data_wall_object_adjacent[id] == 1) {
+    if (game_data.wall_objects[id].blocking == 1) {
         if (dir == 0) {
             world->object_adjacency[x][y] |= 1;
 
@@ -883,7 +883,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 /* keep water tiles under the bridge */
 
                 if (decoration > 0 &&
-                    game_data_tile_type[decoration - 1] == BRIDGE_TILE_TYPE) {
+                    game_data.tiles[decoration - 1].type == BRIDGE_TILE_TYPE) {
                     height = 0;
                 }
 
@@ -891,7 +891,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world_get_tile_decoration(world, r_x - 1, r_y);
 
                 if (decoration_east > 0 &&
-                    game_data_tile_type[decoration_east - 1] ==
+                    game_data.tiles[decoration_east - 1].type ==
                         BRIDGE_TILE_TYPE) {
                     height = 0;
                 }
@@ -900,7 +900,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world_get_tile_decoration(world, r_x, r_y - 1);
 
                 if (decoration_north > 0 &&
-                    game_data_tile_type[decoration_north - 1] ==
+                    game_data.tiles[decoration_north - 1].type ==
                         BRIDGE_TILE_TYPE) {
                     height = 0;
                 }
@@ -909,7 +909,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world_get_tile_decoration(world, r_x - 1, r_y - 1);
 
                 if (decoration_north_east > 0 &&
-                    game_data_tile_type[decoration_north_east - 1] ==
+                    game_data.tiles[decoration_north_east - 1].type ==
                         BRIDGE_TILE_TYPE) {
                     height = 0;
                 }
@@ -944,11 +944,11 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 int decoration = world_get_tile_decoration(world, r_x, r_y);
 
                 if (decoration > 0) {
-                    int tile_type = game_data_tile_type[decoration - 1];
+                    int tile_type = game_data.tiles[decoration - 1].type;
                     int is_floor = world_get_tile_type(world, r_x, r_y);
 
-                    colour = game_data_tile_decoration[decoration - 1];
-                    colour_1 = game_data_tile_decoration[decoration - 1];
+                    colour = game_data.tiles[decoration - 1].decoration;
+                    colour_1 = game_data.tiles[decoration - 1].decoration;
 
                     if (tile_type == BRIDGE_TILE_TYPE) {
                         colour = 1;
@@ -1037,7 +1037,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
                     }
 
-                    if (game_data_tile_adjacent[decoration - 1] != 0) {
+                    if (game_data.tiles[decoration - 1].blocking != 0) {
                         world->object_adjacency[r_x][r_y] |= 0x40;
                     }
 
@@ -1154,8 +1154,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 /* create bridge floor tiles over water */
 
                 if (decoration > 0 &&
-                    game_data_tile_type[decoration - 1] == BRIDGE_TILE_TYPE) {
-                    int fill_front = game_data_tile_decoration[decoration - 1];
+                    game_data.tiles[decoration - 1].type == BRIDGE_TILE_TYPE) {
+                    int fill_front = game_data.tiles[decoration - 1].decoration;
 
                     uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
@@ -1191,16 +1191,16 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world_draw_map_tile(world, r_x, r_y, 0, fill_front,
                                         fill_front);
                 } else if (decoration == 0 ||
-                           game_data_tile_type[decoration - 1] !=
+                           game_data.tiles[decoration - 1].type !=
                                LIQUID_TILE_TYPE) {
                     int decoration_south =
                         world_get_tile_decoration(world, r_x, r_y + 1);
 
                     if (decoration_south > 0 &&
-                        game_data_tile_type[decoration_south - 1] ==
+                        game_data.tiles[decoration_south - 1].type ==
                             BRIDGE_TILE_TYPE) {
                         int fill_front =
-                            game_data_tile_decoration[decoration_south - 1];
+                            game_data.tiles[decoration_south - 1].decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
@@ -1242,12 +1242,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world_get_tile_decoration(world, r_x, r_y - 1);
 
                     if (decoration_north > 0 &&
-                        game_data_tile_type[decoration_north - 1] ==
+                        game_data.tiles[decoration_north - 1].type ==
                             BRIDGE_TILE_TYPE) {
                         int fill_front =
-                            game_data_tile_decoration[world_get_tile_decoration(
+                            game_data.tiles[world_get_tile_decoration(
                                                           world, r_x, r_y - 1) -
-                                                      1];
+                                                      1].decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
@@ -1289,10 +1289,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world_get_tile_decoration(world, r_x + 1, r_y);
 
                     if (decoration_east > 0 &&
-                        game_data_tile_type[decoration_east - 1] ==
+                        game_data.tiles[decoration_east - 1].type ==
                             BRIDGE_TILE_TYPE) {
                         int fill_front =
-                            game_data_tile_decoration[decoration_east - 1];
+                            game_data.tiles[decoration_east - 1].decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
@@ -1334,10 +1334,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         world_get_tile_decoration(world, r_x - 1, r_y);
 
                     if (decoration_west > 0 &&
-                        game_data_tile_type[decoration_west - 1] ==
+                        game_data.tiles[decoration_west - 1].type ==
                             BRIDGE_TILE_TYPE) {
                         int face_fill =
-                            game_data_tile_decoration[decoration_west - 1];
+                            game_data.tiles[decoration_west - 1].decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
@@ -1411,12 +1411,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         for (int r_y = 0; r_y < REGION_HEIGHT - 1; r_y++) {
             int wall = world_get_wall_east_west(world, r_x, r_y);
 
-            if (wall > 0 && game_data_wall_object_invisible[wall - 1] == 0) {
+            if (wall > 0 && game_data.wall_objects[wall - 1].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 1, r_x,
                                   r_y, r_x + 1, r_y);
 
                 if (is_current_plane &&
-                    game_data_wall_object_adjacent[wall - 1] != 0) {
+                    game_data.wall_objects[wall - 1].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 1;
 
                     if (r_y > 0) {
@@ -1433,12 +1433,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
 
             wall = world_get_wall_north_south(world, r_x, r_y);
 
-            if (wall > 0 && game_data_wall_object_invisible[wall - 1] == 0) {
+            if (wall > 0 && game_data.wall_objects[wall - 1].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 1, r_x,
                                   r_y, r_x, r_y + 1);
 
                 if (is_current_plane &&
-                    game_data_wall_object_adjacent[wall - 1] != 0) {
+                    game_data.wall_objects[wall - 1].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 2;
 
                     if (r_x > 0) {
@@ -1455,12 +1455,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             wall = world_get_wall_diagonal(world, r_x, r_y);
 
             if (wall > 0 && wall < 12000 &&
-                game_data_wall_object_invisible[wall - 1] == 0) {
+                game_data.wall_objects[wall - 1].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 1, r_x,
                                   r_y, r_x + 1, r_y + 1);
 
                 if (is_current_plane &&
-                    game_data_wall_object_adjacent[wall - 1] != 0) {
+                    game_data.wall_objects[wall - 1].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 0x20;
                 }
 
@@ -1474,12 +1474,12 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                                         colour);
                 }
             } else if (wall > 12000 && wall < 24000 &&
-                       game_data_wall_object_invisible[wall - 12001] == 0) {
+                       game_data.wall_objects[wall - 12001].interactive == 0) {
                 world_create_wall(world, world->parent_model, wall - 12001,
                                   r_x + 1, r_y, r_x, r_y + 1);
 
                 if (is_current_plane &&
-                    game_data_wall_object_adjacent[wall - 12001] != 0) {
+                    game_data.wall_objects[wall - 12001].blocking != 0) {
                     world->object_adjacency[r_x][r_y] |= 0x10;
                 }
 
@@ -1672,7 +1672,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             int terrain_south_height =
                 world->terrain_height_local[r_x][south_y];
 
-            int roof_height = game_data_roof_height[roof_id - 1];
+            int roof_height = game_data.roofs[roof_id - 1].height;
 
             if (world_has_roof(world, r_x, r_y) &&
                 terrain_height < PLANE_HEIGHT) {
@@ -1781,7 +1781,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 vertex_3_z += ROOF_SLOPE;
             }
 
-            roof_id = game_data_roof_fills[roof_id - 1];
+            roof_id = game_data.roofs[roof_id - 1].fill;
 
             terrain_height = -terrain_height;
             terrain_east_height = -terrain_east_height;
@@ -2027,7 +2027,7 @@ int world_get_tile_type(World *world, int i, int j) {
         return -1;
     }
 
-    int type = game_data_tile_type[decoration - 1];
+    int type = game_data.tiles[decoration - 1].type;
 
     return type == 2;
 }
@@ -2045,17 +2045,17 @@ void world_add_models(World *world, GameModel **models) {
                 int height = 0;
 
                 if (tile_direction == 0 || tile_direction == 4) {
-                    width = game_data_object_width[object_id];
-                    height = game_data_object_height[object_id];
+                    width = game_data.objects[object_id].width;
+                    height = game_data.objects[object_id].height;
                 } else {
-                    height = game_data_object_width[object_id];
-                    width = game_data_object_height[object_id];
+                    height = game_data.objects[object_id].width;
+                    width = game_data.objects[object_id].height;
                 }
 
                 world_remove_object2(world, x, y, object_id);
 
                 GameModel *game_model = game_model_copy_from4(
-                    models[game_data_object_model_index[object_id]], 0, 1, 0,
+                    models[game_data.objects[object_id].model_index], 0, 1, 0,
                     0);
 
                 int translate_x = ((x + x + width) * TILE_SIZE) / 2;
@@ -2120,9 +2120,9 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
     world_method425(world, x1, y1, 40);
     world_method425(world, x2, y2, 40);
 
-    int height = game_data_wall_object_height[wall_object_id];
-    int front = game_data_wall_object_texture_front[wall_object_id];
-    int back = game_data_wall_object_texture_back[wall_object_id];
+    int height = game_data.wall_objects[wall_object_id].height;
+    int front = game_data.wall_objects[wall_object_id].texture_front;
+    int back = game_data.wall_objects[wall_object_id].texture_back;
 
     int vertex_x1 = x1 * TILE_SIZE;
     int vertex_y1 = y1 * TILE_SIZE;
@@ -2159,11 +2159,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         game_model_create_face(game_model, 4, vertices, front,
                                thick_walls ? COLOUR_TRANSPARENT : back);
 
-    if (game_data_wall_object_invisible[wall_object_id] == 5) {
-        game_model->face_tag[wall_face] = WALL_FACE_TAG + wall_object_id;
-    } else {
-        game_model->face_tag[wall_face] = 0;
-    }
+    game_model->face_tag[wall_face] = 0;
 
     if (thick_walls) {
         uint16_t *parallel_vertices = calloc(4, sizeof(uint16_t));
@@ -2200,12 +2196,7 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
         int parallel_wall_face = game_model_create_face(
             game_model, 4, parallel_vertices, COLOUR_TRANSPARENT, back);
 
-        if (game_data_wall_object_invisible[wall_object_id] == 5) {
-            game_model->face_tag[parallel_wall_face] =
-                WALL_FACE_TAG + wall_object_id;
-        } else {
-            game_model->face_tag[parallel_wall_face] = 0;
-        }
+        game_model->face_tag[parallel_wall_face] = 0;
 
         uint16_t *top_vertices = calloc(4, sizeof(uint16_t));
         top_vertices[0] = vertices[1];
@@ -2288,22 +2279,22 @@ void world_remove_object(World *world, int x, int y, int id) {
         return;
     }
 
-    if (game_data_object_type[id] == 1 || game_data_object_type[id] == 2) {
+    if (game_data.objects[id].type == 1 || game_data.objects[id].type == 2) {
         int tile_direction = world_get_tile_direction(world, x, y);
         int width;
         int height;
 
         if (tile_direction == 0 || tile_direction == 4) {
-            width = game_data_object_width[id];
-            height = game_data_object_height[id];
+            width = game_data.objects[id].width;
+            height = game_data.objects[id].height;
         } else {
-            height = game_data_object_width[id];
-            width = game_data_object_height[id];
+            height = game_data.objects[id].width;
+            width = game_data.objects[id].height;
         }
 
         for (int xx = x; xx < x + width; xx++) {
             for (int yy = y; yy < y + height; yy++) {
-                if (game_data_object_type[id] == 1) {
+                if (game_data.objects[id].type == 1) {
                     world->object_adjacency[xx][yy] &= 0xffbf;
                 } else if (tile_direction == 0) {
                     world->object_adjacency[xx][yy] &= 0xfffd;
@@ -2347,7 +2338,7 @@ int world_has_neighbouring_roof(World *world, int x, int y) {
 /* move wall (objects) to the upper-plane */
 void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
                              int x2, int y2) {
-    int height = game_data_wall_object_height[wall_object_id];
+    int height = game_data.wall_objects[wall_object_id].height;
 
     if (world->terrain_height_local[x1][y1] < PLANE_HEIGHT) {
         world->terrain_height_local[x1][y1] += PLANE_HEIGHT + height;

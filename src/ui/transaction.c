@@ -2,7 +2,7 @@
 
 void mudclient_offer_transaction_item(mudclient *mud, int update_opcode,
                                       int item_id, int item_amount) {
-    if (game_data_item_special[item_id] == 1) {
+    if (game_data.items[item_id].special == 1) {
         char *message = update_opcode == CLIENT_TRADE_ITEM_UPDATE
                             ? "This object cannot be traded with other players"
                             : "This object cannot be added to a duel offer";
@@ -20,7 +20,7 @@ void mudclient_offer_transaction_item(mudclient *mud, int update_opcode,
             continue;
         }
 
-        if (game_data_item_stackable[item_id] == 0) {
+        if (game_data.items[item_id].stackable == 0) {
             for (int j = 0; j < item_amount; j++) {
                 if (mud->transaction_items_count[i] < inventory_count) {
                     mud->transaction_items_count[i]++;
@@ -49,7 +49,7 @@ void mudclient_offer_transaction_item(mudclient *mud, int update_opcode,
                 end = max;
             }
 
-            if (game_data_item_stackable[item_id] == 1) {
+            if (game_data.items[item_id].stackable == 1) {
                 for (int i = mud->transaction_item_count; i < end; i++) {
                     mud->transaction_items[i] = item_id;
                     mud->transaction_items_count[i] = 1;
@@ -102,7 +102,7 @@ void mudclient_remove_transaction_item(mudclient *mud, int update_opcode,
                 continue;
             }
 
-            if (game_data_item_stackable[item_id] == 0) {
+            if (game_data.items[item_id].stackable == 0) {
                 mud->transaction_items_count[i] -= item_amount;
 
                 if (mud->transaction_items_count[i] <= 0) {
@@ -165,7 +165,7 @@ void mudclient_remove_transaction_item(mudclient *mud, int update_opcode,
         }
 
         for (int i = 0; i < item_amount; i++) {
-            if (game_data_item_stackable[item_id] == 0 &&
+            if (game_data.items[item_id].stackable == 0 &&
                 mud->transaction_items_count[slot] > 1) {
                 mud->transaction_items_count[slot]--;
                 continue;
@@ -295,7 +295,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
                 if (mud->options->transaction_menus &&
                     !mud->show_right_click_menu) {
-                    char *item_name = game_data_item_name[item_id];
+                    char *item_name = game_data.items[item_id].name;
 
                     char formatted_item_name[strlen(item_name) + 6];
                     sprintf(formatted_item_name, "@lre@%s", item_name);
@@ -343,7 +343,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
                 if (mud->options->transaction_menus &&
                     !mud->show_right_click_menu) {
-                    char *item_name = game_data_item_name[item_id];
+                    char *item_name = game_data.items[item_id].name;
 
                     char formatted_item_name[strlen(item_name) + 6];
                     sprintf(formatted_item_name, "@lre@%s", item_name);
@@ -352,7 +352,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
                     for (int i = 0; i < mud->transaction_item_count; i++) {
                         if (mud->transaction_items[i] == item_id) {
-                            if (game_data_item_stackable[item_id] == 0) {
+                            if (game_data.items[item_id].stackable == 0) {
                                 item_amount = transaction_items_count[i];
                                 break;
                             }
@@ -658,10 +658,10 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
         if (!MUD_IS_COMPACT) {
             char *item_name =
-                game_data_item_name[mud->transaction_selected_item];
+                game_data.items[mud->transaction_selected_item].name;
 
             char *description =
-                game_data_item_description[mud->transaction_selected_item];
+                game_data.items[mud->transaction_selected_item].description;
 
             char formatted_item[strlen(item_name) + strlen(description) + 25];
 
@@ -689,7 +689,7 @@ void mudclient_draw_transaction_items_confirm(
 
     for (int i = 0; i < transaction_confirm_item_count; i++) {
         int item_id = transaction_confirm_items[i];
-        char *item_name = game_data_item_name[item_id];
+        char *item_name = game_data.items[item_id].name;
         int item_length = strlen(item_name);
 
         int line_length = item_length + 15;
@@ -698,7 +698,7 @@ void mudclient_draw_transaction_items_confirm(
 
         strcpy(item_line, item_name);
 
-        if (game_data_item_stackable[item_id] == 0) {
+        if (game_data.items[item_id].stackable == 0) {
             strcat(item_line, " x ");
 
             format_confirm_amount(transaction_confirm_items_count[i],

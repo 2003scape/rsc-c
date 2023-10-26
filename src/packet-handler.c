@@ -31,7 +31,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
         GameModel *model = game_model_copy(original_model);
 #else
-        int sprite_id = game_data_item_sprite[item_id];
+        int sprite_id = game_data.items[item_id].sprite;
         GameModel *original_model = mud->item_models[sprite_id];
 
         if (original_model == NULL) {
@@ -40,7 +40,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
         GameModel *model = game_model_copy(original_model);
 
-        int mask_colour = game_data_item_mask[item_id];
+        int mask_colour = game_data.items[item_id].mask;
 
         if (mask_colour != 0) {
             game_model_mask_faces(model, model->face_fill_back, mask_colour);
@@ -563,16 +563,16 @@ void mudclient_packet_tick(mudclient *mud) {
                     int height = 0;
 
                     if (tile_direction == 0 || tile_direction == 4) {
-                        width = game_data_object_width[object_id];
-                        height = game_data_object_height[object_id];
+                        width = game_data.objects[object_id].width;
+                        height = game_data.objects[object_id].height;
                     } else {
-                        height = game_data_object_width[object_id];
-                        width = game_data_object_height[object_id];
+                        height = game_data.objects[object_id].width;
+                        width = game_data.objects[object_id].height;
                     }
 
                     int model_x = ((area_x + area_x + width) * MAGIC_LOC) / 2;
                     int model_y = ((area_y + area_y + height) * MAGIC_LOC) / 2;
-                    int model_index = game_data_object_model_index[object_id];
+                    int model_index = game_data.objects[object_id].model_index;
 
                     GameModel *model =
                         game_model_copy(mud->game_models[model_index]);
@@ -744,7 +744,7 @@ void mudclient_packet_tick(mudclient *mud) {
             int npc_id = get_bit_mask(data, offset, size, 10);
             offset += 10;
 
-            if (npc_id >= game_data_npc_count) {
+            if (npc_id >= game_data.npc_count) {
                 npc_id = SHIFTY_MAN_ID;
             }
 
@@ -778,7 +778,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     strcpy(npc->message, message);
 
                     if (target_index == mud->local_player->server_index) {
-                        char *npc_name = game_data_npc_name[npc->npc_id];
+                        char *npc_name = game_data.npcs[npc->npc_id].name;
 
                         char formatted_message[strlen(message) +
                                                strlen(npc_name) + 8];
@@ -1100,7 +1100,7 @@ void mudclient_packet_tick(mudclient *mud) {
                         }
 
                         mud->ground_item_z[mud->ground_item_count] =
-                            game_data_object_elevation[mud->object_id[i]];
+                            game_data.objects[mud->object_id[i]].elevation;
 
                         break;
                     }
@@ -1162,7 +1162,7 @@ void mudclient_packet_tick(mudclient *mud) {
             mud->inventory_item_id[i] = id_equip & 32767;
             mud->inventory_equipped[i] = id_equip / 32768;
 
-            if (game_data_item_stackable[id_equip & 32767] == 0) {
+            if (game_data.items[id_equip & 32767].stackable == 0) {
                 mud->inventory_item_stack_count[i] =
                     get_stack_int(data, offset, size);
 
@@ -1186,7 +1186,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int id = get_unsigned_short(data, offset, size);
         offset += 2;
 
-        if (game_data_item_stackable[id & 32767] == 0) {
+        if (game_data.items[id & 32767].stackable == 0) {
             stack = get_stack_int(data, offset, size);
 
             if (stack >= 128) {

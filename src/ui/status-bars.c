@@ -31,7 +31,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
         char *opponent_name = "";
 
         if (opponent->npc_id != -1) {
-            opponent_name = game_data_npc_name[opponent->npc_id];
+            opponent_name = game_data.npcs[opponent->npc_id].name;
         } else {
             opponent_name = opponent->name;
         }

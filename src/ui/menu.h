@@ -7,7 +7,6 @@
 #define PLAYER_FACE_TAG 10000
 #define GROUND_ITEM_FACE_TAG 20000
 #define NPC_FACE_TAG 30000
-#define WALL_FACE_TAG 30000
 #define TILE_FACE_TAG 200000
 
 /* number determines priority in the menu */

@@ -3288,15 +3288,15 @@ char *wiki_pages_objects[] = {
 
 char *wiki_get_npc_page(int npc_id) {
     char *page = wiki_pages_npcs[npc_id];
-    return page == NULL ? game_data_npc_name[npc_id] : page;
+    return page == NULL ? game_data.npcs[npc_id].name : page;
 }
 
 char *wiki_get_item_page(int item_id) {
     char *page = wiki_pages_items[item_id];
-    return page == NULL ? game_data_item_name[item_id] : page;
+    return page == NULL ? game_data.items[item_id].name : page;
 }
 
 char *wiki_get_object_page(int object_id) {
     char *page = wiki_pages_objects[object_id];
-    return page == NULL ? game_data_object_name[object_id] : page;
+    return page == NULL ? game_data.objects[object_id].name : page;
 }

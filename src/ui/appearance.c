@@ -134,11 +134,11 @@ void mudclient_handle_appearance_panel_input(mudclient *mud) {
                          mud->control_appearance_head_left)) {
         do {
             mud->appearance_head_type =
-                (mud->appearance_head_type - 1 + game_data_animation_count) %
-                game_data_animation_count;
-        } while ((game_data_animation_gender[mud->appearance_head_type] & 3) !=
+                (mud->appearance_head_type - 1 + game_data.animation_count) %
+                game_data.animation_count;
+        } while ((game_data.animations[mud->appearance_head_type].gender & 3) !=
                      1 ||
-                 (game_data_animation_gender[mud->appearance_head_type] &
+                 (game_data.animations[mud->appearance_head_type].gender &
                   (4 * mud->appearance_head_gender)) == 0);
     }
 
@@ -146,10 +146,10 @@ void mudclient_handle_appearance_panel_input(mudclient *mud) {
                          mud->control_appearance_head_right)) {
         do {
             mud->appearance_head_type =
-                (mud->appearance_head_type + 1) % game_data_animation_count;
-        } while ((game_data_animation_gender[mud->appearance_head_type] & 3) !=
+                (mud->appearance_head_type + 1) % game_data.animation_count;
+        } while ((game_data.animations[mud->appearance_head_type].gender & 3) !=
                      1 ||
-                 (game_data_animation_gender[mud->appearance_head_type] &
+                 (game_data.animations[mud->appearance_head_type].gender &
                   (4 * mud->appearance_head_gender)) == 0);
     }
 
@@ -174,19 +174,19 @@ void mudclient_handle_appearance_panel_input(mudclient *mud) {
         panel_is_clicked(mud->panel_appearance,
                          mud->control_appearance_gender_right)) {
         for (mud->appearance_head_gender = 3 - mud->appearance_head_gender;
-             (game_data_animation_gender[mud->appearance_head_type] & 3) != 1 ||
-             (game_data_animation_gender[mud->appearance_head_type] &
+             (game_data.animations[mud->appearance_head_type].gender & 3) != 1 ||
+             (game_data.animations[mud->appearance_head_type].gender &
               (4 * mud->appearance_head_gender)) == 0;
              mud->appearance_head_type =
-                 (mud->appearance_head_type + 1) % game_data_animation_count)
+                 (mud->appearance_head_type + 1) % game_data.animation_count)
             ;
 
         for (;
-             (game_data_animation_gender[mud->appearance_body_type] & 3) != 2 ||
-             (game_data_animation_gender[mud->appearance_body_type] &
+             (game_data.animations[mud->appearance_body_type].gender & 3) != 2 ||
+             (game_data.animations[mud->appearance_body_type].gender &
               (4 * mud->appearance_head_gender)) == 0;
              mud->appearance_body_type =
-                 (mud->appearance_body_type + 1) % game_data_animation_count)
+                 (mud->appearance_body_type + 1) % game_data.animation_count)
             ;
     }
 
@@ -268,58 +268,58 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
     surface_draw_sprite_scale_mask(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data_animation_number[ANIMATION_INDEX_LEGS],
+        game_data.animations[ANIMATION_INDEX_LEGS].file_id,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data_animation_number[mud->appearance_body_type],
+        game_data.animations[mud->appearance_body_type].file_id,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data_animation_number[mud->appearance_head_type],
+        game_data.animations[mud->appearance_head_type].file_id,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_scale_mask(
         mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
-        APPEARANCE_CHARACTER_HEIGHT, game_data_animation_number[2] + 6,
+        APPEARANCE_CHARACTER_HEIGHT, game_data.animations[2].file_id + 6,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data_animation_number[mud->appearance_body_type] + 6,
+        game_data.animations[mud->appearance_body_type].file_id + 6,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data_animation_number[mud->appearance_head_type] + 6,
+        game_data.animations[mud->appearance_head_type].file_id + 6,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_scale_mask(
         mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
-        APPEARANCE_CHARACTER_HEIGHT, game_data_animation_number[2] + 12,
+        APPEARANCE_CHARACTER_HEIGHT, game_data.animations[2].file_id + 12,
         player_top_bottom_colours[mud->appearance_bottom_colour]);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data_animation_number[mud->appearance_body_type] + 12,
+        game_data.animations[mud->appearance_body_type].file_id + 12,
         player_top_bottom_colours[mud->appearance_top_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
     surface_draw_sprite_transform_mask(
         mud->surface, x - 32 + 55, y, APPEARANCE_CHARACTER_WIDTH,
         APPEARANCE_CHARACTER_HEIGHT,
-        game_data_animation_number[mud->appearance_head_type] + 12,
+        game_data.animations[mud->appearance_head_type].file_id + 12,
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 

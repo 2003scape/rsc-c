@@ -32,7 +32,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
             mudclient_format_item_amount(
                 mud, mud->inventory_item_stack_count[i], formatted_amount);
 
-            if (game_data_item_stackable[mud->inventory_item_id[i]] == 0) {
+            if (game_data.items[mud->inventory_item_id[i]].stackable == 0) {
                 surface_draw_string(mud->surface, formatted_amount, slot_x + 1,
                                     slot_y + 10, 1, YELLOW);
             }
@@ -72,7 +72,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     }
 
     int item_id = mud->inventory_item_id[item_index];
-    char *item_name = game_data_item_name[item_id];
+    char *item_name = game_data.items[item_id].name;
 
     char formatted_item_name[strlen(item_name) + 6];
     sprintf(formatted_item_name, "@lre@%s", item_name);
@@ -88,10 +88,10 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
                                   mud->bank_last_deposit_offer);
     } else {
         if (mud->selected_spell >= 0) {
-            if (game_data_spell_type[mud->selected_spell] == 3) {
+            if (game_data.spells[mud->selected_spell].type == 3) {
                 sprintf(mud->menu_item_text1[mud->menu_items_count],
                         "Cast %s on",
-                        game_data_spell_name[mud->selected_spell]);
+                        game_data.spells[mud->selected_spell].name);
 
                 strcpy(mud->menu_item_text2[mud->menu_items_count],
                        formatted_item_name);
@@ -133,8 +133,8 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
                 mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_UNEQUIP;
                 mud->menu_index[mud->menu_items_count] = item_index;
                 mud->menu_items_count++;
-            } else if (game_data_item_wearable[item_id] != 0) {
-                int is_wield = (game_data_item_wearable[item_id] & 24);
+            } else if (game_data.items[item_id].wearable != 0) {
+                int is_wield = (game_data.items[item_id].wearable & 24);
 
                 strcpy(mud->menu_item_text1[mud->menu_items_count],
                        is_wield ? "Wield" : "Wear");
@@ -147,9 +147,9 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
                 mud->menu_items_count++;
             }
 
-            if (strlen(game_data_item_command[item_id]) > 0) {
+            if (strlen(game_data.items[item_id].command) > 0) {
                 strcpy(mud->menu_item_text1[mud->menu_items_count],
-                       game_data_item_command[item_id]);
+                       game_data.items[item_id].command);
 
                 strcpy(mud->menu_item_text2[mud->menu_items_count],
                        formatted_item_name);

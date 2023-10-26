@@ -8,115 +8,159 @@
 #include "utility.h"
 
 #define NPC_SPRITE_COUNT 12
+#define MAX_REQUIRED_RUNES 4
 
-extern char *game_data_model_name[5000];
+struct TextureConfig {
+    char *name;
+    char *subtype_name;
+};
 
-extern int game_data_texture_count;
-extern char **game_data_texture_name;
-extern char **game_data_texture_subtype_name;
+struct ObjectConfig {
+    char *name;
+    char *description;
+    char *command1;
+    char *command2;
+    uint16_t model_index;
+    uint8_t width;
+    uint8_t height;
+    uint8_t type;
+    uint8_t elevation; /* surface elev for e.g. tables */
+};
 
-extern int game_data_object_count;
-extern int *game_data_object_model_index;
-extern int *game_data_object_width;
-extern int *game_data_object_height;
-extern int *game_data_object_type;
-extern int *game_data_object_elevation;
-extern char **game_data_object_name;
-extern char **game_data_object_description;
-extern char **game_data_object_command1;
-extern char **game_data_object_command2;
+struct WallConfig {
+    char *name;
+    char *description;
+    char *command1;
+    char *command2;
+    int texture_front;
+    int texture_back;
+    uint16_t height;
+    uint8_t blocking;
+    uint8_t interactive;
+};
 
-extern int game_data_wall_object_count;
-extern int *game_data_wall_object_height;
-extern int *game_data_wall_object_texture_front;
-extern int *game_data_wall_object_texture_back;
-extern int *game_data_wall_object_adjacent;
-extern int *game_data_wall_object_invisible;
-extern char **game_data_wall_object_name;
-extern char **game_data_wall_object_description;
-extern char **game_data_wall_object_command1;
-extern char **game_data_wall_object_command2;
+struct NpcConfig {
+    char *name;
+    char *description;
+    char *command;
+    int16_t sprites[NPC_SPRITE_COUNT];
+    uint16_t width;
+    uint16_t height;
+    uint8_t walk_speed; /* animation playback speed */
+    uint8_t combat_speed; /* animation playback speed */
+    uint8_t combat_width; /* used for e.g. long animals like dragons */
+    uint8_t attack;
+    uint8_t strength;
+    uint8_t hits;
+    uint8_t defense;
+    uint8_t attackable; /* 3 == aggressive, 2 == blocks? */
+    int hair_colour;
+    int top_colour;
+    int bottom_colour;
+    int skin_colour;
+};
 
-extern int game_data_npc_count;
-extern char **game_data_npc_name;
-extern char **game_data_npc_description;
-extern char **game_data_npc_command;
-extern int *game_data_npc_width;
-extern int *game_data_npc_height;
-extern int **game_data_npc_sprite;
-extern int *game_data_npc_hair_colour;
-extern int *game_data_npc_top_colour;
-extern int *game_data_npc_bottom_colour;
-extern int *game_data_npc_skin_colour;
-extern int *game_data_npc_attack;
-extern int *game_data_npc_strength;
-extern int *game_data_npc_hits;
-extern int *game_data_npc_defense;
-extern int *game_data_npc_attackable;
-extern int *game_data_npc_walk_model;
-extern int *game_data_npc_combat_model;
-extern int *game_data_npc_combat_animation;
+struct SpellReagentConfig {
+    uint16_t id;
+    uint8_t count;
+};
 
-extern int game_data_spell_count;
-extern int *game_data_spell_level;
-extern int *game_data_spell_runes_required;
-extern int *game_data_spell_type;
-extern int **game_data_spell_runes_id;
-extern int **game_data_spell_runes_count;
-extern char **game_data_spell_name;
-extern char **game_data_spell_description;
+struct SpellConfig {
+    char *name;
+    char *description;
+    uint8_t level;
+    uint8_t type;
+    uint8_t runes_required;
+    struct SpellReagentConfig runes[MAX_REQUIRED_RUNES];
+};
 
-extern int game_data_item_count;
-extern int game_data_item_sprite_count;
-extern char **game_data_item_name;
-extern char **game_data_item_description;
-extern char **game_data_item_command;
-extern int *game_data_item_sprite;
-extern int *game_data_item_base_price;
-extern int8_t *game_data_item_stackable;
-extern int *game_data_item_wearable;
-extern int *game_data_item_mask;
-extern int8_t *game_data_item_special;
-extern int8_t *game_data_item_members;
+struct ItemConfig {
+    char *name;
+    char *description;
+    char *command;
+    uint16_t sprite;
+    uint32_t mask;
+    uint32_t base_price;
+    uint16_t wearable; /* equipment slot */
+    uint8_t stackable;
+    uint8_t special; /* untradable */
+    uint8_t members;
+};
 
-extern int game_data_tile_count;
-extern int *game_data_tile_decoration;
-extern int *game_data_tile_type;
-extern int *game_data_tile_adjacent;
+struct TileConfig {
+    int decoration;
+    uint8_t type;
+    uint8_t blocking;
+};
 
-extern int game_data_animation_count;
-extern int *game_data_animation_character_colour;
-extern int *game_data_animation_gender;
-extern int *game_data_animation_has_a;
-extern int *game_data_animation_has_f;
-extern int *game_data_animation_number;
-extern char **game_data_animation_name;
+struct AnimConfig {
+    char *name;
+    uint32_t colour;
+    uint8_t gender;
+    uint8_t has_a;
+    uint8_t has_f;
+    uint16_t file_id;
+};
 
-extern int game_data_prayer_count;
-extern int *game_data_prayer_level;
-extern int *game_data_prayer_drain;
-extern char **game_data_prayer_name;
-extern char **game_data_prayer_description;
+struct PrayerConfig {
+    char *name;
+    char *description;
+    uint8_t level;
+    uint8_t drain;
+};
 
-extern int game_data_roof_count;
-extern int *game_data_roof_height;
-extern int *game_data_roof_fills;
+struct RoofConfig {
+    uint8_t height;
+    uint8_t fill;
+};
 
-extern int game_data_model_count;
-extern int game_data_projectile_sprite;
+struct MudConfig {
+    int texture_count;
+    struct TextureConfig *textures;
 
-extern int8_t *game_data_data_string;
-extern size_t game_data_data_string_len;
-extern int8_t *game_data_data_integer;
-extern size_t game_data_data_integer_len;
-extern int game_data_string_offset;
-extern int game_data_offset;
+    int wall_object_count;
+    struct WallConfig *wall_objects;
 
-int game_data_get_model_index(char *name);
-int game_data_get_unsigned_byte();
-int game_data_get_unsigned_short();
-int game_data_get_unsigned_int();
-char *game_data_get_string();
-void game_data_load_data(int8_t *buffer, int is_members);
+    int object_count;
+    struct ObjectConfig *objects;
+
+    int npc_count;
+    struct NpcConfig *npcs;
+
+    int spell_count;
+    struct SpellConfig *spells;
+
+    int item_count;
+    int item_sprite_count;
+    struct ItemConfig *items;
+
+    int tile_count;
+    struct TileConfig *tiles;
+
+    int animation_count;
+    struct AnimConfig *animations;
+
+    int prayer_count;
+    struct PrayerConfig *prayers;
+
+    int roof_count;
+    struct RoofConfig *roofs;
+
+    int model_count;
+    int projectile_sprite;
+
+    int8_t *data_string;
+    size_t data_string_len;
+    int8_t *data_integer;
+    size_t data_integer_len;
+    int string_offset;
+    int offset;
+
+    char *model_name[5000];
+};
+
+extern struct MudConfig game_data;
+extern int game_data_get_model_index(char *name);
+extern void game_data_load_data(int8_t *buffer, int is_members);
 
 #endif

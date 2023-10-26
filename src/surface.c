@@ -3886,8 +3886,8 @@ void surface_draw_item(Surface *surface, int x, int y, int slot_width,
                        int slot_height, int item_id) {
     surface_draw_sprite_transform_mask(
         surface, x, y, slot_width - 1, slot_height - 2,
-        surface->mud->sprite_item + game_data_item_sprite[item_id],
-        game_data_item_mask[item_id], 0, 0, 0);
+        surface->mud->sprite_item + game_data.items[item_id].sprite,
+        game_data.items[item_id].mask, 0, 0, 0);
 }
 
 /* used in bank and shop */
@@ -3946,7 +3946,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                     surface_draw_string_right(
                         surface, formatted_amount, slot_x + slot_width - 2,
                         slot_y + slot_height - 5, font_size, CYAN);
-                } else if (game_data_item_stackable[item_id] == 0) {
+                } else if (game_data.items[item_id].stackable == 0) {
                     char formatted_amount[15] = {0};
 
                     mudclient_format_item_amount(surface->mud, item_count,
