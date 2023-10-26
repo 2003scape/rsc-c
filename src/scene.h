@@ -40,6 +40,8 @@ typedef struct Scene Scene;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 #include "gl/textures/model_textures.h"
+
+#define TRANSLUCENT_MODEL_OPACITY 0.66f
 #endif
 
 #define VERTEX_COUNT 40 // ambigious - SCENE_VERTEX_COUNT ?
@@ -227,6 +229,7 @@ typedef struct Scene {
     int _3ds_gl_light_ambience_diffuse_fog_uniform;
     int _3ds_gl_unlit_uniform;
     int _3ds_gl_light_direction_uniform;
+    int _3ds_gl_opacity_uniform;
     int _3ds_gl_cull_front_uniform;
 
     C3D_Tex gl_model_texture;
@@ -325,5 +328,6 @@ void scene_gl_render_transparent_models(Scene *scene);
 #elif defined(RENDER_3DS_GL)
 void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model);
 void scene_3ds_gl_render(Scene *scene);
+void scene_3ds_gl_render_transparent_models(Scene *scene);
 #endif
 #endif

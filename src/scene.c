@@ -200,6 +200,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->_3ds_gl_light_direction_uniform = shaderInstanceGetUniformLocation(
         (&scene->_3ds_gl_model_shader)->vertexShader, "light_direction");
 
+    scene->_3ds_gl_opacity_uniform = shaderInstanceGetUniformLocation(
+        (&scene->_3ds_gl_model_shader)->vertexShader, "opacity");
+
     scene->_3ds_gl_projection_view_model_uniform =
         shaderInstanceGetUniformLocation(
             (&scene->_3ds_gl_model_shader)->vertexShader,
@@ -4283,14 +4286,11 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                          ((float)game_model->light_diffuse *
                           (float)game_model->light_direction_magnitude) /
                              256.0f);
-
-        /*shader_set_float(&scene->game_model_shader,
-           "light_direction_magnitude",
-                         (float)game_model->light_direction_magnitude);*/
     }
 
     shader_set_float(&scene->game_model_shader, "opacity",
-                     game_model->transparent ? 0.66f : 1.0f);
+                     game_model->transparent ? TRANSLUCENT_MODEL_OPACITY
+                                             : 1.0f);
 
     glCullFace(GL_BACK);
     shader_set_int(&scene->game_model_shader, "cull_front", 0);
@@ -4314,8 +4314,8 @@ void scene_gl_render(Scene *scene) {
 
     scene->surface->width = scene->width;
 
-    scene->surface->height = scene_height + 12 -
-        mudclient_is_ui_scaled(scene->surface->mud);
+    scene->surface->height =
+        scene_height + 12 - mudclient_is_ui_scaled(scene->surface->mud);
 
     surface_reset_bounds(scene->surface);
 
@@ -4542,7 +4542,6 @@ void scene_gl_render_transparent_models(Scene *scene) {
 
     glViewport(0, 0, scene->surface->mud->game_width,
                scene->surface->mud->game_height);
-
 }
 #elif defined(RENDER_3DS_GL)
 void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
@@ -4596,6 +4595,10 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     C3D_FVUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_light_direction_uniform,
                   light_direction[0], light_direction[1], light_direction[2],
                   0);
+
+    C3D_FVUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_opacity_uniform, 1.0f, 1.0f,
+                  1.0f,
+                  game_model->transparent ? TRANSLUCENT_MODEL_OPACITY : 1.0f);
 
     C3D_BoolUnifSet(GPU_VERTEX_SHADER, scene->_3ds_gl_cull_front_uniform, 0);
 
@@ -4747,7 +4750,9 @@ void scene_3ds_gl_render(Scene *scene) {
             }
         }
 
-        scene_3ds_gl_draw_game_model(scene, game_model);
+        if (!game_model->transparent) {
+            scene_3ds_gl_draw_game_model(scene, game_model);
+        }
     }
 
     qsort(scene->gl_mouse_picked_time, scene->gl_mouse_picked_count,
@@ -4761,5 +4766,30 @@ void scene_3ds_gl_render(Scene *scene) {
     }
 
     scene->mouse_picked_count += scene->gl_mouse_picked_count;
+}
+
+void scene_3ds_gl_render_transparent_models(Scene *scene) {
+    C3D_BindProgram(&scene->_3ds_gl_model_shader);
+
+    C3D_AlphaTest(true, GPU_GREATER, 0);
+    C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
+
+    C3D_TexEnv *env = C3D_GetTexEnv(0);
+    C3D_TexEnvInit(env);
+    C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
+    C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
+
+    /* clear the second texenv */
+    C3D_TexEnvInit(C3D_GetTexEnv(1));
+
+    C3D_TexBind(0, &scene->gl_model_texture);
+
+    for (int i = 0; i < scene->model_count; i++) {
+        GameModel *game_model = scene->models[i];
+
+        if (game_model->transparent) {
+            scene_3ds_gl_draw_game_model(scene, game_model);
+        }
+    }
 }
 #endif

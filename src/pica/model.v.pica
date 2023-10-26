@@ -9,6 +9,8 @@
 .bool unlit
 .fvec light_direction
 
+.fvec opacity
+
 .bool cull_front
 
 ; constants
@@ -140,6 +142,9 @@
 
     ; vertex_colour * gradient_index
     mul r1, r1, r2
+
+    ; vertex_colour * opacity
+    mul r1, opacity, r1
 
     mov out_position, r7
     mov out_colour, r1

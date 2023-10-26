@@ -777,7 +777,7 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 #endif
 }
 
-void surface_gl_draw(Surface *surface) {
+void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
 #ifdef RENDER_GL
     glEnable(GL_SCISSOR_TEST);
     glDisable(GL_CULL_FACE);
@@ -862,6 +862,16 @@ void surface_gl_draw(Surface *surface) {
             continue;
         }
 
+        if (depth_mode == GL_DEPTH_DISABLED && !context->use_depth) {
+            drawn_quads += context->quad_count;
+            continue;
+        }
+
+        if (depth_mode == GL_DEPTH_ENABLED && context->use_depth) {
+            drawn_quads += context->quad_count;
+            continue;
+        }
+
         if (context->use_depth) {
             C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
         } else {
@@ -883,7 +893,9 @@ void surface_gl_draw(Surface *surface) {
     }
 #endif
 
-    surface_gl_reset_context(surface);
+    if (depth_mode == GL_DEPTH_BOTH) {
+        surface_gl_reset_context(surface);
+    }
 }
 
 void surface_gl_blur_texture(Surface *surface, int sprite_id, int blur_height,
@@ -1086,11 +1098,10 @@ void surface_draw(Surface *surface) {
         SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
         SDL_UpdateWindowSurface(mud->window);
     }
-
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    surface_gl_draw(surface);
+    surface_gl_draw(surface, GL_DEPTH_BOTH);
 #endif
 }
 

@@ -199,11 +199,11 @@ char _3ds_keyboard_buffer[255] = {0};
 volatile int _3ds_keyboard_received_input = 0;
 SwkbdButton _3ds_keyboard_button;
 
-char _3ds_option_buttons[] = {'X', 'A', 'B', 'Y', 'R'};
+char _3ds_option_buttons[] = {'A', 'B', 'X', 'Y', 'R'};
 
 void _3ds_keyboard_thread_callback(void *arg) {
     static SwkbdState swkbd;
-    swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 2, -1);
+    swkbdInit(&swkbd, (int)arg, 2, -1);
     swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
     swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
 
@@ -650,7 +650,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     gfxInitDefault();
 
-    //consoleInit(GFX_TOP, NULL);
+    consoleInit(GFX_TOP, NULL);
 
     Result romfs_res = romfsInit();
 
@@ -855,9 +855,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     printf("Started application\n");
 
 #ifdef _3DS
-    gspLcdInit();
-    GSPLCD_PowerOffBacklight(GSPLCD_SCREEN_TOP);
-    gspLcdExit();
+    //gspLcdInit();
+    //GSPLCD_PowerOffBacklight(GSPLCD_SCREEN_TOP);
+    //gspLcdExit();
 
     mudclient_3ds_draw_top_background(mud);
     // gspWaitForVBlank();
@@ -4748,6 +4748,10 @@ void mudclient_draw_game(mudclient *mud) {
 
     scene_render(mud->scene);
 
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    surface_gl_draw(mud->surface, GL_DEPTH_DISABLED);
+#endif
+
     mudclient_draw_overhead(mud);
 
     /* draw the animated X sprite when clicking */
@@ -4828,13 +4832,19 @@ void mudclient_draw_game(mudclient *mud) {
     mudclient_draw_ui(mud);
 
     mud->surface->draw_string_shadow = 0;
-
     mudclient_draw_chat_message_tabs(mud);
-
-    surface_draw(mud->surface);
 
 #ifdef RENDER_GL
     scene_gl_render_transparent_models(mud->scene);
+#elif defined(RENDER_3DS_GL)
+    scene_3ds_gl_render_transparent_models(mud->scene);
+#endif
+
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+    surface_gl_draw(mud->surface, GL_DEPTH_ENABLED);
+    surface_gl_reset_context(mud->surface);
+#else
+    surface_draw(mud->surface);
 #endif
 
 #if defined(_3DS) && defined(RENDER_SW)
@@ -5225,7 +5235,7 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_down & KEY_A) {
         if (mud->show_option_menu) {
-            mudclient_key_pressed(mud, K_2, K_2);
+            mudclient_key_pressed(mud, K_1, K_1);
         } else {
             mudclient_key_pressed(mud, K_HOME, -1);
         }
@@ -5241,7 +5251,7 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_down & KEY_X) {
         if (mud->show_option_menu) {
-            mudclient_key_pressed(mud, K_1, K_1);
+            mudclient_key_pressed(mud, K_3, K_3);
         } else {
             mudclient_key_pressed(mud, K_PAGE_UP, -1);
         }
@@ -5249,7 +5259,7 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_down & KEY_B) {
         if (mud->show_option_menu) {
-            mudclient_key_pressed(mud, K_3, K_3);
+            mudclient_key_pressed(mud, K_2, K_2);
         } else {
             mudclient_key_pressed(mud, K_PAGE_DOWN, -1);
         }
@@ -5285,18 +5295,18 @@ void mudclient_poll_events(mudclient *mud) {
 
     if (keys_up & KEY_A || keys_up & KEY_Y) {
         mudclient_key_released(mud, K_HOME);
-        mudclient_key_released(mud, K_2);
+        mudclient_key_released(mud, K_1);
         mudclient_key_released(mud, K_4);
     }
 
     if (keys_up & KEY_X) {
         mudclient_key_released(mud, K_PAGE_UP);
-        mudclient_key_released(mud, K_1);
+        mudclient_key_released(mud, K_3);
     }
 
     if (keys_up & KEY_B) {
         mudclient_key_released(mud, K_PAGE_DOWN);
-        mudclient_key_released(mud, K_3);
+        mudclient_key_released(mud, K_2);
     }
 
     touchPosition touch = {0};

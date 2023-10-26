@@ -588,7 +588,9 @@ void packet_stream_put_login_block(PacketStream *packet_stream,
     size_t password_len = strlen(password);
     uint8_t *p = input_block;
 
+#if !defined(NO_ISAAC) || !defined(NO_RSA)
     *(p++) = '\n'; /* Magic for sanity checks by the server. */
+#endif
 
 #ifndef NO_ISAAC
     memset(packet_stream->isaac_in.randrsl, 0,

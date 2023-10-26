@@ -176,9 +176,6 @@ typedef struct Surface {
     int *rotations_5;
     int rotations_length;
 #elif defined(RENDER_GL)
-    // int8_t gl_fade_to_black;
-    // int8_t gl_has_faded;
-
     Shader gl_flat_shader;
 
     GLuint gl_sprite_texture;
@@ -190,8 +187,6 @@ typedef struct Surface {
 
     // int32_t *gl_screen_pixels_reversed;
     int32_t *gl_screen_pixels;
-    // int gl_last_screen_width;
-    // int gl_last_screen_height;
 #elif defined(RENDER_3DS_GL)
     DVLB_s *_3ds_gl_flat_shader_dvlb;
     shaderProgram_s _3ds_gl_flat_shader;
@@ -213,6 +208,14 @@ typedef struct Surface {
     int gl_context_count;
 #endif
 } Surface;
+
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+typedef enum {
+    GL_DEPTH_BOTH = 0,
+    GL_DEPTH_DISABLED = 1,
+    GL_DEPTH_ENABLED = 2
+} GL_DEPTH_MODE;
+#endif
 
 void create_font(int8_t *buffer, int id);
 
@@ -255,7 +258,7 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
                               int colour, int alpha, float depth);
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
                                 int height, int top_colour, int bottom_colour);
-void surface_gl_draw(Surface *surface);
+void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode);
 void surface_gl_blur_texture(Surface *surface, int sprite_id,
                                  int blur_height, int x, int y, int height);
 void surface_gl_apply_login_filter(Surface *surface, int sprite_id);
