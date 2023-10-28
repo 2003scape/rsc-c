@@ -762,10 +762,16 @@ void mudclient_start_application(mudclient *mud, char *title) {
         }
     }
 
+    uint32_t windowflags = SDL_WINDOW_SHOWN;
+
+#if !defined(WII) && !defined(_3DS)
+    windowflags |= SDL_WINDOW_RESIZABLE;
+#endif
+
 #ifdef RENDER_SW
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
+                         mud->game_width, mud->game_height, windowflags);
 
     mudclient_resize(mud);
 #endif
@@ -793,9 +799,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 #endif
 
+    windowflags |= SDL_WINDOW_OPENGL;
     mud->gl_window = SDL_CreateWindow(
         title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mud->game_width,
-        mud->game_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        mud->game_height, windowflags);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 
@@ -2752,14 +2759,6 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
     mudclient_render_login_scene_sprites(mud);
-
-#if !defined(WII) && !defined(_3DS)
-#ifdef RENDER_SW
-    SDL_SetWindowResizable(mud->window, 1);
-#elif RENDER_GL
-    SDL_SetWindowResizable(mud->gl_window, 1);
-#endif
-#endif
 
     free(surface_texture_pixels);
     surface_texture_pixels = NULL;
