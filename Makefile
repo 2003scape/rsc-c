@@ -9,11 +9,9 @@ OBJ = $(SRC:.c=.o)
 CFLAGS += -fwrapv
 CFLAGS += -I ./cglm/include -DRENDER_GL #-DRENDER_SW #-DREVISION_177
 CFLAGS += $(shell sdl2-config --cflags)
-CFLAGS += $(shell pkg-config --cflags SDL2_image)
 CFLAGS += $(shell pkg-config --cflags glew)
 LDFLAGS += -lm
 LDFLAGS += $(shell sdl2-config --libs)
-LDFLAGS += $(shell pkg-config --libs SDL2_image)
 LDFLAGS += $(shell pkg-config --libs glew)
 
 ifdef DEBUG

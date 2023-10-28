@@ -130,11 +130,11 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
 #ifdef RENDER_GL
     gl_load_texture(&surface->gl_sprite_texture,
-                    "./cache/textures/sprites.png");
+                    "./cache/textures/sprites.bmp");
 
     for (int i = 0; i < ENTITY_TEXTURE_LENGTH; i++) {
         char filename[32] = {0};
-        sprintf(filename, "./cache/textures/entities_%d.png", i);
+        sprintf(filename, "./cache/textures/entities_%d.bmp", i);
 
         gl_load_texture(&surface->gl_entity_textures[i], filename);
     }

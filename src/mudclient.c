@@ -774,9 +774,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->hand_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 
 #ifdef RENDER_GL
-    /*if (IMG_Init(IMG_INIT_PNG) == 0) {
-        fprintf(stderr, "unable to initialize sdl_image: %s\n", IMG_GetError());
-    }*/
 
 #ifdef EMSCRIPTEN
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);

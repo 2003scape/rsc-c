@@ -774,14 +774,30 @@ void gl_create_texture(GLuint *texture_id) {
 void gl_load_texture(GLuint *texture_id, char *file) {
     gl_create_texture(texture_id);
 
-    SDL_Surface *texture_image = IMG_Load(file);
+    SDL_Surface *bmp_image = SDL_LoadBMP(file);
 
-    if (!texture_image) {
+    if (!bmp_image) {
         fprintf(stderr, "unable to load %s texture\n%s\n", file,
-                IMG_GetError());
+                SDL_GetError());
 
         exit(1);
     }
+
+    SDL_SetColorKey(bmp_image, SDL_TRUE, 0xff00ff);
+
+    SDL_Surface *texture_image = SDL_CreateRGBSurfaceWithFormat(0,
+        bmp_image->w, bmp_image->h, 32, SDL_PIXELFORMAT_ABGR8888);
+
+    if (!texture_image) {
+        fprintf(stderr, "unable to allocate memory for %s texture\n%s\n", file,
+                SDL_GetError());
+
+        exit(1);
+    }
+
+    SDL_BlitSurface(bmp_image, NULL, texture_image, NULL);
+
+    SDL_FreeSurface(bmp_image);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture_image->w, texture_image->h,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image->pixels);

@@ -60,7 +60,6 @@ a USB keyboard and mouse can also be used.
 
 install [libsdl2-dev](https://packages.debian.org/sid/libsdl2-dev).
 if compiling with opengl support, also install
-[libsdl2-image-dev](https://packages.debian.org/sid/libsdl2-image-dev),
 [libglew-dev](https://packages.debian.org/sid/libglew-dev),
 [libgl-dev](https://packages.debian.org/sid/libgl-dev),
 and [pkgconf](https://packages.debian.org/sid/pkgconf).

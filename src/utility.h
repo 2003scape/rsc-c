@@ -25,7 +25,6 @@
 #endif
 #else
 #include <SDL.h>
-#include <SDL_image.h>
 
 #ifdef RENDER_GL
 #include <GL/glew.h>

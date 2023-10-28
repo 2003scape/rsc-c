@@ -169,9 +169,15 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
                            scene->texture_light_gradient, RAMP_SIZE);
 
     gl_load_texture(&scene->gl_model_texture,
-                    "./cache/textures/model_textures.png");
+                    "./cache/textures/model_textures.bmp");
 
-    scene->gl_model_surface = IMG_Load("./cache/textures/model_textures.png");
+    SDL_Surface *bmp_image;
+
+    bmp_image = SDL_LoadBMP("./cache/textures/model_textures.bmp");
+    scene->gl_model_surface = SDL_CreateRGBSurfaceWithFormat(0,
+        bmp_image->w, bmp_image->h, 32, SDL_PIXELFORMAT_ABGR8888);
+    SDL_BlitSurface(bmp_image, NULL, scene->gl_model_surface, NULL);
+    SDL_FreeSurface(bmp_image);
 #elif defined(RENDER_3DS_GL)
     scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);
@@ -3502,10 +3508,11 @@ int scene_get_fill_colour(Scene *scene, int face_fill) {
         int x = (int)(atlas_position.left_u * GL_TEXTURE_SIZE);
         int y = (int)(atlas_position.top_v * GL_TEXTURE_SIZE);
 
+
         uint32_t *texture_pixels = (uint32_t *)scene->gl_model_surface->pixels;
         uint32_t pixel = texture_pixels[(y * 1024) + x];
-
         uint8_t r, g, b;
+
         SDL_GetRGB(pixel, scene->gl_model_surface->format, &r, &g, &b);
 
         return (r << 16 | g << 8 | b);
