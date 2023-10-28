@@ -1502,7 +1502,7 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
     for (int y = height - 1; y >= 0; y--) {
         for (int x = 0; x < width; x++) {
             int palette_index = buffer[(256 * 3) + x + y * width];
-#ifdef WII
+#ifdef MUD_IS_BIG_ENDIAN
             pixels[index++] = 255;
             pixels[index++] = r[palette_index];
             pixels[index++] = g[palette_index];
