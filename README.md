@@ -1,8 +1,8 @@
 # rsc-c
 
-portable, enhanced runescape classic client ported to C. supports 204 and 177
-(for [openrsc](https://rsc.vet/) support) client revisions. original
-mudclient204 java source refactored by v0rtex/xetr0v and Isaac Eggsampler.
+portable, enhanced runescape classic client ported to C99. supports 204 and 177
+protocols. original mudclient204 java source refactored by v0rtex/xetr0v and
+Isaac Eggsampler.  compatible with [openrsc](https://rsc.vet/) and 2003scape.
 
 prominent new features include:
 * native ports for 3ds, switch, wii, web browser and desktop
