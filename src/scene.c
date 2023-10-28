@@ -132,6 +132,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_new(&scene->game_model_pick_shader, "./cache/pick.webgl.vs",
                "./cache/pick.webgl.fs");
+#elif OPENGL15
+    shader_new(&scene->game_model_shader, "./cache/game-model.gl2.vs",
+               "./cache/game-model.gl2.fs");
+#elif OPENGL20
+    shader_new(&scene->game_model_shader, "./cache/game-model.gl2.vs",
+               "./cache/game-model.gl2.fs");
 #else
     shader_new(&scene->game_model_shader, "./cache/game-model.vs",
                "./cache/game-model.fs");
