@@ -58,7 +58,7 @@ typedef struct PacketStream PacketStream;
 void init_packet_stream_global();
 #endif
 
-typedef struct PacketStream {
+struct PacketStream {
     int socket;
     int closed;
     int delay;
@@ -95,7 +95,7 @@ typedef struct PacketStream {
 
     int opcode_friend;*/
 #endif
-} PacketStream;
+};
 
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud);
 int packet_stream_available_bytes(PacketStream *packet_stream, int length);

@@ -337,7 +337,7 @@ extern char login_screen_status[255];
 
 extern float global_farts_test;
 
-typedef struct mudclient {
+struct mudclient {
 #ifdef WII
     /* store two for double-buffering */
     uint8_t **framebuffers;
@@ -948,7 +948,7 @@ typedef struct mudclient {
 
     /* wiki */
     int selected_wiki;
-} mudclient;
+};
 
 void mudclient_new(mudclient *mud);
 void mudclient_resize(mudclient *mud);
