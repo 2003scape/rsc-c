@@ -113,7 +113,10 @@ void mudclient_packet_tick(mudclient *mud) {
         packet_stream_send_packet(mud->packet_stream);
     }
 
-    packet_stream_write_packet(mud->packet_stream, 20);
+    if (packet_stream_write_packet(mud->packet_stream, 20) < 0) {
+        mudclient_lost_connection(mud);
+        return;
+    }
 
     int size =
         packet_stream_read_packet(mud->packet_stream, mud->incoming_packet);

@@ -265,6 +265,7 @@ typedef struct mudclient mudclient;
 #include "ui/experience-drops.h"
 #include "ui/login.h"
 #include "ui/logout.h"
+#include "ui/lost-connection.h"
 #include "ui/menu.h"
 #include "ui/message-tabs.h"
 #include "ui/offer-x.h"
@@ -466,7 +467,7 @@ typedef struct mudclient {
     int max_read_tries;
     int world_full_timeout;
     int moderator_level;
-    int auto_login_timeout;
+    int auto_login_attempts;
 
     /* ./ui/social-tab.c */
     Panel *panel_social_list;
@@ -997,6 +998,7 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
 
 void mudclient_update_bank_items(mudclient *mud);
 void mudclient_close_connection(mudclient *mud);
+void mudclient_lost_connection(mudclient *mud);
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
 void mudclient_auto_rotate_camera(mudclient *mud);
 void mudclient_handle_camera_zoom(mudclient *mud);

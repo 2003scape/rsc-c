@@ -660,7 +660,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     }
 
     gfxSetDoubleBuffering(GFX_BOTTOM, 0);
-    //gfxSetDoubleBuffering(GFX_TOP, 0);
+    // gfxSetDoubleBuffering(GFX_TOP, 0);
 
     mud->_3ds_framebuffer_top =
         gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
@@ -855,9 +855,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     printf("Started application\n");
 
 #ifdef _3DS
-    //gspLcdInit();
-    //GSPLCD_PowerOffBacklight(GSPLCD_SCREEN_TOP);
-    //gspLcdExit();
+    // gspLcdInit();
+    // GSPLCD_PowerOffBacklight(GSPLCD_SCREEN_TOP);
+    // gspLcdExit();
 
     mudclient_3ds_draw_top_background(mud);
     // gspWaitForVBlank();
@@ -2217,8 +2217,13 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    strcpy(mud->username, username);
-    strcpy(mud->password, password);
+    if (mud->username != username) {
+        strcpy(mud->username, username);
+    }
+
+    if (mud->password != password) {
+        strcpy(mud->password, password);
+    }
 
     char formatted_username[USERNAME_LENGTH + 1] = {0};
     format_auth_string(username, USERNAME_LENGTH, formatted_username);
@@ -2227,11 +2232,18 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     format_auth_string(password, PASSWORD_LENGTH, formatted_password);
 
     if (reconnecting) {
-        /*mudclient_draw_text_box(
-            mud,
-            "Connection lost! Please wait...",
-            "Attempting to re-establish"
-        );*/
+#ifdef RENDER_3DS_GL
+        mudclient_3ds_gl_frame_start(mud, 0);
+#endif
+
+        mudclient_draw_lost_connection(mud);
+        surface_draw(mud->surface);
+
+#ifdef RENDER_GL
+        SDL_GL_SwapWindow(mud->gl_window);
+#elif defined(RENDER_3DS_GL)
+        mudclient_3ds_gl_frame_end();
+#endif
     } else {
         mudclient_show_login_screen_status(mud, "Please wait...",
                                            "Connecting to server");
@@ -2242,10 +2254,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     packet_stream_new(mud->packet_stream, mud);
 
     if (mud->packet_stream->closed) {
-        mudclient_show_login_screen_status(
-            mud, "Sorry! Unable to connect.",
-            "Check internet settings or try another world");
-        return;
+        goto login_fail;
     }
 
 #ifdef REVISION_177
@@ -2259,7 +2268,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     packet_stream_put_byte(mud->packet_stream,
                            (int)((encoded_username >> 16) & 31));
 
-    packet_stream_flush_packet(mud->packet_stream);
+    if (packet_stream_flush_packet(mud->packet_stream) < 0) {
+        goto login_fail;
+    }
 
     int64_t session_id = packet_stream_get_long(mud->packet_stream);
     mud->session_id = session_id;
@@ -2291,7 +2302,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     /* uid/randomDat */
     packet_stream_put_int(mud->packet_stream, 0);
 
-    packet_stream_flush_packet(mud->packet_stream);
+    if (packet_stream_flush_packet(mud->packet_stream) < 0) {
+        goto login_fail;
+    }
 
     packet_stream_get_byte(mud->packet_stream);
 
@@ -2317,7 +2330,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     packet_stream_put_login_block(mud->packet_stream, formatted_username,
                                   formatted_password, keys, 0);
 
-    packet_stream_flush_packet(mud->packet_stream);
+    if (packet_stream_flush_packet(mud->packet_stream) < 0) {
+        goto login_fail;
+    }
 
     int response = packet_stream_get_byte(mud->packet_stream);
 #endif
@@ -2326,7 +2341,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
 
     if (response == 0 || response == 25) {
         mud->moderator_level = response == 25;
-        mud->auto_login_timeout = 0;
+        mud->auto_login_attempts = 0;
 
         strcpy(mud->options->username,
                mud->options->remember_username ? username : "");
@@ -2344,7 +2359,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     }
 
     if (response == 1) {
-        mud->auto_login_timeout = 0;
+        mud->auto_login_attempts = 0;
         return;
     }
 
@@ -2449,11 +2464,29 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    /*if (mud->auto_login_timeout > 0) {
-        delay_ticks(5000);
-        mud->auto_login_timeout--;
+login_fail:
+    if (mud->auto_login_attempts > 0) {
+        int delay = 0;
+
+        while (delay < 5000) {
+            mudclient_poll_events(mud);
+            delay += 16;
+            delay_ticks(16);
+        }
+
+        mud->auto_login_attempts--;
         mudclient_login(mud, username, password, reconnecting);
-    }*/
+        return;
+    }
+
+    if (reconnecting) {
+        mudclient_reset_login_screen(mud);
+        mud->login_screen = LOGIN_STAGE_EXISTING;
+    }
+
+    mudclient_show_login_screen_status(
+        mud, "Sorry! Unable to connect.",
+        "Check internet settings or try another world");
 }
 
 void mudclient_registration_login(mudclient *mud) {
@@ -2506,12 +2539,21 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
     mud->packet_stream = malloc(sizeof(PacketStream));
     packet_stream_new(mud->packet_stream, mud);
 
+    if (mud->packet_stream->closed) {
+        goto register_fail;
+    }
+
 #ifdef REVISION_177
     int session_id = packet_stream_get_int(mud->packet_stream);
     mud->session_id = session_id;
 
-    printf("Session id: %d\n", mud->session_id);
-#else
+    if (mud->session_id == 0) {
+        mudclient_show_login_screen_status(mud, "Login server offline.",
+                                           "Please try again in a few mins");
+        return;
+    }
+
+    printf("Session id: %d\n", session_id);
 #endif
 
     packet_stream_new_packet(mud->packet_stream, CLIENT_REGISTER);
@@ -2530,7 +2572,9 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
     /* uid/randomDat */
     packet_stream_put_int(mud->packet_stream, 0);
 
-    packet_stream_flush_packet(mud->packet_stream);
+    if (packet_stream_flush_packet(mud->packet_stream) < 0) {
+        goto register_fail;
+    }
 
     packet_stream_get_byte(mud->packet_stream);
 #else
@@ -2597,7 +2641,13 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
         mudclient_show_login_screen_status(mud,
                                            "Error unable to create username.",
                                            "Unrecognised response code");
+        return;
     }
+
+register_fail:
+    mudclient_show_login_screen_status(
+        mud, "Sorry! Unable to connect.",
+        "Check internet settings or try another world");
 }
 
 void mudclient_change_password(mudclient *mud, char *old_password,
@@ -2850,10 +2900,14 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 
 #ifdef RENDER_3DS_GL
     mudclient_3ds_gl_frame_start(mud, 0);
+#endif
+
     surface_draw(mud->surface);
+
+#ifdef RENDER_GL
+    SDL_GL_SwapWindow(mud->gl_window);
+#elif defined(RENDER_3DS_GL)
     mudclient_3ds_gl_frame_end();
-#else
-    surface_draw(mud->surface);
 #endif
 
     int ax = mud->region_x;
@@ -3109,6 +3163,19 @@ void mudclient_close_connection(mudclient *mud) {
     memset(mud->password, '\0', PASSWORD_LENGTH + 1);
 
     mudclient_reset_login_screen(mud);
+}
+
+void mudclient_lost_connection(mudclient *mud) {
+#ifndef REVISION_177
+    mud->system_update = 0;
+#endif
+
+    if (mud->logout_timeout != 0) {
+        mudclient_reset_login_screen(mud);
+    } else {
+        mud->auto_login_attempts = 10;
+        mudclient_login(mud, mud->username, mud->password, 1);
+    }
 }
 
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle) {
@@ -3925,8 +3992,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
             offset_x -= (clip_width - width) / 2;
 
-            int animation_colour =
-                game_data.animations[animation_id].colour;
+            int animation_colour = game_data.animations[animation_id].colour;
 
             int skin_colour = player_skin_colours[player->skin_colour];
 
@@ -4017,21 +4083,23 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
         animation_order = 2;
         flip = 0;
         x -= (game_data.npcs[npc->npc_id].combat_width * ty) / 100;
-        j2 = i2 * 3 + character_combat_model_array1
-                          [((mud->login_timer /
-                                 (game_data.npcs[npc->npc_id].combat_speed) -
-                             1)) %
-                           8];
+        j2 = i2 * 3 +
+             character_combat_model_array1[((mud->login_timer /
+                                                 (game_data.npcs[npc->npc_id]
+                                                      .combat_speed) -
+                                             1)) %
+                                           8];
     } else if (npc->current_animation == 9) {
         i2 = 5;
         animation_order = 2;
         flip = 1;
         x += (game_data.npcs[npc->npc_id].combat_width * ty) / 100;
 
-        j2 = i2 * 3 +
-             character_combat_model_array2
-                 [(mud->login_timer / game_data.npcs[npc->npc_id].combat_speed) %
-                  8];
+        j2 =
+            i2 * 3 +
+            character_combat_model_array2
+                [(mud->login_timer / game_data.npcs[npc->npc_id].combat_speed) %
+                 8];
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -4076,8 +4144,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
             offset_x -= (clip_width - width) / 2;
 
-            int animation_colour =
-                game_data.animations[animation_id].colour;
+            int animation_colour = game_data.animations[animation_id].colour;
 
             int skin_colour = 0;
 
@@ -4688,6 +4755,7 @@ void mudclient_draw_game(mudclient *mud) {
         mudclient_auto_rotate_camera(mud);
     }
 
+    // TODO this is too aggressive on compact client
     if (mud->options->zoom_camera) {
         int clip_far =
             (int)((2400.0f / ZOOM_OUTDOORS) * (float)mud->camera_zoom);
@@ -4886,14 +4954,12 @@ void mudclient_draw(mudclient *mud) {
     } else if (mud->logged_in == 1) {
         mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
-#ifdef RENDER_3DS_GL
+#ifdef RENDER_GL
+        SDL_GL_SwapWindow(mud->gl_window);
+#elif defined(RENDER_3DS_GL)
         mudclient_3ds_gl_frame_end();
 #endif
     }
-
-#ifdef RENDER_GL
-    SDL_GL_SwapWindow(mud->gl_window);
-#endif
 }
 
 void mudclient_on_resize(mudclient *mud) {
