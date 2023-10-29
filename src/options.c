@@ -51,12 +51,13 @@ void options_set_server(Options *options) {
 }
 
 void options_set_defaults(Options *options) {
-    /* connection */
+    /* server */
     options->members = 1;
     options->registration = 1;
     options->idle_logout = 0;
     options->remember_username = 0;
     options->remember_password = 0;
+    options->diversify_npcs = 0;
 
     options_set_server(options);
 
@@ -202,6 +203,7 @@ void options_save(Options *options) {
             options->username,              //
             options->password,              //
             options->browser_command,       //
+            options->diversify_npcs,        //
                                             //
             options->mouse_wheel,           //
             options->middle_click_camera,   //

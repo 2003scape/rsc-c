@@ -1,4 +1,5 @@
 #include "mudclient.h"
+#include "custom/diverse-npcs.h"
 
 #ifdef EMSCRIPTEN
 EM_JS(int, get_canvas_width, (), { return canvas.width; });
@@ -3059,6 +3060,11 @@ GameCharacter *mudclient_add_player(mudclient *mud, int server_index, int x,
 
 GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
                                  int animation, int npc_id) {
+
+    if (mud->options->diversify_npcs) {
+        npc_id = diversify_npc(npc_id, server_index, x, y);
+    }
+
     GameCharacter *npc = mudclient_add_character(
         mud, mud->npcs_server, mud->known_npcs, mud->known_npc_count,
         server_index, x, y, animation, npc_id);

@@ -1,6 +1,6 @@
 #include "./additional-options.h"
 
-char *option_tabs[] = {"Network", "Controls", "Display", "Bank"};
+char *option_tabs[] = {"Server", "Controls", "Display", "Bank"};
 
 int mudclient_add_option_panel_label(Panel *panel, char *label, int x, int y) {
     panel_add_text(panel, x, y, label, 1, 0);
@@ -48,8 +48,6 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     int x = ui_x + 4;
     int y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
-
-    y += 20;
 
     /* connection */
     mud->panel_connection_options = malloc(sizeof(Panel));
@@ -108,6 +106,15 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Remember password: ", mud->options->remember_password, x, y);
 
     mud->connection_options[control] = &mud->options->remember_password;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_connection_options,
+        "@whi@Diversify NPCs: ", mud->options->diversify_npcs, x, y);
+
+    mud->connection_options[control] = &mud->options->diversify_npcs;
     mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     /* controls */
