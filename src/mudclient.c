@@ -2146,6 +2146,7 @@ void mudclient_reset_game(mudclient *mud) {
         mud->players[i] = NULL;
     }
 
+    mud->combat_target = NULL;
     mud->local_player = malloc(sizeof(GameCharacter));
     game_character_new(mud->local_player);
 
