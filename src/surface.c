@@ -85,6 +85,10 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #ifdef EMSCRIPTEN
     shader_new(&surface->gl_flat_shader, "./cache/flat.webgl.vs",
                "./cache/flat.webgl.fs");
+#elif OPENGL15
+    shader_new(&surface->gl_flat_shader, "./cache/flat.gl2.vs", "./cache/flat.gl2.fs");
+#elif OPENGL20
+    shader_new(&surface->gl_flat_shader, "./cache/flat.gl2.vs", "./cache/flat.gl2.fs");
 #else
     shader_new(&surface->gl_flat_shader, "./cache/flat.vs", "./cache/flat.fs");
 #endif
