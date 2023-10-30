@@ -142,7 +142,7 @@ typedef struct Options Options;
 extern int wii_fat_enabled;
 #endif
 
-typedef struct Options {
+struct Options {
     /* configurable options: */
     char server[256];
     int port;
@@ -324,7 +324,7 @@ typedef struct Options {
 
     /* experimental thick walls support (requires restart) */
     int thick_walls;
-} Options;
+};
 
 void options_new(Options *options);
 void options_set_server(Options *options);

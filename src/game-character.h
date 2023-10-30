@@ -39,7 +39,7 @@ typedef struct GameCharacter GameCharacter;
 
 #define WAYPOINT_COUNT 10
 
-typedef struct GameCharacter {
+struct GameCharacter {
     int64_t encoded_username;
     char name[MAX_USER_LENGTH + 1];
 
@@ -86,7 +86,7 @@ typedef struct GameCharacter {
     int projectile_range;
 
     int8_t skull_visible;
-} GameCharacter;
+};
 
 void game_character_new(GameCharacter* game_character);
 void game_character_move(GameCharacter *character);

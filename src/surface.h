@@ -138,7 +138,7 @@ extern int32_t *surface_texture_pixels;
 
 void init_surface_global();
 
-typedef struct Surface {
+struct Surface {
     int limit;
     int width;
     int height;
@@ -207,7 +207,7 @@ typedef struct Surface {
     SurfaceGlContext gl_contexts[GL_MAX_QUADS];
     int gl_context_count;
 #endif
-} Surface;
+};
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 typedef enum {

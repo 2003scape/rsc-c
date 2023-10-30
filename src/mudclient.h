@@ -63,6 +63,10 @@
 #if !defined(WII) && !defined(_3DS)
 #include <SDL.h>
 
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+#define MUD_IS_BIG_ENDIAN
+#endif
+
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
@@ -285,6 +289,8 @@ typedef struct mudclient mudclient;
 #define KEY_WIDTH 23
 #define KEY_HEIGHT 22
 
+#define MUD_IS_BIG_ENDIAN
+
 extern char keyboard_buttons[5][10];
 extern char keyboard_shift_buttons[5][10];
 extern int keyboard_offsets[];
@@ -370,7 +376,7 @@ struct Scenery {
     uint8_t already_in_menu;
 };
 
-typedef struct mudclient {
+struct mudclient {
 #ifdef WII
     /* store two for double-buffering */
     uint8_t **framebuffers;
@@ -966,7 +972,7 @@ typedef struct mudclient {
 
     /* wiki */
     int selected_wiki;
-} mudclient;
+};
 
 void mudclient_new(mudclient *mud);
 void mudclient_resize(mudclient *mud);

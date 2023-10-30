@@ -7,6 +7,8 @@ OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added
 CFLAGS += -fwrapv
+# some platforms require gnu99 instead of c99 to use functions like alloca.
+CFLAGS += -std=gnu99
 CFLAGS += -I ./cglm/include -DRENDER_GL #-DRENDER_SW #-DREVISION_177
 CFLAGS += $(shell sdl2-config --cflags)
 CFLAGS += $(shell pkg-config --cflags SDL2_image)
