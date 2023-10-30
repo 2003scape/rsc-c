@@ -729,7 +729,9 @@ void mudclient_resize(mudclient *mud) {
     SDL_FreeSurface(mud->screen);
     SDL_FreeSurface(mud->pixel_surface);
 
-    #ifndef SDL12
+    #ifdef SDL12
+    mud->screen = SDL_GetVideoSurface();
+    #else
     mud->screen = SDL_GetWindowSurface(mud->window);
     #endif
 
