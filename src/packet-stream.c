@@ -1,5 +1,9 @@
 #include "packet-stream.h"
 
+#ifdef HAVE_SIGNALS
+#include <signal.h>
+#endif
+
 #if 0
 char *SPOOKY_THREAT =
     "All RuneScape code and data, including this message, are copyright 2003 "
@@ -48,6 +52,12 @@ int get_client_opcode_friend(int opcode) {
 }
 
 void init_packet_stream_global() { THREAT_LENGTH = strlen(SPOOKY_THREAT); }
+#endif
+
+#ifdef HAVE_SIGNALS
+void on_signal_do_nothing(int dummy) {
+    (void)dummy;
+}
 #endif
 
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
@@ -203,15 +213,17 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #ifdef WIN32
     u_long mode = 1;
     ioctlsocket(packet_stream->socket, FIONBIO, &mode);
-#elif !defined(WII)
+#elif defined(NET_IS_UNIXLIKE)
     ret = ioctl(packet_stream->socket, FIONBIO, &set);
-#endif
 
-#if !defined(WIN32) && !defined(WII)
     if (ret < 0) {
         fprintf(stderr, "ioctl() error: %d\n", ret);
         exit(1);
     }
+#endif
+
+#ifdef HAVE_SIGNALS
+    (void)signal(SIGPIPE, on_signal_do_nothing);
 #endif
 
     ret = connect(packet_stream->socket, (struct sockaddr *)&server_addr,
@@ -380,9 +392,7 @@ int packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
 #ifdef WII
         return net_write(packet_stream->socket, buffer + offset, length);
 #else
-        return send(packet_stream->socket, buffer + offset, length,
-                    MSG_NOSIGNAL);
-        // return write(packet_stream->socket, buffer + offset, length);
+        return write(packet_stream->socket, buffer + offset, length);
 #endif
     }
 
