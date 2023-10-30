@@ -1,5 +1,5 @@
 #CC = clang
-#DEBUG = 1
+DEBUG = 1
 #RENDER_GL = 1 TODO
 #SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/gl/*.c src/gl/textures/*.c)
@@ -7,13 +7,15 @@ OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added
 CFLAGS += -fwrapv
-CFLAGS += -I ./cglm/include -DRENDER_GL -DOPENGL20 -DSDL12 #-DRENDER_SW #-DREVISION_177
-CFLAGS += $(shell sdl-config --cflags)
-CFLAGS += $(shell pkg-config --cflags SDL_image)
+# some platforms require gnu99 instead of c99 to use functions like alloca.
+CFLAGS += -std=gnu99
+CFLAGS += -I ./cglm/include -DRENDER_GL #-DRENDER_SW #-DREVISION_177
+CFLAGS += $(shell sdl2-config --cflags)
+CFLAGS += $(shell pkg-config --cflags SDL2_image)
 CFLAGS += $(shell pkg-config --cflags glew)
 LDFLAGS += -lm
-LDFLAGS += $(shell sdl-config --libs)
-LDFLAGS += $(shell pkg-config --libs SDL_image)
+LDFLAGS += $(shell sdl2-config --libs)
+LDFLAGS += $(shell pkg-config --libs SDL2_image)
 LDFLAGS += $(shell pkg-config --libs glew)
 
 ifdef DEBUG

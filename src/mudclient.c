@@ -244,214 +244,6 @@ void mudclient_3ds_gl_frame_start(mudclient *mud, int clear) {
 void mudclient_3ds_gl_frame_end() { C3D_FrameEnd(0); }
 #endif
 #else
-#ifdef SDL12
-void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
-    *char_code = -1;
-
-    switch (keysym->sym) {
-    case SDLK_LEFT:
-        *code = K_LEFT;
-        break;
-    case SDLK_RIGHT:
-        *code = K_RIGHT;
-        break;
-    case SDLK_UP:
-        *code = K_UP;
-        break;
-    case SDLK_DOWN:
-        *code = K_DOWN;
-        break;
-    case SDLK_PAGEUP:
-        *code = K_PAGE_UP;
-        break;
-    case SDLK_PAGEDOWN:
-        *code = K_PAGE_DOWN;
-        break;
-    case SDLK_HOME:
-        *code = K_HOME;
-        break;
-    case SDLK_F1:
-        *code = K_F1;
-        break;
-    case SDLK_ESCAPE:
-        *code = K_ESCAPE;
-        break;
-    /*case SDLK_RETURN:
-        *code = K_ENTER;
-        break;*/
-    // TODO: Swallow "bad inputs" by default? ie. numlock, capslock
-    case SDLK_NUMLOCK:
-        *code = -1;
-        *char_code = 1;
-        break;
-    case SDLK_CAPSLOCK:
-        *code = -1;
-        *char_code = 1;
-        break;
-    case SDLK_KP_DIVIDE:
-        *code = K_FWD_SLASH;
-        *char_code = K_FWD_SLASH;
-        break;
-    case SDLK_KP_MULTIPLY:
-        *code = K_ASTERISK;
-        *char_code = K_ASTERISK;
-        break;
-    case SDLK_KP_MINUS:
-        *code = K_MINUS;
-        *char_code = K_MINUS;
-        break;
-    case SDLK_KP_PLUS:
-        *code = K_PLUS;
-        *char_code = K_PLUS;
-        break;
-    case SDLK_KP_PERIOD:
-        *code = K_PERIOD;
-        *char_code = K_PERIOD;
-        break;
-    case SDLK_KP_ENTER:
-        *code = K_ENTER;
-        *char_code = K_ENTER;
-        break;
-    case SDLK_KP0:
-        *code = K_0;
-        *char_code = K_0;
-        break;
-    case SDLK_KP1:
-        *code = K_1;
-        *char_code = K_1;
-        break;
-    case SDLK_KP2:
-        *code = K_2;
-        *char_code = K_2;
-        break;
-    case SDLK_KP3:
-        *code = K_3;
-        *char_code = K_3;
-        break;
-    case SDLK_KP4:
-        *code = K_4;
-        *char_code = K_4;
-        break;
-    case SDLK_KP5:
-        *code = K_5;
-        *char_code = K_5;
-        break;
-    case SDLK_KP6:
-        *code = K_6;
-        *char_code = K_6;
-        break;
-    case SDLK_KP7:
-        *code = K_7;
-        *char_code = K_7;
-        break;
-    case SDLK_KP8:
-        *code = K_8;
-        *char_code = K_8;
-        break;
-    case SDLK_KP9:
-        *code = K_9;
-        *char_code = K_9;
-        break;
-    default:
-        *char_code = keysym->sym;
-
-        switch (keysym->scancode) {
-        case SDLK_TAB:
-            *code = K_TAB;
-            break;
-        case SDLK_1:
-            *code = K_1;
-            break;
-        case SDLK_2:
-            *code = K_2;
-            break;
-        case SDLK_3:
-            *code = K_3;
-            break;
-        case SDLK_4:
-            *code = K_4;
-            break;
-        case SDLK_5:
-            *code = K_5;
-            break;
-        default:
-            *code = *char_code;
-            break;
-        }
-
-        if (keysym->mod & KMOD_SHIFT) {
-            if (*char_code >= 'a' && *char_code <= 'z') {
-                *char_code -= 32;
-            } else {
-                switch (*char_code) {
-                case ';':
-                    *char_code = ':';
-                    break;
-                case '`':
-                    *char_code = '~';
-                    break;
-                case '1':
-                    *char_code = '!';
-                    break;
-                case '2':
-                    *char_code = '@';
-                    break;
-                case '3':
-                    *char_code = '#';
-                    break;
-                case '4':
-                    *char_code = '$';
-                    break;
-                case '5':
-                    *char_code = '%';
-                    break;
-                case '6':
-                    *char_code = '^';
-                    break;
-                case '7':
-                    *char_code = '&';
-                    break;
-                case '8':
-                    *char_code = '*';
-                    break;
-                case '9':
-                    *char_code = '(';
-                    break;
-                case '0':
-                    *char_code = ')';
-                    break;
-                case '-':
-                    *char_code = '_';
-                    break;
-                case '=':
-                    *char_code = '+';
-                    break;
-                case '[':
-                    *char_code = '{';
-                    break;
-                case ']':
-                    *char_code = '}';
-                    break;
-                case '\\':
-                    *char_code = '|';
-                    break;
-                case ',':
-                    *char_code = '<';
-                    break;
-                case '.':
-                    *char_code = '>';
-                    break;
-                case '/':
-                    *char_code = '?';
-                    break;
-                }
-            }
-        }
-
-        break;
-    }
-}
-#else
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     *char_code = -1;
 
@@ -659,7 +451,6 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     }
 }
 #endif
-#endif
 
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
@@ -729,9 +520,7 @@ void mudclient_resize(mudclient *mud) {
     SDL_FreeSurface(mud->screen);
     SDL_FreeSurface(mud->pixel_surface);
 
-    #ifndef SDL12
     mud->screen = SDL_GetWindowSurface(mud->window);
-    #endif
 
     mud->pixel_surface =
         SDL_CreateRGBSurface(0, mud->game_width, mud->game_height, 32, 0xff0000,
@@ -965,9 +754,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         wanted_audio.silence = 0;
         wanted_audio.samples = 1024;
 
-		#ifndef SDL12
         wanted_audio.callback = NULL;
-        #endif
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
             fprintf(stderr, "SDL_OpenAudio(): %s\n", SDL_GetError());
@@ -975,41 +762,28 @@ void mudclient_start_application(mudclient *mud, char *title) {
         }
     }
 
-#ifdef SDL12
-    SDL_WM_SetCaption( "Runescape by Andrew Gower", NULL );
+    uint32_t windowflags = SDL_WINDOW_SHOWN;
+
+#if !defined(WII) && !defined(_3DS)
+    windowflags |= SDL_WINDOW_RESIZABLE;
 #endif
 
 #ifdef RENDER_SW
-	#ifdef SDL12
-	mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_HWSURFACE);
-	#else
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
-    #endif
+                         mud->game_width, mud->game_height, windowflags);
 
     mudclient_resize(mud);
 #endif
-	#ifndef SDL12
+
     mud->default_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     mud->hand_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
-	#endif
-	
+
 #ifdef RENDER_GL
     /*if (IMG_Init(IMG_INIT_PNG) == 0) {
         fprintf(stderr, "unable to initialize sdl_image: %s\n", IMG_GetError());
     }*/
-#ifdef SDL12
-    mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_OPENGL);
 
-    //Check for error
-    GLenum error = glGetError();
-    if( error != GL_NO_ERROR )
-    {
-        printf( "Error initializing OpenGL! %s\n", gluErrorString( error ) );
-        return false;
-    }
-#else
 #ifdef EMSCRIPTEN
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -1037,9 +811,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 #endif
 
+    windowflags |= SDL_WINDOW_OPENGL;
     mud->gl_window = SDL_CreateWindow(
         title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mud->game_width,
-        mud->game_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        mud->game_height, windowflags);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 
@@ -1049,7 +824,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     }
 
     SDL_GL_MakeCurrent(mud->gl_window, context);
-#endif
 
     glewExperimental = GL_TRUE;
 
@@ -1587,11 +1361,7 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     if (mud->gl_last_swap == 0 || get_ticks() - mud->gl_last_swap >= 16) {
         mudclient_poll_events(mud);
         surface_draw(mud->surface);
-        #ifdef SDL12
-        SDL_GL_SwapBuffers();
-        #else
         SDL_GL_SwapWindow(mud->gl_window);
-        #endif
         mud->gl_last_swap = get_ticks();
     } else {
         surface_gl_reset_context(mud->surface);
@@ -1744,7 +1514,7 @@ void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
     for (int y = height - 1; y >= 0; y--) {
         for (int x = 0; x < width; x++) {
             int palette_index = buffer[(256 * 3) + x + y * width];
-#ifdef WII
+#ifdef MUD_IS_BIG_ENDIAN
             pixels[index++] = 255;
             pixels[index++] = r[palette_index];
             pixels[index++] = g[palette_index];
@@ -2335,28 +2105,28 @@ void mudclient_reset_game(mudclient *mud) {
 #endif
 
     for (int i = 0; i < mud->object_count; i++) {
-        scene_remove_model(mud->scene, mud->object_model[i]);
+        scene_remove_model(mud->scene, mud->objects[i].model);
 
-        world_remove_object(mud->world, mud->object_x[i], mud->object_y[i],
-                            mud->object_id[i]);
+        world_remove_object(mud->world, mud->objects[i].x, mud->objects[i].y,
+                            mud->objects[i].id);
 
 #ifdef RENDER_SW
-        game_model_destroy(mud->object_model[i]);
+        game_model_destroy(mud->objects[i].model);
 #endif
-        free(mud->object_model[i]);
-        mud->object_model[i] = NULL;
+        free(mud->objects[i].model);
+        mud->objects[i].model = NULL;
     }
 
     for (int i = 0; i < mud->wall_object_count; i++) {
-        scene_remove_model(mud->scene, mud->wall_object_model[i]);
+        scene_remove_model(mud->scene, mud->wall_objects[i].model);
 
         world_remove_wall_object(
-            mud->world, mud->wall_object_x[i], mud->wall_object_y[i],
-            mud->wall_object_direction[i], mud->wall_object_id[i]);
+            mud->world, mud->wall_objects[i].x, mud->wall_objects[i].y,
+            mud->wall_objects[i].direction, mud->wall_objects[i].id);
 
-        game_model_destroy(mud->wall_object_model[i]);
-        free(mud->wall_object_model[i]);
-        mud->wall_object_model[i] = NULL;
+        game_model_destroy(mud->wall_objects[i].model);
+        free(mud->wall_objects[i].model);
+        mud->wall_objects[i].model = NULL;
     }
 
     mud->object_count = 0;
@@ -2395,6 +2165,7 @@ void mudclient_reset_game(mudclient *mud) {
         mud->players[i] = NULL;
     }
 
+    mud->combat_target = NULL;
     mud->local_player = malloc(sizeof(GameCharacter));
     game_character_new(mud->local_player);
 
@@ -2489,11 +2260,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         surface_draw(mud->surface);
 
 #ifdef RENDER_GL
-        #ifdef SDL12
-        SDL_GL_SwapBuffers();
-        #else
         SDL_GL_SwapWindow(mud->gl_window);
-        #endif
 #elif defined(RENDER_3DS_GL)
         mudclient_3ds_gl_frame_end();
 #endif
@@ -3056,18 +2823,6 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_reset_login_screen(mud);
     mudclient_render_login_scene_sprites(mud);
 
-#if !defined(WII) && !defined(_3DS)
-#ifdef RENDER_SW
-	#ifndef SDL12
-    SDL_SetWindowResizable(mud->window, 1);
-    #endif
-#elif RENDER_GL
-	#ifndef SDL12
-    SDL_SetWindowResizable(mud->gl_window, 1);
-    #endif
-#endif
-#endif
-
     free(surface_texture_pixels);
     surface_texture_pixels = NULL;
 }
@@ -3157,10 +2912,14 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 
 #ifdef RENDER_3DS_GL
     mudclient_3ds_gl_frame_start(mud, 0);
+#endif
+
     surface_draw(mud->surface);
+
+#ifdef RENDER_GL
+    SDL_GL_SwapWindow(mud->gl_window);
+#elif defined(RENDER_3DS_GL)
     mudclient_3ds_gl_frame_end();
-#else
-    surface_draw(mud->surface);
 #endif
 
     int ax = mud->region_x;
@@ -3185,16 +2944,16 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     int offset_y = mud->region_y - ay;
 
     for (int i = 0; i < mud->object_count; i++) {
-        mud->object_x[i] -= offset_x;
-        mud->object_y[i] -= offset_y;
+        mud->objects[i].x -= offset_x;
+        mud->objects[i].y -= offset_y;
 
-        int object_x = mud->object_x[i];
-        int object_y = mud->object_y[i];
-        int object_id = mud->object_id[i];
+        int object_x = mud->objects[i].x;
+        int object_y = mud->objects[i].y;
+        int object_id = mud->objects[i].id;
 
-        GameModel *game_model = mud->object_model[i];
+        GameModel *game_model = mud->objects[i].model;
 
-        int object_direction = mud->object_direction[i];
+        int object_direction = mud->objects[i].direction;
         int object_width = 0;
         int object_height = 0;
 
@@ -3229,26 +2988,26 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 #endif
 
     for (int i = 0; i < mud->wall_object_count; i++) {
-        mud->wall_object_x[i] -= offset_x;
-        mud->wall_object_y[i] -= offset_y;
+        mud->wall_objects[i].x -= offset_x;
+        mud->wall_objects[i].y -= offset_y;
 
-        int wall_object_x = mud->wall_object_x[i];
-        int wall_object_y = mud->wall_object_y[i];
-        int wall_object_id = mud->wall_object_id[i];
-        int wall_object_dir = mud->wall_object_direction[i];
+        int wall_object_x = mud->wall_objects[i].x;
+        int wall_object_y = mud->wall_objects[i].y;
+        int wall_object_id = mud->wall_objects[i].id;
+        int wall_object_dir = mud->wall_objects[i].direction;
 
         world_set_object_adjacency_from4(mud->world, wall_object_x,
                                          wall_object_y, wall_object_dir,
                                          wall_object_id);
 
-        game_model_destroy(mud->wall_object_model[i]);
-        free(mud->wall_object_model[i]);
+        game_model_destroy(mud->wall_objects[i].model);
+        free(mud->wall_objects[i].model);
 
         GameModel *wall_object_model =
             mudclient_create_wall_object(mud, wall_object_x, wall_object_y,
                                          wall_object_dir, wall_object_id, i);
 
-        mud->wall_object_model[i] = wall_object_model;
+        mud->wall_objects[i].model = wall_object_model;
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -3256,8 +3015,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 #endif
 
     for (int i = 0; i < mud->ground_item_count; i++) {
-        mud->ground_item_x[i] -= offset_x;
-        mud->ground_item_y[i] -= offset_y;
+        mud->ground_items[i].x -= offset_x;
+        mud->ground_items[i].y -= offset_y;
     }
 
     mudclient_update_ground_item_models(mud);
@@ -3889,12 +3648,12 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->object_count; i++) {
-        int x = mud->object_x[i];
-        int y = mud->object_y[i];
+        int x = mud->objects[i].x;
+        int y = mud->objects[i].y;
 
         if (x >= 0 && y >= 0 && x < 96 && y < 96 &&
-            mud->object_id[i] == WINDMILL_SAILS_ID) {
-            game_model_rotate(mud->object_model[i], 1, 0, 0);
+            mud->objects[i].id == WINDMILL_SAILS_ID) {
+            game_model_rotate(mud->objects[i].model, 1, 0, 0);
         }
     }
 
@@ -3989,8 +3748,8 @@ void mudclient_handle_inputs(mudclient *mud) {
 
 void mudclient_update_object_animation(mudclient *mud, int object_index,
                                        char *model_name) {
-    int object_x = mud->object_x[object_index];
-    int object_y = mud->object_y[object_index];
+    int object_x = mud->objects[object_index].x;
+    int object_y = mud->objects[object_index].y;
     int distance_x = object_x - (mud->local_player->current_x / 128);
     int distance_y = object_y - (mud->local_player->current_y / 128);
     int max_distance = 7;
@@ -3998,7 +3757,7 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
     if (object_x >= 0 && object_y >= 0 && object_x < 96 && object_y < 96 &&
         distance_x > -max_distance && distance_x < max_distance &&
         distance_y > -max_distance && distance_y < max_distance) {
-        scene_remove_model(mud->scene, mud->object_model[object_index]);
+        scene_remove_model(mud->scene, mud->objects[object_index].model);
 
         int model_index = game_data_get_model_index(model_name);
         GameModel *game_model = game_model_copy(mud->game_models[model_index]);
@@ -4006,16 +3765,16 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
         scene_add_model(mud->scene, game_model);
 
         game_model_set_light_from6(game_model, 1, 48, 48, -50, -10, -50);
-        game_model_copy_position(game_model, mud->object_model[object_index]);
+        game_model_copy_position(game_model, mud->objects[object_index].model);
 
         game_model->key = object_index;
 
 #ifdef RENDER_SW
-        game_model_destroy(mud->object_model[object_index]);
+        game_model_destroy(mud->objects[object_index].model);
 #endif
-        free(mud->object_model[object_index]);
+        free(mud->objects[object_index].model);
 
-        mud->object_model[object_index] = game_model;
+        mud->objects[object_index].model = game_model;
     }
 }
 
@@ -4739,20 +4498,20 @@ void mudclient_animate_objects(mudclient *mud) {
         mud->last_object_animation_cycle = mud->object_animation_cycle;
 
         for (int i = 0; i < mud->object_count; i++) {
-            if (mud->object_id[i] == FIRE_ID) {
+            if (mud->objects[i].id == FIRE_ID) {
                 sprintf(name, "firea%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == FIREPLACE_ID) {
+            } else if (mud->objects[i].id == FIREPLACE_ID) {
                 sprintf(name, "fireplacea%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == LIGHTNING_ID) {
+            } else if (mud->objects[i].id == LIGHTNING_ID) {
                 sprintf(name, "lightning%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == FIRE_SPELL_ID) {
+            } else if (mud->objects[i].id == FIRE_SPELL_ID) {
                 sprintf(name, "firespell%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == SPELL_CHARGE_ID) {
+            } else if (mud->objects[i].id == SPELL_CHARGE_ID) {
                 sprintf(name, "spellcharge%d",
                         (mud->object_animation_cycle + 1));
 
@@ -4765,10 +4524,10 @@ void mudclient_animate_objects(mudclient *mud) {
         mud->last_torch_animation_cycle = mud->torch_animation_cycle;
 
         for (int i = 0; i < mud->object_count; i++) {
-            if (mud->object_id[i] == TORCH_ID) {
+            if (mud->objects[i].id == TORCH_ID) {
                 sprintf(name, "torcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == SKULL_TORCH_ID) {
+            } else if (mud->objects[i].id == SKULL_TORCH_ID) {
                 sprintf(name, "skulltorcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -4779,7 +4538,7 @@ void mudclient_animate_objects(mudclient *mud) {
         mud->last_claw_animation_cycle = mud->claw_animation_cycle;
 
         for (int i = 0; i < mud->object_count; i++) {
-            if (mud->object_id[i] == CLAW_SPELL_ID) {
+            if (mud->objects[i].id == CLAW_SPELL_ID) {
                 sprintf(name, "clawspell%d", mud->claw_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -4892,13 +4651,13 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->ground_item_count; i++) {
-        int x = mud->ground_item_x[i] * MAGIC_LOC + 64;
-        int y = mud->ground_item_y[i] * MAGIC_LOC + 64;
+        int x = mud->ground_items[i].x * MAGIC_LOC + 64;
+        int y = mud->ground_items[i].y * MAGIC_LOC + 64;
 
-        if (mud->ground_item_model[i] == NULL) {
-            scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
+        if (mud->ground_items[i].model == NULL) {
+            scene_add_sprite(mud->scene, 40000 + mud->ground_items[i].id, x,
                              -world_get_elevation(mud->world, x, y) -
-                                 mud->ground_item_z[i],
+                                 mud->ground_items[i].z,
                              y, 96, 64, i + GROUND_ITEM_FACE_TAG);
 
             mud->scene_sprite_count++;
@@ -5207,18 +4966,12 @@ void mudclient_draw(mudclient *mud) {
     } else if (mud->logged_in == 1) {
         mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
-#ifdef RENDER_3DS_GL
+#ifdef RENDER_GL
+        SDL_GL_SwapWindow(mud->gl_window);
+#elif defined(RENDER_3DS_GL)
         mudclient_3ds_gl_frame_end();
 #endif
     }
-
-#ifdef RENDER_GL
-    #ifdef SDL12
-        SDL_GL_SwapBuffers();
-        #else
-        SDL_GL_SwapWindow(mud->gl_window);
-        #endif
-#endif
 }
 
 void mudclient_on_resize(mudclient *mud) {
@@ -5229,22 +4982,14 @@ void mudclient_on_resize(mudclient *mud) {
     new_width = get_canvas_width();
     new_height = get_canvas_height();
 #ifdef RENDER_SW
-	#ifndef SDL12
     SDL_SetWindowSize(mud->window, new_width, new_height);
-    #endif
 #elif defined(RENDER_GL)
-	#ifndef SDL12
     SDL_SetWindowSize(mud->gl_window, new_width, new_height);
-    #endif
 #endif
 #elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
-    #ifndef SDL12
     SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
-	#endif
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
-	#ifndef SDL12
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
-	#endif
 #endif
 
     mud->game_width = new_width;
@@ -5712,7 +5457,6 @@ void mudclient_poll_events(mudclient *mud) {
             mudclient_mouse_released(mud, event.button.x, event.button.y,
                                      event.button.button);
             break;
-        #ifndef SDL12
         case SDL_MOUSEWHEEL:
             if (mud->options->mouse_wheel) {
                 if (event.wheel.y != 0) {
@@ -5741,7 +5485,6 @@ void mudclient_poll_events(mudclient *mud) {
                                      (int)(event.tfinger.y * MUD_HEIGHT),
                                      curMouseBtn);
             break;
-		#endif
 #ifdef __SWITCH__
         case SDL_JOYBUTTONDOWN:
             switch (event.jbutton.button) {
@@ -5875,13 +5618,11 @@ void mudclient_poll_events(mudclient *mud) {
             }
             break;
 #endif
-		#ifndef SDL12
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 mudclient_on_resize(mud);
             }
             break;
-        #endif
         }
     }
 #endif
@@ -6286,12 +6027,12 @@ void mudclient_play_sound(mudclient *mud, char *name) {
 #elif defined(_3DS)
     mud->_3ds_sound_position = 0;
     mud->_3ds_sound_length = length * 2;
-#else
+#elif defined(SDL_VERSION_ATLEAST)
+#if SDL_VERSION_ATLEAST(2, 0, 4)
     // TODO could re-pause after sound plays?
     SDL_PauseAudio(0);
-    #ifndef SDL12
     SDL_QueueAudio(1, mud->pcm_out, length * 2);
-    #endif
+#endif
 #endif
 }
 

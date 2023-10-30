@@ -689,7 +689,7 @@ void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page) {
 }
 
 void mudclient_menu_add_ground_item(mudclient *mud, int index) {
-    int item_id = mud->ground_item_id[index];
+    int item_id = mud->ground_items[index].id;
     char *item_name = game_data.items[item_id].name;
 
     char formatted_item_name[strlen(item_name) + 6];
@@ -697,8 +697,8 @@ void mudclient_menu_add_ground_item(mudclient *mud, int index) {
 
     strcpy(mud->menu_item_text2[mud->menu_items_count], formatted_item_name);
 
-    mud->menu_item_x[mud->menu_items_count] = mud->ground_item_x[index];
-    mud->menu_item_y[mud->menu_items_count] = mud->ground_item_y[index];
+    mud->menu_item_x[mud->menu_items_count] = mud->ground_items[index].x;
+    mud->menu_item_y[mud->menu_items_count] = mud->ground_items[index].y;
     mud->menu_index[mud->menu_items_count] = item_id;
 
     if (mud->selected_wiki) {
@@ -735,7 +735,7 @@ void mudclient_menu_add_ground_item(mudclient *mud, int index) {
                mud->menu_item_text2[mud->menu_items_count - 1]);
 
         mud->menu_type[mud->menu_items_count] = MENU_GROUNDITEM_EXAMINE;
-        mud->menu_index[mud->menu_items_count] = mud->ground_item_id[index];
+        mud->menu_index[mud->menu_items_count] = mud->ground_items[index].id;
         mud->menu_items_count++;
     }
 }
@@ -746,15 +746,15 @@ void mudclient_create_right_click_menu(mudclient *mud) {
     int selected_face = -1;
 
     for (int i = 0; i < mud->object_count; i++) {
-        mud->object_already_in_menu[i] = 0;
+        mud->objects[i].already_in_menu = 0;
     }
 
     for (int i = 0; i < mud->wall_object_count; i++) {
-        mud->wall_object_already_in_menu[i] = 0;
+        mud->wall_objects[i].already_in_menu = 0;
     }
 
     for (int i = 0; i < mud->ground_item_count; i++) {
-        mud->ground_item_already_in_menu[i] = 0;
+        mud->ground_items[i].already_in_menu = 0;
     }
 
     int picked_count = mud->scene->mouse_picked_count;
@@ -1071,28 +1071,28 @@ void mudclient_create_right_click_menu(mudclient *mud) {
         } else if (game_model && game_model->key >= 20000) {
             int index = game_model->key - 20000;
 
-            if (!mud->ground_item_already_in_menu[index]) {
+            if (!mud->ground_items[index].already_in_menu) {
                 mudclient_menu_add_ground_item(mud, index);
-                mud->ground_item_already_in_menu[index] = 1;
+                mud->ground_items[index].already_in_menu = 1;
             }
         } else if (!mud->selected_wiki && game_model &&
                    game_model->key >= 10000) {
             int index = game_model->key - 10000;
-            int wall_object_id = mud->wall_object_id[index];
+            int wall_object_id = mud->wall_objects[index].id;
 
             // TODO wall-object wiki
-            if (!mud->wall_object_already_in_menu[index]) {
+            if (!mud->wall_objects[index].already_in_menu) {
                 sprintf(mud->menu_item_text2[mud->menu_items_count], "@cya@%s",
                         game_data.wall_objects[wall_object_id].name);
 
                 mud->menu_item_x[mud->menu_items_count] =
-                    mud->wall_object_x[index];
+                    mud->wall_objects[index].x;
 
                 mud->menu_item_y[mud->menu_items_count] =
-                    mud->wall_object_y[index];
+                    mud->wall_objects[index].y;
 
                 mud->menu_index[mud->menu_items_count] =
-                    mud->wall_object_direction[index];
+                    mud->wall_objects[index].direction;
 
                 if (mud->selected_spell >= 0) {
                     if (game_data.spells[mud->selected_spell].type == 4) {
@@ -1150,13 +1150,13 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             MENU_WALL_OBJECT_COMMAND2;
 
                         mud->menu_item_x[mud->menu_items_count] =
-                            mud->wall_object_x[index];
+                            mud->wall_objects[index].x;
 
                         mud->menu_item_y[mud->menu_items_count] =
-                            mud->wall_object_y[index];
+                            mud->wall_objects[index].y;
 
                         mud->menu_index[mud->menu_items_count] =
-                            mud->wall_object_direction[index];
+                            mud->wall_objects[index].direction;
 
                         mud->menu_items_count++;
                     }
@@ -1175,14 +1175,14 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     mud->menu_items_count++;
                 }
 
-                mud->wall_object_already_in_menu[index] = 1;
+                mud->wall_objects[index].already_in_menu = 1;
             }
         } else if (game_model && game_model->key >= 0) {
             int index = game_model->key;
-            int id = mud->object_id[index];
+            int id = mud->objects[index].id;
 
-            if (!mud->object_already_in_menu[index]) {
-                int object_id = mud->object_id[index];
+            if (!mud->objects[index].already_in_menu) {
+                int object_id = mud->objects[index].id;
                 char *object_name = game_data.objects[id].name;
 
                 char formatted_object_name[strlen(object_name) + 6];
@@ -1191,11 +1191,11 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 strcpy(mud->menu_item_text2[mud->menu_items_count],
                        formatted_object_name);
 
-                mud->menu_item_x[mud->menu_items_count] = mud->object_x[index];
-                mud->menu_item_y[mud->menu_items_count] = mud->object_y[index];
+                mud->menu_item_x[mud->menu_items_count] = mud->objects[index].x;
+                mud->menu_item_y[mud->menu_items_count] = mud->objects[index].y;
 
                 mud->menu_index[mud->menu_items_count] =
-                    mud->object_direction[index];
+                    mud->objects[index].direction;
 
                 mud->menu_source_index[mud->menu_items_count] = object_id;
 
@@ -1239,13 +1239,13 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             MENU_OBJECT_COMMAND1;
 
                         mud->menu_item_x[mud->menu_items_count] =
-                            mud->object_x[index];
+                            mud->objects[index].x;
 
                         mud->menu_item_y[mud->menu_items_count] =
-                            mud->object_y[index];
+                            mud->objects[index].y;
 
                         mud->menu_index[mud->menu_items_count] =
-                            mud->object_direction[index];
+                            mud->objects[index].direction;
 
                         mud->menu_source_index[mud->menu_items_count] =
                             object_id;
@@ -1265,13 +1265,13 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             MENU_OBJECT_COMMAND2;
 
                         mud->menu_item_x[mud->menu_items_count] =
-                            mud->object_x[index];
+                            mud->objects[index].x;
 
                         mud->menu_item_y[mud->menu_items_count] =
-                            mud->object_y[index];
+                            mud->objects[index].y;
 
                         mud->menu_index[mud->menu_items_count] =
-                            mud->object_direction[index];
+                            mud->objects[index].direction;
 
                         mud->menu_source_index[mud->menu_items_count] =
                             object_id;
@@ -1290,7 +1290,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                     mud->menu_items_count++;
                 }
 
-                mud->object_already_in_menu[index] = 1;
+                mud->objects[index].already_in_menu = 1;
             }
         } else {
             if (face >= 0) {

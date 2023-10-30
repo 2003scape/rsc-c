@@ -5,7 +5,7 @@ typedef struct GamePolygon GamePolygon;
 
 #include "game-model.h"
 
-typedef struct GamePolygon {
+struct GamePolygon {
     int min_plane_x;
     int min_plane_y;
     int max_plane_x;
@@ -23,7 +23,7 @@ typedef struct GamePolygon {
     int skip_something;
     int index;
     int index2;
-} GamePolygon;
+};
 
 void polygon_new(GamePolygon *polygon);
 

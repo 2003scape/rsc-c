@@ -53,7 +53,7 @@ extern int terrain_colours[TERRAIN_COLOUR_COUNT];
 int rgb_to_texture_colour(int r, int g, int b);
 void init_world_global();
 
-typedef struct World {
+struct World {
     Scene *scene;
     Surface *surface;
     int8_t player_alive;
@@ -89,7 +89,7 @@ typedef struct World {
 #endif
 
     int8_t thick_walls;
-} World;
+};
 
 void world_new(World *world, Scene *scene, Surface *surface);
 int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,

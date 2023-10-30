@@ -70,7 +70,7 @@ typedef struct GameModel GameModel;
 #include "gl/textures/model_textures.h"
 #endif
 
-typedef struct GameModel {
+struct GameModel {
     uint16_t vertex_count;
     int *project_vertex_x;
     int *project_vertex_y;
@@ -160,7 +160,7 @@ typedef struct GameModel {
     int gl_pick_vbo_offset;
     int gl_pick_ebo_offset;
 #endif
-} GameModel;
+};
 
 void game_model_new(GameModel *game_model);
 void game_model_from2(GameModel *game_model, int vertex_count, int face_count);

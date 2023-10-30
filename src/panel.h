@@ -41,7 +41,7 @@ typedef struct Panel Panel;
 extern int panel_base_sprite_start;
 extern int panel_text_list_entry_height_mod;
 
-typedef struct Panel {
+struct Panel {
     int8_t *control_shown;
     int8_t *control_list_scrollbar_handle_dragged;
     int8_t *control_mask_text;
@@ -74,7 +74,7 @@ typedef struct Panel {
     /* used for resizable mode */
     int offset_x;
     int offset_y;
-} Panel;
+};
 
 void panel_new(Panel *panel, Surface *surface, int max);
 void panel_handle_mouse(Panel *panel, int x, int y, int last_button,
