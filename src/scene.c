@@ -88,6 +88,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #endif
 
     scene->models = calloc(model_count, sizeof(GameModel *));
+
+    // TODO we need to re-allocate more polygons when client is resized, or just
+    // add more to initial polygon_count
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
@@ -4582,7 +4585,6 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                            (float)game_model->light_direction_magnitude) /
                           256.0f;
 
-    // float fog_z_distance = (float)scene->fog_z_distance / 100.0f;
     float fog_z_distance = (float)scene->fog_z_distance / -1000000.0f;
 
     C3D_FVUnifSet(

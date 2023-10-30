@@ -269,6 +269,7 @@ typedef struct mudclient mudclient;
 #include "ui/experience-drops.h"
 #include "ui/login.h"
 #include "ui/logout.h"
+#include "ui/lost-connection.h"
 #include "ui/menu.h"
 #include "ui/message-tabs.h"
 #include "ui/offer-x.h"
@@ -342,6 +343,38 @@ extern char *animated_models[];
 extern char login_screen_status[255];
 
 extern float global_farts_test;
+
+/*
+ * most walls are created by world.c and are non-interactive,
+ * but those that are interactive or can change need to be
+ * streamed from the server and are stored here.
+ */
+struct ServerBoundary {
+    GameModel *model;
+    uint16_t x;
+    uint16_t y;
+    uint16_t id;
+    uint8_t direction;
+    uint8_t already_in_menu;
+};
+
+struct ItemSpawn {
+    GameModel *model; /* only used when 3D items enabled */
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+    uint16_t id;
+    uint8_t already_in_menu;
+};
+
+struct Scenery {
+    uint16_t x;
+    uint16_t y;
+    uint16_t id;
+    uint8_t direction;
+    GameModel *model;
+    uint8_t already_in_menu;
+};
 
 struct mudclient {
 #ifdef WII
@@ -472,7 +505,7 @@ struct mudclient {
     int max_read_tries;
     int world_full_timeout;
     int moderator_level;
-    int auto_login_timeout;
+    int auto_login_attempts;
 
     /* ./ui/social-tab.c */
     Panel *panel_social_list;
@@ -590,20 +623,10 @@ struct mudclient {
     int combat_timeout;
 
     int object_count;
-    GameModel *object_model[OBJECTS_MAX];
-    int object_x[OBJECTS_MAX];
-    int object_y[OBJECTS_MAX];
-    int object_id[OBJECTS_MAX];
-    int object_direction[OBJECTS_MAX];
-    int8_t object_already_in_menu[OBJECTS_MAX];
+    struct Scenery objects[OBJECTS_MAX];
 
     int wall_object_count;
-    GameModel *wall_object_model[WALL_OBJECTS_MAX];
-    int wall_object_x[WALL_OBJECTS_MAX];
-    int wall_object_y[WALL_OBJECTS_MAX];
-    int wall_object_id[WALL_OBJECTS_MAX];
-    int wall_object_direction[WALL_OBJECTS_MAX];
-    int8_t wall_object_already_in_menu[WALL_OBJECTS_MAX];
+    struct ServerBoundary wall_objects[WALL_OBJECTS_MAX];
 
     int player_server_indexes[PLAYERS_MAX];
     GameCharacter *player_server[PLAYERS_SERVER_MAX];
@@ -628,12 +651,7 @@ struct mudclient {
     GameCharacter *known_npcs[NPCS_MAX];
 
     int ground_item_count;
-    int ground_item_x[GROUND_ITEMS_MAX];
-    int ground_item_y[GROUND_ITEMS_MAX];
-    int ground_item_z[GROUND_ITEMS_MAX];
-    int ground_item_id[GROUND_ITEMS_MAX];
-    GameModel *ground_item_model[GROUND_ITEMS_MAX];
-    int8_t ground_item_already_in_menu[GROUND_ITEMS_MAX];
+    struct ItemSpawn ground_items[GROUND_ITEMS_MAX];
 
     /* ./ui/sleep.c */
     int8_t is_sleeping;
@@ -1003,6 +1021,7 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
 
 void mudclient_update_bank_items(mudclient *mud);
 void mudclient_close_connection(mudclient *mud);
+void mudclient_lost_connection(mudclient *mud);
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
 void mudclient_auto_rotate_camera(mudclient *mud);
 void mudclient_handle_camera_zoom(mudclient *mud);

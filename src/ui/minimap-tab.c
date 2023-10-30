@@ -45,12 +45,12 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
         (rotation + 64) & 255, scale);
 
     for (int i = 0; i < mud->object_count; i++) {
-        int object_x = ((mud->object_x[i] * MAGIC_LOC + 64 -
+        int object_x = ((mud->objects[i].x * MAGIC_LOC + 64 -
                          mud->local_player->current_x) *
                         3 * scale) /
                        2048;
 
-        int object_y = ((mud->object_y[i] * MAGIC_LOC + 64 -
+        int object_y = ((mud->objects[i].y * MAGIC_LOC + 64 -
                          mud->local_player->current_y) *
                         3 * scale) /
                        2048;
@@ -66,12 +66,12 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     }
 
     for (int i = 0; i < mud->ground_item_count; i++) {
-        int item_x = ((mud->ground_item_x[i] * MAGIC_LOC + 64 -
+        int item_x = ((mud->ground_items[i].x * MAGIC_LOC + 64 -
                        mud->local_player->current_x) *
                       3 * scale) /
                      2048;
 
-        int item_y = ((mud->ground_item_y[i] * MAGIC_LOC + 64 -
+        int item_y = ((mud->ground_items[i].y * MAGIC_LOC + 64 -
                        mud->local_player->current_y) *
                       3 * scale) /
                      2048;

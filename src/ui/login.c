@@ -796,7 +796,9 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     surface_draw(mud->surface);
 
-#ifdef RENDER_3DS_GL
+#ifdef RENDER_GL
+    SDL_GL_SwapWindow(mud->gl_window);
+#elif defined(RENDER_3DS_GL)
     mudclient_3ds_gl_frame_end();
 #endif
 }
