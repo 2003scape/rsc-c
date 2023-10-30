@@ -244,110 +244,110 @@ void mudclient_3ds_gl_frame_start(mudclient *mud, int clear) {
 void mudclient_3ds_gl_frame_end() { C3D_FrameEnd(0); }
 #endif
 #else
-void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
+void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
     *char_code = -1;
 
-    switch (keysym->scancode) {
-    case SDL_SCANCODE_LEFT:
+    switch (keysym->sym) {
+    case SDLK_LEFT:
         *code = K_LEFT;
         break;
-    case SDL_SCANCODE_RIGHT:
+    case SDLK_RIGHT:
         *code = K_RIGHT;
         break;
-    case SDL_SCANCODE_UP:
+    case SDLK_UP:
         *code = K_UP;
         break;
-    case SDL_SCANCODE_DOWN:
+    case SDLK_DOWN:
         *code = K_DOWN;
         break;
-    case SDL_SCANCODE_PAGEUP:
+    case SDLK_PAGEUP:
         *code = K_PAGE_UP;
         break;
-    case SDL_SCANCODE_PAGEDOWN:
+    case SDLK_PAGEDOWN:
         *code = K_PAGE_DOWN;
         break;
-    case SDL_SCANCODE_HOME:
+    case SDLK_HOME:
         *code = K_HOME;
         break;
-    case SDL_SCANCODE_F1:
+    case SDLK_F1:
         *code = K_F1;
         break;
-    case SDL_SCANCODE_ESCAPE:
+    case SDLK_ESCAPE:
         *code = K_ESCAPE;
         break;
-    /*case SDL_SCANCODE_RETURN:
+    /*case SDLK_RETURN:
         *code = K_ENTER;
         break;*/
     // TODO: Swallow "bad inputs" by default? ie. numlock, capslock
-    case SDL_SCANCODE_NUMLOCKCLEAR:
+    case SDLK_NUMLOCK:
         *code = -1;
         *char_code = 1;
         break;
-    case SDL_SCANCODE_CAPSLOCK:
+    case SDLK_CAPSLOCK:
         *code = -1;
         *char_code = 1;
         break;
-    case SDL_SCANCODE_KP_DIVIDE:
+    case SDLK_KP_DIVIDE:
         *code = K_FWD_SLASH;
         *char_code = K_FWD_SLASH;
         break;
-    case SDL_SCANCODE_KP_MULTIPLY:
+    case SDLK_KP_MULTIPLY:
         *code = K_ASTERISK;
         *char_code = K_ASTERISK;
         break;
-    case SDL_SCANCODE_KP_MINUS:
+    case SDLK_KP_MINUS:
         *code = K_MINUS;
         *char_code = K_MINUS;
         break;
-    case SDL_SCANCODE_KP_PLUS:
+    case SDLK_KP_PLUS:
         *code = K_PLUS;
         *char_code = K_PLUS;
         break;
-    case SDL_SCANCODE_KP_PERIOD:
+    case SDLK_KP_PERIOD:
         *code = K_PERIOD;
         *char_code = K_PERIOD;
         break;
-    case SDL_SCANCODE_KP_ENTER:
+    case SDLK_KP_ENTER:
         *code = K_ENTER;
         *char_code = K_ENTER;
         break;
-    case SDL_SCANCODE_KP_0:
+    case SDLK_KP0:
         *code = K_0;
         *char_code = K_0;
         break;
-    case SDL_SCANCODE_KP_1:
+    case SDLK_KP1:
         *code = K_1;
         *char_code = K_1;
         break;
-    case SDL_SCANCODE_KP_2:
+    case SDLK_KP2:
         *code = K_2;
         *char_code = K_2;
         break;
-    case SDL_SCANCODE_KP_3:
+    case SDLK_KP3:
         *code = K_3;
         *char_code = K_3;
         break;
-    case SDL_SCANCODE_KP_4:
+    case SDLK_KP4:
         *code = K_4;
         *char_code = K_4;
         break;
-    case SDL_SCANCODE_KP_5:
+    case SDLK_KP5:
         *code = K_5;
         *char_code = K_5;
         break;
-    case SDL_SCANCODE_KP_6:
+    case SDLK_KP6:
         *code = K_6;
         *char_code = K_6;
         break;
-    case SDL_SCANCODE_KP_7:
+    case SDLK_KP7:
         *code = K_7;
         *char_code = K_7;
         break;
-    case SDL_SCANCODE_KP_8:
+    case SDLK_KP8:
         *code = K_8;
         *char_code = K_8;
         break;
-    case SDL_SCANCODE_KP_9:
+    case SDLK_KP9:
         *code = K_9;
         *char_code = K_9;
         break;
@@ -355,22 +355,22 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
         *char_code = keysym->sym;
 
         switch (keysym->scancode) {
-        case SDL_SCANCODE_TAB:
+        case SDLK_TAB:
             *code = K_TAB;
             break;
-        case SDL_SCANCODE_1:
+        case SDLK_1:
             *code = K_1;
             break;
-        case SDL_SCANCODE_2:
+        case SDLK_2:
             *code = K_2;
             break;
-        case SDL_SCANCODE_3:
+        case SDLK_3:
             *code = K_3;
             break;
-        case SDL_SCANCODE_4:
+        case SDLK_4:
             *code = K_4;
             break;
-        case SDL_SCANCODE_5:
+        case SDLK_5:
             *code = K_5;
             break;
         default:
@@ -520,7 +520,8 @@ void mudclient_resize(mudclient *mud) {
     SDL_FreeSurface(mud->screen);
     SDL_FreeSurface(mud->pixel_surface);
 
-    mud->screen = SDL_GetWindowSurface(mud->window);
+    //Fixme
+    //mud->screen = SDL_GetWindowSurface(mud->window);
 
     mud->pixel_surface =
         SDL_CreateRGBSurface(0, mud->game_width, mud->game_height, 32, 0xff0000,
@@ -754,7 +755,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         wanted_audio.silence = 0;
         wanted_audio.samples = 1024;
 
-        wanted_audio.callback = NULL;
+        //wanted_audio.callback = NULL;
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
             fprintf(stderr, "SDL_OpenAudio(): %s\n", SDL_GetError());
@@ -763,22 +764,24 @@ void mudclient_start_application(mudclient *mud, char *title) {
     }
 
 #ifdef RENDER_SW
-    mud->window =
+    /*mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
+                         mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);*/
+
+    mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_HWSURFACE);
 
     mudclient_resize(mud);
 #endif
 
-    mud->default_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    mud->hand_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    //mud->default_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    //mud->hand_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 
 #ifdef RENDER_GL
     /*if (IMG_Init(IMG_INIT_PNG) == 0) {
         fprintf(stderr, "unable to initialize sdl_image: %s\n", IMG_GetError());
     }*/
 
-#ifdef EMSCRIPTEN
+/*#ifdef EMSCRIPTEN
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -791,9 +794,21 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-#endif
+#endif*/
 
-    mud->gl_window = SDL_CreateWindow(
+    mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_OPENGL | SDL_RESIZABLE);
+
+    SDL_WM_SetCaption( "OpenGL Test", NULL );
+
+    //Check for error
+    GLenum error = glGetError();
+    if( error != GL_NO_ERROR )
+    {
+        printf( "Error initializing OpenGL! %s\n", gluErrorString( error ) );
+        return false;
+    }
+
+    /*mud->gl_window = SDL_CreateWindow(
         title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mud->game_width,
         mud->game_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
@@ -804,7 +819,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 
-    SDL_GL_MakeCurrent(mud->gl_window, context);
+    SDL_GL_MakeCurrent(mud->gl_window, context);*/
 
     glewExperimental = GL_TRUE;
 
@@ -1342,7 +1357,8 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     if (mud->gl_last_swap == 0 || get_ticks() - mud->gl_last_swap >= 16) {
         mudclient_poll_events(mud);
         surface_draw(mud->surface);
-        SDL_GL_SwapWindow(mud->gl_window);
+        //SDL_GL_SwapWindow(mud->gl_window);
+        SDL_GL_SwapBuffers();
         mud->gl_last_swap = get_ticks();
     } else {
         surface_gl_reset_context(mud->surface);
@@ -2805,9 +2821,9 @@ void mudclient_start_game(mudclient *mud) {
 
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
-    SDL_SetWindowResizable(mud->window, 1);
+    //SDL_SetWindowResizable(mud->window, 1);
 #elif RENDER_GL
-    SDL_SetWindowResizable(mud->gl_window, 1);
+    //SDL_SetWindowResizable(mud->gl_window, 1);
 #endif
 #endif
 
@@ -4960,6 +4976,14 @@ void mudclient_draw(mudclient *mud) {
         mudclient_3ds_gl_frame_end();
 #endif
     }
+<<<<<<< Updated upstream
+=======
+
+#ifdef RENDER_GL
+    //SDL_GL_SwapWindow(mud->gl_window);
+    SDL_GL_SwapBuffers();
+#endif
+>>>>>>> Stashed changes
 }
 
 void mudclient_on_resize(mudclient *mud) {
@@ -4975,9 +4999,9 @@ void mudclient_on_resize(mudclient *mud) {
     SDL_SetWindowSize(mud->gl_window, new_width, new_height);
 #endif
 #elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
-    SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
+    //SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
-    SDL_GetWindowSize(mud->window, &new_width, &new_height);
+    //SDL_GetWindowSize(mud->window, &new_width, &new_height);
 #endif
 
     mud->game_width = new_width;
@@ -5445,7 +5469,7 @@ void mudclient_poll_events(mudclient *mud) {
             mudclient_mouse_released(mud, event.button.x, event.button.y,
                                      event.button.button);
             break;
-        case SDL_MOUSEWHEEL:
+        /*case SDL_MOUSEWHEEL:
             if (mud->options->mouse_wheel) {
                 if (event.wheel.y != 0) {
                     mud->mouse_scroll_delta = (event.wheel.y > 0 ? -1 : 1);
@@ -5472,7 +5496,7 @@ void mudclient_poll_events(mudclient *mud) {
             mudclient_mouse_released(mud, (int)(event.tfinger.x * MUD_WIDTH),
                                      (int)(event.tfinger.y * MUD_HEIGHT),
                                      curMouseBtn);
-            break;
+            break;*/
 #ifdef __SWITCH__
         case SDL_JOYBUTTONDOWN:
             switch (event.jbutton.button) {
@@ -5606,11 +5630,11 @@ void mudclient_poll_events(mudclient *mud) {
             }
             break;
 #endif
-        case SDL_WINDOWEVENT:
+        /*case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 mudclient_on_resize(mud);
             }
-            break;
+            break;*/
         }
     }
 #endif
@@ -6018,7 +6042,7 @@ void mudclient_play_sound(mudclient *mud, char *name) {
 #else
     // TODO could re-pause after sound plays?
     SDL_PauseAudio(0);
-    SDL_QueueAudio(1, mud->pcm_out, length * 2);
+    //SDL_QueueAudio(1, mud->pcm_out, length * 2);
 #endif
 }
 

@@ -8,7 +8,7 @@
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
-#include <SDL_opengl.h>
+//#include <SDL_opengl.h>
 
 #define CGLM_DEFINE_PRINTS
 #include <cglm/cglm.h>
