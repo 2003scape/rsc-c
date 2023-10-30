@@ -71,9 +71,15 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
 #ifdef RENDER_3DS_GL
     if (mud->ground_item_count > 0) {
+        GameModel *ground_item_model[mud->ground_item_count];
+
+        for (int i = 0; i < mud->ground_item_count; i++) {
+            ground_item_model[i] = mud->ground_items[i].model;
+        }
+
         game_model_gl_buffer_models(
             &mud->scene->gl_item_buffers, &mud->scene->gl_item_buffer_length,
-            mud->ground_item_model, mud->ground_item_count);
+            ground_item_model, mud->ground_item_count);
     }
 #endif
 }
@@ -613,8 +619,9 @@ void mudclient_packet_tick(mudclient *mud) {
             int object_count = mud->object_count + ANIMATED_MODELS_LENGTH + 8;
             GameModel *object_model[object_count];
 
-            memcpy(object_model, mud->object_model,
-                   sizeof(GameModel *) * mud->object_count);
+            for (int i = 0; i < mud->object_count; i++) {
+                object_model[i] = mud->objects[i].model;
+            }
 
             int first_animated_index = 0;
 
