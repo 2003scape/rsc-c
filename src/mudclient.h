@@ -66,7 +66,9 @@
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
-//#include <SDL_opengl.h>
+#ifndef SDL12
+#include <SDL_opengl.h>
+#endif
 
 #include "gl/shader.h"
 #endif
@@ -328,7 +330,10 @@ void mudclient_3ds_gl_frame_start(mudclient *mud, int clear);
 void mudclient_3ds_gl_frame_end();
 #endif
 #else
+#ifdef SDL12
 void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code);
+#else
+void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
 #endif
 
 // TODO this was moved
@@ -374,12 +379,17 @@ typedef struct mudclient {
     C3D_RenderTarget *_3ds_gl_offscreen_render_target;
 #endif
 #else
-    //SDL_Window *window;
+    #ifndef SDL12
+    SDL_Window *window;
+    #endif
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
 
 #ifdef RENDER_GL
-    //SDL_Window *gl_window;
+    #ifndef SDL12
+    SDL_Window *gl_window;
+    #endif
+#endif
 #endif
 
     SDL_Cursor *default_cursor;

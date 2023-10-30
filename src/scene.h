@@ -13,7 +13,9 @@
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
-//#include <SDL_opengl.h>
+#ifndef SDL12
+#include <SDL_opengl.h>
+#endif
 
 #include "gl/shader.h"
 #endif

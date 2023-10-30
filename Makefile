@@ -7,7 +7,7 @@ OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added
 CFLAGS += -fwrapv
-CFLAGS += -I ./cglm/include -DRENDER_GL -DOPENGL20 #-DRENDER_SW #-DREVISION_177
+CFLAGS += -I ./cglm/include -DRENDER_GL -DOPENGL20 -DSDL12 #-DRENDER_SW #-DREVISION_177
 CFLAGS += $(shell sdl-config --cflags)
 CFLAGS += $(shell pkg-config --cflags SDL_image)
 CFLAGS += $(shell pkg-config --cflags glew)

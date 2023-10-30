@@ -1357,8 +1357,11 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     if (mud->gl_last_swap == 0 || get_ticks() - mud->gl_last_swap >= 16) {
         mudclient_poll_events(mud);
         surface_draw(mud->surface);
-        //SDL_GL_SwapWindow(mud->gl_window);
+        #ifdef SDL12
         SDL_GL_SwapBuffers();
+        #else
+        SDL_GL_SwapWindow(mud->gl_window);
+        #endif
         mud->gl_last_swap = get_ticks();
     } else {
         surface_gl_reset_context(mud->surface);
@@ -2256,7 +2259,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         surface_draw(mud->surface);
 
 #ifdef RENDER_GL
+        #ifndef SDL12
         SDL_GL_SwapWindow(mud->gl_window);
+        #endif
 #elif defined(RENDER_3DS_GL)
         mudclient_3ds_gl_frame_end();
 #endif
@@ -2921,7 +2926,9 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     surface_draw(mud->surface);
 
 #ifdef RENDER_GL
+    #ifndef SDL12
     SDL_GL_SwapWindow(mud->gl_window);
+    #endif
 #elif defined(RENDER_3DS_GL)
     mudclient_3ds_gl_frame_end();
 #endif
@@ -4971,19 +4978,21 @@ void mudclient_draw(mudclient *mud) {
         mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
 #ifdef RENDER_GL
+        #ifndef SDL12
         SDL_GL_SwapWindow(mud->gl_window);
+        #endif
 #elif defined(RENDER_3DS_GL)
         mudclient_3ds_gl_frame_end();
 #endif
     }
-<<<<<<< Updated upstream
-=======
 
 #ifdef RENDER_GL
-    //SDL_GL_SwapWindow(mud->gl_window);
+    #ifdef SDL12
     SDL_GL_SwapBuffers();
+    #else
+    SDL_GL_SwapWindow(mud->gl_window);
+    #endif
 #endif
->>>>>>> Stashed changes
 }
 
 void mudclient_on_resize(mudclient *mud) {
@@ -4994,9 +5003,11 @@ void mudclient_on_resize(mudclient *mud) {
     new_width = get_canvas_width();
     new_height = get_canvas_height();
 #ifdef RENDER_SW
-    SDL_SetWindowSize(mud->window, new_width, new_height);
+    //SDL_SetWindowSize(mud->window, new_width, new_height);
 #elif defined(RENDER_GL)
-    SDL_SetWindowSize(mud->gl_window, new_width, new_height);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
+    mud->screen = SDL_SetVideoMode(new_width, new_height, 32, SDL_OPENGL | SDL_RESIZABLE);
+    //SDL_SetWindowSize(mud->gl_window, new_width, new_height);
 #endif
 #elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
     //SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);

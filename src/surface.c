@@ -1090,15 +1090,21 @@ void surface_draw(Surface *surface) {
                    surface_pixels + pixel_index, 3);
         }
     }
+    #ifdef SDL12
     SDL_Flip(mud->screen); //Needed?
+    #endif
     // gspWaitForVBlank();
 #endif
 #else
-    //if (mud->window != NULL) {
+    #ifdef SDL12
         SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
         SDL_Flip(mud->screen);
-        //SDL_UpdateWindowSurface(mud->window);
-    //}
+    #else
+    if (mud->window != NULL) {
+        SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
+        SDL_UpdateWindowSurface(mud->window);
+    }
+    #endif
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
