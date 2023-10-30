@@ -56,6 +56,7 @@ static int fairy_banker_start = -1;
 static int tribesman_start = -1;
 static int jungle_savage_start = -1;
 static int earth_warrior_start = -1;
+static int thug_start = -1;
 
 #define NPC_MAN                         (11)
 #define NPC_MAN_AL_KHARID               (72)
@@ -74,6 +75,7 @@ static int earth_warrior_start = -1;
 #define NPC_DARK_WARRIOR                (199)
 #define NPC_DRUID                       (200)
 #define NPC_FAIRY_BANKER                (224)
+#define NPC_THUG                        (251)
 #define NPC_PIRATE_BRIMHAVEN            (264)
 #define NPC_BANKER_AL_KHARID            (268)
 #define NPC_CHAOS_DRUID                 (270)
@@ -711,6 +713,23 @@ add_diverse_npcs(void) {
     npc.sprites[ANIMATION_INDEX_BODY] = ANIM_FBODY1;
     npc.sprites[ANIMATION_INDEX_BODY_OVERLAY] = -1;
     game_data.npcs[game_data.npc_count++] = npc;
+
+    /* Thug */
+
+    thug_start = game_data.npc_count;
+
+    npc = game_data.npcs[NPC_THUG];
+    npc.skin_colour = SKIN_COLOUR_TAN1;
+    game_data.npcs[game_data.npc_count++] = npc;
+
+    npc = game_data.npcs[NPC_THUG];
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_AXE_IRON;
+    game_data.npcs[game_data.npc_count++] = npc;
+
+    npc = game_data.npcs[NPC_THUG];
+    npc.skin_colour = SKIN_COLOUR_TAN1;
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_AXE_IRON;
+    game_data.npcs[game_data.npc_count++] = npc;
 }
 
 static int
@@ -824,6 +843,9 @@ diversify_npc(int id, int server_index, int x, int y) {
         case NPC_EARTH_WARRIOR:
             r = roll_isaac(server_index, 4);
             return r == 0 ? NPC_EARTH_WARRIOR : earth_warrior_start + (r - 1);
+        case NPC_THUG:
+            r = roll_isaac(server_index, 4);
+            return r == 0 ? NPC_THUG : thug_start + (r - 1);
     }
     return id;
 }
