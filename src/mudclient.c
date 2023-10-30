@@ -2086,28 +2086,28 @@ void mudclient_reset_game(mudclient *mud) {
 #endif
 
     for (int i = 0; i < mud->object_count; i++) {
-        scene_remove_model(mud->scene, mud->object_model[i]);
+        scene_remove_model(mud->scene, mud->objects[i].model);
 
-        world_remove_object(mud->world, mud->object_x[i], mud->object_y[i],
-                            mud->object_id[i]);
+        world_remove_object(mud->world, mud->objects[i].x, mud->objects[i].y,
+                            mud->objects[i].id);
 
 #ifdef RENDER_SW
-        game_model_destroy(mud->object_model[i]);
+        game_model_destroy(mud->objects[i].model);
 #endif
-        free(mud->object_model[i]);
-        mud->object_model[i] = NULL;
+        free(mud->objects[i].model);
+        mud->objects[i].model = NULL;
     }
 
     for (int i = 0; i < mud->wall_object_count; i++) {
-        scene_remove_model(mud->scene, mud->wall_object_model[i]);
+        scene_remove_model(mud->scene, mud->wall_objects[i].model);
 
         world_remove_wall_object(
-            mud->world, mud->wall_object_x[i], mud->wall_object_y[i],
-            mud->wall_object_direction[i], mud->wall_object_id[i]);
+            mud->world, mud->wall_objects[i].x, mud->wall_objects[i].y,
+            mud->wall_objects[i].direction, mud->wall_objects[i].id);
 
-        game_model_destroy(mud->wall_object_model[i]);
-        free(mud->wall_object_model[i]);
-        mud->wall_object_model[i] = NULL;
+        game_model_destroy(mud->wall_objects[i].model);
+        free(mud->wall_objects[i].model);
+        mud->wall_objects[i].model = NULL;
     }
 
     mud->object_count = 0;
@@ -2932,16 +2932,16 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     int offset_y = mud->region_y - ay;
 
     for (int i = 0; i < mud->object_count; i++) {
-        mud->object_x[i] -= offset_x;
-        mud->object_y[i] -= offset_y;
+        mud->objects[i].x -= offset_x;
+        mud->objects[i].y -= offset_y;
 
-        int object_x = mud->object_x[i];
-        int object_y = mud->object_y[i];
-        int object_id = mud->object_id[i];
+        int object_x = mud->objects[i].x;
+        int object_y = mud->objects[i].y;
+        int object_id = mud->objects[i].id;
 
-        GameModel *game_model = mud->object_model[i];
+        GameModel *game_model = mud->objects[i].model;
 
-        int object_direction = mud->object_direction[i];
+        int object_direction = mud->objects[i].direction;
         int object_width = 0;
         int object_height = 0;
 
@@ -2976,26 +2976,26 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 #endif
 
     for (int i = 0; i < mud->wall_object_count; i++) {
-        mud->wall_object_x[i] -= offset_x;
-        mud->wall_object_y[i] -= offset_y;
+        mud->wall_objects[i].x -= offset_x;
+        mud->wall_objects[i].y -= offset_y;
 
-        int wall_object_x = mud->wall_object_x[i];
-        int wall_object_y = mud->wall_object_y[i];
-        int wall_object_id = mud->wall_object_id[i];
-        int wall_object_dir = mud->wall_object_direction[i];
+        int wall_object_x = mud->wall_objects[i].x;
+        int wall_object_y = mud->wall_objects[i].y;
+        int wall_object_id = mud->wall_objects[i].id;
+        int wall_object_dir = mud->wall_objects[i].direction;
 
         world_set_object_adjacency_from4(mud->world, wall_object_x,
                                          wall_object_y, wall_object_dir,
                                          wall_object_id);
 
-        game_model_destroy(mud->wall_object_model[i]);
-        free(mud->wall_object_model[i]);
+        game_model_destroy(mud->wall_objects[i].model);
+        free(mud->wall_objects[i].model);
 
         GameModel *wall_object_model =
             mudclient_create_wall_object(mud, wall_object_x, wall_object_y,
                                          wall_object_dir, wall_object_id, i);
 
-        mud->wall_object_model[i] = wall_object_model;
+        mud->wall_objects[i].model = wall_object_model;
     }
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -3003,8 +3003,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 #endif
 
     for (int i = 0; i < mud->ground_item_count; i++) {
-        mud->ground_item_x[i] -= offset_x;
-        mud->ground_item_y[i] -= offset_y;
+        mud->ground_items[i].x -= offset_x;
+        mud->ground_items[i].y -= offset_y;
     }
 
     mudclient_update_ground_item_models(mud);
@@ -3636,12 +3636,12 @@ void mudclient_handle_game_input(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->object_count; i++) {
-        int x = mud->object_x[i];
-        int y = mud->object_y[i];
+        int x = mud->objects[i].x;
+        int y = mud->objects[i].y;
 
         if (x >= 0 && y >= 0 && x < 96 && y < 96 &&
-            mud->object_id[i] == WINDMILL_SAILS_ID) {
-            game_model_rotate(mud->object_model[i], 1, 0, 0);
+            mud->objects[i].id == WINDMILL_SAILS_ID) {
+            game_model_rotate(mud->objects[i].model, 1, 0, 0);
         }
     }
 
@@ -3736,8 +3736,8 @@ void mudclient_handle_inputs(mudclient *mud) {
 
 void mudclient_update_object_animation(mudclient *mud, int object_index,
                                        char *model_name) {
-    int object_x = mud->object_x[object_index];
-    int object_y = mud->object_y[object_index];
+    int object_x = mud->objects[object_index].x;
+    int object_y = mud->objects[object_index].y;
     int distance_x = object_x - (mud->local_player->current_x / 128);
     int distance_y = object_y - (mud->local_player->current_y / 128);
     int max_distance = 7;
@@ -3745,7 +3745,7 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
     if (object_x >= 0 && object_y >= 0 && object_x < 96 && object_y < 96 &&
         distance_x > -max_distance && distance_x < max_distance &&
         distance_y > -max_distance && distance_y < max_distance) {
-        scene_remove_model(mud->scene, mud->object_model[object_index]);
+        scene_remove_model(mud->scene, mud->objects[object_index].model);
 
         int model_index = game_data_get_model_index(model_name);
         GameModel *game_model = game_model_copy(mud->game_models[model_index]);
@@ -3753,16 +3753,16 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
         scene_add_model(mud->scene, game_model);
 
         game_model_set_light_from6(game_model, 1, 48, 48, -50, -10, -50);
-        game_model_copy_position(game_model, mud->object_model[object_index]);
+        game_model_copy_position(game_model, mud->objects[object_index].model);
 
         game_model->key = object_index;
 
 #ifdef RENDER_SW
-        game_model_destroy(mud->object_model[object_index]);
+        game_model_destroy(mud->objects[object_index].model);
 #endif
-        free(mud->object_model[object_index]);
+        free(mud->objects[object_index].model);
 
-        mud->object_model[object_index] = game_model;
+        mud->objects[object_index].model = game_model;
     }
 }
 
@@ -4486,20 +4486,20 @@ void mudclient_animate_objects(mudclient *mud) {
         mud->last_object_animation_cycle = mud->object_animation_cycle;
 
         for (int i = 0; i < mud->object_count; i++) {
-            if (mud->object_id[i] == FIRE_ID) {
+            if (mud->objects[i].id == FIRE_ID) {
                 sprintf(name, "firea%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == FIREPLACE_ID) {
+            } else if (mud->objects[i].id == FIREPLACE_ID) {
                 sprintf(name, "fireplacea%d",
                         (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == LIGHTNING_ID) {
+            } else if (mud->objects[i].id == LIGHTNING_ID) {
                 sprintf(name, "lightning%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == FIRE_SPELL_ID) {
+            } else if (mud->objects[i].id == FIRE_SPELL_ID) {
                 sprintf(name, "firespell%d", (mud->object_animation_cycle + 1));
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == SPELL_CHARGE_ID) {
+            } else if (mud->objects[i].id == SPELL_CHARGE_ID) {
                 sprintf(name, "spellcharge%d",
                         (mud->object_animation_cycle + 1));
 
@@ -4512,10 +4512,10 @@ void mudclient_animate_objects(mudclient *mud) {
         mud->last_torch_animation_cycle = mud->torch_animation_cycle;
 
         for (int i = 0; i < mud->object_count; i++) {
-            if (mud->object_id[i] == TORCH_ID) {
+            if (mud->objects[i].id == TORCH_ID) {
                 sprintf(name, "torcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
-            } else if (mud->object_id[i] == SKULL_TORCH_ID) {
+            } else if (mud->objects[i].id == SKULL_TORCH_ID) {
                 sprintf(name, "skulltorcha%d", mud->torch_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -4526,7 +4526,7 @@ void mudclient_animate_objects(mudclient *mud) {
         mud->last_claw_animation_cycle = mud->claw_animation_cycle;
 
         for (int i = 0; i < mud->object_count; i++) {
-            if (mud->object_id[i] == CLAW_SPELL_ID) {
+            if (mud->objects[i].id == CLAW_SPELL_ID) {
                 sprintf(name, "clawspell%d", mud->claw_animation_cycle + 1);
                 mudclient_update_object_animation(mud, i, name);
             }
@@ -4639,13 +4639,13 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->ground_item_count; i++) {
-        int x = mud->ground_item_x[i] * MAGIC_LOC + 64;
-        int y = mud->ground_item_y[i] * MAGIC_LOC + 64;
+        int x = mud->ground_items[i].x * MAGIC_LOC + 64;
+        int y = mud->ground_items[i].y * MAGIC_LOC + 64;
 
-        if (mud->ground_item_model[i] == NULL) {
-            scene_add_sprite(mud->scene, 40000 + mud->ground_item_id[i], x,
+        if (mud->ground_items[i].model == NULL) {
+            scene_add_sprite(mud->scene, 40000 + mud->ground_items[i].id, x,
                              -world_get_elevation(mud->world, x, y) -
-                                 mud->ground_item_z[i],
+                                 mud->ground_items[i].z,
                              y, 96, 64, i + GROUND_ITEM_FACE_TAG);
 
             mud->scene_sprite_count++;
