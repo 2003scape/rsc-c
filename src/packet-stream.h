@@ -25,10 +25,6 @@
 #endif
 #endif
 
-#ifndef MSG_NOSIGNAL
-#define MSG_NOSIGNAL 0
-#endif
-
 #ifdef REVISION_177
 #define NO_ISAAC
 #endif
@@ -39,6 +35,11 @@
 
 #ifndef NO_RSA
 #include "lib/bn.h"
+#endif
+
+#if !defined(WIN32) && !defined(WII)
+#define NET_IS_UNIXLIKE
+#define HAVE_SIGNALS
 #endif
 
 #define USERNAME_LENGTH 20
