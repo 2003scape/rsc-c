@@ -672,8 +672,8 @@ add_diverse_npcs(void) {
     jungle_savage_start = game_data.npc_count;
 
     /* MODIFIED to not be racist */
-    game_data.npcs[NPC_JUNGLE_SAVAGE].name = "Kharazi Warrior";
-    game_data.npcs[NPC_JUNGLE_SAVAGE].description = "A fearless warrior from the deep jungle";
+    game_data.npcs[NPC_JUNGLE_SAVAGE].name = "Tormented Warrior";
+    game_data.npcs[NPC_JUNGLE_SAVAGE].description = "A Kharazi warrior, tormented by evil spirits.";
 
     /* By the way, Karamja has Adamantite deposits. */
 
