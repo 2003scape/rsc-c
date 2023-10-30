@@ -62,11 +62,21 @@ void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
                                     int *attribute_offset,
                                     int attribute_length) {
 #ifdef RENDER_GL
+    #ifdef OPENGL15
+    glVertexAttribPointerARB(vertex_buffer->attribute_index, attribute_length,
+                          GL_FLOAT, GL_FALSE, vertex_buffer->vertex_length,
+                          (void *)((*attribute_offset) * sizeof(GLfloat)));
+    #else
     glVertexAttribPointer(vertex_buffer->attribute_index, attribute_length,
                           GL_FLOAT, GL_FALSE, vertex_buffer->vertex_length,
                           (void *)((*attribute_offset) * sizeof(GLfloat)));
+    #endif
 
+    #ifdef OPENGL15
+    glEnableVertexAttribArrayARB(vertex_buffer->attribute_index);
+    #else
     glEnableVertexAttribArray(vertex_buffer->attribute_index);
+    #endif
 #elif defined(RENDER_3DS_GL)
     AttrInfo_AddLoader(&vertex_buffer->attr_info,
                        vertex_buffer->attribute_index, GPU_FLOAT,
