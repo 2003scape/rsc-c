@@ -716,6 +716,16 @@ void mudclient_start_application(mudclient *mud, char *title) {
     HIDUSER_EnableGyroscope();
 #else
 
+#ifdef WIN32
+    WSADATA wsa_data = {0};
+    int ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
+
+    if (ret < 0) {
+        fprintf(stderr, "WSAStartup() error: %d\n", WSAGetLastError());
+        exit(1);
+    }
+#endif
+
 #ifdef __SWITCH__
     Result romfs_res = romfsInit();
 
@@ -812,6 +822,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
     windowflags |= SDL_WINDOW_OPENGL;
+
     mud->gl_window = SDL_CreateWindow(
         title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mud->game_width,
         mud->game_height, windowflags);
