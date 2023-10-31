@@ -193,6 +193,7 @@
 #define WINDMILL_SAILS_ID 74
 #define FIRE_ID 97
 #define FIREPLACE_ID 274
+#define ODD_WELL_ID 466
 #define LIGHTNING_ID 1031
 #define FIRE_SPELL_ID 1036
 #define SPELL_CHARGE_ID 1147
@@ -200,7 +201,11 @@
 #define SKULL_TORCH_ID 143
 #define CLAW_SPELL_ID 1142
 
+/* boundary IDs */
+#define ODD_LOOKING_WALL_ID 22
+
 /* item IDs */
+#define IRON_MACE_ID 0
 #define COINS_ID 10
 
 #define FIRE_RUNE_ID 31

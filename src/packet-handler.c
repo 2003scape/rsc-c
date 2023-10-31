@@ -322,6 +322,9 @@ void mudclient_packet_tick(mudclient *mud) {
             if (update_type == 0) {
                 /* action bubble with an item in it */
                 int item_id = get_unsigned_short(data, offset, size);
+                if (item_id >= game_data.item_count) {
+                    item_id = IRON_MACE_ID;
+                }
                 offset += 2;
 
                 if (player != NULL) {
@@ -565,6 +568,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 mud->object_count = object_index;
 
                 if (object_id != 60000) {
+                    if (object_id >= game_data.object_count) {
+                        object_id = ODD_WELL_ID;
+                    }
+
                     int tile_direction =
                         world_get_tile_direction(mud->world, area_x, area_y);
 
@@ -1037,6 +1044,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 mud->wall_object_count = count;
 
                 if (id != 65535) {
+                    if (id >= game_data.wall_object_count) {
+                        id = ODD_LOOKING_WALL_ID;
+                    }
+
                     world_set_object_adjacency_from4(mud->world, l_x, l_y,
                                                      direction, id);
 
@@ -1098,6 +1109,9 @@ void mudclient_packet_tick(mudclient *mud) {
                     get_signed_byte(data, offset++, size);
 
                 if ((item_id & 32768) == 0) {
+                    if (item_id >= game_data.item_count) {
+                        item_id = IRON_MACE_ID;
+                    }
                     mud->ground_items[mud->ground_item_count].x = area_x;
                     mud->ground_items[mud->ground_item_count].y = area_y;
                     mud->ground_items[mud->ground_item_count].id = item_id;
@@ -1169,10 +1183,17 @@ void mudclient_packet_tick(mudclient *mud) {
             int id_equip = get_unsigned_short(data, offset, size);
             offset += 2;
 
-            mud->inventory_item_id[i] = id_equip & 32767;
-            mud->inventory_equipped[i] = id_equip / 32768;
+            int id = id_equip & 32767;
+            if (id >= game_data.item_count) {
+                id = IRON_MACE_ID;
+            }
 
-            if (game_data.items[id_equip & 32767].stackable == 0) {
+            int equipped = id_equip / 32768;
+
+            mud->inventory_item_id[i] = id;
+            mud->inventory_equipped[i] = equipped;
+
+            if (game_data.items[id].stackable == 0) {
                 mud->inventory_item_stack_count[i] =
                     get_stack_int(data, offset, size);
 
@@ -1193,8 +1214,14 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int index = get_unsigned_byte(data, offset++, size);
 
-        int id = get_unsigned_short(data, offset, size);
+        int id_equip = get_unsigned_short(data, offset, size);
         offset += 2;
+
+        int id = id_equip & 32767;
+        if (id >= game_data.item_count) {
+            id = IRON_MACE_ID;
+        }
+        int equipped = id_equip / 32768;
 
         if (game_data.items[id & 32767].stackable == 0) {
             stack = get_stack_int(data, offset, size);
@@ -1206,8 +1233,8 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-        mud->inventory_item_id[index] = id & 32767;
-        mud->inventory_equipped[index] = id / 32768;
+        mud->inventory_item_id[index] = id;
+        mud->inventory_equipped[index] = equipped;
         mud->inventory_item_stack_count[index] = stack;
 
         if (index >= mud->inventory_items_count) {
