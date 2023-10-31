@@ -5233,10 +5233,52 @@ void mudclient_draw(mudclient *mud) {
 #endif
 }
 
+void mudclient_sdl1_on_resize(mudclient *mud,int width, int height){
+    int new_width = width;
+    int new_height = height;
+    if ((SDL_SetVideoMode(width, height, 32, SDL_OPENGL | SDL_RESIZABLE)) == NULL){
+        return;
+    }
+    mud->game_width = new_width;
+    mud->game_height = new_height;
+
+    if (mud->surface != NULL) {
+#ifdef RENDER_GL
+        // TODO we actually don't need to do this since we only generate
+        // the login scenes on boot
+        // surface_gl_create_framebuffer(mud->surface);
+#endif
+
+        if (mudclient_is_ui_scaled(mud)) {
+            mud->surface->width = new_width / 2;
+            mud->surface->height = new_height / 2;
+        } else {
+            mud->surface->width = new_width;
+            mud->surface->height = new_height;
+        }
+
+        surface_reset_bounds(mud->surface);
+    }
+
+    if (mud->scene != NULL) {
+#ifdef RENDER_SW
+        free(mud->scene->scanlines);
+#endif
+
+        // TODO change 12 to bar height - 1
+        scene_set_bounds(mud->scene, new_width, new_height - 12);
+
+#ifdef RENDER_GL
+        mudclient_update_fov(mud);
+#endif
+    }
+
+    mudclient_resize(mud);
+}
+
 void mudclient_on_resize(mudclient *mud) {
     int new_width = MUD_WIDTH;
     int new_height = MUD_HEIGHT;
-    SDL_ResizeEvent resize;
 
 #ifdef EMSCRIPTEN
     new_width = get_canvas_width();
@@ -5251,17 +5293,11 @@ void mudclient_on_resize(mudclient *mud) {
     #endif
 #endif
 #elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
-    #ifdef SDL12
-    new_width = resize.w;
-    new_height = resize.h;
-    #else
+    #ifndef SDL12
     SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
 	#endif
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
-	#ifdef SDL12
-    new_width = resize.w;
-    new_height = resize.h;
-    #else
+	#ifndef SDL12
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
 	#endif
 #endif
@@ -5896,7 +5932,8 @@ void mudclient_poll_events(mudclient *mud) {
 #endif
 		#ifdef SDL12
         case SDL_VIDEORESIZE:
-            mudclient_on_resize(mud);
+            //mudclient_on_resize(mud);
+            mudclient_sdl1_on_resize(mud, event.resize.w, event.resize.h);
             break;
         #else
         case SDL_WINDOWEVENT:
