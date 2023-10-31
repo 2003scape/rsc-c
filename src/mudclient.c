@@ -352,6 +352,10 @@ void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
         *code = K_9;
         *char_code = K_9;
         break;
+    case SDLK_LSHIFT:
+    case SDLK_RSHIFT:
+        //Ignore these on SDL12
+        break;
     default:
         *char_code = keysym->sym;
 
