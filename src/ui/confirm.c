@@ -100,7 +100,11 @@ void mudclient_handle_confirm_input(mudclient *mud) {
                 #endif
 #endif
 #endif
+                #ifdef SDL12
+                mudclient_sdl1_on_resize(mud, mud->game_width, mud->game_height);
+                #else
                 mudclient_on_resize(mud);
+                #endif
                 break;
         }
 

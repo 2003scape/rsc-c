@@ -717,7 +717,11 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
 #endif
 #ifdef RENDER_GL
                 if (old_ui_scale != mud->options->ui_scale) {
-                    mudclient_on_resize(mud);
+                    #ifdef SDL12
+                mudclient_sdl1_on_resize(mud, mud->game_width, mud->game_height);
+                #else
+                mudclient_on_resize(mud);
+                #endif
                 }
 #endif
             }

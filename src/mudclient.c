@@ -5932,7 +5932,6 @@ void mudclient_poll_events(mudclient *mud) {
 #endif
 		#ifdef SDL12
         case SDL_VIDEORESIZE:
-            //mudclient_on_resize(mud);
             mudclient_sdl1_on_resize(mud, event.resize.w, event.resize.h);
             break;
         #else
