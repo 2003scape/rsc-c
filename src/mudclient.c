@@ -979,6 +979,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 	#ifdef SDL12
 	SDL_WM_SetCaption( "Runescape by Andrew Gower", NULL );
+	SDL_WM_SetIcon(IMG_Load("win/2003scape.png"),NULL);
 	#else
     uint32_t windowflags = SDL_WINDOW_SHOWN;
     #endif
@@ -989,7 +990,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 #ifdef RENDER_SW
 	#ifdef SDL12
-	mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_HWSURFACE);
+	mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_HWSURFACE | SDL_RESIZABLE);
 	#else
 	windowflags |= SDL_WINDOW_RESIZABLE;
     mud->window =
@@ -1009,7 +1010,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         fprintf(stderr, "unable to initialize sdl_image: %s\n", IMG_GetError());
     }*/
 #ifdef SDL12
-    mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_OPENGL);
+    mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_OPENGL | SDL_RESIZABLE);
 
     //Check for error
     GLenum error = glGetError();
@@ -5235,6 +5236,7 @@ void mudclient_draw(mudclient *mud) {
 void mudclient_on_resize(mudclient *mud) {
     int new_width = MUD_WIDTH;
     int new_height = MUD_HEIGHT;
+    SDL_ResizeEvent resize;
 
 #ifdef EMSCRIPTEN
     new_width = get_canvas_width();
@@ -5249,11 +5251,17 @@ void mudclient_on_resize(mudclient *mud) {
     #endif
 #endif
 #elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
-    #ifndef SDL12
+    #ifdef SDL12
+    new_width = resize.w;
+    new_height = resize.h;
+    #else
     SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
 	#endif
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
-	#ifndef SDL12
+	#ifdef SDL12
+    new_width = resize.w;
+    new_height = resize.h;
+    #else
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
 	#endif
 #endif
@@ -5886,7 +5894,11 @@ void mudclient_poll_events(mudclient *mud) {
             }
             break;
 #endif
-		#ifndef SDL12
+		#ifdef SDL12
+        case SDL_VIDEORESIZE:
+            mudclient_on_resize(mud);
+            break;
+        #else
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 mudclient_on_resize(mud);
