@@ -244,6 +244,9 @@
 #define LOADING_WIDTH 277
 #define LOADING_HEIGHT 20
 
+/* how many tiles away before objects stop animating */
+#define OBJECT_ANIMATION_DISTANCE 7
+
 typedef struct mudclient mudclient;
 
 #include "chat-message.h"

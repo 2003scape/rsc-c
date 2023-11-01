@@ -825,9 +825,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     windowflags |= SDL_WINDOW_OPENGL;
 
-    mud->gl_window = SDL_CreateWindow(
-        title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mud->game_width,
-        mud->game_height, windowflags);
+    mud->gl_window =
+        SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                         mud->game_width, mud->game_height, windowflags);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 
@@ -3763,13 +3763,23 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
                                        char *model_name) {
     int object_x = mud->objects[object_index].x;
     int object_y = mud->objects[object_index].y;
-    int distance_x = object_x - (mud->local_player->current_x / 128);
-    int distance_y = object_y - (mud->local_player->current_y / 128);
-    int max_distance = 7;
+
+    int within_distance = 0;
+
+    if (mud->options->distant_animation) {
+        within_distance = 1;
+    } else {
+        int distance_x = object_x - (mud->local_player->current_x / 128);
+        int distance_y = object_y - (mud->local_player->current_y / 128);
+
+        within_distance = distance_x > -OBJECT_ANIMATION_DISTANCE &&
+                          distance_x < OBJECT_ANIMATION_DISTANCE &&
+                          distance_y > -OBJECT_ANIMATION_DISTANCE &&
+                          distance_y < OBJECT_ANIMATION_DISTANCE;
+    }
 
     if (object_x >= 0 && object_y >= 0 && object_x < 96 && object_y < 96 &&
-        distance_x > -max_distance && distance_x < max_distance &&
-        distance_y > -max_distance && distance_y < max_distance) {
+        within_distance) {
         scene_remove_model(mud->scene, mud->objects[object_index].model);
 
         int model_index = game_data_get_model_index(model_name);
