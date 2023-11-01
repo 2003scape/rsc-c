@@ -1332,11 +1332,13 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                 mud->menu_type[mud->menu_items_count] = MENU_CAST_GROUND;
 
+#ifdef RENDER_SW
                 mud->menu_item_x[mud->menu_items_count] =
                     mud->world->local_x[selected_face];
 
                 mud->menu_item_y[mud->menu_items_count] =
                     mud->world->local_y[selected_face];
+#endif
 
                 mud->menu_index[mud->menu_items_count] = mud->selected_spell;
                 mud->menu_items_count++;
@@ -1349,11 +1351,13 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
             mud->menu_type[mud->menu_items_count] = MENU_WALK;
 
+#ifdef RENDER_SW
             mud->menu_item_x[mud->menu_items_count] =
                 mud->world->local_x[selected_face];
 
             mud->menu_item_y[mud->menu_items_count] =
                 mud->world->local_y[selected_face];
+#endif
 
             mud->menu_items_count++;
         }
