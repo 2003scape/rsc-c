@@ -4,6 +4,8 @@
 EM_JS(int, get_canvas_width, (), { return canvas.width; });
 EM_JS(int, get_canvas_height, (), { return canvas.height; });
 
+EM_JS(void, trigger_resize, (), { window.dispatchEvent(new Event('resize')); });
+
 int last_canvas_check = 0;
 
 mudclient *global_mud = NULL;
@@ -774,7 +776,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     uint32_t windowflags = SDL_WINDOW_SHOWN;
 
-#if !defined(WII) && !defined(_3DS)
+#if !defined(WII) && !defined(_3DS) && !defined(EMSCRIPTEN)
     windowflags |= SDL_WINDOW_RESIZABLE;
 #endif
 
@@ -2740,7 +2742,7 @@ void mudclient_start_game(mudclient *mud) {
 
     panel_base_sprite_start = mud->sprite_util;
 
-    int x = mud->surface->width - 199;
+    int x = MUD_WIDTH - 199;
     int y = 36;
 
     mud->panel_quests = malloc(sizeof(Panel));
@@ -5788,6 +5790,10 @@ void mudclient_run(mudclient *mud) {
         mudclient_load_jagex(mud);
         mudclient_start_game(mud);
         mud->loading_step = 0;
+
+#ifdef EMSCRIPTEN
+        trigger_resize();
+#endif
     }
 
     int i = 0;
