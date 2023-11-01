@@ -66,7 +66,7 @@ void main() {
         gradient_index += gl_Position.z * VERTEX_SCALE - float(fog_distance);
     }
 
-    gradient_index = max(0, min(gradient_index, RAMP_SIZE - 1));
+    gradient_index = max(0.0, min(gradient_index, RAMP_SIZE - 1.0));
 
     vertex_gradient_index = gradient_index;
 
