@@ -5,8 +5,9 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     int ui_y = 36;
 
     surface_draw_sprite(mud->surface,
-                              mud->surface->width - UI_TABS_WIDTH - (MUD_IS_COMPACT ? 52 : 3), 3,
-                              mud->sprite_media + INVENTORY_TAB_SPRITE_OFFSET);
+                        mud->surface->width - UI_TABS_WIDTH -
+                            (MUD_IS_COMPACT ? 52 : 3),
+                        3, mud->sprite_media + INVENTORY_TAB_SPRITE_OFFSET);
 
     /* item slots */
     for (int i = 0; i < INVENTORY_ITEMS_MAX; i++) {
@@ -25,7 +26,8 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
         if (i < mud->inventory_items_count) {
             int item_id = mud->inventory_item_id[i];
 
-            mudclient_draw_item(mud, slot_x, slot_y, ITEM_GRID_SLOT_WIDTH, ITEM_GRID_SLOT_HEIGHT, item_id);
+            mudclient_draw_item(mud, slot_x, slot_y, ITEM_GRID_SLOT_WIDTH,
+                                ITEM_GRID_SLOT_HEIGHT, item_id);
 
             char formatted_amount[12] = {0};
 
@@ -78,8 +80,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     sprintf(formatted_item_name, "@lre@%s", item_name);
 
     if (mud->selected_wiki) {
-        mudclient_menu_add_wiki(mud, formatted_item_name,
-                                wiki_get_item_page(item_id));
+        mudclient_menu_add_id_wiki(mud, formatted_item_name, "item", item_id);
     } else if (mud->show_dialog_bank) {
         int item_amount = mudclient_get_inventory_count(mud, item_id);
 

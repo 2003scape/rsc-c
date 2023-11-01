@@ -262,7 +262,6 @@ typedef struct mudclient mudclient;
 #include "surface.h"
 #include "utility.h"
 #include "version.h"
-#include "wiki.h"
 #include "world.h"
 
 #include "ui/additional-options.h"
