@@ -71,12 +71,12 @@
 
 #define MENU_CANCEL 4000
 
-#define WIKI_TYPE_PAGE "Special:Lookup?type=%s&id=%d"
+#define WIKI_TYPE_PAGE "Special:Lookup?type=%s&id=%d&name=%s"
 
 void mudclient_menu_item_click(mudclient *mud, int i);
 void mudclient_create_top_mouse_menu(mudclient *mud);
 void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page);
-void mudclient_menu_add_id_wiki(mudclient *mud, char *display, char *name,
+void mudclient_menu_add_id_wiki(mudclient *mud, char *display, char *type,
                                 int id);
 void mudclient_menu_add_ground_item(mudclient *mud, int index);
 void mudclient_create_right_click_menu(mudclient *mud);

@@ -696,10 +696,24 @@ void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page) {
     mud->menu_items_count++;
 }
 
-void mudclient_menu_add_id_wiki(mudclient *mud, char *display, char *name,
+void mudclient_menu_add_id_wiki(mudclient *mud, char *display, char *type,
                                 int id) {
-    char page[strlen(WIKI_TYPE_PAGE) + strlen(name) + 7];
-    sprintf(page, WIKI_TYPE_PAGE, name, id);
+    char *name = display;
+
+    for (int i = strlen(name); i >= 0; i--) {
+        if (name[i] == '@') {
+            name += i + 1;
+            break;
+        }
+    }
+
+    char encoded_display[(strlen(name) * 3) + 1];
+    url_encode(name, encoded_display);
+
+    char page[strlen(WIKI_TYPE_PAGE) + strlen(type) + strlen(encoded_display) +
+              5];
+
+    sprintf(page, WIKI_TYPE_PAGE, type, id, encoded_display);
     mudclient_menu_add_wiki(mud, display, page);
 }
 
@@ -979,7 +993,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 mud->menu_index[mud->menu_items_count] = npc->server_index;
 
                 if (mud->selected_wiki) {
-                    mudclient_menu_add_id_wiki(mud, formatted_npc_name, "npc", npc_id);
+                    mudclient_menu_add_id_wiki(mud, formatted_npc_name, "npc",
+                                               npc_id);
                 } else if (mud->selected_spell >= 0) {
                     if (game_data.spells[mud->selected_spell].type == 2) {
                         sprintf(mud->menu_item_text1[mud->menu_items_count],
@@ -1102,7 +1117,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
             sprintf(formatted_wall_object_name, "@cya@%s", wall_object_name);
 
             if (mud->selected_wiki) {
-                mudclient_menu_add_id_wiki(mud, formatted_wall_object_name, "wallobject", wall_object_id);
+                mudclient_menu_add_id_wiki(mud, formatted_wall_object_name,
+                                           "wallobject", wall_object_id);
             } else if (!mud->wall_objects[index].already_in_menu) {
                 strcpy(mud->menu_item_text2[mud->menu_items_count],
                        formatted_wall_object_name);
@@ -1214,7 +1230,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 mud->menu_source_index[mud->menu_items_count] = object_id;
 
                 if (mud->selected_wiki) {
-                    mudclient_menu_add_id_wiki(mud, formatted_object_name, "object", object_id);
+                    mudclient_menu_add_id_wiki(mud, formatted_object_name,
+                                               "object", object_id);
                 } else if (mud->selected_spell >= 0) {
                     if (game_data.spells[mud->selected_spell].type == 5) {
                         sprintf(mud->menu_item_text1[mud->menu_items_count],
