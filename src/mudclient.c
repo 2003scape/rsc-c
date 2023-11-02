@@ -4611,9 +4611,13 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
                 int dx = character->current_x;
                 int dy = character->current_y;
 
+                /*
+                 * Original game incorrectly uses the height of unicorns
+                 * for players here, match it.
+                 */
                 int target_height = player->attacking_npc_server_index != -1 ?
                     game_data.npcs[character->npc_id].height :
-                    game_data.npcs[SHIFTY_MAN_ID].height;
+                    game_data.npcs[0].height;
                 int delev = -world_get_elevation(mud->world, dx, dy) -
                             (target_height / 2);
 
