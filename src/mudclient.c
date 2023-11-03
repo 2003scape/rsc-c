@@ -989,14 +989,15 @@ void mudclient_start_application(mudclient *mud, char *title) {
     #endif
 
 #if !defined(WII) && !defined(_3DS)
-    
+    #ifndef SDL12
+    windowflags |= SDL_WINDOW_RESIZABLE;
+    #endif
 #endif
 
 #ifdef RENDER_SW
 	#ifdef SDL12
 	mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32, SDL_HWSURFACE | SDL_RESIZABLE);
 	#else
-	windowflags |= SDL_WINDOW_RESIZABLE;
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
