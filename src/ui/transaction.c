@@ -231,6 +231,8 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
     int decline_opcode = is_trade ? CLIENT_TRADE_DECLINE : CLIENT_DUEL_DECLINE;
 
+    int mouse_click = mud->show_right_click_menu ? 0 : mud->mouse_button_click;
+
     if (mud->show_dialog_offer_x && mud->input_digits_final > 0) {
         if (mud->input_digits_final > mud->offer_max) {
             mudclient_show_message(mud, "You don't have that many!",
@@ -253,7 +255,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
     mud->transaction_selected_item = -1;
 
-    if (!mud->options->transaction_menus && mud->mouse_button_click != 0 &&
+    if (!mud->options->transaction_menus && mouse_click != 0 &&
         mud->mouse_item_count_increment == 0) {
         mud->mouse_item_count_increment = 1;
     }
@@ -266,7 +268,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
     int tabs_width = TRADE_SLOT_WIDTH * TRANSACTION_OFFER_COLUMNS;
     int tabs_height = 24;
 
-    if (MUD_IS_COMPACT && mud->mouse_button_click != 0 &&
+    if (MUD_IS_COMPACT && mouse_click != 0 &&
         mouse_x >= TRANSACTION_OFFER_X &&
         mouse_x <= TRANSACTION_OFFER_X + tabs_width &&
         mouse_y >= TRANSACTION_INVENTORY_Y &&
@@ -397,7 +399,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
         }
 
         /* handle accept buttons */
-        if (mud->mouse_button_click != 0 && mouse_y >= TRANSACTION_BUTTON_Y &&
+        if (mouse_click != 0 && mouse_y >= TRANSACTION_BUTTON_Y &&
             mouse_y <= TRANSACTION_BUTTON_Y + TRANSACTION_BUTTON_HEIGHT) {
             if (mouse_x >= TRANSACTION_ACCEPT_X &&
                 mouse_x <= TRANSACTION_ACCEPT_X + TRANSACTION_BUTTON_WIDTH) {
@@ -420,7 +422,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
 
             mud->mouse_button_click = 0;
         }
-    } else if (mud->mouse_button_click != 0) {
+    } else if (mouse_click != 0) {
         mud->show_dialog_trade = 0;
         mud->show_dialog_duel = 0;
 
