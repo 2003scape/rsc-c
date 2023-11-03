@@ -988,7 +988,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     uint32_t windowflags = SDL_WINDOW_SHOWN;
     #endif
 
-#if !defined(WII) && !defined(_3DS)
+#if !defined(WII) && !defined(_3DS) && !defined(EMSCRIPTEN)
     #ifndef SDL12
     windowflags |= SDL_WINDOW_RESIZABLE;
     #endif
@@ -5241,9 +5241,15 @@ void mudclient_draw(mudclient *mud) {
 void mudclient_sdl1_on_resize(mudclient *mud,int width, int height){
     int new_width = width;
     int new_height = height;
+    #ifdef RENDER_SW
+	if ((SDL_SetVideoMode(width, height, 32, SDL_HWSURFACE | SDL_RESIZABLE)) == NULL){
+        return;
+    }
+	#else
     if ((SDL_SetVideoMode(width, height, 32, SDL_OPENGL | SDL_RESIZABLE)) == NULL){
         return;
     }
+    #endif
     mud->game_width = new_width;
     mud->game_height = new_height;
 
