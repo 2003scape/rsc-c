@@ -571,6 +571,9 @@ void mudclient_packet_tick(mudclient *mud) {
                     if (object_id >= game_data.object_count) {
                         object_id = ODD_WELL_ID;
                     }
+                    if (mud->object_count >= OBJECTS_MAX) {
+                        return;
+                    }
 
                     int tile_direction =
                         world_get_tile_direction(mud->world, area_x, area_y);
@@ -1047,6 +1050,9 @@ void mudclient_packet_tick(mudclient *mud) {
                     if (id >= game_data.wall_object_count) {
                         id = ODD_LOOKING_WALL_ID;
                     }
+                    if (mud->wall_object_count >= WALL_OBJECTS_MAX) {
+                        return;
+                    }
 
                     world_set_object_adjacency_from4(mud->world, l_x, l_y,
                                                      direction, id);
@@ -1111,6 +1117,9 @@ void mudclient_packet_tick(mudclient *mud) {
                 if ((item_id & 32768) == 0) {
                     if (item_id >= game_data.item_count) {
                         item_id = IRON_MACE_ID;
+                    }
+                    if (mud->ground_item_count >= GROUND_ITEMS_MAX) {
+                        return;
                     }
                     mud->ground_items[mud->ground_item_count].x = area_x;
                     mud->ground_items[mud->ground_item_count].y = area_y;
@@ -1178,6 +1187,9 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->inventory_items_count = get_unsigned_byte(data, offset++, size);
+        if (mud->inventory_items_count > INVENTORY_ITEMS_MAX) {
+            mud->inventory_items_count = INVENTORY_ITEMS_MAX;
+        }
 
         for (int i = 0; i < mud->inventory_items_count; i++) {
             int id_equip = get_unsigned_short(data, offset, size);
@@ -1213,6 +1225,9 @@ void mudclient_packet_tick(mudclient *mud) {
         int stack = 1;
 
         int index = get_unsigned_byte(data, offset++, size);
+        if (index >= INVENTORY_ITEMS_MAX) {
+            return;
+        }
 
         int id_equip = get_unsigned_short(data, offset, size);
         offset += 2;
@@ -1244,6 +1259,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_INVENTORY_ITEM_REMOVE: {
         int index = get_unsigned_byte(data, 1, size);
+        if (index >= INVENTORY_ITEMS_MAX) {
+            return;
+        }
 
         mud->inventory_items_count--;
 
@@ -1277,7 +1295,7 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_PLAYER_STAT_EQUIPMENT_BONUS: {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < PLAYER_STAT_EQUIPMENT_COUNT; i++) {
             mud->player_stat_equipment[i] = get_unsigned_byte(data, 1 + i, size);
         }
 
@@ -1285,6 +1303,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_PLAYER_STAT_EXPERIENCE_UPDATE: {
         int skill_index = get_unsigned_byte(data, 1, size);
+        if (skill_index >= PLAYER_SKILL_COUNT) {
+            return;
+        }
 
         int old_experience = mud->player_experience[skill_index];
         mud->player_experience[skill_index] = get_unsigned_int(data, 2, size);
@@ -1297,6 +1318,9 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_PLAYER_STAT_UPDATE: {
         int offset = 1;
         int skill_index = get_unsigned_byte(data, offset++, size);
+        if (skill_index >= PLAYER_SKILL_COUNT) {
+            return;
+        }
 
         mud->player_skill_current[skill_index] =
             get_unsigned_byte(data, offset++, size);
@@ -1318,6 +1342,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_FRIEND_LIST: {
         mud->friend_list_count = get_unsigned_byte(data, 1, size);
+        if (mud->friend_list_count > (SOCIAL_LIST_MAX * 2)) {
+            mud->friend_list_count = SOCIAL_LIST_MAX * 2;
+        }
 
         for (int i = 0; i < mud->friend_list_count; i++) {
             mud->friend_list[i] = get_unsigned_long(data, 2 + i * 9, size);
@@ -1360,6 +1387,10 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
+        if (mud->friend_list_count >= (SOCIAL_LIST_MAX * 2)) {
+            return;
+        }
+
         mud->friend_list[mud->friend_list_count] = encoded_username;
         mud->friend_list_online[mud->friend_list_count] = world;
 
@@ -1386,6 +1417,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_IGNORE_LIST: {
         mud->ignore_list_count = get_unsigned_byte(data, 1, size);
+        if (mud->ignore_list_count > SOCIAL_LIST_MAX) {
+            mud->ignore_list_count = SOCIAL_LIST_MAX;
+        }
 
         for (int i = 0; i < mud->ignore_list_count; i++) {
             mud->ignore_list[i] = get_unsigned_long(data, 2 + i * 8, size);
@@ -1509,7 +1543,14 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->new_bank_item_count = get_unsigned_byte(data, offset++, size);
+        if (mud->new_bank_item_count > BANK_ITEMS_MAX) {
+            mud->new_bank_item_count = BANK_ITEMS_MAX;
+        }
+
         mud->bank_items_max = get_unsigned_byte(data, offset++, size);
+        if (mud->bank_items_max > BANK_ITEMS_MAX) {
+            mud->bank_items_max = BANK_ITEMS_MAX;
+        }
 
         for (int i = 0; i < mud->new_bank_item_count; i++) {
             mud->new_bank_items[i] = get_unsigned_short(data, offset, size);
@@ -1574,6 +1615,11 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
         int new_item_count = get_unsigned_byte(data, offset++, size);
+        if (new_item_count > 40) {
+            /* TODO: use some kind of constant to determine this (also below) */
+            return;
+        }
+
         int is_general = get_unsigned_byte(data, offset++, size);
 
         mud->shop_sell_price_mod = get_unsigned_byte(data, offset++, size);
@@ -1682,6 +1728,9 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_DUEL_ITEMS: {
         mud->transaction_recipient_item_count =
             get_unsigned_byte(data, 1, size);
+        if (mud->transaction_recipient_item_count > TRADE_ITEMS_MAX) {
+            mud->transaction_recipient_item_count = TRADE_ITEMS_MAX;
+        }
 
         int offset = 2;
 
@@ -1750,6 +1799,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
         mud->transaction_confirm_item_count =
             get_unsigned_byte(data, offset++, size);
+        if (mud->transaction_confirm_item_count > TRADE_ITEMS_MAX) {
+            mud->transaction_confirm_item_count = TRADE_ITEMS_MAX;
+        }
 
         for (int i = 0; i < mud->transaction_confirm_item_count; i++) {
             mud->transaction_confirm_items[i] =
@@ -1775,7 +1827,11 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_PRAYER_STATUS: {
-        for (int i = 0; i < size - 1; i++) {
+        size--;
+        if (size > PRAYER_COUNT) {
+            size = PRAYER_COUNT;
+        }
+        for (int i = 0; i < size; i++) {
             int on = data[i + 1] == 1;
 
             if (!mud->prayer_on[i] && on) {
