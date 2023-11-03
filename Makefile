@@ -5,10 +5,10 @@ SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added
-CFLAGS += -fwrapv #-DSDL12
+CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
 CFLAGS += -std=gnu99
-CFLAGS += #-DREVISION_177
+CFLAGS += #-DREVISION_177 #-DSDL12
 CFLAGS += $(shell sdl2-config --cflags)
 LDFLAGS += -lm
 LDFLAGS += $(shell sdl2-config --libs)
