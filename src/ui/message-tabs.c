@@ -128,7 +128,8 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         surface_draw_string_centre(
             mud->surface,
             mud->options->wiki_lookup ? "Wiki lookup" : "Report abuse",
-            x + button_offset_x + (button_width * 4) + 3, y, 0, WHITE);
+            x + button_offset_x + (button_width * 4) + 3, y, FONT_REGULAR_11,
+            mud->selected_wiki ? MESSAGE_TAB_ORANGE : WHITE);
     }
 }
 
@@ -209,7 +210,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
         } else if (!MUD_IS_COMPACT && mouse_x > 417 && mouse_x < 497 &&
                    mud->last_mouse_button_down == 1) {
             if (mud->options->wiki_lookup) {
-                mud->selected_wiki = 1;
+                mud->selected_wiki = !mud->selected_wiki;
             }
 
             /*mud->show_dialog_report_abuse_step = 1;

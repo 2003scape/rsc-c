@@ -55,9 +55,7 @@ void init_packet_stream_global() { THREAT_LENGTH = strlen(SPOOKY_THREAT); }
 #endif
 
 #ifdef HAVE_SIGNALS
-void on_signal_do_nothing(int dummy) {
-    (void)dummy;
-}
+void on_signal_do_nothing(int dummy) { (void)dummy; }
 #endif
 
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
@@ -136,14 +134,6 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     }
 
 #ifdef WIN32
-    WSADATA wsa_data = {0};
-    ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
-
-    if (ret != 0) {
-        fprintf(stderr, "WSAStartup: %d\n", ret);
-        exit(1);
-    }
-
     ret = InetPton(AF_INET, server_ip, &server_addr.sin_addr);
 #else
     ret = inet_aton(server_ip, &server_addr.sin_addr);
@@ -165,7 +155,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     if (packet_stream->socket < 0) {
         fprintf(stderr, "socket error: %s (%d)\n", strerror(errno), errno);
-        packet_stream->closed = 1;
+        packet_stream_close(packet_stream);
         return;
     }
 
@@ -230,19 +220,23 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
                   sizeof(server_addr));
 
     if (ret == -1) {
-        struct timeval timeout = {0};
-        timeout.tv_sec = 5;
-        timeout.tv_usec = 0;
-
-        fd_set write_fds;
-        FD_ZERO(&write_fds);
-        FD_SET(packet_stream->socket, &write_fds);
-
+#ifdef WIN32
+        if (WSAGetLastError() == WSAEWOULDBLOCK) {
+#else
         if (errno == EINPROGRESS) {
+#endif
+            struct timeval timeout = {0};
+            timeout.tv_sec = 5;
+            timeout.tv_usec = 0;
+
+            fd_set write_fds;
+            FD_ZERO(&write_fds);
+            FD_SET(packet_stream->socket, &write_fds);
+
             ret = select(packet_stream->socket + 1, NULL, &write_fds, NULL,
                          &timeout);
 
-            if (ret > 0 || errno == EINTR) {
+            if (ret > 0) {
                 socklen_t lon = sizeof(int);
                 int valopt = 0;
 
@@ -391,6 +385,8 @@ int packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
     if (!packet_stream->closed) {
 #ifdef WII
         return net_write(packet_stream->socket, buffer + offset, length);
+#elif defined(WIN32) || defined(__SWITCH__)
+        return send(packet_stream->socket, buffer + offset, length, 0);
 #else
         return write(packet_stream->socket, buffer + offset, length);
 #endif
@@ -784,11 +780,17 @@ int64_t packet_stream_get_long(PacketStream *packet_stream) {
 }
 
 void packet_stream_close(PacketStream *packet_stream) {
+    if (packet_stream->socket > -1) {
 #ifdef WII
-    net_close(packet_stream->socket);
+        net_close(packet_stream->socket);
+#elif defined(WIN32)
+        closesocket(packet_stream->socket);
 #else
-    close(packet_stream->socket);
+        close(packet_stream->socket);
 #endif
+
+        packet_stream->socket = -1;
+    }
 
     packet_stream->closed = 1;
 }

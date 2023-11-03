@@ -195,6 +195,7 @@
 #define WINDMILL_SAILS_ID 74
 #define FIRE_ID 97
 #define FIREPLACE_ID 274
+#define ODD_WELL_ID 466
 #define LIGHTNING_ID 1031
 #define FIRE_SPELL_ID 1036
 #define SPELL_CHARGE_ID 1147
@@ -202,7 +203,11 @@
 #define SKULL_TORCH_ID 143
 #define CLAW_SPELL_ID 1142
 
+/* boundary IDs */
+#define ODD_LOOKING_WALL_ID 22
+
 /* item IDs */
+#define IRON_MACE_ID 0
 #define COINS_ID 10
 
 #define FIRE_RUNE_ID 31
@@ -241,6 +246,9 @@
 #define LOADING_WIDTH 277
 #define LOADING_HEIGHT 20
 
+/* how many tiles away before objects stop animating */
+#define OBJECT_ANIMATION_DISTANCE 7
+
 typedef struct mudclient mudclient;
 
 #include "chat-message.h"
@@ -259,7 +267,6 @@ typedef struct mudclient mudclient;
 #include "surface.h"
 #include "utility.h"
 #include "version.h"
-#include "wiki.h"
 #include "world.h"
 
 #include "ui/additional-options.h"
@@ -1078,7 +1085,6 @@ void mudclient_3ds_flush_audio(mudclient *mud);
 void mudclient_3ds_open_keyboard(mudclient *mud);
 void mudclient_3ds_handle_keyboard(mudclient *mud);
 void mudclient_3ds_draw_top_background(mudclient *mud);
-void mudclient_3ds_draw_framebuffer_top(mudclient *mud);
 #endif
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);

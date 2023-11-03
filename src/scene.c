@@ -1000,6 +1000,7 @@ void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
 void scene_add_model(Scene *scene, GameModel *model) {
     if (model == NULL) {
         fprintf(stderr, "Warning tried to add null object!\n");
+        return;
     }
 
     if (scene->model_count < scene->max_model_count) {
