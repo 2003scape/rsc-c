@@ -1094,9 +1094,6 @@ void surface_draw(Surface *surface) {
                    surface_pixels + pixel_index, 3);
         }
     }
-    #ifdef SDL12
-    SDL_Flip(mud->screen); //Needed?
-    #endif
     // gspWaitForVBlank();
 #endif
 #else
