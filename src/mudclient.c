@@ -3073,6 +3073,9 @@ GameCharacter *mudclient_add_character(mudclient *mud,
         }
 
         GameCharacter *character = malloc(sizeof(GameCharacter));
+        if (character == NULL) {
+            return NULL;
+        }
         game_character_new(character);
 
         character_server[server_index] = character;
@@ -3124,9 +3127,18 @@ GameCharacter *mudclient_add_character(mudclient *mud,
 
 GameCharacter *mudclient_add_player(mudclient *mud, int server_index, int x,
                                     int y, int animation) {
+    if (server_index >= PLAYERS_SERVER_MAX ||
+        mud->player_count >= PLAYERS_MAX) {
+        return NULL;
+    }
+
     GameCharacter *player = mudclient_add_character(
         mud, mud->player_server, mud->known_players, mud->known_player_count,
         server_index, x, y, animation, -1);
+
+    if (player == NULL) {
+        return NULL;
+    }
 
     mud->players[mud->player_count++] = player;
 
@@ -3135,9 +3147,17 @@ GameCharacter *mudclient_add_player(mudclient *mud, int server_index, int x,
 
 GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
                                  int animation, int npc_id) {
+    if (server_index >= NPCS_SERVER_MAX || mud->npc_count >= NPCS_MAX) {
+        return NULL;
+    }
+
     GameCharacter *npc = mudclient_add_character(
         mud, mud->npcs_server, mud->known_npcs, mud->known_npc_count,
         server_index, x, y, animation, npc_id);
+
+    if (npc == NULL) {
+        return NULL;
+    }
 
     mud->npcs[mud->npc_count++] = npc;
 
@@ -3803,6 +3823,9 @@ void mudclient_draw_character_message(mudclient *mud, GameCharacter *character,
     if (character->message_timeout <= 0) {
         return;
     }
+    if (mud->received_messages_count >= RECEIVED_MESSAGE_MAX) {
+        return;
+    }
 
     int text_width = surface_text_width(character->message, 1);
 
@@ -3840,9 +3863,11 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
 
         int missing = (character->current_hits * 30) / character->max_hits;
 
-        mud->health_bar_x[mud->health_bar_count] = offset_x + (width / 2);
-        mud->health_bar_y[mud->health_bar_count] = y;
-        mud->health_bar_missing[mud->health_bar_count++] = missing;
+        if (mud->health_bar_count < HEALTH_BAR_MAX) {
+            mud->health_bar_x[mud->health_bar_count] = offset_x + (width / 2);
+            mud->health_bar_y[mud->health_bar_count] = y;
+            mud->health_bar_missing[mud->health_bar_count++] = missing;
+        }
     }
 
     if (character->combat_timer > 150) {
@@ -4047,7 +4072,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
     mudclient_draw_character_message(mud, player, x, y, width);
 
-    if (player->bubble_timeout > 0) {
+    if (player->bubble_timeout > 0 &&
+            mud->action_bubble_count < ACTION_BUBBLE_MAX) {
         mud->action_bubble_x[mud->action_bubble_count] = x + (width / 2);
         mud->action_bubble_y[mud->action_bubble_count] = y;
         mud->action_bubble_scale[mud->action_bubble_count] = ty;
