@@ -1094,7 +1094,7 @@ void surface_draw(Surface *surface) {
                    surface_pixels + pixel_index, 3);
         }
     }
-    // gspWaitForVBlank();
+    gspWaitForVBlank();
 #endif
 #else
     #ifdef SDL12
