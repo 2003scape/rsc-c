@@ -1075,7 +1075,6 @@ void mudclient_3ds_flush_audio(mudclient *mud);
 void mudclient_3ds_open_keyboard(mudclient *mud);
 void mudclient_3ds_handle_keyboard(mudclient *mud);
 void mudclient_3ds_draw_top_background(mudclient *mud);
-void mudclient_3ds_draw_framebuffer_top(mudclient *mud);
 #endif
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);

@@ -1,6 +1,8 @@
 #ifndef _H_VERTEX_BUFFER
 #define _H_VERTEX_BUFFER
 
+#include <stdlib.h>
+
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>

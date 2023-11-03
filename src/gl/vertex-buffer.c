@@ -12,9 +12,8 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
         vertex_buffer_gl_destroy(vertex_buffer);
     }
 
-    printf("creating new vertex buffer %d %d: %d\n", vbo_length, vertex_length, vbo_length * vertex_length);
-
-    printf("creating new ebo %lu: %d\n", ebo_length, ebo_length * sizeof(uint16_t));
+    /*printf("new vertex buffer %d * %d: %d\n", vbo_length, vertex_length,
+           vbo_length * vertex_length);*/
 
 #ifdef RENDER_GL
     glGenVertexArrays(1, &vertex_buffer->vao);
@@ -25,11 +24,8 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
     vertex_buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
 
     if (!vertex_buffer->vbo) {
-        fprintf(stderr, "oh no\n");
-
-        while (1) {
-            delay_ticks(100);
-        }
+        fprintf(stderr, "vertex buffer is empty\n");
+        exit(1);
     }
 
     AttrInfo_Init(&vertex_buffer->attr_info);
@@ -62,21 +58,21 @@ void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
                                     int *attribute_offset,
                                     int attribute_length) {
 #ifdef RENDER_GL
-    #ifdef OPENGL15
+#ifdef OPENGL15
     glVertexAttribPointerARB(vertex_buffer->attribute_index, attribute_length,
-                          GL_FLOAT, GL_FALSE, vertex_buffer->vertex_length,
-                          (void *)((*attribute_offset) * sizeof(GLfloat)));
-    #else
+                             GL_FLOAT, GL_FALSE, vertex_buffer->vertex_length,
+                             (void *)((*attribute_offset) * sizeof(GLfloat)));
+#else
     glVertexAttribPointer(vertex_buffer->attribute_index, attribute_length,
                           GL_FLOAT, GL_FALSE, vertex_buffer->vertex_length,
                           (void *)((*attribute_offset) * sizeof(GLfloat)));
-    #endif
+#endif
 
-    #ifdef OPENGL15
+#ifdef OPENGL15
     glEnableVertexAttribArrayARB(vertex_buffer->attribute_index);
-    #else
+#else
     glEnableVertexAttribArray(vertex_buffer->attribute_index);
-    #endif
+#endif
 #elif defined(RENDER_3DS_GL)
     AttrInfo_AddLoader(&vertex_buffer->attr_info,
                        vertex_buffer->attribute_index, GPU_FLOAT,

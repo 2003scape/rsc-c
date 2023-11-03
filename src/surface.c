@@ -1095,7 +1095,7 @@ void surface_draw(Surface *surface) {
         }
     }
 
-    // gspWaitForVBlank();
+    gspWaitForVBlank();
 #endif
 #else
     if (mud->window != NULL) {
