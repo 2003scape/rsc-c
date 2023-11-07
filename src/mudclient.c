@@ -3178,7 +3178,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
 
     surface_draw_string_centre(mud->surface, "Loading... Please wait",
                                mud->surface->width / 2,
-                               mud->surface->height / 2 + 19, 1, WHITE);
+                               mud->surface->height / 2 + 19, FONT_BOLD_12,
+                               WHITE);
 
     mudclient_draw_chat_message_tabs(mud);
 
@@ -4911,6 +4912,7 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
                 int target_height = player->attacking_npc_server_index != -1 ?
                     game_data.npcs[character->npc_id].height :
                     game_data.npcs[0].height;
+
                 int delev = -world_get_elevation(mud->world, dx, dy) -
                             (target_height / 2);
 

@@ -1720,6 +1720,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
         mud->show_dialog_duel = 0;
         mud->show_dialog_duel_confirm = 0;
+
+        mud->show_dialog_offer_x = 0;
         break;
     }
     case SERVER_TRADE_ITEMS:
@@ -1760,6 +1762,8 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TRADE_CONFIRM_OPEN:
     case SERVER_DUEL_CONFIRM_OPEN: {
+        mud->show_dialog_offer_x = 0;
+
         if (opcode == SERVER_TRADE_CONFIRM_OPEN) {
             mud->show_dialog_trade_confirm = 1;
         } else {
