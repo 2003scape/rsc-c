@@ -1078,6 +1078,9 @@ void mudclient_update_fov(mudclient *mud);
 #endif
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
+#ifdef SDL12
+void mudclient_sdl1_on_resize(mudclient *mud,int width, int height);
+#endif
 void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
 #ifdef _3DS

@@ -1032,7 +1032,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     if( error != GL_NO_ERROR )
     {
         printf( "Error initializing OpenGL! %s\n", gluErrorString( error ) );
-        return false;
+        exit(0);
     }
 #else
 #ifdef EMSCRIPTEN
@@ -5291,6 +5291,7 @@ void mudclient_draw(mudclient *mud) {
 #endif
 }
 
+#ifdef SDL12
 void mudclient_sdl1_on_resize(mudclient *mud,int width, int height){
     int new_width = width;
     int new_height = height;
@@ -5339,6 +5340,7 @@ void mudclient_sdl1_on_resize(mudclient *mud,int width, int height){
 
     mudclient_resize(mud);
 }
+#endif
 
 void mudclient_on_resize(mudclient *mud) {
     int new_width = MUD_WIDTH;
