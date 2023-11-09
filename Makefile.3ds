@@ -29,7 +29,8 @@ include $(DEVKITARM)/3ds_rules
 #     - <libctru folder>/default_icon.png
 TARGET		:=	$(notdir $(CURDIR))
 BUILD			:=	build
-SOURCES		:=	src src/lib src/ui src/pica src/gl src/gl/textures
+SOURCES		:=	src src/lib src/ui src/custom src/pica src/gl src/gl/textures
+#SOURCES		:=	src src/lib src/ui src/custom
 DATA			:=
 #INCLUDES : = include
 INCLUDES	:=	src cglm/include
@@ -45,7 +46,7 @@ CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-mword-relocations -fomit-frame-pointer -ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -D__3DS__ -D_3DS -DRENDER_3DS_GL
+CFLAGS	+=	$(INCLUDE) -D__3DS__ -D_3DS -DRENDER_3DS_GL -DNO_ISAAC -DNO_RSA #-DREVISION_177
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
