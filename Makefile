@@ -1,7 +1,5 @@
 #CC = clang
-DEBUG ?= 1
-RENDER_GL ?= 1
-SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added

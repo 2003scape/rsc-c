@@ -36,6 +36,8 @@ typedef struct Options Options;
      "password = %s\n\n"                                                       \
      "; System command to use to open the web browser (only on desktop)\n"     \
      "browser_command = %s\n\n"                                                \
+     "; Diversify NPCs sent by server (custom)\n"                              \
+     "diversify_npcs= %d\n\n"                                                  \
      "; Scroll panel lists, chatbox, and camera (if zoom enabled) with "       \
      "wheel\n"                                                                 \
      "mouse_wheel = %d\n"                                                      \
@@ -167,6 +169,9 @@ struct Options {
     /* save credentials for login screen (not secure) */
     int remember_username;
     int remember_password;
+
+    /* diversify NPCs sent by server (custom) */
+    int diversify_npcs;
 
     /* command to use to open web browser (on desktop) */
     char browser_command[255];
