@@ -1463,3 +1463,32 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
                             text_colour);
     }
 }
+
+void mudclient_draw_hover_tooltip(mudclient *mud)
+{
+    if (mud->options->show_hover_tooltip && mud->menu_items_count > 1
+        && mud->mouse_button_down == 0 && mud->show_right_click_menu == 0)
+    {
+        char *menu_item_text1 = mud->menu_item_text1[mud->menu_indices[0]];
+        char *menu_item_text2 = mud->menu_item_text2[mud->menu_indices[0]];
+
+        // if the first menu item equals "Walk here" then we don't want to show
+        // the tooltip
+        if (strcmp(menu_item_text1, "Walk here") == 0) {
+            return;
+        }
+
+        char combined[strlen(menu_item_text1) + strlen(menu_item_text2) + 2];
+        sprintf(combined, "%s %s", menu_item_text1, menu_item_text2);
+
+        int text_width = surface_text_width(combined, FONT_BOLD_12);
+        int text_height = surface_text_height(FONT_BOLD_12);
+
+        surface_draw_box_alpha(mud->surface, mud->mouse_x,
+            mud->mouse_y - text_height, text_width + 5, text_height + 3,
+            GREY_D0, 120);
+
+        surface_draw_string(mud->surface, combined, mud->mouse_x + 2,
+                            mud->mouse_y, FONT_BOLD_12, WHITE);
+    }
+}

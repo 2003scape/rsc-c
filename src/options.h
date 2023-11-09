@@ -103,6 +103,8 @@ typedef struct Options Options;
      "ground_item_models = %d\n"                                               \
      "; Always animate objects like fires\n"                                   \
      "distant_animation = %d\n\n"                                              \
+     "; Show hover tooltip menu\n"                                             \
+     "show_hover_tooltip = %d\n"                                               \
                                                                                \
      "; Add filtering to the bank\n"                                           \
      "bank_search = %d\n"                                                      \
@@ -334,6 +336,9 @@ struct Options {
 
     /* experimental thick walls support (requires restart) */
     int thick_walls;
+
+    /* show the current action where the mouse is */
+    int show_hover_tooltip;
 };
 
 void options_new(Options *options);
