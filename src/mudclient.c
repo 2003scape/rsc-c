@@ -4420,6 +4420,8 @@ void mudclient_draw_ui(mudclient *mud) {
 #endif
             }
         }
+
+        mudclient_draw_hover_tooltip(mud);
     }
 
     if (mud->options->inventory_count) {
