@@ -834,8 +834,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
 
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+    // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 #endif
 
     windowflags |= SDL_WINDOW_OPENGL;
@@ -3160,7 +3160,7 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
     if (server_index >= NPCS_SERVER_MAX || mud->npc_count >= NPCS_MAX) {
         return NULL;
     }
-  
+
     if (mud->options->diversify_npcs) {
         npc_id = diversify_npc(npc_id, server_index, x, y);
     }
@@ -4854,6 +4854,8 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance -= 200;
     }
 
+    /* TODO this should probably be tied with FOV instead */
+#ifdef RENDER_SW
     /*
      * Keep the fog roughly "feeling the same" as the vanilla
      * 512x346 client when resized beyond that.
@@ -4866,6 +4868,7 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->clip_far_2d = clip_far;
         mud->scene->fog_z_distance = clip_far - 100;
     }
+#endif
 
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
@@ -6305,7 +6308,7 @@ int main(int argc, char **argv) {
     global_mud = mud;
 #endif
 
-    if (argc > 1) {
+    if (argc > 1 && strlen(argv[1]) > 0) {
         mud->options->members = strcmp(argv[1], "members") == 0;
     }
 

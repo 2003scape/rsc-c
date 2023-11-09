@@ -37,7 +37,7 @@ typedef struct Options Options;
      "; System command to use to open the web browser (only on desktop)\n"     \
      "browser_command = %s\n\n"                                                \
      "; Diversify NPCs sent by server (custom)\n"                              \
-     "diversify_npcs= %d\n\n"                                                  \
+     "diversify_npcs = %d\n\n"                                                  \
      "; Scroll panel lists, chatbox, and camera (if zoom enabled) with "       \
      "wheel\n"                                                                 \
      "mouse_wheel = %d\n"                                                      \

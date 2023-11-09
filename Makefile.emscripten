@@ -1,16 +1,16 @@
 CC = emcc
 DEBUG ?= 0
-RENDER_GL ?= 0
+RENDER_GL ?= 1
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
 OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added
 CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
-CFLAGS += -std=gnu99
+CFLAGS += -std=gnu99 -s USE_SDL=2
 CFLAGS += -DREVISION_177
-CFLAGS += -s USE_SDL=2
-LDFLAGS = -lm -lSDL2
+LDFLAGS += -sWEBSOCKET_URL=wss://
+LDFLAGS += -lm -lSDL2
 
 ifeq ($(RENDER_GL), 1)
 SRC += $(wildcard src/gl/*.c src/gl/textures/*.c)
