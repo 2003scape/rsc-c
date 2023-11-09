@@ -101,6 +101,7 @@ void options_set_defaults(Options *options) {
     options->wilderness_warning = 1;
     options->status_bars = 0;
     options->ground_item_models = 1;
+    options->distant_animation = 1;
 
     /* bank */
     options->bank_unstackble_withdraw = 1;
@@ -159,6 +160,7 @@ void options_set_vanilla(Options *options) {
     options->wilderness_warning = 1;
     options->status_bars = 0;
     options->ground_item_models = 0;
+    options->distant_animation = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 0;
@@ -234,6 +236,7 @@ void options_save(Options *options) {
             options->wilderness_warning,    //
             options->status_bars,           //
             options->ground_item_models,    //
+            options->distant_animation,     //
                                             //
             options->bank_search,           //
             options->bank_capacity,         //
@@ -305,6 +308,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("wilderness_warning", options->wilderness_warning, 0, 1);
     OPTION_INI_INT("status_bars", options->status_bars, 0, 1);
     OPTION_INI_INT("ground_item_models", options->ground_item_models, 0, 1);
+    OPTION_INI_INT("distant_animation", options->distant_animation, 0, 1);
 
     /* bank */
     OPTION_INI_INT("bank_search", options->bank_search, 0, 1);

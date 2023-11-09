@@ -5,8 +5,6 @@ void mudclient_draw_server_message(mudclient *mud) {
     int dialog_y = (mud->surface->height / 2) - 6;
     int height = mud->server_message_box_top ? 300 : 100;
 
-    //mud->server_message_box_top = 1;
-
     if (MUD_IS_COMPACT && mud->server_message_box_top) {
         dialog_y -= 2;
         height = MUD_HEIGHT - 16;

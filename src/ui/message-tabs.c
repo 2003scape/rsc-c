@@ -128,7 +128,8 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         surface_draw_string_centre(
             mud->surface,
             mud->options->wiki_lookup ? "Wiki lookup" : "Report abuse",
-            x + button_offset_x + (button_width * 4) + 3, y, 0, WHITE);
+            x + button_offset_x + (button_width * 4) + 3, y, FONT_REGULAR_11,
+            mud->selected_wiki ? MESSAGE_TAB_ORANGE : WHITE);
     }
 }
 
@@ -209,7 +210,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
         } else if (!MUD_IS_COMPACT && mouse_x > 417 && mouse_x < 497 &&
                    mud->last_mouse_button_down == 1) {
             if (mud->options->wiki_lookup) {
-                mud->selected_wiki = 1;
+                mud->selected_wiki = !mud->selected_wiki;
             }
 
             /*mud->show_dialog_report_abuse_step = 1;
@@ -242,7 +243,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             } else if (strncasecmp(message + 2, "logout", 6) == 0) {
                 mudclient_close_connection(mud);
             } else if (strncasecmp(message + 2, "lostcon", 7) == 0) {
-                // mudclient_lost_connection(mud);
+                mudclient_lost_connection(mud);
             } else if (strncasecmp(message + 2, "displayfps", 10) == 0) {
                 mud->options->display_fps = !mud->options->display_fps;
             } else {
@@ -304,7 +305,7 @@ void mudclient_decrement_message_flash(mudclient *mud) {
     }
 }
 
-void mudclient_show_message(mudclient *mud, char *message, int type) {
+void mudclient_show_message(mudclient *mud, char *message, MESSAGE_TYPE type) {
     int message_length = -1;
 
     /* handle ignore list */

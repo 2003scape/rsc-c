@@ -87,7 +87,7 @@ typedef struct GlModelTime {
 } GlModelTime;
 #endif
 
-typedef struct Scene {
+struct Scene {
     int max_sprite_count;
     int last_visible_polygons_count;
     int clip_near;
@@ -236,7 +236,7 @@ typedef struct Scene {
 
     mat4 gl_original_projection;
 #endif
-} Scene;
+};
 
 int scene_polygon_depth_compare(const void *a, const void *b);
 

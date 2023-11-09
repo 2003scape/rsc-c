@@ -37,6 +37,11 @@
 #include "lib/bn.h"
 #endif
 
+#if !defined(WIN32) && !defined(WII)
+#define NET_IS_UNIXLIKE
+#define HAVE_SIGNALS
+#endif
+
 #define USERNAME_LENGTH 20
 #define PASSWORD_LENGTH 20
 
@@ -58,7 +63,7 @@ typedef struct PacketStream PacketStream;
 void init_packet_stream_global();
 #endif
 
-typedef struct PacketStream {
+struct PacketStream {
     int socket;
     int closed;
     int delay;
@@ -95,21 +100,21 @@ typedef struct PacketStream {
 
     int opcode_friend;*/
 #endif
-} PacketStream;
+};
 
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud);
 int packet_stream_available_bytes(PacketStream *packet_stream, int length);
-void packet_stream_read_bytes(PacketStream *packet_stream, int length,
-                              int8_t *buffer);
-void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
-                               int offset, int length);
+int packet_stream_read_bytes(PacketStream *packet_stream, int length,
+                             int8_t *buffer);
+int packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
+                              int offset, int length);
 int packet_stream_read_byte(PacketStream *packet_stream);
 int packet_stream_has_packet(PacketStream *packet_stream);
 int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer);
 void packet_stream_new_packet(PacketStream *packet_stream,
                               CLIENT_OPCODE opcode);
 /*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);*/
-void packet_stream_write_packet(PacketStream *packet_stream, int i);
+int packet_stream_write_packet(PacketStream *packet_stream, int i);
 void packet_stream_send_packet(PacketStream *packet_stream);
 void packet_stream_put_bytes(PacketStream *packet_stream, void *src,
                              int offset, int length);
@@ -130,7 +135,7 @@ int packet_stream_get_byte(PacketStream *packet_stream);
 int packet_stream_get_short(PacketStream *packet_stream);
 int packet_stream_get_int(PacketStream *packet_stream);
 int64_t packet_stream_get_long(PacketStream *packet_stream);
-void packet_stream_flush_packet(PacketStream *packet_stream);
+int packet_stream_flush_packet(PacketStream *packet_stream);
 void packet_stream_close(PacketStream *packet_stream);
 
 #endif

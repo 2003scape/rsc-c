@@ -1,5 +1,9 @@
 #include "packet-stream.h"
 
+#ifdef HAVE_SIGNALS
+#include <signal.h>
+#endif
+
 #if 0
 char *SPOOKY_THREAT =
     "All RuneScape code and data, including this message, are copyright 2003 "
@@ -50,8 +54,14 @@ int get_client_opcode_friend(int opcode) {
 void init_packet_stream_global() { THREAT_LENGTH = strlen(SPOOKY_THREAT); }
 #endif
 
+#ifdef HAVE_SIGNALS
+void on_signal_do_nothing(int dummy) { (void)dummy; }
+#endif
+
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     memset(packet_stream, 0, sizeof(PacketStream));
+
+    packet_stream->max_read_tries = 1000;
 
 #ifdef REVISION_177
     /*packet_stream->decode_key = 3141592;
@@ -103,8 +113,9 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         int status = getaddrinfo(mud->options->server, NULL, &hints, &result);
 
         if (status != 0) {
-            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
-            exit(1);
+            fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(status));
+            packet_stream->closed = 1;
+            return;
         }
 
         for (struct addrinfo *rp = result; rp != NULL; rp = rp->ai_next) {
@@ -123,14 +134,6 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     }
 
 #ifdef WIN32
-    WSADATA wsa_data = {0};
-    ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
-
-    if (ret != 0) {
-        fprintf(stderr, "WSAStartup: %d\n", ret);
-        exit(1);
-    }
-
     ret = InetPton(AF_INET, server_ip, &server_addr.sin_addr);
 #else
     ret = inet_aton(server_ip, &server_addr.sin_addr);
@@ -144,15 +147,16 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #ifdef WII
     packet_stream->socket = net_socket(AF_INET, SOCK_STREAM, 0);
 #else
-    #ifdef __SWITCH__
-        socketInitializeDefault();              // Initialize sockets
-    #endif
+#ifdef __SWITCH__
+    socketInitializeDefault();
+#endif
     packet_stream->socket = socket(AF_INET, SOCK_STREAM, 0);
 #endif
 
     if (packet_stream->socket < 0) {
-        fprintf(stderr, "socket() error: %d\n", packet_stream->socket);
-        exit(1);
+        fprintf(stderr, "socket error: %s (%d)\n", strerror(errno), errno);
+        packet_stream_close(packet_stream);
+        return;
     }
 
     int set = 1;
@@ -196,38 +200,86 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         attempts_ms += 100;
     } while (ret == -1);
 #else
-    ret = connect(packet_stream->socket, (struct sockaddr *)&server_addr,
-                  sizeof(server_addr));
-#endif
-#endif
+#ifdef WIN32
+    u_long mode = 1;
+    ioctlsocket(packet_stream->socket, FIONBIO, &mode);
+#elif defined(NET_IS_UNIXLIKE)
+    ret = ioctl(packet_stream->socket, FIONBIO, &set);
 
     if (ret < 0) {
-        fprintf(stderr, "connect() error: %d\n", ret);
-        packet_stream->closed = 1;
-    } else {
-        packet_stream->closed = 0;
+        fprintf(stderr, "ioctl() error: %d\n", ret);
+        exit(1);
+    }
+#endif
 
-#ifdef WII
-        ret = net_ioctl(packet_stream->socket, FIONBIO, &set);
-#else
+#ifdef HAVE_SIGNALS
+    (void)signal(SIGPIPE, on_signal_do_nothing);
+#endif
+
+    ret = connect(packet_stream->socket, (struct sockaddr *)&server_addr,
+                  sizeof(server_addr));
+
+    if (ret == -1) {
 #ifdef WIN32
-        u_long mode = 1;
-        ioctlsocket(packet_stream->socket, FIONBIO, &mode);
+        if (WSAGetLastError() == WSAEWOULDBLOCK) {
+#else
+        if (errno == EINPROGRESS) {
 #endif
+            struct timeval timeout = {0};
+            timeout.tv_sec = 5;
+            timeout.tv_usec = 0;
 
-#if !defined(EMSCRIPTEN) && !defined(WIN32)
-        ret = ioctl(packet_stream->socket, FIONBIO, &set);
-#endif
-#endif
+            fd_set write_fds;
+            FD_ZERO(&write_fds);
+            FD_SET(packet_stream->socket, &write_fds);
 
-#if !defined(EMSCRIPTEN) && !defined(WIN32)
-        if (ret < 0) {
-            fprintf(stderr, "ioctl() error: %d\n", ret);
-            exit(1);
+            ret = select(packet_stream->socket + 1, NULL, &write_fds, NULL,
+                         &timeout);
+
+            if (ret > 0) {
+                socklen_t lon = sizeof(int);
+                int valopt = 0;
+
+                if (getsockopt(packet_stream->socket, SOL_SOCKET, SO_ERROR,
+                               (void *)(&valopt), &lon) < 0) {
+                    fprintf(stderr, "getsockopt() error:  %s (%d)\n",
+                            strerror(errno), errno);
+
+                    exit(1);
+                }
+
+                if (valopt > 0) {
+                    ret = -1;
+                    errno = valopt;
+                } else {
+                    ret = 0;
+                }
+            } else if (ret == 0) {
+                fprintf(stderr, "connect() timeout\n");
+                packet_stream_close(packet_stream);
+                return;
+            }
         }
+    }
 #endif
+#endif
+
+    if (ret < 0 && errno != 0) {
+        fprintf(stderr, "connect() error: %s (%d)\n", strerror(errno), errno);
+        packet_stream_close(packet_stream);
+        return;
     }
 
+#ifdef WII
+    ret = net_ioctl(packet_stream->socket, FIONBIO, &set);
+
+    if (ret < 0) {
+        fprintf(stderr, "ioctl() error: %d\n", ret);
+        exit(1);
+    }
+#endif
+
+    packet_stream->closed = 0;
     packet_stream->packet_end = 3;
     packet_stream->packet_max_length = 5000;
 }
@@ -264,10 +316,10 @@ int packet_stream_available_bytes(PacketStream *packet_stream, int length) {
     return 1;
 }
 
-void packet_stream_read_bytes(PacketStream *packet_stream, int length,
-                              int8_t *buffer) {
+int packet_stream_read_bytes(PacketStream *packet_stream, int length,
+                             int8_t *buffer) {
     if (packet_stream->closed) {
-        return;
+        return -1;
     }
 
     if (packet_stream->available_length > 0) {
@@ -295,6 +347,9 @@ void packet_stream_read_bytes(PacketStream *packet_stream, int length,
         }
     }
 
+    /* how many ticks we've been waiting to read for */
+    int read_duration = 0;
+
     int offset = 0;
 
     while (length > 0) {
@@ -307,24 +362,37 @@ void packet_stream_read_bytes(PacketStream *packet_stream, int length,
         if (bytes > 0) {
             length -= bytes;
             offset += bytes;
+        } else if (bytes == 0) {
+            packet_stream->closed = 1;
+            return -1;
         } else {
-            // TODO up this?
-            delay_ticks(1);
+            read_duration += 1;
+
+            if (read_duration >= 5000) {
+                packet_stream_close(packet_stream);
+                return -1;
+            } else {
+                delay_ticks(1);
+            }
         }
     }
+
+    return 0;
 }
 
-void packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
-                               int offset, int length) {
+int packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
+                              int offset, int length) {
     if (!packet_stream->closed) {
 #ifdef WII
-        net_write(packet_stream->socket, buffer + offset, length);
+        return net_write(packet_stream->socket, buffer + offset, length);
 #elif defined(WIN32) || defined(__SWITCH__)
-        send(packet_stream->socket, buffer + offset, length, 0);
+        return send(packet_stream->socket, buffer + offset, length, 0);
 #else
-        write(packet_stream->socket, buffer + offset, length);
+        return write(packet_stream->socket, buffer + offset, length);
 #endif
     }
+
+    return -1;
 }
 
 int packet_stream_read_byte(PacketStream *packet_stream) {
@@ -333,8 +401,12 @@ int packet_stream_read_byte(PacketStream *packet_stream) {
     }
 
     int8_t byte;
-    packet_stream_read_bytes(packet_stream, 1, &byte);
-    return (uint8_t)byte & 0xff;
+
+    if (packet_stream_read_bytes(packet_stream, 1, &byte) > -1) {
+        return (uint8_t)byte & 0xff;
+    }
+
+    return -1;
 }
 
 int packet_stream_has_packet(PacketStream *packet_stream) {
@@ -366,15 +438,19 @@ int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer) {
     if (packet_stream->length > 0 &&
         packet_stream_available_bytes(packet_stream, packet_stream->length)) {
         if (packet_stream->length >= 160) {
-            packet_stream_read_bytes(packet_stream, packet_stream->length,
-                                     buffer);
+            if (packet_stream_read_bytes(packet_stream, packet_stream->length,
+                                         buffer) < 0) {
+                return 0;
+            }
         } else {
             buffer[packet_stream->length - 1] =
                 packet_stream_read_byte(packet_stream);
 
             if (packet_stream->length > 1) {
-                packet_stream_read_bytes(packet_stream,
-                                         packet_stream->length - 1, buffer);
+                if (packet_stream_read_bytes(
+                        packet_stream, packet_stream->length - 1, buffer) < 0) {
+                    return 0;
+                }
             }
         }
 
@@ -389,14 +465,18 @@ int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer) {
     return 0;
 }
 
-void packet_stream_new_packet(PacketStream *packet_stream, CLIENT_OPCODE opcode) {
+void packet_stream_new_packet(PacketStream *packet_stream,
+                              CLIENT_OPCODE opcode) {
 #if 0
     packet_stream->opcode_friend = get_client_opcode_friend(opcode);
 #endif
 
     if (packet_stream->packet_start >
         ((packet_stream->packet_max_length * 4) / 5)) {
-        packet_stream_write_packet(packet_stream, 0);
+        if (packet_stream_write_packet(packet_stream, 0) < 0) {
+            packet_stream->socket_exception = 1;
+            packet_stream->socket_exception_message = "failed to write packet";
+        }
     }
 
 #ifndef NO_ISAAC
@@ -426,7 +506,7 @@ void packet_stream_new_packet(PacketStream *packet_stream, CLIENT_OPCODE opcode)
     return decoded_opcode;
 }*/
 
-void packet_stream_write_packet(PacketStream *packet_stream, int i) {
+int packet_stream_write_packet(PacketStream *packet_stream, int i) {
     if (packet_stream->socket_exception) {
         packet_stream->packet_start = 0;
         packet_stream->packet_end = 3;
@@ -435,24 +515,28 @@ void packet_stream_write_packet(PacketStream *packet_stream, int i) {
         fprintf(stderr, "socket exception: %s\n",
                 packet_stream->socket_exception_message);
 
-        exit(1);
+        return -1;
     }
 
     packet_stream->delay++;
 
     if (packet_stream->delay < i) {
-        return;
+        return 0;
     }
 
     if (packet_stream->packet_start > 0) {
         packet_stream->delay = 0;
 
-        packet_stream_write_bytes(packet_stream, packet_stream->packet_data, 0,
-                                  packet_stream->packet_start);
+        if (packet_stream_write_bytes(packet_stream, packet_stream->packet_data,
+                                      0, packet_stream->packet_start) < 0) {
+            return -1;
+        }
     }
 
     packet_stream->packet_start = 0;
     packet_stream->packet_end = 3;
+
+    return 0;
 }
 
 void packet_stream_send_packet(PacketStream *packet_stream) {
@@ -493,13 +577,13 @@ void packet_stream_send_packet(PacketStream *packet_stream) {
     packet_stream->packet_start = packet_stream->packet_end;
 }
 
-void packet_stream_flush_packet(PacketStream *packet_stream) {
+int packet_stream_flush_packet(PacketStream *packet_stream) {
     packet_stream_send_packet(packet_stream);
-    packet_stream_write_packet(packet_stream, 0);
+    return packet_stream_write_packet(packet_stream, 0);
 }
 
-void packet_stream_put_bytes(PacketStream *packet_stream, void *src,
-                             int offset, int length) {
+void packet_stream_put_bytes(PacketStream *packet_stream, void *src, int offset,
+                             int length) {
     uint8_t *p = src;
 
     memcpy(packet_stream->packet_data + packet_stream->packet_end, p + offset,
@@ -579,11 +663,10 @@ static void packet_stream_put_rsa(PacketStream *packet_stream,
 
 #ifndef REVISION_177
 void packet_stream_put_login_block(PacketStream *packet_stream,
-                const char *username, const char *password,
-                uint32_t *isaac_keys, uint32_t uuid)
-{
-    uint8_t input_block[16 + (sizeof(uint32_t) * 4) + 4 +
-                        USERNAME_LENGTH + PASSWORD_LENGTH];
+                                   const char *username, const char *password,
+                                   uint32_t *isaac_keys, uint32_t uuid) {
+    uint8_t input_block[16 + (sizeof(uint32_t) * 4) + 4 + USERNAME_LENGTH +
+                        PASSWORD_LENGTH];
     size_t username_len = strlen(username);
     size_t password_len = strlen(password);
     uint8_t *p = input_block;
@@ -697,9 +780,17 @@ int64_t packet_stream_get_long(PacketStream *packet_stream) {
 }
 
 void packet_stream_close(PacketStream *packet_stream) {
+    if (packet_stream->socket > -1) {
 #ifdef WII
-    net_close(packet_stream->socket);
+        net_close(packet_stream->socket);
+#elif defined(WIN32)
+        closesocket(packet_stream->socket);
 #else
-    close(packet_stream->socket);
+        close(packet_stream->socket);
 #endif
+
+        packet_stream->socket = -1;
+    }
+
+    packet_stream->closed = 1;
 }

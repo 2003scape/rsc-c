@@ -2,17 +2,17 @@
 
 void mudclient_update_ground_item_models(mudclient *mud) {
     for (int i = 0; i < GROUND_ITEMS_MAX; i++) {
-        if (mud->ground_item_model[i] == NULL) {
+        if (mud->ground_items[i].model == NULL) {
             continue;
         }
 
-        scene_remove_model(mud->scene, mud->ground_item_model[i]);
+        scene_remove_model(mud->scene, mud->ground_items[i].model);
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
-        game_model_destroy(mud->ground_item_model[i]);
+        game_model_destroy(mud->ground_items[i].model);
 #endif
-        free(mud->ground_item_model[i]);
+        free(mud->ground_items[i].model);
 
-        mud->ground_item_model[i] = NULL;
+        mud->ground_items[i].model = NULL;
     }
 
     if (!mud->options->ground_item_models) {
@@ -20,7 +20,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->ground_item_count; i++) {
-        int item_id = mud->ground_item_id[i];
+        int item_id = mud->ground_items[i].id;
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         GameModel *original_model = mud->item_models[item_id];
@@ -50,15 +50,15 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
         model->key = i + GROUND_ITEM_FACE_TAG;
 
-        int area_x = mud->ground_item_x[i];
-        int area_y = mud->ground_item_y[i];
+        int area_x = mud->ground_items[i].x;
+        int area_y = mud->ground_items[i].y;
         int model_x = ((area_x + area_x + 1) * MAGIC_LOC) / 2;
         int model_y = ((area_y + area_y + 1) * MAGIC_LOC) / 2;
 
         game_model_translate(
             model, model_x,
             -(world_get_elevation(mud->world, model_x, model_y) +
-              mud->ground_item_z[i]) -
+              mud->ground_items[i].z) -
                 10,
             model_y);
 
@@ -66,14 +66,20 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
         scene_add_model(mud->scene, model);
 
-        mud->ground_item_model[i] = model;
+        mud->ground_items[i].model = model;
     }
 
 #ifdef RENDER_3DS_GL
     if (mud->ground_item_count > 0) {
+        GameModel *ground_item_model[mud->ground_item_count];
+
+        for (int i = 0; i < mud->ground_item_count; i++) {
+            ground_item_model[i] = mud->ground_items[i].model;
+        }
+
         game_model_gl_buffer_models(
             &mud->scene->gl_item_buffers, &mud->scene->gl_item_buffer_length,
-            mud->ground_item_model, mud->ground_item_count);
+            ground_item_model, mud->ground_item_count);
     }
 #endif
 }
@@ -84,7 +90,7 @@ void mudclient_gl_update_wall_models(mudclient *mud) {
     int ebo_offset = 0;
 
     for (int i = 0; i < mud->wall_object_count; i++) {
-        GameModel *game_model = mud->wall_object_model[i];
+        GameModel *game_model = mud->wall_objects[i].model;
 
         game_model->gl_buffer = mud->scene->gl_wall_buffers[0];
         game_model->gl_ebo_length = 6;
@@ -113,7 +119,10 @@ void mudclient_packet_tick(mudclient *mud) {
         packet_stream_send_packet(mud->packet_stream);
     }
 
-    packet_stream_write_packet(mud->packet_stream, 20);
+    if (packet_stream_write_packet(mud->packet_stream, 20) < 0) {
+        mudclient_lost_connection(mud);
+        return;
+    }
 
     int size =
         packet_stream_read_packet(mud->packet_stream, mud->incoming_packet);
@@ -313,6 +322,9 @@ void mudclient_packet_tick(mudclient *mud) {
             if (update_type == 0) {
                 /* action bubble with an item in it */
                 int item_id = get_unsigned_short(data, offset, size);
+                if (item_id >= game_data.item_count) {
+                    item_id = IRON_MACE_ID;
+                }
                 offset += 2;
 
                 if (player != NULL) {
@@ -479,34 +491,34 @@ void mudclient_packet_tick(mudclient *mud) {
                 offset += 3;
 
                 for (int i = 0; i < mud->object_count; i++) {
-                    int o_x = (mud->object_x[i] / 8) - l_x;
-                    int o_y = (mud->object_y[i] / 8) - l_y;
+                    int o_x = (mud->objects[i].x / 8) - l_x;
+                    int o_y = (mud->objects[i].y / 8) - l_y;
 
                     if (o_x != 0 || o_y != 0) {
                         if (i != index) {
-                            mud->object_model[index] = mud->object_model[i];
-                            mud->object_model[index]->key = index;
-                            mud->object_x[index] = mud->object_x[i];
-                            mud->object_y[index] = mud->object_y[i];
-                            mud->object_id[index] = mud->object_id[i];
+                            mud->objects[index].model = mud->objects[i].model;
+                            mud->objects[index].model->key = index;
+                            mud->objects[index].x = mud->objects[i].x;
+                            mud->objects[index].y = mud->objects[i].y;
+                            mud->objects[index].id = mud->objects[i].id;
 
-                            mud->object_direction[index] =
-                                mud->object_direction[i];
+                            mud->objects[index].direction =
+                                mud->objects[i].direction;
                         }
 
                         index++;
                     } else {
-                        scene_remove_model(mud->scene, mud->object_model[i]);
+                        scene_remove_model(mud->scene, mud->objects[i].model);
 
-                        world_remove_object(mud->world, mud->object_x[i],
-                                            mud->object_y[i],
-                                            mud->object_id[i]);
+                        world_remove_object(mud->world, mud->objects[i].id,
+                                            mud->objects[i].x,
+                                            mud->objects[i].y);
 
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
-                        game_model_destroy(mud->object_model[i]);
+                        game_model_destroy(mud->objects[i].model);
 #endif
-                        free(mud->object_model[i]);
-                        mud->object_model[i] = NULL;
+                        free(mud->objects[i].model);
+                        mud->objects[i].model = NULL;
                     }
                 }
 
@@ -522,40 +534,47 @@ void mudclient_packet_tick(mudclient *mud) {
                 int object_index = 0;
 
                 for (int i = 0; i < mud->object_count; i++) {
-                    if (mud->object_x[i] != area_x ||
-                        mud->object_y[i] != area_y) {
+                    if (mud->objects[i].x != area_x ||
+                        mud->objects[i].y != area_y) {
                         if (i != object_index) {
-                            mud->object_model[object_index] =
-                                mud->object_model[i];
+                            mud->objects[object_index].model =
+                                mud->objects[i].model;
 
-                            mud->object_model[object_index]->key = object_index;
-                            mud->object_x[object_index] = mud->object_x[i];
-                            mud->object_y[object_index] = mud->object_y[i];
-                            mud->object_id[object_index] = mud->object_id[i];
+                            mud->objects[object_index].model->key = object_index;
+                            mud->objects[object_index].x = mud->objects[i].x;
+                            mud->objects[object_index].y = mud->objects[i].y;
+                            mud->objects[object_index].id = mud->objects[i].id;
 
-                            mud->object_direction[object_index] =
-                                mud->object_direction[i];
+                            mud->objects[object_index].direction =
+                                mud->objects[i].direction;
                         }
 
                         object_index++;
                     } else {
-                        scene_remove_model(mud->scene, mud->object_model[i]);
+                        scene_remove_model(mud->scene, mud->objects[i].model);
 
-                        world_remove_object(mud->world, mud->object_x[i],
-                                            mud->object_y[i],
-                                            mud->object_id[i]);
+                        world_remove_object(mud->world, mud->objects[i].x,
+                                            mud->objects[i].y,
+                                            mud->objects[i].id);
 
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
-                        game_model_destroy(mud->object_model[i]);
+                        game_model_destroy(mud->objects[i].model);
 #endif
-                        free(mud->object_model[i]);
-                        mud->object_model[i] = NULL;
+                        free(mud->objects[i].model);
+                        mud->objects[i].model = NULL;
                     }
                 }
 
                 mud->object_count = object_index;
 
                 if (object_id != 60000) {
+                    if (object_id >= game_data.object_count) {
+                        object_id = ODD_WELL_ID;
+                    }
+                    if (mud->object_count >= OBJECTS_MAX) {
+                        return;
+                    }
+
                     int tile_direction =
                         world_get_tile_direction(mud->world, area_x, area_y);
 
@@ -596,11 +615,11 @@ void mudclient_packet_tick(mudclient *mud) {
                         game_model_translate(model, 0, -480, 0);
                     }
 
-                    mud->object_x[mud->object_count] = area_x;
-                    mud->object_y[mud->object_count] = area_y;
-                    mud->object_id[mud->object_count] = object_id;
-                    mud->object_direction[mud->object_count] = tile_direction;
-                    mud->object_model[mud->object_count++] = model;
+                    mud->objects[mud->object_count].x = area_x;
+                    mud->objects[mud->object_count].y = area_y;
+                    mud->objects[mud->object_count].id = object_id;
+                    mud->objects[mud->object_count].direction = tile_direction;
+                    mud->objects[mud->object_count++].model = model;
                 }
             }
         }
@@ -610,8 +629,9 @@ void mudclient_packet_tick(mudclient *mud) {
             int object_count = mud->object_count + ANIMATED_MODELS_LENGTH + 8;
             GameModel *object_model[object_count];
 
-            memcpy(object_model, mud->object_model,
-                   sizeof(GameModel *) * mud->object_count);
+            for (int i = 0; i < mud->object_count; i++) {
+                object_model[i] = mud->objects[i].model;
+            }
 
             int first_animated_index = 0;
 
@@ -820,22 +840,22 @@ void mudclient_packet_tick(mudclient *mud) {
             int entity_count = 0;
 
             for (int j = 0; j < mud->ground_item_count; j++) {
-                int x = (mud->ground_item_x[j] / 8) - delta_x;
-                int y = (mud->ground_item_y[j] / 8) - delta_y;
+                int x = (mud->ground_items[j].x / 8) - delta_x;
+                int y = (mud->ground_items[j].y / 8) - delta_y;
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->ground_item_x[entity_count] =
-                            mud->ground_item_x[j];
+                        mud->ground_items[entity_count].x =
+                            mud->ground_items[j].x;
 
-                        mud->ground_item_y[entity_count] =
-                            mud->ground_item_y[j];
+                        mud->ground_items[entity_count].y =
+                            mud->ground_items[j].y;
 
-                        mud->ground_item_id[entity_count] =
-                            mud->ground_item_id[j];
+                        mud->ground_items[entity_count].id =
+                            mud->ground_items[j].id;
 
-                        mud->ground_item_z[entity_count] =
-                            mud->ground_item_z[j];
+                        mud->ground_items[entity_count].z =
+                            mud->ground_items[j].z;
                     }
 
                     entity_count++;
@@ -846,33 +866,33 @@ void mudclient_packet_tick(mudclient *mud) {
             entity_count = 0;
 
             for (int j = 0; j < mud->object_count; j++) {
-                int x = (mud->object_x[j] / 8) - delta_x;
-                int y = (mud->object_y[j] / 8) - delta_y;
+                int x = (mud->objects[j].x / 8) - delta_x;
+                int y = (mud->objects[j].y / 8) - delta_y;
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->object_model[entity_count] = mud->object_model[j];
-                        mud->object_model[entity_count]->key = entity_count;
-                        mud->object_x[entity_count] = mud->object_x[j];
-                        mud->object_y[entity_count] = mud->object_y[j];
-                        mud->object_id[entity_count] = mud->object_id[j];
+                        mud->objects[entity_count].model = mud->objects[j].model;
+                        mud->objects[entity_count].model->key = entity_count;
+                        mud->objects[entity_count].x = mud->objects[j].x;
+                        mud->objects[entity_count].y = mud->objects[j].y;
+                        mud->objects[entity_count].id = mud->objects[j].id;
 
-                        mud->object_direction[entity_count] =
-                            mud->object_direction[j];
+                        mud->objects[entity_count].direction =
+                            mud->objects[j].direction;
                     }
 
                     entity_count++;
                 } else {
-                    scene_remove_model(mud->scene, mud->object_model[j]);
+                    scene_remove_model(mud->scene, mud->objects[j].model);
 
-                    world_remove_object(mud->world, mud->object_x[j],
-                                        mud->object_y[j], mud->object_id[j]);
+                    world_remove_object(mud->world, mud->objects[j].x,
+                                        mud->objects[j].y, mud->objects[j].id);
 
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
-                    game_model_destroy(mud->object_model[j]);
+                    game_model_destroy(mud->objects[j].model);
 #endif
-                    free(mud->object_model[j]);
-                    mud->object_model[j] = NULL;
+                    free(mud->objects[j].model);
+                    mud->objects[j].model = NULL;
                 }
             }
 
@@ -880,42 +900,42 @@ void mudclient_packet_tick(mudclient *mud) {
             entity_count = 0;
 
             for (int j = 0; j < mud->wall_object_count; j++) {
-                int x = (mud->wall_object_x[j] / 8) - delta_x;
-                int y = (mud->wall_object_y[j] / 8) - delta_y;
+                int x = (mud->wall_objects[j].x / 8) - delta_x;
+                int y = (mud->wall_objects[j].y / 8) - delta_y;
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->wall_object_model[entity_count] =
-                            mud->wall_object_model[j];
+                        mud->wall_objects[entity_count].model =
+                            mud->wall_objects[j].model;
 
-                        mud->wall_object_model[entity_count]->key =
+                        mud->wall_objects[entity_count].model->key =
                             entity_count + 10000;
 
-                        mud->wall_object_x[entity_count] =
-                            mud->wall_object_x[j];
+                        mud->wall_objects[entity_count].x =
+                            mud->wall_objects[j].x;
 
-                        mud->wall_object_y[entity_count] =
-                            mud->wall_object_y[j];
+                        mud->wall_objects[entity_count].y =
+                            mud->wall_objects[j].y;
 
-                        mud->wall_object_direction[entity_count] =
-                            mud->wall_object_direction[j];
+                        mud->wall_objects[entity_count].direction =
+                            mud->wall_objects[j].direction;
 
-                        mud->wall_object_id[entity_count] =
-                            mud->wall_object_id[j];
+                        mud->wall_objects[entity_count].id =
+                            mud->wall_objects[j].id;
                     }
 
                     entity_count++;
                 } else {
-                    scene_remove_model(mud->scene, mud->wall_object_model[j]);
+                    scene_remove_model(mud->scene, mud->wall_objects[j].model);
 
-                    world_remove_wall_object(mud->world, mud->wall_object_x[j],
-                                             mud->wall_object_y[j],
-                                             mud->wall_object_direction[j],
-                                             mud->wall_object_id[j]);
+                    world_remove_wall_object(mud->world, mud->wall_objects[j].x,
+                                             mud->wall_objects[j].y,
+                                             mud->wall_objects[j].direction,
+                                             mud->wall_objects[j].id);
 
-                    game_model_destroy(mud->wall_object_model[j]);
-                    free(mud->wall_object_model[j]);
-                    mud->wall_object_model[j] = NULL;
+                    game_model_destroy(mud->wall_objects[j].model);
+                    free(mud->wall_objects[j].model);
+                    mud->wall_objects[j].model = NULL;
                 }
             }
 
@@ -942,38 +962,38 @@ void mudclient_packet_tick(mudclient *mud) {
                 offset += 3;
 
                 for (int i = 0; i < mud->wall_object_count; i++) {
-                    int s_x = (mud->wall_object_x[i] / 8) - l_x;
-                    int s_y = (mud->wall_object_y[i] / 8) - l_y;
+                    int s_x = (mud->wall_objects[i].x / 8) - l_x;
+                    int s_y = (mud->wall_objects[i].y / 8) - l_y;
 
                     if (s_x != 0 || s_y != 0) {
                         if (i != index) {
-                            mud->wall_object_model[index] =
-                                mud->wall_object_model[i];
+                            mud->wall_objects[index].model =
+                                mud->wall_objects[i].model;
 
-                            mud->wall_object_model[index]->key = index + 10000;
-                            mud->wall_object_x[index] = mud->wall_object_x[i];
-                            mud->wall_object_y[index] = mud->wall_object_y[i];
+                            mud->wall_objects[index].model->key = index + 10000;
+                            mud->wall_objects[index].x = mud->wall_objects[i].x;
+                            mud->wall_objects[index].y = mud->wall_objects[i].y;
 
-                            mud->wall_object_direction[index] =
-                                mud->wall_object_direction[i];
+                            mud->wall_objects[index].direction =
+                                mud->wall_objects[i].direction;
 
-                            mud->wall_object_id[index] = mud->wall_object_id[i];
+                            mud->wall_objects[index].id = mud->wall_objects[i].id;
                         }
 
                         index++;
                     } else {
                         scene_remove_model(mud->scene,
-                                           mud->wall_object_model[i]);
+                                           mud->wall_objects[i].model);
 
                         world_remove_wall_object(mud->world,
-                                                 mud->wall_object_x[i],
-                                                 mud->wall_object_y[i],
-                                                 mud->wall_object_direction[i],
-                                                 mud->wall_object_id[i]);
+                                                 mud->wall_objects[i].x,
+                                                 mud->wall_objects[i].y,
+                                                 mud->wall_objects[i].direction,
+                                                 mud->wall_objects[i].id);
 
-                        game_model_destroy(mud->wall_object_model[i]);
-                        free(mud->wall_object_model[i]);
-                        mud->wall_object_model[i] = NULL;
+                        game_model_destroy(mud->wall_objects[i].model);
+                        free(mud->wall_objects[i].model);
+                        mud->wall_objects[i].model = NULL;
                     }
                 }
 
@@ -990,55 +1010,62 @@ void mudclient_packet_tick(mudclient *mud) {
                 int count = 0;
 
                 for (int i = 0; i < mud->wall_object_count; i++) {
-                    if (mud->wall_object_x[i] != l_x ||
-                        mud->wall_object_y[i] != l_y ||
-                        mud->wall_object_direction[i] != direction) {
+                    if (mud->wall_objects[i].x != l_x ||
+                        mud->wall_objects[i].y != l_y ||
+                        mud->wall_objects[i].direction != direction) {
                         if (i != count) {
-                            mud->wall_object_model[count] =
-                                mud->wall_object_model[i];
+                            mud->wall_objects[count].model =
+                                mud->wall_objects[i].model;
 
-                            mud->wall_object_model[count]->key = count + 10000;
-                            mud->wall_object_x[count] = mud->wall_object_x[i];
-                            mud->wall_object_y[count] = mud->wall_object_y[i];
+                            mud->wall_objects[count].model->key = count + 10000;
+                            mud->wall_objects[count].x = mud->wall_objects[i].x;
+                            mud->wall_objects[count].y = mud->wall_objects[i].y;
 
-                            mud->wall_object_direction[count] =
-                                mud->wall_object_direction[i];
+                            mud->wall_objects[count].direction =
+                                mud->wall_objects[i].direction;
 
-                            mud->wall_object_id[count] = mud->wall_object_id[i];
+                            mud->wall_objects[count].id = mud->wall_objects[i].id;
                         }
 
                         count++;
                     } else {
                         scene_remove_model(mud->scene,
-                                           mud->wall_object_model[i]);
+                                           mud->wall_objects[i].model);
 
                         world_remove_wall_object(mud->world,
-                                                 mud->wall_object_x[i],
-                                                 mud->wall_object_y[i],
-                                                 mud->wall_object_direction[i],
-                                                 mud->wall_object_id[i]);
+                                                 mud->wall_objects[i].x,
+                                                 mud->wall_objects[i].y,
+                                                 mud->wall_objects[i].direction,
+                                                 mud->wall_objects[i].id);
 
-                        game_model_destroy(mud->wall_object_model[i]);
-                        free(mud->wall_object_model[i]);
-                        mud->wall_object_model[i] = NULL;
+                        game_model_destroy(mud->wall_objects[i].model);
+                        free(mud->wall_objects[i].model);
+                        mud->wall_objects[i].model = NULL;
                     }
                 }
 
                 mud->wall_object_count = count;
 
                 if (id != 65535) {
+                    if (id >= game_data.wall_object_count) {
+                        id = ODD_LOOKING_WALL_ID;
+                    }
+                    if (mud->wall_object_count >= WALL_OBJECTS_MAX) {
+                        return;
+                    }
+
                     world_set_object_adjacency_from4(mud->world, l_x, l_y,
                                                      direction, id);
 
                     GameModel *model = mudclient_create_wall_object(
                         mud, l_x, l_y, direction, id, mud->wall_object_count);
 
-                    mud->wall_object_model[mud->wall_object_count] = model;
-                    mud->wall_object_x[mud->wall_object_count] = l_x;
-                    mud->wall_object_y[mud->wall_object_count] = l_y;
-                    mud->wall_object_id[mud->wall_object_count] = id;
+                    mud->wall_objects[mud->wall_object_count].model = model;
+                    mud->wall_objects[mud->wall_object_count].x = l_x;
+                    mud->wall_objects[mud->wall_object_count].y = l_y;
+                    mud->wall_objects[mud->wall_object_count].id = id;
 
-                    mud->wall_object_direction[mud->wall_object_count++] =
+                    mud->wall_objects[mud->wall_object_count++].direction =
                         direction;
                 }
             }
@@ -1062,15 +1089,15 @@ void mudclient_packet_tick(mudclient *mud) {
                 offset += 3;
 
                 for (int i = 0; i < mud->ground_item_count; i++) {
-                    int g_x = (mud->ground_item_x[i] / 8) - l_x;
-                    int g_y = (mud->ground_item_y[i] / 8) - l_y;
+                    int g_x = (mud->ground_items[i].x / 8) - l_x;
+                    int g_y = (mud->ground_items[i].y / 8) - l_y;
 
                     if (g_x != 0 || g_y != 0) {
                         if (i != index) {
-                            mud->ground_item_x[index] = mud->ground_item_x[i];
-                            mud->ground_item_y[index] = mud->ground_item_y[i];
-                            mud->ground_item_id[index] = mud->ground_item_id[i];
-                            mud->ground_item_z[index] = mud->ground_item_z[i];
+                            mud->ground_items[index].x = mud->ground_items[i].x;
+                            mud->ground_items[index].y = mud->ground_items[i].y;
+                            mud->ground_items[index].id = mud->ground_items[i].id;
+                            mud->ground_items[index].z = mud->ground_items[i].z;
                         }
 
                         index++;
@@ -1088,19 +1115,25 @@ void mudclient_packet_tick(mudclient *mud) {
                     get_signed_byte(data, offset++, size);
 
                 if ((item_id & 32768) == 0) {
-                    mud->ground_item_x[mud->ground_item_count] = area_x;
-                    mud->ground_item_y[mud->ground_item_count] = area_y;
-                    mud->ground_item_id[mud->ground_item_count] = item_id;
-                    mud->ground_item_z[mud->ground_item_count] = 0;
+                    if (item_id >= game_data.item_count) {
+                        item_id = IRON_MACE_ID;
+                    }
+                    if (mud->ground_item_count >= GROUND_ITEMS_MAX) {
+                        return;
+                    }
+                    mud->ground_items[mud->ground_item_count].x = area_x;
+                    mud->ground_items[mud->ground_item_count].y = area_y;
+                    mud->ground_items[mud->ground_item_count].id = item_id;
+                    mud->ground_items[mud->ground_item_count].z = 0;
 
                     for (int i = 0; i < mud->object_count; i++) {
-                        if (mud->object_x[i] != area_x ||
-                            mud->object_y[i] != area_y) {
+                        if (mud->objects[i].x != area_x ||
+                            mud->objects[i].y != area_y) {
                             continue;
                         }
 
-                        mud->ground_item_z[mud->ground_item_count] =
-                            game_data.objects[mud->object_id[i]].elevation;
+                        mud->ground_items[mud->ground_item_count].z =
+                            game_data.objects[mud->objects[i].id].elevation;
 
                         break;
                     }
@@ -1112,21 +1145,21 @@ void mudclient_packet_tick(mudclient *mud) {
                     int index = 0;
 
                     for (int i = 0; i < mud->ground_item_count; i++) {
-                        if (mud->ground_item_x[i] != area_x ||
-                            mud->ground_item_y[i] != area_y ||
-                            mud->ground_item_id[i] != item_id) {
+                        if (mud->ground_items[i].x != area_x ||
+                            mud->ground_items[i].y != area_y ||
+                            mud->ground_items[i].id != item_id) {
                             if (i != index) {
-                                mud->ground_item_x[index] =
-                                    mud->ground_item_x[i];
+                                mud->ground_items[index].x =
+                                    mud->ground_items[i].x;
 
-                                mud->ground_item_y[index] =
-                                    mud->ground_item_y[i];
+                                mud->ground_items[index].y =
+                                    mud->ground_items[i].y;
 
-                                mud->ground_item_id[index] =
-                                    mud->ground_item_id[i];
+                                mud->ground_items[index].id =
+                                    mud->ground_items[i].id;
 
-                                mud->ground_item_z[index] =
-                                    mud->ground_item_z[i];
+                                mud->ground_items[index].z =
+                                    mud->ground_items[i].z;
                             }
 
                             index++;
@@ -1154,15 +1187,25 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->inventory_items_count = get_unsigned_byte(data, offset++, size);
+        if (mud->inventory_items_count > INVENTORY_ITEMS_MAX) {
+            mud->inventory_items_count = INVENTORY_ITEMS_MAX;
+        }
 
         for (int i = 0; i < mud->inventory_items_count; i++) {
             int id_equip = get_unsigned_short(data, offset, size);
             offset += 2;
 
-            mud->inventory_item_id[i] = id_equip & 32767;
-            mud->inventory_equipped[i] = id_equip / 32768;
+            int id = id_equip & 32767;
+            if (id >= game_data.item_count) {
+                id = IRON_MACE_ID;
+            }
 
-            if (game_data.items[id_equip & 32767].stackable == 0) {
+            int equipped = id_equip / 32768;
+
+            mud->inventory_item_id[i] = id;
+            mud->inventory_equipped[i] = equipped;
+
+            if (game_data.items[id].stackable == 0) {
                 mud->inventory_item_stack_count[i] =
                     get_stack_int(data, offset, size);
 
@@ -1182,9 +1225,18 @@ void mudclient_packet_tick(mudclient *mud) {
         int stack = 1;
 
         int index = get_unsigned_byte(data, offset++, size);
+        if (index >= INVENTORY_ITEMS_MAX) {
+            return;
+        }
 
-        int id = get_unsigned_short(data, offset, size);
+        int id_equip = get_unsigned_short(data, offset, size);
         offset += 2;
+
+        int id = id_equip & 32767;
+        if (id >= game_data.item_count) {
+            id = IRON_MACE_ID;
+        }
+        int equipped = id_equip / 32768;
 
         if (game_data.items[id & 32767].stackable == 0) {
             stack = get_stack_int(data, offset, size);
@@ -1196,8 +1248,8 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
-        mud->inventory_item_id[index] = id & 32767;
-        mud->inventory_equipped[index] = id / 32768;
+        mud->inventory_item_id[index] = id;
+        mud->inventory_equipped[index] = equipped;
         mud->inventory_item_stack_count[index] = stack;
 
         if (index >= mud->inventory_items_count) {
@@ -1207,6 +1259,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_INVENTORY_ITEM_REMOVE: {
         int index = get_unsigned_byte(data, 1, size);
+        if (index >= INVENTORY_ITEMS_MAX) {
+            return;
+        }
 
         mud->inventory_items_count--;
 
@@ -1240,7 +1295,7 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_PLAYER_STAT_EQUIPMENT_BONUS: {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < PLAYER_STAT_EQUIPMENT_COUNT; i++) {
             mud->player_stat_equipment[i] = get_unsigned_byte(data, 1 + i, size);
         }
 
@@ -1248,6 +1303,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_PLAYER_STAT_EXPERIENCE_UPDATE: {
         int skill_index = get_unsigned_byte(data, 1, size);
+        if (skill_index >= PLAYER_SKILL_COUNT) {
+            return;
+        }
 
         int old_experience = mud->player_experience[skill_index];
         mud->player_experience[skill_index] = get_unsigned_int(data, 2, size);
@@ -1260,6 +1318,9 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_PLAYER_STAT_UPDATE: {
         int offset = 1;
         int skill_index = get_unsigned_byte(data, offset++, size);
+        if (skill_index >= PLAYER_SKILL_COUNT) {
+            return;
+        }
 
         mud->player_skill_current[skill_index] =
             get_unsigned_byte(data, offset++, size);
@@ -1281,6 +1342,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_FRIEND_LIST: {
         mud->friend_list_count = get_unsigned_byte(data, 1, size);
+        if (mud->friend_list_count > (SOCIAL_LIST_MAX * 2)) {
+            mud->friend_list_count = SOCIAL_LIST_MAX * 2;
+        }
 
         for (int i = 0; i < mud->friend_list_count; i++) {
             mud->friend_list[i] = get_unsigned_long(data, 2 + i * 9, size);
@@ -1323,6 +1387,10 @@ void mudclient_packet_tick(mudclient *mud) {
             }
         }
 
+        if (mud->friend_list_count >= (SOCIAL_LIST_MAX * 2)) {
+            return;
+        }
+
         mud->friend_list[mud->friend_list_count] = encoded_username;
         mud->friend_list_online[mud->friend_list_count] = world;
 
@@ -1349,6 +1417,9 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_IGNORE_LIST: {
         mud->ignore_list_count = get_unsigned_byte(data, 1, size);
+        if (mud->ignore_list_count > SOCIAL_LIST_MAX) {
+            mud->ignore_list_count = SOCIAL_LIST_MAX;
+        }
 
         for (int i = 0; i < mud->ignore_list_count; i++) {
             mud->ignore_list[i] = get_unsigned_long(data, 2 + i * 8, size);
@@ -1472,7 +1543,14 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->new_bank_item_count = get_unsigned_byte(data, offset++, size);
+        if (mud->new_bank_item_count > BANK_ITEMS_MAX) {
+            mud->new_bank_item_count = BANK_ITEMS_MAX;
+        }
+
         mud->bank_items_max = get_unsigned_byte(data, offset++, size);
+        if (mud->bank_items_max > BANK_ITEMS_MAX) {
+            mud->bank_items_max = BANK_ITEMS_MAX;
+        }
 
         for (int i = 0; i < mud->new_bank_item_count; i++) {
             mud->new_bank_items[i] = get_unsigned_short(data, offset, size);
@@ -1537,6 +1615,11 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
         int new_item_count = get_unsigned_byte(data, offset++, size);
+        if (new_item_count > 40) {
+            /* TODO: use some kind of constant to determine this (also below) */
+            return;
+        }
+
         int is_general = get_unsigned_byte(data, offset++, size);
 
         mud->shop_sell_price_mod = get_unsigned_byte(data, offset++, size);
@@ -1637,12 +1720,17 @@ void mudclient_packet_tick(mudclient *mud) {
 
         mud->show_dialog_duel = 0;
         mud->show_dialog_duel_confirm = 0;
+
+        mud->show_dialog_offer_x = 0;
         break;
     }
     case SERVER_TRADE_ITEMS:
     case SERVER_DUEL_ITEMS: {
         mud->transaction_recipient_item_count =
             get_unsigned_byte(data, 1, size);
+        if (mud->transaction_recipient_item_count > TRADE_ITEMS_MAX) {
+            mud->transaction_recipient_item_count = TRADE_ITEMS_MAX;
+        }
 
         int offset = 2;
 
@@ -1674,6 +1762,8 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_TRADE_CONFIRM_OPEN:
     case SERVER_DUEL_CONFIRM_OPEN: {
+        mud->show_dialog_offer_x = 0;
+
         if (opcode == SERVER_TRADE_CONFIRM_OPEN) {
             mud->show_dialog_trade_confirm = 1;
         } else {
@@ -1709,6 +1799,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
         mud->transaction_confirm_item_count =
             get_unsigned_byte(data, offset++, size);
+        if (mud->transaction_confirm_item_count > TRADE_ITEMS_MAX) {
+            mud->transaction_confirm_item_count = TRADE_ITEMS_MAX;
+        }
 
         for (int i = 0; i < mud->transaction_confirm_item_count; i++) {
             mud->transaction_confirm_items[i] =
@@ -1734,7 +1827,11 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_PRAYER_STATUS: {
-        for (int i = 0; i < size - 1; i++) {
+        size--;
+        if (size > PRAYER_COUNT) {
+            size = PRAYER_COUNT;
+        }
+        for (int i = 0; i < size; i++) {
             int on = data[i + 1] == 1;
 
             if (!mud->prayer_on[i] && on) {

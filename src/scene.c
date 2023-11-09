@@ -88,6 +88,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #endif
 
     scene->models = calloc(model_count, sizeof(GameModel *));
+
+    // TODO we need to re-allocate more polygons when client is resized, or just
+    // add more to initial polygon_count
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
@@ -132,6 +135,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_new(&scene->game_model_pick_shader, "./cache/pick.webgl.vs",
                "./cache/pick.webgl.fs");
+#elif OPENGL15
+    shader_new(&scene->game_model_shader, "./cache/game-model.gl2.vs",
+               "./cache/game-model.gl2.fs");
+#elif OPENGL20
+    shader_new(&scene->game_model_shader, "./cache/game-model.gl2.vs",
+               "./cache/game-model.gl2.fs");
 #else
     shader_new(&scene->game_model_shader, "./cache/game-model.vs",
                "./cache/game-model.fs");
@@ -991,6 +1000,7 @@ void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
 void scene_add_model(Scene *scene, GameModel *model) {
     if (model == NULL) {
         fprintf(stderr, "Warning tried to add null object!\n");
+        return;
     }
 
     if (scene->model_count < scene->max_model_count) {
@@ -4582,7 +4592,6 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
                            (float)game_model->light_direction_magnitude) /
                           256.0f;
 
-    // float fog_z_distance = (float)scene->fog_z_distance / 100.0f;
     float fog_z_distance = (float)scene->fog_z_distance / -1000000.0f;
 
     C3D_FVUnifSet(

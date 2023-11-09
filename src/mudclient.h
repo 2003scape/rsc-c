@@ -63,6 +63,10 @@
 #if !defined(WII) && !defined(_3DS)
 #include <SDL.h>
 
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+#define MUD_IS_BIG_ENDIAN
+#endif
+
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
@@ -189,6 +193,7 @@
 #define WINDMILL_SAILS_ID 74
 #define FIRE_ID 97
 #define FIREPLACE_ID 274
+#define ODD_WELL_ID 466
 #define LIGHTNING_ID 1031
 #define FIRE_SPELL_ID 1036
 #define SPELL_CHARGE_ID 1147
@@ -196,7 +201,11 @@
 #define SKULL_TORCH_ID 143
 #define CLAW_SPELL_ID 1142
 
+/* boundary IDs */
+#define ODD_LOOKING_WALL_ID 22
+
 /* item IDs */
+#define IRON_MACE_ID 0
 #define COINS_ID 10
 
 #define FIRE_RUNE_ID 31
@@ -235,6 +244,9 @@
 #define LOADING_WIDTH 277
 #define LOADING_HEIGHT 20
 
+/* how many tiles away before objects stop animating */
+#define OBJECT_ANIMATION_DISTANCE 7
+
 typedef struct mudclient mudclient;
 
 #include "chat-message.h"
@@ -253,7 +265,6 @@ typedef struct mudclient mudclient;
 #include "surface.h"
 #include "utility.h"
 #include "version.h"
-#include "wiki.h"
 #include "world.h"
 
 #include "ui/additional-options.h"
@@ -265,6 +276,7 @@ typedef struct mudclient mudclient;
 #include "ui/experience-drops.h"
 #include "ui/login.h"
 #include "ui/logout.h"
+#include "ui/lost-connection.h"
 #include "ui/menu.h"
 #include "ui/message-tabs.h"
 #include "ui/offer-x.h"
@@ -283,6 +295,8 @@ typedef struct mudclient mudclient;
 /* these are doubled for the wii */
 #define KEY_WIDTH 23
 #define KEY_HEIGHT 22
+
+#define MUD_IS_BIG_ENDIAN
 
 extern char keyboard_buttons[5][10];
 extern char keyboard_shift_buttons[5][10];
@@ -320,6 +334,7 @@ extern SwkbdButton _3ds_keyboard_button;
 extern char _3ds_option_buttons[5];
 
 void _3ds_keyboard_thread_callback(void *arg);
+void _3ds_toggle_top_screen(int is_off);
 
 #ifdef RENDER_3DS_GL
 void mudclient_3ds_gl_offscreen_frame_start(mudclient *mud);
@@ -337,7 +352,39 @@ extern char login_screen_status[255];
 
 extern float global_farts_test;
 
-typedef struct mudclient {
+/*
+ * most walls are created by world.c and are non-interactive,
+ * but those that are interactive or can change need to be
+ * streamed from the server and are stored here.
+ */
+struct ServerBoundary {
+    GameModel *model;
+    uint16_t x;
+    uint16_t y;
+    uint16_t id;
+    uint8_t direction;
+    uint8_t already_in_menu;
+};
+
+struct ItemSpawn {
+    GameModel *model; /* only used when 3D items enabled */
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+    uint16_t id;
+    uint8_t already_in_menu;
+};
+
+struct Scenery {
+    uint16_t x;
+    uint16_t y;
+    uint16_t id;
+    uint8_t direction;
+    GameModel *model;
+    uint8_t already_in_menu;
+};
+
+struct mudclient {
 #ifdef WII
     /* store two for double-buffering */
     uint8_t **framebuffers;
@@ -364,6 +411,7 @@ typedef struct mudclient {
     int8_t keyboard_open;
     int8_t _3ds_gyro_down;
     int8_t _3ds_gyro_start;
+    int8_t _3ds_top_screen_off;
 
     int _3ds_sound_position;
     int _3ds_sound_length;
@@ -466,7 +514,7 @@ typedef struct mudclient {
     int max_read_tries;
     int world_full_timeout;
     int moderator_level;
-    int auto_login_timeout;
+    int auto_login_attempts;
 
     /* ./ui/social-tab.c */
     Panel *panel_social_list;
@@ -563,7 +611,7 @@ typedef struct mudclient {
     int control_text_list_chat;
     int control_text_list_quest;
     int control_text_list_private;
-    int message_tab_selected;
+    MESSAGE_TAB message_tab_selected;
     int message_tab_flash_all;
     int message_tab_flash_history;
     int message_tab_flash_quest;
@@ -584,20 +632,10 @@ typedef struct mudclient {
     int combat_timeout;
 
     int object_count;
-    GameModel *object_model[OBJECTS_MAX];
-    int object_x[OBJECTS_MAX];
-    int object_y[OBJECTS_MAX];
-    int object_id[OBJECTS_MAX];
-    int object_direction[OBJECTS_MAX];
-    int8_t object_already_in_menu[OBJECTS_MAX];
+    struct Scenery objects[OBJECTS_MAX];
 
     int wall_object_count;
-    GameModel *wall_object_model[WALL_OBJECTS_MAX];
-    int wall_object_x[WALL_OBJECTS_MAX];
-    int wall_object_y[WALL_OBJECTS_MAX];
-    int wall_object_id[WALL_OBJECTS_MAX];
-    int wall_object_direction[WALL_OBJECTS_MAX];
-    int8_t wall_object_already_in_menu[WALL_OBJECTS_MAX];
+    struct ServerBoundary wall_objects[WALL_OBJECTS_MAX];
 
     int player_server_indexes[PLAYERS_MAX];
     GameCharacter *player_server[PLAYERS_SERVER_MAX];
@@ -622,12 +660,7 @@ typedef struct mudclient {
     GameCharacter *known_npcs[NPCS_MAX];
 
     int ground_item_count;
-    int ground_item_x[GROUND_ITEMS_MAX];
-    int ground_item_y[GROUND_ITEMS_MAX];
-    int ground_item_z[GROUND_ITEMS_MAX];
-    int ground_item_id[GROUND_ITEMS_MAX];
-    GameModel *ground_item_model[GROUND_ITEMS_MAX];
-    int8_t ground_item_already_in_menu[GROUND_ITEMS_MAX];
+    struct ItemSpawn ground_items[GROUND_ITEMS_MAX];
 
     /* ./ui/sleep.c */
     int8_t is_sleeping;
@@ -680,7 +713,7 @@ typedef struct mudclient {
     int local_region_x;
     int local_region_y;
 
-    int last_height_offset;
+    int last_plane_index;
     int local_lower_x;
     int local_lower_y;
     int local_upper_x;
@@ -948,7 +981,7 @@ typedef struct mudclient {
 
     /* wiki */
     int selected_wiki;
-} mudclient;
+};
 
 void mudclient_new(mudclient *mud);
 void mudclient_resize(mudclient *mud);
@@ -997,6 +1030,7 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
 
 void mudclient_update_bank_items(mudclient *mud);
 void mudclient_close_connection(mudclient *mud);
+void mudclient_lost_connection(mudclient *mud);
 int mudclient_is_valid_camera_angle(mudclient *mud, int angle);
 void mudclient_auto_rotate_camera(mudclient *mud);
 void mudclient_handle_camera_zoom(mudclient *mud);
@@ -1043,7 +1077,6 @@ void mudclient_3ds_flush_audio(mudclient *mud);
 void mudclient_3ds_open_keyboard(mudclient *mud);
 void mudclient_3ds_handle_keyboard(mudclient *mud);
 void mudclient_3ds_draw_top_background(mudclient *mud);
-void mudclient_3ds_draw_framebuffer_top(mudclient *mud);
 #endif
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);

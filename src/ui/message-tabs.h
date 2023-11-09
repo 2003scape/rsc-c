@@ -7,16 +7,20 @@
 #define MESSAGE_HISTORY_LENGTH 5
 #define MESSAGE_FLASH_TIME 200
 
-#define MESSAGE_TAB_ALL 0
-#define MESSAGE_TAB_CHAT 1
-#define MESSAGE_TAB_QUEST 2
-#define MESSAGE_TAB_PRIVATE 3
+typedef enum MESSAGE_TAB {
+    MESSAGE_TAB_ALL = 0,
+    MESSAGE_TAB_CHAT = 1,
+    MESSAGE_TAB_QUEST = 2,
+    MESSAGE_TAB_PRIVATE = 3
+} MESSAGE_TAB;
 
-#define MESSAGE_TYPE_CHAT 2
-#define MESSAGE_TYPE_GAME 3
-#define MESSAGE_TYPE_BOR 4
-#define MESSAGE_TYPE_QUEST 5
-#define MESSAGE_TYPE_PRIVATE 6
+typedef enum MESSAGE_TYPE {
+    MESSAGE_TYPE_CHAT = 2,
+    MESSAGE_TYPE_GAME = 3,
+    MESSAGE_TYPE_BOR = 4,
+    MESSAGE_TYPE_QUEST = 5,
+    MESSAGE_TYPE_PRIVATE = 6
+} MESSAGE_TYPE;
 
 #define HBAR_SPRITE_OFFSET 23
 #define HBAR_WIDTH 512
@@ -33,7 +37,7 @@ void mudclient_send_chat_message(mudclient *mud, int8_t *encoded,
                                  int encoded_length);
 void mudclient_handle_message_tabs_input(mudclient *mud);
 void mudclient_decrement_message_flash(mudclient *mud);
-void mudclient_show_message(mudclient *mud, char *message, int type);
+void mudclient_show_message(mudclient *mud, char *message, MESSAGE_TYPE type);
 void mudclient_show_server_message(mudclient *mud, char *message);
 
 #endif

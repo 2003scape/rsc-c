@@ -70,7 +70,7 @@ typedef struct Options Options;
      "interlace = %d\n"                                                        \
      "; Display the FPS at the bottom right of the screen\n"                   \
      "display_fps = %d\n"                                                      \
-     "; Double the UI size but keep the scene size if window is over double"   \
+     "; Double the UI size but keep the scene size if window is over double "  \
      "original\n; size (GL only)\n"                                            \
      "ui_scale = %d\n"                                                         \
      "; Enable multi-sampling\n"                                               \
@@ -100,7 +100,9 @@ typedef struct Options Options;
      "; Display hits and prayer bars\n"                                        \
      "status_bars = %d\n"                                                      \
      "; Use ground item models instead of billboarded sprites\n"               \
-     "ground_item_models = %d\n\n"                                             \
+     "ground_item_models = %d\n"                                               \
+     "; Always animate objects like fires\n"                                   \
+     "distant_animation = %d\n\n"                                              \
                                                                                \
      "; Add filtering to the bank\n"                                           \
      "bank_search = %d\n"                                                      \
@@ -144,7 +146,7 @@ typedef struct Options Options;
 extern int wii_fat_enabled;
 #endif
 
-typedef struct Options {
+struct Options {
     /* configurable options: */
     char server[256];
     int port;
@@ -267,6 +269,9 @@ typedef struct Options {
     /* use ground item models instead of billboarded sprites */
     int ground_item_models;
 
+    /* always animate objects like fires */
+    int distant_animation;
+
     /* withdraw multiple unstackable items */
     int bank_unstackble_withdraw;
 
@@ -329,7 +334,7 @@ typedef struct Options {
 
     /* experimental thick walls support (requires restart) */
     int thick_walls;
-} Options;
+};
 
 void options_new(Options *options);
 void options_set_server(Options *options);

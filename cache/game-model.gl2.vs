@@ -1,21 +1,21 @@
-#version 330 core
+#version 110
 
 #define VERTEX_SCALE 100.0
 
 #define RAMP_SIZE 256.0
 #define USE_GOURAUD 12345678.0
 
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec4 normal;
-layout(location = 2) in vec2 lighting;
-layout(location = 3) in vec3 front_colour;
-layout(location = 4) in vec2 front_texture_position;
-layout(location = 5) in vec3 back_colour;
-layout(location = 6) in vec2 back_texture_position;
+attribute vec3 position;
+attribute vec4 normal;
+attribute vec2 lighting;
+attribute vec3 front_colour;
+attribute vec2 front_texture_position;
+attribute vec3 back_colour;
+attribute vec2 back_texture_position;
 
-out vec3 vertex_colour;
-out vec2 vertex_texture_position;
-out float vertex_gradient_index;
+varying vec3 vertex_colour;
+varying vec2 vertex_texture_position;
+varying float vertex_gradient_index;
 
 uniform float scroll_texture;
 
