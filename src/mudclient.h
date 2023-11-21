@@ -336,6 +336,7 @@ extern SwkbdButton _3ds_keyboard_button;
 extern char _3ds_option_buttons[5];
 
 void _3ds_keyboard_thread_callback(void *arg);
+void _3ds_toggle_top_screen(int is_off);
 
 #ifdef RENDER_3DS_GL
 void mudclient_3ds_gl_offscreen_frame_start(mudclient *mud);
@@ -415,6 +416,7 @@ struct mudclient {
     int8_t keyboard_open;
     int8_t _3ds_gyro_down;
     int8_t _3ds_gyro_start;
+    int8_t _3ds_top_screen_off;
 
     int _3ds_sound_position;
     int _3ds_sound_length;
@@ -424,16 +426,16 @@ struct mudclient {
     C3D_RenderTarget *_3ds_gl_offscreen_render_target;
 #endif
 #else
-    #ifndef SDL12
+#ifndef SDL12
     SDL_Window *window;
-    #endif
+#endif
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
 
 #ifdef RENDER_GL
-    #ifndef SDL12
+#ifndef SDL12
     SDL_Window *gl_window;
-    #endif
+#endif
 #endif
 #endif
 
@@ -619,7 +621,7 @@ struct mudclient {
     int control_text_list_chat;
     int control_text_list_quest;
     int control_text_list_private;
-    int message_tab_selected;
+    MESSAGE_TAB message_tab_selected;
     int message_tab_flash_all;
     int message_tab_flash_history;
     int message_tab_flash_quest;
@@ -721,7 +723,7 @@ struct mudclient {
     int local_region_x;
     int local_region_y;
 
-    int last_height_offset;
+    int last_plane_index;
     int local_lower_x;
     int local_lower_y;
     int local_upper_x;

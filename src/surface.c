@@ -86,9 +86,11 @@ void surface_new(Surface *surface, int width, int height, int limit,
     shader_new(&surface->gl_flat_shader, "./cache/flat.webgl.vs",
                "./cache/flat.webgl.fs");
 #elif OPENGL15
-    shader_new(&surface->gl_flat_shader, "./cache/flat.gl2.vs", "./cache/flat.gl2.fs");
+    shader_new(&surface->gl_flat_shader, "./cache/flat.gl2.vs",
+               "./cache/flat.gl2.fs");
 #elif OPENGL20
-    shader_new(&surface->gl_flat_shader, "./cache/flat.gl2.vs", "./cache/flat.gl2.fs");
+    shader_new(&surface->gl_flat_shader, "./cache/flat.gl2.vs",
+               "./cache/flat.gl2.fs");
 #else
     shader_new(&surface->gl_flat_shader, "./cache/flat.vs", "./cache/flat.fs");
 #endif
@@ -1094,6 +1096,7 @@ void surface_draw(Surface *surface) {
                    surface_pixels + pixel_index, 3);
         }
     }
+
     gspWaitForVBlank();
 #endif
 #else
@@ -1115,6 +1118,8 @@ void surface_draw(Surface *surface) {
 
 void surface_black_screen(Surface *surface) {
 #ifdef RENDER_GL
+    (void)surface;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #elif defined(RENDER_3DS_GL)
     C3D_RenderTargetClear(surface->mud->_3ds_gl_render_target, C3D_CLEAR_ALL,
@@ -1467,47 +1472,6 @@ void surface_fade_to_black(Surface *surface) {
     // TODO this leaves some sort of residue. https://imgur.com/a/35sqk7v
     surface_gl_buffer_box(surface, 0, 0, surface->width, surface->height, BLACK,
                           16);
-#endif
-}
-
-void surface_draw_blur_software(Surface *surface, int32_t *dest,
-                                int blur_height, int x, int y, int width,
-                                int height, int add_alpha) {
-    for (int xx = x; xx < x + width; xx++) {
-        for (int yy = y; yy < y + height; yy++) {
-            int r = 0;
-            int g = 0;
-            int b = 0;
-            int a = 0;
-
-            for (int x2 = xx; x2 <= xx; x2++) {
-                if (x2 >= 0 && x2 < surface->width) {
-                    for (int y2 = yy - blur_height; y2 <= yy + blur_height;
-                         y2++) {
-                        if (y2 >= 0 && y2 < surface->height) {
-                            int32_t pixel = dest[x2 + surface->width * y2];
-
-                            r += (pixel >> 16) & 0xff;
-                            g += (pixel >> 8) & 0xff;
-                            b += pixel & 0xff;
-                            a++;
-                        }
-                    }
-                }
-            }
-
-            dest[xx + surface->width * yy] = ((r / a) << 16) + ((g / a) << 8) +
-                                             (b / a) +
-                                             (add_alpha ? 0xff000000 : 0);
-        }
-    }
-}
-
-void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
-                       int width, int height) {
-#ifdef RENDER_SW
-    surface_draw_blur_software(surface, surface->pixels, blur_height, x, y,
-                               width, height, 1);
 #endif
 }
 
@@ -1987,7 +1951,7 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
     surface->sprite_width_full[sprite_id] = width;
     surface->sprite_height_full[sprite_id] = height;
 
-#if defined(RENDER_SW)
+#ifdef RENDER_SW
     free(surface->surface_pixels[sprite_id]);
 
     surface->surface_pixels[sprite_id] =
@@ -3599,6 +3563,39 @@ void surface_draw_character(Surface *surface, int character_offset, int x,
                             font_data_offset);
     }
 }
+
+void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
+                       int width, int height) {
+    for (int xx = x; xx < x + width; xx++) {
+        for (int yy = y; yy < y + height; yy++) {
+            int r = 0;
+            int g = 0;
+            int b = 0;
+            int a = 0;
+
+            for (int x2 = xx; x2 <= xx; x2++) {
+                if (x2 >= 0 && x2 < surface->width) {
+                    for (int y2 = yy - blur_height; y2 <= yy + blur_height;
+                         y2++) {
+                        if (y2 >= 0 && y2 < surface->height) {
+                            int32_t pixel =
+                                surface->pixels[x2 + surface->width * y2];
+
+                            r += (pixel >> 16) & 0xff;
+                            g += (pixel >> 8) & 0xff;
+                            b += pixel & 0xff;
+                            a++;
+                        }
+                    }
+                }
+            }
+
+            surface->pixels[xx + surface->width * yy] =
+                ((r / a) << 16) + ((g / a) << 8) + (b / a);
+        }
+    }
+}
+
 #endif
 
 void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,

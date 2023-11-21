@@ -288,11 +288,6 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour);
 void surface_fade_to_black_software(Surface *surface, int32_t *dest,
                                     int add_alpha);
 void surface_fade_to_black(Surface *surface);
-void surface_draw_blur_software(Surface *surface, int32_t *dest,
-                                int blur_height, int x, int y, int width,
-                                int height, int add_alpha);
-void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
-                       int width, int height);
 void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
@@ -392,6 +387,8 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
                          int dest_offset, int font_data_offset);
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
+void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
+                       int width, int height);
 #endif
 void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
                                FONT_STYLE font, int colour, float depth);

@@ -573,7 +573,7 @@ void world_reset(World *world, int dispose) {
     }
 }
 
-// TODO adds the water and sloping tiles
+// TODO adds the water and sloping tiles for map edges
 void world_set_tiles(World *world) {
     for (int x = 0; x < REGION_WIDTH; x++) {
         for (int y = 0; y < REGION_HEIGHT; y++) {
@@ -2335,7 +2335,7 @@ int world_has_neighbouring_roof(World *world, int x, int y) {
             world_get_wall_roof(world, x, y - 1) > 0);
 }
 
-/* move wall (objects) to the upper-plane */
+/* move wall (objects) and roofs to the upper-plane */
 void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
                              int x2, int y2) {
     int height = game_data.wall_objects[wall_object_id].height;
@@ -2376,8 +2376,6 @@ void world_gl_buffer_world_models(World *world) {
 
 /* update the terrain model VBOs after ambience changes */
 void world_gl_update_terrain_buffers(World *world) {
-    printf("update terrain buffer lighting\n");
-
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         GameModel *game_model = world->terrain_models[i];
 

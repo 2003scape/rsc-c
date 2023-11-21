@@ -305,7 +305,7 @@ void mudclient_decrement_message_flash(mudclient *mud) {
     }
 }
 
-void mudclient_show_message(mudclient *mud, char *message, int type) {
+void mudclient_show_message(mudclient *mud, char *message, MESSAGE_TYPE type) {
     int message_length = -1;
 
     /* handle ignore list */

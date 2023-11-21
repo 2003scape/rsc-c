@@ -88,23 +88,23 @@ void mudclient_handle_confirm_input(mudclient *mud) {
 
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
-                #ifndef SDL12
+#ifndef SDL12
                 SDL_RestoreWindow(mud->window);
                 SDL_SetWindowSize(mud->window, MUD_WIDTH, MUD_HEIGHT);
-                #endif
+#endif
 #endif
 #ifdef RENDER_GL
-                #ifndef SDL12
+#ifndef SDL12
                 SDL_RestoreWindow(mud->gl_window);
                 SDL_SetWindowSize(mud->gl_window, MUD_WIDTH, MUD_HEIGHT);
-                #endif
 #endif
 #endif
-                #ifdef SDL12
+#endif
+#ifdef SDL12
                 mudclient_sdl1_on_resize(mud, mud->game_width, mud->game_height);
-                #else
+#else
                 mudclient_on_resize(mud);
-                #endif
+#endif
                 break;
         }
 

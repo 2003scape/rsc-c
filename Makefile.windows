@@ -1,6 +1,6 @@
 CC = x86_64-w64-mingw32-gcc
 DEBUG = 1
-SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
 CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_SW -DREVISION_177
 CFLAGS += -I ./SDL2-2.0.20/x86_64-w64-mingw32/include/SDL2 #-fPIE
@@ -19,5 +19,5 @@ mudclient.exe: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS) ./win/icon.res ./win/meta.res
 
 clean:
-	rm -f src/*.o src/lib/*.o src/ui/*.o
+	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o src/custom/*.o
 	rm -f mudclient.exe

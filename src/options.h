@@ -36,6 +36,8 @@ typedef struct Options Options;
      "password = %s\n\n"                                                       \
      "; System command to use to open the web browser (only on desktop)\n"     \
      "browser_command = %s\n\n"                                                \
+     "; Diversify NPCs sent by server (custom)\n"                              \
+     "diversify_npcs = %d\n\n"                                                  \
      "; Scroll panel lists, chatbox, and camera (if zoom enabled) with "       \
      "wheel\n"                                                                 \
      "mouse_wheel = %d\n"                                                      \
@@ -101,6 +103,8 @@ typedef struct Options Options;
      "ground_item_models = %d\n"                                               \
      "; Always animate objects like fires\n"                                   \
      "distant_animation = %d\n\n"                                              \
+     "; Show hover tooltip menu\n"                                             \
+     "show_hover_tooltip = %d\n"                                               \
                                                                                \
      "; Add filtering to the bank\n"                                           \
      "bank_search = %d\n"                                                      \
@@ -167,6 +171,9 @@ struct Options {
     /* save credentials for login screen (not secure) */
     int remember_username;
     int remember_password;
+
+    /* diversify NPCs sent by server (custom) */
+    int diversify_npcs;
 
     /* command to use to open web browser (on desktop) */
     char browser_command[255];
@@ -329,6 +336,9 @@ struct Options {
 
     /* experimental thick walls support (requires restart) */
     int thick_walls;
+
+    /* show the current action where the mouse is */
+    int show_hover_tooltip;
 };
 
 void options_new(Options *options);

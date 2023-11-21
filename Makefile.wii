@@ -6,20 +6,20 @@ endif
 
 include $(DEVKITPPC)/wii_rules
 
-#DEBUG = 1
+#DEBUG = 0
 TARGET := mudclient
 BUILD := build
-SOURCES := src src/lib src/ui src/wii
+SOURCES := src src/lib src/ui src/custom src/wii
 DATA := cache
 INCLUDES :=
 
-#CFLAGS = -DRENDER_SW -DWII -g $(MACHDEP) $(INCLUDE)
-CFLAGS = -DRENDER_SW -DWII -DREVISION_177 -Ofast -Wall $(MACHDEP) $(INCLUDE)
+CFLAGS = -DRENDER_SW -DWII -DREVISION_177 -g $(MACHDEP) $(INCLUDE)
+#CFLAGS = -DRENDER_SW -DWII -DNO_RSA -DNO_ISAAC $(MACHDEP) $(INCLUDE)
 
 ifdef DEBUG
 CFLAGS += -g
 else
-CFLAGS += -s
+CFLAGS += -s -Ofast -Wall
 endif
 
 LDFLAGS = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map

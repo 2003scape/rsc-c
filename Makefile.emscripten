@@ -1,14 +1,27 @@
 CC = emcc
-#DEBUG = 1
-#SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
-SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/gl/*.c src/gl/textures/*.c)
+DEBUG ?= 0
+RENDER_GL ?= 1
+SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -I ./cglm/include -DRENDER_GL -s USE_SDL=2
-CFLAGS += -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' #-DREVISION_177
+# remove -fwrapv when code is converted to use unsigned ints or
+# overflow checks are added
+CFLAGS += -fwrapv
+# some platforms require gnu99 instead of c99 to use functions like alloca.
+CFLAGS += -std=gnu99 -s USE_SDL=2
+CFLAGS += -DREVISION_177
+LDFLAGS += -sWEBSOCKET_URL=wss://
+LDFLAGS += -lm -lSDL2
 
-LDFLAGS = -lm -lSDL2 -lSDL2_image -lGLEW -lGL
+ifeq ($(RENDER_GL), 1)
+SRC += $(wildcard src/gl/*.c src/gl/textures/*.c)
+CFLAGS += -I ./cglm/include -DRENDER_GL
+CFLAGS += -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
+LDFLAGS += -lSDL2_image -lGLEW -lGL
+else
+CFLAGS += -DRENDER_SW
+endif
 
-ifdef DEBUG
+ifeq ($(DEBUG), 1)
 CFLAGS += -Wall -Wextra -pedantic -g
 LDFLAGS += -s SOCKET_DEBUG=1
 else
@@ -32,5 +45,5 @@ mudclient.html: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o
+	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o src/custom/*.o
 	rm -f mudclient mudclient.*

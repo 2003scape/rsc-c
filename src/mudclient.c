@@ -1,4 +1,5 @@
 #include "mudclient.h"
+#include "custom/diverse-npcs.h"
 
 #ifdef EMSCRIPTEN
 EM_JS(int, get_canvas_width, (), { return canvas.width; });
@@ -190,7 +191,11 @@ int update_wii_mouse(WPADData *wiimote_data) {
 #elif defined(_3DS)
 u32 *SOC_buffer = NULL;
 
-void soc_shutdown() { socExit(); }
+void soc_shutdown() {
+    socExit();
+
+    _3ds_toggle_top_screen(1);
+}
 
 ndspWaveBuf wave_buf[2] = {0};
 u32 *audio_buffer = NULL;
@@ -224,6 +229,18 @@ void _3ds_keyboard_thread_callback(void *arg) {
     }
 
     threadExit(0);
+}
+
+void _3ds_toggle_top_screen(int is_off) {
+    gspLcdInit();
+
+    if (is_off) {
+        GSPLCD_PowerOnBacklight(GSPLCD_SCREEN_TOP);
+    } else {
+        GSPLCD_PowerOffBacklight(GSPLCD_SCREEN_TOP);
+    }
+
+    gspLcdExit();
 }
 
 #ifdef RENDER_3DS_GL
@@ -681,7 +698,7 @@ void mudclient_new(mudclient *mud) {
     mud->camera_rotation = 128;
     mud->camera_rotation_x_increment = 2;
     mud->camera_rotation_y_increment = 2;
-    mud->last_height_offset = -1;
+    mud->last_plane_index = -1;
 
     mud->options = malloc(sizeof(Options));
 
@@ -981,9 +998,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
         wanted_audio.silence = 0;
         wanted_audio.samples = 1024;
 
-		#ifndef SDL12
+#ifndef SDL12
         wanted_audio.callback = NULL;
-        #endif
+#endif
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
             fprintf(stderr, "SDL_OpenAudio(): %s\n", SDL_GetError());
@@ -999,9 +1016,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     #endif
 
 #if !defined(WII) && !defined(_3DS) && !defined(EMSCRIPTEN)
-    #ifndef SDL12
+#ifndef SDL12
     windowflags |= SDL_WINDOW_RESIZABLE;
-    #endif
+#endif
 #endif
 
 #ifdef RENDER_SW
@@ -1013,12 +1030,12 @@ void mudclient_start_application(mudclient *mud, char *title) {
                          mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
     #endif
 
-    mudclient_resize(mud);
+    mudclint_resize(mud);
 #endif
-	#ifndef SDL12
+#ifndef SDL12
     mud->default_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     mud->hand_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
-	#endif
+#endif
 	
 #ifdef RENDER_GL
     /*if (IMG_Init(IMG_INIT_PNG) == 0) {
@@ -1058,8 +1075,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
 
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+    // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 #endif
 
     windowflags |= SDL_WINDOW_OPENGL;
@@ -1127,10 +1144,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     printf("Started application\n");
 
 #ifdef _3DS
-    // gspLcdInit();
-    // GSPLCD_PowerOffBacklight(GSPLCD_SCREEN_TOP);
-    // gspLcdExit();
-
     mudclient_3ds_draw_top_background(mud);
 #endif
 
@@ -2348,9 +2361,6 @@ void mudclient_reset_game(mudclient *mud) {
     memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
 
     surface_black_screen(mud->surface);
-    // TODO add opengl support here
-
-    // surface_3ds_gl_reset_context(mud->surface);
 
 #ifdef RENDER_3DS_GL
     mudclient_3ds_gl_frame_start(mud, 1);
@@ -3085,13 +3095,13 @@ void mudclient_start_game(mudclient *mud) {
 
 #if !defined(WII) && !defined(_3DS)
 #ifdef RENDER_SW
-	#ifndef SDL12
+#ifndef SDL12
     SDL_SetWindowResizable(mud->window, 1);
-    #endif
+#endif
 #elif RENDER_GL
-	#ifndef SDL12
+#ifndef SDL12
     SDL_SetWindowResizable(mud->gl_window, 1);
-    #endif
+#endif
 #endif
 #endif
 
@@ -3169,17 +3179,16 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     lx += mud->plane_width;
     ly += mud->plane_height;
 
-    if (mud->last_height_offset == mud->plane_index &&
-        lx > mud->local_lower_x && lx < mud->local_upper_x &&
-        ly > mud->local_lower_y && ly < mud->local_upper_y) {
+    if (mud->last_plane_index == mud->plane_index && lx > mud->local_lower_x &&
+        lx < mud->local_upper_x && ly > mud->local_lower_y &&
+        ly < mud->local_upper_y) {
         mud->world->player_alive = 1;
         return 0;
     }
 
-    surface_draw_string_centre(mud->surface, "Loading... Please wait",
-                               mud->surface->width / 2,
-                               mud->surface->height / 2 + 19, FONT_BOLD_12,
-                               WHITE);
+    surface_draw_string_centre(
+        mud->surface, "Loading... Please wait", mud->surface->width / 2,
+        mud->surface->height / 2 + 19, FONT_BOLD_12, WHITE);
 
     mudclient_draw_chat_message_tabs(mud);
 
@@ -3196,7 +3205,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     int section_x = (lx + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (ly + (REGION_SIZE / 2)) / REGION_SIZE;
 
-    mud->last_height_offset = mud->plane_index;
+    mud->last_plane_index = mud->plane_index;
     mud->region_x = section_x * REGION_SIZE - REGION_SIZE;
     mud->region_y = section_y * REGION_SIZE - REGION_SIZE;
     mud->local_lower_x = section_x * REGION_SIZE - 32;
@@ -3204,7 +3213,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     mud->local_upper_x = section_x * REGION_SIZE + 32;
     mud->local_upper_y = section_y * REGION_SIZE + 32;
 
-    world_load_section_from3(mud->world, lx, ly, mud->last_height_offset);
+    world_load_section_from3(mud->world, lx, ly, mud->last_plane_index);
 
     mud->region_x -= mud->plane_width;
     mud->region_y -= mud->plane_height;
@@ -3408,6 +3417,10 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
                                  int animation, int npc_id) {
     if (server_index >= NPCS_SERVER_MAX || mud->npc_count >= NPCS_MAX) {
         return NULL;
+    }
+
+    if (mud->options->diversify_npcs) {
+        npc_id = diversify_npc(npc_id, server_index, x, y);
     }
 
     GameCharacter *npc = mudclient_add_character(
@@ -4332,7 +4345,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
     mudclient_draw_character_message(mud, player, x, y, width);
 
     if (player->bubble_timeout > 0 &&
-            mud->action_bubble_count < ACTION_BUBBLE_MAX) {
+        mud->action_bubble_count < ACTION_BUBBLE_MAX) {
         mud->action_bubble_x[mud->action_bubble_count] = x + (width / 2);
         mud->action_bubble_y[mud->action_bubble_count] = y;
         mud->action_bubble_scale[mud->action_bubble_count] = ty;
@@ -4670,6 +4683,8 @@ void mudclient_draw_ui(mudclient *mud) {
 #endif
             }
         }
+
+        mudclient_draw_hover_tooltip(mud);
     }
 
     if (mud->options->inventory_count) {
@@ -4909,9 +4924,10 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
                  * Original game incorrectly uses the height of unicorns
                  * for players here, match it.
                  */
-                int target_height = player->attacking_npc_server_index != -1 ?
-                    game_data.npcs[character->npc_id].height :
-                    game_data.npcs[0].height;
+                int target_height =
+                    player->attacking_npc_server_index != -1
+                        ? game_data.npcs[character->npc_id].height
+                        : game_data.npcs[0].height;
 
                 int delev = -world_get_elevation(mud->world, dx, dy) -
                             (target_height / 2);
@@ -4948,7 +4964,6 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int y = npc->current_y;
         int elevation = -world_get_elevation(mud->world, x, y);
 
-        // TODO put this in a function
         int sprite_id = scene_add_sprite(mud->scene, 20000 + i, x, elevation, y,
                                          game_data.npcs[npc->npc_id].width,
                                          game_data.npcs[npc->npc_id].height,
@@ -5026,9 +5041,9 @@ void mudclient_draw_game(mudclient *mud) {
     for (int i = 0; i < TERRAIN_COUNT; i++) {
         // TODO this is really slow!
         scene_remove_model(mud->scene,
-                           mud->world->roof_models[mud->last_height_offset][i]);
+                           mud->world->roof_models[mud->last_plane_index][i]);
 
-        if (mud->last_height_offset == 0) {
+        if (mud->last_plane_index == 0) {
             scene_remove_model(mud->scene, mud->world->wall_models[1][i]);
             scene_remove_model(mud->scene, mud->world->roof_models[1][i]);
             scene_remove_model(mud->scene, mud->world->wall_models[2][i]);
@@ -5038,12 +5053,12 @@ void mudclient_draw_game(mudclient *mud) {
         if (mud->options->show_roofs) {
             mud->fog_of_war = 1;
 
-            if (mud->last_height_offset == 0 &&
+            if (mud->last_plane_index == 0 &&
                 !world_is_under_roof(mud->world, mud->local_player->current_x,
                                      mud->local_player->current_y)) {
                 scene_add_model(
                     mud->scene,
-                    mud->world->roof_models[mud->last_height_offset][i]);
+                    mud->world->roof_models[mud->last_plane_index][i]);
 
                 scene_add_model(mud->scene, mud->world->wall_models[1][i]);
                 scene_add_model(mud->scene, mud->world->roof_models[1][i]);
@@ -5065,7 +5080,7 @@ void mudclient_draw_game(mudclient *mud) {
     mud->surface->interlace = mud->options->interlace;
 
     /* flickering lights in dungeons */
-    if (mud->last_height_offset == 3) {
+    if (mud->last_plane_index == 3) {
         int ambience = 40 + ((float)rand() / (float)RAND_MAX) * 3;
         int diffuse = 40 + ((float)rand() / (float)RAND_MAX) * 7;
 
@@ -5080,7 +5095,6 @@ void mudclient_draw_game(mudclient *mud) {
         mudclient_auto_rotate_camera(mud);
     }
 
-    // TODO this is too aggressive on compact client
     if (mud->options->zoom_camera) {
         int clip_far =
             (int)((2400.0f / ZOOM_OUTDOORS) * (float)mud->camera_zoom);
@@ -5100,6 +5114,8 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance -= 200;
     }
 
+    /* TODO this should probably be tied with FOV instead */
+#ifdef RENDER_SW
     /*
      * Keep the fog roughly "feeling the same" as the vanilla
      * 512x346 client when resized beyond that.
@@ -5112,6 +5128,7 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->clip_far_2d = clip_far;
         mud->scene->fog_z_distance = clip_far - 100;
     }
+#endif
 
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
@@ -5243,7 +5260,6 @@ void mudclient_draw_game(mudclient *mud) {
 #if defined(_3DS) && defined(RENDER_SW)
     gfxFlushBuffers();
     gfxSwapBuffers();
-    // TODO move to where gl_swapwindow is
 #endif
 }
 
@@ -5352,22 +5368,22 @@ void mudclient_on_resize(mudclient *mud) {
     new_width = get_canvas_width();
     new_height = get_canvas_height();
 #ifdef RENDER_SW
-	#ifndef SDL12
+#ifndef SDL12
     SDL_SetWindowSize(mud->window, new_width, new_height);
-    #endif
+#endif
 #elif defined(RENDER_GL)
-	#ifndef SDL12
+#ifndef SDL12
     SDL_SetWindowSize(mud->gl_window, new_width, new_height);
-    #endif
+#endif
 #endif
 #elif defined(RENDER_GL) && !defined(_3DS) && !defined(WII)
-    #ifndef SDL12
+#ifndef SDL12
     SDL_GetWindowSize(mud->gl_window, &new_width, &new_height);
-	#endif
+#endif
 #elif defined(RENDER_SW) && !defined(_3DS) && !defined(WII)
-	#ifndef SDL12
+#ifndef SDL12
     SDL_GetWindowSize(mud->window, &new_width, &new_height);
-	#endif
+#endif
 #endif
 
     mud->game_width = new_width;
@@ -5659,10 +5675,6 @@ void mudclient_poll_events(mudclient *mud) {
         mudclient_key_pressed(mud, K_DOWN, -1);
     }
 
-    if (keys_down & KEY_SELECT) {
-        mudclient_key_pressed(mud, K_F1, -1);
-    }
-
     if (keys_down & KEY_START && !mud->keyboard_open) {
         mudclient_3ds_open_keyboard(mud);
     }
@@ -5765,6 +5777,11 @@ void mudclient_poll_events(mudclient *mud) {
         mudclient_key_released(mud, K_2);
     }
 
+    if (keys_up & KEY_SELECT) {
+        _3ds_toggle_top_screen(mud->_3ds_top_screen_off);
+        mud->_3ds_top_screen_off = !mud->_3ds_top_screen_off;
+    }
+
     touchPosition touch = {0};
     hidTouchRead(&touch);
 
@@ -5835,7 +5852,7 @@ void mudclient_poll_events(mudclient *mud) {
             mudclient_mouse_released(mud, event.button.x, event.button.y,
                                      event.button.button);
             break;
-        #ifndef SDL12
+#ifndef SDL12
         case SDL_MOUSEWHEEL:
             if (mud->options->mouse_wheel) {
                 if (event.wheel.y != 0) {
@@ -5864,7 +5881,7 @@ void mudclient_poll_events(mudclient *mud) {
                                      (int)(event.tfinger.y * MUD_HEIGHT),
                                      curMouseBtn);
             break;
-		#endif
+#endif
 #ifdef __SWITCH__
         case SDL_JOYBUTTONDOWN:
             switch (event.jbutton.button) {
@@ -6059,15 +6076,17 @@ void mudclient_3ds_open_keyboard(mudclient *mud) {
     memset(mud->_3ds_framebuffer_top, 0, 400 * 240 * 3);
 
 #ifdef RENDER_3DS_GL
+    gspWaitForPPF();
+
     uint32_t *framebuffer_bottom =
-        (uint32_t*)mud->_3ds_gl_render_target->frameBuf.colorBuf;
+        (uint32_t *)mud->_3ds_gl_render_target->frameBuf.colorBuf;
 
     for (int x = 0; x < 319; x++) {
         for (int y = 0; y < 240; y++) {
             int top_index = (((x + 40) * 240) + (240 - y)) * 3;
 
-            int bottom_index = _3ds_gl_translate_framebuffer_index(
-                    (y * 320) + x);
+            int bottom_index =
+                _3ds_gl_translate_framebuffer_index((y * 320) + x);
 
             int32_t colour = (int32_t)framebuffer_bottom[bottom_index];
 
@@ -6177,7 +6196,7 @@ void mudclient_run(mudclient *mud) {
             mud->stop_timeout--;
 
             if (mud->stop_timeout == 0) {
-                // mudclient_on_closing(mud);
+                mudclient_close_connection(mud);
                 return;
             }
         }
@@ -6628,7 +6647,7 @@ int main(int argc, char **argv) {
     global_mud = mud;
 #endif
 
-    if (argc > 1) {
+    if (argc > 1 && strlen(argv[1]) > 0) {
         mud->options->members = strcmp(argv[1], "members") == 0;
     }
 

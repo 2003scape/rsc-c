@@ -43,32 +43,21 @@ void options_set_server(Options *options) {
     options->port = 43596;
 #endif
 #else
-#if VERSION == 203
-    /* openrsc preservation */
-    strcpy(options->server, "game.openrsc.com"); // 206.251.222.229
-    options->port = 43596;
-
-    strcpy(options->rsa_exponent, "00010001");
-
-    strcpy(options->rsa_modulus,
-           "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
-           "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
-#else
     strcpy(options->server, "127.0.0.1");
     //strcpy(options->server, "192.168.100.178");
     //strcpy(options->server, "192.168.100.113");
     options->port = 43594;
 #endif
-#endif
 }
 
 void options_set_defaults(Options *options) {
-    /* connection */
+    /* server */
     options->members = 1;
     options->registration = 1;
     options->idle_logout = 0;
     options->remember_username = 0;
     options->remember_password = 0;
+    options->diversify_npcs = 0;
 
     options_set_server(options);
 
@@ -95,7 +84,7 @@ void options_set_defaults(Options *options) {
     options->offer_x = 1;
     options->last_offer_x = 1;
     options->wiki_lookup = 1;
-    options->combat_style_always = (MUD_IS_COMPACT ? 0 : 1);
+    options->combat_style_always = 0;
     options->hold_to_buy = 1;
 
     /* display */
@@ -113,6 +102,7 @@ void options_set_defaults(Options *options) {
     options->status_bars = 0;
     options->ground_item_models = 1;
     options->distant_animation = 1;
+    options->show_hover_tooltip = 1;
 
     /* bank */
     options->bank_unstackble_withdraw = 1;
@@ -138,6 +128,7 @@ void options_set_vanilla(Options *options) {
     options->idle_logout = 1;
     options->remember_username = 0;
     options->remember_password = 0;
+    options->diversify_npcs = 0;
 
     options_set_server(options);
 
@@ -172,6 +163,7 @@ void options_set_vanilla(Options *options) {
     options->status_bars = 0;
     options->ground_item_models = 0;
     options->distant_animation = 0;
+    options->show_hover_tooltip = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 0;
@@ -216,6 +208,7 @@ void options_save(Options *options) {
             options->username,              //
             options->password,              //
             options->browser_command,       //
+            options->diversify_npcs,        //
                                             //
             options->mouse_wheel,           //
             options->middle_click_camera,   //
@@ -247,6 +240,7 @@ void options_save(Options *options) {
             options->status_bars,           //
             options->ground_item_models,    //
             options->distant_animation,     //
+            options->show_hover_tooltip,    //
                                             //
             options->bank_search,           //
             options->bank_capacity,         //
@@ -285,6 +279,7 @@ void options_load(Options *options) {
     OPTION_INI_STR("username", options->username, 20);
     OPTION_INI_STR("password", options->password, 20);
     OPTION_INI_STR("browser_command", options->browser_command, 20);
+    OPTION_INI_INT("diversify_npcs", options->diversify_npcs, 0, 1);
 
     /* controls */
     OPTION_INI_INT("mouse_wheel", options->mouse_wheel, 0, 1);
@@ -319,6 +314,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("status_bars", options->status_bars, 0, 1);
     OPTION_INI_INT("ground_item_models", options->ground_item_models, 0, 1);
     OPTION_INI_INT("distant_animation", options->distant_animation, 0, 1);
+    OPTION_INI_INT("show_hover_tooltip", options->show_hover_tooltip, 0, 1);
 
     /* bank */
     OPTION_INI_INT("bank_search", options->bank_search, 0, 1);
