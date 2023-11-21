@@ -1,21 +1,21 @@
 #CC = clang
 DEBUG ?= 1
 RENDER_GL ?= 1
-SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added
 CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
 CFLAGS += -std=gnu99
-CFLAGS += #-DREVISION_177 #-DSDL12
+CFLAGS += #-DREVISION_177
 CFLAGS += $(shell sdl2-config --cflags)
 LDFLAGS += -lm
 LDFLAGS += $(shell sdl2-config --libs)
 
 ifeq ($(RENDER_GL), 1)
 SRC += $(wildcard src/gl/*.c src/gl/textures/*.c)
-CFLAGS += -I ./cglm/include -DRENDER_GL #-DOPENGL20
+CFLAGS += -I ./cglm/include -DRENDER_GL
 CFLAGS += $(shell pkg-config --cflags SDL2_image)
 CFLAGS += $(shell pkg-config --cflags glew)
 LDFLAGS += $(shell pkg-config --libs SDL2_image)
@@ -36,5 +36,5 @@ mudclient: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o
+	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o src/custom/*.o
 	rm -f mudclient

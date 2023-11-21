@@ -5390,12 +5390,6 @@ void mudclient_on_resize(mudclient *mud) {
     mud->game_height = new_height;
 
     if (mud->surface != NULL) {
-#ifdef RENDER_GL
-        // TODO we actually don't need to do this since we only generate
-        // the login scenes on boot
-        // surface_gl_create_framebuffer(mud->surface);
-#endif
-
         if (mudclient_is_ui_scaled(mud)) {
             mud->surface->width = new_width / 2;
             mud->surface->height = new_height / 2;
