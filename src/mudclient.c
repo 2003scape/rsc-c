@@ -1626,11 +1626,11 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     if (mud->gl_last_swap == 0 || get_ticks() - mud->gl_last_swap >= 16) {
         mudclient_poll_events(mud);
         surface_draw(mud->surface);
-        #ifdef SDL12
+#ifdef SDL12
         SDL_GL_SwapBuffers();
-        #else
+#else
         SDL_GL_SwapWindow(mud->gl_window);
-        #endif
+#endif
         mud->gl_last_swap = get_ticks();
     } else {
         surface_gl_reset_context(mud->surface);
@@ -2526,11 +2526,11 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         surface_draw(mud->surface);
 
 #ifdef RENDER_GL
-        #ifdef SDL12
+#ifdef SDL12
         SDL_GL_SwapBuffers();
-        #else
+#else
         SDL_GL_SwapWindow(mud->gl_window);
-        #endif
+#endif
 #elif defined(RENDER_3DS_GL)
         mudclient_3ds_gl_frame_end();
 #endif
@@ -3187,7 +3187,9 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     surface_draw(mud->surface);
 
 #ifdef RENDER_GL
-#ifndef SDL12
+#ifdef SDL12
+    SDL_GL_SwapBuffers();
+#else
     SDL_GL_SwapWindow(mud->gl_window);
 #endif
 #elif defined(RENDER_3DS_GL)
@@ -5289,7 +5291,6 @@ void mudclient_draw(mudclient *mud) {
     } else if (mud->logged_in == 1) {
         mud->surface->draw_string_shadow = 1;
         mudclient_draw_game(mud);
-    }
 #ifdef RENDER_GL
 #ifdef SDL12
         SDL_GL_SwapBuffers();
@@ -5299,6 +5300,7 @@ void mudclient_draw(mudclient *mud) {
 #elif defined(RENDER_3DS_GL)
         mudclient_3ds_gl_frame_end();
 #endif
+    }
 }
 
 #ifdef SDL12
