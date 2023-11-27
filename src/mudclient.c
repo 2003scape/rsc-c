@@ -1030,7 +1030,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
                          mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
     #endif
 
-    mudclint_resize(mud);
+    mudclient_resize(mud);
 #endif
 #ifndef SDL12
     mud->default_cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
