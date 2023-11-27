@@ -1,16 +1,57 @@
 #include "mudclient.h"
-#include "custom/diverse-npcs.h"
 
 #ifdef EMSCRIPTEN
-EM_JS(int, get_canvas_width, (), { return canvas.width; });
-EM_JS(int, get_canvas_height, (), { return canvas.height; });
+/* clang doesn't know what triple equals is, understandably */
+/* clang-format off */
+EM_JS(int, can_resize, (), {
+    return window._mudclientCanResize &&
+               document.activeElement !== window._mudclientKeyboard;
+});
 
-EM_JS(void, trigger_resize, (), { window.dispatchEvent(new Event('resize')); });
+EM_JS(int, get_window_width, (), { return window.innerWidth; });
+EM_JS(int, get_window_height, (), { return window.innerHeight; });
+
+EM_JS(void, browser_trigger_keyboard,
+      (char *text, int is_password, int x, int y, int width, int height), {
+          const keyboard = window._mudclientKeyboard;
+
+          keyboard.value = UTF8ToString(text);
+
+          if (is_password) {
+              keyboard.type = 'password';
+              keyboard.style.fontFamily = 'monospace';
+          } else {
+              keyboard.type = 'text';
+              keyboard.style.fontFamily = 'Arial';
+          }
+
+          keyboard.style.left = `${x}px`;
+          keyboard.style.top = `${y}px`;
+
+          keyboard.style.width = `${width}px`;
+
+          keyboard.style.display = 'block';
+
+          keyboard.focus();
+      });
+
+EM_JS(int, browser_is_touch, (), { return window._mudclientIsTouch; });
+/* clang-format on */
 
 int last_canvas_check = 0;
 
 mudclient *global_mud = NULL;
 #endif
+
+// TODO put in mudclient?
+int mudclient_touch_down = 0;
+int mudclient_touch_start = 0; // ms
+
+int mudclient_horizontal_drag = 0;
+int mudclient_vertical_drag = 0;
+
+int mudclient_touch_start_x = 0;
+int mudclient_touch_start_y = 0;
 
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
@@ -27,11 +68,10 @@ char login_screen_status[255] = {0};
 #ifdef __SWITCH__
 SDL_Joystick *joystick;
 #define MAX_KBD_STR_SIZE 200
-SwkbdConfig kbd;
-char tmpoutstr[MAX_KBD_STR_SIZE] = {0};
+SwkbdConfig switch_keyboard;
+char switch_keyboard_buffer[MAX_KBD_STR_SIZE] = {0};
+uint8_t switch_mouse_button = 1;
 #endif
-
-uint8_t curMouseBtn = 1;
 
 #ifdef WII
 char keyboard_buttons[5][10] = {
@@ -492,9 +532,6 @@ void mudclient_new(mudclient *mud) {
     options_new(mud->options);
     options_load(mud->options);
 
-    /*strcpy(mud->options->server, "192.168.100.113");
-    mud->options->port = 43595;*/
-
     mud->camera_zoom = mud->options->zoom_camera ? ZOOM_OUTDOORS : ZOOM_INDOORS;
 
     for (int i = 0; i < MESSAGE_HISTORY_LENGTH; i++) {
@@ -815,13 +852,13 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-#elif OPENGL15
+#elif defined(OPENGL15)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
-#elif OPENGL20
+#elif defined(OPENGL20)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
@@ -5008,8 +5045,8 @@ void mudclient_draw_game(mudclient *mud) {
 void mudclient_draw(mudclient *mud) {
 #ifdef EMSCRIPTEN
     if (get_ticks() - last_canvas_check > 1000) {
-        if (get_canvas_width() != mud->game_width ||
-            get_canvas_height() != mud->game_height) {
+        if (can_resize() && (get_window_width() != mud->game_width ||
+                             get_window_height() != mud->game_height)) {
             mudclient_on_resize(mud);
         }
 
@@ -5050,8 +5087,8 @@ void mudclient_on_resize(mudclient *mud) {
     int new_height = MUD_HEIGHT;
 
 #ifdef EMSCRIPTEN
-    new_width = get_canvas_width();
-    new_height = get_canvas_height();
+    new_width = get_window_width();
+    new_height = get_window_height();
 #ifdef RENDER_SW
     SDL_SetWindowSize(mud->window, new_width, new_height);
 #elif defined(RENDER_GL)
@@ -5491,6 +5528,13 @@ void mudclient_poll_events(mudclient *mud) {
         }*/
     }
 #else
+    if (!mudclient_horizontal_drag && !mudclient_vertical_drag &&
+        mudclient_touch_down && get_ticks() - mudclient_touch_start >= 400) {
+        mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
+        mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
+        mudclient_touch_down = 0;
+    }
+
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -5513,15 +5557,21 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
         case SDL_MOUSEMOTION:
-            mudclient_mouse_moved(mud, event.motion.x, event.motion.y);
+            if (!mudclient_is_touch(mud)) {
+                mudclient_mouse_moved(mud, event.motion.x, event.motion.y);
+            }
             break;
         case SDL_MOUSEBUTTONDOWN:
-            mudclient_mouse_pressed(mud, event.button.x, event.button.y,
-                                    event.button.button);
+            if (!mudclient_is_touch(mud)) {
+                mudclient_mouse_pressed(mud, event.button.x, event.button.y,
+                                        event.button.button);
+            }
             break;
         case SDL_MOUSEBUTTONUP:
-            mudclient_mouse_released(mud, event.button.x, event.button.y,
-                                     event.button.button);
+            if (!mudclient_is_touch(mud)) {
+                mudclient_mouse_released(mud, event.button.x, event.button.y,
+                                         event.button.button);
+            }
             break;
         case SDL_MOUSEWHEEL:
             if (mud->options->mouse_wheel) {
@@ -5537,20 +5587,113 @@ void mudclient_poll_events(mudclient *mud) {
                 }
             }
             break;
-        case SDL_FINGERMOTION:
-            mudclient_mouse_moved(mud, (int)(event.tfinger.x * MUD_WIDTH),
-                                  (int)(event.tfinger.y * MUD_HEIGHT));
+        case SDL_FINGERMOTION: {
+            int touch_x = event.tfinger.x * mud->game_width;
+            int touch_y = event.tfinger.y * mud->game_height;
+
+#ifdef __SWITCH__
+            mudclient_mouse_moved(mud, touch_x, touch_y);
+#else
+            if (!mudclient_is_touch(mud)) {
+                break;
+            }
+
+            if (event.tfinger.fingerId != 0) {
+                break;
+            }
+
+            int delta_x = touch_x - mudclient_touch_start_x;
+            int delta_y = touch_y - mudclient_touch_start_y;
+
+            if (!mudclient_horizontal_drag && abs(delta_x) > 30) {
+                mudclient_horizontal_drag = 1;
+
+                mudclient_mouse_pressed(mud, mudclient_touch_start_x,
+                                        mudclient_touch_start_y, 2);
+            }
+
+            if (mudclient_vertical_drag || abs(delta_y) > 30) {
+                mudclient_vertical_drag = 1;
+
+                mud->mouse_scroll_delta =
+                    event.tfinger.dy * mud->game_height / 2;
+            }
+
+            mudclient_mouse_moved(mud, touch_x, touch_y);
+#endif
             break;
-        case SDL_FINGERDOWN:
-            mudclient_mouse_pressed(mud, (int)(event.tfinger.x * MUD_WIDTH),
-                                    (int)(event.tfinger.y * MUD_HEIGHT),
-                                    curMouseBtn);
+        }
+        case SDL_FINGERDOWN: {
+            int touch_x = event.tfinger.x * mud->game_width;
+            int touch_y = event.tfinger.y * mud->game_height;
+
+#ifdef __SWITCH__
+            mudclient_mouse_pressed(mud, touch_x, touch_y, switch_mouse_button);
+#else
+            if (!mudclient_is_touch(mud)) {
+                break;
+            }
+
+            if (event.tfinger.fingerId != 0) {
+                break;
+            }
+
+            if (mudclient_touch_down) {
+                break;
+            }
+
+            mudclient_touch_down = 1;
+            mudclient_touch_start = get_ticks();
+
+            mudclient_touch_start_x = touch_x;
+            mudclient_touch_start_y = touch_y;
+
+            mudclient_mouse_moved(mud, touch_x, touch_y);
+
+            /*char farts[255] = {0};
+            sprintf(farts, "finger: %d", event.tfinger.fingerId);
+            mudclient_show_message(mud, farts, MESSAGE_TYPE_GAME);*/
+#endif
             break;
-        case SDL_FINGERUP:
-            mudclient_mouse_released(mud, (int)(event.tfinger.x * MUD_WIDTH),
-                                     (int)(event.tfinger.y * MUD_HEIGHT),
-                                     curMouseBtn);
+        }
+        case SDL_FINGERUP: {
+            int touch_x = event.tfinger.x * mud->game_width;
+            int touch_y = event.tfinger.y * mud->game_height;
+
+#ifdef __SWITCH__
+            mudclient_mouse_released(mud, touch_x, touch_y,
+                                     switch_mouse_button);
+#else
+            if (!mudclient_is_touch(mud)) {
+                break;
+            }
+
+            if (event.tfinger.fingerId != 0) {
+                break;
+            }
+
+            if (!mudclient_touch_down) {
+                break;
+            }
+
+            mudclient_touch_down = 0;
+
+            if (!mudclient_vertical_drag && !mudclient_horizontal_drag) {
+
+                mudclient_mouse_pressed(mud, touch_x, touch_y, 0);
+                mudclient_mouse_released(mud, touch_x, touch_y, 0);
+            } else {
+                mudclient_vertical_drag = 0;
+
+                if (mudclient_horizontal_drag) {
+                    mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y,
+                                             2);
+                    mudclient_horizontal_drag = 0;
+                }
+            }
+#endif
             break;
+        }
 #ifdef __SWITCH__
         case SDL_JOYBUTTONDOWN:
             switch (event.jbutton.button) {
@@ -5576,7 +5719,7 @@ void mudclient_poll_events(mudclient *mud) {
                     mud->options->display_fps = 0;
                 break;
             case 8: // ZL
-                curMouseBtn = 3;
+                switch_mouse_button = 3;
                 break;
             case 9: // ZR
                 // Reserved
@@ -5585,19 +5728,25 @@ void mudclient_poll_events(mudclient *mud) {
                 mudclient_key_pressed(mud, K_F1, -1);
                 break;
             case 10: // Plus Button
-                swkbdCreate(&kbd, 0);
-                swkbdConfigSetType(&kbd, SwkbdType_QWERTY);
-                swkbdConfigSetBlurBackground(&kbd, 0);
-                swkbdConfigSetTextDrawType(&kbd, SwkbdTextDrawType_Box);
-                swkbdConfigSetReturnButtonFlag(&kbd, 0);
-                swkbdConfigSetStringLenMax(&kbd, MAX_KBD_STR_SIZE);
-                swkbdConfigSetOkButtonText(&kbd, "Submit");
-                swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
+                swkbdCreate(&switch_keyboard, 0);
+                swkbdConfigSetType(&switch_keyboard, SwkbdType_QWERTY);
+                swkbdConfigSetBlurBackground(&switch_keyboard, 0);
 
-                for (int i = 0; i < sizeof(tmpoutstr); i++)
-                    mudclient_key_pressed(mud, -1, tmpoutstr[i]);
+                swkbdConfigSetTextDrawType(&switch_keyboard,
+                                           SwkbdTextDrawType_Box);
 
-                swkbdClose(&kbd);
+                swkbdConfigSetReturnButtonFlag(&switch_keyboard, 0);
+                swkbdConfigSetStringLenMax(&switch_keyboard, MAX_KBD_STR_SIZE);
+                swkbdConfigSetOkButtonText(&switch_keyboard, "Submit");
+
+                swkbdShow(&switch_keyboard, switch_keyboard_buffer,
+                          sizeof(switch_keyboard_buffer));
+
+                for (int i = 0; i < sizeof(switch_keyboard_buffer); i++) {
+                    mudclient_key_pressed(mud, -1, switch_keyboard_buffer[i]);
+                }
+
+                swkbdClose(&switch_keyboard);
                 break;
             case 12: // DPAD LEFT
             case 16: // Left Stick Left
@@ -5647,7 +5796,7 @@ void mudclient_poll_events(mudclient *mud) {
             case 7: // R Button
                 break;
             case 8: // ZL
-                curMouseBtn = 1;
+                switch_mouse_button = 1;
                 break;
             case 9: // ZR
                 // Reserved
@@ -5691,6 +5840,28 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
     }
+#endif
+}
+
+int mudclient_is_touch(mudclient *mud) {
+    (void)(mud);
+
+#ifdef EMSCRIPTEN
+    return browser_is_touch();
+#else
+    return 0;
+#endif
+}
+
+// TODO open_keyboard
+void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
+                                int x, int y, int width, int height) {
+#ifdef EMSCRIPTEN
+    if (mudclient_is_ui_scaled(mud)) {
+        // TODO
+    }
+
+    browser_trigger_keyboard(text, is_password, x, y, width, height);
 #endif
 }
 
@@ -5841,7 +6012,7 @@ void mudclient_run(mudclient *mud) {
         mud->loading_step = 0;
 
 #ifdef EMSCRIPTEN
-        trigger_resize();
+        mudclient_on_resize(mud);
 #endif
     }
 
@@ -6356,5 +6527,9 @@ int main(int argc, char **argv) {
 #ifdef EMSCRIPTEN
 void browser_mouse_moved(int x, int y) {
     mudclient_mouse_moved(global_mud, x, y);
+}
+
+void browser_key_pressed(int code, int char_code) {
+    mudclient_key_pressed(global_mud, code, char_code);
 }
 #endif

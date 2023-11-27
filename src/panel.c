@@ -183,9 +183,9 @@ void panel_draw_panel(Panel *panel) {
             break;
         case PANEL_SPRITE:
             surface_draw_sprite(panel->surface,
-                                      panel->control_x[i] + panel->offset_x,
-                                      panel->control_y[i] + panel->offset_y,
-                                      panel->control_text_size[i]);
+                                panel->control_x[i] + panel->offset_x,
+                                panel->control_y[i] + panel->offset_y,
+                                panel->control_text_size[i]);
             break;
         case PANEL_CHECKBOX:
             panel_draw_checkbox(panel, i, panel->control_x[i] + panel->offset_x,
@@ -275,7 +275,7 @@ void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
         if (panel->mouse_last_button_down == 1 && panel->mouse_x >= min_x &&
             panel->mouse_y >= y - (height / 2) && panel->mouse_x <= max_x &&
             panel->mouse_y <= y + (height / 2)) {
-            panel->focus_control_index = control;
+            panel_set_focus(panel, control);
         }
 
         if (is_centred) {
@@ -351,17 +351,16 @@ void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height) {
     surface_draw_border(panel->surface, x + 2, y + 2, width - 4, height - 4,
                         PANEL_ROUNDED_BOX_IN_COLOUR);
 
-    surface_draw_sprite(panel->surface, x, y,
-                              2 + panel_base_sprite_start);
+    surface_draw_sprite(panel->surface, x, y, 2 + panel_base_sprite_start);
 
     surface_draw_sprite(panel->surface, x + width - 7, y,
-                              3 + panel_base_sprite_start);
+                        3 + panel_base_sprite_start);
 
     surface_draw_sprite(panel->surface, x, y + height - 7,
-                              4 + panel_base_sprite_start);
+                        4 + panel_base_sprite_start);
 
     surface_draw_sprite(panel->surface, x + width - 7, y + height - 7,
-                              5 + panel_base_sprite_start);
+                        5 + panel_base_sprite_start);
 }
 
 void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
@@ -752,6 +751,26 @@ void panel_hide(Panel *panel, int control) {
 
 void panel_set_focus(Panel *panel, int control) {
     panel->focus_control_index = control;
+
+    if (!mudclient_is_touch(panel->surface->mud)) {
+        return;
+    }
+
+    if (panel->control_type[control] == PANEL_TEXT_INPUT) {
+        int width = panel->control_width[control];
+        int height = panel->control_height[control];
+        int is_centred = !panel->control_use_alternative_colour[control];
+
+        int x = (panel->control_x[control] + panel->offset_x) -
+                (is_centred ? width / 2 : 0);
+
+        int y = panel->control_y[control] + panel->offset_y;
+
+        mudclient_trigger_keyboard(panel->surface->mud,
+                                   panel->control_text[control],
+                                   panel->control_mask_text[control], x,
+                                   y - (height / 2) + 12, width, height);
+    }
 }
 
 int panel_get_list_entry_index(Panel *panel, int control) {

@@ -115,7 +115,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->sprite_translate_x = calloc(max_sprite_count, sizeof(int));
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    // TODO i want to remove these
     scene->gl_sprite_depth_top = calloc(max_sprite_count, sizeof(float));
     scene->gl_sprite_depth_bottom = calloc(max_sprite_count, sizeof(float));
 
@@ -135,10 +134,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_new(&scene->game_model_pick_shader, "./cache/pick.webgl.vs",
                "./cache/pick.webgl.fs");
-#elif OPENGL15
-    shader_new(&scene->game_model_shader, "./cache/game-model.gl2.vs",
-               "./cache/game-model.gl2.fs");
-#elif OPENGL20
+#elif defined(OPENGL15) || defined(OPENGL20)
     shader_new(&scene->game_model_shader, "./cache/game-model.gl2.vs",
                "./cache/game-model.gl2.fs");
 #else
