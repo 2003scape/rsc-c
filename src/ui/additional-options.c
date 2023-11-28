@@ -216,8 +216,7 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_control_options,
-        "@whi@Style outside combat: ",
-        mud->options->combat_style_always, x, y);
+        "@whi@Style outside combat: ", mud->options->combat_style_always, x, y);
 
     mud->control_options[control] = &mud->options->combat_style_always;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -226,8 +225,7 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_control_options,
-        "@whi@Hold to buy/sell in shop: ",
-        mud->options->hold_to_buy, x, y);
+        "@whi@Hold to buy/sell in shop: ", mud->options->hold_to_buy, x, y);
 
     mud->control_options[control] = &mud->options->hold_to_buy;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -734,7 +732,8 @@ void mudclient_handle_additional_options_input(mudclient *mud) {
 #ifdef RENDER_GL
                 if (old_ui_scale != mud->options->ui_scale) {
 #ifdef SDL12
-                    mudclient_sdl1_on_resize(mud, mud->game_width, mud->game_height);
+                    mudclient_sdl1_on_resize(mud, mud->game_width,
+                                             mud->game_height);
 #else
                     mudclient_on_resize(mud);
 #endif

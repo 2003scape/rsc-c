@@ -478,10 +478,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
         }
     }
 
-    game_model_gl_buffer_models(
-        &mud->scene->gl_game_model_buffers,
-        &mud->scene->gl_game_model_buffer_length, world_models,
-        model_index);
+    game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
+                                &mud->scene->gl_game_model_buffer_length,
+                                world_models, model_index);
 #endif
 
     int x = 9728;
@@ -516,9 +515,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     int offset_x = (mud->surface->width / 2) - logo_width / 2;
     int offset_y = 15;
 
-    surface_draw_sprite_transform_mask(
-        mud->surface, offset_x, offset_y,
-        logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
+    surface_draw_sprite_transform_mask(mud->surface, offset_x, offset_y,
+                                       logo_width, logo_height,
+                                       mud->sprite_media + 10, 0, 0, 0, 0);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_draw(mud->surface);
@@ -562,9 +561,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 
-    surface_draw_sprite_transform_mask(
-        mud->surface, offset_x, offset_y,
-        logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
+    surface_draw_sprite_transform_mask(mud->surface, offset_x, offset_y,
+                                       logo_width, logo_height,
+                                       mud->sprite_media + 10, 0, 0, 0, 0);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_draw(mud->surface);
@@ -632,9 +631,9 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 
     surface_apply_login_filter(mud->surface, LOGIN_BACKGROUND_HEIGHT);
 
-    surface_draw_sprite_transform_mask(
-        mud->surface, offset_x, offset_y,
-        logo_width, logo_height, mud->sprite_media + 10, 0, 0, 0, 0);
+    surface_draw_sprite_transform_mask(mud->surface, offset_x, offset_y,
+                                       logo_width, logo_height,
+                                       mud->sprite_media + 10, 0, 0, 0, 0);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_draw(mud->surface);
@@ -657,8 +656,7 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
 #endif
 
 #ifdef RENDER_SW
-    surface_screen_raster_to_palette_sprite(mud->surface,
-                                            mud->sprite_logo + 2);
+    surface_screen_raster_to_palette_sprite(mud->surface, mud->sprite_logo + 2);
 #endif
 
     world_reset(mud->world, 0);
@@ -741,8 +739,8 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
                 /* left */
                 surface_draw_box_alpha(mud->surface, (i * 2) + offset_x,
-                                       10 + offset_y, 2, LOGIN_BACKGROUND_HEIGHT,
-                                       BLACK, alpha);
+                                       10 + offset_y, 2,
+                                       LOGIN_BACKGROUND_HEIGHT, BLACK, alpha);
 
                 /* right */
                 surface_draw_box_alpha(
