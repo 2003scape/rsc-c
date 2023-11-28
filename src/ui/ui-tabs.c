@@ -1,7 +1,9 @@
 #include "ui-tabs.h"
 
-#if defined (_3DS) || defined (__SWITCH__)
-void mudclient_3ds_toggle_ui_tab(mudclient *mud, int tab) {
+char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
+                                  "Spellbook", "Friends", "Options"};
+
+void mudclient_toggle_ui_tab(mudclient *mud, int tab) {
     if (mud->mouse_button_click != 0) {
         if (mud->show_ui_tab == tab) {
             mud->show_ui_tab = 0;
@@ -12,111 +14,50 @@ void mudclient_3ds_toggle_ui_tab(mudclient *mud, int tab) {
         mud->mouse_button_click = 0;
     }
 }
-#endif
 
 void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
-    if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 &&
-        mud->mouse_y < UI_BUTTON_SIZE) {
-#if defined (_3DS) || defined (__SWITCH__)
-        mudclient_3ds_toggle_ui_tab(mud, INVENTORY_TAB);
-#else
-        if (mud->show_ui_tab == 0) {
-            mud->show_ui_tab = INVENTORY_TAB;
-        }
+    int is_toggle = mudclient_is_touch(mud);
+
+#if defined(_3DS) || defined(__SWITCH__)
+    is_toggle = 1;
 #endif
 
-        if (mud->selected_wiki && no_menus) {
-            mudclient_menu_add_wiki(mud, "Inventory", "Inventory");
-        }
-    }
+    int offset_start_x = mud->surface->width - UI_BUTTON_SIZE;
+    int offset_end_x = mud->surface->width - 3;
 
-    if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 33 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 36 &&
-        mud->mouse_y < UI_BUTTON_SIZE) {
-#if defined (_3DS) || defined (__SWITCH__)
-        mudclient_3ds_toggle_ui_tab(mud, MAP_TAB);
-#else
-        if (mud->show_ui_tab == 0) {
-            mud->show_ui_tab = MAP_TAB;
+    for (int i = 0; i < 6; i++) {
+        int tab = i + 1;
 
-            if (mud->options->anti_macro) {
-                mud->minimap_random_rotation =
-                    (int)((((float)rand() / (float)RAND_MAX)) * 13) - 6;
+        if (mud->mouse_x >= offset_start_x && mud->mouse_x < offset_end_x &&
+            mud->mouse_y >= 3 && mud->mouse_y < UI_BUTTON_SIZE) {
+            if (is_toggle) {
+                mudclient_toggle_ui_tab(mud, tab);
+                break;
+            }
 
-                mud->minimap_random_scale =
-                    (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
+            if (mud->show_ui_tab == 0) {
+                mud->show_ui_tab = tab;
+
+                if (tab == MAP_TAB && mud->options->anti_macro) {
+                    mud->minimap_random_rotation =
+                        (int)((((float)rand() / (float)RAND_MAX)) * 13) - 6;
+
+                    mud->minimap_random_scale =
+                        (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
+                }
+
+            }
+
+            if (mud->selected_wiki && no_menus) {
+                mudclient_menu_add_wiki(mud, mudclient_ui_tab_names[i],
+                                        tab == MAP_TAB
+                                            ? "RuneScape_Classic_Map"
+                                            : mudclient_ui_tab_names[i]);
             }
         }
-#endif
 
-        if (mud->selected_wiki && no_menus) {
-            mudclient_menu_add_wiki(mud, "Map", "RuneScape_Classic_Map");
-        }
-    }
-
-    if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 66 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 66 &&
-        mud->mouse_y < UI_BUTTON_SIZE) {
-#if defined (_3DS) || defined (__SWITCH__)
-        mudclient_3ds_toggle_ui_tab(mud, STATS_TAB);
-#else
-        if (mud->show_ui_tab == 0) {
-            mud->show_ui_tab = STATS_TAB;
-        }
-#endif
-
-        if (mud->selected_wiki && no_menus) {
-            mudclient_menu_add_wiki(mud, "Stats", "Stats");
-        }
-    }
-
-    if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 99 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 99 &&
-        mud->mouse_y < UI_BUTTON_SIZE) {
-#if defined (_3DS) || defined (__SWITCH__)
-        mudclient_3ds_toggle_ui_tab(mud, MAGIC_TAB);
-#else
-        if (mud->show_ui_tab == 0) {
-            mud->show_ui_tab = MAGIC_TAB;
-        }
-#endif
-
-        if (mud->selected_wiki && no_menus) {
-            mudclient_menu_add_wiki(mud, "Spellbook", "Spellbook");
-        }
-    }
-
-    if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 132 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 132 &&
-        mud->mouse_y < UI_BUTTON_SIZE) {
-#if defined (_3DS) || defined (__SWITCH__)
-        mudclient_3ds_toggle_ui_tab(mud, SOCIAL_TAB);
-#else
-        if (mud->show_ui_tab == 0) {
-            mud->show_ui_tab = SOCIAL_TAB;
-        }
-#endif
-
-        if (mud->selected_wiki && no_menus) {
-            mudclient_menu_add_wiki(mud, "Friends", "Friends");
-        }
-    }
-
-    if (mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 165 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 165 &&
-        mud->mouse_y < UI_BUTTON_SIZE) {
-#if defined (_3DS) || defined (__SWITCH__)
-        mudclient_3ds_toggle_ui_tab(mud, OPTIONS_TAB);
-#else
-        if (mud->show_ui_tab == 0) {
-            mud->show_ui_tab = OPTIONS_TAB;
-        }
-#endif
-
-        if (mud->selected_wiki && no_menus) {
-            mudclient_menu_add_wiki(mud, "Options", "Options");
-        }
+        offset_start_x -= UI_BUTTON_SIZE - 2;
+        offset_end_x -= UI_BUTTON_SIZE - 2;
     }
 
     if (mud->show_ui_tab != 0 &&

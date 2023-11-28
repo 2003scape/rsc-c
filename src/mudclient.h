@@ -351,13 +351,12 @@ void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code);
 #else
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
 #endif
+#endif
 
 // TODO this was moved
 extern char *font_files[];
 extern char *animated_models[];
 extern char login_screen_status[255];
-
-extern float global_farts_test;
 
 /*
  * most walls are created by world.c and are non-interactive,
@@ -431,14 +430,12 @@ struct mudclient {
 #ifndef SDL12
     SDL_Window *window;
 #endif
+
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
 
-#ifdef RENDER_GL
-#ifndef SDL12
+#if defined(RENDER_GL) && !defined(SDL12)
     SDL_Window *gl_window;
-#endif
-#endif
 #endif
 
     SDL_Cursor *default_cursor;
@@ -962,7 +959,7 @@ struct mudclient {
     int8_t show_dialog_confirm;
     char *confirm_text_top;
     char *confirm_text_bottom;
-    int confirm_type;
+    CONFIRM_TYPE confirm_type;
 
     /* ./ui/additional-options.c */
     int show_additional_options;

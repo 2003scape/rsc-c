@@ -1,7 +1,9 @@
 #include <assert.h>
 #include <stdbool.h>
+
 #include "../game-character.h"
 #include "../game-data.h"
+
 #include "diverse-npcs.h"
 
 /*
@@ -128,7 +130,7 @@ static int thug_start = -1;
 static void
 add_diverse_npcs(void) {
     struct NpcConfig npc;
-    
+
     game_data.npcs = realloc(game_data.npcs,
         (game_data.npc_count + 100) * sizeof(struct NpcConfig));
     assert(game_data.npcs != NULL);
@@ -468,11 +470,11 @@ add_diverse_npcs(void) {
     black_knight_start = game_data.npc_count;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT];
@@ -481,13 +483,13 @@ add_diverse_npcs(void) {
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK;
     npc.sprites[ANIMATION_INDEX_LEGS] = ANIM_LEGS1;
     npc.sprites[ANIMATION_INDEX_LEGS_OVERLAY] = ANIM_SKIRT_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK;
     npc.sprites[ANIMATION_INDEX_LEGS] = ANIM_LEGS1;
     npc.sprites[ANIMATION_INDEX_LEGS_OVERLAY] = ANIM_SKIRT_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
@@ -497,11 +499,11 @@ add_diverse_npcs(void) {
     black_knight_aggr_start = game_data.npc_count;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT_AGGR];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT_AGGR];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT_AGGR];
@@ -510,13 +512,13 @@ add_diverse_npcs(void) {
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT_AGGR];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_BLACK;
     npc.sprites[ANIMATION_INDEX_LEGS] = ANIM_LEGS1;
     npc.sprites[ANIMATION_INDEX_LEGS_OVERLAY] = ANIM_SKIRT_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BLACK_KNIGHT_AGGR];
-    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK; 
+    npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_SWORD_BLACK;
     npc.sprites[ANIMATION_INDEX_LEGS] = ANIM_LEGS1;
     npc.sprites[ANIMATION_INDEX_LEGS_OVERLAY] = ANIM_SKIRT_BLACK;
     game_data.npcs[game_data.npc_count++] = npc;
@@ -644,7 +646,7 @@ add_diverse_npcs(void) {
     /* Tribesman */
 
     tribesman_start = game_data.npc_count;
-   
+
     /* MODIFIED to not be racist */
     game_data.npcs[NPC_TRIBESMAN].description = "A warrior from Karamja";
 
