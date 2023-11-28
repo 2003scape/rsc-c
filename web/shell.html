@@ -2,6 +2,8 @@
 <html lang="en-us">
     <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no" />
+        <!--<meta name="viewport" content="user-scalable=no" />-->
         <title>Runescape by Andrew Gower</title>
         <style>
             html,
@@ -21,6 +23,29 @@
                 background-color: black;
                 display: block;
             }
+
+            canvas.emscripten:focus {
+                outline: none;
+            }
+
+            #mudclient-keyboard {
+                background: none;
+                /*font-family: Arial, sans-serif;*/
+                /*background: red;*/
+                border: 0;
+                color: transparent;
+                display: none;
+                font-size: 15px;
+                font-weight: bold;
+                padding: 0;
+                position: absolute;
+                resize: none;
+                text-align: center;
+            }
+
+            #mudclient-keyboard:focus {
+                outline: none;
+            }
         </style>
     </head>
     <body>
@@ -29,7 +54,10 @@
             id="canvas"
             oncontextmenu="event.preventDefault()"
             tabindex="-1"
+            autofocus="autofocus"
         ></canvas>
+
+        <input id="mudclient-keyboard" type="text" />
 
         <script>
             function LSFS() {
@@ -206,6 +234,8 @@
                 ],
                 preRun: [
                     function () {
+                        ENV.SDL_EMSCRIPTEN_KEYBOARD_ELEMENT = '#canvas';
+
                         const args = window.location.hash.slice(1).split(',');
                         arguments_.push(...args);
                     }
@@ -236,18 +266,6 @@
                         false
                     );
 
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-
-                    window.addEventListener(
-                        'resize',
-                        () => {
-                            canvas.width = window.innerWidth;
-                            canvas.height = window.innerHeight;
-                        },
-                        false
-                    );
-
                     // for rotating the camera off-window
                     window.addEventListener(
                         'mousemove',
@@ -266,6 +284,19 @@
                         },
                         false
                     );
+
+                    canvas.addEventListener('mousedown', focusCanvas);
+                    canvas.addEventListener('touchstart', focusCanvas);
+
+                    canvas.addEventListener('touchend', (event) => {
+                        if (!window._mudclientIsTouch) {
+                            return;
+                        }
+
+                        if (!document.fullscreenElement) {
+                            document.documentElement.requestFullscreen();
+                        }
+                    });
 
                     return canvas;
                 })(),
@@ -300,6 +331,61 @@
                     }
                 };
             };
+
+            const ENTER_KEY_CODE = 13;
+            const BACKSPACE_KEY_CODE = 8;
+
+            const keyboardInput = document.getElementById('mudclient-keyboard');
+
+            function focusCanvas() {
+                //keyboardInput.blur();
+                keyboardInput.style.display = 'none';
+                canvas.focus();
+            }
+
+            function emscriptenKeyPress(code, charCode) {
+                Module.ccall(
+                    'browser_key_pressed',
+                    null,
+                    ['number'],
+                    [code, charCode]
+                );
+            }
+
+            keyboardInput.addEventListener('input', (event) => {
+                for (let i = 0; i < 255; i++) {
+                    emscriptenKeyPress(BACKSPACE_KEY_CODE, BACKSPACE_KEY_CODE);
+                }
+
+                for (const character of event.target.value.split('')) {
+                    emscriptenKeyPress(-1, character.charCodeAt(0));
+                }
+            });
+
+            keyboardInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    emscriptenKeyPress(ENTER_KEY_CODE, ENTER_KEY_CODE);
+                    keyboardInput.style.display = 'none';
+                    //focusCanvas();
+                }
+            });
+
+            // sometimes the viewport takes more time to return to normal after
+            // the input is blur'd
+            // TODO maybe just poll for focused element
+            keyboardInput.addEventListener('blur', () => {
+                window._mudclientCanResize = false;
+
+                setTimeout(() => {
+                    window._mudclientCanResize = true;
+                }, 1000);
+            });
+
+            window._mudclientCanResize = true;
+            window._mudclientKeyboard = keyboardInput;
+
+            window._mudclientIsTouch =
+                navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
         </script>
         {{{ SCRIPT }}}
     </body>

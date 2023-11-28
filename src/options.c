@@ -102,7 +102,7 @@ void options_set_defaults(Options *options) {
     options->status_bars = 0;
     options->ground_item_models = 1;
     options->distant_animation = 1;
-    options->show_hover_tooltip = 1;
+    options->show_hover_tooltip = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 1;

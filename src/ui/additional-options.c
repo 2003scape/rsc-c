@@ -234,7 +234,7 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     /* display */
     x = ui_x + 4;
-    y = ui_y + 17 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     mud->panel_display_options = malloc(sizeof(Panel));
     panel_new(mud->panel_display_options, mud->surface, 50);
@@ -246,7 +246,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->interlace;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -255,7 +255,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->display_fps;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options, "@whi@UI Scale: ", mud->options->ui_scale,
@@ -264,7 +264,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->ui_scale;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -273,7 +273,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->anti_alias;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     sprintf(formatted_digits, "%d", mud->options->field_of_view);
 
@@ -284,7 +284,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->field_of_view;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -293,7 +293,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->show_roofs;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -302,7 +302,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->number_commas;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -312,7 +312,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
-    y = ui_y + 17 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
+    y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -321,7 +321,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->total_experience;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -330,7 +330,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->experience_drops;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -339,7 +339,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->inventory_count;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -348,7 +348,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->condense_item_amounts;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -357,7 +357,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->certificate_items;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -366,7 +366,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->wilderness_warning;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -375,7 +375,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->status_bars;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
@@ -384,14 +384,14 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->display_options[control] = &mud->options->ground_item_models;
     mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += 17;
+    y += 20;
 
-    control = mudclient_add_option_panel_checkbox(
+    /*control = mudclient_add_option_panel_checkbox(
         mud->panel_display_options,
-        "@whi@Hover Tooltip: ", mud->options->show_hover_tooltip, x, y);
+        "@whi@Hover tooltip: ", mud->options->show_hover_tooltip, x, y);
 
     mud->display_options[control] = &mud->options->show_hover_tooltip;
-    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+    mud->display_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;*/
 
     /* bank */
     x = ui_x + 4;

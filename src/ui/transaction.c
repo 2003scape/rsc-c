@@ -311,7 +311,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                                               mud->transaction_last_offer);
                 } else if (mud->mouse_item_count_increment > 0) {
                     mudclient_offer_transaction_item(
-                        mud, item_id, update_opcode,
+                        mud, update_opcode, item_id,
                         mud->mouse_item_count_increment);
 
                     mud->mouse_button_click = 0;

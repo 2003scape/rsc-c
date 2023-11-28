@@ -1,6 +1,5 @@
 #ifndef _H_SCENE
 #define _H_SCENE
-
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>

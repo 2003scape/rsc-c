@@ -28,7 +28,7 @@ else
 CFLAGS += -s -O3 -ffast-math #-fno-signed-zeros -freciprocal-math -ffp-contract=fast
 endif
 
-LDFLAGS += -sEXPORTED_FUNCTIONS=_browser_mouse_moved,_main
+LDFLAGS += -sEXPORTED_FUNCTIONS=_browser_mouse_moved,_browser_key_pressed,_main
 LDFLAGS += -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
 
 LDFLAGS += -s INITIAL_MEMORY=50MB -s ALLOW_MEMORY_GROWTH=1 -s USE_SDL=2

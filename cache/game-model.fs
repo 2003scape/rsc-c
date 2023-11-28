@@ -15,6 +15,25 @@ uniform float texture_light_gradient[RAMP_SIZE];
 
 uniform float opacity;
 
+/* the maximum number of uniforms we can have in webgl2 is 224 */
+
+/*
+float get_light_gradient(int gradient_index) {
+    gradient_index = (RAMP_SIZE - 1) - gradient_index;
+
+    return (gradient_index * gradient_index) / float(RAMP_SIZE * RAMP_SIZE);
+}
+
+float get_texture_gradient(int gradient_index) {
+    gradient_index = ((RAMP_SIZE - 1) - gradient_index) / 16;
+
+    int x = gradient_index / 4;
+    int y = gradient_index % 4;
+
+    return ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
+}
+*/
+
 void main() {
     float lightness = 1.0f;
     int gradient_index = int(vertex_gradient_index);

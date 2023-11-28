@@ -114,7 +114,10 @@ void strtolower(char *s) {
 int get_signed_byte(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+        fprintf(
+            stderr,
+            "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
+            offset, buflen);
         assert(0);
         return 0;
     }
@@ -124,7 +127,10 @@ int get_signed_byte(void *b, size_t offset, size_t buflen) {
 int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+        fprintf(
+            stderr,
+            "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
+            offset, buflen);
         assert(0);
         return 0;
     }
@@ -134,7 +140,10 @@ int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
 int get_unsigned_short(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 2) || (buflen - offset) < 2) {
-        fprintf(stderr, "WARNING: tried to read excess short from buffer, off %zu len %zu\n", offset, buflen);
+        fprintf(stderr,
+                "WARNING: tried to read excess short from buffer, off %zu len "
+                "%zu\n",
+                offset, buflen);
         assert(0);
         return 0;
     }
@@ -144,7 +153,10 @@ int get_unsigned_short(void *b, size_t offset, size_t buflen) {
 int get_unsigned_int(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
-        fprintf(stderr, "WARNING: tried to read excess int from buffer, off %zu len %zu\n", offset, buflen);
+        fprintf(
+            stderr,
+            "WARNING: tried to read excess int from buffer, off %zu len %zu\n",
+            offset, buflen);
         assert(0);
         return 0;
     }
@@ -155,7 +167,8 @@ int get_unsigned_int(void *b, size_t offset, size_t buflen) {
 
 /* XXX: actually signed */
 int64_t get_unsigned_long(void *buffer, size_t offset, size_t buflen) {
-    return (((int64_t)get_unsigned_int(buffer, offset, buflen) & 0xffffffff) << 32) +
+    return (((int64_t)get_unsigned_int(buffer, offset, buflen) & 0xffffffff)
+            << 32) +
            ((int64_t)get_unsigned_int(buffer, offset + 4, buflen) & 0xffffffff);
 }
 
@@ -175,18 +188,23 @@ int get_signed_short(void *buffer, size_t offset, size_t buflen) {
 int get_stack_int(void *b, size_t offset, size_t buflen) {
     uint8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+        fprintf(
+            stderr,
+            "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
+            offset, buflen);
         assert(0);
         return 0;
     }
-
 
     if ((buffer[offset] & 0xff) < 128) {
         return buffer[offset];
     }
 
     if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
-        fprintf(stderr, "WARNING: tried to read excess int from buffer, off %zu len %zu\n", offset, buflen);
+        fprintf(
+            stderr,
+            "WARNING: tried to read excess int from buffer, off %zu len %zu\n",
+            offset, buflen);
         assert(0);
         return 0;
     }
@@ -204,7 +222,10 @@ int get_bit_mask(void *b, size_t offset, size_t buflen, size_t nbits) {
 
     for (; nbits > bit_offset; bit_offset = 8) {
         if (byte_offset > (SIZE_MAX - 1) || (buflen - byte_offset) < 1) {
-            fprintf(stderr, "WARNING: tried to read excess byte from buffer, off %zu len %zu\n", offset, buflen);
+            fprintf(stderr,
+                    "WARNING: tried to read excess byte from buffer, off %zu "
+                    "len %zu\n",
+                    offset, buflen);
             assert(0);
             return 0;
         }
@@ -217,8 +238,7 @@ int get_bit_mask(void *b, size_t offset, size_t buflen, size_t nbits) {
     if (nbits == bit_offset) {
         bits += buffer[byte_offset] & BITMASK[bit_offset];
     } else {
-        bits +=
-            (buffer[byte_offset] >> (bit_offset - nbits)) & BITMASK[nbits];
+        bits += (buffer[byte_offset] >> (bit_offset - nbits)) & BITMASK[nbits];
     }
 
     return bits;
@@ -420,8 +440,8 @@ uint32_t get_data_file_length(const char *file_name, void *buffer) {
     return 0;
 }
 
-void *unpack_data(const char *file_name, size_t extra_size,
-                  void *archive_data, void *data_out, size_t *size_out) {
+void *unpack_data(const char *file_name, size_t extra_size, void *archive_data,
+                  void *data_out, size_t *size_out) {
     /* FIXME: unsafe, need to know buffer size */
     uint16_t num_entries = get_unsigned_short(archive_data, 0, SIZE_MAX);
     uint32_t wanted_hash = hash_file_name(file_name);
@@ -458,8 +478,8 @@ void *unpack_data(const char *file_name, size_t extra_size,
     return NULL;
 }
 
-void *load_data(const char *file_name, size_t extra_size,
-                void *archive_data, size_t *size_out) {
+void *load_data(const char *file_name, size_t extra_size, void *archive_data,
+                size_t *size_out) {
     if (archive_data == NULL) {
         return NULL;
     }
@@ -521,7 +541,7 @@ int get_ticks() {
 #endif
 
 #ifdef _3DS
-    //return (int)osGetTime();
+    // return (int)osGetTime();
     return (int)(svcGetSystemTick() / CPU_TICKS_PER_MSEC);
 #endif
 
@@ -728,8 +748,7 @@ int colour_str_to_colour(char *colour_str) {
     } else if (strcmp(colour_str, "ora") == 0) {
         colour = STRING_ORA;
     } else if (strcmp(colour_str, "ran") == 0) {
-        colour =
-            (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+        colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
     } else if (strcmp(colour_str, "or1") == 0) {
         colour = STRING_OR1;
     } else if (strcmp(colour_str, "or2") == 0) {
@@ -746,7 +765,6 @@ int colour_str_to_colour(char *colour_str) {
 
     return colour;
 }
-
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range) {
@@ -769,6 +787,8 @@ void gl_create_texture(GLuint *texture_id) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 }
 
 void gl_load_texture(GLuint *texture_id, char *file) {
@@ -829,11 +849,12 @@ int _3ds_gl_translate_framebuffer_index(int index) {
            _3ds_gl_framebuffer_offsets_y[y_offset];
 }
 
-/* https://github.com/xerpi/sf2dlib/blob/master/libsf2d/source/sf2d_texture.c#L643 */
+/* https://github.com/xerpi/sf2dlib/blob/master/libsf2d/source/sf2d_texture.c#L643
+ */
 int _3ds_gl_morton_interleave(int x, int y) {
     int i = (x & 7) | ((y & 7) << 8); // ---- -210
-    i = (i ^ (i << 2)) & 0x1313; // ---2 --10
-    i = (i ^ (i << 1)) & 0x1515; // ---2 -1-0
+    i = (i ^ (i << 2)) & 0x1313;      // ---2 --10
+    i = (i ^ (i << 1)) & 0x1515;      // ---2 -1-0
     i = (i | (i >> 7)) & 0x3F;
     return i;
 }

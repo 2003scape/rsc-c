@@ -293,6 +293,8 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
+#include "custom/diverse-npcs.h"
+
 #ifdef WII
 /* these are doubled for the wii */
 #define KEY_WIDTH 23
@@ -404,7 +406,7 @@ struct mudclient {
     int last_wii_y;
     int last_wii_button;
 
-    int keyboard_open;
+    int8_t keyboard_open;
     int last_keyboard_button;
 #elif defined(_3DS)
     uint8_t *_3ds_framebuffer_top;
@@ -1085,6 +1087,9 @@ void mudclient_sdl1_on_resize(mudclient *mud,int width, int height);
 #endif
 void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
+int mudclient_is_touch(mudclient *mud);
+void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
+                                int x, int y, int width, int height);
 #ifdef _3DS
 void mudclient_3ds_flush_audio(mudclient *mud);
 void mudclient_3ds_open_keyboard(mudclient *mud);
@@ -1124,4 +1129,5 @@ int main(int argc, char **argv);
 #endif
 #ifdef EMSCRIPTEN
 void browser_mouse_moved(int x, int y);
+void browser_key_pressed(int code, int char_code);
 #endif

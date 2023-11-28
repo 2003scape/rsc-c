@@ -10,8 +10,8 @@
 
 typedef struct Options Options;
 
-#include "mudclient.h"
 #include "lib/ini.h"
+#include "mudclient.h"
 
 #define OPTIONS_INI_TEMPLATE                                                   \
     ("; IPv4 address with revision 177 compatible protocol support\n"          \
@@ -20,8 +20,8 @@ typedef struct Options Options;
      "; Disable registration and load sounds, P2P landscape and items ("       \
      "requires\n; restart)\n"                                                  \
      "members = %d\n"                                                          \
-     "; If enabled, override members option and always show New User button\n"\
-     "registration = %d\n" \
+     "; If enabled, override members option and always show New User button\n" \
+     "registration = %d\n"                                                     \
      "; Used together to encrypt passwords, Must be represented as "           \
      "hexadecimal string\n; 0-padded to a multiple of eight characters\n"      \
      "rsa_exponent = %s\n"                                                     \
@@ -37,7 +37,8 @@ typedef struct Options Options;
      "; System command to use to open the web browser (only on desktop)\n"     \
      "browser_command = %s\n\n"                                                \
      "; Diversify NPCs sent by server (custom)\n"                              \
-     "diversify_npcs = %d\n\n"                                                  \
+     "diversify_npcs = %d\n\n"                                                 \
+                                                                               \
      "; Scroll panel lists, chatbox, and camera (if zoom enabled) with "       \
      "wheel\n"                                                                 \
      "mouse_wheel = %d\n"                                                      \
@@ -102,9 +103,9 @@ typedef struct Options Options;
      "; Use ground item models instead of billboarded sprites\n"               \
      "ground_item_models = %d\n"                                               \
      "; Always animate objects like fires\n"                                   \
-     "distant_animation = %d\n\n"                                              \
+     "distant_animation = %d\n"                                                \
      "; Show hover tooltip menu\n"                                             \
-     "show_hover_tooltip = %d\n"                                               \
+     "show_hover_tooltip = %d\n\n"                                             \
                                                                                \
      "; Add filtering to the bank\n"                                           \
      "bank_search = %d\n"                                                      \
