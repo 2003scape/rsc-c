@@ -24,3 +24,4 @@ texture-pack/node_modules
 *.npdm
 *.nso
 *.nsp
+*.bak

@@ -70,7 +70,9 @@
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>
+#ifndef SDL12
 #include <SDL_opengl.h>
+#endif
 
 #include "gl/shader.h"
 #endif
@@ -344,6 +346,9 @@ void mudclient_3ds_gl_frame_start(mudclient *mud, int clear);
 void mudclient_3ds_gl_frame_end();
 #endif
 #else
+#ifdef SDL12
+void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code);
+#else
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
 #endif
 
@@ -423,12 +428,17 @@ struct mudclient {
     C3D_RenderTarget *_3ds_gl_offscreen_render_target;
 #endif
 #else
+#ifndef SDL12
     SDL_Window *window;
+#endif
     SDL_Surface *screen;
     SDL_Surface *pixel_surface;
 
 #ifdef RENDER_GL
+#ifndef SDL12
     SDL_Window *gl_window;
+#endif
+#endif
 #endif
 
     SDL_Cursor *default_cursor;
@@ -1072,6 +1082,9 @@ void mudclient_update_fov(mudclient *mud);
 #endif
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
+#ifdef SDL12
+void mudclient_sdl1_on_resize(mudclient *mud,int width, int height);
+#endif
 void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
 int mudclient_is_touch(mudclient *mud);
