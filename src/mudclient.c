@@ -6014,8 +6014,8 @@ void mudclient_poll_events(mudclient *mud) {
             }
 #endif
             break;
-#endif
         }
+#endif
 #ifdef __SWITCH__
         case SDL_JOYBUTTONDOWN:
             switch (event.jbutton.button) {
