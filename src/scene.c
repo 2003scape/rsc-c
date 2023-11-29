@@ -137,6 +137,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #elif defined(OPENGL15) || defined(OPENGL20)
     shader_new(&scene->game_model_shader, "./cache/game-model.gl2.vs",
                "./cache/game-model.gl2.fs");
+#elif defined(__SWITCH__)
+    shader_new(&scene->game_model_shader, "romfs:/game-model.vs",
+               "romfs:/game-model.fs");
 #else
     shader_new(&scene->game_model_shader, "./cache/game-model.vs",
                "./cache/game-model.fs");
@@ -173,10 +176,17 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
 
+#ifdef __SWITCH__
+    gl_load_texture(&scene->gl_model_texture,
+                    "romfs:/textures/model_textures.png");
+
+    scene->gl_model_surface = IMG_Load("romfs:/textures/model_textures.png");
+#else
     gl_load_texture(&scene->gl_model_texture,
                     "./cache/textures/model_textures.png");
 
     scene->gl_model_surface = IMG_Load("./cache/textures/model_textures.png");
+#endif
 #elif defined(RENDER_3DS_GL)
     scene->_3ds_gl_model_shader_dvlb =
         DVLB_ParseFile((u32 *)model_shbin, model_shbin_size);

@@ -1133,6 +1133,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_MakeCurrent(mud->gl_window, context);
 #endif
 
+#ifdef __SWITCH__
+    gladLoadGL();
+#else
+
     glewExperimental = GL_TRUE;
 
     GLenum glew_error = glewInit();
@@ -1141,6 +1145,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         fprintf(stderr, "GLEW error: %s\n", glewGetErrorString(glew_error));
         exit(1);
     }
+#endif
 
     glViewport(0, 0, mud->game_width, mud->game_height);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

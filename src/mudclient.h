@@ -61,16 +61,24 @@
 #endif
 
 #if !defined(WII) && !defined(_3DS)
+#ifdef __SWITCH__
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define MUD_IS_BIG_ENDIAN
 #endif
 
 #ifdef RENDER_GL
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
-#ifndef SDL12
+#endif
+#if !defined (SDL12) && !defined (__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 

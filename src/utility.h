@@ -24,12 +24,24 @@
 #include <tex3ds.h>
 #endif
 #else
+#ifdef __SWITCH__
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 
 #ifdef RENDER_GL
+#ifdef __SWITCH__
+#include <SDL2/SDL_image.h>
+#else
 #include <SDL_image.h>
+#endif
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
+#endif
 #endif
 #endif
 
