@@ -1,7 +1,7 @@
 #CC = clang
 DEBUG ?= 1
 SDL2 ?= 1
-GLAD ?= 1
+GLAD ?= 0
 RENDER_GL ?= 1
 LEGACY_GL ?= 0
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
