@@ -1026,6 +1026,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     joystick = SDL_JoystickOpen(0);
 #endif
 
+/* XXX: currently require non-callback-based audio from SDL >= 2.0.4 */
+#ifdef SDL_VERSION_ATLEAST
+#if SDL_VERSION_ATLEAST(2, 0, 4)
     if (mud->options->members) {
         SDL_AudioSpec wanted_audio;
 
@@ -1034,16 +1037,15 @@ void mudclient_start_application(mudclient *mud, char *title) {
         wanted_audio.channels = 1;
         wanted_audio.silence = 0;
         wanted_audio.samples = 1024;
-
-#ifndef SDL12
         wanted_audio.callback = NULL;
-#endif
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
             fprintf(stderr, "SDL_OpenAudio(): %s\n", SDL_GetError());
             exit(1);
         }
     }
+#endif
+#endif
 
 #ifdef SDL12
     SDL_WM_SetCaption("Runescape by Andrew Gower", NULL);
