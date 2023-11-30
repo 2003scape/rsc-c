@@ -34,8 +34,8 @@ typedef struct gl_face_fill {
 #endif
 
 #ifdef RENDER_GL
-#ifdef __SWITCH__
-#include <glad/glad.h>
+#ifdef GLAD
+#include "../../glad/glad.h"
 #else
 #include <GL/glew.h>
 #include <GL/glu.h>

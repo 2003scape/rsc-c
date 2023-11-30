@@ -36,7 +36,7 @@
 
 #ifdef RENDER_GL
 #ifdef GLAD
-#include <glad/glad.h>
+#include "../../glad/glad.h"
 #else
 #include <GL/glew.h>
 #include <GL/glu.h>
