@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef __SWITCH__
+#ifdef GLAD
 #include <glad/glad.h>
 #else
 #include <GL/glew.h>

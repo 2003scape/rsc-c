@@ -72,7 +72,7 @@
 #endif
 
 #ifdef RENDER_GL
-#ifdef __SWITCH__
+#ifdef GLAD
 #include <glad/glad.h>
 #else
 #include <GL/glew.h>

@@ -1133,7 +1133,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_MakeCurrent(mud->gl_window, context);
 #endif
 
-#ifdef __SWITCH__
+#ifdef GLAD
     gladLoadGL();
 #else
 
