@@ -125,6 +125,7 @@ void url_encode(char *s, char *dest);
 int get_certificate_item_id(int item_id);
 int is_ip_address(char *address);
 int colour_str_to_colour(char *colour_str);
+double distance(int x1, int y1, int x2, int y2);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range);
