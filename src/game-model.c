@@ -174,11 +174,11 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     // TODO only scene->view needs this
     //#ifdef RENDER_SW
     if (!game_model->projected) {
-        game_model->project_vertex_x = calloc(vertex_count, sizeof(int));
-        game_model->project_vertex_y = calloc(vertex_count, sizeof(int));
-        game_model->project_vertex_z = calloc(vertex_count, sizeof(int));
-        game_model->vertex_view_x = calloc(vertex_count, sizeof(int));
-        game_model->vertex_view_y = calloc(vertex_count, sizeof(int));
+        game_model->project_vertex_x = calloc(vertex_count, sizeof(int16_t));
+        game_model->project_vertex_y = calloc(vertex_count, sizeof(int16_t));
+        game_model->project_vertex_z = calloc(vertex_count, sizeof(int16_t));
+        game_model->vertex_view_x = calloc(vertex_count, sizeof(int32_t));
+        game_model->vertex_view_y = calloc(vertex_count, sizeof(int32_t));
     }
     //#endif
 

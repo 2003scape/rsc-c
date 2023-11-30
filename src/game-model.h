@@ -72,11 +72,11 @@ typedef struct GameModel GameModel;
 
 struct GameModel {
     uint16_t vertex_count;
-    int *project_vertex_x;
-    int *project_vertex_y;
-    int *project_vertex_z;
-    int *vertex_view_x;
-    int *vertex_view_y;
+    int16_t *project_vertex_x;
+    int16_t *project_vertex_y;
+    int16_t *project_vertex_z;
+    int32_t *vertex_view_x;
+    int32_t *vertex_view_y;
     int *vertex_intensity;
     int8_t *vertex_ambience;
     uint16_t face_count;
