@@ -160,7 +160,7 @@
 #define RECEIVED_MESSAGE_MAX 50
 #define ACTION_BUBBLE_MAX 50
 #define HEALTH_BAR_MAX 50
-#define TELEPORT_BUBBLE_MAX 50
+#define MAGIC_BUBBLE_MAX 50
 
 #define INVENTORY_ITEMS_MAX 30
 #define MENU_MAX 250
@@ -388,6 +388,26 @@ struct Scenery {
     uint8_t direction;
     GameModel *model;
     uint8_t already_in_menu;
+};
+
+struct MagicBubble {
+    uint16_t x;
+    uint16_t y;
+    uint8_t type;
+    uint8_t time;
+};
+
+struct ActionBubble {
+    uint16_t x;
+    uint16_t y;
+    uint16_t scale;
+    uint16_t item;
+};
+
+struct HealthBar {
+    uint16_t x;
+    uint16_t y;
+    uint8_t missing;
 };
 
 struct mudclient {
@@ -736,23 +756,15 @@ struct mudclient {
 
     /* bubbles with items above players' heads */
     int action_bubble_count;
-    int action_bubble_x[ACTION_BUBBLE_MAX];
-    int action_bubble_y[ACTION_BUBBLE_MAX];
-    int action_bubble_scale[ACTION_BUBBLE_MAX];
-    int action_bubble_item[ACTION_BUBBLE_MAX];
+    struct ActionBubble action_bubbles[ACTION_BUBBLE_MAX];
 
     /* green/red health bars displayed above characters' heads in combat */
     int health_bar_count;
-    int health_bar_x[HEALTH_BAR_MAX];
-    int health_bar_y[HEALTH_BAR_MAX];
-    int health_bar_missing[HEALTH_BAR_MAX];
+    struct HealthBar health_bars[HEALTH_BAR_MAX];
 
     /* blue/red bubbles used for teleporting and telegrabbing */
-    int teleport_bubble_count;
-    int8_t teleport_bubble_type[TELEPORT_BUBBLE_MAX];
-    int teleport_bubble_x[TELEPORT_BUBBLE_MAX];
-    int teleport_bubble_y[TELEPORT_BUBBLE_MAX];
-    int teleport_bubble_time[TELEPORT_BUBBLE_MAX];
+    int magic_bubble_count;
+    struct MagicBubble magic_bubbles[MAGIC_BUBBLE_MAX];
 
     /*int8_t show_dialog_report_abuse_step;
     int report_abuse_offence;*/
@@ -1095,7 +1107,7 @@ void mudclient_3ds_draw_top_background(mudclient *mud);
 #endif
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
-void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
+void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id, float depth);
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
