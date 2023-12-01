@@ -30,9 +30,17 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
 
         if (mud->mouse_x >= offset_start_x && mud->mouse_x < offset_end_x &&
             mud->mouse_y >= 3 && mud->mouse_y < UI_BUTTON_SIZE) {
+            char *tab_name = mudclient_ui_tab_names[i];
+            char *page = tab == MAP_TAB ? "RuneScape_Classic_Map" : tab_name;
+
             if (is_toggle) {
-                mudclient_toggle_ui_tab(mud, tab);
-                break;
+                if (mud->show_ui_tab == tab && mud->selected_wiki && no_menus) {
+                    mudclient_menu_add_wiki(mud, tab_name, page);
+                } else {
+                    mudclient_toggle_ui_tab(mud, tab);
+                }
+
+                return;
             }
 
             if (mud->show_ui_tab == 0) {
@@ -49,10 +57,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
             }
 
             if (mud->selected_wiki && no_menus) {
-                mudclient_menu_add_wiki(mud, mudclient_ui_tab_names[i],
-                                        tab == MAP_TAB
-                                            ? "RuneScape_Classic_Map"
-                                            : mudclient_ui_tab_names[i]);
+                mudclient_menu_add_wiki(mud, tab_name, page);
             }
         }
 

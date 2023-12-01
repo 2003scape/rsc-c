@@ -766,6 +766,10 @@ int colour_str_to_colour(char *colour_str) {
     return colour;
 }
 
+double distance(int x1, int y1, int x2, int y2) {
+    return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+}
+
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 float gl_translate_coord(int position, int range) {
     float half = range / 2.0f;

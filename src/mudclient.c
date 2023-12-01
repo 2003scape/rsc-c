@@ -36,6 +36,8 @@ EM_JS(void, browser_trigger_keyboard,
       });
 
 EM_JS(int, browser_is_touch, (), { return window._mudclientIsTouch; });
+
+EM_JS(void, browser_alert, (int id), { alert(id); });
 /* clang-format on */
 
 int last_canvas_check = 0;
@@ -44,7 +46,6 @@ mudclient *global_mud = NULL;
 #endif
 
 // TODO put in mudclient?
-int mudclient_touch_down = 0;
 int mudclient_touch_start = 0; // ms
 
 int mudclient_horizontal_drag = 0;
@@ -52,6 +53,18 @@ int mudclient_vertical_drag = 0;
 
 int mudclient_touch_start_x = 0;
 int mudclient_touch_start_y = 0;
+
+double mudclient_pinch_distance = 0;
+
+int64_t mudclient_finger_1_id = 0;
+int mudclient_finger_1_x = 0;
+int mudclient_finger_1_y = 0;
+int mudclient_finger_1_down = 0;
+
+int64_t mudclient_finger_2_id = 0;
+int mudclient_finger_2_x = 0;
+int mudclient_finger_2_y = 0;
+int mudclient_finger_2_down = 0;
 
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
@@ -5847,10 +5860,11 @@ void mudclient_poll_events(mudclient *mud) {
     }
 #else
     if (!mudclient_horizontal_drag && !mudclient_vertical_drag &&
-        mudclient_touch_down && get_ticks() - mudclient_touch_start >= 400) {
+        mudclient_finger_1_down && !mudclient_finger_2_down &&
+        get_ticks() - mudclient_touch_start >= 400) {
         mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
-        mudclient_touch_down = 0;
+        mudclient_finger_1_down = 0;
     }
 
     SDL_Event event;
@@ -5917,28 +5931,53 @@ void mudclient_poll_events(mudclient *mud) {
                 break;
             }
 
-            if (event.tfinger.fingerId != 0) {
-                break;
+            int64_t finger_id = event.tfinger.fingerId;
+
+            if (finger_id == mudclient_finger_1_id) {
+                mudclient_finger_1_x = touch_x;
+                mudclient_finger_1_y = touch_y;
+            } else if (finger_id == mudclient_finger_2_id) {
+                mudclient_finger_2_x = touch_x;
+                mudclient_finger_2_y = touch_y;
             }
 
-            int delta_x = touch_x - mudclient_touch_start_x;
-            int delta_y = touch_y - mudclient_touch_start_y;
+            if (mudclient_finger_1_down && mudclient_finger_2_down) {
+                double pinch_distance =
+                    distance(mudclient_finger_1_x, mudclient_finger_1_y,
+                             mudclient_finger_2_x, mudclient_finger_2_y);
 
-            if (!mudclient_horizontal_drag && abs(delta_x) > 30) {
-                mudclient_horizontal_drag = 1;
+                /*char farts[255] = {0};
+                sprintf(farts, "distance: %f",
+                        mudclient_pinch_distance - pinch_distance);
+                mudclient_show_message(mud, farts, MESSAGE_TYPE_GAME);*/
 
-                mudclient_mouse_pressed(mud, mudclient_touch_start_x,
-                                        mudclient_touch_start_y, 2);
+                if (mudclient_pinch_distance > 0) {
+                    mud->mouse_scroll_delta =
+                        ((mudclient_pinch_distance  - pinch_distance) / 2.0f);
+                }
+
+
+                mudclient_pinch_distance = pinch_distance;
+            } else if (mudclient_finger_1_down && !mudclient_finger_2_down) {
+                int delta_x = touch_x - mudclient_touch_start_x;
+                int delta_y = touch_y - mudclient_touch_start_y;
+
+                if (!mudclient_horizontal_drag && abs(delta_x) > 30) {
+                    mudclient_horizontal_drag = 1;
+
+                    mudclient_mouse_pressed(mud, mudclient_touch_start_x,
+                                            mudclient_touch_start_y, 2);
+                }
+
+                if (mudclient_vertical_drag || abs(delta_y) > 30) {
+                    mudclient_vertical_drag = 1;
+
+                    mud->mouse_scroll_delta =
+                        (event.tfinger.dy / 2.0f) * mud->game_height;
+                }
+
+                mudclient_mouse_moved(mud, touch_x, touch_y);
             }
-
-            if (mudclient_vertical_drag || abs(delta_y) > 30) {
-                mudclient_vertical_drag = 1;
-
-                mud->mouse_scroll_delta =
-                    event.tfinger.dy * mud->game_height / 2;
-            }
-
-            mudclient_mouse_moved(mud, touch_x, touch_y);
 #endif
             break;
         }
@@ -5953,25 +5992,30 @@ void mudclient_poll_events(mudclient *mud) {
                 break;
             }
 
-            if (event.tfinger.fingerId != 0) {
+            int64_t finger_id = event.tfinger.fingerId;
+
+            if (!mudclient_finger_1_down) {
+                mudclient_finger_1_id = finger_id;
+                mudclient_finger_1_down = 1;
+
+                mudclient_finger_1_x = touch_x;
+                mudclient_finger_1_y = touch_y;
+
+                mudclient_touch_start = get_ticks();
+
+                mudclient_touch_start_x = touch_x;
+                mudclient_touch_start_y = touch_y;
+
+                mudclient_mouse_moved(mud, touch_x, touch_y);
+            } else if (!mudclient_finger_2_down) {
+                mudclient_finger_2_id = finger_id;
+                mudclient_finger_2_down = 1;
+
+                mudclient_finger_2_x = touch_x;
+                mudclient_finger_2_y = touch_y;
+            } else {
                 break;
             }
-
-            if (mudclient_touch_down) {
-                break;
-            }
-
-            mudclient_touch_down = 1;
-            mudclient_touch_start = get_ticks();
-
-            mudclient_touch_start_x = touch_x;
-            mudclient_touch_start_y = touch_y;
-
-            mudclient_mouse_moved(mud, touch_x, touch_y);
-
-            /*char farts[255] = {0};
-            sprintf(farts, "finger: %d", event.tfinger.fingerId);
-            mudclient_show_message(mud, farts, MESSAGE_TYPE_GAME);*/
 #endif
             break;
         }
@@ -5987,28 +6031,32 @@ void mudclient_poll_events(mudclient *mud) {
                 break;
             }
 
-            if (event.tfinger.fingerId != 0) {
-                break;
-            }
+            int64_t finger_id = event.tfinger.fingerId;
 
-            if (!mudclient_touch_down) {
-                break;
-            }
+            if (mudclient_finger_1_down &&
+                finger_id == mudclient_finger_1_id) {
+                mudclient_finger_1_down = 0;
 
-            mudclient_touch_down = 0;
+                if (!mudclient_vertical_drag && !mudclient_horizontal_drag &&
+                    mudclient_pinch_distance == 0) {
+                    mudclient_mouse_pressed(mud, touch_x, touch_y, 0);
+                    mudclient_mouse_released(mud, touch_x, touch_y, 0);
+                } else {
+                    mudclient_vertical_drag = 0;
 
-            if (!mudclient_vertical_drag && !mudclient_horizontal_drag) {
+                    if (mudclient_horizontal_drag) {
+                        mudclient_mouse_released(mud, mud->mouse_x,
+                                                 mud->mouse_y, 2);
 
-                mudclient_mouse_pressed(mud, touch_x, touch_y, 0);
-                mudclient_mouse_released(mud, touch_x, touch_y, 0);
-            } else {
-                mudclient_vertical_drag = 0;
-
-                if (mudclient_horizontal_drag) {
-                    mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y,
-                                             2);
-                    mudclient_horizontal_drag = 0;
+                        mudclient_horizontal_drag = 0;
+                    }
                 }
+
+                mudclient_pinch_distance = 0;
+            } else if (mudclient_finger_2_down &&
+                       finger_id == mudclient_finger_2_id) {
+                mudclient_finger_2_down = 0;
+                mudclient_pinch_distance = 0;
             }
 #endif
             break;
@@ -6158,11 +6206,11 @@ void mudclient_poll_events(mudclient *mud) {
             mudclient_sdl1_on_resize(mud, event.resize.w, event.resize.h);
             break;
 #else
-    case SDL_WINDOWEVENT:
-        if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-            mudclient_on_resize(mud);
-        }
-        break;
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                mudclient_on_resize(mud);
+            }
+            break;
 #endif
         }
     }
