@@ -4008,17 +4008,14 @@ void mudclient_handle_game_input(mudclient *mud) {
         }
     }
 
-    for (int i = 0; i < mud->teleport_bubble_count; i++) {
-        mud->teleport_bubble_time[i]++;
+    for (int i = 0; i < mud->magic_bubble_count; i++) {
+        mud->magic_bubbles[i].time++;
 
-        if (mud->teleport_bubble_time[i] > 50) {
-            mud->teleport_bubble_count--;
+        if (mud->magic_bubbles[i].time > 50) {
+            mud->magic_bubble_count--;
 
-            for (int j = i; j < mud->teleport_bubble_count; j++) {
-                mud->teleport_bubble_x[j] = mud->teleport_bubble_x[j + 1];
-                mud->teleport_bubble_y[j] = mud->teleport_bubble_y[j + 1];
-                mud->teleport_bubble_time[j] = mud->teleport_bubble_time[j + 1];
-                mud->teleport_bubble_type[j] = mud->teleport_bubble_type[j + 1];
+            for (int j = i; j < mud->magic_bubble_count; j++) {
+                mud->magic_bubbles[j] = mud->magic_bubbles[j + 1];
             }
         }
     }
@@ -4185,9 +4182,9 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
         int missing = (character->current_hits * 30) / character->max_hits;
 
         if (mud->health_bar_count < HEALTH_BAR_MAX) {
-            mud->health_bar_x[mud->health_bar_count] = offset_x + (width / 2);
-            mud->health_bar_y[mud->health_bar_count] = y;
-            mud->health_bar_missing[mud->health_bar_count++] = missing;
+            mud->health_bars[mud->health_bar_count].x = offset_x + (width / 2);
+            mud->health_bars[mud->health_bar_count].y = y;
+            mud->health_bars[mud->health_bar_count++].missing = missing;
         }
     }
 
@@ -4395,11 +4392,11 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
     if (player->bubble_timeout > 0 &&
         mud->action_bubble_count < ACTION_BUBBLE_MAX) {
-        mud->action_bubble_x[mud->action_bubble_count] = x + (width / 2);
-        mud->action_bubble_y[mud->action_bubble_count] = y;
-        mud->action_bubble_scale[mud->action_bubble_count] = ty;
+        mud->action_bubbles[mud->action_bubble_count].x = x + (width / 2);
+        mud->action_bubbles[mud->action_bubble_count].y = y;
+        mud->action_bubbles[mud->action_bubble_count].scale = ty;
 
-        mud->action_bubble_item[mud->action_bubble_count++] =
+        mud->action_bubbles[mud->action_bubble_count++].item =
             player->bubble_item;
     }
 
@@ -4813,9 +4810,9 @@ void mudclient_draw_overhead(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->action_bubble_count; i++) {
-        int x = mud->action_bubble_x[i];
-        int y = mud->action_bubble_y[i];
-        int scale = mud->action_bubble_scale[i];
+        int x = mud->action_bubbles[i].x;
+        int y = mud->action_bubbles[i].y;
+        int scale = mud->action_bubbles[i].scale;
 
         if (mudclient_is_ui_scaled(mud)) {
             x /= 2;
@@ -4823,7 +4820,7 @@ void mudclient_draw_overhead(mudclient *mud) {
             scale /= 2;
         }
 
-        int id = mud->action_bubble_item[i];
+        int id = mud->action_bubbles[i].item;
         int scale_x = (39 * scale) / 100;
         int scale_y = (27 * scale) / 100;
 
@@ -4843,9 +4840,9 @@ void mudclient_draw_overhead(mudclient *mud) {
     }
 
     for (int i = 0; i < mud->health_bar_count; i++) {
-        int x = mud->health_bar_x[i];
-        int y = mud->health_bar_y[i];
-        int missing = mud->health_bar_missing[i];
+        int x = mud->health_bars[i].x;
+        int y = mud->health_bars[i].y;
+        int missing = mud->health_bars[i].missing;
 
         if (mudclient_is_ui_scaled(mud)) {
             x /= 2;
@@ -5041,10 +5038,10 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         }
     }
 
-    for (int i = 0; i < mud->teleport_bubble_count; i++) {
-        int x = mud->teleport_bubble_x[i] * MAGIC_LOC + 64;
-        int y = mud->teleport_bubble_y[i] * MAGIC_LOC + 64;
-        int type = mud->teleport_bubble_type[i];
+    for (int i = 0; i < mud->magic_bubble_count; i++) {
+        int x = mud->magic_bubbles[i].x * MAGIC_LOC + 64;
+        int y = mud->magic_bubbles[i].y * MAGIC_LOC + 64;
+        int type = mud->magic_bubbles[i].type;
         int height = type == 0 ? 256 : 64;
 
         scene_add_sprite(mud->scene, 50000 + i, x,
@@ -6493,10 +6490,10 @@ void mudclient_run(mudclient *mud) {
     }
 }
 
-void mudclient_draw_teleport_bubble(mudclient *mud, int x, int y, int width,
+void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
                                     int height, int id, float depth) {
-    int type = mud->teleport_bubble_type[id];
-    int time = mud->teleport_bubble_time[id];
+    int type = mud->magic_bubbles[id].type;
+    int time = mud->magic_bubbles[id].time;
 
     if (type == 0) {
         /* blue bubble used for teleports */

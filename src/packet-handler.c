@@ -1846,18 +1846,18 @@ void mudclient_packet_tick(mudclient *mud) {
         }
         break;
     }
-    case SERVER_TELEPORT_BUBBLE: {
-        if (mud->teleport_bubble_count < TELEPORT_BUBBLE_MAX) {
+    case SERVER_MAGIC_BUBBLE: {
+        if (mud->magic_bubble_count < MAGIC_BUBBLE_MAX) {
             int type = get_unsigned_byte(data, 1, size);
             int x = get_signed_byte(data, 2, size) + mud->local_region_x;
             int y = get_signed_byte(data, 3, size) + mud->local_region_y;
 
-            mud->teleport_bubble_type[mud->teleport_bubble_count] = type;
-            mud->teleport_bubble_time[mud->teleport_bubble_count] = 0;
-            mud->teleport_bubble_x[mud->teleport_bubble_count] = x;
-            mud->teleport_bubble_y[mud->teleport_bubble_count] = y;
+            mud->magic_bubbles[mud->magic_bubble_count].type = type;
+            mud->magic_bubbles[mud->magic_bubble_count].time = 0;
+            mud->magic_bubbles[mud->magic_bubble_count].x = x;
+            mud->magic_bubbles[mud->magic_bubble_count].y = y;
 
-            mud->teleport_bubble_count++;
+            mud->magic_bubble_count++;
         }
         break;
     }
