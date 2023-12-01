@@ -1182,7 +1182,7 @@ void scene_set_bounds(Scene *scene, int width, int height) {
 void scene_polygons_intersect_sort(Scene *scene, int step,
                                    GamePolygon **polygons, int count) {
     for (int i = 0; i <= count; i++) {
-        polygons[i]->skip_something = 0;
+        polygons[i]->visited = 0;
         polygons[i]->index = i;
         polygons[i]->index2 = -1;
     }
@@ -1190,7 +1190,7 @@ void scene_polygons_intersect_sort(Scene *scene, int step,
     int l = 0;
 
     do {
-        while (polygons[l]->skip_something) {
+        while (polygons[l]->visited) {
             l++;
         }
 
@@ -1199,7 +1199,7 @@ void scene_polygons_intersect_sort(Scene *scene, int step,
         }
 
         GamePolygon *polygon = polygons[l];
-        polygon->skip_something = 1;
+        polygon->visited = 1;
 
         int start = l;
         int end = l + step;

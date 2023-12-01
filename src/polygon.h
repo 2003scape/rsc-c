@@ -6,23 +6,23 @@ typedef struct GamePolygon GamePolygon;
 #include "game-model.h"
 
 struct GamePolygon {
-    int min_plane_x;
-    int min_plane_y;
-    int max_plane_x;
-    int max_plane_y;
-    int min_z;
-    int max_z;
+    int16_t min_plane_x;
+    int16_t min_plane_y;
+    int16_t max_plane_x;
+    int16_t max_plane_y;
+    int16_t face;
+    int16_t depth;
+    int16_t normal_x;
+    int16_t normal_y;
+    int16_t normal_z;
+    uint8_t visited;
+    int32_t min_z;
+    int32_t max_z;
+    int32_t visibility;
+    int32_t facefill;
+    int32_t index;
+    int32_t index2;
     GameModel *model;
-    int face;
-    int depth;
-    int normal_x;
-    int normal_y;
-    int normal_z;
-    int visibility;
-    int facefill;
-    int skip_something;
-    int index;
-    int index2;
 };
 
 void polygon_new(GamePolygon *polygon);

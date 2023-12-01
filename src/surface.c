@@ -2170,9 +2170,9 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
     if (sprite_id >= 50000) {
-        mudclient_draw_teleport_bubble(surface->mud, x, y, width, height,
-                                       sprite_id - 50000,
-                                       (depth_top + depth_bottom) / 2.0f);
+        mudclient_draw_magic_bubble(surface->mud, x, y, width, height,
+                                    sprite_id - 50000,
+                                    (depth_top + depth_bottom) / 2.0f);
 
         return;
     }
