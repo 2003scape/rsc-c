@@ -1,4 +1,5 @@
 #include "world.h"
+#include "version.h"
 
 int terrain_colours[TERRAIN_COLOUR_COUNT];
 
@@ -292,22 +293,78 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
     }
 }
 
-/* TODO rename to read map files? */
-void world_load_section_from4i(World *world, int x, int y, int plane,
-                               int chunk) {
-    if (world->landscape_pack == NULL) {
-        return;
+static void world_load_section_jm(World *world, uint8_t *map_data, size_t len, int chunk) {
+    size_t offset = 0;
+    int prev = 0;
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        prev += get_signed_byte(map_data, offset++, len);
+        world->terrain_height[chunk][tile++] = prev & 0xff;
     }
 
+    prev = 0;
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        prev += get_signed_byte(map_data, offset++, len);
+        world->terrain_colour[chunk][tile++] = prev & 0xff;
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_north_south[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_east_west[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_diagonal[chunk][tile++] =
+            get_unsigned_short(map_data, offset, len);
+        offset += 2;
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_roof[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->tile_decoration[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->tile_direction[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+}
+
+void world_load_section_files(World *world, int x, int y, int plane,
+                               int chunk) {
     char map_name[37]; // 2 digits for %d (10), m (1), file ext (4) and null
     sprintf(map_name, "m%d%d%d%d%d", plane, x / 10, x % 10, y / 10, y % 10);
     int map_name_length = strlen(map_name);
+    size_t len = 0;
+    int8_t *map_data;
+
+    /* assume map in old file format */
+    if (world->landscape_pack == NULL) {
+        strcpy(map_name + map_name_length, ".jm");
+        map_data = load_data(map_name, 0, world->map_pack, &len);
+        if (map_data != NULL) {
+            world_load_section_jm(world, map_data, len, chunk);
+            free(map_data);
+        }
+        return;
+    }
 
     strcpy(map_name + map_name_length, ".hei");
 
-    size_t len = 0;
-    int8_t *map_data = load_data(map_name, 0, world->landscape_pack, &len);
+    map_data = load_data(map_name, 0, world->landscape_pack, &len);
 
+    /* not in free map file, search members one */
     if (map_data == NULL && world->member_landscape_pack != NULL) {
         map_data = load_data(map_name, 0, world->member_landscape_pack, &len);
     }
@@ -391,27 +448,69 @@ void world_load_section_from4i(World *world, int x, int y, int plane,
     if (map_data != NULL) {
         int offset = 0;
 
-        for (int tile = 0; tile < TILE_COUNT; tile++) {
-            world->walls_north_south[chunk][tile] =
-                get_signed_byte(map_data, offset++, len);
-        }
-
-        for (int tile = 0; tile < TILE_COUNT; tile++) {
-            world->walls_east_west[chunk][tile] =
-                get_signed_byte(map_data, offset++, len);
-        }
-
-        for (int tile = 0; tile < TILE_COUNT; tile++) {
-            world->walls_diagonal[chunk][tile] =
-                get_unsigned_byte(map_data, offset++, len);
-        }
-
-        for (int tile = 0; tile < TILE_COUNT; tile++) {
+        for (int tile = 0; tile < TILE_COUNT;) {
             int val = get_unsigned_byte(map_data, offset++, len);
 
+#if VERSION_MAPS > 53
+            world->walls_north_south[chunk][tile++] = val;
+#else
+            if (val < 128) {
+                world->walls_north_south[chunk][tile++] = val;
+            } else {
+                for (int i = 0; i < val - 128; i++) {
+                    world->walls_north_south[chunk][tile++] = 0;
+                }
+            }
+#endif
+        }
+
+        for (int tile = 0; tile < TILE_COUNT;) {
+            int val = get_unsigned_byte(map_data, offset++, len);
+
+#if VERSION_MAPS > 53
+            world->walls_east_west[chunk][tile++] = val;
+#else
+            if (val < 128) {
+                world->walls_east_west[chunk][tile++] = val;
+            } else {
+                for (int i = 0; i < val - 128; i++) {
+                    world->walls_east_west[chunk][tile++] = 0;
+                }
+            }
+#endif
+        }
+
+        for (int tile = 0; tile < TILE_COUNT;) {
+            int val = get_unsigned_byte(map_data, offset++, len);
+
+#if VERSION_MAPS > 53
+            world->walls_diagonal[chunk][tile++] = val;
+#else
+            if (val < 128) {
+                world->walls_diagonal[chunk][tile++] = val;
+            } else {
+                for (int i = 0; i < val - 128; i++) {
+                    world->walls_diagonal[chunk][tile++] = 0;
+                }
+            }
+#endif
+        }
+
+        for (int tile = 0; tile < TILE_COUNT;) {
+            int val = get_unsigned_byte(map_data, offset++, len);
+
+#if VERSION_MAPS > 53
             if (val > 0) {
                 world->walls_diagonal[chunk][tile] = val + 12000;
             }
+            tile++;
+#else
+            if (val < 128) {
+                world->walls_diagonal[chunk][tile++] = val + 12000;
+            } else {
+                tile += (val - 128);
+            }
+#endif
         }
 
         for (int tile = 0; tile < TILE_COUNT;) {
@@ -844,10 +943,10 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
-    world_load_section_from4i(world, section_x - 1, section_y - 1, plane, 0);
-    world_load_section_from4i(world, section_x, section_y - 1, plane, 1);
-    world_load_section_from4i(world, section_x - 1, section_y, plane, 2);
-    world_load_section_from4i(world, section_x, section_y, plane, 3);
+    world_load_section_files(world, section_x - 1, section_y - 1, plane, 0);
+    world_load_section_files(world, section_x, section_y - 1, plane, 1);
+    world_load_section_files(world, section_x - 1, section_y, plane, 2);
+    world_load_section_files(world, section_x, section_y, plane, 3);
 
     world_set_tiles(world);
 
@@ -2234,12 +2333,12 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
         world_load_section_from4(world, x, y, 1, 0);
         world_load_section_from4(world, x, y, 2, 0);
 
-        world_load_section_from4i(world, section_x - 1, section_y - 1, plane,
+        world_load_section_files(world, section_x - 1, section_y - 1, plane,
                                   0);
 
-        world_load_section_from4i(world, section_x, section_y - 1, plane, 1);
-        world_load_section_from4i(world, section_x - 1, section_y, plane, 2);
-        world_load_section_from4i(world, section_x, section_y, plane, 3);
+        world_load_section_files(world, section_x, section_y - 1, plane, 1);
+        world_load_section_files(world, section_x - 1, section_y, plane, 2);
+        world_load_section_files(world, section_x, section_y, plane, 3);
 
         world_set_tiles(world);
     }
