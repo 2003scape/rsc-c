@@ -1065,10 +1065,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 // SDL_WM_SetIcon(IMG_Load("win/2003scape.png"),NULL);
 #else
     uint32_t windowflags = SDL_WINDOW_SHOWN;
-#endif
-
 #if !defined(WII) && !defined(_3DS) && !defined(EMSCRIPTEN)
-#ifndef SDL12
     windowflags |= SDL_WINDOW_RESIZABLE;
 #endif
 #endif
@@ -1080,7 +1077,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #else
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         mud->game_width, mud->game_height, SDL_WINDOW_SHOWN);
+                         mud->game_width, mud->game_height, windowflags);
 #endif
 
     mudclient_resize(mud);
