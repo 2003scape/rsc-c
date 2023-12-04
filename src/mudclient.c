@@ -6861,7 +6861,6 @@ int main(int argc, char **argv) {
     if (argc > 1 && strlen(argv[1]) > 0) {
         mud->options->members = strcmp(argv[1], "members") == 0;
     }
-    mud->options->members = 0;
 
     if (argc > 2) {
         strcpy(mud->options->server, argv[2]);
