@@ -43,49 +43,53 @@ struct GameCharacter {
     int64_t encoded_username;
     char name[MAX_USER_LENGTH + 1];
 
-    int server_index;
-    int server_id;
-    int current_x;
-    int current_y;
+    uint16_t server_index;
+    uint16_t server_id;
 
     /* set to -1 for players */
-    int npc_id;
+    int16_t npc_id;
 
-    int step_count;
-    int moving_step;
-    int waypoint_current;
-    int waypoints_x[WAYPOINT_COUNT];
-    int waypoints_y[WAYPOINT_COUNT];
+    uint8_t step_count;
+    uint8_t moving_step;
+    uint8_t waypoint_current;
 
-    int current_animation;
-    int next_animation;
+    int32_t current_x;
+    int32_t current_y;
+    int32_t waypoints_x[WAYPOINT_COUNT];
+    int32_t waypoints_y[WAYPOINT_COUNT];
+
+    int8_t current_animation;
+    int8_t next_animation;
 
     /* chat message above head */
+    uint8_t message_timeout;
     char message[255];
-    int message_timeout;
+
+    uint8_t damage_taken;
+    uint8_t current_hits;
+    uint8_t max_hits;
+
+    uint8_t combat_timer;
+
+    uint8_t hair_colour;
+    uint8_t top_colour;
+    uint8_t bottom_colour;
+    uint8_t skin_colour;
+    uint8_t skull_visible;
 
     /* action bubble */
-    int bubble_item;
-    int bubble_timeout;
+    uint8_t bubble_timeout;
+    uint16_t bubble_item;
 
-    int damage_taken;
-    int current_hits;
-    int max_hits;
-    int combat_timer;
-    int level;
+    int16_t level;
 
-    int hair_colour;
-    int top_colour;
-    int bottom_colour;
-    int skin_colour;
     ANIMATION_INDEX animations[ANIMATION_COUNT];
 
-    int incoming_projectile_sprite;
-    int attacking_player_server_index;
-    int attacking_npc_server_index;
-    int projectile_range;
+    uint16_t incoming_projectile_sprite;
+    uint8_t projectile_range;
 
-    int8_t skull_visible;
+    int32_t attacking_player_server_index;
+    int32_t attacking_npc_server_index;
 };
 
 void game_character_new(GameCharacter* game_character);
