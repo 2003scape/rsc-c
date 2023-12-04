@@ -13,8 +13,8 @@
 #define VERSION_FONTS       (1)
 #define VERSION_FONTS_S     "1"
 
-#define VERSION_MAPS        (14)
-#define VERSION_MAPS_S      "14"
+#define VERSION_MAPS        (63)
+#define VERSION_MAPS_S      "63"
 
 #define VERSION_MEDIA       (58)
 #define VERSION_MEDIA_S     "58"
