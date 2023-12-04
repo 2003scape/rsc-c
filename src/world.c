@@ -501,8 +501,9 @@ void world_load_section_files(World *world, int x, int y, int plane,
 
 #if VERSION_MAPS > 53
             if (val > 0) {
-                world->walls_diagonal[chunk][tile++] = val + 12000;
+                world->walls_diagonal[chunk][tile] = val + 12000;
             }
+            tile++;
 #else
             if (val < 128) {
                 world->walls_diagonal[chunk][tile++] = val + 12000;
