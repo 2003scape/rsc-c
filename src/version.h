@@ -13,8 +13,8 @@
 #define VERSION_FONTS       (1)
 #define VERSION_FONTS_S     "1"
 
-#define VERSION_MAPS        (36)
-#define VERSION_MAPS_S      "36"
+#define VERSION_MAPS        (14)
+#define VERSION_MAPS_S      "14"
 
 #define VERSION_MEDIA       (58)
 #define VERSION_MEDIA_S     "58"
@@ -27,5 +27,7 @@
 
 #define VERSION_TEXTURES    (17)
 #define VERSION_TEXTURES_S  "17"
+
+#define HAS_SEPARATE_LAND   (VERSION_MAPS > 27)
 
 #endif

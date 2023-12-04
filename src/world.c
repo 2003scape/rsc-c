@@ -293,24 +293,78 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
     }
 }
 
-void world_load_section_jm(World *world, int x, int y, int plane, int chunk) {
+static void world_load_section_jm(World *world, uint8_t *map_data, size_t len, int chunk) {
+    size_t offset = 0;
+    int prev = 0;
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        prev += get_signed_byte(map_data, offset++, len);
+        world->terrain_height[chunk][tile++] = prev & 0xff;
+    }
+
+    prev = 0;
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        prev += get_signed_byte(map_data, offset++, len);
+        world->terrain_colour[chunk][tile++] = prev & 0xff;
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_north_south[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_east_west[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_diagonal[chunk][tile++] =
+            get_unsigned_short(map_data, offset, len);
+        offset += 2;
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->walls_roof[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->tile_decoration[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
+
+    for (int tile = 0; tile < TILE_COUNT;) {
+        world->tile_direction[chunk][tile++] =
+            get_signed_byte(map_data, offset++, len);
+    }
 }
 
 void world_load_section_files(World *world, int x, int y, int plane,
                                int chunk) {
-    if (world->landscape_pack == NULL) {
-        return;
-    }
-
     char map_name[37]; // 2 digits for %d (10), m (1), file ext (4) and null
     sprintf(map_name, "m%d%d%d%d%d", plane, x / 10, x % 10, y / 10, y % 10);
     int map_name_length = strlen(map_name);
+    size_t len = 0;
+    int8_t *map_data;
+
+    /* assume map in old file format */
+    if (world->landscape_pack == NULL) {
+        strcpy(map_name + map_name_length, ".jm");
+        map_data = load_data(map_name, 0, world->map_pack, &len);
+        if (map_data != NULL) {
+            world_load_section_jm(world, map_data, len, chunk);
+            free(map_data);
+        }
+        return;
+    }
 
     strcpy(map_name + map_name_length, ".hei");
 
-    size_t len = 0;
-    int8_t *map_data = load_data(map_name, 0, world->landscape_pack, &len);
+    map_data = load_data(map_name, 0, world->landscape_pack, &len);
 
+    /* not in free map file, search members one */
     if (map_data == NULL && world->member_landscape_pack != NULL) {
         map_data = load_data(map_name, 0, world->member_landscape_pack, &len);
     }

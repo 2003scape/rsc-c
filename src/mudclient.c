@@ -2386,6 +2386,7 @@ void mudclient_load_maps(mudclient *mud) {
             mud, "maps" VERSION_MAPS_S ".mem", "members map", 75);
     }
 
+#if HAS_SEPARATE_LAND
     mud->world->landscape_pack =
         mudclient_read_data_file(mud, "land" VERSION_MAPS_S ".jag", "landscape", 80);
 
@@ -2393,6 +2394,7 @@ void mudclient_load_maps(mudclient *mud) {
         mud->world->member_landscape_pack = mudclient_read_data_file(
             mud, "land" VERSION_MAPS_S ".mem", "members landscape", 85);
     }
+#endif
 }
 
 void mudclient_load_sounds(mudclient *mud) {
