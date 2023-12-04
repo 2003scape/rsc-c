@@ -1710,29 +1710,29 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     if (strcmp(file, "jagex.jag") == 0) {
         file_data = (int8_t *)jagex_jag;
-    } else if (strcmp(file, "fonts" FONTS ".jag") == 0) {
+    } else if (strcmp(file, "fonts" VERSION_FONTS_S ".jag") == 0) {
         file_data = (int8_t *)fonts1_jag;
-    } else if (strcmp(file, "config" CONFIG ".jag") == 0) {
+    } else if (strcmp(file, "config" VERSION_CONFIG_S ".jag") == 0) {
         file_data = (int8_t *)config85_jag;
-    } else if (strcmp(file, "media" MEDIA ".jag") == 0) {
+    } else if (strcmp(file, "media" VERSION_MEDIA_S ".jag") == 0) {
         file_data = (int8_t *)media58_jag;
-    } else if (strcmp(file, "entity" ENTITY ".jag") == 0) {
+    } else if (strcmp(file, "entity" VERSION_ENTITY_S ".jag") == 0) {
         file_data = (int8_t *)entity24_jag;
-    } else if (strcmp(file, "entity" ENTITY ".mem") == 0) {
+    } else if (strcmp(file, "entity" VERSION_ENTITY_S ".mem") == 0) {
         file_data = (int8_t *)entity24_mem;
-    } else if (strcmp(file, "textures" TEXTURES ".jag") == 0) {
+    } else if (strcmp(file, "textures" VERSION_TEXTURES_S ".jag") == 0) {
         file_data = (int8_t *)textures17_jag;
-    } else if (strcmp(file, "maps" MAPS ".jag") == 0) {
+    } else if (strcmp(file, "maps" VERSION_MAPS_S ".jag") == 0) {
         file_data = (int8_t *)maps63_jag;
-    } else if (strcmp(file, "maps" MAPS ".mem") == 0) {
+    } else if (strcmp(file, "maps" VERSION_MAPS_S ".mem") == 0) {
         file_data = (int8_t *)maps63_mem;
-    } else if (strcmp(file, "land" MAPS ".jag") == 0) {
+    } else if (strcmp(file, "land" VERSION_MAPS_S ".jag") == 0) {
         file_data = (int8_t *)land63_jag;
-    } else if (strcmp(file, "land" MAPS ".mem") == 0) {
+    } else if (strcmp(file, "land" VERSION_MAPS_S ".mem") == 0) {
         file_data = (int8_t *)land63_mem;
-    } else if (strcmp(file, "models" MODELS ".jag") == 0) {
+    } else if (strcmp(file, "models" VERSION_MODELS_S ".jag") == 0) {
         file_data = (int8_t *)models36_jag;
-    } else if (strcmp(file, "sounds" SOUNDS ".mem") == 0) {
+    } else if (strcmp(file, "sounds" VERSION_SOUNDS_S ".mem") == 0) {
         file_data = (int8_t *)sounds1_mem;
     }
 
@@ -1879,7 +1879,7 @@ void mudclient_load_jagex(mudclient *mud) {
 #endif
 
     int8_t *fonts_jag =
-        mudclient_read_data_file(mud, "fonts" FONTS ".jag", "Game fonts", 5);
+        mudclient_read_data_file(mud, "fonts" VERSION_FONTS_S ".jag", "Game fonts", 5);
 
     if (fonts_jag != NULL) {
         for (int i = 0; i < FONT_FILES_LENGTH; i++) {
@@ -1891,7 +1891,7 @@ void mudclient_load_jagex(mudclient *mud) {
 }
 
 void mudclient_load_game_config(mudclient *mud) {
-    int8_t *config_jag = mudclient_read_data_file(mud, "config" CONFIG ".jag",
+    int8_t *config_jag = mudclient_read_data_file(mud, "config" VERSION_CONFIG_S ".jag",
                                                   "Configuration", 10);
 
     if (config_jag == NULL) {
@@ -1902,7 +1902,7 @@ void mudclient_load_game_config(mudclient *mud) {
     game_data_load_data(config_jag, mud->options->members);
     free(config_jag);
 
-    /*int8_t *filter_jag = mudclient_read_data_file(mud, "filter" FILTER ".jag",
+    /*int8_t *filter_jag = mudclient_read_data_file(mud, "filter" VERSION_FILTER_S ".jag",
                                                   "Chat system", 15);
 
     if (filter_jag == NULL) {
@@ -1916,7 +1916,7 @@ void mudclient_load_game_config(mudclient *mud) {
 void mudclient_load_media(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     int8_t *media_jag =
-        mudclient_read_data_file(mud, "media" MEDIA ".jag", "2d graphics", 20);
+        mudclient_read_data_file(mud, "media" VERSION_MEDIA_S ".jag", "2d graphics", 20);
 
     if (media_jag == NULL) {
         mud->error_loading_data = 1;
@@ -2026,7 +2026,7 @@ void mudclient_load_media(mudclient *mud) {
 
 void mudclient_load_entities(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
-    int8_t *entity_jag = mudclient_read_data_file(mud, "entity" ENTITY ".jag",
+    int8_t *entity_jag = mudclient_read_data_file(mud, "entity" VERSION_ENTITY_S ".jag",
                                                   "people and monsters", 30);
 
     if (entity_jag == NULL) {
@@ -2039,7 +2039,7 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *index_dat_mem = NULL;
 
     if (mud->options->members) {
-        entity_jag_mem = mudclient_read_data_file(mud, "entity" ENTITY ".mem",
+        entity_jag_mem = mudclient_read_data_file(mud, "entity" VERSION_ENTITY_S ".mem",
                                                   "member graphics", 45);
 
         if (entity_jag_mem == NULL) {
@@ -2149,7 +2149,7 @@ void mudclient_load_entities(mudclient *mud) {
 void mudclient_load_textures(mudclient *mud) {
 #ifdef RENDER_SW
     int8_t *textures_jag = mudclient_read_data_file(
-        mud, "textures" TEXTURES ".jag", "Textures", 50);
+        mud, "textures" VERSION_TEXTURES_S ".jag", "Textures", 50);
 
     if (textures_jag == NULL) {
         mud->error_loading_data = 1;
@@ -2248,7 +2248,7 @@ void mudclient_load_models(mudclient *mud) {
         game_data_get_model_index(name);
     }
 
-    char *models_filename = "models" MODELS ".jag";
+    char *models_filename = "models" VERSION_MODELS_S ".jag";
 
     int8_t *models_jag =
         mudclient_read_data_file(mud, models_filename, "3d models", 60);
@@ -2379,24 +2379,24 @@ void mudclient_load_models(mudclient *mud) {
 
 void mudclient_load_maps(mudclient *mud) {
     mud->world->map_pack =
-        mudclient_read_data_file(mud, "maps" MAPS ".jag", "map", 70);
+        mudclient_read_data_file(mud, "maps" VERSION_MAPS_S ".jag", "map", 70);
 
     if (mud->options->members) {
         mud->world->member_map_pack = mudclient_read_data_file(
-            mud, "maps" MAPS ".mem", "members map", 75);
+            mud, "maps" VERSION_MAPS_S ".mem", "members map", 75);
     }
 
     mud->world->landscape_pack =
-        mudclient_read_data_file(mud, "land" MAPS ".jag", "landscape", 80);
+        mudclient_read_data_file(mud, "land" VERSION_MAPS_S ".jag", "landscape", 80);
 
     if (mud->options->members) {
         mud->world->member_landscape_pack = mudclient_read_data_file(
-            mud, "land" MAPS ".mem", "members landscape", 85);
+            mud, "land" VERSION_MAPS_S ".mem", "members landscape", 85);
     }
 }
 
 void mudclient_load_sounds(mudclient *mud) {
-    mud->sound_data = mudclient_read_data_file(mud, "sounds" SOUNDS ".mem",
+    mud->sound_data = mudclient_read_data_file(mud, "sounds" VERSION_SOUNDS_S ".mem",
                                                "Sound effects", 90);
 }
 
@@ -6859,6 +6859,7 @@ int main(int argc, char **argv) {
     if (argc > 1 && strlen(argv[1]) > 0) {
         mud->options->members = strcmp(argv[1], "members") == 0;
     }
+    mud->options->members = 0;
 
     if (argc > 2) {
         strcpy(mud->options->server, argv[2]);

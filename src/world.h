@@ -110,7 +110,7 @@ void world_map_line_vertical(World *world, int x, int y, int height,
                              int colour);
 void world_draw_map_tile(World *world, int i, int j, int k, int l,
                          int texture_id_2);
-void world_load_section_from4i(World *world, int x, int y, int plane,
+void world_load_section_files(World *world, int x, int y, int plane,
                                int chunk);
 void world_method404(World *world, int x, int y, int width, int height);
 int world_get_object_adjacency(World *world, int x, int y);
