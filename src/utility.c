@@ -360,22 +360,11 @@ void decode_username(int64_t encoded, char *decoded) {
 }
 
 static uint32_t hash_file_name(const char *file_name) {
-    int i = 0;
-
-    char upper_file_name[strlen(file_name) + 1];
-
-    while (file_name[i]) {
-        upper_file_name[i] = toupper((unsigned char)file_name[i]);
-        i++;
-    }
-
-    file_name = upper_file_name;
-
-    int file_name_length = i;
+    size_t file_name_length = strlen(file_name);
     uint32_t hash = 0;
 
-    for (int i = 0; i < file_name_length; i++) {
-        hash = hash * 61 + file_name[i] - 32;
+    for (size_t i = 0; i < file_name_length; i++) {
+        hash = hash * 61 + toupper((unsigned char)file_name[i]) - 32;
     }
 
     return hash;
