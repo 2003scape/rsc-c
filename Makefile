@@ -1,7 +1,7 @@
 #CC = clang
 DEBUG ?= 1
 SDL2 ?= 1
-RENDER_GL ?= 1
+RENDER_GL ?= 0
 LEGACY_GL ?= 0
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
@@ -10,7 +10,7 @@ OBJ = $(SRC:.c=.o)
 CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
 CFLAGS += -std=gnu99
-CFLAGS += #-DREVISION_177
+CFLAGS += -DREVISION_177
 ifeq ($(SDL2), 1)
 CFLAGS += $(shell sdl2-config --cflags)
 LDFLAGS += -lm
@@ -44,7 +44,9 @@ endif
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -Wall -Wextra -pedantic -g
+#CFLAGS += -fsanitize=undefined
 #LDFLAGS += -fsanitize=address -static-libasan
+#LDFLAGS += -fsanitize=undefined
 else
 CFLAGS += -s -Ofast
 LDFLAGS += -s

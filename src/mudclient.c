@@ -5,30 +5,45 @@
 /* clang-format off */
 EM_JS(int, can_resize, (), {
     return window._mudclientCanResize &&
-               document.activeElement !== window._mudclientKeyboard;
+               document.activeElement !== window._mudclientKeyboard &&
+               document.activeElement !== window._mudclientPassword;
 });
 
 EM_JS(int, get_window_width, (), { return window.innerWidth; });
 EM_JS(int, get_window_height, (), { return window.innerHeight; });
 
 EM_JS(void, browser_trigger_keyboard,
-      (char *text, int is_password, int x, int y, int width, int height), {
-          const keyboard = window._mudclientKeyboard;
+      (char *text, int is_password, int x, int y, int width, int height,
+       int font, int is_centred), {
+          const keyboard = is_password ? window._mudclientPassword :
+                                         window._mudclientKeyboard;
 
           keyboard.value = UTF8ToString(text);
 
-          if (is_password) {
-              keyboard.type = 'password';
-              keyboard.style.fontFamily = 'monospace';
+          if (is_centred) {
+              keyboard.style.height = `${height}px`;
+              keyboard.style.textAlign = 'center';
           } else {
-              keyboard.type = 'text';
-              keyboard.style.fontFamily = 'Arial';
+              keyboard.style.textAlign = 'left';
           }
 
           keyboard.style.left = `${x}px`;
           keyboard.style.top = `${y}px`;
 
           keyboard.style.width = `${width}px`;
+
+          const fonts = {
+              1: 'mudclient-font-bold-12',
+              4: 'mudclient-font-bold-14',
+          };
+
+          keyboard.classList.remove(...Object.values(fonts));
+
+          const fontClass = fonts[font];
+
+          if (fontClass) {
+              keyboard.classList.add(fontClass);
+          }
 
           keyboard.style.display = 'block';
 
@@ -1717,7 +1732,8 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         file_data = (int8_t *)entity24_jag;
     } else if (strcmp(file, "entity" VERSION_STR(VERSION_ENTITY) ".mem") == 0) {
         file_data = (int8_t *)entity24_mem;
-    } else if (strcmp(file, "textures" VERSION_STR(VERSION_TEXTURES) ".jag") == 0) {
+    } else if (strcmp(file, "textures" VERSION_STR(VERSION_TEXTURES) ".jag") ==
+               0) {
         file_data = (int8_t *)textures17_jag;
     } else if (strcmp(file, "maps" VERSION_STR(VERSION_MAPS) ".jag") == 0) {
         file_data = (int8_t *)maps63_jag;
@@ -1899,8 +1915,8 @@ void mudclient_load_game_config(mudclient *mud) {
     game_data_load_data(config_jag, mud->options->members);
     free(config_jag);
 
-    /*int8_t *filter_jag = mudclient_read_data_file(mud, "filter"
-    VERSION_STR(VERSION_FILTER) ".jag", "Chat system", 15);
+    /*int8_t *filter_jag = mudclient_read_data_file(
+        mud, "filter" VERSION_STR(VERSION_FILTER) ".jag", "Chat system", 15);
 
     if (filter_jag == NULL) {
         mud->error_loading_data = 1;
@@ -2024,7 +2040,8 @@ void mudclient_load_media(mudclient *mud) {
 void mudclient_load_entities(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
     int8_t *entity_jag = mudclient_read_data_file(
-        mud, "entity" VERSION_STR(VERSION_ENTITY) ".jag", "people and monsters", 30);
+        mud, "entity" VERSION_STR(VERSION_ENTITY) ".jag", "people and monsters",
+        30);
 
     if (entity_jag == NULL) {
         mud->error_loading_data = 1;
@@ -2037,7 +2054,8 @@ void mudclient_load_entities(mudclient *mud) {
 
     if (mud->options->members) {
         entity_jag_mem = mudclient_read_data_file(
-            mud, "entity" VERSION_STR(VERSION_ENTITY) ".mem", "member graphics", 45);
+            mud, "entity" VERSION_STR(VERSION_ENTITY) ".mem", "member graphics",
+            45);
 
         if (entity_jag_mem == NULL) {
             mud->error_loading_data = 1;
@@ -2375,8 +2393,8 @@ void mudclient_load_models(mudclient *mud) {
 }
 
 void mudclient_load_maps(mudclient *mud) {
-    mud->world->map_pack =
-        mudclient_read_data_file(mud, "maps" VERSION_STR(VERSION_MAPS) ".jag", "map", 70);
+    mud->world->map_pack = mudclient_read_data_file(
+        mud, "maps" VERSION_STR(VERSION_MAPS) ".jag", "map", 70);
 
     if (mud->options->members) {
         mud->world->member_map_pack = mudclient_read_data_file(
@@ -2389,7 +2407,8 @@ void mudclient_load_maps(mudclient *mud) {
 
     if (mud->options->members) {
         mud->world->member_landscape_pack = mudclient_read_data_file(
-            mud, "land" VERSION_STR(VERSION_MAPS) ".mem", "members landscape", 85);
+            mud, "land" VERSION_STR(VERSION_MAPS) ".mem", "members landscape",
+            85);
     }
 #endif
 }
@@ -6227,13 +6246,14 @@ int mudclient_is_touch(mudclient *mud) {
 
 // TODO open_keyboard
 void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
-                                int x, int y, int width, int height) {
+                                int x, int y, int width, int height, int font,
+                                int is_centred) {
 #ifdef EMSCRIPTEN
     if (mudclient_is_ui_scaled(mud)) {
         // TODO
     }
 
-    browser_trigger_keyboard(text, is_password, x, y, width, height);
+    browser_trigger_keyboard(text, is_password, x, y, width, height, font, is_centred);
 #endif
 }
 
