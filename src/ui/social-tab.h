@@ -1,6 +1,12 @@
 #ifndef _H_SOCIAL_TAB
 #define _H_SOCIAL_TAB
 
+typedef enum {
+    SOCIAL_ADD_FRIEND = 1,
+    SOCIAL_MESSAGE_FRIEND,
+    SOCIAL_ADD_IGNORE
+} SocialInput;
+
 #include "../mudclient.h"
 
 /* width and height of tab window */
@@ -27,10 +33,6 @@
 #else
 #define FRIEND_ONLINE 255
 #endif
-
-#define SOCIAL_ADD_FRIEND 1
-#define SOCIAL_MESSAGE_FRIEND 2
-#define SOCIAL_ADD_IGNORE 3
 
 extern char *social_tabs[];
 
