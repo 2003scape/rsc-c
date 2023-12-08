@@ -31,7 +31,9 @@
             .mudclient-font-bold-12 {
                 font-weight: bold;
                 font-size: 12px;
-                height: 13px;
+                /*height: 13px;*/
+                margin-top: -6px;
+                height: 25px;
             }
 
             .mudclient-font-bold-14 {
@@ -43,8 +45,8 @@
             .mudclient-keyboard {
                 background: none;
                 font-family: Arial, sans-serif;
-                /*opacity: 0.5;
-                background: red;*/
+                /*opacity: 0.5;*/
+                /*background: red;*/
                 border: 0;
                 color: transparent;
                 display: none;
@@ -417,6 +419,9 @@
 
             keyboardInput.addEventListener('focus', keyboardFocusEvent);
             passwordInput.addEventListener('focus', keyboardFocusEvent);
+
+            keyboardInput.addEventListener('touchend', keyboardFocusEvent);
+            passwordInput.addEventListener('touchend', keyboardFocusEvent);
 
             window._mudclientCanResize = true;
 

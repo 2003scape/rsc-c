@@ -24,6 +24,7 @@ EM_JS(void, browser_trigger_keyboard,
               keyboard.style.height = `${height}px`;
               keyboard.style.textAlign = 'center';
           } else {
+              keyboard.style.height = null;
               keyboard.style.textAlign = 'left';
           }
 
@@ -5991,7 +5992,7 @@ void mudclient_poll_events(mudclient *mud) {
                     mudclient_vertical_drag = 1;
 
                     mud->mouse_scroll_delta =
-                        (event.tfinger.dy / 2.0f) * mud->game_height;
+                        (event.tfinger.dy / 3.0f) * mud->game_height;
                 }
 
                 mudclient_mouse_moved(mud, touch_x, touch_y);
