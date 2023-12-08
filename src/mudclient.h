@@ -547,7 +547,7 @@ struct mudclient {
 
     /* ./ui/social-tab.c */
     Panel *panel_social_list;
-    int8_t show_dialog_social_input;
+    SocialInput show_dialog_social_input;
     int control_list_social;
     int ui_tab_social_sub_tab;
     int message_index;

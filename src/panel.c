@@ -766,7 +766,7 @@ void panel_set_focus(Panel *panel, int control) {
 
         int y = panel->control_y[control] + panel->offset_y;
 
-        FONT_STYLE font = panel->control_text_size[control];
+        FontStyle font = panel->control_text_size[control];
 
         mudclient_trigger_keyboard(panel->surface->mud,
                                    panel->control_text[control],
