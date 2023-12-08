@@ -361,13 +361,16 @@ void mudclient_draw_social_input(mudclient *mud) {
     int cancel_offset_x = mud->surface->width / 2 - SOCIAL_CANCEL_SIZE / 2;
     int cancel_offset_y = mud->surface->height / 2 + SOCIAL_CANCEL_SIZE / 2;
 
+    char *input_current = mud->show_dialog_social_input == SOCIAL_MESSAGE_FRIEND
+                              ? mud->input_pm_current
+                              : mud->input_text_current;
+
     if (mud->mouse_button_click != 0) {
         mud->mouse_button_click = 0;
 
-        if (mud->show_dialog_social_input != 0 &&
-            (mud->mouse_x < dialog_x || mud->mouse_y < dialog_y ||
-             mud->mouse_x > dialog_x + box_width ||
-             mud->mouse_y > dialog_y + SOCIAL_DIALOG_HEIGHT)) {
+        if (mud->mouse_x < dialog_x || mud->mouse_y < dialog_y ||
+            mud->mouse_x > dialog_x + box_width ||
+            mud->mouse_y > dialog_y + SOCIAL_DIALOG_HEIGHT) {
             mud->show_dialog_social_input = 0;
             return;
         }
@@ -379,6 +382,22 @@ void mudclient_draw_social_input(mudclient *mud) {
             mud->show_dialog_social_input = 0;
             return;
         }
+
+        if (mudclient_is_touch(mud)) {
+            int keyboard_x =
+                mud->surface->width / 2 - box_width / 2;
+
+            int keyboard_y = dialog_y + 20;
+
+            if (mud->mouse_x >= keyboard_x &&
+                mud->mouse_x <= keyboard_x + box_width &&
+                mud->mouse_y >= keyboard_y && mud->mouse_y <= keyboard_y + 20) {
+
+                mudclient_trigger_keyboard(mud, input_current, 0, keyboard_x,
+                                           keyboard_y, box_width - 5,
+                                           30, FONT_BOLD_14, 1);
+            }
+        }
     }
 
     surface_draw_box(mud->surface, dialog_x, dialog_y, box_width,
@@ -389,6 +408,9 @@ void mudclient_draw_social_input(mudclient *mud) {
 
     dialog_y += 20;
 
+    char formatted_current[INPUT_TEXT_LENGTH + 2] = {0};
+    sprintf(formatted_current, "%s*", input_current);
+
     switch (mud->show_dialog_social_input) {
     case SOCIAL_ADD_FRIEND: {
         surface_draw_string_centre(
@@ -396,9 +418,6 @@ void mudclient_draw_social_input(mudclient *mud) {
             mud->surface->width / 2, dialog_y, FONT_BOLD_14, WHITE);
 
         dialog_y += 20;
-
-        char formatted_current[INPUT_TEXT_LENGTH + 2] = {0};
-        sprintf(formatted_current, "%s*", mud->input_text_current);
 
         surface_draw_string_centre(mud->surface, formatted_current,
                                    mud->surface->width / 2, dialog_y,
@@ -434,9 +453,6 @@ void mudclient_draw_social_input(mudclient *mud) {
                                    FONT_BOLD_14, WHITE);
 
         dialog_y += 20;
-
-        char formatted_current[INPUT_PM_LENGTH + 2] = {0};
-        sprintf(formatted_current, "%s*", mud->input_pm_current);
 
         surface_draw_string_centre(mud->surface, formatted_current,
                                    mud->surface->width / 2, dialog_y,
@@ -478,9 +494,6 @@ void mudclient_draw_social_input(mudclient *mud) {
             mud->surface->width / 2, dialog_y, FONT_BOLD_14, WHITE);
 
         dialog_y += 20;
-
-        char formatted_current[INPUT_TEXT_LENGTH + 2] = {0};
-        sprintf(formatted_current, "%s*", mud->input_text_current);
 
         surface_draw_string_centre(mud->surface, formatted_current,
                                    mud->surface->width / 2, dialog_y,
