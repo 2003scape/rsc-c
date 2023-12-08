@@ -28,23 +28,40 @@
                 outline: none;
             }
 
-            #mudclient-keyboard {
+            .mudclient-font-bold-12 {
+                font-weight: bold;
+                font-size: 12px;
+                /*height: 13px;*/
+                margin-top: -6px;
+                height: 25px;
+            }
+
+            .mudclient-font-bold-14 {
+                font-weight: bold;
+                font-size: 15px;
+                height: 16px;
+            }
+
+            .mudclient-keyboard {
                 background: none;
-                /*font-family: Arial, sans-serif;*/
+                font-family: Arial, sans-serif;
+                /*opacity: 0.5;*/
                 /*background: red;*/
                 border: 0;
                 color: transparent;
                 display: none;
-                font-size: 15px;
-                font-weight: bold;
                 padding: 0;
                 position: absolute;
                 resize: none;
                 text-align: center;
             }
 
-            #mudclient-keyboard:focus {
+            .mudclient-keyboard:focus {
                 outline: none;
+            }
+
+            #mudclient-password {
+                font-family: monospace;
             }
         </style>
     </head>
@@ -57,7 +74,9 @@
             autofocus="autofocus"
         ></canvas>
 
-        <input id="mudclient-keyboard" type="text" />
+        <input id="mudclient-keyboard" class="mudclient-keyboard" type="text" />
+
+        <input id="mudclient-password" class="mudclient-keyboard" type="password" />
 
         <script>
             function LSFS() {
@@ -336,10 +355,14 @@
             const BACKSPACE_KEY_CODE = 8;
 
             const keyboardInput = document.getElementById('mudclient-keyboard');
+            const passwordInput = document.getElementById('mudclient-password');
 
             function focusCanvas() {
-                //keyboardInput.blur();
+                // keyboardInput.blur();
+
                 keyboardInput.style.display = 'none';
+                passwordInput.style.display = 'none';
+
                 canvas.focus();
             }
 
@@ -352,7 +375,7 @@
                 );
             }
 
-            keyboardInput.addEventListener('input', (event) => {
+            function keyboardInputEvent(event) {
                 for (let i = 0; i < 255; i++) {
                     emscriptenKeyPress(BACKSPACE_KEY_CODE, BACKSPACE_KEY_CODE);
                 }
@@ -360,29 +383,50 @@
                 for (const character of event.target.value.split('')) {
                     emscriptenKeyPress(-1, character.charCodeAt(0));
                 }
-            });
+            }
 
-            keyboardInput.addEventListener('keydown', (event) => {
+            keyboardInput.addEventListener('input', keyboardInputEvent);
+            passwordInput.addEventListener('input', keyboardInputEvent);
+
+            function keyboardDownEvent(event) {
                 if (event.key === 'Enter') {
                     emscriptenKeyPress(ENTER_KEY_CODE, ENTER_KEY_CODE);
                     keyboardInput.style.display = 'none';
                     //focusCanvas();
                 }
-            });
+            }
 
-            // sometimes the viewport takes more time to return to normal after
-            // the input is blur'd
-            // TODO maybe just poll for focused element
-            keyboardInput.addEventListener('blur', () => {
+            keyboardInput.addEventListener('keydown', keyboardDownEvent);
+            passwordInput.addEventListener('keydown', keyboardDownEvent);
+
+            function keyboardBlurEvent() {
                 window._mudclientCanResize = false;
 
                 setTimeout(() => {
                     window._mudclientCanResize = true;
                 }, 1000);
-            });
+            }
+
+            // sometimes the viewport takes more time to return to normal after
+            // the input is blur'd
+            // TODO maybe just poll for focused element
+            keyboardInput.addEventListener('blur', keyboardBlurEvent);
+            passwordInput.addEventListener('blur', keyboardBlurEvent);
+
+            function keyboardFocusEvent(event) {
+                event.target.selectionStart = event.target.selectionEnd = event.target.value.length;
+            }
+
+            keyboardInput.addEventListener('focus', keyboardFocusEvent);
+            passwordInput.addEventListener('focus', keyboardFocusEvent);
+
+            keyboardInput.addEventListener('touchend', keyboardFocusEvent);
+            passwordInput.addEventListener('touchend', keyboardFocusEvent);
 
             window._mudclientCanResize = true;
+
             window._mudclientKeyboard = keyboardInput;
+            window._mudclientPassword = passwordInput;
 
             window._mudclientIsTouch =
                 navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;

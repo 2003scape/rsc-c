@@ -1110,7 +1110,8 @@ void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
 int mudclient_is_touch(mudclient *mud);
 void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
-                                int x, int y, int width, int height);
+                                int x, int y, int width, int height, int font,
+                                int is_centred);
 #ifdef _3DS
 void mudclient_3ds_flush_audio(mudclient *mud);
 void mudclient_3ds_open_keyboard(mudclient *mud);

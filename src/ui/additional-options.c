@@ -14,7 +14,7 @@ int mudclient_add_option_panel_string(Panel *panel, char *label,
     int label_width = mudclient_add_option_panel_label(panel, label, x, y);
 
     int control = panel_add_text_input(panel, x + label_width, y,
-                                       (ADDITIONAL_OPTIONS_WIDTH / 4), 15, 1,
+                                       (ADDITIONAL_OPTIONS_WIDTH / 2) - 10, 15, 1,
                                        max_length, 0, 1);
 
     panel_update_text(panel, control, default_text);

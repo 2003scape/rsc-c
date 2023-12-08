@@ -46,22 +46,22 @@ void mudclient_create_login_panels(mudclient *mud) {
             panel_add_button(mud->panel_login_welcome, x + 100 - offset_x,
                              LOGIN_BACKGROUND_HEIGHT + offset_y + y, 120, 35);
     } else {
-        int font_size = 4;
+        FONT_STYLE font_style = FONT_BOLD_14;
         int button_width = 200;
 
         if (MUD_IS_COMPACT) {
             y -= 18;
-            font_size = 3;
+            font_style = FONT_BOLD_13;
             button_width = 180;
         }
 
         panel_add_text_centre(mud->panel_login_welcome, x,
                               LOGIN_BACKGROUND_HEIGHT + y,
-                              "Welcome to RuneScape", font_size, 1);
+                              "Welcome to RuneScape", font_style, 1);
 
         panel_add_text_centre(
             mud->panel_login_welcome, x, LOGIN_BACKGROUND_HEIGHT + 15 + y,
-            "You need a members account to use this server", font_size, 1);
+            "You need a members account to use this server", font_style, 1);
 
         panel_add_button_background(mud->panel_login_welcome, x,
                                     LOGIN_BACKGROUND_HEIGHT + 50 + y,
@@ -99,7 +99,7 @@ void mudclient_create_login_panels(mudclient *mud) {
         if (mud->refer_id == 0) {
             panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
                                   "to create an account please go back to the",
-                                  4, 1);
+                                  FONT_BOLD_14, 1);
 
             y += 20;
 
@@ -116,17 +116,17 @@ void mudclient_create_login_panels(mudclient *mud) {
 
             panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
                                   "'create account' link below the game window",
-                                  4, 1);
+                                  FONT_BOLD_14, 1);
         } else {
             panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
                                   "To create an account please go back to the",
-                                  4, 1);
+                                  FONT_BOLD_14, 1);
 
             y += 20;
 
             panel_add_text_centre(
                 mud->panel_login_new_user, x, y + 8,
-                "runescape front webpage and choose 'create account'", 4, 1);
+                "runescape front webpage and choose 'create account'", FONT_BOLD_14, 1);
         }
 
         y += 30;
@@ -157,7 +157,7 @@ void mudclient_create_login_panels(mudclient *mud) {
             mud->control_register_status = panel_add_text_centre(
                 mud->panel_login_new_user, x, y + 8,
                 "to create an account please enter all the requested details",
-                4, 1);
+                FONT_BOLD_14, 1);
         }
 
         int offset_y = y + 25;
@@ -166,10 +166,10 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     250, 34);
 
         panel_add_text_centre(mud->panel_login_new_user, x, offset_y + 8,
-                              "Choose a username", 4, 0);
+                              "Choose a username", FONT_BOLD_14, 0);
 
         mud->control_register_user = panel_add_text_input(
-            mud->panel_login_new_user, x, offset_y + 25, 200, 40, 4, 12, 0, 0);
+            mud->panel_login_new_user, x, offset_y + 25, 200, 40, FONT_BOLD_14, 12, 0, 0);
 
         offset_y += 40;
 
@@ -178,11 +178,11 @@ void mudclient_create_login_panels(mudclient *mud) {
                                         offset_y + 17, 220, 34);
 
             panel_add_text_centre(mud->panel_login_new_user, x, offset_y + 8,
-                                  "Choose a Password", 4, 0);
+                                  "Choose a Password", FONT_BOLD_14, 0);
 
             mud->control_register_password =
                 panel_add_text_input(mud->panel_login_new_user, x,
-                                     offset_y + 25, 220, 40, 4, 20, 1, 0);
+                                     offset_y + 25, 220, 40, FONT_BOLD_14, 20, 1, 0);
 
             offset_y += 40;
 
@@ -190,32 +190,32 @@ void mudclient_create_login_panels(mudclient *mud) {
                                         offset_y + 17, 220, 34);
 
             panel_add_text_centre(mud->panel_login_new_user, x, offset_y + 8,
-                                  "Confirm Password", 4, 0);
+                                  "Confirm Password", FONT_BOLD_14, 0);
 
             mud->control_register_confirm_password =
                 panel_add_text_input(mud->panel_login_new_user, x,
-                                     offset_y + 25, 220, 40, 4, 20, 1, 0);
+                                     offset_y + 25, 220, 40, FONT_BOLD_14, 20, 1, 0);
             offset_y += 34;
         } else {
             panel_add_button_background(mud->panel_login_new_user, x - 115,
                                         offset_y + 17, 220, 34);
 
             panel_add_text_centre(mud->panel_login_new_user, x - 115,
-                                  offset_y + 8, "Choose a Password", 4, 0);
+                                  offset_y + 8, "Choose a Password", FONT_BOLD_14, 0);
 
             mud->control_register_password =
                 panel_add_text_input(mud->panel_login_new_user, x - 115,
-                                     offset_y + 25, 220, 40, 4, 20, 1, 0);
+                                     offset_y + 25, 220, 40, FONT_BOLD_14, 20, 1, 0);
 
             panel_add_button_background(mud->panel_login_new_user, x + 115,
                                         offset_y + 17, 220, 34);
 
             panel_add_text_centre(mud->panel_login_new_user, x + 115,
-                                  offset_y + 8, "Confirm Password", 4, 0);
+                                  offset_y + 8, "Confirm Password", FONT_BOLD_14, 0);
 
             mud->control_register_confirm_password =
                 panel_add_text_input(mud->panel_login_new_user, x + 115,
-                                     offset_y + 25, 220, 40, 4, 20, 1, 0);
+                                     offset_y + 25, 220, 40, FONT_BOLD_14, 20, 1, 0);
             offset_y += 60;
 
             mud->control_register_checkbox = panel_add_checkbox(
@@ -223,14 +223,14 @@ void mudclient_create_login_panels(mudclient *mud) {
 
             panel_add_text(mud->panel_login_new_user, x - 181, offset_y,
                            "I have read and agreed to the terms and conditions",
-                           4, 1);
+                           FONT_BOLD_14, 1);
 
             offset_y += 15;
 
             panel_add_text_centre(mud->panel_login_new_user, x, offset_y,
                                   "(to view these click the relevant link "
                                   "below this game window)",
-                                  4, 1);
+                                  FONT_BOLD_14, 1);
         }
 
         offset_y += 20;
@@ -281,11 +281,11 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     200, 40);
 
         panel_add_text_centre(mud->panel_login_existing_user, x - 56, y - 10,
-                              "Username:", 4, 0);
+                              "Username:", FONT_BOLD_14, 0);
 
         mud->control_login_username =
             panel_add_text_input(mud->panel_login_existing_user, x - 56, y + 10,
-                                 200, 40, 4, 12, 0, 0);
+                                 200, 40, FONT_BOLD_14, 12, 0, 0);
 
         y += 47;
 
@@ -293,11 +293,11 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     200, 40);
 
         panel_add_text_centre(mud->panel_login_existing_user, x - 32, y - 10,
-                              "Password:", 4, 0);
+                              "Password:", FONT_BOLD_14, 0);
 
         mud->control_login_password =
             panel_add_text_input(mud->panel_login_existing_user, x - 32, y + 10,
-                                 200, 40, 4, 20, 1, 0);
+                                 200, 40, FONT_BOLD_14, 20, 1, 0);
 
         y -= 55;
 
@@ -305,7 +305,7 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     x + 154 - 38, y, 80, 25);
 
         panel_add_text_centre(mud->panel_login_existing_user, x + 154 - 38, y,
-                              "Ok", 4, 0);
+                              "Ok", FONT_BOLD_14, 0);
 
         mud->control_login_ok = panel_add_button(mud->panel_login_existing_user,
                                                  x + 154 - 38, y, 80, 25);
@@ -316,7 +316,7 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     x + 154 - 38, y, 80, 25);
 
         panel_add_text_centre(mud->panel_login_existing_user, x + 154 - 38, y,
-                              "Cancel", 4, 0);
+                              "Cancel", FONT_BOLD_14, 0);
 
         mud->control_login_cancel = panel_add_button(
             mud->panel_login_existing_user, x + 154 - 38, y, 80, 25);
@@ -324,7 +324,7 @@ void mudclient_create_login_panels(mudclient *mud) {
     } else {
         mud->control_login_status = panel_add_text_centre(
             mud->panel_login_existing_user, x, y - 10,
-            "Please enter your username and password", 4, 1);
+            "Please enter your username and password", FONT_BOLD_14, 1);
 
         y += 28;
 
@@ -332,11 +332,11 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     200, 40);
 
         panel_add_text_centre(mud->panel_login_existing_user, x - 116, y - 10,
-                              "Username:", 4, 0);
+                              "Username:", FONT_BOLD_14, 0);
 
         mud->control_login_username =
             panel_add_text_input(mud->panel_login_existing_user, x - 116,
-                                 y + 10, 200, 40, 4, 12, 0, 0);
+                                 y + 10, 200, 40, FONT_BOLD_14, 12, 0, 0);
 
         y += 47;
 
@@ -344,11 +344,11 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     200, 40);
 
         panel_add_text_centre(mud->panel_login_existing_user, x - 66, y - 10,
-                              "Password:", 4, 0);
+                              "Password:", FONT_BOLD_14, 0);
 
         mud->control_login_password =
             panel_add_text_input(mud->panel_login_existing_user, x - 66, y + 10,
-                                 200, 40, 4, 20, 1, 0);
+                                 200, 40, FONT_BOLD_14, 20, 1, 0);
 
         y -= 55;
 
@@ -356,7 +356,7 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     120, 25);
 
         panel_add_text_centre(mud->panel_login_existing_user, x + 154, y, "Ok",
-                              4, 0);
+                              FONT_BOLD_14, 0);
 
         mud->control_login_ok = panel_add_button(mud->panel_login_existing_user,
                                                  x + 154, y, 120, 25);
@@ -367,7 +367,7 @@ void mudclient_create_login_panels(mudclient *mud) {
                                     120, 25);
 
         panel_add_text_centre(mud->panel_login_existing_user, x + 154, y,
-                              "Cancel", 4, 0);
+                              "Cancel", FONT_BOLD_14, 0);
 
         mud->control_login_cancel = panel_add_button(
             mud->panel_login_existing_user, x + 154, y, 120, 25);
@@ -380,7 +380,7 @@ void mudclient_create_login_panels(mudclient *mud) {
         y, 160, 25);
 
         panel_add_text_centre(mud->panel_login_existing_user, x + 154, y,
-                              "I've lost my password", 4, 0);
+                              "I've lost my password", FONT_BOLD_14, 0);
 
         mud->control_login_recover = panel_add_button(
             mud->panel_login_existing_user, x + 154, y, 160, 25);*/
