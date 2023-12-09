@@ -408,7 +408,7 @@ void mudclient_draw_social_input(mudclient *mud) {
 
     dialog_y += 20;
 
-    char formatted_current[INPUT_TEXT_LENGTH + 2] = {0};
+    char formatted_current[INPUT_PM_LENGTH + 2] = {0};
     sprintf(formatted_current, "%s*", input_current);
 
     switch (mud->show_dialog_social_input) {

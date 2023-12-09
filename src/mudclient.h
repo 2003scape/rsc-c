@@ -286,6 +286,7 @@ typedef struct mudclient mudclient;
 #include "ui/server-message.h"
 #include "ui/shop.h"
 #include "ui/sleep.h"
+#include "ui/social-tab.h"
 #include "ui/stats-tab.h"
 #include "ui/status-bars.h"
 #include "ui/trade.h"
@@ -793,7 +794,7 @@ struct mudclient {
     int menu_index[MENU_MAX];
     int menu_source_index[MENU_MAX];
     int menu_target_index[MENU_MAX];
-    int menu_type[MENU_MAX];
+    MenuType menu_type[MENU_MAX];
     int menu_width;
     int menu_height;
     int menu_x;
