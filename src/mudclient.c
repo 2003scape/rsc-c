@@ -36,6 +36,7 @@ EM_JS(void, browser_trigger_keyboard,
           const fonts = {
               1: 'mudclient-font-bold-12',
               4: 'mudclient-font-bold-14',
+              5: 'mudclient-font-bold-16'
           };
 
           keyboard.classList.remove(...Object.values(fonts));
