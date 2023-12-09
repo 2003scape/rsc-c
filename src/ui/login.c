@@ -46,7 +46,7 @@ void mudclient_create_login_panels(mudclient *mud) {
             panel_add_button(mud->panel_login_welcome, x + 100 - offset_x,
                              LOGIN_BACKGROUND_HEIGHT + offset_y + y, 120, 35);
     } else {
-        FONT_STYLE font_style = FONT_BOLD_14;
+        FontStyle font_style = FONT_BOLD_14;
         int button_width = 200;
 
         if (MUD_IS_COMPACT) {

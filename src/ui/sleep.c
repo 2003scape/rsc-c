@@ -37,11 +37,17 @@ void mudclient_draw_sleep(mudclient *mud) {
     int y = (mud->surface->height / 2) - (MUD_HEIGHT / 2) +
             (MUD_IS_COMPACT ? 28 : 50);
 
-    surface_draw_box(mud->surface, x - 100, y + 74 + (MUD_IS_COMPACT ? 0 : 36),
-                     200, (MUD_IS_COMPACT ? 36 : 40), BLACK);
+    /* draw a box so our input text doesn't ghost */
+    int keyboard_x = x - 100;
+    int keyboard_y = y + 74 + (MUD_IS_COMPACT ? 0 : 36);
+    int keyboard_width = 200;
+    int keyboard_height = (MUD_IS_COMPACT ? 36 : 40);
 
-    surface_draw_string_centre(mud->surface, "You are sleeping", x, y, 7,
-                               YELLOW);
+    surface_draw_box(mud->surface, keyboard_x, keyboard_y, keyboard_width,
+                     keyboard_height, BLACK);
+
+    surface_draw_string_centre(mud->surface, "You are sleeping", x, y,
+                               FONT_BOLD_24, YELLOW);
 
     char formatted_fatigue[22] = {0};
 
@@ -50,8 +56,8 @@ void mudclient_draw_sleep(mudclient *mud) {
 
     y += (MUD_IS_COMPACT ? 28 : 40);
 
-    surface_draw_string_centre(mud->surface, formatted_fatigue, x, y, 7,
-                               YELLOW);
+    surface_draw_string_centre(mud->surface, formatted_fatigue, x, y,
+                               FONT_BOLD_24, YELLOW);
 
     y += (MUD_IS_COMPACT ? 25 : 50);
 
@@ -59,7 +65,7 @@ void mudclient_draw_sleep(mudclient *mud) {
                                MUD_IS_COMPACT
                                    ? "To wake up just use your keyboard"
                                    : "When you want to wake up just use your",
-                               x, y, 5, WHITE);
+                               x, y, FONT_BOLD_16, WHITE);
 
     y += 20;
 
@@ -67,20 +73,21 @@ void mudclient_draw_sleep(mudclient *mud) {
         mud->surface,
         MUD_IS_COMPACT ? "to type the word in the box below"
                        : "keyboard to type the word in the box below",
-        x, y, 5, WHITE);
+        x, y, FONT_BOLD_16, WHITE);
 
     char formatted_input[strlen(mud->input_text_current) + 2];
     sprintf(formatted_input, "%s*", mud->input_text_current);
 
     y += 20;
 
-    surface_draw_string_centre(mud->surface, formatted_input, x, y, 5, CYAN);
+    surface_draw_string_centre(mud->surface, formatted_input, x, y,
+                               FONT_BOLD_16, CYAN);
 
     y += (MUD_IS_COMPACT ? 16 : 49);
 
     if (mud->sleeping_status_text == NULL) {
         surface_draw_sprite(mud->surface, x - 127, y + 1,
-                                  mud->sprite_texture + 1);
+                            mud->sprite_texture + 1);
     } else {
         surface_draw_string_centre(mud->surface, mud->sleeping_status_text, x,
                                    y + 31, 5, RED);
@@ -106,6 +113,7 @@ void mudclient_draw_sleep(mudclient *mud) {
 
 void mudclient_handle_sleep_input(mudclient *mud) {
     int x = mud->surface->width / 2;
+
     int y = (mud->surface->height / 2) - (MUD_HEIGHT / 2) +
             (MUD_IS_COMPACT ? 28 : 50);
 
@@ -134,6 +142,21 @@ void mudclient_handle_sleep_input(mudclient *mud) {
         }
     }
 
+    int keyboard_x = x - 100 - 3;
+    int keyboard_y = y + 74 + (MUD_IS_COMPACT ? 0 : 36);
+    int keyboard_width = 200;
+    int keyboard_height = 28;
+
+    if (mud->last_mouse_button_down == 1 && mud->mouse_x > keyboard_x &&
+        mud->mouse_x < keyboard_x + keyboard_width &&
+        mud->mouse_y > keyboard_y &&
+        mud->mouse_y < keyboard_y + keyboard_height) {
+        mudclient_trigger_keyboard(mud, mud->input_text_current, 0, keyboard_x,
+                                   keyboard_y, keyboard_width, keyboard_height,
+                                   FONT_BOLD_16, 1);
+    }
+
+    /* new sleep word */
     if (mud->last_mouse_button_down == 1 &&
         mud->mouse_y > y + (MUD_IS_COMPACT ? 157 : 225) &&
         mud->mouse_y < y + (MUD_IS_COMPACT ? 192 : 260) &&

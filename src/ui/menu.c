@@ -6,7 +6,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
     int menu_index = mud->menu_index[i];
     int menu_source_index = mud->menu_source_index[i];
     int menu_target_index = mud->menu_target_index[i];
-    int menu_type = mud->menu_type[i];
+    MenuType menu_type = mud->menu_type[i];
 
     switch (menu_type) {
     case MENU_CAST_GROUNDITEM:
@@ -625,7 +625,8 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
         }
 
         if (strlen(menu_text) > 0) {
-            surface_draw_string(mud->surface, menu_text, 6, 14, 1, YELLOW);
+            surface_draw_string(mud->surface, menu_text, 6, 14, FONT_BOLD_12,
+                                YELLOW);
         }
 
         if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 1) ||
@@ -638,9 +639,14 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
         if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 2) ||
             (mud->settings_mouse_button_one && mud->mouse_button_click == 1)) {
+            int entry_height = mudclient_is_touch(mud) ? 19 : 15;
 
-            mud->menu_height = (mud->menu_items_count + 1) * 15;
+            mud->menu_height = (mud->menu_items_count + 1) * entry_height;
             mud->menu_width = surface_text_width("Choose option", 1) + 5;
+
+            if (mudclient_is_touch(mud)) {
+                mud->menu_height += 3;
+            }
 
             for (int i = 0; i < mud->menu_items_count; i++) {
                 char *menu_item_text1 = mud->menu_item_text1[i];
@@ -1395,13 +1401,18 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 }
 
 void mudclient_draw_right_click_menu(mudclient *mud) {
+    int entry_height = mudclient_is_touch(mud) ? 19 : 15;
+
     if (mud->mouse_button_click != 0) {
         for (int i = 0; i < mud->menu_items_count; i++) {
             int entry_x = mud->menu_x + 2;
-            int entry_y = mud->menu_y + 27 + i * 15;
+            int entry_y = mud->menu_y + entry_height + 12 + i * entry_height;
 
-            if (mud->mouse_x <= entry_x - 2 || mud->mouse_y <= entry_y - 12 ||
-                mud->mouse_y >= entry_y + 4 ||
+            int min_y = entry_y - (mudclient_is_touch(mud) ? 14 : 12);
+            int max_y = entry_y + (mudclient_is_touch(mud) ? 6 : 4);
+
+            if (mud->mouse_x <= entry_x - 2 || mud->mouse_y <= min_y ||
+                mud->mouse_y >= max_y ||
                 mud->mouse_x >= (entry_x - 3) + mud->menu_width) {
                 continue;
             }
@@ -1431,7 +1442,7 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
                            160 + (is_dark_menu ? 40 : 0));
 
     surface_draw_string(mud->surface, "Choose option", mud->menu_x + 2,
-                        mud->menu_y + 12, 1, CYAN);
+                        mud->menu_y + 12, FONT_BOLD_12, CYAN);
 
     for (int i = 0; i < mud->menu_items_count; i++) {
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -1444,11 +1455,14 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
 #endif
 
         int entry_x = mud->menu_x + 2;
-        int entry_y = mud->menu_y + 27 + i * 15;
+        int entry_y = mud->menu_y + entry_height + 12 + i * entry_height;
         int text_colour = WHITE;
 
-        if (mud->mouse_x > entry_x - 2 && mud->mouse_y > entry_y - 12 &&
-            mud->mouse_y < entry_y + 4 &&
+        int min_y = entry_y - (mudclient_is_touch(mud) ? 14 : 12);
+        int max_y = entry_y + (mudclient_is_touch(mud) ? 6 : 4);
+
+        if (mud->mouse_x > entry_x - 2 && mud->mouse_y > min_y &&
+            mud->mouse_y < max_y &&
             mud->mouse_x < (entry_x - 3) + mud->menu_width) {
             text_colour = YELLOW;
         }
@@ -1459,16 +1473,14 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
         char combined[strlen(menu_item_text1) + strlen(menu_item_text2) + 2];
         sprintf(combined, "%s %s", menu_item_text1, menu_item_text2);
 
-        surface_draw_string(mud->surface, combined, entry_x, entry_y, 1,
-                            text_colour);
+        surface_draw_string(mud->surface, combined, entry_x, entry_y,
+                            FONT_BOLD_12, text_colour);
     }
 }
 
-void mudclient_draw_hover_tooltip(mudclient *mud)
-{
-    if (mud->options->show_hover_tooltip && mud->menu_items_count > 1
-        && mud->mouse_button_down == 0 && mud->show_right_click_menu == 0)
-    {
+void mudclient_draw_hover_tooltip(mudclient *mud) {
+    if (mud->options->show_hover_tooltip && mud->menu_items_count > 1 &&
+        mud->mouse_button_down == 0 && mud->show_right_click_menu == 0) {
         char *menu_item_text1 = mud->menu_item_text1[mud->menu_indices[0]];
         char *menu_item_text2 = mud->menu_item_text2[mud->menu_indices[0]];
 
@@ -1485,8 +1497,8 @@ void mudclient_draw_hover_tooltip(mudclient *mud)
         int text_height = surface_text_height(FONT_BOLD_12);
 
         surface_draw_box_alpha(mud->surface, mud->mouse_x,
-            mud->mouse_y - text_height, text_width + 5, text_height + 3,
-            GREY_D0, 120);
+                               mud->mouse_y - text_height, text_width + 5,
+                               text_height + 3, GREY_D0, 120);
 
         surface_draw_string(mud->surface, combined, mud->mouse_x + 2,
                             mud->mouse_y, FONT_BOLD_12, WHITE);

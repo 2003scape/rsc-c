@@ -298,6 +298,7 @@ typedef struct mudclient mudclient;
 #include "ui/server-message.h"
 #include "ui/shop.h"
 #include "ui/sleep.h"
+#include "ui/social-tab.h"
 #include "ui/stats-tab.h"
 #include "ui/status-bars.h"
 #include "ui/trade.h"
@@ -559,7 +560,7 @@ struct mudclient {
 
     /* ./ui/social-tab.c */
     Panel *panel_social_list;
-    int8_t show_dialog_social_input;
+    SocialInput show_dialog_social_input;
     int control_list_social;
     int ui_tab_social_sub_tab;
     int message_index;
@@ -805,7 +806,7 @@ struct mudclient {
     int menu_index[MENU_MAX];
     int menu_source_index[MENU_MAX];
     int menu_target_index[MENU_MAX];
-    int menu_type[MENU_MAX];
+    MenuType menu_type[MENU_MAX];
     int menu_width;
     int menu_height;
     int menu_x;

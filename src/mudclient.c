@@ -36,6 +36,7 @@ EM_JS(void, browser_trigger_keyboard,
           const fonts = {
               1: 'mudclient-font-bold-12',
               4: 'mudclient-font-bold-14',
+              5: 'mudclient-font-bold-16'
           };
 
           keyboard.classList.remove(...Object.values(fonts));
@@ -1507,6 +1508,11 @@ void mudclient_mouse_released(mudclient *mud, int x, int y, int button) {
         mud->middle_button_down = 0;
 
         int tick_delta = get_ticks() - mud->last_mouse_sample_ticks;
+
+        if (tick_delta <= 0) {
+            return;
+        }
+
         int x_delta = x - mud->last_mouse_sample_x;
 
         mud->camera_momentum = 2 * ((float)x_delta / (float)tick_delta);
