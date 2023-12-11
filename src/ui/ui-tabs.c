@@ -43,7 +43,7 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
                 return;
             }
 
-            if (mud->show_ui_tab == 0) {
+            if (mud->show_ui_tab == 0 || mud->mouse_y < UI_BUTTON_SIZE - 9) {
                 mud->show_ui_tab = tab;
 
                 if (tab == MAP_TAB && mud->options->anti_macro) {
@@ -63,56 +63,6 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
 
         offset_start_x -= UI_BUTTON_SIZE - 2;
         offset_end_x -= UI_BUTTON_SIZE - 2;
-    }
-
-    if (mud->show_ui_tab != 0 &&
-        mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 &&
-        mud->mouse_y < UI_BUTTON_SIZE - 9) {
-        mud->show_ui_tab = INVENTORY_TAB;
-    }
-
-    if (mud->show_ui_tab != 0 && mud->show_ui_tab != MAP_TAB &&
-        mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 33 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 33 &&
-        mud->mouse_y < UI_BUTTON_SIZE - 9) {
-        mud->show_ui_tab = MAP_TAB;
-
-        if (mud->options->anti_macro) {
-            mud->minimap_random_rotation =
-                (int)((((float)rand() / (float)RAND_MAX)) * 13) - 6;
-
-            mud->minimap_random_scale =
-                (int)((((float)rand() / (float)RAND_MAX)) * 23) - 11;
-        }
-    }
-
-    if (mud->show_ui_tab != 0 &&
-        mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 66 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 66 &&
-        mud->mouse_y < UI_BUTTON_SIZE - 9) {
-        mud->show_ui_tab = STATS_TAB;
-    }
-
-    if (mud->show_ui_tab != 0 &&
-        mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 99 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 99 &&
-        mud->mouse_y < UI_BUTTON_SIZE - 9) {
-        mud->show_ui_tab = MAGIC_TAB;
-    }
-
-    if (mud->show_ui_tab != 0 &&
-        mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 132 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 132 &&
-        mud->mouse_y < UI_BUTTON_SIZE - 9) {
-        mud->show_ui_tab = SOCIAL_TAB;
-    }
-
-    if (mud->show_ui_tab != 0 &&
-        mud->mouse_x >= mud->surface->width - UI_BUTTON_SIZE - 165 &&
-        mud->mouse_y >= 3 && mud->mouse_x < mud->surface->width - 3 - 165 &&
-        mud->mouse_y < UI_BUTTON_SIZE - 9) {
-        mud->show_ui_tab = OPTIONS_TAB;
     }
 
     if (mud->show_ui_tab == INVENTORY_TAB &&
