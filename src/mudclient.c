@@ -1943,9 +1943,11 @@ void mudclient_load_media(mudclient *mud) {
 
     int8_t *index_dat = load_data("index.dat", 0, media_jag, NULL);
 
+#if (VERSION_MEDIA < 59)
     surface_parse_sprite(mud->surface, mud->sprite_media,
                          load_data("inv1.dat", 0, media_jag, NULL), index_dat,
                          1);
+#endif
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 1,
                          load_data("inv2.dat", 0, media_jag, NULL), index_dat,
@@ -1985,8 +1987,12 @@ void mudclient_load_media(mudclient *mud) {
 
 #if (VERSION_MEDIA >= 59)
     surface_parse_sprite(mud->surface, mud->sprite_media + 27,
-                         load_data("labels.dat", 0, media_jag, NULL),
-                         index_dat, 6);
+                         load_data("labels.dat", 0, media_jag, NULL), index_dat,
+                         6);
+
+    surface_parse_sprite(mud->surface, mud->sprite_media + 33,
+                         load_data("inv3.dat", 0, media_jag, NULL), index_dat,
+                         6);
 #endif
 
     surface_parse_sprite(mud->surface, mud->sprite_util,
@@ -2031,7 +2037,16 @@ void mudclient_load_media(mudclient *mud) {
 #endif
 
 #ifdef RENDER_SW
+    /* this is probably for an optimization, but it is necessary for the action
+     * bubble scaling */
+#if (VERSION_MEDIA >= 59)
+    for (int i = 0; i < 6; i++) {
+        surface_load_sprite(mud->surface, mud->sprite_media + 33 + i);
+    }
+#else
     surface_load_sprite(mud->surface, mud->sprite_media);
+#endif
+
     surface_load_sprite(mud->surface, mud->sprite_media + 9);
 
     for (int i = 11; i <= 26; i++) {
@@ -4659,8 +4674,7 @@ GameCharacter *mudclient_get_opponent(mudclient *mud) {
 }
 
 void mudclient_draw_ui(mudclient *mud) {
-    surface_draw_sprite_alpha(mud->surface, mud->surface->width - 200, 3,
-                              mud->sprite_media, 128);
+    mudclient_draw_ui_tabs(mud);
 
     int no_menus = !mud->show_option_menu && !mud->show_right_click_menu;
 

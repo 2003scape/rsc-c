@@ -6,6 +6,25 @@ int ui_tab_widths[] = {INVENTORY_WIDTH, MINIMAP_WIDTH,    STATS_WIDTH + 1,
 char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
+void mudclient_draw_ui_tabs(mudclient *mud) {
+    int button_x =
+        mud->surface->width - mud->surface->sprite_width[mud->sprite_media] - 3;
+
+#if (VERSION_MEDIA >= 59)
+    button_x -= UI_BUTTON_SIZE - 3;
+
+    for (int i = 0; i < 6; i++) {
+        surface_draw_sprite_alpha(mud->surface, button_x, 3,
+                                  mud->sprite_media + 33 + i, 128);
+
+        button_x -= UI_BUTTON_SIZE - 2;
+    }
+#else
+    surface_draw_sprite_alpha(mud->surface, button_x, 3, mud->sprite_media,
+                              128);
+#endif
+}
+
 void mudclient_toggle_ui_tab(mudclient *mud, int tab) {
     if (mud->mouse_button_click != 0) {
         mud->show_ui_tab = mud->show_ui_tab == tab ? 0 : tab;
