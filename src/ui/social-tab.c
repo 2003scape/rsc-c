@@ -132,6 +132,11 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - SOCIAL_WIDTH - 3;
     int ui_y = 36;
 
+    mud->ui_tab_min_x = ui_x;
+    mud->ui_tab_max_x = mud->surface->width;
+    mud->ui_tab_min_y = 0;
+    mud->ui_tab_max_y = 240;
+
     surface_draw_sprite(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
                         3, mud->sprite_media + SOCIAL_TAB_SPRITE_OFFSET);
 

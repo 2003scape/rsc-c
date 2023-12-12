@@ -4,6 +4,11 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - INVENTORY_WIDTH - 3;
     int ui_y = 36;
 
+    mud->ui_tab_min_x = ui_x;
+    mud->ui_tab_max_x = mud->surface->width;
+    mud->ui_tab_min_y = 0;
+    mud->ui_tab_max_y = ui_y + INVENTORY_HEIGHT;
+
     surface_draw_sprite(mud->surface,
                         mud->surface->width - UI_TABS_WIDTH -
                             (MUD_IS_COMPACT ? 52 : 3),

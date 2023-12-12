@@ -137,6 +137,7 @@
 
 #define ANIMATED_MODELS_LENGTH 20
 
+/* maximum amount of friends/ignores */
 #define SOCIAL_LIST_MAX 100
 
 #define INPUT_TEXT_LENGTH 20
@@ -241,8 +242,10 @@
 #define SKILL_PRAYER 5
 #define SKILL_MAGIC 6
 
+/* sprite stuff */
 #define SPRITE_LIMIT 4000
 
+/* jagex loading screen on startup */
 #define LOADING_WIDTH 277
 #define LOADING_HEIGHT 20
 
@@ -526,8 +529,6 @@ struct mudclient {
     int stop_timeout;
     int fps;
     int target_fps;
-    int max_draw_time;
-    int thread_sleep;
 
     /* used for username boxes */
     char input_text_current[INPUT_TEXT_LENGTH + 1];
@@ -778,6 +779,12 @@ struct mudclient {
     /* ./ui/ui-tabs.c */
     /* which UI tab is currently hovered over */
     int show_ui_tab;
+
+    /* boundaries for when to close a tab UI */
+    int ui_tab_min_x;
+    int ui_tab_max_x;
+    int ui_tab_min_y;
+    int ui_tab_max_y;
 
     /* used to rotate minimap randomly on open for anti-macro */
     int minimap_random_rotation;

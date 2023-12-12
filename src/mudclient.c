@@ -758,10 +758,8 @@ void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
 
     mud->target_fps = 20;
-    mud->max_draw_time = 1000;
     mud->loading_step = 1;
     mud->loading_progess_text = "Loading";
-    mud->thread_sleep = 10;
     mud->game_width = MUD_WIDTH;
     mud->game_height = MUD_HEIGHT;
     mud->camera_angle = 1;
@@ -1662,16 +1660,16 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
 
     if (game_fonts[2] != NULL) {
         surface_draw_string_centre(mud->surface, text, copyright_x, copyright_y,
-                                   2, GREY_C6);
+                                   FONT_REGULAR_12, GREY_C6);
     }
 
     /* footer */
     if (game_fonts[3] != NULL) {
         copyright_y += 20;
 
-        surface_draw_string_centre(mud->surface,
-                                   "Created by JAGeX - visit www.jagex.com",
-                                   copyright_x, copyright_y, 3, GREY_C6);
+        surface_draw_string_centre(
+            mud->surface, "Created by JAGeX - visit www.jagex.com", copyright_x,
+            copyright_y, FONT_BOLD_13, GREY_C6);
 
         copyright_x += 7;
         copyright_y += 16;
@@ -1688,10 +1686,10 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
                             4, BLACK, 255, 0);
 
         surface_draw_string(mud->surface, "c", copyright_icon_x,
-                            copyright_y - 2, 0, GREY_C6);
+                            copyright_y - 2, FONT_REGULAR_11, GREY_C6);
 
         surface_draw_string_centre(mud->surface, copyright_date, copyright_x,
-                                   copyright_y, 3, GREY_C6);
+                                   copyright_y, FONT_BOLD_13, GREY_C6);
     }
 
 #ifdef RENDER_GL
@@ -3415,9 +3413,11 @@ GameCharacter *mudclient_add_character(mudclient *mud,
         }
 
         GameCharacter *character = malloc(sizeof(GameCharacter));
+
         if (character == NULL) {
             return NULL;
         }
+
         game_character_new(character);
 
         character_server[server_index] = character;
@@ -4230,9 +4230,9 @@ void mudclient_draw_character_damage(mudclient *mud, GameCharacter *character,
         char damage_string[12] = {0};
         sprintf(damage_string, "%d", character->damage_taken);
 
-        surface_draw_string_centre_depth(mud->surface, damage_string,
-                                         (offset_x + (width / 2)) - 1,
-                                         y + (height / 2) + 5, 3, WHITE, depth);
+        surface_draw_string_centre_depth(
+            mud->surface, damage_string, (offset_x + (width / 2)) - 1,
+            y + (height / 2) + 5, FONT_BOLD_13, WHITE, depth);
     }
 }
 
@@ -4785,8 +4785,8 @@ void mudclient_draw_ui(mudclient *mud) {
         char formatted_count[17] = {0};
         sprintf(formatted_count, "%s%d", colour, count);
 
-        surface_draw_string_centre(mud->surface, formatted_count, x, y, 3,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, formatted_count, x, y,
+                                   FONT_BOLD_13, WHITE);
     }
 
     mud->mouse_button_click = 0;
@@ -5085,9 +5085,9 @@ void mudclient_draw_game(mudclient *mud) {
     if (mud->death_screen_timeout != 0) {
         surface_fade_to_black(mud->surface);
 
-        surface_draw_string_centre(mud->surface, "Oh dear! You are dead...",
-                                   mud->surface->width / 2,
-                                   (mud->surface->height - 12) / 2, 7, RED);
+        surface_draw_string_centre(
+            mud->surface, "Oh dear! You are dead...", mud->surface->width / 2,
+            (mud->surface->height - 12) / 2, FONT_BOLD_24, RED);
 
         mudclient_draw_chat_message_tabs(mud);
 
@@ -5254,7 +5254,7 @@ void mudclient_draw_game(mudclient *mud) {
 
         surface_draw_string(mud->surface, fps,
                             mud->surface->width - 62 - offset_x,
-                            mud->surface->height - 22, 1, YELLOW);
+                            mud->surface->height - 22, FONT_BOLD_12, YELLOW);
     }
 
 #ifndef REVISION_177
@@ -5270,7 +5270,7 @@ void mudclient_draw_game(mudclient *mud) {
                 seconds);
 
         surface_draw_string_centre(mud->surface, formatted_update, 256,
-                                   mud->game_height - 19, 1, YELLOW);
+                                   mud->game_height - 19, FONT_BOLD_12, YELLOW);
     }
 #endif
 
@@ -5284,18 +5284,18 @@ void mudclient_draw_game(mudclient *mud) {
                                 mud->surface->height - 68,
                                 mud->sprite_media + 13);
 
-            surface_draw_string_centre(mud->surface, "Wilderness",
-                                       mud->surface->width - 47,
-                                       mud->surface->height - 32, 1, YELLOW);
+            surface_draw_string_centre(
+                mud->surface, "Wilderness", mud->surface->width - 47,
+                mud->surface->height - 32, FONT_BOLD_12, YELLOW);
 
             int wilderness_level = 1 + (wilderness_depth / 6);
 
             char formatted_level[19] = {0};
             sprintf(formatted_level, "Level: %d", wilderness_level);
 
-            surface_draw_string_centre(mud->surface, formatted_level,
-                                       mud->surface->width - 47,
-                                       mud->surface->height - 19, 1, YELLOW);
+            surface_draw_string_centre(
+                mud->surface, formatted_level, mud->surface->width - 47,
+                mud->surface->height - 19, FONT_BOLD_12, YELLOW);
 
             if (mud->show_wilderness_warning == 0) {
                 mud->show_wilderness_warning = 2;
@@ -6260,7 +6260,8 @@ void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
         // TODO
     }
 
-    browser_trigger_keyboard(text, is_password, x, y, width, height, font, is_centred);
+    browser_trigger_keyboard(text, is_password, x, y, width, height, font,
+                             is_centred);
 #endif
 }
 
@@ -6415,13 +6416,13 @@ void mudclient_run(mudclient *mud) {
 #endif
     }
 
-    int i = 0;
+    int timing_index = 0;
     int j = 256;
     int delay = 1;
     int i1 = 0;
 
-    for (int j1 = 0; j1 < 10; j1++) {
-        mud->timings[j1] = get_ticks();
+    for (int i = 0; i < 10; i++) {
+        mud->timings[i] = get_ticks();
     }
 
     while (mud->stop_timeout >= 0) {
@@ -6442,12 +6443,12 @@ void mudclient_run(mudclient *mud) {
 
         int time = get_ticks();
 
-        if (mud->timings[i] == 0) {
+        if (mud->timings[timing_index] == 0) {
             j = k1;
             delay = last_delay;
-        } else if (time > mud->timings[i]) {
+        } else if (time > mud->timings[timing_index]) {
             j = (float)(2560 * mud->target_fps) /
-                (float)(time - mud->timings[i]);
+                (float)(time - mud->timings[timing_index]);
         }
 
         if (j < 25) {
@@ -6456,22 +6457,23 @@ void mudclient_run(mudclient *mud) {
 
         if (j > 256) {
             j = 256;
-            delay = mud->target_fps - (time - mud->timings[i]) / 10;
+            delay = mud->target_fps - (time - mud->timings[timing_index]) / 10;
 
-            if (delay < mud->thread_sleep) {
-                delay = mud->thread_sleep;
+            // TODO minimum delay
+            if (delay < 10) {
+                delay = 10;
             }
         }
 
         delay_ticks(delay);
 
-        mud->timings[i] = time;
-        i = (i + 1) % 10;
+        mud->timings[timing_index] = time;
+        timing_index = (timing_index + 1) % 10;
 
         if (delay > 1) {
-            for (int j2 = 0; j2 < 10; j2++) {
-                if (mud->timings[j2] != 0) {
-                    mud->timings[j2] += delay;
+            for (int i = 0; i < 10; i++) {
+                if (mud->timings[i] != 0) {
+                    mud->timings[i] += delay;
                 }
             }
         }
@@ -6484,13 +6486,14 @@ void mudclient_run(mudclient *mud) {
 
             i1 += j;
 
-            if (++k2 > mud->max_draw_time) {
+            // TODO magic #
+            if (++k2 > 1000) {
                 i1 = 0;
                 break;
             }
         }
 
-        i1 &= 0xff;
+        i1 &= 255;
 
 #ifdef _3DS
         if (!mud->keyboard_open) {
@@ -6508,7 +6511,7 @@ void mudclient_run(mudclient *mud) {
         }
 #endif
 
-        mud->fps = (1000 * j) / (mud->target_fps * 256);
+        mud->fps = (j * 1000) / (mud->target_fps * 256);
 
         mud->mouse_scroll_delta = 0;
     }
