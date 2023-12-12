@@ -1,7 +1,7 @@
 #include "ui-tabs.h"
 
 int ui_tab_widths[] = {INVENTORY_WIDTH, MINIMAP_WIDTH,    STATS_WIDTH + 1,
-                       MAGIC_WIDTH + 1, SOCIAL_WIDTH + 1, OPTIONS_WIDTH};
+                       MAGIC_WIDTH + 1, SOCIAL_WIDTH + 1, OPTIONS_WIDTH + 1};
 
 char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
