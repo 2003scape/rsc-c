@@ -1119,7 +1119,6 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 game_data.wall_objects[wall_object_id].name;
 
             char formatted_wall_object_name[strlen(wall_object_name) + 6];
-
             sprintf(formatted_wall_object_name, "@cya@%s", wall_object_name);
 
             if (mud->selected_wiki) {
@@ -1181,6 +1180,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             "Examine", 7) != 0) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                game_data.wall_objects[wall_object_id].command2);
+
+                        strcpy(mud->menu_item_text2[mud->menu_items_count],
+                               formatted_wall_object_name);
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_WALL_OBJECT_COMMAND2;
