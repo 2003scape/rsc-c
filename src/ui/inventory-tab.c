@@ -9,11 +9,6 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     mud->ui_tab_min_y = 0;
     mud->ui_tab_max_y = ui_y + INVENTORY_HEIGHT;
 
-    surface_draw_sprite(mud->surface,
-                        mud->surface->width - UI_TABS_WIDTH -
-                            (MUD_IS_COMPACT ? 52 : 3),
-                        3, mud->sprite_media + INVENTORY_TAB_SPRITE_OFFSET);
-
     /* item slots */
     for (int i = 0; i < INVENTORY_ITEMS_MAX; i++) {
         int slot_x = ui_x + (i % INVENTORY_COLUMNS) * ITEM_GRID_SLOT_WIDTH;
@@ -41,7 +36,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
 
             if (game_data.items[mud->inventory_item_id[i]].stackable == 0) {
                 surface_draw_string(mud->surface, formatted_amount, slot_x + 1,
-                                    slot_y + 10, 1, YELLOW);
+                                    slot_y + 10, FONT_BOLD_12, YELLOW);
             }
         }
     }
@@ -107,6 +102,7 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
 
                 mud->menu_source_index[mud->menu_items_count] =
                     mud->selected_spell;
+
                 mud->menu_items_count++;
 
                 return;

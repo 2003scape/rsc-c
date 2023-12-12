@@ -8,8 +8,6 @@
 #define STATS_TAB_HEIGHT 24
 #define STATS_LINE_BREAK (MUD_IS_COMPACT ? 11 : 12)
 
-#define STATS_TAB_SPRITE_OFFSET 3
-
 extern char *short_skill_names[];
 extern char *skill_names[];
 extern int skills_length;

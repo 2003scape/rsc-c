@@ -49,4 +49,6 @@
 #define TITLE_BAR_COLOUR 0x0000c0
 #define DUEL_BAR_COLOUR 0xc90b1d
 
+#define UI_LABEL_COLOUR 0x000084
+
 #endif

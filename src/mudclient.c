@@ -1983,6 +1983,12 @@ void mudclient_load_media(mudclient *mud) {
                          load_data("buttons.dat", 0, media_jag, NULL),
                          index_dat, 2);
 
+#if (VERSION_MEDIA >= 59)
+    surface_parse_sprite(mud->surface, mud->sprite_media + 27,
+                         load_data("labels.dat", 0, media_jag, NULL),
+                         index_dat, 6);
+#endif
+
     surface_parse_sprite(mud->surface, mud->sprite_util,
                          load_data("scrollbar.dat", 0, media_jag, NULL),
                          index_dat, 2);
@@ -4394,8 +4400,6 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
             int animation_colour = game_data.animations[animation_id].colour;
 
-            int skin_colour = player_skin_colours[player->skin_colour];
-
             if (animation_colour == 1) {
                 animation_colour = player_hair_colours[player->hair_colour];
             } else if (animation_colour == 2) {
@@ -4405,6 +4409,8 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
                 animation_colour =
                     player_top_bottom_colours[player->bottom_colour];
             }
+
+            int skin_colour = player_skin_colours[player->skin_colour];
 
             surface_draw_sprite_transform_mask_depth(
                 mud->surface, x + offset_x, y + offset_y, clip_width, height,
@@ -4605,6 +4611,7 @@ GameCharacter *mudclient_get_opponent(mudclient *mud) {
             if (mud->combat_target->max_hits <= 0) {
                 return NULL;
             }
+
             /*
              * if there is a target, check that they are still in view
              */
@@ -4622,6 +4629,7 @@ GameCharacter *mudclient_get_opponent(mudclient *mud) {
                 }
             }
         }
+
         return NULL;
     }
 

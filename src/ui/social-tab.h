@@ -26,8 +26,6 @@ typedef enum {
 /* width and height of clickable cancel button */
 #define SOCIAL_CANCEL_SIZE 40
 
-#define SOCIAL_TAB_SPRITE_OFFSET 5
-
 #ifdef REVISION_177
 #define FRIEND_ONLINE 99
 #else

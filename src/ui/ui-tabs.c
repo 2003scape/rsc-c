@@ -1,16 +1,14 @@
 #include "ui-tabs.h"
 
+int ui_tab_widths[] = {INVENTORY_WIDTH, MINIMAP_WIDTH,    STATS_WIDTH + 1,
+                       MAGIC_WIDTH + 1, SOCIAL_WIDTH + 1, OPTIONS_WIDTH};
+
 char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
 void mudclient_toggle_ui_tab(mudclient *mud, int tab) {
     if (mud->mouse_button_click != 0) {
-        if (mud->show_ui_tab == tab) {
-            mud->show_ui_tab = 0;
-        } else {
-            mud->show_ui_tab = tab;
-        }
-
+        mud->show_ui_tab = mud->show_ui_tab == tab ? 0 : tab;
         mud->mouse_button_click = 0;
     }
 }
@@ -102,5 +100,38 @@ void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus) {
         mudclient_draw_ui_tab_social(mud, no_menus);
     } else if (mud->show_ui_tab == OPTIONS_TAB) {
         mudclient_draw_ui_tab_options(mud, no_menus);
+    }
+
+    if (mud->show_ui_tab != 0) {
+#if (VERSION_MEDIA >= 59)
+        int label_width = ui_tab_widths[mud->show_ui_tab - 1];
+        int label_x = mud->surface->width - label_width - 3;
+        int label_y = UI_BUTTON_SIZE - 9;
+
+        surface_draw_box(mud->surface, label_x, label_y, label_width, 9,
+                         UI_LABEL_COLOUR);
+
+        int sprite_id = mud->sprite_media + 26 + mud->show_ui_tab;
+
+        int label_offset =
+            mud->show_ui_tab > 4
+                ? label_width - mud->surface->sprite_width[sprite_id] - 3
+                : 1;
+
+        surface_draw_sprite(mud->surface, label_x + label_offset, label_y + 1,
+                            sprite_id);
+
+        surface_draw_line_horizontal(mud->surface, label_x, label_y + 9,
+                                     label_width, BLACK);
+
+        int selected_x = mud->surface->width -
+                         UI_BUTTON_SIZE * mud->show_ui_tab +
+                         (mud->show_ui_tab - 1) * 2;
+#else
+        int selected_x = mud->surface->width - UI_TABS_WIDTH - 3;
+#endif
+
+        surface_draw_sprite(mud->surface, selected_x, 3,
+                            mud->sprite_media + mud->show_ui_tab);
     }
 }
