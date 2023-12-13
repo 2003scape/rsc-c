@@ -19,10 +19,12 @@
 #include "social-tab.h"
 #include "stats-tab.h"
 
+void mudclient_draw_ui_tabs(mudclient *mud);
 void mudclient_toggle_ui_tab(mudclient *mud, int tab);
 void mudclient_set_active_ui_tab(mudclient *mud, int no_menus);
 void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus);
 
 extern char *mudclient_ui_tab_names[6];
+extern int ui_tab_widths[6];
 
 #endif

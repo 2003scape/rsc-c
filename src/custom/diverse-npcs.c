@@ -1,9 +1,3 @@
-#include <assert.h>
-#include <stdbool.h>
-
-#include "../game-character.h"
-#include "../game-data.h"
-
 #include "diverse-npcs.h"
 
 /*
@@ -133,6 +127,7 @@ add_diverse_npcs(void) {
 
     game_data.npcs = realloc(game_data.npcs,
         (game_data.npc_count + 100) * sizeof(struct NpcConfig));
+
     assert(game_data.npcs != NULL);
 
     /* Men: can't make them women due to chat dialogue... */

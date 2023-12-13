@@ -149,16 +149,19 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - OPTIONS_WIDTH - 3;
     int ui_y = 36;
 
+    mud->ui_tab_min_x = ui_x;
+    mud->ui_tab_max_x = mud->surface->width;
+    mud->ui_tab_min_y = 0;
+
+    mud->ui_tab_max_y =
+        311 + (mud->options->show_additional_options ? OPTIONS_LINE_BREAK : 0);
+
     int player_x = mud->region_x + mud->local_region_x;
     int player_y = mud->region_y + mud->local_region_y;
 
     int show_skip_tutorial =
         mud->options->skip_tutorial && (player_x >= 190 && player_x <= 240 &&
                                         player_y >= 720 && player_y <= 770);
-
-    surface_draw_sprite(mud->surface,
-                              mud->surface->width - UI_TABS_WIDTH - 3, 3,
-                              mud->sprite_media + 6);
 
     surface_draw_box_alpha(
         mud->surface, ui_x, ui_y, OPTIONS_WIDTH,
@@ -400,6 +403,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
     if (mouse_x >= 0 && mouse_y >= 0 && mouse_x < 196 &&
         mouse_y < options_height) {
         int x = ui_x + 3;
+
         int y = ui_y + OPTIONS_LINE_BREAK +
                 (MUD_IS_COMPACT ? 0 : OPTIONS_LINE_BREAK);
 

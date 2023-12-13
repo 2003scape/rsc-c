@@ -151,8 +151,21 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - STATS_WIDTH - 3;
     int ui_y = 36;
 
-    surface_draw_sprite(mud->surface, mud->surface->width - UI_TABS_WIDTH - 3,
-                        3, mud->sprite_media + STATS_TAB_SPRITE_OFFSET);
+#if (VERSION_MEDIA >= 59)
+    int label_x = mud->surface->width - STATS_WIDTH - 4;
+    int label_y = UI_BUTTON_SIZE - 9;
+
+    surface_draw_box(mud->surface, label_x,
+            label_y, STATS_WIDTH, 9, UI_LABEL_COLOUR);
+
+    surface_draw_sprite(mud->surface, label_x + 1, label_y + 1,
+                        mud->sprite_media + 26 + STATS_TAB);
+#endif
+
+    mud->ui_tab_min_x = ui_x;
+    mud->ui_tab_max_x = mud->surface->width;
+    mud->ui_tab_min_y = 0;
+    mud->ui_tab_max_y = ui_y + height + 5;
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + STATS_TAB_HEIGHT,
                            STATS_WIDTH, height - STATS_TAB_HEIGHT, GREY_DC,

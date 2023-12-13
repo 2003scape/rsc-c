@@ -599,8 +599,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 #endif
             base_atlas_position = base_texture_position.atlas_position;
         }
-    } else if (sprite_id >= surface->mud->sprite_media && sprite_id <= 3166) {
-        // TODO magic number ^
+    } else if (sprite_id >= surface->mud->sprite_media && sprite_id < mud->sprite_projectile + game_data.projectile_sprite) {
         int atlas_index = sprite_id - surface->mud->sprite_media;
 
         atlas_position = gl_media_atlas_positions[atlas_index];
@@ -2488,10 +2487,10 @@ void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
             int colour = src[src_pos++];
 
             if (colour != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
+                dest[dest_pos] = colour;
             }
+
+            dest_pos++;
         }
 
         dest_pos += dest_offset;
@@ -2508,10 +2507,10 @@ void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
             int8_t index = colours[src_pos++];
 
             if (index != 0) {
-                dest[dest_pos++] = palette[index & 0xff];
-            } else {
-                dest_pos++;
+                dest[dest_pos] = palette[index & 0xff];
             }
+
+            dest_pos++;
         }
 
         dest_pos += dest_offset;
@@ -2531,11 +2530,10 @@ void surface_plot_scale_from13(int32_t *dest, int32_t *src, int j, int k,
             int colour = src[(j >> 16) + j3];
 
             if (colour != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
+                dest[dest_pos] = colour;
             }
 
+            dest_pos++;
             j += l1;
         }
 
@@ -2568,11 +2566,11 @@ void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int src_pos,
             if (colour != 0) {
                 int background_colour = dest[dest_pos];
 
-                dest[dest_pos++] =
+                dest[dest_pos] =
                     surface_blend_alpha(background_colour, colour, alpha);
-            } else {
-                dest_pos++;
             }
+
+            dest_pos++;
         }
 
         dest_pos += dest_offset;
@@ -2594,11 +2592,11 @@ void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colours,
 
                 int background_colour = dest[dest_pos];
 
-                dest[dest_pos++] =
+                dest[dest_pos] =
                     surface_blend_alpha(background_colour, colour, alpha);
-            } else {
-                dest_pos++;
             }
+
+            dest_pos++;
         }
 
         dest_pos += dest_offset;
@@ -2621,12 +2619,11 @@ void surface_transparent_scale(int32_t *dest, int32_t *src, int j, int k,
             if (colour != 0) {
                 int background_colour = dest[dest_pos];
 
-                dest[dest_pos++] =
+                dest[dest_pos] =
                     surface_blend_alpha(background_colour, colour, alpha);
-            } else {
-                dest_pos++;
             }
 
+            dest_pos++;
             j += l1;
         }
 
@@ -2657,16 +2654,15 @@ void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k,
                 int b = colour & 0xff;
 
                 if (r == g && g == b) {
-                    dest[dest_pos++] = (((r * mask_r) >> 8) << 16) +
-                                       (((g * mask_g) >> 8) << 8) +
-                                       ((b * mask_b) >> 8);
+                    dest[dest_pos] = (((r * mask_r) >> 8) << 16) +
+                                     (((g * mask_g) >> 8) << 8) +
+                                     ((b * mask_b) >> 8);
                 } else {
-                    dest[dest_pos++] = colour;
+                    dest[dest_pos] = colour;
                 }
-            } else {
-                dest_pos++;
             }
 
+            dest_pos++;
             j += l1;
         }
 
@@ -3042,11 +3038,10 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int dest_pos,
         int colour = src[(k >> 17) + (l >> 17) * l1];
 
         if (colour != 0) {
-            dest[dest_pos++] = colour;
-        } else {
-            dest_pos++;
+            dest[dest_pos] = colour;
         }
 
+        dest_pos++;
         k += i1;
         l += j1;
     }
@@ -3510,10 +3505,10 @@ void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
     for (int y = -height; y < 0; y++) {
         for (int x = -width; x < 0; x++) {
             if (font_data[font_pos++] != 0) {
-                dest[dest_pos++] = colour;
-            } else {
-                dest_pos++;
+                dest[dest_pos] = colour;
             }
+
+            dest_pos++;
         }
 
         dest_pos += dest_offset;
@@ -3729,8 +3724,8 @@ void surface_draw_string_centre(Surface *surface, const char *text, int x,
                         colour);
 }
 
-int surface_paragraph_height(Surface *surface, const char *text,
-                             FontStyle font, int max, int max_height) {
+int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,
+                             int max, int max_height) {
     int y = 0;
     int width = 0;
     int8_t *font_data = game_fonts[font];
@@ -3944,7 +3939,11 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                                     item_id);
 
                 int item_count = items_count[item_index];
-                int font_size = slot_width < ITEM_GRID_SLOT_WIDTH ? 0 : 1;
+
+                FontStyle font_style = slot_width < ITEM_GRID_SLOT_WIDTH
+                                           ? FONT_REGULAR_11
+                                           : FONT_BOLD_12;
+
                 if (show_inventory_count) {
                     char formatted_amount[15] = {0};
 
@@ -3952,7 +3951,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
                                                  formatted_amount);
 
                     surface_draw_string(surface, formatted_amount, slot_x + 1,
-                                        slot_y + 10, font_size, GREEN);
+                                        slot_y + 10, font_style, GREEN);
 
                     mudclient_format_item_amount(
                         surface->mud,
@@ -3961,7 +3960,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
                     surface_draw_string_right(
                         surface, formatted_amount, slot_x + slot_width - 2,
-                        slot_y + slot_height - 5, font_size, CYAN);
+                        slot_y + slot_height - 5, font_style, CYAN);
                 } else if (game_data.items[item_id].stackable == 0) {
                     char formatted_amount[15] = {0};
 
@@ -3970,7 +3969,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
                     surface_draw_string(
                         surface, formatted_amount, slot_x + 1 + offset_x,
-                        slot_y + 10 + offset_x, font_size, YELLOW);
+                        slot_y + 10 + offset_x, font_style, YELLOW);
                 }
             }
 
@@ -4087,68 +4086,4 @@ int surface_3ds_gl_get_sprite_texture_offsets(Surface *surface, int sprite_id,
 
     return 1;
 }
-
-#if 0
-void surface_3ds_gl_blur_texture(Surface *surface, int sprite_id,
-                                 int blur_height, int x, int y, int height) {
-    int offset_x = 0;
-    int offset_y = 0;
-
-    if (!surface_3ds_gl_get_sprite_texture_offsets(surface, sprite_id,
-                                                   &offset_x, &offset_y)) {
-        return;
-    }
-
-    uint16_t *texture_data = (uint16_t *)surface->gl_sprite_texture.data;
-
-    for (int xx = x; xx < x + surface->sprite_width[sprite_id]; xx++) {
-        for (int yy = y; yy < y + height; yy++) {
-            int r = 0;
-            int g = 0;
-            int b = 0;
-            int a = 0;
-
-            for (int x2 = xx; x2 <= xx; x2++) {
-                if (x2 >= 0 && x2 < surface->sprite_width[sprite_id]) {
-                    for (int y2 = yy - blur_height; y2 <= yy + blur_height;
-                         y2++) {
-                        if (y2 >= 0 && y2 < surface->sprite_height[sprite_id]) {
-                            int32_t pixel = _3ds_gl_rgba5551_to_rgb32(
-                                texture_data[_3ds_gl_translate_texture_index(
-                                                 x2 + offset_x, y2 + offset_y,
-                                                 1024) /
-                                             2]);
-
-                            r += (pixel >> 16) & 0xff;
-                            g += (pixel >> 8) & 0xff;
-                            b += pixel & 0xff;
-                            a++;
-                        }
-                    }
-                }
-            }
-
-            /*texture_data[] =
-                _3ds_gl_rgb32_to_rgba5551(((r / a) << 16) + ((g / a) << 8) +
-                                          (b / a));*/
-        }
-    }
-
-    surface_gl_update_dynamic_texture(surface);
-}
-
-void surface_3ds_gl_apply_login_filter(Surface *surface, int sprite_id) {
-    for (int i = 6; i >= 1; i--) {
-        surface_3ds_gl_blur_texture(surface, sprite_id, i, 0, i, 8);
-    }
-
-    int sprite_height = surface->sprite_height[sprite_id];
-
-    for (int i = 6; i >= 1; i--) {
-        surface_3ds_gl_blur_texture(surface, sprite_id, i, 0,
-                                    sprite_height - 6 - i, 8);
-    }
-}
-#endif
-
 #endif

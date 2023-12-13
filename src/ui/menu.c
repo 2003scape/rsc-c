@@ -1119,7 +1119,6 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 game_data.wall_objects[wall_object_id].name;
 
             char formatted_wall_object_name[strlen(wall_object_name) + 6];
-
             sprintf(formatted_wall_object_name, "@cya@%s", wall_object_name);
 
             if (mud->selected_wiki) {
@@ -1181,6 +1180,9 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                             "Examine", 7) != 0) {
                         strcpy(mud->menu_item_text1[mud->menu_items_count],
                                game_data.wall_objects[wall_object_id].command2);
+
+                        strcpy(mud->menu_item_text2[mud->menu_items_count],
+                               formatted_wall_object_name);
 
                         mud->menu_type[mud->menu_items_count] =
                             MENU_WALL_OBJECT_COMMAND2;
@@ -1430,6 +1432,7 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
         mud->mouse_x > mud->menu_x + mud->menu_width + 10 ||
         mud->mouse_y > mud->menu_y + mud->menu_height + 10) {
         mud->show_right_click_menu = 0;
+        // TODO on mobile set click/down to 0
         return;
     }
 
@@ -1448,9 +1451,9 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
         /* pick and store the position as soon as the right click menu is opened
          * in case the camera moves before they press it */
-        if (mud->scene->gl_terrain_pick_step == 0 &&
+        if (mud->scene->gl_terrain_pick_step == GL_PICK_STEP_NONE &&
             mud->menu_type[i] == MENU_WALK) {
-            mud->scene->gl_terrain_pick_step = 1;
+            mud->scene->gl_terrain_pick_step = GL_PICK_STEP_SAMPLE;
         }
 #endif
 
@@ -1482,13 +1485,14 @@ void mudclient_draw_hover_tooltip(mudclient *mud) {
     if (mud->options->show_hover_tooltip && mud->menu_items_count > 1 &&
         mud->mouse_button_down == 0 && mud->show_right_click_menu == 0) {
         char *menu_item_text1 = mud->menu_item_text1[mud->menu_indices[0]];
-        char *menu_item_text2 = mud->menu_item_text2[mud->menu_indices[0]];
 
         // if the first menu item equals "Walk here" then we don't want to show
         // the tooltip
         if (strcmp(menu_item_text1, "Walk here") == 0) {
             return;
         }
+
+        char *menu_item_text2 = mud->menu_item_text2[mud->menu_indices[0]];
 
         char combined[strlen(menu_item_text1) + strlen(menu_item_text2) + 2];
         sprintf(combined, "%s %s", menu_item_text1, menu_item_text2);
