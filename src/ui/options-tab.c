@@ -148,8 +148,6 @@ void mudclient_draw_change_password(mudclient *mud) {
 }
 
 void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
-    mud->options->show_additional_options = 0;
-
     int ui_x = mud->surface->width - OPTIONS_WIDTH - 3;
     int ui_y = UI_BUTTON_SIZE + 1;
 
@@ -233,9 +231,10 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
                            ui_y + security_box_height + controls_box_height,
                            OPTIONS_WIDTH, privacy_box_height, GREY_B5, 160);
 
+    int hide_logout_label = (is_touch && show_skip_tutorial);
     int logout_box_height = is_compact ? 29 : 40;
 
-    if (show_skip_tutorial) {
+    if (!hide_logout_label && show_skip_tutorial) {
         logout_box_height += OPTIONS_LINE_BREAK;
     }
 
@@ -459,10 +458,12 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
         }
     }
 
-    surface_draw_string(mud->surface, "Always logout when you finish", x, y,
-                        FONT_BOLD_12, BLACK);
+    if (!hide_logout_label) {
+        surface_draw_string(mud->surface, "Always logout when you finish", x, y,
+                            FONT_BOLD_12, BLACK);
 
-    y += OPTIONS_LINE_BREAK - (is_compact ? 2 : 0);
+        y += OPTIONS_LINE_BREAK - (is_compact ? 2 : 0);
+    }
 
     text_colour = WHITE;
 
@@ -620,7 +621,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
                 mud->settings_block_trade, mud->settings_block_duel);
         }
 
-        y += OPTIONS_LINE_BREAK + 5;
+        y += OPTIONS_LINE_BREAK + (is_compact ? 0 : 5);
 
         if (show_skip_tutorial) {
             if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
@@ -642,7 +643,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             }
         }
 
-        y += OPTIONS_LINE_BREAK - (is_compact ? 2 : 0);
+        if (!hide_logout_label) {
+            y += OPTIONS_LINE_BREAK - (is_compact ? 2 : 0);
+        }
 
         if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
             mud->mouse_y > y - 12 && mud->mouse_y < y + 4 &&
