@@ -4,19 +4,47 @@ char *magic_tabs[] = {"Magic", "Prayers"};
 
 void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - MAGIC_WIDTH - 3;
-    int ui_y = 36;
+    int ui_y = UI_BUTTON_SIZE + 1;
+
+    int height = MAGIC_HEIGHT;
+
+    int is_touch = mudclient_is_touch(mud);
+
+    if (is_touch) {
+        height = 198;
+        ui_x = UI_TABS_TOUCH_X - MAGIC_WIDTH - 1;
+        ui_y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - height - 2;
+    }
+
+#if (VERSION_MEDIA >= 59)
+    mudclient_draw_ui_tab_label(mud, MAGIC_TAB, MAGIC_WIDTH + !is_touch,
+                                ui_x - !is_touch, ui_y - 10);
+#endif
 
     mud->ui_tab_min_x = ui_x;
     mud->ui_tab_max_x = mud->surface->width;
     mud->ui_tab_min_y = 0;
     mud->ui_tab_max_y = 240;
 
-    surface_draw_box_alpha(mud->surface, ui_x, ui_y + MAGIC_TAB_HEIGHT,
-                           MAGIC_WIDTH, MAGIC_HEIGHT - MAGIC_TAB_HEIGHT,
-                           GREY_DC, 128);
+    if (is_touch) {
+        mud->ui_tab_max_x = ui_x + MAGIC_WIDTH;
+        mud->ui_tab_min_y = ui_y;
+        mud->ui_tab_max_y = ui_y + height;
+    }
 
-    surface_draw_line_horizontal(mud->surface, ui_x, ui_y + 113, MAGIC_WIDTH,
+    surface_draw_box_alpha(mud->surface, ui_x, ui_y + MAGIC_TAB_HEIGHT,
+                           MAGIC_WIDTH, height - MAGIC_TAB_HEIGHT, GREY_DC,
+                           128);
+
+    int spell_list_height =
+        mud->panel_magic->control_height[mud->control_list_magic];
+
+    int description_y = ui_y + spell_list_height + MAGIC_TAB_HEIGHT - 1;
+
+    surface_draw_line_horizontal(mud->surface, ui_x, description_y, MAGIC_WIDTH,
                                  BLACK);
+
+    description_y += 11;
 
     surface_draw_tabs(mud->surface, ui_x, ui_y, MAGIC_WIDTH, MAGIC_TAB_HEIGHT,
                       magic_tabs, 2, mud->ui_tab_magic_sub_tab);
@@ -76,11 +104,11 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                     game_data.spells[spell_index].level, spell_name);
 
             surface_draw_string(mud->surface, formatted_spell, ui_x + 2,
-                                ui_y + 124, 1, YELLOW);
+                                description_y, FONT_BOLD_12, YELLOW);
 
-            surface_draw_string(mud->surface,
-                                game_data.spells[spell_index].description,
-                                ui_x + 2, ui_y + 136, 0, WHITE);
+            surface_draw_string(
+                mud->surface, game_data.spells[spell_index].description,
+                ui_x + 2, description_y + 12, FONT_REGULAR_11, WHITE);
 
             for (int i = 0; i < game_data.spells[spell_index].runes_required;
                  i++) {
@@ -98,7 +126,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                 }
 
                 surface_draw_sprite(
-                    mud->surface, ui_x + 2 + i * 44, ui_y + 150,
+                    mud->surface, ui_x + 2 + i * 44, description_y + 26,
                     mud->sprite_item + game_data.items[rune_id].sprite);
 
                 char formatted_count[29] = {0};
@@ -107,7 +135,8 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                         inventory_rune_count, rune_count);
 
                 surface_draw_string(mud->surface, formatted_count,
-                                    ui_x + 2 + i * 44, ui_y + 150, 1, WHITE);
+                                    ui_x + 2 + i * 44, description_y + 26,
+                                    FONT_BOLD_12, WHITE);
             }
 
             if (mud->selected_wiki && no_menus) {
@@ -116,7 +145,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
         } else {
             surface_draw_string(mud->surface,
                                 "Point at a spell for a description", ui_x + 2,
-                                ui_y + 124, 1, BLACK);
+                                description_y, FONT_BOLD_12, BLACK);
         }
     } else if (mud->ui_tab_magic_sub_tab == 1) {
         panel_clear_list(mud->panel_magic, mud->control_list_magic);
@@ -155,19 +184,20 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                     game_data.prayers[prayer_index].level, prayer_name);
 
             surface_draw_string_centre(mud->surface, formatted_prayer,
-                                       ui_x + (MAGIC_WIDTH / 2), ui_y + 130, 1,
-                                       YELLOW);
+                                       ui_x + (MAGIC_WIDTH / 2),
+                                       description_y + 6, FONT_BOLD_12, YELLOW);
 
             surface_draw_string_centre(
                 mud->surface, game_data.prayers[prayer_index].description,
-                ui_x + (MAGIC_WIDTH / 2), ui_y + 145, 0, WHITE);
+                ui_x + (MAGIC_WIDTH / 2), description_y + 21, FONT_REGULAR_11,
+                WHITE);
 
             sprintf(formatted_prayer, "Drain rate: %d",
                     game_data.prayers[prayer_index].drain);
 
             surface_draw_string_centre(mud->surface, formatted_prayer,
-                                       ui_x + (MAGIC_WIDTH / 2), ui_y + 160, 1,
-                                       BLACK);
+                                       ui_x + (MAGIC_WIDTH / 2),
+                                       description_y + 36, FONT_BOLD_12, BLACK);
 
             if (mud->selected_wiki && no_menus) {
                 mudclient_menu_add_wiki(mud, prayer_name, prayer_name);
@@ -175,7 +205,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
         } else {
             surface_draw_string(mud->surface,
                                 "Point at a prayer for a description", ui_x + 2,
-                                ui_y + 124, 1, BLACK);
+                                description_y, FONT_BOLD_12, BLACK);
         }
     }
 
@@ -188,7 +218,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                           ? 1
                           : mouse_x >= 0 && mouse_x < MAGIC_WIDTH;
 
-    if (!is_within_x || !(mouse_y >= 0 && mouse_y < MAGIC_HEIGHT)) {
+    if (!is_within_x || !(mouse_y >= 0 && mouse_y < height)) {
         return;
     }
 

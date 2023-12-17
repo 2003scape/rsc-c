@@ -132,16 +132,37 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - SOCIAL_WIDTH - 3;
     int ui_y = 36;
 
+    int height = SOCIAL_HEIGHT;
+
+    int is_touch = mudclient_is_touch(mud);
+
+    if (is_touch) {
+        height = 198;
+        ui_x = UI_TABS_TOUCH_X - SOCIAL_WIDTH - 1;
+        ui_y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - height - 2;
+    }
+
+#if (VERSION_MEDIA >= 59)
+    mudclient_draw_ui_tab_label(mud, SOCIAL_TAB, SOCIAL_WIDTH + !is_touch,
+                                ui_x - !is_touch, ui_y - 10);
+#endif
+
     mud->ui_tab_min_x = ui_x;
     mud->ui_tab_max_x = mud->surface->width;
     mud->ui_tab_min_y = 0;
     mud->ui_tab_max_y = 240;
 
-    surface_draw_box_alpha(mud->surface, ui_x, ui_y + SOCIAL_TAB_HEIGHT,
-                           SOCIAL_WIDTH, SOCIAL_HEIGHT - SOCIAL_TAB_HEIGHT,
-                           GREY_DC, 128);
+    if (is_touch) {
+        mud->ui_tab_max_x = ui_x + SOCIAL_WIDTH;
+        mud->ui_tab_min_y = ui_y;
+        mud->ui_tab_max_y = ui_y + height;
+    }
 
-    surface_draw_line_horizontal(mud->surface, ui_x, ui_y + SOCIAL_HEIGHT - 16,
+    surface_draw_box_alpha(mud->surface, ui_x, ui_y + SOCIAL_TAB_HEIGHT,
+                           SOCIAL_WIDTH, height - SOCIAL_TAB_HEIGHT, GREY_DC,
+                           128);
+
+    surface_draw_line_horizontal(mud->surface, ui_x, ui_y + height - 16,
                                  SOCIAL_WIDTH, BLACK);
 
     surface_draw_tabs(mud->surface, ui_x, ui_y, SOCIAL_WIDTH, SOCIAL_TAB_HEIGHT,
@@ -232,22 +253,21 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
         }
 
         surface_draw_string_centre(mud->surface, formatted,
-                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + 35, 1,
-                                   WHITE);
+                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + 35,
+                                   FONT_BOLD_12, WHITE);
 
         int text_colour = BLACK;
 
         if (mud->mouse_x > ui_x && mud->mouse_x < ui_x + SOCIAL_WIDTH &&
-            mud->mouse_y > ui_y + SOCIAL_HEIGHT - 16 &&
-            mud->mouse_y < ui_y + SOCIAL_HEIGHT) {
+            mud->mouse_y > ui_y + height - 16 && mud->mouse_y < ui_y + height) {
             text_colour = YELLOW;
         } else {
             text_colour = WHITE;
         }
 
         surface_draw_string_centre(mud->surface, "Click here to add a friend",
-                                   ui_x + (SOCIAL_WIDTH / 2),
-                                   ui_y + SOCIAL_HEIGHT - 3, 1, text_colour);
+                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + height - 3,
+                                   FONT_BOLD_12, text_colour);
     } else if (mud->ui_tab_social_sub_tab == 1) {
         int ignore_index = panel_get_list_entry_index(mud->panel_social_list,
                                                       mud->control_list_social);
@@ -263,22 +283,21 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
         }
 
         surface_draw_string_centre(mud->surface, formatted,
-                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + 35, 1,
-                                   WHITE);
+                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + 35,
+                                   FONT_BOLD_12, WHITE);
 
         int text_colour = BLACK;
 
         if (mud->mouse_x > ui_x && mud->mouse_x < ui_x + SOCIAL_WIDTH &&
-            mud->mouse_y > ui_y + SOCIAL_HEIGHT - 16 &&
-            mud->mouse_y < ui_y + SOCIAL_HEIGHT) {
+            mud->mouse_y > ui_y + height - 16 && mud->mouse_y < ui_y + height) {
             text_colour = YELLOW;
         } else {
             text_colour = WHITE;
         }
 
         surface_draw_string_centre(mud->surface, "Click here to add a name",
-                                   ui_x + (SOCIAL_WIDTH / 2),
-                                   ui_y + SOCIAL_HEIGHT - 3, 1, text_colour);
+                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + height - 3,
+                                   FONT_BOLD_12, text_colour);
     }
 
     if (!no_menus) {
@@ -290,7 +309,7 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
                           ? 1
                           : mouse_x >= 0 && mouse_x < SOCIAL_WIDTH;
 
-    if (!is_within_x || !(mouse_y >= 0 && mouse_y < SOCIAL_HEIGHT)) {
+    if (!is_within_x || !(mouse_y >= 0 && mouse_y < height)) {
         return;
     }
 
@@ -386,8 +405,7 @@ void mudclient_draw_social_input(mudclient *mud) {
         }
 
         if (mudclient_is_touch(mud)) {
-            int keyboard_x =
-                mud->surface->width / 2 - box_width / 2;
+            int keyboard_x = mud->surface->width / 2 - box_width / 2;
 
             int keyboard_y = dialog_y + 20;
 
@@ -396,8 +414,8 @@ void mudclient_draw_social_input(mudclient *mud) {
                 mud->mouse_y >= keyboard_y && mud->mouse_y <= keyboard_y + 20) {
 
                 mudclient_trigger_keyboard(mud, input_current, 0, keyboard_x,
-                                           keyboard_y, box_width - 5,
-                                           30, FONT_BOLD_14, 1);
+                                           keyboard_y, box_width - 5, 30,
+                                           FONT_BOLD_14, 1);
             }
         }
     }
@@ -531,5 +549,5 @@ void mudclient_draw_social_input(mudclient *mud) {
     }
 
     surface_draw_string_centre(mud->surface, "Cancel", mud->surface->width / 2,
-                               dialog_y + 23, 1, text_colour);
+                               dialog_y + 23, FONT_BOLD_12, text_colour);
 }
