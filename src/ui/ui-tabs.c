@@ -1,25 +1,33 @@
 #include "ui-tabs.h"
 
-int ui_tab_widths[] = {INVENTORY_WIDTH, MINIMAP_WIDTH,    STATS_WIDTH + 1,
-                       MAGIC_WIDTH + 1, SOCIAL_WIDTH + 1, OPTIONS_WIDTH + 1};
-
 char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
 void mudclient_draw_ui_tabs(mudclient *mud) {
+    int button_y = 3;
+
+#if (VERSION_MEDIA >= 59)
+    int button_x = mud->surface->width - UI_BUTTON_SIZE;
+
+    if (mudclient_is_touch(mud)) {
+        button_x = UI_TABS_TOUCH_X;
+        button_y = UI_TABS_TOUCH_Y;
+    }
+
+    for (int i = 0; i < 6; i++) {
+        surface_draw_sprite_alpha(mud->surface, button_x, button_y,
+                                  mud->sprite_media + 33 + i, 128);
+
+        if (mudclient_is_touch(mud)) {
+            button_y += UI_BUTTON_SIZE - 2;
+        } else {
+            button_x -= UI_BUTTON_SIZE - 2;
+        }
+    }
+#else
     int button_x =
         mud->surface->width - mud->surface->sprite_width[mud->sprite_media] - 3;
 
-#if (VERSION_MEDIA >= 59)
-    button_x -= UI_BUTTON_SIZE - 3;
-
-    for (int i = 0; i < 6; i++) {
-        surface_draw_sprite_alpha(mud->surface, button_x, 3,
-                                  mud->sprite_media + 33 + i, 128);
-
-        button_x -= UI_BUTTON_SIZE - 2;
-    }
-#else
     surface_draw_sprite_alpha(mud->surface, button_x, 3, mud->sprite_media,
                               128);
 #endif
@@ -39,16 +47,27 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     is_toggle = 1;
 #endif
 
-    int offset_start_x = mud->surface->width - UI_BUTTON_SIZE;
-    int offset_end_x = mud->surface->width - 3;
+    int offset_min_x = mud->surface->width - UI_BUTTON_SIZE;
+    int offset_max_x = mud->surface->width - 3;
+
+    int offset_min_y = 3;
+    int offset_max_y = UI_BUTTON_SIZE;
+
+    if (mudclient_is_touch(mud)) {
+        offset_min_x = UI_TABS_TOUCH_X;
+        offset_max_x = mud->surface->width;
+
+        offset_min_y = UI_TABS_TOUCH_Y;
+        offset_max_y = offset_min_y + (UI_BUTTON_SIZE - 2);
+    }
 
     int has_changed_tab = 0;
 
     for (int i = 0; i < 6; i++) {
         int tab = i + 1;
 
-        if (mud->mouse_x >= offset_start_x && mud->mouse_x < offset_end_x &&
-            mud->mouse_y >= 3 && mud->mouse_y < UI_BUTTON_SIZE) {
+        if (mud->mouse_x >= offset_min_x && mud->mouse_x < offset_max_x &&
+            mud->mouse_y >= offset_min_y && mud->mouse_y < offset_max_y) {
             char *tab_name = mudclient_ui_tab_names[i];
             char *page = tab == MAP_TAB ? "RuneScape_Classic_Map" : tab_name;
 
@@ -81,10 +100,16 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
             }
         }
 
-        offset_start_x -= UI_BUTTON_SIZE - 2;
-        offset_end_x -= UI_BUTTON_SIZE - 2;
+        if (mudclient_is_touch(mud)) {
+            offset_min_y += UI_BUTTON_SIZE - 2;
+            offset_max_y += UI_BUTTON_SIZE - 2;
+        } else {
+            offset_min_x -= UI_BUTTON_SIZE - 2;
+            offset_max_x -= UI_BUTTON_SIZE - 2;
+        }
     }
 
+    // TODO check this for changing tabs too
     int is_dragging_scrollbar = 0;
 
     if (mud->options->off_handle_scroll_drag) {
@@ -106,6 +131,20 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
     }
 }
 
+void mudclient_draw_ui_tab_label(mudclient *mud, int selected_tab, int width,
+                                 int x, int y) {
+    surface_draw_box(mud->surface, x, y, width, 9, UI_LABEL_COLOUR);
+
+    int sprite_id = mud->sprite_media + 26 + selected_tab;
+
+    int label_offset = !mudclient_is_touch(mud) && mud->show_ui_tab > 4
+                           ? width - mud->surface->sprite_width[sprite_id] - 3
+                           : 1;
+
+    surface_draw_sprite(mud->surface, x + label_offset, y + 1, sprite_id);
+    surface_draw_line_horizontal(mud->surface, x, y + 9, width, BLACK);
+}
+
 void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus) {
     if (mud->show_ui_tab == INVENTORY_TAB) {
         mudclient_draw_ui_tab_inventory(mud, no_menus);
@@ -122,35 +161,24 @@ void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus) {
     }
 
     if (mud->show_ui_tab != 0) {
+        int selected_y = 3;
+
 #if (VERSION_MEDIA >= 59)
-        int label_width = ui_tab_widths[mud->show_ui_tab - 1];
-        int label_x = mud->surface->width - label_width - 3;
-        int label_y = UI_BUTTON_SIZE - 9;
-
-        surface_draw_box(mud->surface, label_x, label_y, label_width, 9,
-                         UI_LABEL_COLOUR);
-
-        int sprite_id = mud->sprite_media + 26 + mud->show_ui_tab;
-
-        int label_offset =
-            mud->show_ui_tab > 4
-                ? label_width - mud->surface->sprite_width[sprite_id] - 3
-                : 1;
-
-        surface_draw_sprite(mud->surface, label_x + label_offset, label_y + 1,
-                            sprite_id);
-
-        surface_draw_line_horizontal(mud->surface, label_x, label_y + 9,
-                                     label_width, BLACK);
-
         int selected_x = mud->surface->width -
                          UI_BUTTON_SIZE * mud->show_ui_tab +
                          (mud->show_ui_tab - 1) * 2;
+
+        if (mudclient_is_touch(mud)) {
+            selected_x = UI_TABS_TOUCH_X;
+
+            selected_y =
+                UI_TABS_TOUCH_Y + (mud->show_ui_tab - 1) * (UI_BUTTON_SIZE - 2);
+        }
 #else
         int selected_x = mud->surface->width - UI_TABS_WIDTH - 3;
 #endif
 
-        surface_draw_sprite(mud->surface, selected_x, 3,
+        surface_draw_sprite(mud->surface, selected_x, selected_y,
                             mud->sprite_media + mud->show_ui_tab);
     }
 }

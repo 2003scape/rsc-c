@@ -4,7 +4,8 @@
 #include "../mudclient.h"
 
 #define STATS_WIDTH 196
-#define STATS_HEIGHT (MUD_IS_COMPACT ? 182 : 275)
+#define STATS_HEIGHT 275
+#define STATS_COMPACT_HEIGHT 171
 #define STATS_TAB_HEIGHT 24
 #define STATS_LINE_BREAK (MUD_IS_COMPACT ? 11 : 12)
 
@@ -23,6 +24,8 @@ extern char *stats_tabs[];
 
 void init_stats_tab_global();
 
+void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
+                                     int line_break, int no_menus);
 void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus);
 
 #endif

@@ -44,15 +44,6 @@ int quests_length = 0;
 char *stats_tabs[3] = {0};
 
 void init_stats_tab_global() {
-    if (MUD_IS_COMPACT) {
-        stats_tabs[0] = "Skills";
-        stats_tabs[1] = "Gear";
-        stats_tabs[2] = "Quests";
-    } else {
-        stats_tabs[0] = "Skills";
-        stats_tabs[1] = "Quests";
-    }
-
     skills_length = sizeof(skill_names) / sizeof(skill_names[0]);
 
     int total_exp = 0;
@@ -87,21 +78,21 @@ void init_stats_tab_global() {
 }
 
 void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
-                                     int no_menus) {
+                                     int line_break, int no_menus) {
     if (no_menus && mud->selected_wiki && mud->mouse_x > x + 5 &&
-        mud->mouse_y > y - STATS_LINE_BREAK &&
-        mud->mouse_y < y + (STATS_LINE_BREAK / 2) - 4) {
+        mud->mouse_y > y - line_break &&
+        mud->mouse_y < y + (line_break / 2) - 4) {
         mudclient_menu_add_wiki(mud, "Equipment Status", "Equipment");
     }
 
     surface_draw_string(mud->surface, "Equipment Status", x + 5, y, 3, YELLOW);
 
-    y += STATS_LINE_BREAK;
+    y += line_break;
 
     for (int i = 0; i < 3; i++) {
         if (no_menus && mud->selected_wiki && mud->mouse_x > x + 5 &&
             mud->mouse_x < x + (STATS_WIDTH / 2) + 25 &&
-            mud->mouse_y > y - STATS_LINE_BREAK && mud->mouse_y < y + 3) {
+            mud->mouse_y > y - line_break && mud->mouse_y < y + 3) {
             mudclient_menu_add_wiki(mud, equipment_stat_names[i],
                                     equipment_stat_names[i]);
         }
@@ -117,7 +108,7 @@ void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
         if (i < 2) {
             if (no_menus && mud->selected_wiki &&
                 mud->mouse_x > x + (STATS_WIDTH / 2) + 25 &&
-                mud->mouse_y > y - STATS_LINE_BREAK && mud->mouse_y < y + 3) {
+                mud->mouse_y > y - line_break && mud->mouse_y < y + 3) {
                 mudclient_menu_add_wiki(mud, equipment_stat_names[i + 3],
                                         equipment_stat_names[i + 3]);
             }
@@ -129,37 +120,54 @@ void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
                                 x + (STATS_WIDTH / 2) + 25, y, 1, WHITE);
         }
 
-        y += STATS_LINE_BREAK + 1;
+        y += line_break + 1;
     }
 }
 
 void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
+    int ui_x = mud->surface->width - STATS_WIDTH - 3;
+    int ui_y = UI_BUTTON_SIZE + 1;
+
     int height = STATS_HEIGHT;
 
-    if (MUD_IS_COMPACT && mud->ui_tab_stats_sub_tab == 1) {
+    int is_touch = mudclient_is_touch(mud);
+
+    int is_compact =
+        is_touch || mud->surface->height < (height + STATS_LINE_BREAK) + ui_y;
+
+    if (is_compact) {
+        height = STATS_COMPACT_HEIGHT;
+
+        stats_tabs[0] = "Skills";
+        stats_tabs[1] = "Gear";
+        stats_tabs[2] = "Quests";
+    } else {
+        stats_tabs[0] = "Skills";
+        stats_tabs[1] = "Quests";
+    }
+
+    int line_break = (is_compact ? 11 : 12);
+
+    if (mud->options->total_experience || mud->options->remaining_experience) {
+        height += line_break;
+    }
+
+    mud->panel_quests->control_height[mud->control_list_quest] =
+        height - STATS_TAB_HEIGHT;
+
+    /* equipment screen */
+    if (is_compact && mud->ui_tab_stats_sub_tab == 1) {
         height = 78;
     }
 
-    if (!MUD_IS_COMPACT && (mud->options->total_experience ||
-                            mud->options->remaining_experience)) {
-        height += STATS_LINE_BREAK;
-
-        mud->panel_quests->control_height[mud->control_list_quest] =
-            251 + STATS_LINE_BREAK;
+    if (is_touch) {
+        ui_x = UI_TABS_TOUCH_X - STATS_WIDTH - 1;
+        ui_y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - height - 2;
     }
 
-    int ui_x = mud->surface->width - STATS_WIDTH - 3;
-    int ui_y = 36;
-
 #if (VERSION_MEDIA >= 59)
-    int label_x = mud->surface->width - STATS_WIDTH - 4;
-    int label_y = UI_BUTTON_SIZE - 9;
-
-    surface_draw_box(mud->surface, label_x,
-            label_y, STATS_WIDTH, 9, UI_LABEL_COLOUR);
-
-    surface_draw_sprite(mud->surface, label_x + 1, label_y + 1,
-                        mud->sprite_media + 26 + STATS_TAB);
+    mudclient_draw_ui_tab_label(mud, STATS_TAB, STATS_WIDTH + !is_touch,
+                                ui_x - !is_touch, ui_y - 10);
 #endif
 
     mud->ui_tab_min_x = ui_x;
@@ -175,7 +183,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                                  STATS_WIDTH, BLACK);
 
     surface_draw_tabs(mud->surface, ui_x, ui_y, STATS_WIDTH, STATS_TAB_HEIGHT,
-                      stats_tabs, MUD_IS_COMPACT ? 3 : 2,
+                      stats_tabs, is_compact ? 3 : 2,
                       mud->ui_tab_stats_sub_tab);
 
     /* the handler for the skills/equipment tab */
@@ -184,17 +192,16 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         int selected_skill = -1;
         int total_experience = 0;
 
-        if (!MUD_IS_COMPACT) {
+        if (!is_compact) {
             surface_draw_string(mud->surface, "Skills", ui_x + 5, y, 3, YELLOW);
 
             if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
                 mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 8 &&
-                mud->mouse_y > y - (STATS_LINE_BREAK - 1) &&
-                mud->mouse_y < y + 2) {
+                mud->mouse_y > y - (line_break - 1) && mud->mouse_y < y + 2) {
                 mudclient_menu_add_wiki(mud, "Skills", "Skills");
             }
 
-            y += STATS_LINE_BREAK + 1;
+            y += line_break + 1;
         }
 
         /* draw two columns with each skill name and current/base levels */
@@ -206,8 +213,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             int text_colour = WHITE;
 
             if (no_menus && mud->mouse_x > ui_x + 3 &&
-                mud->mouse_y >= y - (STATS_LINE_BREAK - 1) &&
-                mud->mouse_y < y + 2 &&
+                mud->mouse_y >= y - (line_break - 1) && mud->mouse_y < y + 2 &&
                 mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 8) {
                 text_colour = RED;
                 selected_skill = i;
@@ -227,10 +233,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             text_colour = WHITE;
 
             if (no_menus && mud->mouse_x >= ui_x + 90 &&
-                mud->mouse_y >=
-                    y - (STATS_LINE_BREAK * (MUD_IS_COMPACT ? 1 : 2)) &&
-                mud->mouse_y <
-                    y - (MUD_IS_COMPACT ? 0 : (STATS_LINE_BREAK - 1)) &&
+                mud->mouse_y >= y - (line_break * (is_compact ? 1 : 2)) &&
+                mud->mouse_y < y - (is_compact ? 0 : (line_break - 1)) &&
                 mud->mouse_x < ui_x + STATS_WIDTH) {
                 text_colour = RED;
                 selected_skill = i + 9;
@@ -240,22 +244,21 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                     mud->player_skill_current[i + 9],
                     mud->player_skill_base[i + 9]);
 
-            surface_draw_string(mud->surface, formatted_skill,
-                                ui_x + (STATS_WIDTH / 2) - 5,
-                                y - (MUD_IS_COMPACT ? 0 : STATS_LINE_BREAK + 1),
-                                1, text_colour);
+            surface_draw_string(
+                mud->surface, formatted_skill, ui_x + (STATS_WIDTH / 2) - 5,
+                y - (is_compact ? 0 : line_break + 1), 1, text_colour);
 
-            y += STATS_LINE_BREAK + 1;
+            y += line_break + 1;
         }
 
-        if (MUD_IS_COMPACT) {
-            y += STATS_LINE_BREAK + 1;
+        if (is_compact) {
+            y += line_break + 1;
         }
 
         if (no_menus && mud->selected_wiki &&
             mud->mouse_x > ui_x + (STATS_WIDTH / 2) - 5 &&
-            mud->mouse_y > y - (STATS_LINE_BREAK * 2) &&
-            mud->mouse_y < y - (STATS_LINE_BREAK - 1)) {
+            mud->mouse_y > y - (line_break * 2) &&
+            mud->mouse_y < y - (line_break - 1)) {
             mudclient_menu_add_wiki(mud, "Quest Points", "Quest Points");
         }
 
@@ -267,14 +270,14 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         surface_draw_string(mud->surface, formatted_quest_points,
                             ui_x + (STATS_WIDTH / 2) - 5, y - 13, 1, WHITE);
 
-        if (!MUD_IS_COMPACT) {
-            y += STATS_LINE_BREAK;
+        if (!is_compact) {
+            y += line_break;
         }
 
         if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
             mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 5 &&
-            mud->mouse_y > y - (STATS_LINE_BREAK * 2) &&
-            mud->mouse_y < y - (STATS_LINE_BREAK - 1)) {
+            mud->mouse_y > y - (line_break * 2) &&
+            mud->mouse_y < y - (line_break - 1)) {
             mudclient_menu_add_wiki(mud, "Fatigue", "Fatigue");
         }
 
@@ -286,31 +289,30 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         surface_draw_string(mud->surface, formatted_fatigue, ui_x + 5, y - 13,
                             1, WHITE);
 
-        if (MUD_IS_COMPACT) {
+        if (is_compact) {
             y += 2;
         } else {
             y += 8;
 
-            mudclient_draw_equipment_status(mud, ui_x, y, no_menus);
+            mudclient_draw_equipment_status(mud, ui_x, y, line_break, no_menus);
 
             y += 51;
-            y += STATS_LINE_BREAK / 2;
+            y += line_break / 2;
         }
 
-        surface_draw_line_horizontal(mud->surface, ui_x,
-                                     y - (MUD_IS_COMPACT ? 12 : 15),
-                                     STATS_WIDTH, BLACK);
+        surface_draw_line_horizontal(
+            mud->surface, ui_x, y - (is_compact ? 12 : 15), STATS_WIDTH, BLACK);
 
         char formatted_number[15] = {0};
 
-        int wiki_height = STATS_LINE_BREAK * 2;
+        int wiki_height = line_break * 2;
 
         if (mud->options->total_experience) {
-            wiki_height += STATS_LINE_BREAK;
+            wiki_height += line_break;
         }
 
         if (selected_skill != -1) {
-            if (!MUD_IS_COMPACT) {
+            if (!is_compact) {
                 /* longest skill (11) + 6 + 1 */
                 char formatted_skill[18] = {0};
                 sprintf(formatted_skill, "%s skill",
@@ -319,7 +321,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 surface_draw_string(mud->surface, formatted_skill, ui_x + 5, y,
                                     1, YELLOW);
 
-                y += STATS_LINE_BREAK;
+                y += line_break;
             }
 
             int next_level_at = experience_array[0];
@@ -341,7 +343,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             surface_draw_string(mud->surface, formatted_xp, ui_x + 5, y, 1,
                                 WHITE);
 
-            y += STATS_LINE_BREAK;
+            y += line_break;
 
             mudclient_format_number_commas(mud, next_level_at / 4,
                                            formatted_number);
@@ -353,7 +355,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                                 WHITE);
 
             if (mud->options->remaining_experience) {
-                y += STATS_LINE_BREAK;
+                y += line_break;
 
                 int remaining_xp = (next_level_at - total_xp);
 
@@ -376,16 +378,16 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             }
         } else {
             if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
-                mud->mouse_y > y - STATS_LINE_BREAK &&
-                mud->mouse_y < y - STATS_LINE_BREAK + wiki_height + 3) {
+                mud->mouse_y > y - line_break &&
+                mud->mouse_y < y - line_break + wiki_height + 3) {
                 mudclient_menu_add_wiki(mud, "Experience", "Experience");
             }
 
-            if (!MUD_IS_COMPACT) {
+            if (!is_compact) {
                 surface_draw_string(mud->surface, "Overall levels", ui_x + 5, y,
                                     1, YELLOW);
 
-                y += STATS_LINE_BREAK;
+                y += line_break;
             }
 
             int total_level = 0;
@@ -402,7 +404,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             surface_draw_string(mud->surface, formatted_total, ui_x + 5, y, 1,
                                 WHITE);
 
-            y += STATS_LINE_BREAK;
+            y += line_break;
 
             if (mud->options->total_experience) {
                 mudclient_format_number_commas(mud, total_experience,
@@ -413,11 +415,11 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 surface_draw_string(mud->surface, formatted_total, ui_x + 5, y,
                                     1, WHITE);
 
-                y += STATS_LINE_BREAK;
+                y += line_break;
             }
 
             if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x &&
-                mud->mouse_y > y - STATS_LINE_BREAK && mud->mouse_y < y + 5) {
+                mud->mouse_y > y - line_break && mud->mouse_y < y + 5) {
                 mudclient_menu_add_wiki(mud, "Combat level", "Combat level");
             }
 
@@ -426,17 +428,17 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             sprintf(formatted_combat, "Combat level: %d",
                     mud->local_player->level);
 
-            surface_draw_string(mud->surface, formatted_combat, ui_x + 5, y, 1,
-                                WHITE);
+            surface_draw_string(mud->surface, formatted_combat, ui_x + 5, y,
+                                FONT_BOLD_12, WHITE);
 
-            y += STATS_LINE_BREAK;
+            y += line_break;
         }
-    } else if ((!MUD_IS_COMPACT && mud->ui_tab_stats_sub_tab == 1) ||
-               (MUD_IS_COMPACT && mud->ui_tab_stats_sub_tab == 2)) {
+    } else if ((!is_compact && mud->ui_tab_stats_sub_tab == 1) ||
+               (is_compact && mud->ui_tab_stats_sub_tab == 2)) {
         int stats_height = 36 + STATS_HEIGHT + 5;
 
         if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
-            mud->mouse_y > ui_y + 24 + STATS_LINE_BREAK &&
+            mud->mouse_y > ui_y + 24 + line_break &&
             mud->mouse_y < ui_y + stats_height) {
             int quest_index =
                 mud->panel_quests
@@ -481,8 +483,9 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         }
 
         panel_draw_panel(mud->panel_quests);
-    } else if (MUD_IS_COMPACT && mud->ui_tab_stats_sub_tab == 1) {
-        mudclient_draw_equipment_status(mud, ui_x, ui_y + 38, no_menus);
+    } else if (is_compact && mud->ui_tab_stats_sub_tab == 1) {
+        mudclient_draw_equipment_status(mud, ui_x, ui_y + 38, line_break,
+                                        no_menus);
     }
 
     if (!no_menus) {
@@ -499,7 +502,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                           : mouse_x >= 0 && mouse_x < STATS_WIDTH;
 
     if (is_within_x && mouse_y >= 0 && mouse_y < height) {
-        int quest_tab = MUD_IS_COMPACT ? 2 : 1;
+        int quest_tab = is_compact ? 2 : 1;
 
         if (mud->ui_tab_stats_sub_tab == quest_tab) {
             panel_handle_mouse(mud->panel_quests, mouse_x + ui_x,
@@ -508,7 +511,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         }
 
         if (mouse_y <= STATS_TAB_HEIGHT) {
-            int total_tabs = MUD_IS_COMPACT ? 3 : 2;
+            int total_tabs = is_compact ? 3 : 2;
             int selected_tab = mouse_x / (STATS_WIDTH / total_tabs);
 
             if (selected_tab < 0 || selected_tab >= total_tabs) {
@@ -518,7 +521,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             if (mud->selected_wiki) {
                 char *wiki_page = stats_tabs[selected_tab];
 
-                if (MUD_IS_COMPACT && selected_tab == 1) {
+                if (is_compact && selected_tab == 1) {
                     wiki_page = "Equipment";
                 }
 

@@ -4,6 +4,10 @@
 #define UI_TABS_WIDTH 245
 #define UI_BUTTON_SIZE 35
 
+#define UI_TABS_TOUCH_HEIGHT (((UI_BUTTON_SIZE - 2) * 6) + 1)
+#define UI_TABS_TOUCH_X (mud->surface->width - UI_BUTTON_SIZE - 11)
+#define UI_TABS_TOUCH_Y (mud->surface->height - UI_TABS_TOUCH_HEIGHT) - 30
+
 #define INVENTORY_TAB 1
 #define MAP_TAB 2
 #define STATS_TAB 3
@@ -20,11 +24,11 @@
 #include "stats-tab.h"
 
 void mudclient_draw_ui_tabs(mudclient *mud);
-void mudclient_toggle_ui_tab(mudclient *mud, int tab);
+void mudclient_draw_ui_tab_label(mudclient *mud, int selected_tab, int width,
+                                 int x, int y);
 void mudclient_set_active_ui_tab(mudclient *mud, int no_menus);
 void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus);
 
 extern char *mudclient_ui_tab_names[6];
-extern int ui_tab_widths[6];
 
 #endif
