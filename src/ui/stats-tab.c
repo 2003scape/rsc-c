@@ -522,9 +522,17 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         int quest_tab = is_compact ? 2 : 1;
 
         if (mud->ui_tab_stats_sub_tab == quest_tab) {
-            panel_handle_mouse(mud->panel_quests, mouse_x + ui_x,
-                               mouse_y + ui_y, mud->last_mouse_button_down,
-                               mud->mouse_button_down, mud->mouse_scroll_delta);
+            if (is_touch) {
+                panel_handle_mouse(
+                    mud->panel_quests, mudclient_finger_1_x,
+                    mudclient_finger_1_y, mud->last_mouse_button_down,
+                    mudclient_finger_1_down, mud->mouse_scroll_delta);
+            } else {
+                panel_handle_mouse(mud->panel_quests, mud->mouse_x,
+                                   mud->mouse_y, mud->last_mouse_button_down,
+                                   mud->mouse_button_down,
+                                   mud->mouse_scroll_delta);
+            }
         }
 
         if (mouse_y <= STATS_TAB_HEIGHT) {

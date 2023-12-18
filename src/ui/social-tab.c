@@ -211,10 +211,22 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
     int mouse_x = mud->mouse_x - ui_x;
     int mouse_y = mud->mouse_y - ui_y;
 
+    int handle_panel_input_early = is_touch;
+
 #ifdef _3DS
-    panel_handle_mouse(mud->panel_social_list, mouse_x + ui_x, mouse_y + ui_y,
+    handle_panel_input_early = 1;
+
+    panel_handle_mouse(mud->panel_social_list, mud->mouse_x, mud->mouse_y,
                        mud->last_mouse_button_down, mud->mouse_button_down,
                        mud->mouse_scroll_delta);
+#else
+    if (is_touch) {
+        handle_panel_input_early = 1;
+
+        panel_handle_mouse(mud->panel_social_list, mudclient_finger_1_x,
+                           mudclient_finger_1_y, mud->last_mouse_button_down,
+                           mudclient_finger_1_down, mud->mouse_scroll_delta);
+    }
 #endif
 
     panel_draw_panel(mud->panel_social_list);
@@ -304,19 +316,19 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
         return;
     }
 
-#ifndef _3DS
-    int is_within_x = mud->options->off_handle_scroll_drag
-                          ? 1
-                          : mouse_x >= 0 && mouse_x < SOCIAL_WIDTH;
+    if (!handle_panel_input_early) {
+        int is_within_x = mud->options->off_handle_scroll_drag
+                              ? 1
+                              : mouse_x >= 0 && mouse_x < SOCIAL_WIDTH;
 
-    if (!is_within_x || !(mouse_y >= 0 && mouse_y < height)) {
-        return;
+        if (!is_within_x || !(mouse_y >= 0 && mouse_y < height)) {
+            return;
+        }
+
+        panel_handle_mouse(mud->panel_social_list, mouse_x + ui_x,
+                           mouse_y + ui_y, mud->last_mouse_button_down,
+                           mud->mouse_button_down, mud->mouse_scroll_delta);
     }
-
-    panel_handle_mouse(mud->panel_social_list, mouse_x + ui_x, mouse_y + ui_y,
-                       mud->last_mouse_button_down, mud->mouse_button_down,
-                       mud->mouse_scroll_delta);
-#endif
 
     if (mouse_y <= SOCIAL_TAB_HEIGHT && mud->mouse_button_click == 1) {
         if (mouse_x < (SOCIAL_WIDTH / 2) && mud->ui_tab_social_sub_tab == 1) {

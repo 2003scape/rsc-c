@@ -444,8 +444,10 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                                     panel->mouse_x <= corner_top_right + 24);
             }
 
-            if ((is_within_x || is_dragging) && panel->mouse_y > y + 12 &&
-                panel->mouse_y < y + height - 12) {
+            int is_within_y =
+                panel->mouse_y > y + 12 && panel->mouse_y < y + height - 12;
+
+            if ((is_within_x || is_dragging) && is_within_y) {
                 panel->control_list_scrollbar_handle_dragged[control] = 1;
 
                 int l3 = panel->mouse_y - y - 12 - (scrub_height / 2);

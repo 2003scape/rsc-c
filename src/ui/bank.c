@@ -434,9 +434,12 @@ void mudclient_draw_bank(mudclient *mud) {
         mud->bank_scroll_row = 0;
     }
 
+    // TODO DRY
+    int inventory_width = ITEM_GRID_SLOT_WIDTH * (MUD_IS_COMPACT ? 6 : 5);
+
     int show_inventory =
         mud->options->bank_inventory &&
-        mud->surface->width > INVENTORY_WIDTH + bank_width + 15;
+        mud->surface->width > inventory_width + bank_width + 15;
 
     if (show_inventory) {
         mudclient_draw_ui_tab_inventory(mud, !mud->show_right_click_menu &&
@@ -444,8 +447,8 @@ void mudclient_draw_bank(mudclient *mud) {
     }
 
     int contain_width = show_inventory && mud->surface->width <
-                                              INVENTORY_WIDTH + bank_width + 265
-                            ? mud->surface->width - INVENTORY_WIDTH - 4
+                                              inventory_width + bank_width + 265
+                            ? mud->surface->width - inventory_width - 4
                             : mud->surface->width;
 
     int ui_x = (contain_width / 2) - (bank_width / 2);
@@ -593,7 +596,7 @@ void mudclient_draw_bank(mudclient *mud) {
     }
 
     int mouse_in_inventory =
-        show_inventory && mud->mouse_x > mud->surface->width - INVENTORY_WIDTH;
+        show_inventory && mud->mouse_x > mud->surface->width - inventory_width;
 
     if (!mud->show_right_click_menu && mud->mouse_button_click != 0 &&
         !mouse_in_inventory) {

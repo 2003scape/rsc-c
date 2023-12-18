@@ -83,6 +83,8 @@ int mudclient_finger_2_x = 0;
 int mudclient_finger_2_y = 0;
 int mudclient_finger_2_down = 0;
 
+int mudclient_has_right_clicked = 0;
+
 char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
                       "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
@@ -5935,12 +5937,14 @@ void mudclient_poll_events(mudclient *mud) {
         }*/
     }
 #else
-    if (!mudclient_horizontal_drag && !mudclient_vertical_drag &&
+    if (!mudclient_has_right_clicked &&
+        !mudclient_horizontal_drag && !mudclient_vertical_drag &&
         mudclient_finger_1_down && !mudclient_finger_2_down &&
         get_ticks() - mudclient_touch_start >= 400) {
         mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
-        mudclient_finger_1_down = 0;
+        mudclient_has_right_clicked = 1;
+        // mudclient_finger_1_down = 0;
     }
 
     SDL_Event event;
@@ -6022,11 +6026,6 @@ void mudclient_poll_events(mudclient *mud) {
                     distance(mudclient_finger_1_x, mudclient_finger_1_y,
                              mudclient_finger_2_x, mudclient_finger_2_y);
 
-                /*char farts[255] = {0};
-                sprintf(farts, "distance: %f",
-                        mudclient_pinch_distance - pinch_distance);
-                mudclient_show_message(mud, farts, MESSAGE_TYPE_GAME);*/
-
                 if (mudclient_pinch_distance > 0) {
                     mud->mouse_scroll_delta =
                         ((mudclient_pinch_distance - pinch_distance) / 2.0f);
@@ -6044,7 +6043,8 @@ void mudclient_poll_events(mudclient *mud) {
                                             mudclient_touch_start_y, 2);
                 }
 
-                if (mudclient_vertical_drag || abs(delta_y) > 30) {
+                if (mud->show_ui_tab == 0 &&
+                    (mudclient_vertical_drag || abs(delta_y) > 30)) {
                     mudclient_vertical_drag = 1;
 
                     mud->mouse_scroll_delta =
@@ -6070,6 +6070,8 @@ void mudclient_poll_events(mudclient *mud) {
             int64_t finger_id = event.tfinger.fingerId;
 
             if (!mudclient_finger_1_down) {
+                mudclient_has_right_clicked = 0;
+
                 mudclient_finger_1_id = finger_id;
                 mudclient_finger_1_down = 1;
 
@@ -6111,7 +6113,8 @@ void mudclient_poll_events(mudclient *mud) {
             if (mudclient_finger_1_down && finger_id == mudclient_finger_1_id) {
                 mudclient_finger_1_down = 0;
 
-                if (!mudclient_vertical_drag && !mudclient_horizontal_drag &&
+                if (!mudclient_has_right_clicked &&
+                    !mudclient_vertical_drag && !mudclient_horizontal_drag &&
                     mudclient_pinch_distance == 0) {
                     mudclient_mouse_pressed(mud, touch_x, touch_y, 0);
                     mudclient_mouse_released(mud, touch_x, touch_y, 0);
