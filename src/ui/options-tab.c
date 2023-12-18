@@ -40,8 +40,9 @@ void mudclient_draw_change_password(mudclient *mud) {
     // TODO ChangePasswordStep
 
     if (mud->show_change_password_step == 6) {
-        surface_draw_string_centre(
-            mud->surface, "Please enter your current password", x, y, 4, WHITE);
+        surface_draw_string_centre(mud->surface,
+                                   "Please enter your current password", x, y,
+                                   FONT_BOLD_14, WHITE);
 
         y += 25;
 
@@ -53,8 +54,8 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         password_input[current_length] = '*';
 
-        surface_draw_string_centre(mud->surface, password_input, x, y, 4,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, password_input, x, y,
+                                   FONT_BOLD_14, WHITE);
 
         if (strlen(mud->input_text_final) > 0) {
             strcpy(mud->change_password_old, mud->input_text_final);
@@ -63,8 +64,9 @@ void mudclient_draw_change_password(mudclient *mud) {
             mud->show_change_password_step = 1;
         }
     } else if (mud->show_change_password_step == 1) {
-        surface_draw_string_centre(
-            mud->surface, "Please enter your new password", x, y, 4, WHITE);
+        surface_draw_string_centre(mud->surface,
+                                   "Please enter your new password", x, y,
+                                   FONT_BOLD_14, WHITE);
 
         y += 25;
 
@@ -76,8 +78,8 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         password_input[current_length] = '*';
 
-        surface_draw_string_centre(mud->surface, password_input, x, y, 4,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, password_input, x, y,
+                                   FONT_BOLD_14, WHITE);
 
         if (strlen(mud->input_text_final) > 0) {
             strcpy(mud->change_password_new, mud->input_text_final);
@@ -91,8 +93,9 @@ void mudclient_draw_change_password(mudclient *mud) {
             }
         }
     } else if (mud->show_change_password_step == 2) {
-        surface_draw_string_centre(
-            mud->surface, "Enter password again to confirm", x, y, 4, WHITE);
+        surface_draw_string_centre(mud->surface,
+                                   "Enter password again to confirm", x, y,
+                                   FONT_BOLD_14, WHITE);
 
         y += 25;
 
@@ -104,8 +107,8 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         password_input[current_length] = '*';
 
-        surface_draw_string_centre(mud->surface, password_input, x, y, 4,
-                                   WHITE);
+        surface_draw_string_centre(mud->surface, password_input, x, y,
+                                   FONT_BOLD_14, WHITE);
 
         if (strlen(mud->input_text_final) > 0) {
             if (strcasecmp(mud->input_text_final, mud->change_password_new) ==
@@ -121,28 +124,29 @@ void mudclient_draw_change_password(mudclient *mud) {
     } else {
         if (mud->show_change_password_step == 3) {
             surface_draw_string_centre(mud->surface, "Passwords do not match!",
-                                       x, y, 4, WHITE);
+                                       x, y, FONT_BOLD_14, WHITE);
 
             y += 25;
 
             surface_draw_string_centre(mud->surface, "Press any key to close",
-                                       x, y, 4, WHITE);
+                                       x, y, FONT_BOLD_14, WHITE);
         } else if (mud->show_change_password_step == 4) {
-            surface_draw_string_centre(
-                mud->surface, "Ok, your request has been sent", x, y, 4, WHITE);
+            surface_draw_string_centre(mud->surface,
+                                       "Ok, your request has been sent", x, y,
+                                       FONT_BOLD_14, WHITE);
 
             y += 25;
 
             surface_draw_string_centre(mud->surface, "Press any key to close",
-                                       x, y, 4, WHITE);
+                                       x, y, FONT_BOLD_14, WHITE);
         } else if (mud->show_change_password_step == 5) {
             surface_draw_string_centre(mud->surface, "Password must be at", x,
-                                       y, 4, WHITE);
+                                       y, FONT_BOLD_14, WHITE);
 
             y += 25;
 
             surface_draw_string_centre(mud->surface, "least 5 letters long", x,
-                                       y, 4, WHITE);
+                                       y, FONT_BOLD_14, WHITE);
         }
     }
 }

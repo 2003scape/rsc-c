@@ -130,7 +130,7 @@ void mudclient_send_private_message(mudclient *mud, int64_t username,
 
 void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - SOCIAL_WIDTH - 3;
-    int ui_y = 36;
+    int ui_y = UI_BUTTON_SIZE + 1;
 
     int height = SOCIAL_HEIGHT;
 
@@ -144,7 +144,7 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 
 #if (VERSION_MEDIA >= 59)
     mudclient_draw_ui_tab_label(mud, SOCIAL_TAB, SOCIAL_WIDTH + !is_touch,
-                                ui_x - !is_touch, ui_y - 10);
+                                ui_x - !is_touch, ui_y - UI_TABS_LABEL_HEIGHT);
 #endif
 
     mud->ui_tab_min_x = ui_x;
@@ -154,7 +154,7 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 
     if (is_touch) {
         mud->ui_tab_max_x = ui_x + SOCIAL_WIDTH;
-        mud->ui_tab_min_y = ui_y;
+        mud->ui_tab_min_y = ui_y - UI_TABS_LABEL_HEIGHT;
         mud->ui_tab_max_y = ui_y + height;
     }
 

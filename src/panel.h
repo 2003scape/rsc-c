@@ -10,17 +10,19 @@ typedef struct Panel Panel;
 #include "surface.h"
 #include "utility.h"
 
-#define PANEL_TEXT 0
-#define PANEL_CENTRE_TEXT 1
-#define PANEL_BOX 2
-#define PANEL_TEXT_LIST 4
-#define PANEL_LIST_INPUT 5
-#define PANEL_TEXT_INPUT 6
-#define PANEL_TEXT_LIST_INTERACTIVE 9
-#define PANEL_BUTTON 10
-#define PANEL_ROUNDED_BOX 11
-#define PANEL_SPRITE 12
-#define PANEL_CHECKBOX 14
+typedef enum {
+    PANEL_TEXT = 0,
+    PANEL_CENTRE_TEXT = 1,
+    PANEL_BOX = 2,
+    PANEL_TEXT_LIST = 4,
+    PANEL_LIST_INPUT = 5,
+    PANEL_TEXT_INPUT = 6,
+    PANEL_TEXT_LIST_INTERACTIVE = 9,
+    PANEL_BUTTON = 10,
+    PANEL_ROUNDED_BOX = 11,
+    PANEL_SPRITE = 12,
+    PANEL_CHECKBOX = 14
+} PanelControlType;
 
 #define PANEL_ROUNDED_BOX_OUT_COLOUR 0x758eab
 #define PANEL_ROUNDED_BOX_MIDDLE_COLOUR 0x627a9e
@@ -56,11 +58,11 @@ struct Panel {
     int8_t *control_use_alternative_colour;
     int *control_x;
     int *control_y;
-    int *control_type;
+    PanelControlType *control_type;
     int *control_width;
     int *control_height;
     int *control_input_max_length;
-    int *control_text_size; /* also used for sprite IDs */
+    int *control_font_style; /* also used for sprite IDs */
     char **control_text;
     char ***control_list_entries;
     int mouse_x;
@@ -85,34 +87,37 @@ void panel_draw_panel(Panel *panel);
 void panel_draw_checkbox(Panel *panel, int control, int x, int y, int width,
                          int height);
 void panel_draw_text(Panel *panel, int control, int x, int y, char *text,
-                     int text_size);
+                     FontStyle font_style);
 void panel_draw_string(Panel *panel, int control, int x, int y, char *text,
-                       int text_size);
+                       FontStyle font_style);
 void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
-                           int height, char *text, int text_size);
+                           int height, char *text, FontStyle font_style);
 void panel_draw_box(Panel *panel, int x, int y, int width, int height);
 void panel_draw_rounded_box(Panel *panel, int x, int y, int width, int height);
 void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
-                          int height, int text_size, char **list_entries,
+                          int height, FontStyle font_style, char **list_entries,
                           int list_entry_count, int list_entry_position,
                           int is_interactive);
-int panel_prepare_component(Panel *panel, int type, int x, int y);
-int panel_add_text(Panel *panel, int x, int y, char *text, int size, int flag);
-int panel_add_text_centre(Panel *panel, int x, int y, char *text, int size,
-                          int flag);
-int panel_add_button_background(Panel *panel, int x, int y, int width,
-                                int height);
+int panel_prepare_component(Panel *panel, PanelControlType type, int x, int y);
+int panel_add_text(Panel *panel, int x, int y, char *text, FontStyle font_style,
+                   int flag);
+int panel_add_text_centre(Panel *panel, int x, int y, char *text,
+                          FontStyle font_style, int flag);
 int panel_add_box_rounded(Panel *panel, int x, int y, int width, int height);
 int panel_add_sprite(Panel *panel, int x, int y, int sprite_id);
 int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
-                        int size, int max_length, int flag);
+                        FontStyle font_style, int max_length, int flag);
 int panel_add_text_list_input(Panel *panel, int x, int y, int width, int height,
-                              int size, int max_length, int flag, int flag1);
+                              FontStyle font_style, int max_length, int flag,
+                              int flag1);
 int panel_add_text_input(Panel *panel, int x, int y, int width, int height,
-                         int size, int max_length, int is_password, int flag1);
+                         FontStyle font_style, int max_length, int is_password,
+                         int flag1);
 int panel_add_text_list_interactive(Panel *panel, int x, int y, int width,
-                                    int height, int text_size, int max_length,
-                                    int flag);
+                                    int height, FontStyle font_style,
+                                    int max_length, int flag);
+int panel_add_button_background(Panel *panel, int x, int y, int width,
+                                int height);
 int panel_add_button(Panel *panel, int x, int y, int width, int height);
 int panel_add_checkbox(Panel *panel, int x, int y, int width, int height);
 void panel_toggle_checkbox(Panel *panel, int control, int activated);
