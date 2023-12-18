@@ -624,7 +624,9 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
             strcat(menu_text, more_options);
         }
 
-        if (strlen(menu_text) > 0) {
+        int is_touch = mudclient_is_touch(mud);
+
+        if (!is_touch && strlen(menu_text) > 0) {
             surface_draw_string(mud->surface, menu_text, 6, 14, FONT_BOLD_12,
                                 YELLOW);
         }
@@ -639,12 +641,12 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
         if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 2) ||
             (mud->settings_mouse_button_one && mud->mouse_button_click == 1)) {
-            int entry_height = mudclient_is_touch(mud) ? 19 : 15;
+            int entry_height = is_touch ? 19 : 15;
 
             mud->menu_height = (mud->menu_items_count + 1) * entry_height;
             mud->menu_width = surface_text_width("Choose option", 1) + 5;
 
-            if (mudclient_is_touch(mud)) {
+            if (is_touch) {
                 mud->menu_height += 3;
             }
 
@@ -1403,15 +1405,16 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 }
 
 void mudclient_draw_right_click_menu(mudclient *mud) {
-    int entry_height = mudclient_is_touch(mud) ? 19 : 15;
+    int is_touch = mudclient_is_touch(mud);
+    int entry_height = is_touch ? 19 : 15;
 
     if (mud->mouse_button_click != 0) {
         for (int i = 0; i < mud->menu_items_count; i++) {
             int entry_x = mud->menu_x + 2;
             int entry_y = mud->menu_y + entry_height + 12 + i * entry_height;
 
-            int min_y = entry_y - (mudclient_is_touch(mud) ? 14 : 12);
-            int max_y = entry_y + (mudclient_is_touch(mud) ? 6 : 4);
+            int min_y = entry_y - (is_touch ? 14 : 12);
+            int max_y = entry_y + (is_touch ? 6 : 4);
 
             if (mud->mouse_x <= entry_x - 2 || mud->mouse_y <= min_y ||
                 mud->mouse_y >= max_y ||
@@ -1461,8 +1464,8 @@ void mudclient_draw_right_click_menu(mudclient *mud) {
         int entry_y = mud->menu_y + entry_height + 12 + i * entry_height;
         int text_colour = WHITE;
 
-        int min_y = entry_y - (mudclient_is_touch(mud) ? 14 : 12);
-        int max_y = entry_y + (mudclient_is_touch(mud) ? 6 : 4);
+        int min_y = entry_y - (is_touch ? 14 : 12);
+        int max_y = entry_y + (is_touch ? 6 : 4);
 
         if (mud->mouse_x > entry_x - 2 && mud->mouse_y > min_y &&
             mud->mouse_y < max_y &&

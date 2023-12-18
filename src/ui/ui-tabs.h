@@ -8,6 +8,8 @@
 #define UI_TABS_TOUCH_X (mud->surface->width - UI_BUTTON_SIZE - 11)
 #define UI_TABS_TOUCH_Y (mud->surface->height - UI_TABS_TOUCH_HEIGHT) - 30
 
+#define UI_TABS_LABEL_HEIGHT 10
+
 #define INVENTORY_TAB 1
 #define MAP_TAB 2
 #define STATS_TAB 3

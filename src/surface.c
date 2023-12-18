@@ -585,7 +585,7 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 #endif
             base_atlas_position = base_texture_position.atlas_position;
         }
-    } else if (sprite_id >= surface->mud->sprite_media && sprite_id < mud->sprite_projectile + game_data.projectile_sprite) {
+    } else if (sprite_id >= surface->mud->sprite_media && sprite_id < surface->mud->sprite_projectile + game_data.projectile_sprite) {
         int atlas_index = sprite_id - surface->mud->sprite_media;
 
         atlas_position = gl_media_atlas_positions[atlas_index];
@@ -3857,10 +3857,14 @@ int surface_text_width(const char *text, FontStyle font) {
 
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
                        char **tabs, int tabs_length, int selected) {
-    int tab_width = (int)ceilf(width / (float)tabs_length);
+    int tab_width = (int)(width / (float)tabs_length);
     int offset_x = 0;
 
     for (int i = 0; i < tabs_length; i++) {
+        if (i == tabs_length - 1) {
+            tab_width += width % tabs_length;
+        }
+
         int tab_colour = selected == i ? GREY_DC : GREY_A0;
 
         surface_draw_box_alpha(surface, x + offset_x, y, tab_width, height,

@@ -85,7 +85,8 @@ void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
         mudclient_menu_add_wiki(mud, "Equipment Status", "Equipment");
     }
 
-    surface_draw_string(mud->surface, "Equipment Status", x + 5, y, 3, YELLOW);
+    surface_draw_string(mud->surface, "Equipment Status", x + 5, y,
+                        FONT_BOLD_13, YELLOW);
 
     y += line_break;
 
@@ -103,7 +104,8 @@ void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
         sprintf(formatted_stat, "%s:@yel@%d", equipment_stat_names[i],
                 mud->player_stat_equipment[i]);
 
-        surface_draw_string(mud->surface, formatted_stat, x + 5, y, 1, WHITE);
+        surface_draw_string(mud->surface, formatted_stat, x + 5, y,
+                            FONT_BOLD_12, WHITE);
 
         if (i < 2) {
             if (no_menus && mud->selected_wiki &&
@@ -117,7 +119,8 @@ void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
                     mud->player_stat_equipment[i + 3]);
 
             surface_draw_string(mud->surface, formatted_stat,
-                                x + (STATS_WIDTH / 2) + 25, y, 1, WHITE);
+                                x + (STATS_WIDTH / 2) + 25, y, FONT_BOLD_12,
+                                WHITE);
         }
 
         y += line_break + 1;
@@ -146,14 +149,11 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         stats_tabs[1] = "Quests";
     }
 
-    int line_break = (is_compact ? 11 : 12);
+    int line_break = (is_compact && !is_touch ? 11 : 12);
 
     if (mud->options->total_experience || mud->options->remaining_experience) {
         height += line_break;
     }
-
-    mud->panel_quests->control_height[mud->control_list_quest] =
-        height - STATS_TAB_HEIGHT;
 
     /* equipment screen */
     if (is_compact && mud->ui_tab_stats_sub_tab == 1) {
@@ -161,19 +161,29 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     }
 
     if (is_touch) {
+        height = 198;
         ui_x = UI_TABS_TOUCH_X - STATS_WIDTH - 1;
         ui_y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - height - 2;
     }
 
+    mud->panel_quests->control_height[mud->control_list_quest] =
+        height - STATS_TAB_HEIGHT;
+
 #if (VERSION_MEDIA >= 59)
     mudclient_draw_ui_tab_label(mud, STATS_TAB, STATS_WIDTH + !is_touch,
-                                ui_x - !is_touch, ui_y - 10);
+                                ui_x - !is_touch, ui_y - UI_TABS_LABEL_HEIGHT);
 #endif
 
     mud->ui_tab_min_x = ui_x;
     mud->ui_tab_max_x = mud->surface->width;
     mud->ui_tab_min_y = 0;
     mud->ui_tab_max_y = ui_y + height + 5;
+
+    if (is_touch) {
+        mud->ui_tab_max_x = ui_x + STATS_WIDTH;
+        mud->ui_tab_min_y = ui_y - UI_TABS_LABEL_HEIGHT;
+        mud->ui_tab_max_y = ui_y + height;
+    }
 
     surface_draw_box_alpha(mud->surface, ui_x, ui_y + STATS_TAB_HEIGHT,
                            STATS_WIDTH, height - STATS_TAB_HEIGHT, GREY_DC,
@@ -193,7 +203,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         int total_experience = 0;
 
         if (!is_compact) {
-            surface_draw_string(mud->surface, "Skills", ui_x + 5, y, 3, YELLOW);
+            surface_draw_string(mud->surface, "Skills", ui_x + 5, y,
+                                FONT_BOLD_13, YELLOW);
 
             if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
                 mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 8 &&
@@ -226,8 +237,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             sprintf(formatted_skill, "%s:@yel@%d/%d", short_skill_names[i],
                     mud->player_skill_current[i], mud->player_skill_base[i]);
 
-            surface_draw_string(mud->surface, formatted_skill, ui_x + 5, y, 1,
-                                text_colour);
+            surface_draw_string(mud->surface, formatted_skill, ui_x + 5, y,
+                                FONT_BOLD_12, text_colour);
 
             /* right column */
             text_colour = WHITE;
@@ -244,9 +255,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                     mud->player_skill_current[i + 9],
                     mud->player_skill_base[i + 9]);
 
-            surface_draw_string(
-                mud->surface, formatted_skill, ui_x + (STATS_WIDTH / 2) - 5,
-                y - (is_compact ? 0 : line_break + 1), 1, text_colour);
+            surface_draw_string(mud->surface, formatted_skill,
+                                ui_x + (STATS_WIDTH / 2) - 5,
+                                y - (is_compact ? 0 : line_break + 1),
+                                FONT_BOLD_12, text_colour);
 
             y += line_break + 1;
         }
@@ -268,7 +280,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 mud->player_quest_points);
 
         surface_draw_string(mud->surface, formatted_quest_points,
-                            ui_x + (STATS_WIDTH / 2) - 5, y - 13, 1, WHITE);
+                            ui_x + (STATS_WIDTH / 2) - 5, y - 13, FONT_BOLD_12,
+                            WHITE);
 
         if (!is_compact) {
             y += line_break;
@@ -287,7 +300,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 (mud->stat_fatigue * 100) / 750);
 
         surface_draw_string(mud->surface, formatted_fatigue, ui_x + 5, y - 13,
-                            1, WHITE);
+                            FONT_BOLD_12, WHITE);
 
         if (is_compact) {
             y += 2;
@@ -298,6 +311,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
             y += 51;
             y += line_break / 2;
+        }
+
+        if (is_touch) {
+            y += 2;
         }
 
         surface_draw_line_horizontal(
@@ -319,7 +336,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                         skill_names[selected_skill]);
 
                 surface_draw_string(mud->surface, formatted_skill, ui_x + 5, y,
-                                    1, YELLOW);
+                                    FONT_BOLD_12, YELLOW);
 
                 y += line_break;
             }
@@ -340,8 +357,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             char formatted_xp[25] = {0};
             sprintf(formatted_xp, "Total xp: %s", formatted_number);
 
-            surface_draw_string(mud->surface, formatted_xp, ui_x + 5, y, 1,
-                                WHITE);
+            surface_draw_string(mud->surface, formatted_xp, ui_x + 5, y,
+                                FONT_BOLD_12, WHITE);
 
             y += line_break;
 
@@ -351,8 +368,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             char formatted_next[30] = {0};
             sprintf(formatted_next, "Next level at: %s", formatted_number);
 
-            surface_draw_string(mud->surface, formatted_next, ui_x + 5, y, 1,
-                                WHITE);
+            surface_draw_string(mud->surface, formatted_next, ui_x + 5, y,
+                                FONT_BOLD_12, WHITE);
 
             if (mud->options->remaining_experience) {
                 y += line_break;
@@ -369,7 +386,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                         formatted_remainder + 1);
 
                 surface_draw_string(mud->surface, formatted_next, ui_x + 5, y,
-                                    1, WHITE);
+                                    FONT_BOLD_12, WHITE);
             }
 
             if (no_menus && mud->selected_wiki) {
@@ -385,7 +402,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
             if (!is_compact) {
                 surface_draw_string(mud->surface, "Overall levels", ui_x + 5, y,
-                                    1, YELLOW);
+                                    FONT_BOLD_12, YELLOW);
 
                 y += line_break;
             }
@@ -401,19 +418,19 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             char formatted_total[28] = {0};
             sprintf(formatted_total, "Skill total: %s", formatted_number);
 
-            surface_draw_string(mud->surface, formatted_total, ui_x + 5, y, 1,
-                                WHITE);
+            surface_draw_string(mud->surface, formatted_total, ui_x + 5, y,
+                                FONT_BOLD_12, WHITE);
 
             y += line_break;
 
             if (mud->options->total_experience) {
-                mudclient_format_number_commas(mud, total_experience,
+                mudclient_format_number_commas(mud, total_experience / 4,
                                                formatted_number);
 
                 sprintf(formatted_total, "Total xp: %s", formatted_number);
 
                 surface_draw_string(mud->surface, formatted_total, ui_x + 5, y,
-                                    1, WHITE);
+                                    FONT_BOLD_12, WHITE);
 
                 y += line_break;
             }

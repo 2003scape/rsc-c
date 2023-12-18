@@ -841,6 +841,8 @@ void mudclient_resize(mudclient *mud) {
 
         mud->scene->raster = mud->surface->pixels;
 
+        int is_touch = mudclient_is_touch(mud);
+
         int full_offset_x = mud->surface->width - MUD_WIDTH;
         int full_offset_y = mud->surface->height - MUD_HEIGHT;
         int half_offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
@@ -872,14 +874,26 @@ void mudclient_resize(mudclient *mud) {
 
         if (mud->panel_quests != NULL) {
             mud->panel_quests->offset_x = full_offset_x;
+
+            if (is_touch) {
+                mud->panel_quests->offset_y = full_offset_y;
+            }
         }
 
         if (mud->panel_magic != NULL) {
             mud->panel_magic->offset_x = full_offset_x;
+
+            if (is_touch) {
+                mud->panel_magic->offset_y = full_offset_y;
+            }
         }
 
         if (mud->panel_social_list != NULL) {
             mud->panel_social_list->offset_x = full_offset_x;
+
+            if (is_touch) {
+                mud->panel_social_list->offset_y = full_offset_y;
+            }
         }
 
         if (mud->panel_connection_options != NULL) {
@@ -3097,27 +3111,41 @@ void mudclient_start_game(mudclient *mud) {
     panel_base_sprite_start = mud->sprite_util;
 
     int x = MUD_WIDTH - 199;
-    int y = 36;
+    int y = UI_BUTTON_SIZE + 1;
+
+    int is_touch = mudclient_is_touch(mud);
 
     mud->panel_quests = malloc(sizeof(Panel));
     panel_new(mud->panel_quests, mud->surface, 5);
 
+    if (is_touch) {
+        x = UI_TABS_TOUCH_X - STATS_WIDTH - 1;
+
+        y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - STATS_COMPACT_HEIGHT - STATS_TAB_HEIGHT - 5;
+    }
+
     mud->control_list_quest = panel_add_text_list_interactive(
         mud->panel_quests, x, y + STATS_TAB_HEIGHT, STATS_WIDTH,
-        STATS_HEIGHT - STATS_TAB_HEIGHT, 1, 500, 1);
+        STATS_HEIGHT - STATS_TAB_HEIGHT, FONT_BOLD_12, 500, 1);
 
     mud->panel_magic = malloc(sizeof(Panel));
     panel_new(mud->panel_magic, mud->surface, 5);
 
+    if (is_touch) {
+        x = UI_TABS_TOUCH_X - MAGIC_WIDTH - 1;
+        y = UI_TABS_TOUCH_Y + 10;
+    }
+
     mud->control_list_magic = panel_add_text_list_interactive(
-        mud->panel_magic, x, y + MAGIC_TAB_HEIGHT, MAGIC_WIDTH, 90, 1, 500, 1);
+        mud->panel_magic, x, y + MAGIC_TAB_HEIGHT - (is_touch ? 11 : 0), MAGIC_WIDTH, 90+(is_touch ? 16 :0),
+        FONT_BOLD_12, 500, 1);
 
     mud->panel_social_list = malloc(sizeof(Panel));
     panel_new(mud->panel_social_list, mud->surface, 5);
 
     mud->control_list_social = panel_add_text_list_interactive(
-        mud->panel_social_list, x, y + SOCIAL_TAB_HEIGHT + 16, 196, 126, 1, 500,
-        1);
+        mud->panel_social_list, x, y + SOCIAL_TAB_HEIGHT + 16 - (is_touch ? 11 : 0),
+        196, 126 + (is_touch ? 16 : 0), FONT_BOLD_12, 500, 1);
 
     mudclient_load_media(mud);
 
