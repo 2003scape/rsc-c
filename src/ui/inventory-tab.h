@@ -7,7 +7,6 @@
 #define INVENTORY_ROWS (INVENTORY_ITEMS_MAX / INVENTORY_COLUMNS)
 
 #define INVENTORY_WIDTH (ITEM_GRID_SLOT_WIDTH * INVENTORY_COLUMNS)
-#define INVENTORY_HEIGHT (ITEM_GRID_SLOT_HEIGHT * INVENTORY_ROWS)
 
 void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus);
 

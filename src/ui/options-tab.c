@@ -185,17 +185,17 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
 #if (VERSION_MEDIA >= 59)
     mudclient_draw_ui_tab_label(mud, OPTIONS_TAB, OPTIONS_WIDTH + !is_touch,
-                                ui_x - !is_touch, ui_y - 10);
+                                ui_x - !is_touch, ui_y - UI_TABS_LABEL_HEIGHT);
 #endif
 
     mud->ui_tab_min_x = ui_x;
     mud->ui_tab_max_x = mud->surface->width;
     mud->ui_tab_min_y = 0;
-    mud->ui_tab_max_y = height + 46;
+    mud->ui_tab_max_y = ui_y + height + 10;
 
     if (is_touch) {
         mud->ui_tab_max_x = ui_x + OPTIONS_WIDTH;
-        mud->ui_tab_min_y = ui_y;
+        mud->ui_tab_min_y = ui_y - UI_TABS_LABEL_HEIGHT;
         mud->ui_tab_max_y = ui_y + height;
     }
 

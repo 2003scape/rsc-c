@@ -14,12 +14,33 @@ void mudclient_draw_minimap_entity(mudclient *mud, int x, int y, int colour) {
 
 void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - MINIMAP_WIDTH - 3;
-    int ui_y = 36;
+    int ui_y = UI_BUTTON_SIZE + 1;
+
+    int is_touch = mudclient_is_touch(mud);
+
+    if (is_touch) {
+        ui_x = UI_TABS_TOUCH_X - MINIMAP_WIDTH - 1;
+
+        ui_y =
+            UI_TABS_TOUCH_Y + (UI_TABS_TOUCH_HEIGHT - MINIMAP_HEIGHT + 10) / 2;
+    }
 
     mud->ui_tab_min_x = mud->surface->width - 199;
     mud->ui_tab_max_x = mud->surface->width;
     mud->ui_tab_min_y = 0;
     mud->ui_tab_max_y = 240;
+
+    if (is_touch) {
+        mud->ui_tab_min_x = ui_x;
+        mud->ui_tab_max_x = ui_x + MINIMAP_WIDTH;
+        mud->ui_tab_min_y = ui_y - UI_TABS_LABEL_HEIGHT;
+        mud->ui_tab_max_y = ui_y + MINIMAP_HEIGHT;
+    }
+
+#if (VERSION_MEDIA >= 59)
+    mudclient_draw_ui_tab_label(mud, MAP_TAB, MINIMAP_WIDTH, ui_x,
+                                ui_y - UI_TABS_LABEL_HEIGHT);
+#endif
 
     surface_draw_box(mud->surface, ui_x, ui_y, MINIMAP_WIDTH, MINIMAP_HEIGHT,
                      BLACK);
