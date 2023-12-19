@@ -1586,24 +1586,33 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id,
         surface->sprite_width_full[sprite_id] = width;
         surface->sprite_height_full[sprite_id] = height;
     } else {
-        uint16_t piece_width = width / columns;
-        uint16_t piece_height = height / rows;
+        uint16_t frame_width = width / columns;
+        uint16_t frame_height = height / rows;
 
-        for (int x = 0; x < columns; ++x) {
-            for (int y = 0; y < rows; ++y) {
+         printf("%d %d %dx%d\n", width, height, frame_width, frame_height);
+
+        for (int y = 0; y < rows; ++y) {
+           for (int x = 0; x < columns; ++x) {
+                uint8_t *frame_pixels = malloc(frame_width * frame_height);
+                for (int i = 0; i < frame_height; ++i) {
+                    offset = (x * frame_width) + ((y * frame_height) + i) * width;
+                    memcpy(frame_pixels + (i * frame_width),
+                        pixels + offset, frame_width);
+                }
                 free(surface->surface_pixels[sprite_id]);
                 surface->surface_pixels[sprite_id] = NULL;
-                surface->sprite_colours[sprite_id] = pixels;
-                surface->sprite_translate[sprite_id] = 1;
-                surface->sprite_translate_x[sprite_id] = x * piece_width;
-                surface->sprite_translate_y[sprite_id] = y * piece_height;
+                surface->sprite_colours[sprite_id] = frame_pixels;
+                surface->sprite_translate[sprite_id] = 0;
+                surface->sprite_translate_x[sprite_id] = 0;
+                surface->sprite_translate_y[sprite_id] = 0;
                 surface->sprite_palette[sprite_id] = map;
-                surface->sprite_width[sprite_id] = piece_width;
-                surface->sprite_height[sprite_id] = piece_height;
-                surface->sprite_width_full[sprite_id] = width;
-                surface->sprite_height_full[sprite_id++] = height;
+                surface->sprite_width[sprite_id] = frame_width;
+                surface->sprite_height[sprite_id] = frame_height;
+                surface->sprite_width_full[sprite_id] = frame_width;
+                surface->sprite_height_full[sprite_id++] = frame_height;
             }
         }
+        free(pixels);
     }
 }
 
