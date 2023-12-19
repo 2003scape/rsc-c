@@ -97,6 +97,7 @@ void strtolower(char *s);
 int get_signed_byte(void *, size_t, size_t);
 int get_unsigned_byte(void *, size_t, size_t);
 int get_unsigned_short(void *, size_t, size_t);
+int get_unsigned_short_le(void *, size_t, size_t);
 int get_unsigned_int(void *, size_t, size_t);
 int64_t get_unsigned_long(void *, size_t, size_t);
 int get_signed_short(void *, size_t, size_t);

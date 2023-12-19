@@ -1641,11 +1641,7 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     int logo_sprite_id = SPRITE_LIMIT - 1;
 
     if (mud->surface->sprite_width[logo_sprite_id]) {
-        int offset_x = 19;
-
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-        offset_x = 2;
-#endif
+        int offset_x = 2;
 
         int logo_x = (mud->game_width / 2) -
                      (mud->surface->sprite_width[logo_sprite_id] / 2) -
@@ -1849,56 +1845,16 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     return archive_data;
 }
 
-/* used for the jagex logo in the loading screen */
-void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
-    int width = buffer[13] * 256 + buffer[12];
-    int height = buffer[15] * 256 + buffer[14];
-
-    uint8_t r[256] = {0};
-    uint8_t g[256] = {0};
-    uint8_t b[256] = {0};
-
-    for (int i = 0; i < 256; i++) {
-        r[i] = buffer[20 + i * 3];
-        g[i] = buffer[19 + i * 3];
-        b[i] = buffer[18 + i * 3];
-    }
-
-    uint8_t *pixels = calloc(width * height * 4, sizeof(uint8_t));
-    int index = 0;
-
-    for (int y = height - 1; y >= 0; y--) {
-        for (int x = 0; x < width; x++) {
-            int palette_index = buffer[(256 * 3) + x + y * width];
-#ifdef MUD_IS_BIG_ENDIAN
-            pixels[index++] = 255;
-            pixels[index++] = r[palette_index];
-            pixels[index++] = g[palette_index];
-            pixels[index++] = b[palette_index];
-#else
-            pixels[index++] = b[palette_index];
-            pixels[index++] = g[palette_index];
-            pixels[index++] = r[palette_index];
-            pixels[index++] = 255;
-#endif
-        }
-    }
-
-    int sprite_index = SPRITE_LIMIT - 1;
-
-    mud->surface->sprite_width[sprite_index] = width;
-    mud->surface->sprite_height[sprite_index] = height;
-    mud->surface->surface_pixels[sprite_index] = (int32_t *)pixels;
-}
-
 void mudclient_load_jagex(mudclient *mud) {
 #if defined(RENDER_SW)
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
-        int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, NULL);
-        mudclient_load_jagex_tga_sprite(mud, logo_tga);
+        size_t len;
+        uint8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
+        surface_parse_sprite_tga(mud->surface,
+            SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
         free(logo_tga);
 
 #ifndef WII

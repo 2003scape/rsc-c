@@ -150,6 +150,19 @@ int get_unsigned_short(void *b, size_t offset, size_t buflen) {
     return ((buffer[offset] & 0xff) << 8) + (buffer[offset + 1] & 0xff);
 }
 
+int get_unsigned_short_le(void *b, size_t offset, size_t buflen) {
+    int8_t *buffer = b;
+    if (offset > (SIZE_MAX - 2) || (buflen - offset) < 2) {
+        fprintf(stderr,
+                "WARNING: tried to read excess short from buffer, off %zu len "
+                "%zu\n",
+                offset, buflen);
+        assert(0);
+        return 0;
+    }
+    return ((buffer[offset + 1] & 0xff) << 8) + (buffer[offset] & 0xff);
+}
+
 int get_unsigned_int(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
