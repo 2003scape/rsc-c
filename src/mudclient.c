@@ -95,6 +95,21 @@ char *animated_models[] = {
     "firespell2",   "firespell3", "lightning2", "lightning3",   "clawspell2",
     "clawspell3",   "clawspell4", "clawspell5", "spellcharge2", "spellcharge3"};
 
+/*
+ * animations that experienced a loss of fine detail in January 2002 with the
+ * "Compression" update
+ *
+ * camel - eyes lose distinctiveness.
+ * bat - most noticable. mouth is nearly gone entirely.
+ * bear - loses some shading that gives it more of a "fur" texture.
+ * human heads - eyes lose detail.
+ * human tops - belt buckles lose detail or become flesh (ew).
+ */
+static char *anims_older_is_better[] = {
+    "camel", "bat", "battleaxe", "bear", "fbody1", "fhead1", "fplatemailtop",
+    "head1", "head2", "head3", "head4", "platemailtop", NULL
+};
+
 char login_screen_status[255] = {0};
 
 #ifdef __SWITCH__
@@ -2041,6 +2056,13 @@ void mudclient_load_entities(mudclient *mud) {
         mud, "entity" VERSION_STR(VERSION_ENTITY) ".jag", "people and monsters",
         30);
 
+    int8_t *entity_jag_legacy = NULL;
+
+    if (mud->options->tga_sprites) {
+        entity_jag_legacy = mudclient_read_data_file(mud,
+            "entity8.jag", "people and monsters", 37);
+    }
+
     if (entity_jag == NULL) {
         mud->error_loading_data = 1;
         return;
@@ -2082,53 +2104,94 @@ void mudclient_load_entities(mudclient *mud) {
             goto label0;
         }
 
-        char file_name[255] = {0};
-        sprintf(file_name, "%s.dat", animation_name);
+        bool older_is_better = false;
+        const char *extension = "dat";
+        uint8_t *archive_file = entity_jag;
 
-        int8_t *animation_dat = load_data(file_name, 0, entity_jag, NULL);
+        char **older_names = anims_older_is_better;
+        if (mud->options->tga_sprites) {
+            while (*older_names != NULL) {
+                if (strcmp(animation_name, *older_names) == 0) {
+                    older_is_better = true;
+                    extension = "tga";
+                    archive_file = entity_jag_legacy;
+                    break;
+                }
+                older_names++;
+            }
+        }
+
+        char file_name[255] = {0};
+        sprintf(file_name, "%s.%s", animation_name, extension);
+
+        size_t len = 0;
+
+        int8_t *animation_dat = load_data(file_name, 0, archive_file, &len);
         int8_t *animation_index_dat = index_dat;
 
         if (animation_dat == NULL && mud->options->members) {
-            animation_dat = load_data(file_name, 0, entity_jag_mem, NULL);
+            animation_dat = load_data(file_name, 0, entity_jag_mem, &len);
             animation_index_dat = index_dat_mem;
         }
 
         if (animation_dat != NULL) {
-            surface_parse_sprite(mud->surface, animation_index, animation_dat,
-                                 animation_index_dat, 15);
+            if (older_is_better) {
+                surface_parse_sprite_tga(mud->surface, animation_index,
+                                         animation_dat, len, 15, 1);
+            } else {
+                surface_parse_sprite(mud->surface, animation_index, animation_dat,
+                                     animation_index_dat, 15);
+            }
 
             frame_count += 15;
 
             if (game_data.animations[i].has_a) {
-                sprintf(file_name, "%sa.dat", animation_name);
+                if (older_is_better && strcmp(animation_name, "camel") == 0) {
+                    /* camel attack anim was a much later addition */
+                    older_is_better = false;
+                    extension = "dat";
+                    archive_file = entity_jag;
+                }
 
-                int8_t *a_dat = load_data(file_name, 0, entity_jag, NULL);
+                sprintf(file_name, "%sa.%s", animation_name, extension);
+
+                int8_t *a_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *a_index_dat = index_dat;
 
                 if (a_dat == NULL && mud->options->members) {
-                    a_dat = load_data(file_name, 0, entity_jag_mem, NULL);
+                    a_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     a_index_dat = index_dat_mem;
                 }
 
-                surface_parse_sprite(mud->surface, animation_index + 15, a_dat,
-                                     a_index_dat, 3);
+                if (older_is_better) {
+                    surface_parse_sprite_tga(mud->surface, animation_index + 15,
+                                             a_dat, len, 3, 1);
+                } else {
+                    surface_parse_sprite(mud->surface, animation_index + 15,
+                                         a_dat, a_index_dat, 3);
+                }
 
                 frame_count += 3;
             }
 
             if (game_data.animations[i].has_f) {
-                sprintf(file_name, "%sf.dat", animation_name);
+                sprintf(file_name, "%sf.%s", animation_name, extension);
 
-                int8_t *f_dat = load_data(file_name, 0, entity_jag, NULL);
+                int8_t *f_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *f_index_dat = index_dat;
 
                 if (f_dat == NULL && mud->options->members) {
-                    f_dat = load_data(file_name, 0, entity_jag_mem, NULL);
+                    f_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     f_index_dat = index_dat_mem;
                 }
 
-                surface_parse_sprite(mud->surface, animation_index + 18, f_dat,
-                                     f_index_dat, 9);
+                if (older_is_better) {
+                    surface_parse_sprite_tga(mud->surface, animation_index + 18,
+                                         f_dat, len, 9, 1);
+                } else {
+                    surface_parse_sprite(mud->surface, animation_index + 18,
+                                         f_dat, f_index_dat, 9);
+                }
 
                 frame_count += 9;
             }
@@ -2151,6 +2214,7 @@ void mudclient_load_entities(mudclient *mud) {
 
 #ifndef WII
     free(entity_jag);
+    free(entity_jag_legacy);
     free(entity_jag_mem);
 #endif
 

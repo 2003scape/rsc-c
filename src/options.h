@@ -104,6 +104,8 @@ typedef struct Options Options;
      "ground_item_models = %d\n"                                               \
      "; Always animate objects like fires\n"                                   \
      "distant_animation = %d\n"                                                \
+     "; Load less compressed (2001 era) sprites\n"                             \
+     "tga_sprites = %d\n"                                                      \
      "; Show hover tooltip menu\n"                                             \
      "show_hover_tooltip = %d\n\n"                                             \
                                                                                \
@@ -274,6 +276,9 @@ struct Options {
 
     /* always animate objects like fires */
     int distant_animation;
+
+    /* load less compressed (2001 era) sprites */
+    int tga_sprites;
 
     /* withdraw multiple unstackable items */
     int bank_unstackble_withdraw;
