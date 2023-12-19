@@ -1589,15 +1589,20 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id,
         uint16_t frame_width = width / columns;
         uint16_t frame_height = height / rows;
 
-         printf("%d %d %dx%d\n", width, height, frame_width, frame_height);
-
         for (int y = 0; y < rows; ++y) {
            for (int x = 0; x < columns; ++x) {
                 uint8_t *frame_pixels = malloc(frame_width * frame_height);
+                assert(frame_pixels != NULL);
                 for (int i = 0; i < frame_height; ++i) {
                     offset = (x * frame_width) + ((y * frame_height) + i) * width;
                     memcpy(frame_pixels + (i * frame_width),
                         pixels + offset, frame_width);
+                }
+                int frame_len = frame_width * frame_height;
+                for (int i = 0; i < frame_len; ++i) {
+                    if (map[frame_pixels[i]] == 0xff00ff) {
+                        frame_pixels[i] = 0;
+                    }
                 }
                 free(surface->surface_pixels[sprite_id]);
                 surface->surface_pixels[sprite_id] = NULL;
