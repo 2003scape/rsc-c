@@ -89,6 +89,7 @@ void options_set_defaults(Options *options) {
     options->hold_to_buy = 1;
 
     /* display */
+    options->lowmem = 1;
     options->interlace = 0;
     options->display_fps = 0;
     options->number_commas = 1;
@@ -153,6 +154,7 @@ void options_set_vanilla(Options *options) {
     options->hold_to_buy = 0;
 
     /* display */
+    options->lowmem = 1;
     options->interlace = 0;
     options->display_fps = 0;
     options->number_commas = 0;
@@ -230,6 +232,7 @@ void options_save(Options *options) {
             options->combat_style_always,   //
             options->hold_to_buy,           //
                                             //
+            options->lowmem,                //
             options->interlace,             //
             options->display_fps,           //
             options->ui_scale,              //
@@ -306,6 +309,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("hold_to_buy", options->hold_to_buy, 0, 1);
 
     /* display */
+    OPTION_INI_INT("lowmem", options->lowmem, 1, 1);
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
     OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
     OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);

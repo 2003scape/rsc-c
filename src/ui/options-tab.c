@@ -282,7 +282,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
     y += OPTIONS_LINE_BREAK;
 
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         sprintf(settings_string, "Sound effects - %s",
                 (mud->settings_sound_disabled ? "@red@off" : "@gre@on"));
 

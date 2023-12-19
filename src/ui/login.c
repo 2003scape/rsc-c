@@ -695,6 +695,10 @@ void mudclient_draw_login_screens(mudclient *mud) {
                           mud->login_screen <= LOGIN_STAGE_REGISTER;
     }
 
+    if (mud->options->lowmem) {
+        show_background = 0;
+    }
+
     if (show_background) {
         int offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
         int offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
@@ -778,7 +782,9 @@ void mudclient_draw_login_screens(mudclient *mud) {
     }
     }
 
-    mudclient_draw_blue_bar(mud);
+    if (mud->options->lowmem) {
+        mudclient_draw_blue_bar(mud);
+    }
 
     if (mud->show_additional_options) {
         mudclient_draw_additional_options(mud);
