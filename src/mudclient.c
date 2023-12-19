@@ -85,11 +85,11 @@ int mudclient_finger_2_down = 0;
 
 int mudclient_has_right_clicked = 0;
 
-char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
-                      "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
+const char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
+                            "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
 /* only the first of models with animations are stored in the cache */
-char *animated_models[] = {
+const char *animated_models[] = {
     "torcha2",      "torcha3",    "torcha4",    "skulltorcha2", "skulltorcha3",
     "skulltorcha4", "firea2",     "firea3",     "fireplacea2",  "fireplacea3",
     "firespell2",   "firespell3", "lightning2", "lightning3",   "clawspell2",
@@ -105,7 +105,7 @@ char *animated_models[] = {
  * human heads - eyes lose detail.
  * human tops - belt buckles lose detail or become flesh (ew).
  */
-static char *anims_older_is_better[] = {
+static const char *anims_older_is_better[] = {
     "camel", "bat", "battleaxe", "bear", "fbody1", "fhead1", "fplatemailtop",
     "head1", "head2", "head3", "head4", "platemailtop", NULL
 };
@@ -2108,7 +2108,7 @@ void mudclient_load_entities(mudclient *mud) {
         const char *extension = "dat";
         uint8_t *archive_file = entity_jag;
 
-        char **older_names = anims_older_is_better;
+        const char **older_names = anims_older_is_better;
         if (mud->options->tga_sprites) {
             while (*older_names != NULL) {
                 if (strcmp(animation_name, *older_names) == 0) {
