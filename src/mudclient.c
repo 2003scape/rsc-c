@@ -1069,7 +1069,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     int init = SDL_INIT_VIDEO;
 
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         init |= SDL_INIT_AUDIO;
     }
 
@@ -1090,7 +1090,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 /* XXX: currently require non-callback-based audio from SDL >= 2.0.4 */
 #ifdef SDL_VERSION_ATLEAST
 #if SDL_VERSION_ATLEAST(2, 0, 4)
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         SDL_AudioSpec wanted_audio;
 
         wanted_audio.freq = SAMPLE_RATE;
@@ -6812,7 +6812,8 @@ void mudclient_send_logout(mudclient *mud) {
 }
 
 void mudclient_play_sound(mudclient *mud, char *name) {
-    if (!mud->options->members || mud->settings_sound_disabled) {
+    if (!mud->options->members || mud->settings_sound_disabled ||
+         mud->options->lowmem) {
         return;
     }
 
