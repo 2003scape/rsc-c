@@ -3,27 +3,23 @@
 
 int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
-int rgb_to_texture_colour(int r, int g, int b) {
-    return -1 - (r / 8) * 1024 - (g / 8) * 32 - (b / 8);
-}
-
 void init_world_global() {
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i] = rgb_to_texture_colour(
+        terrain_colours[i] = scene_rgb_to_fill(
             255 - i * 4, 255 - (int)((double)i * 1.75), 255 - i * 4);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 64] = rgb_to_texture_colour(i * 3, 144, 0);
+        terrain_colours[i + 64] = scene_rgb_to_fill(i * 3, 144, 0);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 128] = rgb_to_texture_colour(
+        terrain_colours[i + 128] = scene_rgb_to_fill(
             192 - (int)((double)i * 1.5), 144 - (int)((double)i * 1.5), 0);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 192] = rgb_to_texture_colour(
+        terrain_colours[i + 192] = scene_rgb_to_fill(
             96 - (int)((double)i * 1.5), 48 + (int)((double)i * 1.5), 0);
     }
 }

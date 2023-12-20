@@ -7051,7 +7051,6 @@ int main(int argc, char **argv) {
 #ifdef _3DS
     osSetSpeedupEnable(true);
 #endif
-
     srand(0);
 
     init_utility_global();
@@ -7062,6 +7061,8 @@ int main(int argc, char **argv) {
 
     mudclient *mud = malloc(sizeof(mudclient));
     mudclient_new(mud);
+    mud->options->lowmem = 1;
+    mud->options->members = 1;
 
 #ifdef EMSCRIPTEN
     global_mud = mud;

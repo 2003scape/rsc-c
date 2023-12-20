@@ -3513,6 +3513,10 @@ void scene_scroll_texture(Scene *scene, int id) {
 }
 #endif
 
+int16_t scene_rgb_to_fill(uint8_t r, uint8_t g, uint8_t b) {
+    return -1 - ((r >> 3) << 10) - ((g >> 3) << 5) - (b >> 3);
+}
+
 /* used to convert face_fill values (textures or colours) to minimap colours */
 int scene_get_fill_colour(Scene *scene, int face_fill) {
 #ifdef USE_TOONSCAPE

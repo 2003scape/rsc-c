@@ -1,4 +1,5 @@
 #include "toonscape.h"
+#include "../scene.h"
 #include <string.h>
 
 /*
@@ -58,50 +59,42 @@ int toonscape_avoid_load(int id) {
     return 0;
 }
 
-static int32_t encode_rgb(uint8_t r, uint8_t g, uint8_t b) {
-    /*
-     * Convert r, g, b values to inverted 16-bit colour as used by
-     * Jagex's scene graph
-     */
-    return -1 - ((r >> 3) << 10) - ((g >> 3) << 5) - (b >> 3);
-}
-
 int32_t apply_toonscape(int32_t fill) {
     switch (fill) {
     case TEXTURE_BARK:
-        return encode_rgb(148, 75, 17);
+        return scene_rgb_to_fill(148, 75, 17);
     case TEXTURE_CANVAS:
     case TEXTURE_TENTBOTTOM:
-        return encode_rgb(230, 198, 155);
+        return scene_rgb_to_fill(230, 198, 155);
     case TEXTURE_CAVERN:
     case TEXTURE_CAVERN2:
-        return encode_rgb(90, 41, 24);
+        return scene_rgb_to_fill(90, 41, 24);
     case TEXTURE_GUNGYWATER:
-        return encode_rgb(54, 84, 102);
+        return scene_rgb_to_fill(54, 84, 102);
     case TEXTURE_LAVA:
-        return encode_rgb(255, 111, 12);
+        return scene_rgb_to_fill(255, 111, 12);
     case TEXTURE_LEAFYTREE:
-        return encode_rgb(0, 118, 0);
+        return scene_rgb_to_fill(0, 118, 0);
     case TEXTURE_MARBLE:
-        return encode_rgb(255, 255, 255);
+        return scene_rgb_to_fill(255, 255, 255);
     case TEXTURE_MOSSY:
-        return encode_rgb(120, 122, 121);
+        return scene_rgb_to_fill(120, 122, 121);
     case TEXTURE_MOSSYBRICKS:
-        return encode_rgb(51, 54, 51);
+        return scene_rgb_to_fill(51, 54, 51);
     case TEXTURE_MUMMY:
-        return encode_rgb(223, 219, 200);
+        return scene_rgb_to_fill(223, 219, 200);
     case TEXTURE_PLANKS:
-        return encode_rgb(168, 83, 10);
+        return scene_rgb_to_fill(168, 83, 10);
     case TEXTURE_ROOF:
-        return encode_rgb(115, 42, 22);
+        return scene_rgb_to_fill(115, 42, 22);
     case TEXTURE_TREESTUMP:
-        return encode_rgb(160, 89, 27);
+        return scene_rgb_to_fill(160, 89, 27);
     case TEXTURE_WALL:
-        return encode_rgb(49, 49, 49);
+        return scene_rgb_to_fill(49, 49, 49);
     case TEXTURE_WATER:
-        return encode_rgb(80, 145, 255);
+        return scene_rgb_to_fill(80, 145, 255);
     case TEXTURE_CHAINMAIL2:
-        return encode_rgb(74, 74, 74);
+        return scene_rgb_to_fill(74, 74, 74);
     }
     return fill;
 }
