@@ -1640,7 +1640,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
     int colour_count = index_data[index_offset++] & 0xff;
 
 #ifdef RENDER_SW
-    int32_t *colours = calloc(colour_count, sizeof(int32_t));
+    int32_t colours[256];
     colours[0] = MAGENTA;
 #endif
 
@@ -1679,7 +1679,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
         surface->sprite_colours[i] = calloc(area, sizeof(int8_t));
-        surface->sprite_palette[i] = colours;
+        assert(surface->sprite_colours[i] != NULL);
 #else
         index_offset++;
 #endif
@@ -1723,14 +1723,16 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 
 #ifdef USE_LOCOLOUR
         palette_to_locolour((uint8_t *)surface->sprite_colours[i],
-                            area, (uint32_t *)surface->sprite_palette[i]);
+                            area, (uint32_t *)colours);
         surface->sprite_palette[i] = (int32_t *)ibm_vga_palette;
+#elif defined(RENDER_SW)
+        surface->sprite_palette[i] = calloc(colour_count, sizeof(int32_t));
+        assert(surface->sprite_palette[i] != NULL);
+        memcpy(surface->sprite_palette[i], colours,
+               colour_count * sizeof(int32_t));
 #endif
     }
 
-#ifdef USE_LOCOLOUR
-    free(colours);
-#endif
     free(sprite_data);
 }
 
