@@ -70,7 +70,7 @@ typedef struct Options Options;
      "hold_to_buy = %d\n\n"                                                    \
                                                                                \
      "; Low memory mode\n"                                                     \
-     "lowmem = %d\n\n"                                                         \
+     "lowmem = %d\n"                                                           \
      "; F1 mode - only render every second scanline\n"                         \
      "interlace = %d\n"                                                        \
      "; Display the FPS at the bottom right of the screen\n"                   \
