@@ -3217,7 +3217,11 @@ void mudclient_start_game(mudclient *mud) {
     }
 
     mud->scene = malloc(sizeof(Scene));
-    scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
+    if (mud->options->lowmem) {
+        scene_new(mud->scene, mud->surface, 7500, 7500, 1000);
+    } else {
+        scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
+    }
 
 #ifdef RENDER_3DS_GL
     scene_set_bounds(mud->scene, mud->game_width, mud->game_height);
