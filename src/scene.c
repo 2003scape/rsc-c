@@ -91,6 +91,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     // TODO we need to re-allocate more polygons when client is resized, or just
     // add more to initial polygon_count
+    polygon_count = 32767;
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
@@ -239,7 +240,7 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
         j = (l / i1) << 7;
     }
 
-    // 16256 is almost 128x128
+    // 16256 is 128x128 - 128
     if (i < 0) {
         i = 0;
     } else if (i > 16256) {
@@ -590,6 +591,7 @@ void scene_texture_scanline2(int32_t *raster, int32_t *texture_pixels, int k,
         j3 = (l / i1) << 6;
     }
 
+    // 4032 is 64x64 - 64
     if (i3 < 0) {
         i3 = 0;
     } else if (i3 > 4032) {
@@ -2856,24 +2858,24 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
     if (yaw != 0) {
         int sine = sin_cos_2048[yaw];
         int cosine = sin_cos_2048[yaw + 1024];
-        int i4 = (offset_y * cosine - offset_z * sine) / 32768;
-        offset_z = (offset_y * sine + offset_z * cosine) / 32768;
+        int i4 = (offset_y * cosine - offset_z * sine) >> 15;
+        offset_z = (offset_y * sine + offset_z * cosine) >> 15;
         offset_y = i4;
     }
 
     if (pitch != 0) {
         int sine = sin_cos_2048[pitch];
         int cosine = sin_cos_2048[pitch + 1024];
-        int j4 = (offset_z * sine + offset_x * cosine) / 32768;
-        offset_z = (offset_z * cosine - offset_x * sine) / 32768;
+        int j4 = (offset_z * sine + offset_x * cosine) >> 15;
+        offset_z = (offset_z * cosine - offset_x * sine) >> 15;
         offset_x = j4;
     }
 
     if (roll != 0) {
         int sine = sin_cos_2048[roll];
         int cosine = sin_cos_2048[roll + 1024];
-        int k4 = (offset_y * sine + offset_x * cosine) / 32768;
-        offset_y = (offset_y * cosine - offset_x * sine) / 32768;
+        int k4 = (offset_y * sine + offset_x * cosine) >> 15;
+        offset_y = (offset_y * cosine - offset_x * sine) >> 15;
         offset_x = k4;
     }
 
@@ -3315,6 +3317,7 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     scene->texture_pixels = calloc(count, sizeof(int32_t *));
 
     scene_texture_count_loaded = 0;
+    // scene_texture_count_loaded = (1L << 30L) - 5000;
 
     for (int i = 0; i < count; i++) {
         scene->texture_loaded_number[i] = 0;
@@ -3347,8 +3350,10 @@ void scene_prepare_texture(Scene *scene, int id) {
         return;
     }
 
+    // TODO do something when this is close to (1L << 30L)
     scene_texture_count_loaded++;
     scene->texture_loaded_number[id] = scene_texture_count_loaded;
+    // printf("id=%d tcl=%ld\n", id, scene_texture_count_loaded);
 
     if (scene->texture_pixels[id] != NULL) {
         return;
