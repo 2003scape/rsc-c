@@ -161,15 +161,15 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     game_model->vertex_x = calloc(vertex_count, sizeof(int16_t));
     game_model->vertex_y = calloc(vertex_count, sizeof(int16_t));
     game_model->vertex_z = calloc(vertex_count, sizeof(int16_t));
-    game_model->vertex_intensity = calloc(vertex_count, sizeof(int));
+    game_model->vertex_intensity = calloc(vertex_count, sizeof(int16_t));
     game_model->vertex_ambience = calloc(vertex_count, sizeof(int8_t));
     game_model->face_vertex_count = calloc(face_count, sizeof(uint8_t));
     game_model->face_vertices = calloc(face_count, sizeof(uint16_t *));
     game_model->face_fill_front = calloc(face_count, sizeof(int16_t));
     game_model->face_fill_back = calloc(face_count, sizeof(int16_t));
     game_model->face_intensity = calloc(face_count, sizeof(int16_t));
-    game_model->normal_scale = calloc(face_count, sizeof(int));
-    game_model->normal_magnitude = calloc(face_count, sizeof(int));
+    game_model->normal_scale = calloc(face_count, sizeof(int16_t));
+    game_model->normal_magnitude = calloc(face_count, sizeof(int32_t));
 
     // TODO only scene->view needs this
     //#ifdef RENDER_SW
@@ -201,9 +201,9 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     }
 
     if (!game_model->unlit || !game_model->isolated) {
-        game_model->face_normal_x = calloc(face_count, sizeof(int));
-        game_model->face_normal_y = calloc(face_count, sizeof(int));
-        game_model->face_normal_z = calloc(face_count, sizeof(int));
+        game_model->face_normal_x = calloc(face_count, sizeof(int16_t));
+        game_model->face_normal_y = calloc(face_count, sizeof(int16_t));
+        game_model->face_normal_z = calloc(face_count, sizeof(int16_t));
     }
 
     game_model->face_count = 0;
@@ -696,8 +696,8 @@ void game_model_compute_bounds(GameModel *game_model) {
 
 void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
                                  int16_t *vertex_y, int16_t *vertex_z,
-                                 int *face_normal_x, int *face_normal_y,
-                                 int *face_normal_z, int reset_scale) {
+                                 int16_t *face_normal_x, int16_t *face_normal_y,
+                                 int16_t *face_normal_z, int reset_scale) {
     for (int i = 0; i < game_model->face_count; i++) {
         uint16_t *face_vertices = game_model->face_vertices[i];
 
@@ -747,10 +747,10 @@ void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
     }
 }
 
-void game_model_get_vertex_normals(GameModel *game_model, int *face_normal_x,
-                                   int *face_normal_y, int *face_normal_z,
-                                   int *normal_x, int *normal_y, int *normal_z,
-                                   int *normal_magnitude) {
+void game_model_get_vertex_normals(GameModel *game_model, int16_t *face_normal_x,
+                                   int16_t *face_normal_y, int16_t *face_normal_z,
+                                   int16_t *normal_x, int16_t *normal_y, int16_t *normal_z,
+                                   int32_t *normal_magnitude) {
     for (int i = 0; i < game_model->face_count; i++) {
         if (game_model->face_intensity[i] == GAME_MODEL_USE_GOURAUD) {
             for (int j = 0; j < game_model->face_vertex_count[i]; j++) {
@@ -787,10 +787,10 @@ void game_model_light(GameModel *game_model) {
 
     // TODO we could probably re-use a global variable for this instead of
     // allocating and freeing so many arrays
-    int *normal_x = calloc(game_model->vertex_count, sizeof(int));
-    int *normal_y = calloc(game_model->vertex_count, sizeof(int));
-    int *normal_z = calloc(game_model->vertex_count, sizeof(int));
-    int *normal_magnitude = calloc(game_model->vertex_count, sizeof(int));
+    int16_t *normal_x = calloc(game_model->vertex_count, sizeof(int16_t));
+    int16_t *normal_y = calloc(game_model->vertex_count, sizeof(int16_t));
+    int16_t *normal_z = calloc(game_model->vertex_count, sizeof(int16_t));
+    int32_t *normal_magnitude = calloc(game_model->vertex_count, sizeof(int32_t));
 
     game_model_get_vertex_normals(game_model, game_model->face_normal_x,
                                   game_model->face_normal_y,
@@ -1250,7 +1250,7 @@ void game_model_dump(GameModel *game_model, char *file_name) {
 }
 
 /* use the sprite masking technique on model faces */
-void game_model_mask_faces(GameModel *game_model, int *face_fill,
+void game_model_mask_faces(GameModel *game_model, int16_t *face_fill,
                            int mask_colour) {
     for (int j = 0; j < game_model->face_count; j++) {
         int fill_colour = -1 - face_fill[j];
@@ -1429,20 +1429,20 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         return;
     }
 
-    int *face_normal_x = calloc(game_model->face_count, sizeof(int));
-    int *face_normal_y = calloc(game_model->face_count, sizeof(int));
-    int *face_normal_z = calloc(game_model->face_count, sizeof(int));
+    int16_t *face_normal_x = calloc(game_model->face_count, sizeof(int16_t));
+    int16_t *face_normal_y = calloc(game_model->face_count, sizeof(int16_t));
+    int16_t *face_normal_z = calloc(game_model->face_count, sizeof(int16_t));
 
     game_model_get_face_normals(game_model, game_model->vertex_x,
                                 game_model->vertex_y, game_model->vertex_z,
                                 face_normal_x, face_normal_y, face_normal_z, 0);
 
-    int *vertex_normal_x = calloc(game_model->vertex_count, sizeof(int));
-    int *vertex_normal_y = calloc(game_model->vertex_count, sizeof(int));
-    int *vertex_normal_z = calloc(game_model->vertex_count, sizeof(int));
+    int16_t *vertex_normal_x = calloc(game_model->vertex_count, sizeof(int16_t));
+    int16_t *vertex_normal_y = calloc(game_model->vertex_count, sizeof(int16_t));
+    int16_t *vertex_normal_z = calloc(game_model->vertex_count, sizeof(int16_t));
 
-    int *vertex_normal_magnitude =
-        calloc(game_model->vertex_count, sizeof(int));
+    int32_t *vertex_normal_magnitude =
+        calloc(game_model->vertex_count, sizeof(int32_t));
 
     game_model_get_vertex_normals(game_model, face_normal_x, face_normal_y,
                                   face_normal_z, vertex_normal_x,
