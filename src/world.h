@@ -20,8 +20,6 @@ typedef struct World World;
 
 #include "mudclient.h"
 
-#define COLOUR_TRANSPARENT 12345678
-
 #define REGION_WIDTH 96
 #define REGION_HEIGHT 96
 

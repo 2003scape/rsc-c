@@ -1,4 +1,7 @@
 #include "game-data.h"
+#include "scene.h"
+
+#define JAGEX_TRANSPARENT    (12345678)
 
 struct MudConfig game_data;
 
@@ -344,10 +347,16 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     for (i = 0; i < game_data.wall_object_count; i++) {
         game_data.wall_objects[i].texture_front = game_data_get_unsigned_int();
+        if (game_data.wall_objects[i].texture_front == JAGEX_TRANSPARENT) {
+            game_data.wall_objects[i].texture_front = COLOUR_TRANSPARENT;
+        }
     }
 
     for (i = 0; i < game_data.wall_object_count; i++) {
         game_data.wall_objects[i].texture_back = game_data_get_unsigned_int();
+        if (game_data.wall_objects[i].texture_back == JAGEX_TRANSPARENT) {
+            game_data.wall_objects[i].texture_back = COLOUR_TRANSPARENT;
+        }
     }
 
     for (i = 0; i < game_data.wall_object_count; i++) {
@@ -374,6 +383,9 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     for (i = 0; i < game_data.tile_count; i++) {
         game_data.tiles[i].decoration = game_data_get_unsigned_int();
+        if (game_data.tiles[i].decoration == JAGEX_TRANSPARENT) {
+            game_data.tiles[i].decoration = COLOUR_TRANSPARENT;
+        }
     }
 
     for (i = 0; i < game_data.tile_count; i++) {

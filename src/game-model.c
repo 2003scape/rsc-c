@@ -165,9 +165,9 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     game_model->vertex_ambience = calloc(vertex_count, sizeof(int8_t));
     game_model->face_vertex_count = calloc(face_count, sizeof(uint8_t));
     game_model->face_vertices = calloc(face_count, sizeof(uint16_t *));
-    game_model->face_fill_front = calloc(face_count, sizeof(int));
-    game_model->face_fill_back = calloc(face_count, sizeof(int));
-    game_model->face_intensity = calloc(face_count, sizeof(int));
+    game_model->face_fill_front = calloc(face_count, sizeof(int16_t));
+    game_model->face_fill_back = calloc(face_count, sizeof(int16_t));
+    game_model->face_intensity = calloc(face_count, sizeof(int16_t));
     game_model->normal_scale = calloc(face_count, sizeof(int));
     game_model->normal_magnitude = calloc(face_count, sizeof(int));
 

@@ -58,8 +58,8 @@ typedef struct gl_pick_vertex {
 #define GAME_MODEL_TRANSFORM_TRANSLATE 1
 #define GAME_MODEL_TRANSFORM_ROTATE 2
 
-#define GAME_MODEL_USE_GOURAUD 12345678
-#define COLOUR_TRANSPARENT 12345678
+/* originally 12345678 - allows saving memory */
+#define GAME_MODEL_USE_GOURAUD INT16_MAX
 
 typedef struct GameModel GameModel;
 
@@ -82,11 +82,11 @@ struct GameModel {
     uint16_t face_count;
     uint8_t *face_vertex_count;
     uint16_t **face_vertices;
-    int *face_fill_front;
-    int *face_fill_back;
+    int16_t *face_fill_front;
+    int16_t *face_fill_back;
+    int16_t *face_intensity;
     int *normal_magnitude;
     int *normal_scale;
-    int *face_intensity;
     int *face_normal_x;
     int *face_normal_y;
     int *face_normal_z;

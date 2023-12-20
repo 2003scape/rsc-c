@@ -55,7 +55,8 @@ typedef struct Scene Scene;
 
 #define MOUSE_PICKED_MAX 100
 
-#define COLOUR_TRANSPARENT 12345678
+/* originally 12345678 - this way we save on memory. */
+#define COLOUR_TRANSPARENT INT16_MAX
 
 /* width and height of scrollable textures */
 #define SCROLL_TEXTURE_SIZE 64
