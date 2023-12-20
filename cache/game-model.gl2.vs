@@ -3,7 +3,7 @@
 #define VERTEX_SCALE 100.0
 
 #define RAMP_SIZE 256.0
-#define USE_GOURAUD 12345678.0
+#define USE_GOURAUD 32767.0
 
 attribute vec3 position;
 attribute vec4 normal;
