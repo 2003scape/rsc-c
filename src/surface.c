@@ -73,13 +73,13 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
     surface->sprite_colours = calloc(limit, sizeof(int8_t *));
     surface->sprite_palette = calloc(limit, sizeof(int32_t *));
-    surface->sprite_width = calloc(limit, sizeof(int));
-    surface->sprite_height = calloc(limit, sizeof(int));
-    surface->sprite_width_full = calloc(limit, sizeof(int));
-    surface->sprite_height_full = calloc(limit, sizeof(int));
+    surface->sprite_width = calloc(limit, sizeof(int16_t));
+    surface->sprite_height = calloc(limit, sizeof(int16_t));
+    surface->sprite_width_full = calloc(limit, sizeof(int16_t));
+    surface->sprite_height_full = calloc(limit, sizeof(int16_t));
     surface->sprite_translate = calloc(limit, sizeof(int8_t));
-    surface->sprite_translate_x = calloc(limit, sizeof(int));
-    surface->sprite_translate_y = calloc(limit, sizeof(int));
+    surface->sprite_translate_x = calloc(limit, sizeof(int16_t));
+    surface->sprite_translate_y = calloc(limit, sizeof(int16_t));
 
     surface->mud = mud;
 
