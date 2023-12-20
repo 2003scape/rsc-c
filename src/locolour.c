@@ -95,6 +95,25 @@ static uint8_t locolour_get_pinkish(int target_shade) {
     return best_entry;
 }
 
+static void try_colour_range(int *best_entry, int *best_value,
+                             unsigned min, unsigned max,
+                             int r, int g, int b) {
+    for (unsigned i = min; i < max; ++i) {
+        int palette_r = GET_RED(ibm_vga_palette[i]);
+        int palette_g = GET_GREEN(ibm_vga_palette[i]);
+        int palette_b = GET_BLUE(ibm_vga_palette[i]);
+
+        int value = (r - palette_r) * (r - palette_r) +
+                    (g - palette_g) * (g - palette_g) +
+                    (b - palette_b) * (b - palette_b);
+
+        if (value < *best_value) {
+            *best_entry = i;
+            *best_value = value;
+        }
+    }
+}
+
 uint8_t locolour_get_nearest(uint32_t target) {
     int r = GET_RED(target);
     int g = GET_GREEN(target);
@@ -121,20 +140,24 @@ uint8_t locolour_get_nearest(uint32_t target) {
     int best_entry = 0;
     int best_value = INT_MAX;
 
-    for (unsigned i = 0; i < 256; ++i) {
-        int palette_r = GET_RED(ibm_vga_palette[i]);
-        int palette_g = GET_GREEN(ibm_vga_palette[i]);
-        int palette_b = GET_BLUE(ibm_vga_palette[i]);
+    /* check the text mode range first */
+    try_colour_range(&best_entry, &best_value,
+                     1, GREYSCALE_START, r, g, b);
 
-        int value = (r - palette_r) * (r - palette_r) +
-                    (g - palette_g) * (g - palette_g) +
-                    (b - palette_b) * (b - palette_b);
-
-        if (value < best_value) {
-            best_entry = i;
-            best_value = value;
-        }
+    uint32_t found_colour = ibm_vga_palette[best_entry];
+    if (GET_RED(found_colour) == GET_GREEN(found_colour) &&
+        GET_GREEN(found_colour) == GET_BLUE(found_colour)) {
+         /*
+          * there are some problematic greyscales in the text mode
+          * range. we have to avoid them so masks aren't applied.
+          */
+         best_entry = 0;
+         best_value = INT_MAX;
     }
+
+    /* now check extended VGA colours */
+    try_colour_range(&best_entry, &best_value,
+                     GREYSCALE_END, PINKISH_START, r, g, b);
 
     return best_entry;
 }
