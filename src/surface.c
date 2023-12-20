@@ -1,5 +1,9 @@
 #include "surface.h"
 
+#ifdef USE_LOCOLOUR
+#include "locolour.h"
+#endif
+
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 gl_atlas_position gl_white_atlas_position = {
     .left_u = 0.0f,
@@ -1716,8 +1720,17 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
             }
         }
 #endif
+
+#ifdef USE_LOCOLOUR
+        palette_to_locolour((uint8_t *)surface->sprite_colours[i],
+                            area, (uint32_t *)surface->sprite_palette[i]);
+        surface->sprite_palette[i] = (int32_t *)ibm_vga_palette;
+#endif
     }
 
+#ifdef USE_LOCOLOUR
+    free(colours);
+#endif
     free(sprite_data);
 }
 
@@ -1828,7 +1841,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
-
+#ifndef USE_LOCOLOUR
     int32_t *sprite_pixels = surface->surface_pixels[sprite_id];
 
     for (int i = 0; i < sprite_size; i++) {
@@ -1910,6 +1923,13 @@ void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
 
     surface->sprite_colours[sprite_id] = colours;
     surface->sprite_palette[sprite_id] = palette;
+#else
+    uint8_t *colours = calloc(sprite_size, sizeof(uint8_t));
+    rgb_to_locolour((uint32_t *)surface->surface_pixels[sprite_id],
+                    sprite_size, colours);
+    surface->sprite_colours[sprite_id] = (int8_t *)colours;
+    surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#endif
 
     free(surface->surface_pixels[sprite_id]);
     surface->surface_pixels[sprite_id] = NULL;

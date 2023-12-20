@@ -2270,8 +2270,10 @@ void mudclient_load_textures(mudclient *mud) {
         surface_draw_box(surface, 0, 0, 128, 128, MAGENTA);
         surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
+#ifndef USE_LOCOLOUR
         free(surface->sprite_palette[mud->sprite_texture]);
         surface->sprite_palette[mud->sprite_texture] = NULL;
+#endif
 
         free(surface->sprite_colours[mud->sprite_texture]);
         surface->sprite_colours[mud->sprite_texture] = NULL;
@@ -2293,8 +2295,10 @@ void mudclient_load_textures(mudclient *mud) {
 
                 surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
+#ifndef USE_LOCOLOUR
                 free(surface->sprite_palette[mud->sprite_texture]);
                 surface->sprite_palette[mud->sprite_texture] = NULL;
+#endif
 
                 free(surface->sprite_colours[mud->sprite_texture]);
                 surface->sprite_colours[mud->sprite_texture] = NULL;
