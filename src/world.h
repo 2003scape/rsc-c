@@ -54,7 +54,7 @@ typedef enum TILE_TIPE {
 /* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
 #define BRIDGE_TILE_DECORATION 12
 
-extern int terrain_colours[TERRAIN_COLOUR_COUNT];
+extern int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
 int rgb_to_texture_colour(int r, int g, int b);
 void init_world_global();

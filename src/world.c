@@ -1,7 +1,7 @@
 #include "world.h"
 #include "version.h"
 
-int terrain_colours[TERRAIN_COLOUR_COUNT];
+int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
 int rgb_to_texture_colour(int r, int g, int b) {
     return -1 - (r / 8) * 1024 - (g / 8) * 32 - (b / 8);
