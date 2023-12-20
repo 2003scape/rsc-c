@@ -782,7 +782,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
     }
     }
 
-    if (mud->options->lowmem) {
+    if (!mud->options->lowmem) {
         mudclient_draw_blue_bar(mud);
     }
 
