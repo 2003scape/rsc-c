@@ -90,7 +90,6 @@ typedef struct GlModelTime {
 #endif
 
 struct Scene {
-    int max_sprite_count;
     int last_visible_polygons_count;
     int clip_near;
     int clip_far_3d;
@@ -98,6 +97,8 @@ struct Scene {
     int fog_z_distance;
     int model_count;
     int max_model_count;
+    int max_polygon_count;
+    int max_sprite_count;
     GameModel **models;
     GameModel *view;
     int32_t *raster;
