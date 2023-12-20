@@ -79,6 +79,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->surface = surface;
     scene->max_model_count = model_count;
+    scene->max_polygon_count = polygon_count;
     scene->max_sprite_count = max_sprite_count;
 
     scene->clip_near = 5;
@@ -1362,6 +1363,11 @@ void scene_initialise_polygons_2d(Scene *scene) {
         if (view_x - (view_width / 2) <= scene->clip_x &&
             view_x + (view_width / 2) >= -scene->clip_x &&
             view_y - view_height <= scene->clip_y && view_y >= -scene->clip_y) {
+
+            if (scene->visible_polygons_count >= (scene->max_polygon_count - 1)) {
+                break;
+            }
+
             GamePolygon *polygon =
                 scene->visible_polygons[scene->visible_polygons_count];
 
@@ -1545,6 +1551,10 @@ void scene_render(Scene *scene) {
                     }
 
                     if (view_y_count == 3) {
+                        if (scene->visible_polygons_count >= (scene->max_polygon_count - 1)) {
+                            break;
+                        }
+
                         GamePolygon *polygon_1 =
                             scene->visible_polygons
                                 [scene->visible_polygons_count];
