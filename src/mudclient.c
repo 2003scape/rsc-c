@@ -1,5 +1,9 @@
 #include "mudclient.h"
 
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
+
 #ifdef EMSCRIPTEN
 /* clang doesn't know what triple equals is, understandably */
 /* clang-format off */
@@ -2260,6 +2264,11 @@ void mudclient_load_textures(mudclient *mud) {
     Surface *surface = mud->surface;
 
     for (int i = 0; i < game_data.texture_count; i++) {
+#ifdef USE_TOONSCAPE
+        if (toonscape_avoid_load(i)) {
+            continue;
+        }
+#endif
         sprintf(file_name, "%s.dat", game_data.textures[i].name);
 
         int8_t *texture_dat = load_data(file_name, 0, textures_jag, NULL);

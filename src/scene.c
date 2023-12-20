@@ -1,4 +1,7 @@
 #include "scene.h"
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
 
 #ifdef RENDER_3DS_GL
 void _3ds_gl_perspective(float fov, float aspect, float near, float far,
@@ -1572,6 +1575,9 @@ void scene_render(Scene *scene) {
                             polygon_1->depth =
                                 (h / vertex_count) + game_model->depth;
 
+#ifdef USE_TOONSCAPE
+                            face_fill = apply_toonscape(face_fill);
+#endif
                             polygon_1->facefill = face_fill;
 
                             scene->visible_polygons_count++;
@@ -2424,6 +2430,10 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                      int32_t *vertices_y, int32_t *vertices_z, int face_fill,
                      GameModel *game_model) {
+#ifdef USE_TOONSCAPE
+    face_fill = apply_toonscape(face_fill);
+#endif
+
     if (face_fill == -2) {
         return;
     }
@@ -3495,6 +3505,10 @@ void scene_scroll_texture(Scene *scene, int id) {
 
 /* used to convert face_fill values (textures or colours) to minimap colours */
 int scene_get_fill_colour(Scene *scene, int face_fill) {
+#ifdef USE_TOONSCAPE
+    face_fill = apply_toonscape(face_fill);
+#endif
+
     if (face_fill == COLOUR_TRANSPARENT) {
         return 0;
     }
