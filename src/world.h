@@ -32,6 +32,14 @@ typedef struct World World;
 #define TILE_COUNT (REGION_SIZE * REGION_SIZE)
 #define PLANE_HEIGHT 80000
 
+#ifndef TERRAIN_MAX_FACES
+#define TERRAIN_MAX_FACES 18688
+#endif
+
+#ifndef TERRAIN_MAX_VERTICES
+#define TERRAIN_MAX_VERTICES 18688
+#endif
+
 /* length of the portion of the roof hanging over the building */
 #define ROOF_SLOPE 16
 
