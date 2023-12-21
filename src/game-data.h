@@ -88,7 +88,7 @@ struct ItemConfig {
 };
 
 struct TileConfig {
-    int decoration;
+    int16_t decoration;
     uint8_t type;
     uint8_t blocking;
 };
