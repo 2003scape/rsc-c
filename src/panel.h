@@ -106,10 +106,10 @@ int panel_add_text_centre(Panel *panel, int x, int y, char *text,
 int panel_add_box_rounded(Panel *panel, int x, int y, int width, int height);
 int panel_add_sprite(Panel *panel, int x, int y, int sprite_id);
 int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
-                        FontStyle font_style, int max_length, int flag);
+                        FontStyle font_style, int max_list_entries, int flag);
 int panel_add_text_list_input(Panel *panel, int x, int y, int width, int height,
-                              FontStyle font_style, int max_length, int flag,
-                              int flag1);
+                              FontStyle font_style, int max_length,
+                              int is_password, int flag1);
 int panel_add_text_input(Panel *panel, int x, int y, int width, int height,
                          FontStyle font_style, int max_length, int is_password,
                          int flag1);

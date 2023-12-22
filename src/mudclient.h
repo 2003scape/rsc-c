@@ -176,6 +176,9 @@
 #define MUD_VANILLA_WIDTH 512
 #define MUD_VANILLA_HEIGHT 346
 
+#define MUD_MIN_WIDTH 320
+#define MUD_MIN_HEIGHT 240
+
 #ifdef _3DS
 #define MUD_WIDTH 320
 #define MUD_HEIGHT 240
@@ -663,7 +666,7 @@ struct mudclient {
     int control_text_list_chat;
     int control_text_list_quest;
     int control_text_list_private;
-    MESSAGE_TAB message_tab_selected;
+    MessageTab message_tab_selected;
     int message_tab_flash_all;
     int message_tab_flash_history;
     int message_tab_flash_quest;

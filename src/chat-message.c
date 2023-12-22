@@ -75,8 +75,8 @@ char *chat_message_decode(int8_t *buffer, int offset, int length) {
 int chat_message_encode(char *message) {
     int message_length = strlen(message);
 
-    if (message_length > 80) {
-        message_length = 80;
+    if (message_length > CHAT_MESSAGE_MAX_INPUT_LENGTH) {
+        message_length = CHAT_MESSAGE_MAX_INPUT_LENGTH;
     }
 
     int offset = 0;

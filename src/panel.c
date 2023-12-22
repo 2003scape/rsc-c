@@ -31,6 +31,8 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->control_list_entries = calloc(max, sizeof(char **));
 }
 
+// TODO should we just remove the arguments and use mud? they're the same 100%
+// of the time
 void panel_handle_mouse(Panel *panel, int x, int y, int last_button,
                         int is_down, int scroll_delta) {
     panel->mouse_x = x;
@@ -578,17 +580,17 @@ int panel_add_sprite(Panel *panel, int x, int y, int sprite_id) {
 }
 
 int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
-                        FontStyle font_style, int max_length, int flag) {
+                        FontStyle font_style, int max_list_entries, int flag) {
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
     panel->control_use_alternative_colour[panel->control_count] = flag;
     panel->control_font_style[panel->control_count] = font_style;
-    panel->control_input_max_length[panel->control_count] = max_length;
+    panel->control_input_max_length[panel->control_count] = max_list_entries;
 
     panel->control_list_entries[panel->control_count] =
-        calloc(max_length, sizeof(char *));
+        calloc(max_list_entries, sizeof(char *));
 
-    for (int i = 0; i < max_length; i++) {
+    for (int i = 0; i < max_list_entries; i++) {
         panel->control_list_entries[panel->control_count][i] =
             calloc(255, sizeof(char));
     }
@@ -597,9 +599,9 @@ int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
 }
 
 int panel_add_text_list_input(Panel *panel, int x, int y, int width, int height,
-                              FontStyle font_style, int max_length, int flag,
-                              int flag1) {
-    panel->control_mask_text[panel->control_count] = flag;
+                              FontStyle font_style, int max_length,
+                              int is_password, int flag1) {
+    panel->control_mask_text[panel->control_count] = is_password;
     panel->control_font_style[panel->control_count] = font_style;
     panel->control_use_alternative_colour[panel->control_count] = flag1;
     panel->control_width[panel->control_count] = width;

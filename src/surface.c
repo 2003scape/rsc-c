@@ -3982,6 +3982,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height) {
+    // TODO just remove this? confusing.
     x += width - 12;
 
     surface_draw_border(surface, x, y, 12, height, 0);
