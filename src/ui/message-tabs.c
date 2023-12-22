@@ -453,7 +453,8 @@ void mudclient_show_message(mudclient *mud, char *message, MESSAGE_TYPE type) {
         mud->message_history_timeout[i] = mud->message_history_timeout[i - 1];
     }
 
-    strcpy(mud->message_history[0], coloured_message);
+    snprintf(mud->message_history[0],
+             sizeof(mud->message_history[0]), "%s", coloured_message);
     mud->message_history_timeout[0] = 300;
 
     if (type == MESSAGE_TYPE_CHAT) {
