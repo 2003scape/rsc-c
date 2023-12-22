@@ -870,7 +870,7 @@ void mudclient_resize(mudclient *mud) {
             mud->panel_appearance->offset_y = half_offset_y;
         }
 
-        if (mud->panel_message_tabs != NULL) {
+        if (mud->panel_message_tabs != NULL && !is_touch) {
             mud->panel_message_tabs->offset_y = full_offset_y;
         }
 
@@ -2009,6 +2009,10 @@ void mudclient_load_media(mudclient *mud) {
     surface_parse_sprite(mud->surface, mud->sprite_media + 33,
                          load_data("inv3.dat", 0, media_jag, NULL), index_dat,
                          6);
+
+    surface_parse_sprite(mud->surface, mud->sprite_media + 39,
+                         load_data("message.dat", 0, media_jag, NULL), index_dat,
+                         1);
 #endif
 
     surface_parse_sprite(mud->surface, mud->sprite_util,

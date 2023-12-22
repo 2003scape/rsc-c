@@ -4,8 +4,10 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
     mud->panel_message_tabs = malloc(sizeof(Panel));
     panel_new(mud->panel_message_tabs, mud->surface, 10);
 
-    int x = 7;
-    int y = MUD_HEIGHT - 22;
+    int is_touch = mudclient_is_touch(mud);
+
+    int x = 7 + (is_touch ? 5 : 0);
+    int y = is_touch ? 100 : MUD_HEIGHT - 22;
 
     int width = MUD_WIDTH - 14;
     int height = 14;
@@ -15,9 +17,9 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
         CHAT_MESSAGE_MAX_INPUT_LENGTH, 0, 1);
 
     int text_list_x = x - 2;
-    int text_list_y = y - 55;
+    int text_list_y = y - 55 - (is_touch ? 13 : 0);
     int text_list_width = MUD_WIDTH - 10;
-    int text_list_height = 56;
+    int text_list_height = 56 + (is_touch ? 14 : 0);
 
     // TODO make this higher - like 100 - add option to enable
     int max_text_list_entries = 20;
@@ -39,6 +41,7 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH;
+    int is_touch = mudclient_is_touch(mud);
 
     Panel *panel = mud->panel_message_tabs;
 
@@ -55,7 +58,9 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 
     int button_width = is_compact ? (int)(mud->surface->width * 0.245f) : 100;
 
-    if (is_compact) {
+    if (is_touch) {
+        surface_draw_sprite(mud->surface, x, y + 4, mud->sprite_media + 22);
+    } else if (is_compact) {
         int bar_width =
             is_compact ? mud->surface->width + button_width : HBAR_WIDTH;
 
@@ -83,14 +88,25 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
                                      mud->surface->width - 503, BLACK);
     }
 
-    if (!is_compact && mud->options->wiki_lookup) {
+    if (!is_touch && !is_compact && mud->options->wiki_lookup) {
         surface_draw_box(mud->surface, x + 416, y + 3, 84, 9, MESSAGE_TAB_WIKI);
         surface_draw_box(mud->surface, x + 414, y + 7, 88, 5, MESSAGE_TAB_WIKI);
         surface_draw_box(mud->surface, x + 413, y + 8, 90, 3, MESSAGE_TAB_WIKI);
     }
 
-    x += (int)(button_width * 0.54f);
-    y = mud->surface->height - 6 + (is_compact ? 1 : 0);
+    if (is_touch) {
+        x = 9;
+        y = 24;
+
+        for (int i = 0; i < 5; i++) {
+            surface_draw_sprite(mud->surface, x + (i * 100) + (i == 4 ? 1 : 0),
+                                y - 13, mud->sprite_media + 39);
+        }
+    } else {
+        y = mud->surface->height - 6 + (is_compact ? 1 : 0);
+    }
+
+    x = (int)(button_width * 0.54f);
 
     int text_colour = MESSAGE_TAB_PURPLE;
 
@@ -159,14 +175,16 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
-        int y = mud->surface->height - 30;
+        int is_touch = mudclient_is_touch(mud);
+        int x = 7 + (is_touch ? 5 : 0);
+        int y = is_touch ? 91 : mud->surface->height - 30;
 
         for (int i = 0; i < MESSAGE_HISTORY_LENGTH; i++) {
             if (mud->message_history_timeout[i] <= 0) {
                 continue;
             }
 
-            surface_draw_string(mud->surface, mud->message_history[i], 7,
+            surface_draw_string(mud->surface, mud->message_history[i], x,
                                 y - i * 12, FONT_BOLD_12, YELLOW);
         }
     }
@@ -205,16 +223,18 @@ void mudclient_send_chat_message(mudclient *mud, int8_t *encoded,
 }
 
 void mudclient_handle_message_tabs_input(mudclient *mud) {
+    int is_touch = mudclient_is_touch(mud);
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH;
 
     float button_scale =
         is_compact ? mud->surface->width / (float)MUD_MIN_WIDTH : 1;
 
-    int bar_min_y = mud->surface->height - 16;
-    int bar_max_y = mud->surface->height;
+    int bar_min_y = is_touch ? 0 : mud->surface->height - 16;
+    int bar_max_y = is_touch ? 30 : mud->surface->height;
+    int bar_max_x = is_touch ? HBAR_WIDTH : mud->surface->width;
 
-    if (mud->last_mouse_button_down == 1 && mud->mouse_y > bar_min_y &&
-        mud->mouse_y <= bar_max_y) {
+    if (mud->last_mouse_button_down == 1 && mud->mouse_x <= bar_max_x &&
+        mud->mouse_y > bar_min_y && mud->mouse_y <= bar_max_y) {
         int all_min_x = (is_compact ? 12 * button_scale : 15);
         int all_max_x = (is_compact ? 75 * button_scale : 96);
 
@@ -262,9 +282,15 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
         mud->mouse_button_down = 0;
     }
 
-    panel_handle_mouse(mud->panel_message_tabs, mud->mouse_x, mud->mouse_y,
-                       mud->last_mouse_button_down, mud->mouse_button_down,
-                       mud->mouse_scroll_delta);
+    if (mudclient_is_touch(mud)) {
+        panel_handle_mouse(mud->panel_message_tabs, mudclient_finger_1_x,
+                           mudclient_finger_1_y, mud->last_mouse_button_down,
+                           mudclient_finger_1_down, mud->mouse_scroll_delta);
+    } else {
+        panel_handle_mouse(mud->panel_message_tabs, mud->mouse_x, mud->mouse_y,
+                           mud->last_mouse_button_down, mud->mouse_button_down,
+                           mud->mouse_scroll_delta);
+    }
 
     int text_list_width = is_compact ? mud->surface->width : MUD_VANILLA_WIDTH;
 
@@ -319,6 +345,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
                           "");
     }
 
+    // TODO make an option to disable this
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
         for (int i = 0; i < 5; i++) {
             if (mud->message_history_timeout[i] > 0) {
@@ -387,8 +414,6 @@ void mudclient_show_message(mudclient *mud, char *message, MessageType type) {
     /* handle wrapping */
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH;
     int max_text_width = (is_compact ? mud->surface->width : MUD_WIDTH) - 15;
-
-    printf("max text width %d\n", max_text_width);
 
     if (is_compact &&
         surface_text_width(message, FONT_BOLD_12) >= max_text_width) {
