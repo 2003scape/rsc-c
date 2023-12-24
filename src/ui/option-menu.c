@@ -1,10 +1,12 @@
 #include "option-menu.h"
 
 void mudclient_draw_option_menu(mudclient *mud) {
-    int font_size = 1;
-    int font_height = 12;
-    int ui_x = 6;
-    int ui_y = 0;
+    int is_touch = mudclient_is_touch(mud);
+
+    FontStyle font_style = is_touch ? FONT_BOLD_13 : FONT_BOLD_12;
+    int font_height = is_touch ? 22 : 12;
+    int ui_x = is_touch ? 12 : 6;
+    int ui_y = is_touch ? 108 : 0;
 
     if (mud->options->option_numbers) {
         int index = -1;
@@ -51,7 +53,7 @@ void mudclient_draw_option_menu(mudclient *mud) {
 
             if (mud->mouse_x < ui_x - 6 ||
                 mud->mouse_x >=
-                    ui_x - 6 + surface_text_width(entry, font_size) ||
+                    ui_x - 6 + surface_text_width(entry, font_style) ||
                 mud->mouse_y <= ui_y + i * font_height ||
                 mud->mouse_y >= ui_y + (font_height + i * font_height)) {
                 continue;
@@ -81,14 +83,14 @@ void mudclient_draw_option_menu(mudclient *mud) {
 #endif
 
         if (mud->mouse_x > ui_x - 6 &&
-            mud->mouse_x < ui_x - 6 + surface_text_width(entry, font_size) &&
+            mud->mouse_x < ui_x - 6 + surface_text_width(entry, font_style) &&
             mud->mouse_y > ui_y + i * font_height &&
             mud->mouse_y < ui_y + (i * font_height + font_height)) {
             text_colour = RED;
         }
 
         surface_draw_string(mud->surface, entry, ui_x,
-                            ui_y + (font_height + i * font_height), font_size,
+                            ui_y + (font_height + i * font_height), font_style,
                             text_colour);
     }
 }

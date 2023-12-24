@@ -61,6 +61,22 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
         offset_max_y = offset_min_y + (UI_BUTTON_SIZE - 2);
     }
 
+    int is_dragging_scrollbar = 0;
+
+    if (mud->options->off_handle_scroll_drag) {
+        is_dragging_scrollbar =
+            mud->panel_quests->control_list_scrollbar_handle_dragged
+                [mud->control_list_quest] ||
+            mud->panel_magic->control_list_scrollbar_handle_dragged
+                [mud->control_list_magic] ||
+            mud->panel_social_list->control_list_scrollbar_handle_dragged
+                [mud->control_list_social];
+
+        if (is_dragging_scrollbar) {
+            return;
+        }
+    }
+
     int has_changed_tab = 0;
 
     for (int i = 0; i < 6; i++) {
@@ -107,19 +123,6 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
             offset_min_x -= UI_BUTTON_SIZE - 2;
             offset_max_x -= UI_BUTTON_SIZE - 2;
         }
-    }
-
-    // TODO check this for changing tabs too
-    int is_dragging_scrollbar = 0;
-
-    if (mud->options->off_handle_scroll_drag) {
-        is_dragging_scrollbar =
-            mud->panel_quests->control_list_scrollbar_handle_dragged
-                [mud->control_list_quest] ||
-            mud->panel_magic->control_list_scrollbar_handle_dragged
-                [mud->control_list_magic] ||
-            mud->panel_social_list->control_list_scrollbar_handle_dragged
-                [mud->control_list_social];
     }
 
     /* ui_tab_ boundary values will change next frame after the change */

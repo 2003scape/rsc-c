@@ -2011,8 +2011,8 @@ void mudclient_load_media(mudclient *mud) {
                          6);
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 39,
-                         load_data("message.dat", 0, media_jag, NULL), index_dat,
-                         1);
+                         load_data("message.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 #endif
 
     surface_parse_sprite(mud->surface, mud->sprite_util,
@@ -2063,6 +2063,8 @@ void mudclient_load_media(mudclient *mud) {
     for (int i = 0; i < 6; i++) {
         surface_load_sprite(mud->surface, mud->sprite_media + 33 + i);
     }
+
+    surface_load_sprite(mud->surface, mud->sprite_media + 39);
 #else
     surface_load_sprite(mud->surface, mud->sprite_media);
 #endif
@@ -3127,7 +3129,8 @@ void mudclient_start_game(mudclient *mud) {
     if (is_touch) {
         x = UI_TABS_TOUCH_X - STATS_WIDTH - 1;
 
-        y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - STATS_COMPACT_HEIGHT - STATS_TAB_HEIGHT - 5;
+        y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - STATS_COMPACT_HEIGHT -
+            STATS_TAB_HEIGHT - 5;
     }
 
     mud->control_list_quest = panel_add_text_list_interactive(
@@ -3143,15 +3146,16 @@ void mudclient_start_game(mudclient *mud) {
     }
 
     mud->control_list_magic = panel_add_text_list_interactive(
-        mud->panel_magic, x, y + MAGIC_TAB_HEIGHT - (is_touch ? 11 : 0), MAGIC_WIDTH, 90+(is_touch ? 16 :0),
-        FONT_BOLD_12, 500, 1);
+        mud->panel_magic, x, y + MAGIC_TAB_HEIGHT - (is_touch ? 11 : 0),
+        MAGIC_WIDTH, 90 + (is_touch ? 16 : 0), FONT_BOLD_12, 500, 1);
 
     mud->panel_social_list = malloc(sizeof(Panel));
     panel_new(mud->panel_social_list, mud->surface, 5);
 
     mud->control_list_social = panel_add_text_list_interactive(
-        mud->panel_social_list, x, y + SOCIAL_TAB_HEIGHT + 16 - (is_touch ? 11 : 0),
-        196, 126 + (is_touch ? 16 : 0), FONT_BOLD_12, 500, 1);
+        mud->panel_social_list, x,
+        y + SOCIAL_TAB_HEIGHT + 16 - (is_touch ? 11 : 0), 196,
+        126 + (is_touch ? 16 : 0), FONT_BOLD_12, 500, 1);
 
     mudclient_load_media(mud);
 
@@ -3737,12 +3741,19 @@ void mudclient_handle_camera_zoom(mudclient *mud) {
         mud->camera_zoom = ZOOM_OUTDOORS;
     }
 
+    int is_touch = mudclient_is_touch(mud);
+
+    int exclude_max_x = MUD_VANILLA_WIDTH;
+
+    int exclude_min_y = is_touch ? 0 : mud->surface->height - 80;
+    int exclude_max_y = is_touch ? 100 : mud->surface->height;
+
     if (mud->mouse_scroll_delta != 0 &&
         (mud->show_ui_tab == 0 || mud->show_ui_tab == MAP_TAB) &&
         !(mud->message_tab_selected != MESSAGE_TAB_ALL &&
-          mud->mouse_y > mud->surface->height - 80) &&
+          mud->mouse_y > exclude_min_y && mud->mouse_y <= exclude_max_y &&
+          mud->mouse_x <= exclude_max_x) &&
         !mud->show_dialog_bank) {
-
         mud->camera_zoom += mud->mouse_scroll_delta * 24;
     }
 
@@ -5941,9 +5952,9 @@ void mudclient_poll_events(mudclient *mud) {
         }*/
     }
 #else
-    if (!mudclient_has_right_clicked &&
-        !mudclient_horizontal_drag && !mudclient_vertical_drag &&
-        mudclient_finger_1_down && !mudclient_finger_2_down &&
+    if (!mudclient_has_right_clicked && !mudclient_horizontal_drag &&
+        !mudclient_vertical_drag && mudclient_finger_1_down &&
+        !mudclient_finger_2_down &&
         get_ticks() - mudclient_touch_start >= 400) {
         mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
@@ -6117,8 +6128,8 @@ void mudclient_poll_events(mudclient *mud) {
             if (mudclient_finger_1_down && finger_id == mudclient_finger_1_id) {
                 mudclient_finger_1_down = 0;
 
-                if (!mudclient_has_right_clicked &&
-                    !mudclient_vertical_drag && !mudclient_horizontal_drag &&
+                if (!mudclient_has_right_clicked && !mudclient_vertical_drag &&
+                    !mudclient_horizontal_drag &&
                     mudclient_pinch_distance == 0) {
                     mudclient_mouse_pressed(mud, touch_x, touch_y, 0);
                     mudclient_mouse_released(mud, touch_x, touch_y, 0);

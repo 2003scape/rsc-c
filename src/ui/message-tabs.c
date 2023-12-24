@@ -9,7 +9,7 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
     int x = 7 + (is_touch ? 5 : 0);
     int y = is_touch ? 100 : MUD_HEIGHT - 22;
 
-    int width = MUD_WIDTH - 14;
+    int width = MUD_WIDTH - 14 - (is_touch ? 14 : 0);
     int height = 14;
 
     mud->control_text_list_all = panel_add_text_list_input(
@@ -45,8 +45,8 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 
     Panel *panel = mud->panel_message_tabs;
 
-    int panel_width =
-        (is_compact ? mud->surface->width : MUD_VANILLA_WIDTH) - 14;
+    int panel_width = (is_compact ? mud->surface->width : MUD_VANILLA_WIDTH) -
+                      14 - (is_touch ? 14 : 0);
 
     panel->control_width[mud->control_text_list_all] = panel_width;
     panel->control_width[mud->control_text_list_chat] = panel_width + 4;
@@ -98,9 +98,13 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         x = 9;
         y = 24;
 
-        for (int i = 0; i < 5; i++) {
-            surface_draw_sprite(mud->surface, x + (i * 100) + (i == 4 ? 1 : 0),
-                                y - 13, mud->sprite_media + 39);
+        int button_width =
+            is_compact ? (int)(mud->surface->width * 0.245f) : 100;
+
+        for (int i = 0; i < 4 + (!is_compact); i++) {
+            surface_draw_sprite_scale(
+                mud->surface, x + (i * button_width) + (i == 4 ? 1 : 0), y - 13,
+                button_width - 10, 19, mud->sprite_media + 39, 0);
         }
     } else {
         y = mud->surface->height - 6 + (is_compact ? 1 : 0);
@@ -292,11 +296,16 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
                            mud->mouse_scroll_delta);
     }
 
-    int text_list_width = is_compact ? mud->surface->width : MUD_VANILLA_WIDTH;
+    int text_list_width =
+        (is_compact ? mud->surface->width : MUD_VANILLA_WIDTH) -
+        (is_touch ? 14 : 0);
+
+    int min_scrollbar_y = is_touch ? 0 : mud->surface->height - 78;
+    int max_scrollbar_y = is_touch ? 102 : mud->surface->height;
 
     if (mud->message_tab_selected > 0 && mud->mouse_x >= text_list_width - 18 &&
-        mud->mouse_x < text_list_width + 1 &&
-        mud->mouse_y >= mud->surface->height - 78) {
+        mud->mouse_x < text_list_width + 1 && mud->mouse_y >= min_scrollbar_y &&
+        mud->mouse_y <= max_scrollbar_y) {
         mud->last_mouse_button_down = 0;
     }
 
