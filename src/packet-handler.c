@@ -142,6 +142,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
+        if (mud->local_player_server_index >= PLAYERS_SERVER_MAX) {
+            return;
+        }
         mud->loading_area = 1;
         mud->local_player_server_index = get_unsigned_short(data, 1, size);
         mud->plane_width = get_unsigned_short(data, 3, size);
@@ -259,6 +262,10 @@ void mudclient_packet_tick(mudclient *mud) {
         while (offset + 24 < size * 8) {
             int server_index = get_bit_mask(data, offset, size, 11);
             offset += 11;
+
+            if (server_index >= PLAYERS_SERVER_MAX) {
+                return;
+            }
 
             int area_x = get_bit_mask(data, offset, size, 5);
             offset += 5;
@@ -395,6 +402,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int npc_index = get_unsigned_short(data, offset, size);
                 offset += 2;
 
+                if (npc_index >= NPCS_SERVER_MAX) {
+                    return;
+                }
+
                 if (player != NULL) {
                     player->incoming_projectile_sprite = projectile_sprite;
                     player->attacking_npc_server_index = npc_index;
@@ -408,6 +419,10 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 int opponent_index = get_unsigned_short(data, offset, size);
                 offset += 2;
+
+                if (opponent_index >= PLAYERS_SERVER_MAX) {
+                    return;
+                }
 
                 if (player != NULL) {
                     player->incoming_projectile_sprite = projectile_sprite;
@@ -741,6 +756,10 @@ void mudclient_packet_tick(mudclient *mud) {
             int server_index = get_bit_mask(data, offset, size, 12);
             offset += 12;
 
+            if (server_index >= NPCS_SERVER_MAX) {
+                return;
+            }
+
             int area_x = get_bit_mask(data, offset, size, 5);
             offset += 5;
 
@@ -781,7 +800,15 @@ void mudclient_packet_tick(mudclient *mud) {
             int server_index = get_unsigned_short(data, offset, size);
             offset += 2;
 
+            if (server_index >= NPCS_SERVER_MAX) {
+                return;
+            }
+
             GameCharacter *npc = mud->npcs_server[server_index];
+            if (npc == NULL) {
+                return;
+            }
+
             int update_type = get_unsigned_byte(data, offset++, size);
 
             if (update_type == 1) {
@@ -1688,6 +1715,9 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_TRADE_OPEN:
     case SERVER_DUEL_OPEN: {
         int player_index = get_unsigned_short(data, 1, size);
+        if (player_index >= PLAYERS_SERVER_MAX) {
+            return;
+        }
 
         if (mud->player_server[player_index] != NULL) {
             strcpy(mud->transaction_recipient_name,
