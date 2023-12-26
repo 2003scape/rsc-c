@@ -106,7 +106,6 @@ void panel_key_press(Panel *panel, int key) {
 
         if (input_len <
             panel->control_input_max_length[panel->focus_control_index]) {
-
             for (int i = 0; i < CHAR_SET_LENGTH; i++) {
                 if (key == (int)CHAR_SET[i]) {
                     panel->control_text[panel->focus_control_index]
@@ -114,6 +113,8 @@ void panel_key_press(Panel *panel, int key) {
 
                     panel->control_text[panel->focus_control_index][input_len] =
                         '\0';
+
+                    break;
                 }
             }
         }
@@ -395,7 +396,8 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         int scrub_y =
             ((height - 27 - scrub_height) * list_entry_position) / max_entries;
 
-        if (panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
+        if (!mudclient_is_touch(panel->surface->mud) &&
+            panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
             panel->mouse_x < x + width && panel->mouse_y > y &&
             panel->mouse_y < y + height) {
             list_entry_position += panel->mouse_scroll_delta;

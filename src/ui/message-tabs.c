@@ -79,13 +79,15 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
                                 mud->sprite_media + 22);
         }
 
-        surface_draw_line_horizontal(mud->surface, 503,
-                                     mud->surface->height - 14,
-                                     mud->surface->width - 503, BLACK);
+        if (!is_touch) {
+            surface_draw_line_horizontal(mud->surface, 503,
+                                         mud->surface->height - 14,
+                                         mud->surface->width - 503, BLACK);
 
-        surface_draw_line_horizontal(mud->surface, 503,
-                                     mud->surface->height - 13,
-                                     mud->surface->width - 503, BLACK);
+            surface_draw_line_horizontal(mud->surface, 503,
+                                         mud->surface->height - 13,
+                                         mud->surface->width - 503, BLACK);
+        }
     }
 
     if (!is_touch && !is_compact && mud->options->wiki_lookup) {
@@ -290,6 +292,37 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
         panel_handle_mouse(mud->panel_message_tabs, mudclient_finger_1_x,
                            mudclient_finger_1_y, mud->last_mouse_button_down,
                            mudclient_finger_1_down, mud->mouse_scroll_delta);
+
+        char *chat_input =
+            mud->panel_message_tabs->control_text[mud->control_text_list_all];
+
+        int chat_input_x = 11;
+        int chat_input_width = mud->surface->width - chat_input_x;
+
+        if (chat_input_width > HBAR_WIDTH) {
+            chat_input_width = HBAR_WIDTH;
+        }
+
+        int chat_input_trigger_width =
+            surface_text_width(chat_input, FONT_BOLD_12);
+
+        if (chat_input_trigger_width < 32) {
+            chat_input_trigger_width = 32;
+        }
+
+        int chat_input_y = 93;
+        int chat_input_height = 15;
+
+        if (mud->last_mouse_button_down == 1 &&
+            mud->mouse_x <= chat_input_x + chat_input_trigger_width &&
+            mud->mouse_y >= chat_input_y - 2 &&
+            mud->mouse_y <= chat_input_y + chat_input_height + 2) {
+            mudclient_trigger_keyboard(mud, chat_input, 0, chat_input_x,
+                                       chat_input_y, chat_input_width,
+                                       chat_input_height, FONT_BOLD_12, 0);
+
+            mud->last_mouse_button_down = 0;
+        }
     } else {
         panel_handle_mouse(mud->panel_message_tabs, mud->mouse_x, mud->mouse_y,
                            mud->last_mouse_button_down, mud->mouse_button_down,

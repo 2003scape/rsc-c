@@ -5527,6 +5527,8 @@ void mudclient_on_resize(mudclient *mud) {
     mud->game_width = new_width;
     mud->game_height = new_height;
 
+    printf("new size: %d %d\n", mud->game_width, mud->game_height);
+
     if (mud->surface != NULL) {
         if (mudclient_is_ui_scaled(mud)) {
             mud->surface->width = new_width / 2;

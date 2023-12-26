@@ -4,12 +4,18 @@ char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
 void mudclient_draw_ui_tabs(mudclient *mud) {
+    int is_touch = mudclient_is_touch(mud);
+
+    if (mud->show_dialog_bank && mud->surface->width >= 680 && is_touch) {
+        return;
+    }
+
     int button_y = 3;
 
 #if (VERSION_MEDIA >= 59)
     int button_x = mud->surface->width - UI_BUTTON_SIZE;
 
-    if (mudclient_is_touch(mud)) {
+    if (is_touch) {
         button_x = UI_TABS_TOUCH_X;
         button_y = UI_TABS_TOUCH_Y;
     }
@@ -18,7 +24,7 @@ void mudclient_draw_ui_tabs(mudclient *mud) {
         surface_draw_sprite_alpha(mud->surface, button_x, button_y,
                                   mud->sprite_media + 33 + i, 128);
 
-        if (mudclient_is_touch(mud)) {
+        if (is_touch) {
             button_y += UI_BUTTON_SIZE - 2;
         } else {
             button_x -= UI_BUTTON_SIZE - 2;
