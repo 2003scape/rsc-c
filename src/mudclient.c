@@ -1,3 +1,4 @@
+#include "custom/item-highlight.h"
 #include "mudclient.h"
 
 #ifdef EMSCRIPTEN
@@ -4844,6 +4845,12 @@ void mudclient_draw_ui(mudclient *mud) {
     mud->mouse_button_click = 0;
 }
 
+int mudclient_compare_text(const void *v1, const void *v2) {
+    struct OverworldText *ot1 = (struct OverworldText *)v1;
+    struct OverworldText *ot2 = (struct OverworldText *)v2;
+    return strcmp(ot1->text, ot2->text);
+}
+
 void mudclient_draw_overhead(mudclient *mud) {
     for (int i = 0; i < mud->received_messages_count; i++) {
         int text_height = surface_text_height(1);
@@ -4914,6 +4921,42 @@ void mudclient_draw_overhead(mudclient *mud) {
             mud->surface, final_x, final_y, scale_x_clip, scale_y_clip,
             game_data.items[id].sprite + mud->sprite_item,
             game_data.items[id].mask, 0, 0, 0);
+    }
+
+    /* prevent strobing from random sort order */
+    qsort(mud->overworld_text, mud->overworld_text_count,
+          sizeof(struct OverworldText), mudclient_compare_text);
+
+    /* check and fix overlapping text */
+    for (int i = 0; i < mud->overworld_text_count; i++) {
+        int x = mud->overworld_text[i].x;
+        int y = mud->overworld_text[i].y;
+        int width = surface_text_width(mud->overworld_text[i].text,
+                                       FONT_REGULAR_11);
+        int height = surface_text_height(FONT_REGULAR_11);
+        for (int j = 0; j < mud->overworld_text_count; j++) {
+            int x2 = mud->overworld_text[j].x;
+            int y2 = mud->overworld_text[j].y;
+            int width2 = surface_text_width(mud->overworld_text[j].text,
+                                            FONT_REGULAR_11);
+            int height2 = surface_text_height(FONT_REGULAR_11);
+            if ((x + width + 2) < x2 || (x - width - 2) > x2) {
+                continue;
+            }
+            if ((y + height + 2) < y2 || (y - height - 2) > y2) {
+                continue;
+            }
+            mud->overworld_text[i].y += (height + 1);
+        }
+    }
+
+    for (int i = 0; i < mud->overworld_text_count; i++) {
+        int32_t colour = (int32_t)mud->overworld_text[i].colour;
+        int x = mud->overworld_text[i].x;
+        int y = mud->overworld_text[i].y;
+
+        surface_draw_string_centre(mud->surface, mud->overworld_text[i].text,
+                                   x, y, FONT_REGULAR_11, colour);
     }
 
     for (int i = 0; i < mud->health_bar_count; i++) {
@@ -5104,15 +5147,14 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
     for (int i = 0; i < mud->ground_item_count; i++) {
         int x = mud->ground_items[i].x * MAGIC_LOC + 64;
         int y = mud->ground_items[i].y * MAGIC_LOC + 64;
+        int id = mud->ground_items[i].id;
+        int elevation = -world_get_elevation(mud->world, x, y) -
+                         mud->ground_items[i].z;
 
-        if (mud->ground_items[i].model == NULL) {
-            scene_add_sprite(mud->scene, 40000 + mud->ground_items[i].id, x,
-                             -world_get_elevation(mud->world, x, y) -
-                                 mud->ground_items[i].z,
-                             y, 96, 64, i + GROUND_ITEM_FACE_TAG);
+        scene_add_sprite(mud->scene, 40000 + id, x, elevation, y,
+                         96, 64, i + GROUND_ITEM_FACE_TAG);
 
-            mud->scene_sprite_count++;
-        }
+        mud->scene_sprite_count++;
     }
 
     for (int i = 0; i < mud->magic_bubble_count; i++) {
@@ -5213,6 +5255,7 @@ void mudclient_draw_game(mudclient *mud) {
     mud->action_bubble_count = 0;
     mud->received_messages_count = 0;
     mud->health_bar_count = 0;
+    mud->overworld_text_count = 0;
 
     if (mud->settings_camera_auto && !mud->fog_of_war) {
         mudclient_auto_rotate_camera(mud);
@@ -6593,12 +6636,28 @@ void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
                                 float depth_bottom) {
-    int picture = game_data.items[id].sprite + mud->sprite_item;
-    int mask = game_data.items[id].mask;
 
-    surface_draw_sprite_transform_mask_depth(mud->surface, x, y, width, height,
-                                             picture, mask, 0, 0, 0, depth_top,
-                                             depth_bottom);
+    int32_t highlight_colour = highlight_item(id);
+
+    if (highlight_colour != 0 && mud->options->ground_item_text &&
+            mud->overworld_text_count < OVERWORLD_TEXT_MAX) {
+        struct OverworldText t = {0};
+        t.text = game_data.items[id].name;
+        t.colour = highlight_colour;
+        t.x = x + (width / 2);
+        t.y = y - (height / 2);
+        mud->overworld_text[mud->overworld_text_count++] = t;
+    }
+
+    if (mud->item_models == NULL || mud->item_models[id] == NULL) {
+        int picture = game_data.items[id].sprite + mud->sprite_item;
+        int mask = game_data.items[id].mask;
+
+        surface_draw_sprite_transform_mask_depth(mud->surface, x, y,
+                                                 width, height, picture, mask,
+                                                 0, 0, 0, depth_top,
+                                                 depth_bottom);
+    }
 }
 
 int mudclient_is_item_equipped(mudclient *mud, int id) {
