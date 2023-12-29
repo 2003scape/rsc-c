@@ -301,7 +301,9 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
+#include "custom/clarify-herblaw-items.h"
 #include "custom/diverse-npcs.h"
+#include "custom/item-highlight.h"
 
 #ifdef WII
 /* these are doubled for the wii */
