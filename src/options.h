@@ -104,8 +104,12 @@ typedef struct Options Options;
      "status_bars = %d\n"                                                      \
      "; Use ground item models instead of billboarded sprites\n"               \
      "ground_item_models = %d\n"                                               \
+     "; Show text for valuable ground items to make them stand out\n"          \
+     "ground_item_text = %d\n"                                                 \
      "; Always animate objects like fires\n"                                   \
      "distant_animation = %d\n"                                                \
+     "; Load less compressed (2001 era) sprites\n"                             \
+     "tga_sprites = %d\n"                                                      \
      "; Show hover tooltip menu\n"                                             \
      "show_hover_tooltip = %d\n\n"                                             \
                                                                                \
@@ -277,8 +281,14 @@ struct Options {
     /* use ground item models instead of billboarded sprites */
     int ground_item_models;
 
+    /* display text overlay/highlight for valuable ground items */
+    int ground_item_text;
+
     /* always animate objects like fires */
     int distant_animation;
+
+    /* load less compressed (2001 era) sprites */
+    int tga_sprites;
 
     /* withdraw multiple unstackable items */
     int bank_unstackble_withdraw;

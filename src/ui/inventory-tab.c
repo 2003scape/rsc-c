@@ -3,7 +3,7 @@
 void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     int is_touch = mudclient_is_touch(mud);
 
-    int columns = MUD_IS_COMPACT ? 6 : 5;
+    int columns = mud->surface->height < 260 ? 6 : 5;
     int rows = (INVENTORY_ITEMS_MAX / columns);
 
     int slot_height = ITEM_GRID_SLOT_HEIGHT - is_touch;
@@ -15,7 +15,12 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     int ui_y = UI_BUTTON_SIZE + 1;
 
     if (is_touch) {
-        ui_x = UI_TABS_TOUCH_X - width - 1;
+        if (mud->show_dialog_bank) {
+            ui_x = mud->surface->width - width - 5;
+        } else {
+            ui_x = UI_TABS_TOUCH_X - width - 1;
+        }
+
         ui_y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - height - 2;
     }
 

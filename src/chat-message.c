@@ -11,6 +11,10 @@ char *chat_message_decode(int8_t *buffer, int offset, int length) {
         int current = buffer[offset++] & 0xff;
         int map_index = current >> 4 & 0xf;
 
+        if (new_length >= CHAT_MESSAGE_MAX_LENGTH) {
+            break;
+        }
+
         if (left_shift == -1) {
             if (map_index < 13) {
                 chat_message_decoded[new_length++] =
@@ -26,6 +30,10 @@ char *chat_message_decode(int8_t *buffer, int offset, int length) {
         }
 
         map_index = current & 0xf;
+
+        if (new_length >= CHAT_MESSAGE_MAX_LENGTH) {
+            break;
+        }
 
         if (left_shift == -1) {
             if (map_index < 13) {
@@ -75,8 +83,8 @@ char *chat_message_decode(int8_t *buffer, int offset, int length) {
 int chat_message_encode(char *message) {
     int message_length = strlen(message);
 
-    if (message_length > 80) {
-        message_length = 80;
+    if (message_length > CHAT_MESSAGE_MAX_INPUT_LENGTH) {
+        message_length = CHAT_MESSAGE_MAX_INPUT_LENGTH;
     }
 
     int offset = 0;

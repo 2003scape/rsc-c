@@ -1,4 +1,3 @@
-#include "custom/clarify-herblaw-items.h"
 #include "mudclient.h"
 
 #ifdef EMSCRIPTEN
@@ -54,8 +53,6 @@ EM_JS(void, browser_trigger_keyboard,
       });
 
 EM_JS(int, browser_is_touch, (), { return window._mudclientIsTouch; });
-
-EM_JS(void, browser_alert, (int id), { alert(id); });
 /* clang-format on */
 
 int last_canvas_check = 0;
@@ -86,15 +83,30 @@ int mudclient_finger_2_down = 0;
 
 int mudclient_has_right_clicked = 0;
 
-char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
-                      "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
+const char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
+                            "h14b.jf", "h16b.jf", "h20b.jf", "h24b.jf"};
 
 /* only the first of models with animations are stored in the cache */
-char *animated_models[] = {
+const char *animated_models[] = {
     "torcha2",      "torcha3",    "torcha4",    "skulltorcha2", "skulltorcha3",
     "skulltorcha4", "firea2",     "firea3",     "fireplacea2",  "fireplacea3",
     "firespell2",   "firespell3", "lightning2", "lightning3",   "clawspell2",
     "clawspell3",   "clawspell4", "clawspell5", "spellcharge2", "spellcharge3"};
+
+/*
+ * animations that experienced a loss of fine detail in January 2002 with the
+ * "Compression" update
+ *
+ * camel - eyes lose distinctiveness.
+ * bat - most noticable. mouth is nearly gone entirely.
+ * bear - loses some shading that gives it more of a "fur" texture.
+ * human heads - eyes lose detail.
+ * human tops - belt buckles lose detail or become flesh (ew).
+ */
+static const char *anims_older_is_better[] = {
+    "camel", "bat", "battleaxe", "bear", "fbody1", "fhead1", "fplatemailtop",
+    "head1", "head2", "head3", "head4", "platemailtop", "staff", NULL
+};
 
 char login_screen_status[255] = {0};
 
@@ -871,7 +883,7 @@ void mudclient_resize(mudclient *mud) {
             mud->panel_appearance->offset_y = half_offset_y;
         }
 
-        if (mud->panel_message_tabs != NULL) {
+        if (mud->panel_message_tabs != NULL && !is_touch) {
             mud->panel_message_tabs->offset_y = full_offset_y;
         }
 
@@ -1642,11 +1654,7 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     int logo_sprite_id = SPRITE_LIMIT - 1;
 
     if (mud->surface->sprite_width[logo_sprite_id]) {
-        int offset_x = 19;
-
-#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-        offset_x = 2;
-#endif
+        int offset_x = 2;
 
         int logo_x = (mud->game_width / 2) -
                      (mud->surface->sprite_width[logo_sprite_id] / 2) -
@@ -1850,56 +1858,16 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     return archive_data;
 }
 
-/* used for the jagex logo in the loading screen */
-void mudclient_load_jagex_tga_sprite(mudclient *mud, int8_t *buffer) {
-    int width = buffer[13] * 256 + buffer[12];
-    int height = buffer[15] * 256 + buffer[14];
-
-    uint8_t r[256] = {0};
-    uint8_t g[256] = {0};
-    uint8_t b[256] = {0};
-
-    for (int i = 0; i < 256; i++) {
-        r[i] = buffer[20 + i * 3];
-        g[i] = buffer[19 + i * 3];
-        b[i] = buffer[18 + i * 3];
-    }
-
-    uint8_t *pixels = calloc(width * height * 4, sizeof(uint8_t));
-    int index = 0;
-
-    for (int y = height - 1; y >= 0; y--) {
-        for (int x = 0; x < width; x++) {
-            int palette_index = buffer[(256 * 3) + x + y * width];
-#ifdef MUD_IS_BIG_ENDIAN
-            pixels[index++] = 255;
-            pixels[index++] = r[palette_index];
-            pixels[index++] = g[palette_index];
-            pixels[index++] = b[palette_index];
-#else
-            pixels[index++] = b[palette_index];
-            pixels[index++] = g[palette_index];
-            pixels[index++] = r[palette_index];
-            pixels[index++] = 255;
-#endif
-        }
-    }
-
-    int sprite_index = SPRITE_LIMIT - 1;
-
-    mud->surface->sprite_width[sprite_index] = width;
-    mud->surface->sprite_height[sprite_index] = height;
-    mud->surface->surface_pixels[sprite_index] = (int32_t *)pixels;
-}
-
 void mudclient_load_jagex(mudclient *mud) {
 #if defined(RENDER_SW)
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
-        int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, NULL);
-        mudclient_load_jagex_tga_sprite(mud, logo_tga);
+        size_t len;
+        uint8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
+        surface_parse_sprite_tga(mud->surface,
+            SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
         free(logo_tga);
 
 #ifndef WII
@@ -2016,6 +1984,10 @@ void mudclient_load_media(mudclient *mud) {
     surface_parse_sprite(mud->surface, mud->sprite_media + 33,
                          load_data("inv3.dat", 0, media_jag, NULL), index_dat,
                          6);
+
+    surface_parse_sprite(mud->surface, mud->sprite_media + 39,
+                         load_data("message.dat", 0, media_jag, NULL),
+                         index_dat, 1);
 #endif
 
     surface_parse_sprite(mud->surface, mud->sprite_util,
@@ -2066,6 +2038,8 @@ void mudclient_load_media(mudclient *mud) {
     for (int i = 0; i < 6; i++) {
         surface_load_sprite(mud->surface, mud->sprite_media + 33 + i);
     }
+
+    surface_load_sprite(mud->surface, mud->sprite_media + 39);
 #else
     surface_load_sprite(mud->surface, mud->sprite_media);
 #endif
@@ -2091,6 +2065,13 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *entity_jag = mudclient_read_data_file(
         mud, "entity" VERSION_STR(VERSION_ENTITY) ".jag", "people and monsters",
         30);
+
+    int8_t *entity_jag_legacy = NULL;
+
+    if (mud->options->tga_sprites) {
+        entity_jag_legacy = mudclient_read_data_file(mud,
+            "entity8.jag", "people and monsters", 37);
+    }
 
     if (entity_jag == NULL) {
         mud->error_loading_data = 1;
@@ -2133,53 +2114,94 @@ void mudclient_load_entities(mudclient *mud) {
             goto label0;
         }
 
-        char file_name[255] = {0};
-        sprintf(file_name, "%s.dat", animation_name);
+        bool older_is_better = false;
+        const char *extension = "dat";
+        uint8_t *archive_file = entity_jag;
 
-        int8_t *animation_dat = load_data(file_name, 0, entity_jag, NULL);
+        const char **older_names = anims_older_is_better;
+        if (mud->options->tga_sprites) {
+            while (*older_names != NULL) {
+                if (strcmp(animation_name, *older_names) == 0) {
+                    older_is_better = true;
+                    extension = "tga";
+                    archive_file = entity_jag_legacy;
+                    break;
+                }
+                older_names++;
+            }
+        }
+
+        char file_name[255] = {0};
+        sprintf(file_name, "%s.%s", animation_name, extension);
+
+        size_t len = 0;
+
+        int8_t *animation_dat = load_data(file_name, 0, archive_file, &len);
         int8_t *animation_index_dat = index_dat;
 
         if (animation_dat == NULL && mud->options->members) {
-            animation_dat = load_data(file_name, 0, entity_jag_mem, NULL);
+            animation_dat = load_data(file_name, 0, entity_jag_mem, &len);
             animation_index_dat = index_dat_mem;
         }
 
         if (animation_dat != NULL) {
-            surface_parse_sprite(mud->surface, animation_index, animation_dat,
-                                 animation_index_dat, 15);
+            if (older_is_better) {
+                surface_parse_sprite_tga(mud->surface, animation_index,
+                                         animation_dat, len, 15, 1);
+            } else {
+                surface_parse_sprite(mud->surface, animation_index, animation_dat,
+                                     animation_index_dat, 15);
+            }
 
             frame_count += 15;
 
             if (game_data.animations[i].has_a) {
-                sprintf(file_name, "%sa.dat", animation_name);
+                if (older_is_better && strcmp(animation_name, "camel") == 0) {
+                    /* camel attack anim was a much later addition */
+                    older_is_better = false;
+                    extension = "dat";
+                    archive_file = entity_jag;
+                }
 
-                int8_t *a_dat = load_data(file_name, 0, entity_jag, NULL);
+                sprintf(file_name, "%sa.%s", animation_name, extension);
+
+                int8_t *a_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *a_index_dat = index_dat;
 
                 if (a_dat == NULL && mud->options->members) {
-                    a_dat = load_data(file_name, 0, entity_jag_mem, NULL);
+                    a_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     a_index_dat = index_dat_mem;
                 }
 
-                surface_parse_sprite(mud->surface, animation_index + 15, a_dat,
-                                     a_index_dat, 3);
+                if (older_is_better) {
+                    surface_parse_sprite_tga(mud->surface, animation_index + 15,
+                                             a_dat, len, 3, 1);
+                } else {
+                    surface_parse_sprite(mud->surface, animation_index + 15,
+                                         a_dat, a_index_dat, 3);
+                }
 
                 frame_count += 3;
             }
 
             if (game_data.animations[i].has_f) {
-                sprintf(file_name, "%sf.dat", animation_name);
+                sprintf(file_name, "%sf.%s", animation_name, extension);
 
-                int8_t *f_dat = load_data(file_name, 0, entity_jag, NULL);
+                int8_t *f_dat = load_data(file_name, 0, archive_file, &len);
                 int8_t *f_index_dat = index_dat;
 
                 if (f_dat == NULL && mud->options->members) {
-                    f_dat = load_data(file_name, 0, entity_jag_mem, NULL);
+                    f_dat = load_data(file_name, 0, entity_jag_mem, &len);
                     f_index_dat = index_dat_mem;
                 }
 
-                surface_parse_sprite(mud->surface, animation_index + 18, f_dat,
-                                     f_index_dat, 9);
+                if (older_is_better) {
+                    surface_parse_sprite_tga(mud->surface, animation_index + 18,
+                                         f_dat, len, 9, 1);
+                } else {
+                    surface_parse_sprite(mud->surface, animation_index + 18,
+                                         f_dat, f_index_dat, 9);
+                }
 
                 frame_count += 9;
             }
@@ -2202,6 +2224,7 @@ void mudclient_load_entities(mudclient *mud) {
 
 #ifndef WII
     free(entity_jag);
+    free(entity_jag_legacy);
     free(entity_jag_mem);
 #endif
 
@@ -3130,7 +3153,8 @@ void mudclient_start_game(mudclient *mud) {
     if (is_touch) {
         x = UI_TABS_TOUCH_X - STATS_WIDTH - 1;
 
-        y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - STATS_COMPACT_HEIGHT - STATS_TAB_HEIGHT - 5;
+        y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - STATS_COMPACT_HEIGHT -
+            STATS_TAB_HEIGHT - 5;
     }
 
     mud->control_list_quest = panel_add_text_list_interactive(
@@ -3146,15 +3170,16 @@ void mudclient_start_game(mudclient *mud) {
     }
 
     mud->control_list_magic = panel_add_text_list_interactive(
-        mud->panel_magic, x, y + MAGIC_TAB_HEIGHT - (is_touch ? 11 : 0), MAGIC_WIDTH, 90+(is_touch ? 16 :0),
-        FONT_BOLD_12, 500, 1);
+        mud->panel_magic, x, y + MAGIC_TAB_HEIGHT - (is_touch ? 11 : 0),
+        MAGIC_WIDTH, 90 + (is_touch ? 16 : 0), FONT_BOLD_12, 500, 1);
 
     mud->panel_social_list = malloc(sizeof(Panel));
     panel_new(mud->panel_social_list, mud->surface, 5);
 
     mud->control_list_social = panel_add_text_list_interactive(
-        mud->panel_social_list, x, y + SOCIAL_TAB_HEIGHT + 16 - (is_touch ? 11 : 0),
-        196, 126 + (is_touch ? 16 : 0), FONT_BOLD_12, 500, 1);
+        mud->panel_social_list, x,
+        y + SOCIAL_TAB_HEIGHT + 16 - (is_touch ? 11 : 0), 196,
+        126 + (is_touch ? 16 : 0), FONT_BOLD_12, 500, 1);
 
     mudclient_load_media(mud);
 
@@ -3740,12 +3765,19 @@ void mudclient_handle_camera_zoom(mudclient *mud) {
         mud->camera_zoom = ZOOM_OUTDOORS;
     }
 
+    int is_touch = mudclient_is_touch(mud);
+
+    int exclude_max_x = MUD_VANILLA_WIDTH;
+
+    int exclude_min_y = is_touch ? 0 : mud->surface->height - 80;
+    int exclude_max_y = is_touch ? 100 : mud->surface->height;
+
     if (mud->mouse_scroll_delta != 0 &&
         (mud->show_ui_tab == 0 || mud->show_ui_tab == MAP_TAB) &&
         !(mud->message_tab_selected != MESSAGE_TAB_ALL &&
-          mud->mouse_y > mud->surface->height - 80) &&
+          mud->mouse_y > exclude_min_y && mud->mouse_y <= exclude_max_y &&
+          mud->mouse_x <= exclude_max_x) &&
         !mud->show_dialog_bank) {
-
         mud->camera_zoom += mud->mouse_scroll_delta * 24;
     }
 
@@ -4851,6 +4883,12 @@ void mudclient_draw_ui(mudclient *mud) {
     mud->mouse_button_click = 0;
 }
 
+int mudclient_compare_text(const void *v1, const void *v2) {
+    struct OverworldText *ot1 = (struct OverworldText *)v1;
+    struct OverworldText *ot2 = (struct OverworldText *)v2;
+    return strcmp(ot1->text, ot2->text);
+}
+
 void mudclient_draw_overhead(mudclient *mud) {
     for (int i = 0; i < mud->received_messages_count; i++) {
         int text_height = surface_text_height(1);
@@ -4921,6 +4959,42 @@ void mudclient_draw_overhead(mudclient *mud) {
             mud->surface, final_x, final_y, scale_x_clip, scale_y_clip,
             game_data.items[id].sprite + mud->sprite_item,
             game_data.items[id].mask, 0, 0, 0);
+    }
+
+    /* prevent strobing from random sort order */
+    qsort(mud->overworld_text, mud->overworld_text_count,
+          sizeof(struct OverworldText), mudclient_compare_text);
+
+    /* check and fix overlapping text */
+    for (int i = 0; i < mud->overworld_text_count; i++) {
+        int x = mud->overworld_text[i].x;
+        int y = mud->overworld_text[i].y;
+        int width = surface_text_width(mud->overworld_text[i].text,
+                                       FONT_REGULAR_11);
+        int height = surface_text_height(FONT_REGULAR_11);
+        for (int j = 0; j < mud->overworld_text_count; j++) {
+            int x2 = mud->overworld_text[j].x;
+            int y2 = mud->overworld_text[j].y;
+            int width2 = surface_text_width(mud->overworld_text[j].text,
+                                            FONT_REGULAR_11);
+            int height2 = surface_text_height(FONT_REGULAR_11);
+            if ((x + width + 2) < x2 || (x - width - 2) > x2) {
+                continue;
+            }
+            if ((y + height + 2) < y2 || (y - height - 2) > y2) {
+                continue;
+            }
+            mud->overworld_text[i].y += (height + 1);
+        }
+    }
+
+    for (int i = 0; i < mud->overworld_text_count; i++) {
+        int32_t colour = (int32_t)mud->overworld_text[i].colour;
+        int x = mud->overworld_text[i].x;
+        int y = mud->overworld_text[i].y;
+
+        surface_draw_string_centre(mud->surface, mud->overworld_text[i].text,
+                                   x, y, FONT_REGULAR_11, colour);
     }
 
     for (int i = 0; i < mud->health_bar_count; i++) {
@@ -5111,15 +5185,14 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
     for (int i = 0; i < mud->ground_item_count; i++) {
         int x = mud->ground_items[i].x * MAGIC_LOC + 64;
         int y = mud->ground_items[i].y * MAGIC_LOC + 64;
+        int id = mud->ground_items[i].id;
+        int elevation = -world_get_elevation(mud->world, x, y) -
+                         mud->ground_items[i].z;
 
-        if (mud->ground_items[i].model == NULL) {
-            scene_add_sprite(mud->scene, 40000 + mud->ground_items[i].id, x,
-                             -world_get_elevation(mud->world, x, y) -
-                                 mud->ground_items[i].z,
-                             y, 96, 64, i + GROUND_ITEM_FACE_TAG);
+        scene_add_sprite(mud->scene, 40000 + id, x, elevation, y,
+                         96, 64, i + GROUND_ITEM_FACE_TAG);
 
-            mud->scene_sprite_count++;
-        }
+        mud->scene_sprite_count++;
     }
 
     for (int i = 0; i < mud->magic_bubble_count; i++) {
@@ -5220,6 +5293,7 @@ void mudclient_draw_game(mudclient *mud) {
     mud->action_bubble_count = 0;
     mud->received_messages_count = 0;
     mud->health_bar_count = 0;
+    mud->overworld_text_count = 0;
 
     if (mud->settings_camera_auto && !mud->fog_of_war) {
         mudclient_auto_rotate_camera(mud);
@@ -5267,7 +5341,9 @@ void mudclient_draw_game(mudclient *mud) {
 
     /* centres the camera for the smaller FOV */
     /* TODO could be an option */
-    if (MUD_IS_COMPACT) {
+    if (mudclient_is_touch(mud)) {
+        offset_y = 100;
+    } else if (MUD_IS_COMPACT) {
         offset_y = 75;
     }
 
@@ -5518,6 +5594,8 @@ void mudclient_on_resize(mudclient *mud) {
 
     mud->game_width = new_width;
     mud->game_height = new_height;
+
+    printf("new size: %d %d\n", mud->game_width, mud->game_height);
 
     if (mud->surface != NULL) {
         if (mudclient_is_ui_scaled(mud)) {
@@ -5944,9 +6022,9 @@ void mudclient_poll_events(mudclient *mud) {
         }*/
     }
 #else
-    if (!mudclient_has_right_clicked &&
-        !mudclient_horizontal_drag && !mudclient_vertical_drag &&
-        mudclient_finger_1_down && !mudclient_finger_2_down &&
+    if (!mudclient_has_right_clicked && !mudclient_horizontal_drag &&
+        !mudclient_vertical_drag && mudclient_finger_1_down &&
+        !mudclient_finger_2_down &&
         get_ticks() - mudclient_touch_start >= 400) {
         mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
@@ -6120,8 +6198,8 @@ void mudclient_poll_events(mudclient *mud) {
             if (mudclient_finger_1_down && finger_id == mudclient_finger_1_id) {
                 mudclient_finger_1_down = 0;
 
-                if (!mudclient_has_right_clicked &&
-                    !mudclient_vertical_drag && !mudclient_horizontal_drag &&
+                if (!mudclient_has_right_clicked && !mudclient_vertical_drag &&
+                    !mudclient_horizontal_drag &&
                     mudclient_pinch_distance == 0) {
                     mudclient_mouse_pressed(mud, touch_x, touch_y, 0);
                     mudclient_mouse_released(mud, touch_x, touch_y, 0);
@@ -6135,8 +6213,6 @@ void mudclient_poll_events(mudclient *mud) {
                         mudclient_horizontal_drag = 0;
                     }
                 }
-
-                mudclient_pinch_distance = 0;
             } else if (mudclient_finger_2_down &&
                        finger_id == mudclient_finger_2_id) {
                 mudclient_finger_2_down = 0;
@@ -6600,12 +6676,28 @@ void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
                                 float depth_bottom) {
-    int picture = game_data.items[id].sprite + mud->sprite_item;
-    int mask = game_data.items[id].mask;
 
-    surface_draw_sprite_transform_mask_depth(mud->surface, x, y, width, height,
-                                             picture, mask, 0, 0, 0, depth_top,
-                                             depth_bottom);
+    int32_t highlight_colour = highlight_item(id);
+
+    if (highlight_colour != 0 && mud->options->ground_item_text &&
+            mud->overworld_text_count < OVERWORLD_TEXT_MAX) {
+        struct OverworldText t = {0};
+        t.text = game_data.items[id].name;
+        t.colour = highlight_colour;
+        t.x = x + (width / 2);
+        t.y = y - (height / 2);
+        mud->overworld_text[mud->overworld_text_count++] = t;
+    }
+
+    if (mud->item_models == NULL || mud->item_models[id] == NULL) {
+        int picture = game_data.items[id].sprite + mud->sprite_item;
+        int mask = game_data.items[id].mask;
+
+        surface_draw_sprite_transform_mask_depth(mud->surface, x, y,
+                                                 width, height, picture, mask,
+                                                 0, 0, 0, depth_top,
+                                                 depth_bottom);
+    }
 }
 
 int mudclient_is_item_equipped(mudclient *mud, int id) {

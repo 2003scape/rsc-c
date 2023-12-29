@@ -4,12 +4,18 @@ char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
 void mudclient_draw_ui_tabs(mudclient *mud) {
+    int is_touch = mudclient_is_touch(mud);
+
+    if (mud->show_dialog_bank && mud->surface->width >= 680 && is_touch) {
+        return;
+    }
+
     int button_y = 3;
 
 #if (VERSION_MEDIA >= 59)
     int button_x = mud->surface->width - UI_BUTTON_SIZE;
 
-    if (mudclient_is_touch(mud)) {
+    if (is_touch) {
         button_x = UI_TABS_TOUCH_X;
         button_y = UI_TABS_TOUCH_Y;
     }
@@ -18,7 +24,7 @@ void mudclient_draw_ui_tabs(mudclient *mud) {
         surface_draw_sprite_alpha(mud->surface, button_x, button_y,
                                   mud->sprite_media + 33 + i, 128);
 
-        if (mudclient_is_touch(mud)) {
+        if (is_touch) {
             button_y += UI_BUTTON_SIZE - 2;
         } else {
             button_x -= UI_BUTTON_SIZE - 2;
@@ -59,6 +65,22 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
 
         offset_min_y = UI_TABS_TOUCH_Y;
         offset_max_y = offset_min_y + (UI_BUTTON_SIZE - 2);
+    }
+
+    int is_dragging_scrollbar = 0;
+
+    if (mud->options->off_handle_scroll_drag) {
+        is_dragging_scrollbar =
+            mud->panel_quests->control_list_scrollbar_handle_dragged
+                [mud->control_list_quest] ||
+            mud->panel_magic->control_list_scrollbar_handle_dragged
+                [mud->control_list_magic] ||
+            mud->panel_social_list->control_list_scrollbar_handle_dragged
+                [mud->control_list_social];
+
+        if (is_dragging_scrollbar) {
+            return;
+        }
     }
 
     int has_changed_tab = 0;
@@ -107,19 +129,6 @@ void mudclient_set_active_ui_tab(mudclient *mud, int no_menus) {
             offset_min_x -= UI_BUTTON_SIZE - 2;
             offset_max_x -= UI_BUTTON_SIZE - 2;
         }
-    }
-
-    // TODO check this for changing tabs too
-    int is_dragging_scrollbar = 0;
-
-    if (mud->options->off_handle_scroll_drag) {
-        is_dragging_scrollbar =
-            mud->panel_quests->control_list_scrollbar_handle_dragged
-                [mud->control_list_quest] ||
-            mud->panel_magic->control_list_scrollbar_handle_dragged
-                [mud->control_list_magic] ||
-            mud->panel_social_list->control_list_scrollbar_handle_dragged
-                [mud->control_list_social];
     }
 
     /* ui_tab_ boundary values will change next frame after the change */

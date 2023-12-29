@@ -24,6 +24,8 @@ typedef enum {
     PANEL_CHECKBOX = 14
 } PanelControlType;
 
+#define PANEL_MAX_TEXT_LEN 255
+
 #define PANEL_ROUNDED_BOX_OUT_COLOUR 0x758eab
 #define PANEL_ROUNDED_BOX_MIDDLE_COLOUR 0x627a9e
 #define PANEL_ROUNDED_BOX_IN_COLOUR 0x566488
@@ -106,10 +108,10 @@ int panel_add_text_centre(Panel *panel, int x, int y, char *text,
 int panel_add_box_rounded(Panel *panel, int x, int y, int width, int height);
 int panel_add_sprite(Panel *panel, int x, int y, int sprite_id);
 int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
-                        FontStyle font_style, int max_length, int flag);
+                        FontStyle font_style, int max_list_entries, int flag);
 int panel_add_text_list_input(Panel *panel, int x, int y, int width, int height,
-                              FontStyle font_style, int max_length, int flag,
-                              int flag1);
+                              FontStyle font_style, int max_length,
+                              int is_password, int flag1);
 int panel_add_text_input(Panel *panel, int x, int y, int width, int height,
                          FontStyle font_style, int max_length, int is_password,
                          int flag1);
@@ -133,5 +135,6 @@ void panel_show(Panel *panel, int control);
 void panel_hide(Panel *panel, int control);
 void panel_set_focus(Panel *panel, int control);
 int panel_get_list_entry_index(Panel *panel, int control);
+void panel_destroy(Panel *panel);
 
 #endif

@@ -34,7 +34,9 @@ void mudclient_draw_experience_drops(mudclient *mud) {
 
         char *skill_name = skill_names[mud->experience_drop_skill[i]];
 
-        char formatted_drop[strlen(skill_name) + strlen(formatted_amount) + 5];
+        size_t n = strlen(skill_name) + strlen(formatted_amount) +
+                   strlen(formatted_remainder);
+        char formatted_drop[n + 5];
 
         sprintf(formatted_drop, "%s%s %s XP", formatted_amount,
                 formatted_remainder + 1, skill_name);

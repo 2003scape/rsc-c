@@ -11,8 +11,9 @@ const char *combat_styles_compact[] = {
 };
 
 void mudclient_draw_combat_style(mudclient *mud) {
-    int ui_x = 7;
-    int ui_y = 15;
+    int is_touch = mudclient_is_touch(mud);
+    int ui_x = is_touch ? 13 : 7;
+    int ui_y = is_touch ? 108 : 15;
 
     int combat_styles_length = sizeof(combat_styles) / sizeof(combat_styles[0]);
 
