@@ -162,6 +162,7 @@
 #define ACTION_BUBBLE_MAX 50
 #define HEALTH_BAR_MAX 50
 #define MAGIC_BUBBLE_MAX 50
+#define OVERWORLD_TEXT_MAX 128
 
 #define INVENTORY_ITEMS_MAX 30
 #define MENU_MAX 250
@@ -436,6 +437,13 @@ struct HealthBar {
     uint16_t x;
     uint16_t y;
     uint8_t missing;
+};
+
+struct OverworldText {
+    char *text;
+    uint16_t x;
+    uint16_t y;
+    uint32_t colour;
 };
 
 struct mudclient {
@@ -791,6 +799,9 @@ struct mudclient {
     /* blue/red bubbles used for teleporting and telegrabbing */
     int magic_bubble_count;
     struct MagicBubble magic_bubbles[MAGIC_BUBBLE_MAX];
+
+    int overworld_text_count;
+    struct OverworldText overworld_text[OVERWORLD_TEXT_MAX];
 
     /*int8_t show_dialog_report_abuse_step;
     int report_abuse_offence;*/
