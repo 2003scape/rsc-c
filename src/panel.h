@@ -133,5 +133,6 @@ void panel_show(Panel *panel, int control);
 void panel_hide(Panel *panel, int control);
 void panel_set_focus(Panel *panel, int control);
 int panel_get_list_entry_index(Panel *panel, int control);
+void panel_destroy(Panel *panel);
 
 #endif

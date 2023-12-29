@@ -315,8 +315,8 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
 
         if (mud->last_mouse_button_down == 1 &&
             mud->mouse_x <= chat_input_x + chat_input_trigger_width &&
-            mud->mouse_y >= chat_input_y - 2 &&
-            mud->mouse_y <= chat_input_y + chat_input_height + 2) {
+            mud->mouse_y >= chat_input_y - 8 &&
+            mud->mouse_y <= chat_input_y + chat_input_height + 8) {
             mudclient_trigger_keyboard(mud, chat_input, 0, chat_input_x,
                                        chat_input_y, chat_input_width,
                                        chat_input_height, FONT_BOLD_12, 0);

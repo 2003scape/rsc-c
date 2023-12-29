@@ -324,6 +324,8 @@ void mudclient_draw_bank(mudclient *mud) {
 
         if (visible_columns > BANK_COLUMNS) {
             visible_columns = BANK_COLUMNS;
+        } else if (visible_columns < BANK_COLUMNS_MIN) {
+            visible_columns = BANK_COLUMNS_MIN;
         }
     }
 

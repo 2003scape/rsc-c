@@ -11,19 +11,29 @@ void mudclient_draw_offer_x(mudclient *mud) {
                      OFFER_X_HEIGHT, BLACK);
 
     surface_draw_border(mud->surface, dialog_x, dialog_y, OFFER_X_WIDTH,
-                          OFFER_X_HEIGHT, WHITE);
+                        OFFER_X_HEIGHT, WHITE);
 
     int x = mud->surface->width / 2;
     int y = dialog_y + 20;
 
-    surface_draw_string_centre(mud->surface, "Enter an amount", x, y, 4, WHITE);
+    surface_draw_string_centre(mud->surface, "Enter an amount", x, y,
+                               FONT_BOLD_14, WHITE);
+
+    if (mudclient_is_touch(mud) && mud->mouse_button_click != 0 &&
+        mud->mouse_x > dialog_x && mud->mouse_x < dialog_x + OFFER_X_WIDTH &&
+        mud->mouse_y >= y && mud->mouse_y <= y + 30) {
+        mudclient_trigger_keyboard(mud, mud->input_digits_current, 0, dialog_x,
+                                   y + 1, OFFER_X_WIDTH - 3, 30, FONT_BOLD_14,
+                                   1);
+    }
 
     y += 20;
 
     char formatted_current[INPUT_DIGITS_LENGTH + 2] = {0};
     sprintf(formatted_current, "%s*", mud->input_digits_current);
 
-    surface_draw_string_centre(mud->surface, formatted_current, x, y, 4, WHITE);
+    surface_draw_string_centre(mud->surface, formatted_current, x, y,
+                               FONT_BOLD_14, WHITE);
 
     int text_colour = WHITE;
 
@@ -42,7 +52,7 @@ void mudclient_handle_offer_x_input(mudclient *mud) {
     int cancel_offset_x = mud->surface->width / 2 - OFFER_X_CANCEL_SIZE / 2;
     int cancel_offset_y = mud->surface->height / 2 + OFFER_X_CANCEL_SIZE / 2;
 
-    if (mud->mouse_button_down == 1 && mud->mouse_x > cancel_offset_x &&
+    if (mud->mouse_button_click == 1 && mud->mouse_x > cancel_offset_x &&
         mud->mouse_x < cancel_offset_x + OFFER_X_CANCEL_SIZE &&
         mud->mouse_y > cancel_offset_y &&
         mud->mouse_y < cancel_offset_y + OFFER_X_CANCEL_SIZE) {
@@ -62,8 +72,9 @@ void mudclient_add_offer_menu(mudclient *mud, int type, int item_id, int amount,
     mud->menu_items_count++;
 }
 
-void mudclient_add_offer_menus(mudclient *mud, char *type_string, int type, int item_id,
-                              int item_amount, char *item_name, int last_x) {
+void mudclient_add_offer_menus(mudclient *mud, char *type_string, int type,
+                               int item_id, int item_amount, char *item_name,
+                               int last_x) {
     char formatted[strlen(type_string) + 12];
     sprintf(formatted, "%s-%d", type_string, 1);
 
@@ -93,7 +104,7 @@ void mudclient_add_offer_menus(mudclient *mud, char *type_string, int type, int 
             sprintf(formatted, "%s-%d", type_string, last_x);
 
             mudclient_add_offer_menu(mud, type, item_id, last_x, formatted,
-                                    item_name);
+                                     item_name);
         }
     }
 
@@ -101,14 +112,14 @@ void mudclient_add_offer_menus(mudclient *mud, char *type_string, int type, int 
         sprintf(formatted, "%s-X", type_string);
 
         mudclient_add_offer_menu(mud, type, item_id, -item_amount, formatted,
-                                item_name);
+                                 item_name);
     }
 
     if (mud->options->offer_x && item_amount >= 1) {
         sprintf(formatted, "%s-All", type_string);
 
         mudclient_add_offer_menu(mud, type, item_id, item_amount, formatted,
-                                item_name);
+                                 item_name);
     }
 
     strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");

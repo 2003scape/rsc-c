@@ -484,11 +484,19 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         panel->control_list_entry_mouse_over[control] = -1;
     }
 
+    int is_touch = mudclient_is_touch(panel->surface->mud);
+
+    // ugly hack for now :(
+    if (panel == panel->surface->mud->panel_quests) {
+        is_touch = 0;
+    }
+
     int list_start_y =
         height - displayed_entry_count * surface_text_height(font_style);
 
     int list_y =
-        y + (((surface_text_height(font_style) * 5) / 6) + list_start_y / 2);
+        y + (((surface_text_height(font_style) * 5) / 6) + list_start_y / 2) +
+        (is_touch ? 3 : 0);
 
     for (int i = list_entry_position; i < list_entry_count; i++) {
         if (is_interactive) {
@@ -519,7 +527,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
             surface_draw_string(panel->surface, list_entries[i], x + 2, list_y,
                                 font_style, text_colour);
 
-            list_y += surface_text_height(font_style);
+            list_y += surface_text_height(font_style) + (is_touch ? 6 : 0);
         } else {
             panel_draw_string(panel, control, x + 2, list_y, list_entries[i],
                               font_style);
@@ -788,4 +796,32 @@ void panel_set_focus(Panel *panel, int control) {
 
 int panel_get_list_entry_index(Panel *panel, int control) {
     return panel->control_list_entry_mouse_over[control];
+}
+
+void panel_destroy(Panel *panel) {
+    for (int i = 0; i < panel->max_controls; i++) {
+        if (panel->control_type[i] == PANEL_LIST_INPUT ||
+            panel->control_type[i] == PANEL_TEXT_INPUT) {
+            free(panel->control_text[i]);
+        }
+    }
+
+    free(panel->control_shown);
+    free(panel->control_list_scrollbar_handle_dragged);
+    free(panel->control_mask_text);
+    free(panel->control_clicked);
+    free(panel->control_use_alternative_colour);
+    free(panel->control_list_position);
+    free(panel->control_list_entry_count);
+    free(panel->control_activated);
+    free(panel->control_list_entry_mouse_over);
+    free(panel->control_x);
+    free(panel->control_y);
+    free(panel->control_type);
+    free(panel->control_width);
+    free(panel->control_height);
+    free(panel->control_input_max_length);
+    free(panel->control_font_style);
+    free(panel->control_text);
+    free(panel->control_list_entries);
 }

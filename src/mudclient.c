@@ -53,8 +53,6 @@ EM_JS(void, browser_trigger_keyboard,
       });
 
 EM_JS(int, browser_is_touch, (), { return window._mudclientIsTouch; });
-
-EM_JS(void, browser_alert, (int id), { alert(id); });
 /* clang-format on */
 
 int last_canvas_check = 0;
@@ -5275,7 +5273,9 @@ void mudclient_draw_game(mudclient *mud) {
 
     /* centres the camera for the smaller FOV */
     /* TODO could be an option */
-    if (MUD_IS_COMPACT) {
+    if (mudclient_is_touch(mud)) {
+        offset_y = 100;
+    } else if (MUD_IS_COMPACT) {
         offset_y = 75;
     }
 
@@ -6145,8 +6145,6 @@ void mudclient_poll_events(mudclient *mud) {
                         mudclient_horizontal_drag = 0;
                     }
                 }
-
-                mudclient_pinch_distance = 0;
             } else if (mudclient_finger_2_down &&
                        finger_id == mudclient_finger_2_id) {
                 mudclient_finger_2_down = 0;
