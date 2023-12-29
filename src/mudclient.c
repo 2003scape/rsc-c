@@ -1,4 +1,3 @@
-#include "custom/item-highlight.h"
 #include "mudclient.h"
 
 #ifdef EMSCRIPTEN
@@ -1915,6 +1914,12 @@ void mudclient_load_game_config(mudclient *mud) {
     }
 
     free(filter_jag);*/
+
+    if (mud->options->rename_herblaw_items) {
+        modify_unidentified_herbs();
+        modify_unfinished_potions();
+        modify_potion_dosage();
+    }
 }
 
 void mudclient_load_media(mudclient *mud) {

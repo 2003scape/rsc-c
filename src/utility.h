@@ -91,6 +91,8 @@ extern int _3ds_gl_framebuffer_offsets_y[];
 
 void init_utility_global();
 
+char *strcat_realloc(char *s, const char *new);
+char *mud_strdup(const char *s);
 void strtrim(char *s);
 void strtolower(char *s);
 
