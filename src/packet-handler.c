@@ -1400,19 +1400,25 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_FRIEND_MESSAGE: {
-#ifdef REVISION_177
-        int64_t from = get_unsigned_long(data, 1, size);
+        size_t offset = 1;
+        int64_t from = get_unsigned_long(data, offset, size);
+        offset += 8;
+
+#ifndef REVISION_177
+        /* message number here, ignored for now */
+        offset += 4;
+#endif
+
         char from_username[USERNAME_LENGTH + 1];
         decode_username(from, from_username);
 
-        char *message = chat_message_decode(data, 9, size - 9);
+        char *message = chat_message_decode(data, offset, size - offset);
         char formatted_message[USERNAME_LENGTH + strlen(message) + 18];
 
         sprintf(formatted_message, "@pri@%s: tells you %s", from_username,
                 message);
 
         mudclient_show_server_message(mud, formatted_message);
-#endif
         break;
     }
     case SERVER_IGNORE_LIST: {
