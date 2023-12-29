@@ -602,7 +602,7 @@ int panel_add_text_list(Panel *panel, int x, int y, int width, int height,
 
     for (int i = 0; i < max_list_entries; i++) {
         panel->control_list_entries[panel->control_count][i] =
-            calloc(255, sizeof(char));
+            calloc(PANEL_MAX_TEXT_LEN, sizeof(char));
     }
 
     return panel_prepare_component(panel, PANEL_TEXT_LIST, x, y);
@@ -655,7 +655,7 @@ int panel_add_text_list_interactive(Panel *panel, int x, int y, int width,
 
     for (int i = 0; i < max_length + 1; i++) {
         panel->control_list_entries[panel->control_count][i] =
-            calloc(255, sizeof(char));
+            calloc(PANEL_MAX_TEXT_LEN, sizeof(char));
     }
 
     panel->control_activated[panel->control_count] = -1;
@@ -707,7 +707,8 @@ void panel_reset_list(Panel *panel, int control) {
 
 void panel_add_list_entry(Panel *panel, int control, int index, char *text) {
     if (panel->control_type[control] == PANEL_TEXT_LIST_INTERACTIVE) {
-        strcpy(panel->control_list_entries[control][index], text);
+        snprintf(panel->control_list_entries[control][index],
+                 PANEL_MAX_TEXT_LEN, "%s", text);
     } else {
         panel->control_list_entries[control][index] = text;
     }
@@ -727,13 +728,15 @@ void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
         panel->control_list_entry_count[control]--;
 
         for (int i = 0; i < index; i++) {
-            strcpy(panel->control_list_entries[control][i],
-                   panel->control_list_entries[control][i + 1]);
+            memcpy(panel->control_list_entries[control][i],
+                   panel->control_list_entries[control][i + 1],
+                   PANEL_MAX_TEXT_LEN);
         }
     }
 
     if (panel->control_type[control] == PANEL_TEXT_LIST) {
-        strcpy(panel->control_list_entries[control][index], text);
+        snprintf(panel->control_list_entries[control][index],
+                 PANEL_MAX_TEXT_LEN, "%s", text);
     } else {
         panel->control_list_entries[control][index] = text;
     }
@@ -746,7 +749,8 @@ void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
 void panel_update_text(Panel *panel, int control, char *text) {
     if (panel->control_type[control] == PANEL_TEXT_INPUT ||
         panel->control_type[control] == PANEL_LIST_INPUT) {
-        strcpy(panel->control_text[control], text);
+        snprintf(panel->control_text[control],
+                 PANEL_MAX_TEXT_LEN, "%s", text);
     } else {
         panel->control_text[control] = text;
     }
