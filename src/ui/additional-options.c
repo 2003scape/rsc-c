@@ -117,6 +117,15 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->connection_options[control] = &mud->options->diversify_npcs;
     mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
+    y += 20;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_connection_options,
+        "@whi@Rename Herblaw items: ", mud->options->rename_herblaw_items, x, y);
+
+    mud->connection_options[control] = &mud->options->rename_herblaw_items;
+    mud->connection_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
     /* controls */
     y = ui_y + 20 + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 

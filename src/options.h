@@ -38,6 +38,8 @@ typedef struct Options Options;
      "browser_command = %s\n\n"                                                \
      "; Diversify NPCs sent by server (custom)\n"                              \
      "diversify_npcs = %d\n\n"                                                 \
+     "; Rename Herblaw items for ease of identification (custom)\n"            \
+     "rename_herblaw_items = %d\n\n"                                           \
                                                                                \
      "; Scroll panel lists, chatbox, and camera (if zoom enabled) with "       \
      "wheel\n"                                                                 \
@@ -175,6 +177,9 @@ struct Options {
 
     /* diversify NPCs sent by server (custom) */
     int diversify_npcs;
+
+    /* rename Herblaw items to something clearer (custom) */
+    int rename_herblaw_items;
 
     /* command to use to open web browser (on desktop) */
     char browser_command[255];

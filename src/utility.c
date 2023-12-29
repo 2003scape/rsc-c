@@ -89,6 +89,32 @@ int _3ds_gl_framebuffer_offsets_y[] = {
     69,   68,   65,   64,   21,   20,   17,   16,   5,    4,    1,    0};
 #endif
 
+char *strcat_realloc(char *s, const char *new) {
+    size_t ol = strlen(s);
+    size_t nl = strlen(new);
+    char *np = realloc(s, ol + nl + 1);
+
+    assert(np != NULL);
+    memcpy(np + ol, new, nl);
+    np[ol + nl] = '\0';
+    return np;
+}
+
+char *mud_strdup(const char *s) {
+#if defined(__unix__) || defined(__unix) || \
+        (defined(__APPLE__) && defined(__MACH__))
+    /* strdup is defined in POSIX rather than ISO C */
+    return strdup(s);
+#else
+    size_t len = strlen(s) + 1;
+    char *n = malloc(len);
+    if (n != NULL) {
+        memcpy(n, s, len);
+    }
+    return n;
+#endif
+}
+
 void strtrim(char *s) {
     unsigned char *p = (unsigned char *)s;
     int l = strlen(s);
