@@ -382,8 +382,8 @@ extern int mudclient_finger_2_down;
 
 
 // TODO this was moved
-extern char *font_files[];
-extern char *animated_models[];
+extern const char *font_files[];
+extern const char *animated_models[];
 extern char login_screen_status[255];
 
 /*

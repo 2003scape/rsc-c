@@ -102,6 +102,7 @@ void options_set_defaults(Options *options) {
     options->status_bars = 0;
     options->ground_item_models = 1;
     options->distant_animation = 1;
+    options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
 
     /* bank */
@@ -163,6 +164,7 @@ void options_set_vanilla(Options *options) {
     options->status_bars = 0;
     options->ground_item_models = 0;
     options->distant_animation = 0;
+    options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
 
     /* bank */
@@ -240,6 +242,7 @@ void options_save(Options *options) {
             options->status_bars,           //
             options->ground_item_models,    //
             options->distant_animation,     //
+            options->tga_sprites,           //
             options->show_hover_tooltip,    //
                                             //
             options->bank_search,           //
@@ -314,6 +317,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("status_bars", options->status_bars, 0, 1);
     OPTION_INI_INT("ground_item_models", options->ground_item_models, 0, 1);
     OPTION_INI_INT("distant_animation", options->distant_animation, 0, 1);
+    OPTION_INI_INT("tga_sprites", options->tga_sprites, 0, 0);
     OPTION_INI_INT("show_hover_tooltip", options->show_hover_tooltip, 0, 1);
 
     /* bank */

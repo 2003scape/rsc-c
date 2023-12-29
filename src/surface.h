@@ -290,6 +290,9 @@ void surface_fade_to_black_software(Surface *surface, int32_t *dest,
 void surface_fade_to_black(Surface *surface);
 void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
+void surface_parse_sprite_tga(Surface *surface, int sprite_id,
+                              uint8_t *sprite_data, size_t len,
+                              int columns, int rows);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
 void surface_read_sleep_word(Surface *surface, int sprite_id,

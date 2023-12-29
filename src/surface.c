@@ -1505,6 +1505,122 @@ void surface_clear(Surface *surface) {
     }
 }
 
+void surface_parse_sprite_tga(Surface *surface, int sprite_id,
+                              uint8_t *buffer, size_t len,
+                              int columns, int rows) {
+
+    size_t offset = 0;
+
+    uint8_t image_id_len = get_unsigned_byte(buffer, offset++, len);
+
+    uint8_t color_map_type = get_unsigned_byte(buffer, offset++, len);
+    assert(color_map_type == 1);
+
+    uint8_t image_type = get_unsigned_byte(buffer, offset++, len);
+    assert(image_type == 1 || image_type == 9);
+
+    uint16_t colour_map_start = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    assert(colour_map_start == 0);
+
+    uint16_t colour_map_len = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint8_t colour_map_bpp = get_unsigned_byte(buffer, offset++, len);
+    assert(colour_map_bpp == 24);
+
+    uint16_t x_origin = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint16_t y_origin = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    assert(x_origin == 0);
+    assert(y_origin == 0);
+
+    uint16_t width = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint16_t height = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint8_t bpp = get_unsigned_byte(buffer, offset++, len);
+    assert(bpp == 8);
+
+    uint8_t descriptor = get_unsigned_byte(buffer, offset++, len);
+    (void)descriptor;
+
+    offset += image_id_len;
+
+    uint32_t *map = calloc(colour_map_len + 1, sizeof(uint32_t));
+    assert(map != NULL);
+
+    for (int i = 0; i < colour_map_len; ++i) {
+        uint8_t b = buffer[offset++];
+        uint8_t g = buffer[offset++];
+        uint8_t r = buffer[offset++];
+        map[i] = (r << 16) + (g << 8) + b;
+    }
+
+    map[0] = MAGENTA;
+
+    uint8_t *pixels = malloc(width * height);
+    assert(pixels != NULL);
+
+    for (int y = (height - 1); y >= 0; --y) {
+        memcpy(pixels + (y * width), buffer + offset, width);
+        offset += width;
+    }
+
+    if (rows == 0 && columns == 0) {
+        free(surface->surface_pixels[sprite_id]);
+        surface->surface_pixels[sprite_id] = NULL;
+        surface->sprite_colours[sprite_id] = pixels;
+        surface->sprite_translate[sprite_id] = 0;
+        surface->sprite_translate_x[sprite_id] = 0;
+        surface->sprite_translate_y[sprite_id] = 0;
+        surface->sprite_palette[sprite_id] = map;
+        surface->sprite_width[sprite_id] = width;
+        surface->sprite_height[sprite_id] = height;
+        surface->sprite_width_full[sprite_id] = width;
+        surface->sprite_height_full[sprite_id] = height;
+    } else {
+        uint16_t frame_width = width / columns;
+        uint16_t frame_height = height / rows;
+
+        for (int y = 0; y < rows; ++y) {
+           for (int x = 0; x < columns; ++x) {
+                uint8_t *frame_pixels = malloc(frame_width * frame_height);
+                assert(frame_pixels != NULL);
+                for (int i = 0; i < frame_height; ++i) {
+                    offset = (x * frame_width) + ((y * frame_height) + i) * width;
+                    memcpy(frame_pixels + (i * frame_width),
+                        pixels + offset, frame_width);
+                }
+                int frame_len = frame_width * frame_height;
+                for (int i = 0; i < frame_len; ++i) {
+                    if (map[frame_pixels[i]] == 0xff00ff) {
+                        frame_pixels[i] = 0;
+                    }
+                }
+                free(surface->surface_pixels[sprite_id]);
+                surface->surface_pixels[sprite_id] = NULL;
+                surface->sprite_colours[sprite_id] = frame_pixels;
+                surface->sprite_translate[sprite_id] = 0;
+                surface->sprite_translate_x[sprite_id] = 0;
+                surface->sprite_translate_y[sprite_id] = 0;
+                surface->sprite_palette[sprite_id] = map;
+                surface->sprite_width[sprite_id] = frame_width;
+                surface->sprite_height[sprite_id] = frame_height;
+                surface->sprite_width_full[sprite_id] = frame_width;
+                surface->sprite_height_full[sprite_id++] = frame_height;
+            }
+        }
+        free(pixels);
+    }
+}
+
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count) {
     /* FIXME: unsafe unchecked access */
