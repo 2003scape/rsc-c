@@ -1584,7 +1584,13 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id,
         surface->sprite_translate[sprite_id] = 0;
         surface->sprite_translate_x[sprite_id] = 0;
         surface->sprite_translate_y[sprite_id] = 0;
+#ifdef USE_LOCOLOUR
+        palette_to_locolour((uint8_t *)pixels,
+                            width * height, (uint32_t *)map);
+        surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#else
         surface->sprite_palette[sprite_id] = map;
+#endif
         surface->sprite_width[sprite_id] = width;
         surface->sprite_height[sprite_id] = height;
         surface->sprite_width_full[sprite_id] = width;
@@ -1614,7 +1620,13 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id,
                 surface->sprite_translate[sprite_id] = 0;
                 surface->sprite_translate_x[sprite_id] = 0;
                 surface->sprite_translate_y[sprite_id] = 0;
+#ifdef USE_LOCOLOUR
+                palette_to_locolour((uint8_t *)frame_pixels,
+                                    frame_width * frame_height, (uint32_t *)map);
+                surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#else
                 surface->sprite_palette[sprite_id] = map;
+#endif
                 surface->sprite_width[sprite_id] = frame_width;
                 surface->sprite_height[sprite_id] = frame_height;
                 surface->sprite_width_full[sprite_id] = frame_width;
@@ -1623,6 +1635,9 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id,
         }
         free(pixels);
     }
+#ifdef USE_LOCOLOUR
+    free(map);
+#endif
 }
 
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
