@@ -1872,7 +1872,7 @@ void mudclient_load_jagex(mudclient *mud) {
     if (jagex_jag != NULL) {
         if (!mud->options->lowmem) {
             size_t len;
-            int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, NULL);
+            int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
             surface_parse_sprite_tga(mud->surface,
                 SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
             free(logo_tga);
