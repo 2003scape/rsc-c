@@ -3972,7 +3972,7 @@ int surface_text_width(const char *text, FontStyle font) {
 }
 
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
-                       char **tabs, int tabs_length, int selected) {
+                       const char **tabs, int tabs_length, int selected) {
     int tab_width = (int)(width / (float)tabs_length);
     int offset_x = 0;
 
