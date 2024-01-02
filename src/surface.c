@@ -585,7 +585,9 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 #endif
             base_atlas_position = base_texture_position.atlas_position;
         }
-    } else if (sprite_id >= surface->mud->sprite_media && sprite_id < surface->mud->sprite_projectile + game_data.projectile_sprite) {
+    } else if (sprite_id >= surface->mud->sprite_media &&
+               sprite_id < surface->mud->sprite_projectile +
+                               game_data.projectile_sprite) {
         int atlas_index = sprite_id - surface->mud->sprite_media;
 
         atlas_position = gl_media_atlas_positions[atlas_index];
@@ -1505,9 +1507,8 @@ void surface_clear(Surface *surface) {
     }
 }
 
-void surface_parse_sprite_tga(Surface *surface, int sprite_id,
-                              uint8_t *buffer, size_t len,
-                              int columns, int rows) {
+void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
+                              size_t len, int columns, int rows) {
 
     size_t offset = 0;
 
@@ -1590,13 +1591,14 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id,
         uint16_t frame_height = height / rows;
 
         for (int y = 0; y < rows; ++y) {
-           for (int x = 0; x < columns; ++x) {
+            for (int x = 0; x < columns; ++x) {
                 uint8_t *frame_pixels = malloc(frame_width * frame_height);
                 assert(frame_pixels != NULL);
                 for (int i = 0; i < frame_height; ++i) {
-                    offset = (x * frame_width) + ((y * frame_height) + i) * width;
-                    memcpy(frame_pixels + (i * frame_width),
-                        pixels + offset, frame_width);
+                    offset =
+                        (x * frame_width) + ((y * frame_height) + i) * width;
+                    memcpy(frame_pixels + (i * frame_width), pixels + offset,
+                           frame_width);
                 }
                 int frame_len = frame_width * frame_height;
                 for (int i = 0; i < frame_len; ++i) {
@@ -4128,7 +4130,8 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
-                             int background_colour, int foreground_colour) {
+                             int background_colour, int foreground_colour,
+                             int is_percentage) {
     int current_width = current >= max ? width : (current / (float)max) * width;
 
     surface_draw_box_alpha(surface, x, y, current_width, height,
@@ -4141,14 +4144,25 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
 
     char formatted_status[strlen(label) + 27];
 
+    // TODO maybe do surface_text_width instead and check for overflow
     if (MUD_IS_COMPACT) {
-        sprintf(formatted_status, "%d / %d", current, max);
+        if (is_percentage) {
+            sprintf(formatted_status, "%.2f%%",
+                    (current / (float)max) * 100.0f);
+        } else {
+            sprintf(formatted_status, "%d / %d", current, max);
+        }
     } else {
-        sprintf(formatted_status, "%s: %d / %d", label, current, max);
+        if (is_percentage) {
+            sprintf(formatted_status, "%s: %.2f%%", label,
+                    (current / (float)max) * 100.0f);
+        } else {
+            sprintf(formatted_status, "%s: %d / %d", label, current, max);
+        }
     }
 
     surface_draw_string_centre(surface, formatted_status, x + (width / 2),
-                               y + 12, 0, WHITE);
+                               y + height - 4, 0, WHITE);
 }
 
 #ifdef RENDER_GL

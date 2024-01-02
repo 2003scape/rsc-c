@@ -2,7 +2,8 @@
 
 void mudclient_drop_experience(mudclient *mud, int skill_index,
                                int experience) {
-    if (!mud->options->experience_drops) {
+    if (!mud->options->experience_drops ||
+        mud->experience_drop_count >= EXPERIENCE_DROPS_MAX) {
         return;
     }
 

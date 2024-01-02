@@ -1275,7 +1275,7 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             return;
         }
 
-        if (mud->show_change_password_step == 0 &&
+        if (mud->show_change_password_step == PASSWORD_STEP_NONE &&
             mud->show_dialog_social_input == 0 &&
             mud->show_dialog_offer_x == 0 &&
             !(mud->options->bank_search && mud->show_dialog_bank) &&
@@ -1291,9 +1291,9 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
             }
         }
 
-        if (mud->show_change_password_step == 3 ||
-            mud->show_change_password_step == 4) {
-            mud->show_change_password_step = 0;
+        if (mud->show_change_password_step == PASSWORD_STEP_MISMATCH ||
+            mud->show_change_password_step == PASSWORD_STEP_FINISHED) {
+            mud->show_change_password_step = PASSWORD_STEP_NONE;
         }
     }
 }
@@ -4755,7 +4755,7 @@ void mudclient_draw_ui(mudclient *mud) {
         mudclient_draw_experience_drops(mud);
     }
 
-    if (mud->options->status_bars) {
+    if (mud->options->status_bars && !mudclient_is_touch(mud)) {
         mudclient_draw_status_bars(mud);
     }
 
@@ -5339,9 +5339,11 @@ void mudclient_draw_game(mudclient *mud) {
 
     int offset_y = 0;
 
+    int is_touch = mudclient_is_touch(mud);
+
     /* centres the camera for the smaller FOV */
     /* TODO could be an option */
-    if (mudclient_is_touch(mud)) {
+    if (is_touch) {
         offset_y = 100;
     } else if (MUD_IS_COMPACT) {
         offset_y = 75;
@@ -5388,7 +5390,7 @@ void mudclient_draw_game(mudclient *mud) {
         sprintf(fps, "Fps: %d", mud->fps);
 
         surface_draw_string(mud->surface, fps,
-                            mud->surface->width - 62 - offset_x,
+                            is_touch ? 9 + offset_x : mud->surface->width - 62 - offset_x,
                             mud->surface->height - 22, FONT_BOLD_12, YELLOW);
     }
 
@@ -5415,12 +5417,14 @@ void mudclient_draw_game(mudclient *mud) {
         mud->is_in_wilderness = wilderness_depth > 0;
 
         if (mud->is_in_wilderness) {
-            surface_draw_sprite(mud->surface, mud->surface->width - 59,
+            int x = is_touch ? 29 : mud->surface->width - 59;
+
+            surface_draw_sprite(mud->surface, x,
                                 mud->surface->height - 68,
                                 mud->sprite_media + 13);
 
             surface_draw_string_centre(
-                mud->surface, "Wilderness", mud->surface->width - 47,
+                mud->surface, "Wilderness", x + 12,
                 mud->surface->height - 32, FONT_BOLD_12, YELLOW);
 
             int wilderness_level = 1 + (wilderness_depth / 6);
@@ -5429,7 +5433,7 @@ void mudclient_draw_game(mudclient *mud) {
             sprintf(formatted_level, "Level: %d", wilderness_level);
 
             surface_draw_string_centre(
-                mud->surface, formatted_level, mud->surface->width - 47,
+                mud->surface, formatted_level, x + 12,
                 mud->surface->height - 19, FONT_BOLD_12, YELLOW);
 
             if (mud->show_wilderness_warning == 0) {
@@ -5449,6 +5453,11 @@ void mudclient_draw_game(mudclient *mud) {
 
     mud->surface->draw_string_shadow = 0;
     mudclient_draw_chat_message_tabs(mud);
+
+    if (mud->options->status_bars && mudclient_is_touch(mud)) {
+        mud->surface->draw_string_shadow = 1;
+        mudclient_draw_status_bars(mud);
+    }
 
 #ifdef RENDER_GL
     scene_gl_render_transparent_models(mud->scene);
@@ -6025,11 +6034,10 @@ void mudclient_poll_events(mudclient *mud) {
     if (!mudclient_has_right_clicked && !mudclient_horizontal_drag &&
         !mudclient_vertical_drag && mudclient_finger_1_down &&
         !mudclient_finger_2_down &&
-        get_ticks() - mudclient_touch_start >= 400) {
+        get_ticks() - mudclient_touch_start >= 350) {
         mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_has_right_clicked = 1;
-        // mudclient_finger_1_down = 0;
     }
 
     SDL_Event event;
@@ -6117,6 +6125,7 @@ void mudclient_poll_events(mudclient *mud) {
                 }
 
                 mudclient_pinch_distance = pinch_distance;
+                mudclient_has_right_clicked = 1;
             } else if (mudclient_finger_1_down && !mudclient_finger_2_down) {
                 int delta_x = touch_x - mudclient_touch_start_x;
                 int delta_y = touch_y - mudclient_touch_start_y;
