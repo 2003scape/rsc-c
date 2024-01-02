@@ -1022,17 +1022,17 @@ struct mudclient {
     int show_additional_options;
     int options_tab;
 
-    Panel *panel_connection_options;
-    void *connection_options[50];
-    int connection_option_types[50];
+    Panel *panel_game_options;
+    void *game_options[50];
+    int game_option_types[50];
 
     Panel *panel_control_options;
     void *control_options[50];
     int control_option_types[50];
 
-    Panel *panel_display_options;
-    void *display_options[50];
-    int display_option_types[50];
+    Panel *panel_ui_options;
+    void *ui_options[50];
+    int ui_option_types[50];
 
     Panel *panel_bank_options;
     void *bank_options[50];

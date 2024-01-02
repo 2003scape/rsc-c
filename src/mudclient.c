@@ -911,9 +911,9 @@ void mudclient_resize(mudclient *mud) {
             }
         }
 
-        if (mud->panel_connection_options != NULL) {
-            mud->panel_connection_options->offset_x = half_offset_x;
-            mud->panel_connection_options->offset_y = half_offset_y;
+        if (mud->panel_game_options != NULL) {
+            mud->panel_game_options->offset_x = half_offset_x;
+            mud->panel_game_options->offset_y = half_offset_y;
         }
 
         if (mud->panel_control_options != NULL) {
@@ -921,9 +921,9 @@ void mudclient_resize(mudclient *mud) {
             mud->panel_control_options->offset_y = half_offset_y;
         }
 
-        if (mud->panel_display_options != NULL) {
-            mud->panel_display_options->offset_x = half_offset_x;
-            mud->panel_display_options->offset_y = half_offset_y;
+        if (mud->panel_ui_options != NULL) {
+            mud->panel_ui_options->offset_x = half_offset_x;
+            mud->panel_ui_options->offset_y = half_offset_y;
         }
 
         if (mud->panel_bank_options != NULL) {
@@ -1317,11 +1317,11 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         } else if (code == K_F1) {
             mud->options->interlace = !mud->options->interlace;
 
-            for (int i = 0; i < mud->panel_display_options->control_count;
+            for (int i = 0; i < mud->panel_ui_options->control_count;
                  i++) {
-                if ((int *)mud->display_options[i] ==
+                if ((int *)mud->ui_options[i] ==
                     &mud->options->interlace) {
-                    panel_toggle_checkbox(mud->panel_display_options, i,
+                    panel_toggle_checkbox(mud->panel_ui_options, i,
                                           mud->options->interlace);
                     break;
                 }
