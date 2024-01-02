@@ -527,7 +527,7 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                         dialog_y + 10, 1, WHITE);
 
     if (MUD_IS_COMPACT) {
-        char *tabs[] = {"Yours", "Theirs"};
+        const char *tabs[] = {"Yours", "Theirs"};
         int tabs_x = dialog_x + TRANSACTION_OFFER_X;
         int tabs_y = dialog_y + TRANSACTION_INVENTORY_Y;
 
@@ -736,7 +736,7 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
     int y = 30;
 
     if (MUD_IS_COMPACT) {
-        char *tabs[3] = {0};
+        const char *tabs[3] = {0};
 
         if (is_trade) {
             tabs[0] = "Your Offer";
