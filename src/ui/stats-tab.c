@@ -1,23 +1,23 @@
 #include "stats-tab.h"
 
-char *short_skill_names[] = {
+static const char *short_skill_names[] = {
     "Attack",   "Defense",  "Strength", "Hits",      "Ranged",  "Prayer",
     "Magic",    "Cooking",  "Woodcut",  "Fletching", "Fishing", "Firemaking",
     "Crafting", "Smithing", "Mining",   "Herblaw",   "Agility", "Thieving"};
 
-char *skill_names[] = {
+const char *skill_names[] = {
     "Attack",   "Defense",  "Strength",    "Hits",      "Ranged",  "Prayer",
     "Magic",    "Cooking",  "Woodcutting", "Fletching", "Fishing", "Firemaking",
     "Crafting", "Smithing", "Mining",      "Herblaw",   "Agility", "Thieving"};
 
 int skills_length;
 
-char *equipment_stat_names[] = {"Armour", "WeaponAim", "WeaponPower", "Magic",
-                                "Prayer"};
+static const char *equipment_stat_names[] = {
+    "Armour", "WeaponAim", "WeaponPower", "Magic", "Prayer"};
 
-int experience_array[100];
+static int experience_array[100];
 
-char *free_quests[] = {
+static const char *free_quests[] = {
     "Black knight's fortress", "Cook's assistant",   "Demon slayer",
     "Doric's quest",           "The restless ghost", "Goblin diplomacy",
     "Ernest the chicken",      "Imp catcher",        "Pirate's treasure",
@@ -25,7 +25,7 @@ char *free_quests[] = {
     "Shield of Arrav",         "The knight's sword", "Vampire slayer",
     "Witch's potion",          "Dragon slayer"};
 
-char *members_quests[] = {
+static const char *members_quests[] = {
     "Witch's house",    "Lost city",         "Hero's quest",
     "Druidic ritual",   "Merlin's crystal",  "Scorpion catcher",
     "Family crest",     "Tribal totem",      "Fishing contest",
@@ -40,8 +40,6 @@ char *members_quests[] = {
 
 char **quest_names;
 int quests_length = 0;
-
-char *stats_tabs[3] = {0};
 
 void init_stats_tab_global() {
     skills_length = sizeof(skill_names) / sizeof(skill_names[0]);
@@ -137,6 +135,8 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
     int is_compact =
         is_touch || mud->surface->height < (height + STATS_LINE_BREAK) + ui_y;
+
+    const char *stats_tabs[3];
 
     if (is_compact) {
         height = STATS_COMPACT_HEIGHT;
@@ -390,7 +390,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             }
 
             if (no_menus && mud->selected_wiki) {
-                char *skill_name = skill_names[selected_skill];
+                const char *skill_name = skill_names[selected_skill];
                 mudclient_menu_add_wiki(mud, skill_name, skill_name);
             }
         } else {
@@ -544,7 +544,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             }
 
             if (mud->selected_wiki) {
-                char *wiki_page = stats_tabs[selected_tab];
+                const char *wiki_page = stats_tabs[selected_tab];
 
                 if (is_compact && selected_tab == 1) {
                     wiki_page = "Equipment";
