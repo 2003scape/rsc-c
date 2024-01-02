@@ -1,6 +1,6 @@
 CC = emcc
 DEBUG ?= 0
-RENDER_GL ?= 1
+RENDER_GL ?= 0
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
