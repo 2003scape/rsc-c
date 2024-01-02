@@ -325,7 +325,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("ground_item_models", options->ground_item_models, 0, 1);
     OPTION_INI_INT("ground_item_text", options->ground_item_text, 0, 1);
     OPTION_INI_INT("distant_animation", options->distant_animation, 0, 1);
-    OPTION_INI_INT("tga_sprites", options->tga_sprites, 0, 0);
+    OPTION_INI_INT("tga_sprites", options->tga_sprites, 0, 1);
     OPTION_INI_INT("show_hover_tooltip", options->show_hover_tooltip, 0, 1);
 
     /* bank */
