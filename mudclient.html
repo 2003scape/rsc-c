@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8" />
+        <title>Runescape by Andrew Gower</title>
+        <style>
+            html,
+            body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+
+            body {
+                background-color: #000;
+            }
+
+            /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+            canvas.emscripten {
+                border: 0px none;
+                background-color: black;
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas
+            class="emscripten"
+            id="canvas"
+            oncontextmenu="event.preventDefault()"
+            tabindex="-1"
+        ></canvas>
+
+        <script>
+            function LSFS() {
+                if (LSFS.mount) {
+                    return LSFS;
+                }
+
+                var wrapCreateNode = wrapNode(MEMFS.createNode);
+
+                var wrap_node_ops = {
+                    setattr: wrapSave(MEMFS.node_ops.setattr),
+                    mknod: wrapNode(MEMFS.node_ops.mknod),
+                    rename: wrapSave(MEMFS.node_ops.rename),
+                    unlink: wrapSave(MEMFS.node_ops.unlink),
+                    rmdir: wrapSave(MEMFS.node_ops.rmdir),
+                    symlink: wrapNode(MEMFS.node_ops.symlink)
+                };
+
+                var wrap_stream_ops = {
+                    write: wrapSave(MEMFS.stream_ops.write),
+                    msync: wrapSave(MEMFS.stream_ops.msync)
+                };
+
+                var props = [
+                    'name',
+                    'mode',
+                    'rdev',
+                    'link',
+                    'usedBytes',
+                    'timestamp'
+                ];
+
+                LSFS.mount = mount;
+
+                return LSFS;
+
+                function wrapNode(fn) {
+                    return function () {
+                        var node = fn.apply(null, arguments);
+                        setupNode(node);
+                        return node;
+                    };
+                }
+
+                function wrapSave(fn) {
+                    return function (node) {
+                        var res = fn.apply(null, arguments);
+                        save(node);
+                        return res;
+                    };
+                }
+
+                function setupNode(node) {
+                    var node_ops = {};
+                    for (var op in node.node_ops) {
+                        node_ops[op] = wrap_node_ops[op] || node.node_ops[op];
+                    }
+                    node.node_ops = node_ops;
+
+                    var stream_ops = {};
+                    for (var op in node.stream_ops) {
+                        stream_ops[op] =
+                            wrap_stream_ops[op] || node.stream_ops[op];
+                    }
+                    node.stream_ops = stream_ops;
+                }
+
+                function filter(node) {
+                    var result = {};
+                    for (var key in node) {
+                        if (props.indexOf(key) !== -1) {
+                            result[key] = node[key];
+                        }
+                    }
+
+                    if (node.contents) {
+                        if (node.contents.length) {
+                            result.contents = Array.apply([], node.contents);
+                        } else {
+                            result.contents = {};
+                            for (var name in node.contents) {
+                                result.contents[name] = filter(
+                                    node.contents[name]
+                                );
+                            }
+                        }
+                    }
+
+                    return result;
+                }
+
+                function save(node) {
+                    if (node.node) {
+                        node = node.node;
+                    }
+
+                    var mount = node.mount;
+                    if (!mount || !mount.opts || !mount.opts.key) {
+                        return;
+                    }
+
+                    try {
+                        localStorage.setItem(
+                            mount.opts.key,
+                            JSON.stringify(filter(mount.root))
+                        );
+                    } catch (err) {}
+                }
+
+                function mount(mount) {
+                    if (!mount.opts || !mount.opts.key) {
+                        return;
+                    }
+
+                    var data;
+
+                    try {
+                        data = localStorage.getItem(mount.opts.key);
+                    } catch (err) {}
+
+                    if (data) {
+                        try {
+                            data = JSON.parse(data);
+                        } catch (err) {}
+                    }
+
+                    var node = MEMFS.mount(mount);
+                    setupNode(node);
+                    load(node, mount, data);
+
+                    return node;
+                }
+
+                function load(node, mount, data) {
+                    node.mount = mount;
+
+                    if (!data) {
+                        return;
+                    }
+
+                    for (var key in data) {
+                        if (props.indexOf(key) !== -1) {
+                            node[key] = data[key];
+                        }
+                    }
+
+                    if (data.contents) {
+                        if (data.contents.length) {
+                            node.contents = data.contents;
+                        } else {
+                            node.contents = {};
+
+                            for (var name in data.contents) {
+                                var childData = data.contents[name];
+                                var childNode = wrapCreateNode(
+                                    node,
+                                    name,
+                                    childData.mode,
+                                    childData.rdev
+                                );
+                                load(childNode, mount, childData);
+                            }
+                        }
+                    }
+                }
+            }
+
+            var Module = {
+                preInit: [
+                    function () {
+                        FS.mkdir('/options');
+                        FS.mount(LSFS(), { key: 'rsc' }, '/options');
+                    }
+                ],
+                preRun: [
+                    function () {
+                        const args = window.location.hash.slice(1).split(',');
+                        arguments_.push(...args);
+                    }
+                ],
+                postRun: [],
+                print: (function () {
+                    return function (text) {
+                        if (arguments.length > 1) {
+                            text = Array.prototype.slice
+                                .call(arguments)
+                                .join(' ');
+                        }
+
+                        console.log(text);
+                    };
+                })(),
+                canvas: (function () {
+                    var canvas = document.getElementById('canvas');
+
+                    canvas.addEventListener(
+                        'webglcontextlost',
+                        function (e) {
+                            alert(
+                                'WebGL context lost. You will need to reload the page.'
+                            );
+                            e.preventDefault();
+                        },
+                        false
+                    );
+
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+
+                    window.addEventListener(
+                        'resize',
+                        () => {
+                            canvas.width = window.innerWidth;
+                            canvas.height = window.innerHeight;
+                        },
+                        false
+                    );
+
+                    // for rotating the camera off-window
+                    window.addEventListener(
+                        'mousemove',
+                        (event) => {
+                            if (
+                                event.clientX < 0 ||
+                                event.clientX > window.innerWidth
+                            ) {
+                                Module.ccall(
+                                    'browser_mouse_moved',
+                                    null,
+                                    ['number'],
+                                    [event.clientX, event.clientY]
+                                );
+                            }
+                        },
+                        false
+                    );
+
+                    return canvas;
+                })(),
+                setStatus: function (text) {},
+                totalDependencies: 0,
+                monitorRunDependencies: function (left) {
+                    this.totalDependencies = Math.max(
+                        this.totalDependencies,
+                        left
+                    );
+
+                    Module.setStatus(
+                        left
+                            ? 'Preparing... (' +
+                                  (this.totalDependencies - left) +
+                                  '/' +
+                                  this.totalDependencies +
+                                  ')'
+                            : 'All downloads complete.'
+                    );
+                }
+            };
+
+            Module.setStatus('Downloading...');
+
+            window.onerror = function () {
+                Module.setStatus('Exception thrown, see JavaScript console');
+
+                Module.setStatus = function (text) {
+                    if (text) {
+                        console.error('[post-exception status] ' + text);
+                    }
+                };
+            };
+        </script>
+        <script async type="text/javascript" src="mudclient.js"></script>
+    </body>
+</html>
+
+

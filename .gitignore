@@ -10,10 +10,6 @@ mudclient
 *.dol
 *.elf
 mudclient.exe
-mudclient.data
-mudclient.html
-mudclient.js
-mudclient.wasm
 .idea
 options.ini
 rsc-c.3dsx
