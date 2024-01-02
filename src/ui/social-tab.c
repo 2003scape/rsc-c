@@ -1,6 +1,6 @@
 #include "social-tab.h"
 
-char *social_tabs[] = {"Friends", "Ignore"};
+static const char *social_tabs[] = {"Friends", "Ignore"};
 
 void mudclient_sort_friends(mudclient *mud) {
     int flag = 1;
