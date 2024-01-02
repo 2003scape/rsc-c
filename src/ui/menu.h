@@ -77,9 +77,10 @@ typedef enum {
 
 void mudclient_menu_item_click(mudclient *mud, int i);
 void mudclient_create_top_mouse_menu(mudclient *mud);
-void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page);
-void mudclient_menu_add_id_wiki(mudclient *mud, char *display, char *type,
-                                int id);
+void mudclient_menu_add_wiki(mudclient *mud, const char *display,
+                             const char *page);
+void mudclient_menu_add_id_wiki(mudclient *mud, const char *display,
+                                const char *type, int id);
 void mudclient_menu_add_ground_item(mudclient *mud, int index);
 void mudclient_create_right_click_menu(mudclient *mud);
 void mudclient_draw_right_click_menu(mudclient *mud);

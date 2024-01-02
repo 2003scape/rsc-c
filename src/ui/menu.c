@@ -692,7 +692,8 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
     }
 }
 
-void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page) {
+void mudclient_menu_add_wiki(mudclient *mud, const char *display,
+                             const char *page) {
     if (!mud->options->wiki_lookup) {
         return;
     }
@@ -704,9 +705,9 @@ void mudclient_menu_add_wiki(mudclient *mud, char *display, char *page) {
     mud->menu_items_count++;
 }
 
-void mudclient_menu_add_id_wiki(mudclient *mud, char *display, char *type,
-                                int id) {
-    char *name = display;
+void mudclient_menu_add_id_wiki(mudclient *mud, const char *display,
+                                const char *type, int id) {
+    const char *name = display;
 
     for (int i = strlen(name); i >= 0; i--) {
         if (name[i] == '@') {
