@@ -687,7 +687,7 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
     sprintf(dest, "%s%s%c", use_colour ? colour : "", formatted_amount, suffix);
 }
 
-void url_encode(char *s, char *dest) {
+void url_encode(const char *s, char *dest) {
     const char *hex = "0123456789abcdef";
 
     int pos = 0;
