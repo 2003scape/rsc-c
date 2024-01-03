@@ -105,7 +105,7 @@ const char *animated_models[] = {
  */
 static const char *anims_older_is_better[] = {
     "camel", "bat", "battleaxe", "bear", "fbody1", "fhead1", "fplatemailtop",
-    "head1", "head2", "head3", "head4", "platemailtop", "staff", NULL
+    "head1", "head2", "head3", "head4", "platemailtop", "staff", "body1", NULL
 };
 
 char login_screen_status[255] = {0};
