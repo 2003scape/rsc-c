@@ -349,12 +349,12 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, C3D_Tex *texture,
                             C3D_Tex *base_texture) {
 #endif
     if (surface->gl_context_count >= GL_MAX_QUADS) {
-        fprintf(stderr, "too many context (texture/boundary) switches!\n");
+        mud_error("too many context (texture/boundary) switches!\n");
         return;
     }
 
     if (surface->gl_flat_count >= GL_MAX_QUADS) {
-        fprintf(stderr, "too many quads!\n");
+        mud_error("too many quads!\n");
         return;
     }
 
@@ -1103,7 +1103,8 @@ void surface_draw(Surface *surface) {
     SDL_Flip(mud->screen);
 #else
     if (mud->window != NULL) {
-        SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
+        SDL_BlitScaled(mud->pixel_surface, NULL, mud->screen, NULL);
+        // SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
         SDL_UpdateWindowSurface(mud->window);
     }
 #endif

@@ -90,7 +90,7 @@ void options_set_defaults(Options *options) {
 
     /* display */
     options->interlace = 0;
-    options->display_fps = 0;
+    options->display_fps = 1;
     options->number_commas = 1;
     options->show_roofs = 1;
     options->remaining_experience = 1;
@@ -200,6 +200,11 @@ void options_save(Options *options) {
 #else
     FILE *ini_file = fopen("./options.ini", "w");
 #endif
+
+    if (!ini_file) {
+        mud_error("unable to open options.ini file for writing\n");
+        return;
+    }
 
     fprintf(ini_file, OPTIONS_INI_TEMPLATE,
             options->server,                //

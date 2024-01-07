@@ -81,6 +81,9 @@ int mudclient_finger_2_x = 0;
 int mudclient_finger_2_y = 0;
 int mudclient_finger_2_down = 0;
 
+int mudclient_full_width = 0;
+int mudclient_full_height = 0;
+
 int mudclient_has_right_clicked = 0;
 
 const char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
@@ -985,7 +988,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     Result romfs_res = romfsInit();
 
     if (romfs_res) {
-        fprintf(stderr, "romfsInit: %08lX\n", romfs_res);
+        mud_error("romfsInit: %08lX\n", romfs_res);
         exit(1);
     }
 
@@ -1004,14 +1007,14 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SOC_buffer = (u32 *)memalign(SOC_ALIGN, SOC_BUFFER_SIZE);
 
     if (SOC_buffer == NULL) {
-        fprintf(stderr, "memalign() fail\n");
+        mud_error("memalign() fail\n");
         exit(1);
     }
 
     int ret = -1;
 
     if ((ret = socInit(SOC_buffer, SOC_BUFFER_SIZE)) != 0) {
-        fprintf(stderr, "socInit: 0x%08X\n", (unsigned int)ret);
+        mud_error("socInit: 0x%08X\n", (unsigned int)ret);
         exit(1);
     }
 
@@ -1049,7 +1052,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     int ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
 
     if (ret < 0) {
-        fprintf(stderr, "WSAStartup() error: %d\n", WSAGetLastError());
+        mud_error("WSAStartup() error: %d\n", WSAGetLastError());
         exit(1);
     }
 #endif
@@ -1058,7 +1061,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     Result romfs_res = romfsInit();
 
     if (romfs_res) {
-        fprintf(stderr, "romfsInit: %08lX\n", romfs_res);
+        mud_error("romfsInit: %08lX\n", romfs_res);
         exit(1);
     }
 #endif
@@ -1074,7 +1077,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
     if (SDL_Init(init) < 0) {
-        fprintf(stderr, "SDL_Init(): %s\n", SDL_GetError());
+        mud_error("SDL_Init(): %s\n", SDL_GetError());
         exit(1);
     }
 
@@ -1097,7 +1100,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         wanted_audio.callback = NULL;
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
-            fprintf(stderr, "SDL_OpenAudio(): %s\n", SDL_GetError());
+            mud_error("SDL_OpenAudio(): %s\n", SDL_GetError());
             exit(1);
         }
     }
@@ -1106,7 +1109,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 #ifdef SDL12
     SDL_WM_SetCaption("Runescape by Andrew Gower", NULL);
-// SDL_WM_SetIcon(IMG_Load("win/2003scape.png"),NULL);
+    // SDL_WM_SetIcon(IMG_Load("win/2003scape.png"),NULL);
 #else
     uint32_t windowflags = SDL_WINDOW_SHOWN;
 #if !defined(WII) && !defined(_3DS) && !defined(EMSCRIPTEN)
@@ -1133,7 +1136,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 #ifdef RENDER_GL
     /*if (IMG_Init(IMG_INIT_PNG) == 0) {
-        fprintf(stderr, "unable to initialize sdl_image: %s\n", IMG_GetError());
+        mud_error("unable to initialize sdl_image: %s\n", IMG_GetError());
     }*/
 #ifdef SDL12
     mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
@@ -1142,7 +1145,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     // Check for error
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        printf("Error initializing OpenGL! %s\n", gluErrorString(error));
+        mud_log("Error initializing OpenGL! %s\n", gluErrorString(error));
         exit(0);
     }
 #else
@@ -1182,7 +1185,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 
     if (!context) {
-        fprintf(stderr, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
+        mud_error("SDL_GL_CreateContext(): %s\n", SDL_GetError());
         exit(1);
     }
 
@@ -1194,7 +1197,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     GLenum glew_error = glewInit();
 
     if (glew_error != GLEW_OK) {
-        fprintf(stderr, "GLEW error: %s\n", glewGetErrorString(glew_error));
+        mud_error("GLEW error: %s\n", glewGetErrorString(glew_error));
         exit(1);
     }
 
@@ -1235,10 +1238,16 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);
 
-    printf("Started application\n");
+    mud_log("Started application\n");
 
 #ifdef _3DS
     mudclient_3ds_draw_top_background(mud);
+#endif
+
+    mud->screen = SDL_GetWindowSurface(mud->window);
+
+#ifdef ANDROID
+    SDL_SetWindowFullscreen(mud->window, SDL_WINDOW_FULLSCREEN);
 #endif
 
     mudclient_run(mud);
@@ -1780,11 +1789,11 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     }
 
     if (file_data == NULL) {
-        fprintf(stderr, "Unable to read file: %s\n", file);
+        mud_error("Unable to read file: %s\n", file);
         exit(1);
     }
 
-    memcpy(header, file_data, 6);
+    memcpy(header, file_data, sizeof(header));
 #else
     int file_length = strlen(file);
 
@@ -1794,17 +1803,26 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     char *prefix = "./cache";
 #endif
 
+#ifdef ANDROID
+    char *prefixed_file = file;
+    SDL_RWops *archive_stream = SDL_RWFromFile(prefixed_file, "rb");
+#else
     char prefixed_file[file_length + strlen(prefix) + 2];
     sprintf(prefixed_file, "%s/%s", prefix, file);
 
     FILE *archive_stream = fopen(prefixed_file, "rb");
+#endif
 
     if (archive_stream == NULL) {
-        fprintf(stderr, "Unable to read file: %s\n", prefixed_file);
+        mud_error("Unable to read file: %s\n", prefixed_file);
         exit(1);
     }
 
-    fread(header, 6, 1, archive_stream);
+#ifdef ANDROID
+    SDL_RWread(archive_stream, header, sizeof(header), 1);
+#else
+    fread(header, sizeof(header), 1, archive_stream);
+#endif
 #endif
 
     int archive_size = ((header[0] & 0xff) << 16) + ((header[1] & 0xff) << 8) +
@@ -1826,7 +1844,11 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     while (read < archive_size_compressed) {
         int length = archive_size_compressed - read;
 
+#ifdef ANDROID
+        SDL_RWread(archive_stream, archive_data + read, length, 1);
+#else
         fread(archive_data + read, length, 1, archive_stream);
+#endif
 
         read += length;
 
@@ -1836,7 +1858,11 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         mudclient_draw_loading_progress(mud, percent, loading_text);
     }
 
+#ifdef ANDROID
+    SDL_RWclose(archive_stream);
+#else
     fclose(archive_stream);
+#endif
 #endif
 
     sprintf(loading_text, "Unpacking %s", description);
@@ -1866,8 +1892,10 @@ void mudclient_load_jagex(mudclient *mud) {
     if (jagex_jag != NULL) {
         size_t len;
         uint8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
+
         surface_parse_sprite_tga(mud->surface,
             SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
+
         free(logo_tga);
 
 #ifndef WII
@@ -2127,6 +2155,7 @@ void mudclient_load_entities(mudclient *mud) {
                     archive_file = entity_jag_legacy;
                     break;
                 }
+
                 older_names++;
             }
         }
@@ -2220,7 +2249,7 @@ void mudclient_load_entities(mudclient *mud) {
         i++;
     }
 
-    printf("Loaded: %d frames of animation\n", frame_count);
+    mud_log("Loaded: %d frames of animation\n", frame_count);
 
 #ifndef WII
     free(entity_jag);
@@ -2359,7 +2388,7 @@ void mudclient_load_models(mudclient *mud) {
         if (offset != 0) {
             game_model_from_bytes(game_model, models_jag + offset, len);
         } else {
-            fprintf(stderr, "missing model \"%s.ob3\" from %s\n", model_name,
+            mud_error("missing model \"%s.ob3\" from %s\n", model_name,
                     models_filename);
 
             game_model_from2(game_model, 1, 1);
@@ -2716,7 +2745,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     }
 
 #ifdef REVISION_177
-    printf("Session id: %d\n", session_id);
+    mud_log("Session id: %d\n", session_id);
 
     packet_stream_new_packet(mud->packet_stream,
                              reconnecting ? CLIENT_RECONNECT : CLIENT_LOGIN);
@@ -2744,9 +2773,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     int response = packet_stream_get_byte(mud->packet_stream);
 #else
 #ifdef _3DS
-    printf("Verb: Session id: %lld\n", session_id); /* ? */
+    mud_log("Verb: Session id: %lld\n", session_id); /* ? */
 #else
-    printf("Verb: Session id: %ld\n", session_id);
+    mud_log("Verb: Session id: %ld\n", session_id);
 #endif
 
     uint32_t keys[4] = {0};
@@ -2770,7 +2799,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     int response = packet_stream_get_byte(mud->packet_stream);
 #endif
 
-    printf("Login response: %d\n", response);
+    mud_log("Login response: %d\n", response);
 
     if (response == 0 || response == 25) {
         mud->moderator_level = response == 25;
@@ -2986,7 +3015,7 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
         return;
     }
 
-    printf("Session id: %d\n", session_id);
+    mud_log("Session id: %d\n", session_id);
 #endif
 
     packet_stream_new_packet(mud->packet_stream, CLIENT_REGISTER);
@@ -3014,7 +3043,7 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
 #endif
 
     int response = packet_stream_get_byte(mud->packet_stream);
-    printf("Newplayer response: %d\n", response);
+    mud_log("Newplayer response: %d\n", response);
 
     switch (response) {
     case 2:
@@ -5492,7 +5521,7 @@ void mudclient_draw(mudclient *mud) {
 
     if (mud->error_loading_data) {
         /* TODO draw error */
-        // printf("ERROR LOADING DATA\n");
+        // mud_log("ERROR LOADING DATA\n");
         return;
     }
 
@@ -5601,10 +5630,26 @@ void mudclient_on_resize(mudclient *mud) {
 #endif
 #endif
 
+#ifdef ANDROID
+    // TODO so i get 1020x1920 as a resolution on my phone, but 360x640 on the
+    // browser. apparently there's no way to get the same viewport size in SDL?
+    // we should still adjust this to the aspect ratio
+    mudclient_full_width = new_width;
+    mudclient_full_height = new_height;
+
+    if (new_width > new_height) {
+        new_width = 640;
+        new_height = 360;
+    } else {
+        new_width = 360;
+        new_height = 640;
+    }
+#endif
+
     mud->game_width = new_width;
     mud->game_height = new_height;
 
-    printf("new size: %d %d\n", mud->game_width, mud->game_height);
+    mud_log("new size: %d %d\n", mud->game_width, mud->game_height);
 
     if (mud->surface != NULL) {
         if (mudclient_is_ui_scaled(mud)) {
@@ -6059,6 +6104,12 @@ void mudclient_poll_events(mudclient *mud) {
             int code;
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_released(mud, code);
+
+#ifdef ANDROID
+            if (code == K_ENTER) {
+                SDL_StopTextInput();
+            }
+#endif
             break;
         }
         case SDL_MOUSEMOTION:
@@ -6094,6 +6145,13 @@ void mudclient_poll_events(mudclient *mud) {
             }
             break;
         case SDL_FINGERMOTION: {
+#ifdef ANDROID
+            if (SDL_IsTextInputActive()) {
+                SDL_StopTextInput();
+                return;
+            }
+#endif
+
             int touch_x = event.tfinger.x * mud->game_width;
             int touch_y = event.tfinger.y * mud->game_height;
 
@@ -6151,6 +6209,13 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
         case SDL_FINGERDOWN: {
+#ifdef ANDROID
+            if (SDL_IsTextInputActive()) {
+                SDL_StopTextInput();
+                return;
+            }
+#endif
+
             int touch_x = event.tfinger.x * mud->game_width;
             int touch_y = event.tfinger.y * mud->game_height;
 
@@ -6191,6 +6256,13 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
         case SDL_FINGERUP: {
+#ifdef ANDROID
+            if (SDL_IsTextInputActive()) {
+                SDL_StopTextInput();
+                return;
+            }
+#endif
+
             int touch_x = event.tfinger.x * mud->game_width;
             int touch_y = event.tfinger.y * mud->game_height;
 
@@ -6389,7 +6461,9 @@ void mudclient_poll_events(mudclient *mud) {
 int mudclient_is_touch(mudclient *mud) {
     (void)(mud);
 
-#ifdef EMSCRIPTEN
+#ifdef ANDROID
+    return 1; // TODO maybe still make this toggleable
+#elif defined(EMSCRIPTEN)
     return browser_is_touch();
 #else
     return 0;
@@ -6400,7 +6474,9 @@ int mudclient_is_touch(mudclient *mud) {
 void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
                                 int x, int y, int width, int height, int font,
                                 int is_centred) {
-#ifdef EMSCRIPTEN
+#ifdef ANDROID
+    SDL_StartTextInput();
+#elif defined(EMSCRIPTEN)
     if (mudclient_is_ui_scaled(mud)) {
         // TODO
     }

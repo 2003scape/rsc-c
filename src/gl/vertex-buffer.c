@@ -24,7 +24,7 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
     vertex_buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
 
     if (!vertex_buffer->vbo) {
-        fprintf(stderr, "vertex buffer is empty\n");
+        mud_error("vertex buffer is empty\n");
         exit(1);
     }
 

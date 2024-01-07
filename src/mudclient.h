@@ -386,6 +386,8 @@ extern int mudclient_finger_2_x;
 extern int mudclient_finger_2_y;
 extern int mudclient_finger_2_down;
 
+extern int mudclient_full_width;
+extern int mudclient_full_height;
 
 // TODO this was moved
 extern const char *font_files[];

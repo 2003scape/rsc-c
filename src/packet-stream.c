@@ -83,7 +83,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     ret = if_config(local_ip, netmask, gateway, TRUE, 20);
 
     if (ret < 0) {
-        fprintf(stderr, "if_config(): %d\n", ret);
+        mud_error("if_config(): %d\n", ret);
         exit(1);
     }
 #endif
@@ -113,7 +113,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         int status = getaddrinfo(mud->options->server, NULL, &hints, &result);
 
         if (status != 0) {
-            fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(status));
+            mud_error("getaddrinfo(): %s\n", gai_strerror(status));
             packet_stream->closed = 1;
             return;
         }
@@ -140,7 +140,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #endif
 
     if (ret == 0) {
-        fprintf(stderr, "inet_aton(%s) error: %d\n", mud->options->server, ret);
+        mud_error("inet_aton(%s) error: %d\n", mud->options->server, ret);
         exit(1);
     }
 
@@ -154,7 +154,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #endif
 
     if (packet_stream->socket < 0) {
-        fprintf(stderr, "socket error: %s (%d)\n", strerror(errno), errno);
+        mud_error("socket error: %s (%d)\n", strerror(errno), errno);
         packet_stream_close(packet_stream);
         return;
     }
@@ -207,7 +207,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     ret = ioctl(packet_stream->socket, FIONBIO, &set);
 
     if (ret < 0) {
-        fprintf(stderr, "ioctl() error: %d\n", ret);
+        mud_error("ioctl() error: %d\n", ret);
         exit(1);
     }
 #endif
@@ -242,7 +242,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
                 if (getsockopt(packet_stream->socket, SOL_SOCKET, SO_ERROR,
                                (void *)(&valopt), &lon) < 0) {
-                    fprintf(stderr, "getsockopt() error:  %s (%d)\n",
+                    mud_error("getsockopt() error:  %s (%d)\n",
                             strerror(errno), errno);
 
                     exit(1);
@@ -255,7 +255,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
                     ret = 0;
                 }
             } else if (ret == 0) {
-                fprintf(stderr, "connect() timeout\n");
+                mud_error("connect() timeout\n");
                 packet_stream_close(packet_stream);
                 return;
             }
@@ -265,7 +265,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #endif
 
     if (ret < 0 && errno != 0) {
-        fprintf(stderr, "connect() error: %s (%d)\n", strerror(errno), errno);
+        mud_error("connect() error: %s (%d)\n", strerror(errno), errno);
         packet_stream_close(packet_stream);
         return;
     }
@@ -274,7 +274,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     ret = net_ioctl(packet_stream->socket, FIONBIO, &set);
 
     if (ret < 0) {
-        fprintf(stderr, "ioctl() error: %d\n", ret);
+        mud_error("ioctl() error: %d\n", ret);
         exit(1);
     }
 #endif
@@ -512,7 +512,7 @@ int packet_stream_write_packet(PacketStream *packet_stream, int i) {
         packet_stream->packet_end = 3;
         packet_stream->socket_exception = 0;
 
-        fprintf(stderr, "socket exception: %s\n",
+        mud_error("socket exception: %s\n",
                 packet_stream->socket_exception_message);
 
         return -1;

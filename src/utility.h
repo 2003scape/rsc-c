@@ -1,8 +1,10 @@
 #ifndef _H_UTILITY
 #define _H_UTILITY
 
+#include <assert.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +92,9 @@ extern int _3ds_gl_framebuffer_offsets_y[];
 #endif
 
 void init_utility_global();
+
+void mud_log(char *format, ...);
+void mud_error(char *format, ...);
 
 char *strcat_realloc(char *s, const char *new);
 char *mud_strdup(const char *s);
