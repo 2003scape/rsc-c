@@ -107,9 +107,9 @@ const char *animated_models[] = {
  * human tops - belt buckles lose detail or become flesh (ew).
  */
 static const char *anims_older_is_better[] = {
-    "camel", "bat", "battleaxe", "bear", "fbody1", "fhead1", "fplatemailtop",
-    "head1", "head2", "head3", "head4", "platemailtop", "staff", NULL
-};
+    "camel",  "bat",           "battleaxe", "bear",  "fbody1",
+    "fhead1", "fplatemailtop", "head1",     "head2", "head3",
+    "head4",  "platemailtop",  "staff",     NULL};
 
 char login_screen_status[255] = {0};
 
@@ -1893,8 +1893,8 @@ void mudclient_load_jagex(mudclient *mud) {
         size_t len;
         uint8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
 
-        surface_parse_sprite_tga(mud->surface,
-            SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
+        surface_parse_sprite_tga(mud->surface, SPRITE_LIMIT - 1, logo_tga, len,
+                                 0, 0);
 
         free(logo_tga);
 
@@ -2097,8 +2097,8 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *entity_jag_legacy = NULL;
 
     if (mud->options->tga_sprites) {
-        entity_jag_legacy = mudclient_read_data_file(mud,
-            "entity8.jag", "people and monsters", 37);
+        entity_jag_legacy = mudclient_read_data_file(mud, "entity8.jag",
+                                                     "people and monsters", 37);
     }
 
     if (entity_jag == NULL) {
@@ -2178,8 +2178,8 @@ void mudclient_load_entities(mudclient *mud) {
                 surface_parse_sprite_tga(mud->surface, animation_index,
                                          animation_dat, len, 15, 1);
             } else {
-                surface_parse_sprite(mud->surface, animation_index, animation_dat,
-                                     animation_index_dat, 15);
+                surface_parse_sprite(mud->surface, animation_index,
+                                     animation_dat, animation_index_dat, 15);
             }
 
             frame_count += 15;
@@ -2226,7 +2226,7 @@ void mudclient_load_entities(mudclient *mud) {
 
                 if (older_is_better) {
                     surface_parse_sprite_tga(mud->surface, animation_index + 18,
-                                         f_dat, len, 9, 1);
+                                             f_dat, len, 9, 1);
                 } else {
                     surface_parse_sprite(mud->surface, animation_index + 18,
                                          f_dat, f_index_dat, 9);
@@ -2389,7 +2389,7 @@ void mudclient_load_models(mudclient *mud) {
             game_model_from_bytes(game_model, models_jag + offset, len);
         } else {
             mud_error("missing model \"%s.ob3\" from %s\n", model_name,
-                    models_filename);
+                      models_filename);
 
             game_model_from2(game_model, 1, 1);
         }
@@ -4998,8 +4998,8 @@ void mudclient_draw_overhead(mudclient *mud) {
     for (int i = 0; i < mud->overworld_text_count; i++) {
         int x = mud->overworld_text[i].x;
         int y = mud->overworld_text[i].y;
-        int width = surface_text_width(mud->overworld_text[i].text,
-                                       FONT_REGULAR_11);
+        int width =
+            surface_text_width(mud->overworld_text[i].text, FONT_REGULAR_11);
         int height = surface_text_height(FONT_REGULAR_11);
         for (int j = 0; j < mud->overworld_text_count; j++) {
             int x2 = mud->overworld_text[j].x;
@@ -5022,8 +5022,8 @@ void mudclient_draw_overhead(mudclient *mud) {
         int x = mud->overworld_text[i].x;
         int y = mud->overworld_text[i].y;
 
-        surface_draw_string_centre(mud->surface, mud->overworld_text[i].text,
-                                   x, y, FONT_REGULAR_11, colour);
+        surface_draw_string_centre(mud->surface, mud->overworld_text[i].text, x,
+                                   y, FONT_REGULAR_11, colour);
     }
 
     for (int i = 0; i < mud->health_bar_count; i++) {
@@ -5215,11 +5215,11 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int x = mud->ground_items[i].x * MAGIC_LOC + 64;
         int y = mud->ground_items[i].y * MAGIC_LOC + 64;
         int id = mud->ground_items[i].id;
-        int elevation = -world_get_elevation(mud->world, x, y) -
-                         mud->ground_items[i].z;
+        int elevation =
+            -world_get_elevation(mud->world, x, y) - mud->ground_items[i].z;
 
-        scene_add_sprite(mud->scene, 40000 + id, x, elevation, y,
-                         96, 64, i + GROUND_ITEM_FACE_TAG);
+        scene_add_sprite(mud->scene, 40000 + id, x, elevation, y, 96, 64,
+                         i + GROUND_ITEM_FACE_TAG);
 
         mud->scene_sprite_count++;
     }
@@ -5419,7 +5419,8 @@ void mudclient_draw_game(mudclient *mud) {
         sprintf(fps, "Fps: %d", mud->fps);
 
         surface_draw_string(mud->surface, fps,
-                            is_touch ? 9 + offset_x : mud->surface->width - 62 - offset_x,
+                            is_touch ? 9 + offset_x
+                                     : mud->surface->width - 62 - offset_x,
                             mud->surface->height - 22, FONT_BOLD_12, YELLOW);
     }
 
@@ -5448,22 +5449,21 @@ void mudclient_draw_game(mudclient *mud) {
         if (mud->is_in_wilderness) {
             int x = is_touch ? 29 : mud->surface->width - 59;
 
-            surface_draw_sprite(mud->surface, x,
-                                mud->surface->height - 68,
+            surface_draw_sprite(mud->surface, x, mud->surface->height - 68,
                                 mud->sprite_media + 13);
 
-            surface_draw_string_centre(
-                mud->surface, "Wilderness", x + 12,
-                mud->surface->height - 32, FONT_BOLD_12, YELLOW);
+            surface_draw_string_centre(mud->surface, "Wilderness", x + 12,
+                                       mud->surface->height - 32, FONT_BOLD_12,
+                                       YELLOW);
 
             int wilderness_level = 1 + (wilderness_depth / 6);
 
             char formatted_level[19] = {0};
             sprintf(formatted_level, "Level: %d", wilderness_level);
 
-            surface_draw_string_centre(
-                mud->surface, formatted_level, x + 12,
-                mud->surface->height - 19, FONT_BOLD_12, YELLOW);
+            surface_draw_string_centre(mud->surface, formatted_level, x + 12,
+                                       mud->surface->height - 19, FONT_BOLD_12,
+                                       YELLOW);
 
             if (mud->show_wilderness_warning == 0) {
                 mud->show_wilderness_warning = 2;
@@ -5631,18 +5631,19 @@ void mudclient_on_resize(mudclient *mud) {
 #endif
 
 #ifdef ANDROID
-    // TODO so i get 1020x1920 as a resolution on my phone, but 360x640 on the
-    // browser. apparently there's no way to get the same viewport size in SDL?
-    // we should still adjust this to the aspect ratio
     mudclient_full_width = new_width;
     mudclient_full_height = new_height;
 
     if (new_width > new_height) {
-        new_width = 640;
+        new_width =
+            roundf(360 * (mudclient_full_width / (float)mudclient_full_height));
+
         new_height = 360;
     } else {
         new_width = 360;
-        new_height = 640;
+
+        new_height =
+            roundf(360 * (mudclient_full_height / (float)mudclient_full_width));
     }
 #endif
 
@@ -6765,7 +6766,7 @@ void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
     int32_t highlight_colour = highlight_item(id);
 
     if (highlight_colour != 0 && mud->options->ground_item_text &&
-            mud->overworld_text_count < OVERWORLD_TEXT_MAX) {
+        mud->overworld_text_count < OVERWORLD_TEXT_MAX) {
         struct OverworldText t = {0};
         t.text = game_data.items[id].name;
         t.colour = highlight_colour;
@@ -6778,10 +6779,9 @@ void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
         int picture = game_data.items[id].sprite + mud->sprite_item;
         int mask = game_data.items[id].mask;
 
-        surface_draw_sprite_transform_mask_depth(mud->surface, x, y,
-                                                 width, height, picture, mask,
-                                                 0, 0, 0, depth_top,
-                                                 depth_bottom);
+        surface_draw_sprite_transform_mask_depth(mud->surface, x, y, width,
+                                                 height, picture, mask, 0, 0, 0,
+                                                 depth_top, depth_bottom);
     }
 }
 
