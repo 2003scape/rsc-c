@@ -66,7 +66,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
             x += STATUS_BAR_WIDTH + 10;
             y = ui_y;
         } else {
-            x = ui_x + 2;
+            x = ui_x;
             y += status_bar_height + 5;
         }
 
