@@ -1,4 +1,7 @@
 #include "scene.h"
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
 
 #ifdef RENDER_3DS_GL
 void _3ds_gl_perspective(float fov, float aspect, float near, float far,
@@ -76,6 +79,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->surface = surface;
     scene->max_model_count = model_count;
+    scene->max_polygon_count = polygon_count;
     scene->max_sprite_count = max_sprite_count;
 
     scene->clip_near = 5;
@@ -1359,6 +1363,11 @@ void scene_initialise_polygons_2d(Scene *scene) {
         if (view_x - (view_width / 2) <= scene->clip_x &&
             view_x + (view_width / 2) >= -scene->clip_x &&
             view_y - view_height <= scene->clip_y && view_y >= -scene->clip_y) {
+
+            if (scene->visible_polygons_count >= (scene->max_polygon_count - 1)) {
+                break;
+            }
+
             GamePolygon *polygon =
                 scene->visible_polygons[scene->visible_polygons_count];
 
@@ -1542,6 +1551,10 @@ void scene_render(Scene *scene) {
                     }
 
                     if (view_y_count == 3) {
+                        if (scene->visible_polygons_count >= (scene->max_polygon_count - 1)) {
+                            break;
+                        }
+
                         GamePolygon *polygon_1 =
                             scene->visible_polygons
                                 [scene->visible_polygons_count];
@@ -1572,6 +1585,9 @@ void scene_render(Scene *scene) {
                             polygon_1->depth =
                                 (h / vertex_count) + game_model->depth;
 
+#ifdef USE_TOONSCAPE
+                            face_fill = apply_toonscape(face_fill);
+#endif
                             polygon_1->facefill = face_fill;
 
                             scene->visible_polygons_count++;
@@ -2424,6 +2440,10 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
 void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                      int32_t *vertices_y, int32_t *vertices_z, int face_fill,
                      GameModel *game_model) {
+#ifdef USE_TOONSCAPE
+    face_fill = apply_toonscape(face_fill);
+#endif
+
     if (face_fill == -2) {
         return;
     }
@@ -3493,8 +3513,16 @@ void scene_scroll_texture(Scene *scene, int id) {
 }
 #endif
 
+int16_t scene_rgb_to_fill(uint8_t r, uint8_t g, uint8_t b) {
+    return -1 - ((r >> 3) << 10) - ((g >> 3) << 5) - (b >> 3);
+}
+
 /* used to convert face_fill values (textures or colours) to minimap colours */
 int scene_get_fill_colour(Scene *scene, int face_fill) {
+#ifdef USE_TOONSCAPE
+    face_fill = apply_toonscape(face_fill);
+#endif
+
     if (face_fill == COLOUR_TRANSPARENT) {
         return 0;
     }

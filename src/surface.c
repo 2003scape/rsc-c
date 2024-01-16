@@ -1,5 +1,9 @@
 #include "surface.h"
 
+#ifdef USE_LOCOLOUR
+#include "locolour.h"
+#endif
+
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 gl_atlas_position gl_white_atlas_position = {
     .left_u = 0.0f,
@@ -69,13 +73,13 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
     surface->sprite_colours = calloc(limit, sizeof(int8_t *));
     surface->sprite_palette = calloc(limit, sizeof(int32_t *));
-    surface->sprite_width = calloc(limit, sizeof(int));
-    surface->sprite_height = calloc(limit, sizeof(int));
-    surface->sprite_width_full = calloc(limit, sizeof(int));
-    surface->sprite_height_full = calloc(limit, sizeof(int));
+    surface->sprite_width = calloc(limit, sizeof(int16_t));
+    surface->sprite_height = calloc(limit, sizeof(int16_t));
+    surface->sprite_width_full = calloc(limit, sizeof(int16_t));
+    surface->sprite_height_full = calloc(limit, sizeof(int16_t));
     surface->sprite_translate = calloc(limit, sizeof(int8_t));
-    surface->sprite_translate_x = calloc(limit, sizeof(int));
-    surface->sprite_translate_y = calloc(limit, sizeof(int));
+    surface->sprite_translate_x = calloc(limit, sizeof(int16_t));
+    surface->sprite_translate_y = calloc(limit, sizeof(int16_t));
 
     surface->mud = mud;
 
@@ -1582,7 +1586,13 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
         surface->sprite_translate[sprite_id] = 0;
         surface->sprite_translate_x[sprite_id] = 0;
         surface->sprite_translate_y[sprite_id] = 0;
+#ifdef USE_LOCOLOUR
+        palette_to_locolour((uint8_t *)pixels,
+                            width * height, (uint32_t *)map);
+        surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#else
         surface->sprite_palette[sprite_id] = map;
+#endif
         surface->sprite_width[sprite_id] = width;
         surface->sprite_height[sprite_id] = height;
         surface->sprite_width_full[sprite_id] = width;
@@ -1613,7 +1623,13 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
                 surface->sprite_translate[sprite_id] = 0;
                 surface->sprite_translate_x[sprite_id] = 0;
                 surface->sprite_translate_y[sprite_id] = 0;
+#ifdef USE_LOCOLOUR
+                palette_to_locolour((uint8_t *)frame_pixels,
+                                    frame_width * frame_height, (uint32_t *)map);
+                surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#else
                 surface->sprite_palette[sprite_id] = map;
+#endif
                 surface->sprite_width[sprite_id] = frame_width;
                 surface->sprite_height[sprite_id] = frame_height;
                 surface->sprite_width_full[sprite_id] = frame_width;
@@ -1622,6 +1638,9 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
         }
         free(pixels);
     }
+#ifdef USE_LOCOLOUR
+    free(map);
+#endif
 }
 
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
@@ -1639,7 +1658,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
     int colour_count = index_data[index_offset++] & 0xff;
 
 #ifdef RENDER_SW
-    int32_t *colours = calloc(colour_count, sizeof(int32_t));
+    int32_t colours[256];
     colours[0] = MAGENTA;
 #endif
 
@@ -1678,7 +1697,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
         surface->sprite_colours[i] = calloc(area, sizeof(int8_t));
-        surface->sprite_palette[i] = colours;
+        assert(surface->sprite_colours[i] != NULL);
 #else
         index_offset++;
 #endif
@@ -1718,6 +1737,17 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                 }
             }
         }
+#endif
+
+#ifdef USE_LOCOLOUR
+        palette_to_locolour((uint8_t *)surface->sprite_colours[i],
+                            area, (uint32_t *)colours);
+        surface->sprite_palette[i] = (int32_t *)ibm_vga_palette;
+#elif defined(RENDER_SW)
+        surface->sprite_palette[i] = calloc(colour_count, sizeof(int32_t));
+        assert(surface->sprite_palette[i] != NULL);
+        memcpy(surface->sprite_palette[i], colours,
+               colour_count * sizeof(int32_t));
 #endif
     }
 
@@ -1831,7 +1861,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
-
+#ifndef USE_LOCOLOUR
     int32_t *sprite_pixels = surface->surface_pixels[sprite_id];
 
     for (int i = 0; i < sprite_size; i++) {
@@ -1913,6 +1943,13 @@ void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
 
     surface->sprite_colours[sprite_id] = colours;
     surface->sprite_palette[sprite_id] = palette;
+#else
+    uint8_t *colours = calloc(sprite_size, sizeof(uint8_t));
+    rgb_to_locolour((uint32_t *)surface->surface_pixels[sprite_id],
+                    sprite_size, colours);
+    surface->sprite_colours[sprite_id] = (int8_t *)colours;
+    surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#endif
 
     free(surface->surface_pixels[sprite_id]);
     surface->surface_pixels[sprite_id] = NULL;

@@ -1,29 +1,25 @@
 #include "world.h"
 #include "version.h"
 
-int terrain_colours[TERRAIN_COLOUR_COUNT];
-
-int rgb_to_texture_colour(int r, int g, int b) {
-    return -1 - (r / 8) * 1024 - (g / 8) * 32 - (b / 8);
-}
+int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
 void init_world_global() {
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i] = rgb_to_texture_colour(
+        terrain_colours[i] = scene_rgb_to_fill(
             255 - i * 4, 255 - (int)((double)i * 1.75), 255 - i * 4);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 64] = rgb_to_texture_colour(i * 3, 144, 0);
+        terrain_colours[i + 64] = scene_rgb_to_fill(i * 3, 144, 0);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 128] = rgb_to_texture_colour(
+        terrain_colours[i + 128] = scene_rgb_to_fill(
             192 - (int)((double)i * 1.5), 144 - (int)((double)i * 1.5), 0);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 192] = rgb_to_texture_colour(
+        terrain_colours[i + 192] = scene_rgb_to_fill(
             96 - (int)((double)i * 1.5), 48 + (int)((double)i * 1.5), 0);
     }
 }
@@ -956,7 +952,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         game_model_destroy(world->parent_model);
     }
 
-    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    game_model_from7(world->parent_model,
+                     TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
+                     1, 1, 0, 0, 1);
 
     /* create terrain */
 
@@ -972,7 +970,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         GameModel *game_model = world->parent_model;
 
         game_model_destroy(game_model);
-        game_model_from7(game_model, 18688, 18688, 1, 1, 0, 0, 1);
+        game_model_from7(game_model,
+                         TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
+                         1, 1, 0, 0, 1);
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -1500,7 +1500,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    game_model_from7(world->parent_model,
+                     TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
+                     1, 1, 0, 0, 1);
 
     int colour = 0x606060;
 
@@ -1739,7 +1741,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    game_model_from7(world->parent_model,
+                     TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
+                     1, 1, 0, 0, 1);
 
     for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {

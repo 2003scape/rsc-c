@@ -69,6 +69,8 @@ typedef struct Options Options;
      "; Hold to buy/sell items from shops in bulk (matches trade screen)\n"    \
      "hold_to_buy = %d\n\n"                                                    \
                                                                                \
+     "; Low memory mode\n"                                                     \
+     "lowmem = %d\n"                                                           \
      "; F1 mode - only render every second scanline\n"                         \
      "interlace = %d\n"                                                        \
      "; Display the FPS at the bottom right of the screen\n"                   \
@@ -230,6 +232,9 @@ struct Options {
 
     /* hold to buy/sell items from shops in bulk (matches trade screen) */
     int hold_to_buy;
+
+    /* low memory mode */
+    int lowmem;
 
     /* F1 mode - only render every second scanline */
     int interlace;

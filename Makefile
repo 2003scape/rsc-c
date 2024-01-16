@@ -21,6 +21,14 @@ LDFLAGS += -lm
 LDFLAGS += $(shell sdl-config --libs)
 endif
 
+ifeq ($(USE_LOCOLOUR), 1)
+CFLAGS += -DUSE_LOCOLOUR
+endif
+
+ifeq ($(USE_TOONSCAPE), 1)
+CFLAGS += -DUSE_TOONSCAPE
+endif
+
 ifeq ($(RENDER_GL), 1)
 SRC += $(wildcard src/gl/*.c src/gl/textures/*.c)
 CFLAGS += -I ./cglm/include -DRENDER_GL #-DOPENGL20

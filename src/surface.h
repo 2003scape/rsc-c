@@ -146,13 +146,13 @@ struct Surface {
     int32_t **surface_pixels; // TODO rename
     int8_t **sprite_colours;
     int32_t **sprite_palette;
-    int *sprite_width;
-    int *sprite_height;
-    int *sprite_width_full;
-    int *sprite_height_full;
+    int16_t *sprite_width;
+    int16_t *sprite_height;
+    int16_t *sprite_width_full;
+    int16_t *sprite_height_full;
     int8_t *sprite_translate;
-    int *sprite_translate_x;
-    int *sprite_translate_y;
+    int16_t *sprite_translate_x;
+    int16_t *sprite_translate_y;
 
     int8_t interlace;
     int8_t draw_string_shadow;

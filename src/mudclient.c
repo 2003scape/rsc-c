@@ -1,5 +1,9 @@
 #include "mudclient.h"
 
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
+
 #ifdef EMSCRIPTEN
 /* clang doesn't know what triple equals is, understandably */
 /* clang-format off */
@@ -1068,7 +1072,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     int init = SDL_INIT_VIDEO;
 
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         init |= SDL_INIT_AUDIO;
     }
 
@@ -1089,7 +1093,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 /* XXX: currently require non-callback-based audio from SDL >= 2.0.4 */
 #ifdef SDL_VERSION_ATLEAST
 #if SDL_VERSION_ATLEAST(2, 0, 4)
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         SDL_AudioSpec wanted_audio;
 
         wanted_audio.freq = SAMPLE_RATE;
@@ -1659,20 +1663,22 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     /* hide the previously drawn textures */
     surface_draw_box(mud->surface, 0, 0, 128, 128, BLACK);
 
-    /* jagex logo */
-    int logo_sprite_id = SPRITE_LIMIT - 1;
+    if (!mud->options->lowmem) {
+        /* jagex logo */
+        int logo_sprite_id = SPRITE_LIMIT - 1;
 
     if (mud->surface->sprite_width[logo_sprite_id]) {
         int offset_x = 2;
 
-        int logo_x = (mud->game_width / 2) -
-                     (mud->surface->sprite_width[logo_sprite_id] / 2) -
-                     offset_x;
+            int logo_x = (mud->game_width / 2) -
+                         (mud->surface->sprite_width[logo_sprite_id] / 2) -
+                         offset_x;
 
-        int logo_y = (mud->game_height / 2) -
-                     (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
+            int logo_y = (mud->game_height / 2) -
+                         (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
 
-        surface_draw_sprite(mud->surface, logo_x, logo_y, logo_sprite_id);
+            surface_draw_sprite(mud->surface, logo_x, logo_y, logo_sprite_id);
+        }
     }
 
     /* loading bar */
@@ -1890,13 +1896,13 @@ void mudclient_load_jagex(mudclient *mud) {
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
-        size_t len;
-        uint8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
-
-        surface_parse_sprite_tga(mud->surface, SPRITE_LIMIT - 1, logo_tga, len,
-                                 0, 0);
-
-        free(logo_tga);
+        if (!mud->options->lowmem) {
+            size_t len;
+            int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
+            surface_parse_sprite_tga(mud->surface,
+                SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
+            free(logo_tga);
+        }
 
 #ifndef WII
         free(jagex_jag);
@@ -1976,9 +1982,11 @@ void mudclient_load_media(mudclient *mud) {
                          load_data("bubble.dat", 0, media_jag, NULL), index_dat,
                          1);
 
-    surface_parse_sprite(mud->surface, mud->sprite_media + 10,
-                         load_data("runescape.dat", 0, media_jag, NULL),
-                         index_dat, 1);
+    if (!mud->options->lowmem) {
+        surface_parse_sprite(mud->surface, mud->sprite_media + 10,
+                             load_data("runescape.dat", 0, media_jag, NULL),
+                             index_dat, 1);
+    }
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 11,
                          load_data("splat.dat", 0, media_jag, NULL), index_dat,
@@ -1988,9 +1996,11 @@ void mudclient_load_media(mudclient *mud) {
                          load_data("icon.dat", 0, media_jag, NULL), index_dat,
                          8);
 
-    surface_parse_sprite(mud->surface, mud->sprite_media + 22,
-                         load_data("hbar.dat", 0, media_jag, NULL), index_dat,
-                         1);
+    if (!mud->options->lowmem) {
+        surface_parse_sprite(mud->surface, mud->sprite_media + 22,
+                             load_data("hbar.dat", 0, media_jag, NULL), index_dat,
+                             1);
+    }
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 23,
                          load_data("hbar2.dat", 0, media_jag, NULL), index_dat,
@@ -2281,6 +2291,11 @@ void mudclient_load_textures(mudclient *mud) {
     Surface *surface = mud->surface;
 
     for (int i = 0; i < game_data.texture_count; i++) {
+#ifdef USE_TOONSCAPE
+        if (toonscape_avoid_load(i)) {
+            continue;
+        }
+#endif
         sprintf(file_name, "%s.dat", game_data.textures[i].name);
 
         int8_t *texture_dat = load_data(file_name, 0, textures_jag, NULL);
@@ -2291,8 +2306,10 @@ void mudclient_load_textures(mudclient *mud) {
         surface_draw_box(surface, 0, 0, 128, 128, MAGENTA);
         surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
+#ifndef USE_LOCOLOUR
         free(surface->sprite_palette[mud->sprite_texture]);
         surface->sprite_palette[mud->sprite_texture] = NULL;
+#endif
 
         free(surface->sprite_colours[mud->sprite_texture]);
         surface->sprite_colours[mud->sprite_texture] = NULL;
@@ -2314,8 +2331,10 @@ void mudclient_load_textures(mudclient *mud) {
 
                 surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
+#ifndef USE_LOCOLOUR
                 free(surface->sprite_palette[mud->sprite_texture]);
                 surface->sprite_palette[mud->sprite_texture] = NULL;
+#endif
 
                 free(surface->sprite_colours[mud->sprite_texture]);
                 surface->sprite_colours[mud->sprite_texture] = NULL;
@@ -2357,11 +2376,13 @@ void mudclient_load_textures(mudclient *mud) {
 }
 
 void mudclient_load_models(mudclient *mud) {
-    for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
-        char name_length = strlen(animated_models[i]);
-        char *name = malloc(name_length + 1);
-        strcpy(name, animated_models[i]);
-        game_data_get_model_index(name);
+    if (!mud->options->lowmem) {
+        for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
+            char name_length = strlen(animated_models[i]);
+            char *name = malloc(name_length + 1);
+            strcpy(name, animated_models[i]);
+            game_data_get_model_index(name);
+        }
     }
 
     char *models_filename = "models" VERSION_STR(VERSION_MODELS) ".jag";
@@ -3223,7 +3244,11 @@ void mudclient_start_game(mudclient *mud) {
     }
 
     mud->scene = malloc(sizeof(Scene));
-    scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
+    if (mud->options->lowmem) {
+        scene_new(mud->scene, mud->surface, 7500, 7500, 1000);
+    } else {
+        scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
+    }
 
 #ifdef RENDER_3DS_GL
     scene_set_bounds(mud->scene, mud->game_width, mud->game_height);
@@ -3265,7 +3290,7 @@ void mudclient_start_game(mudclient *mud) {
         return;
     }
 
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         mudclient_load_sounds(mud);
     }
 
@@ -3279,7 +3304,9 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_appearance_panel(mud);
     mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
-    mudclient_render_login_scene_sprites(mud);
+    if (!mud->options->lowmem) {
+        mudclient_render_login_scene_sprites(mud);
+    }
 
     free(surface_texture_pixels);
     surface_texture_pixels = NULL;
@@ -5302,7 +5329,9 @@ void mudclient_draw_game(mudclient *mud) {
         }
     }
 
-    mudclient_animate_objects(mud);
+    if (!mud->options->lowmem) {
+        mudclient_animate_objects(mud);
+    }
     mudclient_draw_entity_sprites(mud);
 
     mud->surface->interlace = 0;
@@ -6870,7 +6899,8 @@ void mudclient_send_logout(mudclient *mud) {
 }
 
 void mudclient_play_sound(mudclient *mud, char *name) {
-    if (!mud->options->members || mud->settings_sound_disabled) {
+    if (!mud->options->members || mud->settings_sound_disabled ||
+         mud->options->lowmem) {
         return;
     }
 
@@ -7104,7 +7134,6 @@ int main(int argc, char **argv) {
 #ifdef _3DS
     osSetSpeedupEnable(true);
 #endif
-
     srand(0);
 
     init_utility_global();

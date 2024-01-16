@@ -58,8 +58,8 @@ typedef struct gl_pick_vertex {
 #define GAME_MODEL_TRANSFORM_TRANSLATE 1
 #define GAME_MODEL_TRANSFORM_ROTATE 2
 
-#define GAME_MODEL_USE_GOURAUD 12345678
-#define COLOUR_TRANSPARENT 12345678
+/* originally 12345678 - allows saving memory */
+#define GAME_MODEL_USE_GOURAUD INT16_MAX
 
 typedef struct GameModel GameModel;
 
@@ -77,19 +77,21 @@ struct GameModel {
     int16_t *project_vertex_z;
     int32_t *vertex_view_x;
     int32_t *vertex_view_y;
-    int *vertex_intensity;
+    int16_t *vertex_intensity;
     int8_t *vertex_ambience;
+
     uint16_t face_count;
     uint8_t *face_vertex_count;
     uint16_t **face_vertices;
-    int *face_fill_front;
-    int *face_fill_back;
-    int *normal_magnitude;
-    int *normal_scale;
-    int *face_intensity;
-    int *face_normal_x;
-    int *face_normal_y;
-    int *face_normal_z;
+    int16_t *face_fill_front;
+    int16_t *face_fill_back;
+    int16_t *face_intensity;
+    int16_t *face_normal_x;
+    int16_t *face_normal_y;
+    int16_t *face_normal_z;
+    int16_t *normal_scale;
+    int32_t *normal_magnitude;
+
     int depth;
     int8_t visible;
 
@@ -206,12 +208,12 @@ void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
 void game_model_compute_bounds(GameModel *game_model);
 void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
                                  int16_t *vertex_y, int16_t *vertex_z,
-                                 int *face_normal_x, int *face_normal_y,
-                                 int *face_normal_z, int reset_scale);
-void game_model_get_vertex_normals(GameModel *game_model, int *face_normal_x,
-                                   int *face_normal_y, int *face_normal_z,
-                                   int *normal_x, int *normal_y, int *normal_z,
-                                   int *normal_magnitude);
+                                 int16_t *face_normal_x, int16_t *face_normal_y,
+                                 int16_t *face_normal_z, int reset_scale);
+void game_model_get_vertex_normals(GameModel *game_model, int16_t *face_normal_x,
+                                   int16_t *face_normal_y, int16_t *face_normal_z,
+                                   int16_t *normal_x, int16_t *normal_y, int16_t *normal_z,
+                                   int32_t *normal_magnitude);
 void game_model_light(GameModel *game_model);
 void game_model_relight(GameModel *game_model);
 void game_model_reset_transform(GameModel *game_model);
@@ -229,7 +231,7 @@ GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
 void game_model_copy_position(GameModel *game_model, GameModel *source);
 void game_model_destroy(GameModel *game_model);
 void game_model_dump(GameModel *game_model, char *file_name);
-void game_model_mask_faces(GameModel *game_model, int *face_fill,
+void game_model_mask_faces(GameModel *game_model, int16_t *face_fill,
                            int mask_colour);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
