@@ -308,6 +308,10 @@ typedef struct mudclient mudclient;
 #include "custom/diverse-npcs.h"
 #include "custom/item-highlight.h"
 
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
+
 #ifdef WII
 /* these are doubled for the wii */
 #define KEY_WIDTH 23

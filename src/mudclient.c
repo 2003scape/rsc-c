@@ -1,9 +1,5 @@
 #include "mudclient.h"
 
-#ifdef USE_TOONSCAPE
-#include "custom/toonscape.h"
-#endif
-
 #ifdef EMSCRIPTEN
 /* clang doesn't know what triple equals is, understandably */
 /* clang-format off */
@@ -1328,10 +1324,8 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         } else if (code == K_F1) {
             mud->options->interlace = !mud->options->interlace;
 
-            for (int i = 0; i < mud->panel_ui_options->control_count;
-                 i++) {
-                if ((int *)mud->ui_options[i] ==
-                    &mud->options->interlace) {
+            for (int i = 0; i < mud->panel_ui_options->control_count; i++) {
+                if ((int *)mud->ui_options[i] == &mud->options->interlace) {
                     panel_toggle_checkbox(mud->panel_ui_options, i,
                                           mud->options->interlace);
                     break;
@@ -1665,8 +1659,8 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
         /* jagex logo */
         int logo_sprite_id = SPRITE_LIMIT - 1;
 
-    if (mud->surface->sprite_width[logo_sprite_id]) {
-        int offset_x = 2;
+        if (mud->surface->sprite_width[logo_sprite_id]) {
+            int offset_x = 2;
 
             int logo_x = (mud->game_width / 2) -
                          (mud->surface->sprite_width[logo_sprite_id] / 2) -
@@ -1897,8 +1891,8 @@ void mudclient_load_jagex(mudclient *mud) {
         if (!mud->options->lowmem) {
             size_t len;
             int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
-            surface_parse_sprite_tga(mud->surface,
-                SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
+            surface_parse_sprite_tga(mud->surface, SPRITE_LIMIT - 1, logo_tga,
+                                     len, 0, 0);
             free(logo_tga);
         }
 
@@ -1996,8 +1990,8 @@ void mudclient_load_media(mudclient *mud) {
 
     if (!mud->options->lowmem) {
         surface_parse_sprite(mud->surface, mud->sprite_media + 22,
-                             load_data("hbar.dat", 0, media_jag, NULL), index_dat,
-                             1);
+                             load_data("hbar.dat", 0, media_jag, NULL),
+                             index_dat, 1);
     }
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 23,
@@ -2104,10 +2098,12 @@ void mudclient_load_entities(mudclient *mud) {
 
     int8_t *entity_jag_legacy = NULL;
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
     if (mud->options->tga_sprites) {
         entity_jag_legacy = mudclient_read_data_file(mud, "entity8.jag",
                                                      "people and monsters", 37);
     }
+#endif
 
     if (entity_jag == NULL) {
         mud->error_loading_data = 1;
@@ -2155,6 +2151,8 @@ void mudclient_load_entities(mudclient *mud) {
         uint8_t *archive_file = entity_jag;
 
         const char **older_names = anims_older_is_better;
+
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
         if (mud->options->tga_sprites) {
             while (*older_names != NULL) {
                 if (strcmp(animation_name, *older_names) == 0) {
@@ -2167,6 +2165,7 @@ void mudclient_load_entities(mudclient *mud) {
                 older_names++;
             }
         }
+#endif
 
         char file_name[255] = {0};
         sprintf(file_name, "%s.%s", animation_name, extension);
@@ -6898,7 +6897,7 @@ void mudclient_send_logout(mudclient *mud) {
 
 void mudclient_play_sound(mudclient *mud, char *name) {
     if (!mud->options->members || mud->settings_sound_disabled ||
-         mud->options->lowmem) {
+        mud->options->lowmem) {
         return;
     }
 
