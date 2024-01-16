@@ -790,6 +790,7 @@ void game_model_light(GameModel *game_model) {
     int16_t *normal_x = calloc(game_model->vertex_count, sizeof(int16_t));
     int16_t *normal_y = calloc(game_model->vertex_count, sizeof(int16_t));
     int16_t *normal_z = calloc(game_model->vertex_count, sizeof(int16_t));
+
     int32_t *normal_magnitude = calloc(game_model->vertex_count, sizeof(int32_t));
 
     game_model_get_vertex_normals(game_model, game_model->face_normal_x,

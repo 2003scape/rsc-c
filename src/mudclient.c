@@ -1248,8 +1248,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mudclient_3ds_draw_top_background(mud);
 #endif
 
-    mud->screen = SDL_GetWindowSurface(mud->window);
-
 #ifdef ANDROID
     SDL_SetWindowFullscreen(mud->window, SDL_WINDOW_FULLSCREEN);
 #endif

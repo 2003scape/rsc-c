@@ -15,7 +15,7 @@
 
 ; constants
 .constf base_const(0.0, 1.0, -1.0, -0.5)
-.constf farts(255.0,255.0,255.0,255.0)
+.constf farts(255.0, 255.0, 255.0, 255.0)
 
 .alias zeros base_const.xxxx
 .alias ones base_const.yyyy
@@ -26,7 +26,8 @@
 ; 1/256
 .constf byte_reciprocal(0.003906, 0.003906, 0.003906, 0.003906)
 
-.constf use_gouraud(12345.0, 12345.0, 12345.0, 12345.0)
+;.constf use_gouraud(12345.0, 12345.0, 12345.0, 12345.0)
+.constf use_gouraud(32766.0, 32766.0, 32766.0, 32766.0)
 
 ; outputs
 .out out_position position

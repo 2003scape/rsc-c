@@ -1,5 +1,4 @@
 #include "vertex-buffer.h"
-#include <stdio.h>
 
 // TODO vertex_length = vertex_size
 void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,

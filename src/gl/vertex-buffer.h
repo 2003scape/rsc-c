@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "../utility.h"
+
 #ifdef RENDER_GL
 #include <GL/glew.h>
 #include <GL/glu.h>

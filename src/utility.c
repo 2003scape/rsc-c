@@ -92,7 +92,7 @@ void mud_log(char *format, ...) {
     va_list args = {0};
     va_start(args, format);
 
-#if 1
+#if !defined(_3DS) && !defined(WII)
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format,
                     args);
 #else
@@ -106,7 +106,7 @@ void mud_error(char *format, ...) {
     va_list args = {0};
     va_start(args, format);
 
-#if 1
+#if !defined(_3DS) && !defined(WII)
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR,
                     format, args);
 #else
