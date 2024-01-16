@@ -104,9 +104,18 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
             is_compact ? (int)(mud->surface->width * 0.245f) : 100;
 
         for (int i = 0; i < 4 + (!is_compact); i++) {
-            surface_draw_sprite_scale(
-                mud->surface, x + (i * button_width) + (i == 4 ? 1 : 0), y - 13,
-                button_width - 10, 19, mud->sprite_media + 39, 0);
+            int button_x = x + (i * button_width) + (i == 4 ? 1 : 0);
+            int button_y = y - 13;
+
+            surface_draw_sprite_scale_mask(
+                mud->surface, button_x, button_y, button_width - 10, 19,
+                mud->sprite_media + 39,
+                i == 4 && !mud->options->wiki_lookup ? 0xff1b00 : 0x00c1ff);
+
+            if (mud->options->wiki_lookup && i == 4) {
+                surface_draw_box(mud->surface, button_x + 4, button_y + 4,
+                                 button_width - 18, 12, 0x3a779d);
+            }
         }
     } else {
         y = mud->surface->height - 6 + (is_compact ? 1 : 0);
@@ -316,7 +325,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
         if (mud->last_mouse_button_down == 1 &&
             mud->mouse_x <= chat_input_x + chat_input_trigger_width &&
             mud->mouse_y >= chat_input_y - 8 &&
-            mud->mouse_y <= chat_input_y + chat_input_height + 8) {
+            mud->mouse_y <= chat_input_y + chat_input_height + 4) {
             mudclient_trigger_keyboard(mud, chat_input, 0, chat_input_x,
                                        chat_input_y, chat_input_width,
                                        chat_input_height, FONT_BOLD_12, 0);
@@ -565,8 +574,8 @@ void mudclient_show_message(mudclient *mud, char *message, MessageType type) {
         mud->message_history_timeout[i] = mud->message_history_timeout[i - 1];
     }
 
-    snprintf(mud->message_history[0],
-             sizeof(mud->message_history[0]), "%s", coloured_message);
+    snprintf(mud->message_history[0], sizeof(mud->message_history[0]), "%s",
+             coloured_message);
     mud->message_history_timeout[0] = 300;
 
     if (type == MESSAGE_TYPE_CHAT) {

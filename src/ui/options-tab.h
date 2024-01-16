@@ -1,6 +1,16 @@
 #ifndef _H_OPTIONS_TAB
 #define _H_OPTIONS_TAB
 
+typedef enum {
+    PASSWORD_STEP_NONE,
+    PASSWORD_STEP_NEW,
+    PASSWORD_STEP_CONFIRM,
+    PASSWORD_STEP_MISMATCH,
+    PASSWORD_STEP_FINISHED,
+    PASSWORD_STEP_SHORT,
+    PASSWORD_STEP_CURRENT
+} ChangePasswordStep;
+
 #include "../client-opcodes.h"
 #include "../colours.h"
 #include "../mudclient.h"
