@@ -179,6 +179,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     free((char *)vertex_shader_code);
     free((char *)fragment_shader_code);
+#endif
 }
 
 void shader_use(Shader *shader) { 

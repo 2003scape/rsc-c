@@ -50,7 +50,7 @@ ICON   	 	:= switch/icon.png
 #CONFIG_JSON := switch/nsp_conf.json
 
 # options for code generation
-ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft #-fPIC
+ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC
 
 # TODO -g for DEBUG mode only
 CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
