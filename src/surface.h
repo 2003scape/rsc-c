@@ -35,8 +35,16 @@
 #endif
 
 #ifdef RENDER_GL
+#ifdef GLAD
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
+#include "../../glad/glad.h"
+#endif
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
+#endif
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)

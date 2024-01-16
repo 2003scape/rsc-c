@@ -39,7 +39,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/lib src/ui
+SOURCES		:=	src src/lib src/ui src/custom src/gl src/gl/textures
 DATA		:=
 INCLUDES	:=	src cglm/include
 ROMFS		:=	cache
@@ -50,21 +50,21 @@ ICON   	 	:= switch/icon.png
 #CONFIG_JSON := switch/nsp_conf.json
 
 # options for code generation
-ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft
+ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft #-fPIC
 
 # TODO -g for DEBUG mode only
 CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-fomit-frame-pointer -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DRENDER_SW -DREVISION_177
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DGLAD -DRENDER_GL -DREVISION_177
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= `$(PREFIX)pkg-config --libs sdl2` -lbz2 -lnx -lm -lstdc++
+LIBS	:= `$(PREFIX)pkg-config --libs libglad sdl2 SDL2_image` -lbz2 -lnx -lm -lstdc++
 
 LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 

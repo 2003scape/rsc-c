@@ -26,12 +26,28 @@
 #include <tex3ds.h>
 #endif
 #else
+#ifdef __SWITCH__
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 
 #ifdef RENDER_GL
+#ifdef __SWITCH__
+#include <SDL2/SDL_image.h>
+#else
 #include <SDL_image.h>
+#endif
+#ifdef GLAD
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
+#include "../../glad/glad.h"
+#endif
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
+#endif
 #endif
 #endif
 

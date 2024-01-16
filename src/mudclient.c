@@ -1141,9 +1141,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef SDL12
     mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
                                    SDL_OPENGL | SDL_RESIZABLE);
-
-    // Check for error
+  
     GLenum error = glGetError();
+  
     if (error != GL_NO_ERROR) {
         mud_log("Error initializing OpenGL! %s\n", gluErrorString(error));
         exit(0);
@@ -1192,6 +1192,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_MakeCurrent(mud->gl_window, context);
 #endif
 
+#ifdef GLAD
+    gladLoadGL();
+#else
+
     glewExperimental = GL_TRUE;
 
     GLenum glew_error = glewInit();
@@ -1200,6 +1204,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         mud_error("GLEW error: %s\n", glewGetErrorString(glew_error));
         exit(1);
     }
+#endif
 
     glViewport(0, 0, mud->game_width, mud->game_height);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

@@ -92,6 +92,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #elif defined(OPENGL15) || defined(OPENGL20)
     shader_new(&surface->gl_flat_shader, "./cache/flat.gl2.vs",
                "./cache/flat.gl2.fs");
+#elif defined(__SWITCH__)
+    shader_new(&surface->gl_flat_shader, "romfs:/flat.vs", "romfs:/flat.fs");
 #else
     shader_new(&surface->gl_flat_shader, "./cache/flat.vs", "./cache/flat.fs");
 #endif
@@ -136,6 +138,17 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #endif
 
 #ifdef RENDER_GL
+#ifdef __SWITCH__
+    gl_load_texture(&surface->gl_sprite_texture,
+                    "romfs:/textures/sprites.png");
+
+    for (int i = 0; i < ENTITY_TEXTURE_LENGTH; i++) {
+        char filename[32] = {0};
+        sprintf(filename, "romfs:/textures/entities_%d.png", i);
+
+        gl_load_texture(&surface->gl_entity_textures[i], filename);
+    }
+#else
     gl_load_texture(&surface->gl_sprite_texture,
                     "./cache/textures/sprites.png");
 
@@ -145,6 +158,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
         gl_load_texture(&surface->gl_entity_textures[i], filename);
     }
+#endif
 
     surface->gl_dynamic_texture_buffer =
         calloc(1024 * 1024 * 3, sizeof(uint8_t));
