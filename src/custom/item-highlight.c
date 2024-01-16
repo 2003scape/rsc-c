@@ -46,6 +46,8 @@
 #define ITEM_SANTAS_HAT             (971)
 #define HIGHLIGHT_SANTAS_HAT        (0xD81010)
 
+#define HIGHLIGHT_HERB              (0x31B131)
+
 #define HIGHLIGHT_SAPPHIRE          (0x004CFF)
 #define HIGHLIGHT_EMERALD           (0x33CC33)
 #define HIGHLIGHT_RUBY              (0xFF3300)
@@ -149,6 +151,11 @@ uint32_t highlight_item(uint16_t id) {
 
     case ITEM_SANTAS_HAT:
         return HIGHLIGHT_SANTAS_HAT;
+    }
+    for (i = 0; i < (sizeof(rare_herbs) / sizeof(uint16_t)); ++i) {
+        if (rare_herbs[i] == id) {
+            return HIGHLIGHT_HERB;
+        }
     }
     for (i = 0; i < (sizeof(sapphire_items) / sizeof(uint16_t)); ++i) {
         if (sapphire_items[i] == id) {

@@ -48,18 +48,17 @@
             }
 
             .mudclient-keyboard {
-                /*background: none;*/
+                background: none;
                 font-family: Arial, sans-serif;
-                /*opacity: 0.5;*/
-                background: red;
-                color: black;
                 border: 0;
-                /*color: transparent;*/
+                color: transparent;
                 display: none;
                 padding: 0;
                 position: absolute;
                 resize: none;
                 text-align: center;
+                /*background: red;
+                color: black;*/
             }
 
             .mudclient-keyboard:focus {
@@ -342,6 +341,12 @@
                         if (shouldPreventTouch()) {
                             event.stopImmediatePropagation();
                             requestFullscreen.bind(document.documentElement)();
+                        }
+                    });
+
+                    canvas.addEventListener('touchmove', (event) => {
+                        if (shouldPreventTouch()) {
+                            event.stopImmediatePropagation();
                         }
                     });
 

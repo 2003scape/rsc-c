@@ -172,6 +172,8 @@
 #define TRADE_ITEMS_MAX 14
 #define DUEL_ITEMS_MAX 8
 
+#define EXPERIENCE_DROPS_MAX 100
+
 #define MOUSE_HISTORY_LENGTH 8192
 
 #define MUD_VANILLA_WIDTH 512
@@ -290,6 +292,7 @@ typedef struct mudclient mudclient;
 #include "ui/message-tabs.h"
 #include "ui/offer-x.h"
 #include "ui/option-menu.h"
+#include "ui/options-tab.h"
 #include "ui/server-message.h"
 #include "ui/shop.h"
 #include "ui/sleep.h"
@@ -383,6 +386,8 @@ extern int mudclient_finger_2_x;
 extern int mudclient_finger_2_y;
 extern int mudclient_finger_2_down;
 
+extern int mudclient_full_width;
+extern int mudclient_full_height;
 
 // TODO this was moved
 extern const char *font_files[];
@@ -604,6 +609,10 @@ struct mudclient {
     int8_t settings_mouse_button_one;
     int8_t settings_sound_disabled;
 
+    ChangePasswordStep show_change_password_step;
+    char change_password_old[PASSWORD_LENGTH + 1];
+    char change_password_new[PASSWORD_LENGTH + 1];
+
     PacketStream *packet_stream;
     int packet_last_read;
     int8_t incoming_packet[PACKET_BUFFER_LENGTH];
@@ -807,11 +816,6 @@ struct mudclient {
 
     /*int8_t show_dialog_report_abuse_step;
     int report_abuse_offence;*/
-
-    /* ./ui/password.c */
-    int show_change_password_step;
-    char change_password_old[PASSWORD_LENGTH + 1];
-    char change_password_new[PASSWORD_LENGTH + 1];
 
     /* ./ui/ui-tabs.c */
     /* which UI tab is currently hovered over */
@@ -1039,10 +1043,10 @@ struct mudclient {
     int bank_option_types[50];
 
     /* ./ui/experience-drops.c */
-    int experience_drop_skill[50];
-    int experience_drop_amount[50];
-    float experience_drop_y[50];
-    float experience_drop_speed[50];
+    int experience_drop_skill[EXPERIENCE_DROPS_MAX];
+    int experience_drop_amount[EXPERIENCE_DROPS_MAX];
+    float experience_drop_y[EXPERIENCE_DROPS_MAX];
+    float experience_drop_speed[EXPERIENCE_DROPS_MAX];
     int experience_drop_count;
 
     /* wiki */

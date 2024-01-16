@@ -5,7 +5,7 @@ char *buffer_file(char *path) {
     FILE *file = fopen(path, "r");
 
     if (!file) {
-        fprintf(stderr, "unable to open file: %s\n", path);
+        mud_error("unable to open file: %s\n", path);
         exit(1);
     }
 
@@ -48,7 +48,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetInfoLogARB(vertex, 512, NULL, info_log);
-        fprintf(stderr, "vertex shader error: %s\n", info_log);
+        mud_error("vertex shader error: %s\n", info_log);
         exit(1);
     }
 
@@ -60,7 +60,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetInfoLogARB(fragment, 512, NULL, info_log);
-        fprintf(stderr, "fragment shader error: %s\n", info_log);
+        mud_error("fragment shader error: %s\n", info_log);
         exit(1);
     }
 
@@ -87,7 +87,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetInfoLogARB(id, 512, NULL, info_log);
-        fprintf(stderr, "shader link error: %s\n", info_log);
+        mud_error("shader link error: %s\n", info_log);
         exit(1);
     }
 
@@ -107,7 +107,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetShaderInfoLog(vertex, 512, NULL, info_log);
-        fprintf(stderr, "vertex shader error: %s\n", info_log);
+        mud_error("vertex shader error: %s\n", info_log);
         exit(1);
     }
 
@@ -119,7 +119,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetShaderInfoLog(fragment, 512, NULL, info_log);
-        fprintf(stderr, "fragment shader error: %s\n", info_log);
+        mud_error("fragment shader error: %s\n", info_log);
         exit(1);
     }
 
@@ -148,7 +148,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetProgramInfoLog(id, 512, NULL, info_log);
-        fprintf(stderr, "shader link error: %s\n", info_log);
+        mud_error("shader link error: %s\n", info_log);
         exit(1);
     }
 

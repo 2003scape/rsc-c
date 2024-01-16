@@ -1001,7 +1001,7 @@ void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
 
 void scene_add_model(Scene *scene, GameModel *model) {
     if (model == NULL) {
-        fprintf(stderr, "Warning tried to add null object!\n");
+        mud_error("Warning tried to add null object!\n");
         return;
     }
 
@@ -1416,7 +1416,7 @@ void scene_render_polygon_2d_face(Scene *scene, int face) {
        scene->sprite_id[face], skew_x, (256 << scene->view_distance) /
        project_z, depth_top, depth_bottom);*/
 
-    // printf("software position: %d %d\n", x, view_x);
+    // mud_log("software position: %d %d\n", x, view_x);
 
     surface_draw_entity_sprite(scene->surface, x + scene->base_x, y, width,
                                height, scene->sprite_id[face], skew_x,
@@ -3373,7 +3373,7 @@ void scene_prepare_texture(Scene *scene, int id) {
     // TODO do something when this is close to (1L << 30L)
     scene_texture_count_loaded++;
     scene->texture_loaded_number[id] = scene_texture_count_loaded;
-    // printf("id=%d tcl=%ld\n", id, scene_texture_count_loaded);
+    // mud_log("id=%d tcl=%ld\n", id, scene_texture_count_loaded);
 
     if (scene->texture_pixels[id] != NULL) {
         return;
