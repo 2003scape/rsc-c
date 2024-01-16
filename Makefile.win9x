@@ -1,0 +1,25 @@
+CC = C:\gcc_win98\bin\gcc
+#DEBUG = 1
+SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c win9x/*.c)
+OBJ = $(SRC:.c=.o)
+CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_SW -DSDL12 -DWIN9X -DSDL_MAIN_HANDLED -DUSE_LOCOLOUR -DREVISION_177
+CFLAGS += -I ./SDL-1.2.15/include/SDL #-fPIE
+CFLAGS += -I ./SDL_image-1.2.12/include
+LDFLAGS = -lm -L ./SDL-1.2.15/lib -lmingw32
+LDFLAGS += -L ./SDL_image-1.2.12/lib/x86
+LDFLAGS += -L ./glew-2.1.0/lib/Release/Win32/ -lopengl32 -lglu32 -lglew32
+LDFLAGS += -lSDL_image -lSDL -lwsock32 -lws2_32 -mwindows
+
+ifdef DEBUG
+CFLAGS += -Wall -Wextra -pedantic -g
+else
+CFLAGS += -march=pentium -mtune=pentium -s -Ofast
+LDFLAGS += -s
+endif
+
+mudclient.exe: $(OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS) 
+
+clean:
+	del src/*.o src/lib/*.o src/ui/*.o
+	del mudclient.exe

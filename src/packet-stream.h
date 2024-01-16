@@ -14,6 +14,9 @@
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#ifdef WIN9X
+#include "../win9x/win-func-backport.h"
+#endif
 #else
 #include <arpa/inet.h>
 #include <netdb.h>

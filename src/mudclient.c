@@ -7131,8 +7131,14 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
             game_data.items[certificate_item_id].mask, 0, 0, 0);
     }
 }
-
+#ifdef WIN9X
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+    PSTR lpCmdLine, int nCmdShow) {
+	int argc; // = nCmdShow?
+	char **argv; // = lpCmdLine?
+#else
 int main(int argc, char **argv) {
+#endif
 #ifdef _3DS
     osSetSpeedupEnable(true);
 #endif
