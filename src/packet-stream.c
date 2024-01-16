@@ -104,11 +104,11 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
         strcpy(server_ip, inet_ntoa(addr));
 #elif WIN9X
-		struct hostent *host_addr = gethostbyname(mud->options->server);
+        struct hostent *host_addr = gethostbyname(mud->options->server);
 
         struct in_addr addr = {0};
         if (host_addr)
-			memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
+            memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
         strcpy(server_ip, inet_ntoa(addr));
 #else
         struct addrinfo hints = {0};

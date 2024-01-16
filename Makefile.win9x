@@ -2,7 +2,7 @@ CC = C:\gcc_win98\bin\gcc
 #DEBUG = 1
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c win9x/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_SW -DSDL12 -DWIN9X -DSDL_MAIN_HANDLED -DUSE_LOCOLOUR -DREVISION_177
+CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_SW -DSDL12 -DWIN9X -DSDL_MAIN_HANDLED -DREVISION_177 #-DUSE_LOCOLOUR
 CFLAGS += -I ./SDL-1.2.15/include/SDL #-fPIE
 CFLAGS += -I ./SDL_image-1.2.12/include
 LDFLAGS = -lm -L ./SDL-1.2.15/lib -lmingw32
