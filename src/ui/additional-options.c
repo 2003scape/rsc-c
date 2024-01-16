@@ -174,6 +174,24 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += OPTION_HORIZ_GAP;
 
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_game_options,
+        "@whi@Low memory (restart): ", mud->options->lowmem, x, y);
+
+    mud->game_options[control] = &mud->options->lowmem;
+    mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += OPTION_HORIZ_GAP;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_game_options,
+        "@whi@Underground flicker: ", mud->options->flicker, x, y);
+
+    mud->game_options[control] = &mud->options->flicker;
+    mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += OPTION_HORIZ_GAP;
+
     sprintf(formatted_digits, "%d", mud->options->field_of_view);
 
     control = mudclient_add_option_panel_string(

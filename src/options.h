@@ -73,6 +73,8 @@ typedef struct Options Options;
      "lowmem = %d\n"                                                           \
      "; F1 mode - only render every second scanline\n"                         \
      "interlace = %d\n"                                                        \
+     "; Underground lighting flicker\n"                                        \
+     "flicker = %d\n"                                                          \
      "; Display the FPS at the bottom right of the screen\n"                   \
      "display_fps = %d\n"                                                      \
      "; Double the UI size but keep the scene size if window is over double "  \
@@ -238,6 +240,9 @@ struct Options {
 
     /* F1 mode - only render every second scanline */
     int interlace;
+
+    /* underground lighting flicker */
+    int flicker;
 
     /* display the FPS at the bottom right of the screen */
     int display_fps;
