@@ -21,5 +21,6 @@ mudclient.exe: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS) 
 
 clean:
-	del src/*.o src/lib/*.o src/ui/*.o
+	cd src/
+	del /Q /F /S "*.o"
 	del mudclient.exe
