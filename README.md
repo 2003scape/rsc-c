@@ -92,7 +92,7 @@ host `mudclient.{html,data,js,wasm}` and `./cache/` directory.
 
 ## build (android)
 
-[follow the pre-requisites listed on SDL's website](https://wiki.libsdl.org/SDL2/Android):
+[follow the pre-requisites listed on SDL's website](https://wiki.libsdl.org/SDL2/Android).
 
 you should only need to run the following commands:
 

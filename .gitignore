@@ -26,3 +26,4 @@ texture-pack/node_modules
 *.nsp
 *.bak
 org.scape2003.mudclient/.gradle/
+org.scape2003.mudclient/app/build/
