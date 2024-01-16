@@ -159,7 +159,7 @@
 #define GAME_OBJECTS_MAX 1000
 #define WALL_OBJECTS_MAX 500
 #define OBJECTS_MAX 1500
-#define PLAYERS_SERVER_MAX 4000
+#define PLAYERS_SERVER_MAX 2000
 #define PLAYERS_MAX 500
 #define NPCS_SERVER_MAX 5000
 #define NPCS_MAX 500
@@ -174,6 +174,7 @@
 #define ACTION_BUBBLE_MAX 50
 #define HEALTH_BAR_MAX 50
 #define MAGIC_BUBBLE_MAX 50
+#define OVERWORLD_TEXT_MAX 128
 
 #define INVENTORY_ITEMS_MAX 30
 #define MENU_MAX 250
@@ -183,10 +184,15 @@
 #define TRADE_ITEMS_MAX 14
 #define DUEL_ITEMS_MAX 8
 
+#define EXPERIENCE_DROPS_MAX 100
+
 #define MOUSE_HISTORY_LENGTH 8192
 
 #define MUD_VANILLA_WIDTH 512
 #define MUD_VANILLA_HEIGHT 346
+
+#define MUD_MIN_WIDTH 320
+#define MUD_MIN_HEIGHT 240
 
 #ifdef _3DS
 #define MUD_WIDTH 320
@@ -298,6 +304,7 @@ typedef struct mudclient mudclient;
 #include "ui/message-tabs.h"
 #include "ui/offer-x.h"
 #include "ui/option-menu.h"
+#include "ui/options-tab.h"
 #include "ui/server-message.h"
 #include "ui/shop.h"
 #include "ui/sleep.h"
@@ -309,7 +316,13 @@ typedef struct mudclient mudclient;
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
 
+#include "custom/clarify-herblaw-items.h"
 #include "custom/diverse-npcs.h"
+#include "custom/item-highlight.h"
+
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
 
 #ifdef WII
 /* these are doubled for the wii */
@@ -369,9 +382,32 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
 #endif
 #endif
 
+extern int mudclient_touch_start;
+
+extern int mudclient_horizontal_drag;
+extern int mudclient_vertical_drag;
+
+extern int mudclient_touch_start_x;
+extern int mudclient_touch_start_y;
+
+extern double mudclient_pinch_distance;
+
+extern int64_t mudclient_finger_1_id;
+extern int mudclient_finger_1_x;
+extern int mudclient_finger_1_y;
+extern int mudclient_finger_1_down;
+
+extern int64_t mudclient_finger_2_id;
+extern int mudclient_finger_2_x;
+extern int mudclient_finger_2_y;
+extern int mudclient_finger_2_down;
+
+extern int mudclient_full_width;
+extern int mudclient_full_height;
+
 // TODO this was moved
-extern char *font_files[];
-extern char *animated_models[];
+extern const char *font_files[];
+extern const char *animated_models[];
 extern char login_screen_status[255];
 
 /*
@@ -424,6 +460,13 @@ struct HealthBar {
     uint16_t x;
     uint16_t y;
     uint8_t missing;
+};
+
+struct OverworldText {
+    char *text;
+    uint16_t x;
+    uint16_t y;
+    uint32_t colour;
 };
 
 struct mudclient {
@@ -582,6 +625,10 @@ struct mudclient {
     int8_t settings_mouse_button_one;
     int8_t settings_sound_disabled;
 
+    ChangePasswordStep show_change_password_step;
+    char change_password_old[PASSWORD_LENGTH + 1];
+    char change_password_new[PASSWORD_LENGTH + 1];
+
     PacketStream *packet_stream;
     int packet_last_read;
     int8_t incoming_packet[PACKET_BUFFER_LENGTH];
@@ -654,7 +701,7 @@ struct mudclient {
     int control_text_list_chat;
     int control_text_list_quest;
     int control_text_list_private;
-    MESSAGE_TAB message_tab_selected;
+    MessageTab message_tab_selected;
     int message_tab_flash_all;
     int message_tab_flash_history;
     int message_tab_flash_quest;
@@ -780,13 +827,11 @@ struct mudclient {
     int magic_bubble_count;
     struct MagicBubble magic_bubbles[MAGIC_BUBBLE_MAX];
 
+    int overworld_text_count;
+    struct OverworldText overworld_text[OVERWORLD_TEXT_MAX];
+
     /*int8_t show_dialog_report_abuse_step;
     int report_abuse_offence;*/
-
-    /* ./ui/password.c */
-    int show_change_password_step;
-    char change_password_old[PASSWORD_LENGTH + 1];
-    char change_password_new[PASSWORD_LENGTH + 1];
 
     /* ./ui/ui-tabs.c */
     /* which UI tab is currently hovered over */
@@ -997,27 +1042,27 @@ struct mudclient {
     int show_additional_options;
     int options_tab;
 
-    Panel *panel_connection_options;
-    void *connection_options[50];
-    int connection_option_types[50];
+    Panel *panel_game_options;
+    void *game_options[50];
+    int game_option_types[50];
 
     Panel *panel_control_options;
     void *control_options[50];
     int control_option_types[50];
 
-    Panel *panel_display_options;
-    void *display_options[50];
-    int display_option_types[50];
+    Panel *panel_ui_options;
+    void *ui_options[50];
+    int ui_option_types[50];
 
     Panel *panel_bank_options;
     void *bank_options[50];
     int bank_option_types[50];
 
     /* ./ui/experience-drops.c */
-    int experience_drop_skill[50];
-    int experience_drop_amount[50];
-    float experience_drop_y[50];
-    float experience_drop_speed[50];
+    int experience_drop_skill[EXPERIENCE_DROPS_MAX];
+    int experience_drop_amount[EXPERIENCE_DROPS_MAX];
+    float experience_drop_y[EXPERIENCE_DROPS_MAX];
+    float experience_drop_speed[EXPERIENCE_DROPS_MAX];
     int experience_drop_count;
 
     /* wiki */

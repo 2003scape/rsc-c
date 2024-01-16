@@ -32,8 +32,6 @@ typedef enum {
 #define FRIEND_ONLINE 255
 #endif
 
-extern char *social_tabs[];
-
 void mudclient_sort_friends(mudclient *mud);
 void mudclient_add_friend(mudclient *mud, char *username);
 void mudclient_remove_friend(mudclient *mud, int64_t encoded_username);

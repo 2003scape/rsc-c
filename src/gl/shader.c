@@ -25,7 +25,7 @@ char *buffer_file(char *path) {
     FILE *file = fopen(path, "r");
 
     if (!file) {
-        fprintf(stderr, "unable to open file: %s\n", path);
+        mud_error("unable to open file: %s\n", path);
         exit(1);
     }
 
@@ -57,6 +57,66 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
     const char *vertex_shader_code = buffer_file(vertex_path);
     const char *fragment_shader_code = buffer_file(fragment_path);
 
+    #ifdef OPENGL15
+    GLhandleARB vertex = glCreateShaderObjectARB(GL_VERTEX_SHADER);
+    glShaderSourceARB(vertex, 1, &vertex_shader_code, NULL);
+    glCompileShaderARB(vertex);
+
+    int success = 0;
+
+    glGetObjectParameterfvARB(vertex, GL_COMPILE_STATUS, &success);
+
+    if (!success) {
+        glGetInfoLogARB(vertex, 512, NULL, info_log);
+        mud_error("vertex shader error: %s\n", info_log);
+        exit(1);
+    }
+
+    GLhandleARB fragment = glCreateShaderObjectARB(GL_FRAGMENT_SHADER);
+    glShaderSourceARB(fragment, 1, &fragment_shader_code, NULL);
+    glCompileShaderARB(fragment);
+
+    glGetObjectParameterfvARB(fragment, GL_COMPILE_STATUS, &success);
+
+    if (!success) {
+        glGetInfoLogARB(fragment, 512, NULL, info_log);
+        mud_error("fragment shader error: %s\n", info_log);
+        exit(1);
+    }
+
+    int id = glCreateProgramObjectARB();
+    glAttachObjectARB(id, vertex);
+    glAttachObjectARB(id, fragment);
+
+    //flats
+    glBindAttribLocationARB(id, 0, "position");
+    glBindAttribLocationARB(id, 1, "colour");
+    glBindAttribLocationARB(id, 2, "texture_position");
+    glBindAttribLocationARB(id, 3, "base_texture_position");
+    //game_models
+    glBindAttribLocationARB(id, 1, "normal");
+    glBindAttribLocationARB(id, 2, "lighting");
+    glBindAttribLocationARB(id, 3, "front_colour");
+    glBindAttribLocationARB(id, 4, "front_texture_position");
+    glBindAttribLocationARB(id, 5, "back_colour");
+    glBindAttribLocationARB(id, 6, "back_texture_position");
+
+    glLinkProgramARB(id);
+
+    glGetObjectParameterfvARB(id, GL_LINK_STATUS, &success);
+
+    if (!success) {
+        glGetInfoLogARB(id, 512, NULL, info_log);
+        mud_error("shader link error: %s\n", info_log);
+        exit(1);
+    }
+
+    shader->id = id;
+
+    glDeleteObjectARB(vertex);
+    glDeleteObjectARB(fragment);
+
+    #else //OpenGL2+
     GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vertex_shader_code, NULL);
     glCompileShader(vertex);
@@ -67,7 +127,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetShaderInfoLog(vertex, 512, NULL, info_log);
-        fprintf(stderr, "vertex shader error: %s\n", info_log);
+        mud_error("vertex shader error: %s\n", info_log);
         exit(1);
     }
 
@@ -79,7 +139,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetShaderInfoLog(fragment, 512, NULL, info_log);
-        fprintf(stderr, "fragment shader error: %s\n", info_log);
+        mud_error("fragment shader error: %s\n", info_log);
         exit(1);
     }
 
@@ -108,7 +168,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     if (!success) {
         glGetProgramInfoLog(id, 512, NULL, info_log);
-        fprintf(stderr, "shader link error: %s\n", info_log);
+        mud_error("shader link error: %s\n", info_log);
         exit(1);
     }
 

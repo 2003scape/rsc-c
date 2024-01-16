@@ -63,7 +63,8 @@ typedef struct Scene Scene;
 
 #define MOUSE_PICKED_MAX 100
 
-#define COLOUR_TRANSPARENT 12345678
+/* originally 12345678 - this way we save on memory. */
+#define COLOUR_TRANSPARENT INT16_MAX
 
 /* width and height of scrollable textures */
 #define SCROLL_TEXTURE_SIZE 64
@@ -97,7 +98,6 @@ typedef struct GlModelTime {
 #endif
 
 struct Scene {
-    int max_sprite_count;
     int last_visible_polygons_count;
     int clip_near;
     int clip_far_3d;
@@ -105,6 +105,8 @@ struct Scene {
     int fog_z_distance;
     int model_count;
     int max_model_count;
+    int max_polygon_count;
+    int max_sprite_count;
     GameModel **models;
     GameModel *view;
     int32_t *raster;
@@ -316,6 +318,7 @@ void scene_set_texture_pixels(Scene *scene, int id);
 #ifdef RENDER_SW
 void scene_scroll_texture(Scene *scene, int id);
 #endif
+int16_t scene_rgb_to_fill(uint8_t, uint8_t, uint8_t);
 int scene_get_fill_colour(Scene *scene, int face_fill);
 void scene_set_light_from3(Scene *scene, int x, int y, int z);
 void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,

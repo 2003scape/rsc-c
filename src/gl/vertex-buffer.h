@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "../utility.h"
+
 #ifdef RENDER_GL
 #ifdef GLAD
 #ifdef __SWITCH__

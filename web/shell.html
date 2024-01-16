@@ -50,9 +50,6 @@
             .mudclient-keyboard {
                 background: none;
                 font-family: Arial, sans-serif;
-                /*opacity: 0.5;*/
-                /*background: red;
-                color: black;*/
                 border: 0;
                 color: transparent;
                 display: none;
@@ -60,6 +57,8 @@
                 position: absolute;
                 resize: none;
                 text-align: center;
+                /*background: red;
+                color: black;*/
             }
 
             .mudclient-keyboard:focus {
@@ -82,7 +81,11 @@
 
         <input id="mudclient-keyboard" class="mudclient-keyboard" type="text" />
 
-        <input id="mudclient-password" class="mudclient-keyboard" type="password" />
+        <input
+            id="mudclient-password"
+            class="mudclient-keyboard"
+            type="password"
+        />
 
         <script>
             function LSFS() {
@@ -311,16 +314,40 @@
                     );
 
                     canvas.addEventListener('mousedown', focusCanvas);
-                    canvas.addEventListener('touchstart', focusCanvas);
 
-                    canvas.addEventListener('touchend', (event) => {
-                        if (!window._mudclientIsTouch) {
-                            return;
+                    const requestFullscreen =
+                        Element.prototype.requestFullscreen ||
+                        Element.prototype.webkitRequestFullscreen;
+
+                    const shouldPreventTouch = () => {
+                        return (
+                            requestFullscreen &&
+                            !(
+                                document.fullscreenElement ||
+                                document.webkitFullscreenElement
+                            )
+                        );
+                    };
+
+                    canvas.addEventListener('touchstart', (event) => {
+                        if (shouldPreventTouch()) {
+                            event.stopImmediatePropagation();
                         }
 
-                        /*if (!document.fullscreenElement) {
-                            document.documentElement.requestFullscreen();
-                        }*/
+                        focusCanvas();
+                    });
+
+                    canvas.addEventListener('touchend', (event) => {
+                        if (shouldPreventTouch()) {
+                            event.stopImmediatePropagation();
+                            requestFullscreen.bind(document.documentElement)();
+                        }
+                    });
+
+                    canvas.addEventListener('touchmove', (event) => {
+                        if (shouldPreventTouch()) {
+                            event.stopImmediatePropagation();
+                        }
                     });
 
                     return canvas;
@@ -397,8 +424,12 @@
             function keyboardDownEvent(event) {
                 if (event.key === 'Enter') {
                     emscriptenKeyPress(ENTER_KEY_CODE, ENTER_KEY_CODE);
+
                     keyboardInput.style.display = 'none';
-                    //focusCanvas();
+                    passwordInput.style.display = 'none';
+
+                    // if we blur and re-focus too fast, safari won't let us
+                    // focusCanvas();
                 }
             }
 
@@ -420,7 +451,8 @@
             passwordInput.addEventListener('blur', keyboardBlurEvent);
 
             function keyboardFocusEvent(event) {
-                event.target.selectionStart = event.target.selectionEnd = event.target.value.length;
+                event.target.selectionStart = event.target.selectionEnd =
+                    event.target.value.length;
             }
 
             keyboardInput.addEventListener('focus', keyboardFocusEvent);

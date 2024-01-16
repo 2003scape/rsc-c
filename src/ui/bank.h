@@ -3,16 +3,11 @@
 
 #include "../mudclient.h"
 
-#if MUD_IS_COMPACT
-#define BANK_COLUMNS 6
-#define BANK_ROWS 4
-#else
+#define BANK_COLUMNS_MIN 6
+#define BANK_ROWS_MIN 3
+
 #define BANK_COLUMNS 8
 #define BANK_ROWS 6
-#endif
-
-#define BANK_WIDTH                                                             \
-    ((ITEM_GRID_SLOT_WIDTH * BANK_COLUMNS) + (MUD_IS_COMPACT ? 11 : 16))
 
 #define BANK_PAGE_BUTTON_WIDTH 65
 

@@ -25,3 +25,4 @@ texture-pack/node_modules
 *.nso
 *.nsp
 *.bak
+org.scape2003.mudclient/.gradle/

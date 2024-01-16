@@ -58,6 +58,7 @@ void options_set_defaults(Options *options) {
     options->remember_username = 0;
     options->remember_password = 0;
     options->diversify_npcs = 0;
+    options->rename_herblaw_items = 0;
 
     options_set_server(options);
 
@@ -88,8 +89,9 @@ void options_set_defaults(Options *options) {
     options->hold_to_buy = 1;
 
     /* display */
+    options->lowmem = 0;
     options->interlace = 0;
-    options->display_fps = 0;
+    options->display_fps = 1;
     options->number_commas = 1;
     options->show_roofs = 1;
     options->remaining_experience = 1;
@@ -101,7 +103,9 @@ void options_set_defaults(Options *options) {
     options->wilderness_warning = 1;
     options->status_bars = 0;
     options->ground_item_models = 1;
+    options->ground_item_text = 1;
     options->distant_animation = 1;
+    options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
 
     /* bank */
@@ -129,6 +133,7 @@ void options_set_vanilla(Options *options) {
     options->remember_username = 0;
     options->remember_password = 0;
     options->diversify_npcs = 0;
+    options->rename_herblaw_items = 0;
 
     options_set_server(options);
 
@@ -149,6 +154,7 @@ void options_set_vanilla(Options *options) {
     options->hold_to_buy = 0;
 
     /* display */
+    options->lowmem = 0;
     options->interlace = 0;
     options->display_fps = 0;
     options->number_commas = 0;
@@ -162,7 +168,9 @@ void options_set_vanilla(Options *options) {
     options->wilderness_warning = 1;
     options->status_bars = 0;
     options->ground_item_models = 0;
+    options->ground_item_text = 0;
     options->distant_animation = 0;
+    options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
 
     /* bank */
@@ -195,6 +203,11 @@ void options_save(Options *options) {
     FILE *ini_file = fopen("./options.ini", "w");
 #endif
 
+    if (!ini_file) {
+        mud_error("unable to open options.ini file for writing\n");
+        return;
+    }
+
     fprintf(ini_file, OPTIONS_INI_TEMPLATE,
             options->server,                //
             options->port,                  //
@@ -209,6 +222,7 @@ void options_save(Options *options) {
             options->password,              //
             options->browser_command,       //
             options->diversify_npcs,        //
+            options->rename_herblaw_items,  //
                                             //
             options->mouse_wheel,           //
             options->middle_click_camera,   //
@@ -223,6 +237,7 @@ void options_save(Options *options) {
             options->combat_style_always,   //
             options->hold_to_buy,           //
                                             //
+            options->lowmem,                //
             options->interlace,             //
             options->display_fps,           //
             options->ui_scale,              //
@@ -239,7 +254,9 @@ void options_save(Options *options) {
             options->wilderness_warning,    //
             options->status_bars,           //
             options->ground_item_models,    //
+            options->ground_item_text,      //
             options->distant_animation,     //
+            options->tga_sprites,           //
             options->show_hover_tooltip,    //
                                             //
             options->bank_search,           //
@@ -280,6 +297,7 @@ void options_load(Options *options) {
     OPTION_INI_STR("password", options->password, 20);
     OPTION_INI_STR("browser_command", options->browser_command, 20);
     OPTION_INI_INT("diversify_npcs", options->diversify_npcs, 0, 1);
+    OPTION_INI_INT("rename_herblaw_items", options->rename_herblaw_items, 0, 1);
 
     /* controls */
     OPTION_INI_INT("mouse_wheel", options->mouse_wheel, 0, 1);
@@ -296,6 +314,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("hold_to_buy", options->hold_to_buy, 0, 1);
 
     /* display */
+    OPTION_INI_INT("lowmem", options->lowmem, 0, 1);
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
     OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
     OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);
@@ -313,7 +332,9 @@ void options_load(Options *options) {
     OPTION_INI_INT("wilderness_warning", options->wilderness_warning, 0, 1);
     OPTION_INI_INT("status_bars", options->status_bars, 0, 1);
     OPTION_INI_INT("ground_item_models", options->ground_item_models, 0, 1);
+    OPTION_INI_INT("ground_item_text", options->ground_item_text, 0, 1);
     OPTION_INI_INT("distant_animation", options->distant_animation, 0, 1);
+    OPTION_INI_INT("tga_sprites", options->tga_sprites, 0, 1);
     OPTION_INI_INT("show_hover_tooltip", options->show_hover_tooltip, 0, 1);
 
     /* bank */

@@ -7,6 +7,7 @@
 #include <string.h>
 
 #define CHAT_MESSAGE_MAX_LENGTH 100
+#define CHAT_MESSAGE_MAX_INPUT_LENGTH 80
 
 #define CHAT_MESSAGE_CHAR_MAP                                                  \
     " etaoihnsrdlumwcyfgpbvkxjqz0123456789 !?.,:;()-&*\\'@#+= $%\"[]`"

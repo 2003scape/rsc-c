@@ -323,7 +323,9 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
-    mudclient_draw_blue_bar(mud);
+    if (!mud->options->lowmem) {
+        mudclient_draw_blue_bar(mud);
+    }
 
     surface_draw(mud->surface);
 }

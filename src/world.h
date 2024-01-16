@@ -28,8 +28,6 @@ typedef struct World World;
 
 #include "mudclient.h"
 
-#define COLOUR_TRANSPARENT 12345678
-
 #define REGION_WIDTH 96
 #define REGION_HEIGHT 96
 
@@ -41,6 +39,14 @@ typedef struct World World;
 #define REGION_SIZE 48
 #define TILE_COUNT (REGION_SIZE * REGION_SIZE)
 #define PLANE_HEIGHT 80000
+
+#ifndef TERRAIN_MAX_FACES
+#define TERRAIN_MAX_FACES 18688
+#endif
+
+#ifndef TERRAIN_MAX_VERTICES
+#define TERRAIN_MAX_VERTICES 18688
+#endif
 
 /* length of the portion of the roof hanging over the building */
 #define ROOF_SLOPE 16
@@ -56,7 +62,7 @@ typedef enum TILE_TIPE {
 /* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
 #define BRIDGE_TILE_DECORATION 12
 
-extern int terrain_colours[TERRAIN_COLOUR_COUNT];
+extern int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
 int rgb_to_texture_colour(int r, int g, int b);
 void init_world_global();

@@ -154,13 +154,13 @@ struct Surface {
     int32_t **surface_pixels; // TODO rename
     int8_t **sprite_colours;
     int32_t **sprite_palette;
-    int *sprite_width;
-    int *sprite_height;
-    int *sprite_width_full;
-    int *sprite_height_full;
+    int16_t *sprite_width;
+    int16_t *sprite_height;
+    int16_t *sprite_width_full;
+    int16_t *sprite_height_full;
     int8_t *sprite_translate;
-    int *sprite_translate_x;
-    int *sprite_translate_y;
+    int16_t *sprite_translate_x;
+    int16_t *sprite_translate_y;
 
     int8_t interlace;
     int8_t draw_string_shadow;
@@ -298,6 +298,9 @@ void surface_fade_to_black_software(Surface *surface, int32_t *dest,
 void surface_fade_to_black(Surface *surface);
 void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
+void surface_parse_sprite_tga(Surface *surface, int sprite_id,
+                              uint8_t *sprite_data, size_t len,
+                              int columns, int rows);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
 void surface_read_sleep_word(Surface *surface, int sprite_id,
@@ -417,7 +420,7 @@ int surface_text_height_font(FontStyle font);
 int surface_text_height(FontStyle font);
 int surface_text_width(const char *text, FontStyle font);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
-                       char **tabs, int tabs_length, int selected);
+                       const char **tabs, int tabs_length, int selected);
 void surface_draw_item(Surface *surface, int x, int y, int slot_width,
                        int slot_height, int item_id);
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
@@ -428,7 +431,8 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height);
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
-                             int background_colour, int foreground_colour);
+                             int background_colour, int foreground_colour,
+                             int is_percentage);
 #ifdef RENDER_GL
 void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_dynamic_texture(Surface *surface);

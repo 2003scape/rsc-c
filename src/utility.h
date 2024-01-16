@@ -1,8 +1,10 @@
 #ifndef _H_UTILITY
 #define _H_UTILITY
 
+#include <assert.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,12 +109,18 @@ extern int _3ds_gl_framebuffer_offsets_y[];
 
 void init_utility_global();
 
+void mud_log(char *format, ...);
+void mud_error(char *format, ...);
+
+char *strcat_realloc(char *s, const char *new);
+char *mud_strdup(const char *s);
 void strtrim(char *s);
 void strtolower(char *s);
 
 int get_signed_byte(void *, size_t, size_t);
 int get_unsigned_byte(void *, size_t, size_t);
 int get_unsigned_short(void *, size_t, size_t);
+int get_unsigned_short_le(void *, size_t, size_t);
 int get_unsigned_int(void *, size_t, size_t);
 int64_t get_unsigned_long(void *, size_t, size_t);
 int get_signed_short(void *, size_t, size_t);
@@ -137,7 +145,7 @@ void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
 void format_number_commas(int number, char *dest);
 void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
                           int use_commas, char *dest);
-void url_encode(char *s, char *dest);
+void url_encode(const char *s, char *dest);
 int get_certificate_item_id(int item_id);
 int is_ip_address(char *address);
 int colour_str_to_colour(char *colour_str);

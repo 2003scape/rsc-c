@@ -7,9 +7,11 @@ void mudclient_update_ground_item_models(mudclient *mud) {
         }
 
         scene_remove_model(mud->scene, mud->ground_items[i].model);
+
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
         game_model_destroy(mud->ground_items[i].model);
 #endif
+
         free(mud->ground_items[i].model);
 
         mud->ground_items[i].model = NULL;
@@ -77,9 +79,9 @@ void mudclient_update_ground_item_models(mudclient *mud) {
             ground_item_model[i] = mud->ground_items[i].model;
         }
 
-        game_model_gl_buffer_models(
-            &mud->scene->gl_item_buffers, &mud->scene->gl_item_buffer_length,
-            ground_item_model, mud->ground_item_count);
+        game_model_gl_buffer_models(&mud->scene->gl_item_buffers,
+                                    &mud->scene->gl_item_buffer_length,
+                                    ground_item_model, mud->ground_item_count);
     }
 #endif
 }
@@ -142,6 +144,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
     switch (opcode) {
     case SERVER_WORLD_INFO:
+        if (mud->local_player_server_index >= PLAYERS_SERVER_MAX) {
+            return;
+        }
         mud->loading_area = 1;
         mud->local_player_server_index = get_unsigned_short(data, 1, size);
         mud->plane_width = get_unsigned_short(data, 3, size);
@@ -260,6 +265,10 @@ void mudclient_packet_tick(mudclient *mud) {
             int server_index = get_bit_mask(data, offset, size, 11);
             offset += 11;
 
+            if (server_index >= PLAYERS_SERVER_MAX) {
+                return;
+            }
+
             int area_x = get_bit_mask(data, offset, size, 5);
             offset += 5;
 
@@ -319,12 +328,15 @@ void mudclient_packet_tick(mudclient *mud) {
             GameCharacter *player = mud->player_server[player_index];
 
             int update_type = get_unsigned_byte(data, offset++, size);
+
             if (update_type == 0) {
                 /* action bubble with an item in it */
                 int item_id = get_unsigned_short(data, offset, size);
+
                 if (item_id >= game_data.item_count) {
                     item_id = IRON_MACE_ID;
                 }
+
                 offset += 2;
 
                 if (player != NULL) {
@@ -395,6 +407,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int npc_index = get_unsigned_short(data, offset, size);
                 offset += 2;
 
+                if (npc_index >= NPCS_SERVER_MAX) {
+                    return;
+                }
+
                 if (player != NULL) {
                     player->incoming_projectile_sprite = projectile_sprite;
                     player->attacking_npc_server_index = npc_index;
@@ -409,6 +425,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int opponent_index = get_unsigned_short(data, offset, size);
                 offset += 2;
 
+                if (opponent_index >= PLAYERS_SERVER_MAX) {
+                    return;
+                }
+
                 if (player != NULL) {
                     player->incoming_projectile_sprite = projectile_sprite;
                     player->attacking_player_server_index = opponent_index;
@@ -421,7 +441,8 @@ void mudclient_packet_tick(mudclient *mud) {
                     player->server_id = get_unsigned_short(data, offset, size);
                     offset += 2;
 
-                    player->encoded_username = get_unsigned_long(data, offset, size);
+                    player->encoded_username =
+                        get_unsigned_long(data, offset, size);
                     offset += 8;
 
                     decode_username(player->encoded_username, player->name);
@@ -438,12 +459,22 @@ void mudclient_packet_tick(mudclient *mud) {
                         player->animations[j] = 0;
                     }
 
-                    player->hair_colour = get_unsigned_byte(data, offset++, size);
-                    player->top_colour = get_unsigned_byte(data, offset++, size);
-                    player->bottom_colour = get_unsigned_byte(data, offset++, size);
-                    player->skin_colour = get_unsigned_byte(data, offset++, size);
+                    player->hair_colour =
+                        get_unsigned_byte(data, offset++, size);
+
+                    player->top_colour =
+                        get_unsigned_byte(data, offset++, size);
+
+                    player->bottom_colour =
+                        get_unsigned_byte(data, offset++, size);
+
+                    player->skin_colour =
+                        get_unsigned_byte(data, offset++, size);
+
                     player->level = get_unsigned_byte(data, offset++, size);
-                    player->skull_visible = get_unsigned_byte(data, offset++, size);
+
+                    player->skull_visible =
+                        get_unsigned_byte(data, offset++, size);
                 } else {
                     offset += 14;
 
@@ -484,9 +515,11 @@ void mudclient_packet_tick(mudclient *mud) {
                 /* remove the object */
                 int index = 0;
                 int l_x = (mud->local_region_x +
-                    get_signed_byte(data, offset + 1, size)) / 8;
+                           get_signed_byte(data, offset + 1, size)) /
+                          8;
                 int l_y = (mud->local_region_y +
-                    get_signed_byte(data, offset + 2, size)) / 8;
+                           get_signed_byte(data, offset + 2, size)) /
+                          8;
 
                 offset += 3;
 
@@ -517,6 +550,7 @@ void mudclient_packet_tick(mudclient *mud) {
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
                         game_model_destroy(mud->objects[i].model);
 #endif
+
                         free(mud->objects[i].model);
                         mud->objects[i].model = NULL;
                     }
@@ -527,10 +561,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int object_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int area_x = mud->local_region_x +
-                    get_signed_byte(data, offset++, size);
-                int area_y = mud->local_region_y +
-                    get_signed_byte(data, offset++, size);
+                int area_x =
+                    mud->local_region_x + get_signed_byte(data, offset++, size);
+                int area_y =
+                    mud->local_region_y + get_signed_byte(data, offset++, size);
                 int object_index = 0;
 
                 for (int i = 0; i < mud->object_count; i++) {
@@ -540,7 +574,8 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->objects[object_index].model =
                                 mud->objects[i].model;
 
-                            mud->objects[object_index].model->key = object_index;
+                            mud->objects[object_index].model->key =
+                                object_index;
                             mud->objects[object_index].x = mud->objects[i].x;
                             mud->objects[object_index].y = mud->objects[i].y;
                             mud->objects[object_index].id = mud->objects[i].id;
@@ -560,6 +595,7 @@ void mudclient_packet_tick(mudclient *mud) {
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
                         game_model_destroy(mud->objects[i].model);
 #endif
+
                         free(mud->objects[i].model);
                         mud->objects[i].model = NULL;
                     }
@@ -741,6 +777,10 @@ void mudclient_packet_tick(mudclient *mud) {
             int server_index = get_bit_mask(data, offset, size, 12);
             offset += 12;
 
+            if (server_index >= NPCS_SERVER_MAX) {
+                return;
+            }
+
             int area_x = get_bit_mask(data, offset, size, 5);
             offset += 5;
 
@@ -781,7 +821,15 @@ void mudclient_packet_tick(mudclient *mud) {
             int server_index = get_unsigned_short(data, offset, size);
             offset += 2;
 
+            if (server_index >= NPCS_SERVER_MAX) {
+                return;
+            }
+
             GameCharacter *npc = mud->npcs_server[server_index];
+            if (npc == NULL) {
+                return;
+            }
+
             int update_type = get_unsigned_byte(data, offset++, size);
 
             if (update_type == 1) {
@@ -831,11 +879,13 @@ void mudclient_packet_tick(mudclient *mud) {
         int length = (size - 1) / 4;
 
         for (int i = 0; i < length; i++) {
-            int delta_x =
-                (mud->local_region_x + get_signed_short(data, 1 + i * 4, size)) / 8;
+            int delta_x = (mud->local_region_x +
+                           get_signed_short(data, 1 + i * 4, size)) /
+                          8;
 
-            int delta_y =
-                (mud->local_region_y + get_signed_short(data, 3 + i * 4, size)) / 8;
+            int delta_y = (mud->local_region_y +
+                           get_signed_short(data, 3 + i * 4, size)) /
+                          8;
 
             int entity_count = 0;
 
@@ -871,7 +921,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->objects[entity_count].model = mud->objects[j].model;
+                        mud->objects[entity_count].model =
+                            mud->objects[j].model;
                         mud->objects[entity_count].model->key = entity_count;
                         mud->objects[entity_count].x = mud->objects[j].x;
                         mud->objects[entity_count].y = mud->objects[j].y;
@@ -955,9 +1006,11 @@ void mudclient_packet_tick(mudclient *mud) {
                 /* remove the bound */
                 int index = 0;
                 int l_x = (mud->local_region_x +
-                    get_signed_byte(data, offset + 1, size)) / 8;
+                           get_signed_byte(data, offset + 1, size)) /
+                          8;
                 int l_y = (mud->local_region_y +
-                    get_signed_byte(data, offset + 2, size)) / 8;
+                           get_signed_byte(data, offset + 2, size)) /
+                          8;
 
                 offset += 3;
 
@@ -977,7 +1030,8 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->wall_objects[index].direction =
                                 mud->wall_objects[i].direction;
 
-                            mud->wall_objects[index].id = mud->wall_objects[i].id;
+                            mud->wall_objects[index].id =
+                                mud->wall_objects[i].id;
                         }
 
                         index++;
@@ -1002,10 +1056,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int l_x = mud->local_region_x +
-                    get_signed_byte(data, offset++, size);
-                int l_y = mud->local_region_y +
-                    get_signed_byte(data, offset++, size);
+                int l_x =
+                    mud->local_region_x + get_signed_byte(data, offset++, size);
+                int l_y =
+                    mud->local_region_y + get_signed_byte(data, offset++, size);
                 int direction = get_signed_byte(data, offset++, size);
                 int count = 0;
 
@@ -1024,7 +1078,8 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->wall_objects[count].direction =
                                 mud->wall_objects[i].direction;
 
-                            mud->wall_objects[count].id = mud->wall_objects[i].id;
+                            mud->wall_objects[count].id =
+                                mud->wall_objects[i].id;
                         }
 
                         count++;
@@ -1082,9 +1137,11 @@ void mudclient_packet_tick(mudclient *mud) {
                 /* remove the item */
                 int index = 0;
                 int l_x = (mud->local_region_x +
-                    get_signed_byte(data, offset + 1, size)) / 8;
+                           get_signed_byte(data, offset + 1, size)) /
+                          8;
                 int l_y = (mud->local_region_y +
-                    get_signed_byte(data, offset + 2, size)) / 8;
+                           get_signed_byte(data, offset + 2, size)) /
+                          8;
 
                 offset += 3;
 
@@ -1096,7 +1153,8 @@ void mudclient_packet_tick(mudclient *mud) {
                         if (i != index) {
                             mud->ground_items[index].x = mud->ground_items[i].x;
                             mud->ground_items[index].y = mud->ground_items[i].y;
-                            mud->ground_items[index].id = mud->ground_items[i].id;
+                            mud->ground_items[index].id =
+                                mud->ground_items[i].id;
                             mud->ground_items[index].z = mud->ground_items[i].z;
                         }
 
@@ -1109,10 +1167,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int item_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int area_x = mud->local_region_x +
-                    get_signed_byte(data, offset++, size);
-                int area_y = mud->local_region_y +
-                    get_signed_byte(data, offset++, size);
+                int area_x =
+                    mud->local_region_x + get_signed_byte(data, offset++, size);
+                int area_y =
+                    mud->local_region_y + get_signed_byte(data, offset++, size);
 
                 if ((item_id & 32768) == 0) {
                     if (item_id >= game_data.item_count) {
@@ -1279,7 +1337,8 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         for (int i = 0; i < skills_length; i++) {
-            mud->player_skill_current[i] = get_unsigned_byte(data, offset++, size);
+            mud->player_skill_current[i] =
+                get_unsigned_byte(data, offset++, size);
         }
 
         for (int i = 0; i < skills_length; i++) {
@@ -1296,7 +1355,8 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_PLAYER_STAT_EQUIPMENT_BONUS: {
         for (int i = 0; i < PLAYER_STAT_EQUIPMENT_COUNT; i++) {
-            mud->player_stat_equipment[i] = get_unsigned_byte(data, 1 + i, size);
+            mud->player_stat_equipment[i] =
+                get_unsigned_byte(data, 1 + i, size);
         }
 
         break;
@@ -1325,9 +1385,11 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->player_skill_current[skill_index] =
             get_unsigned_byte(data, offset++, size);
 
-        mud->player_skill_base[skill_index] = get_unsigned_byte(data, offset++, size);
+        mud->player_skill_base[skill_index] =
+            get_unsigned_byte(data, offset++, size);
 
-        mud->player_experience[skill_index] = get_unsigned_int(data, offset, size);
+        mud->player_experience[skill_index] =
+            get_unsigned_int(data, offset, size);
         break;
     }
     case SERVER_PLAYER_STAT_FATIGUE: {
@@ -1348,7 +1410,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
         for (int i = 0; i < mud->friend_list_count; i++) {
             mud->friend_list[i] = get_unsigned_long(data, 2 + i * 9, size);
-            mud->friend_list_online[i] = get_unsigned_byte(data, 10 + i * 9, size);
+            mud->friend_list_online[i] =
+                get_unsigned_byte(data, 10 + i * 9, size);
         }
 
         mudclient_sort_friends(mud);
@@ -1400,19 +1463,25 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_FRIEND_MESSAGE: {
-#ifdef REVISION_177
-        int64_t from = get_unsigned_long(data, 1, size);
+        size_t offset = 1;
+        int64_t from = get_unsigned_long(data, offset, size);
+        offset += 8;
+
+#ifndef REVISION_177
+        /* message number here, ignored for now */
+        offset += 4;
+#endif
+
         char from_username[USERNAME_LENGTH + 1];
         decode_username(from, from_username);
 
-        char *message = chat_message_decode(data, 9, size - 9);
+        char *message = chat_message_decode(data, offset, size - offset);
         char formatted_message[USERNAME_LENGTH + strlen(message) + 18];
 
         sprintf(formatted_message, "@pri@%s: tells you %s", from_username,
                 message);
 
         mudclient_show_server_message(mud, formatted_message);
-#endif
         break;
     }
     case SERVER_IGNORE_LIST: {
@@ -1688,6 +1757,9 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_TRADE_OPEN:
     case SERVER_DUEL_OPEN: {
         int player_index = get_unsigned_short(data, 1, size);
+        if (player_index >= PLAYERS_SERVER_MAX) {
+            return;
+        }
 
         if (mud->player_server[player_index] != NULL) {
             strcpy(mud->transaction_recipient_name,

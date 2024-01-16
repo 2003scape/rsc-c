@@ -1,5 +1,9 @@
 #include "surface.h"
 
+#ifdef USE_LOCOLOUR
+#include "locolour.h"
+#endif
+
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 gl_atlas_position gl_white_atlas_position = {
     .left_u = 0.0f,
@@ -69,13 +73,13 @@ void surface_new(Surface *surface, int width, int height, int limit,
     surface->surface_pixels = calloc(limit, sizeof(int32_t *));
     surface->sprite_colours = calloc(limit, sizeof(int8_t *));
     surface->sprite_palette = calloc(limit, sizeof(int32_t *));
-    surface->sprite_width = calloc(limit, sizeof(int));
-    surface->sprite_height = calloc(limit, sizeof(int));
-    surface->sprite_width_full = calloc(limit, sizeof(int));
-    surface->sprite_height_full = calloc(limit, sizeof(int));
+    surface->sprite_width = calloc(limit, sizeof(int16_t));
+    surface->sprite_height = calloc(limit, sizeof(int16_t));
+    surface->sprite_width_full = calloc(limit, sizeof(int16_t));
+    surface->sprite_height_full = calloc(limit, sizeof(int16_t));
     surface->sprite_translate = calloc(limit, sizeof(int8_t));
-    surface->sprite_translate_x = calloc(limit, sizeof(int));
-    surface->sprite_translate_y = calloc(limit, sizeof(int));
+    surface->sprite_translate_x = calloc(limit, sizeof(int16_t));
+    surface->sprite_translate_y = calloc(limit, sizeof(int16_t));
 
     surface->mud = mud;
 
@@ -363,12 +367,12 @@ void surface_gl_buffer_quad(Surface *surface, gl_quad *quad, C3D_Tex *texture,
                             C3D_Tex *base_texture) {
 #endif
     if (surface->gl_context_count >= GL_MAX_QUADS) {
-        fprintf(stderr, "too many context (texture/boundary) switches!\n");
+        mud_error("too many context (texture/boundary) switches!\n");
         return;
     }
 
     if (surface->gl_flat_count >= GL_MAX_QUADS) {
-        fprintf(stderr, "too many quads!\n");
+        mud_error("too many quads!\n");
         return;
     }
 
@@ -599,7 +603,9 @@ void surface_gl_buffer_sprite(Surface *surface, int sprite_id, int x, int y,
 #endif
             base_atlas_position = base_texture_position.atlas_position;
         }
-    } else if (sprite_id >= surface->mud->sprite_media && sprite_id < mud->sprite_projectile + game_data.projectile_sprite) {
+    } else if (sprite_id >= surface->mud->sprite_media &&
+               sprite_id < surface->mud->sprite_projectile +
+                               game_data.projectile_sprite) {
         int atlas_index = sprite_id - surface->mud->sprite_media;
 
         atlas_position = gl_media_atlas_positions[atlas_index];
@@ -1115,7 +1121,8 @@ void surface_draw(Surface *surface) {
     SDL_Flip(mud->screen);
 #else
     if (mud->window != NULL) {
-        SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
+        SDL_BlitScaled(mud->pixel_surface, NULL, mud->screen, NULL);
+        // SDL_BlitSurface(mud->pixel_surface, NULL, mud->screen, NULL);
         SDL_UpdateWindowSurface(mud->window);
     }
 #endif
@@ -1519,6 +1526,137 @@ void surface_clear(Surface *surface) {
     }
 }
 
+void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
+                              size_t len, int columns, int rows) {
+
+    size_t offset = 0;
+
+    uint8_t image_id_len = get_unsigned_byte(buffer, offset++, len);
+
+    uint8_t color_map_type = get_unsigned_byte(buffer, offset++, len);
+    assert(color_map_type == 1);
+
+    uint8_t image_type = get_unsigned_byte(buffer, offset++, len);
+    assert(image_type == 1 || image_type == 9);
+
+    uint16_t colour_map_start = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    assert(colour_map_start == 0);
+
+    uint16_t colour_map_len = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint8_t colour_map_bpp = get_unsigned_byte(buffer, offset++, len);
+    assert(colour_map_bpp == 24);
+
+    uint16_t x_origin = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint16_t y_origin = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    assert(x_origin == 0);
+    assert(y_origin == 0);
+
+    uint16_t width = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint16_t height = get_unsigned_short_le(buffer, offset, len);
+    offset += 2;
+
+    uint8_t bpp = get_unsigned_byte(buffer, offset++, len);
+    assert(bpp == 8);
+
+    uint8_t descriptor = get_unsigned_byte(buffer, offset++, len);
+    (void)descriptor;
+
+    offset += image_id_len;
+
+    uint32_t *map = calloc(colour_map_len + 1, sizeof(uint32_t));
+    assert(map != NULL);
+
+    for (int i = 0; i < colour_map_len; ++i) {
+        uint8_t b = buffer[offset++];
+        uint8_t g = buffer[offset++];
+        uint8_t r = buffer[offset++];
+        map[i] = (r << 16) + (g << 8) + b;
+    }
+
+    map[0] = MAGENTA;
+
+    uint8_t *pixels = malloc(width * height);
+    assert(pixels != NULL);
+
+    for (int y = (height - 1); y >= 0; --y) {
+        memcpy(pixels + (y * width), buffer + offset, width);
+        offset += width;
+    }
+
+    if (rows == 0 && columns == 0) {
+        free(surface->surface_pixels[sprite_id]);
+        surface->surface_pixels[sprite_id] = NULL;
+        surface->sprite_colours[sprite_id] = pixels;
+        surface->sprite_translate[sprite_id] = 0;
+        surface->sprite_translate_x[sprite_id] = 0;
+        surface->sprite_translate_y[sprite_id] = 0;
+#ifdef USE_LOCOLOUR
+        palette_to_locolour((uint8_t *)pixels,
+                            width * height, (uint32_t *)map);
+        surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#else
+        surface->sprite_palette[sprite_id] = map;
+#endif
+        surface->sprite_width[sprite_id] = width;
+        surface->sprite_height[sprite_id] = height;
+        surface->sprite_width_full[sprite_id] = width;
+        surface->sprite_height_full[sprite_id] = height;
+    } else {
+        uint16_t frame_width = width / columns;
+        uint16_t frame_height = height / rows;
+
+        for (int y = 0; y < rows; ++y) {
+            for (int x = 0; x < columns; ++x) {
+                uint8_t *frame_pixels = malloc(frame_width * frame_height);
+                assert(frame_pixels != NULL);
+                for (int i = 0; i < frame_height; ++i) {
+                    offset =
+                        (x * frame_width) + ((y * frame_height) + i) * width;
+                    memcpy(frame_pixels + (i * frame_width), pixels + offset,
+                           frame_width);
+                }
+                int frame_len = frame_width * frame_height;
+                for (int i = 0; i < frame_len; ++i) {
+                    if (map[frame_pixels[i]] == 0xff00ff) {
+                        frame_pixels[i] = 0;
+                    }
+                }
+                free(surface->surface_pixels[sprite_id]);
+                surface->surface_pixels[sprite_id] = NULL;
+                surface->sprite_colours[sprite_id] = frame_pixels;
+                surface->sprite_translate[sprite_id] = 0;
+                surface->sprite_translate_x[sprite_id] = 0;
+                surface->sprite_translate_y[sprite_id] = 0;
+#ifdef USE_LOCOLOUR
+                palette_to_locolour((uint8_t *)frame_pixels,
+                                    frame_width * frame_height, (uint32_t *)map);
+                surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#else
+                surface->sprite_palette[sprite_id] = map;
+#endif
+                surface->sprite_width[sprite_id] = frame_width;
+                surface->sprite_height[sprite_id] = frame_height;
+                surface->sprite_width_full[sprite_id] = frame_width;
+                surface->sprite_height_full[sprite_id++] = frame_height;
+            }
+        }
+        free(pixels);
+    }
+#ifdef USE_LOCOLOUR
+    free(map);
+#endif
+}
+
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count) {
     /* FIXME: unsafe unchecked access */
@@ -1534,7 +1672,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
     int colour_count = index_data[index_offset++] & 0xff;
 
 #ifdef RENDER_SW
-    int32_t *colours = calloc(colour_count, sizeof(int32_t));
+    int32_t colours[256];
     colours[0] = MAGENTA;
 #endif
 
@@ -1573,7 +1711,7 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
         int area = surface->sprite_width[i] * surface->sprite_height[i];
 
         surface->sprite_colours[i] = calloc(area, sizeof(int8_t));
-        surface->sprite_palette[i] = colours;
+        assert(surface->sprite_colours[i] != NULL);
 #else
         index_offset++;
 #endif
@@ -1613,6 +1751,17 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                 }
             }
         }
+#endif
+
+#ifdef USE_LOCOLOUR
+        palette_to_locolour((uint8_t *)surface->sprite_colours[i],
+                            area, (uint32_t *)colours);
+        surface->sprite_palette[i] = (int32_t *)ibm_vga_palette;
+#elif defined(RENDER_SW)
+        surface->sprite_palette[i] = calloc(colour_count, sizeof(int32_t));
+        assert(surface->sprite_palette[i] != NULL);
+        memcpy(surface->sprite_palette[i], colours,
+               colour_count * sizeof(int32_t));
 #endif
     }
 
@@ -1726,7 +1875,7 @@ void surface_read_sleep_word(Surface *surface, int sprite_id,
 void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
     int sprite_size =
         surface->sprite_width[sprite_id] * surface->sprite_height[sprite_id];
-
+#ifndef USE_LOCOLOUR
     int32_t *sprite_pixels = surface->surface_pixels[sprite_id];
 
     for (int i = 0; i < sprite_size; i++) {
@@ -1808,6 +1957,13 @@ void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
 
     surface->sprite_colours[sprite_id] = colours;
     surface->sprite_palette[sprite_id] = palette;
+#else
+    uint8_t *colours = calloc(sprite_size, sizeof(uint8_t));
+    rgb_to_locolour((uint32_t *)surface->surface_pixels[sprite_id],
+                    sprite_size, colours);
+    surface->sprite_colours[sprite_id] = (int8_t *)colours;
+    surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
+#endif
 
     free(surface->surface_pixels[sprite_id]);
     surface->surface_pixels[sprite_id] = NULL;
@@ -3870,11 +4026,15 @@ int surface_text_width(const char *text, FontStyle font) {
 }
 
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
-                       char **tabs, int tabs_length, int selected) {
-    int tab_width = (int)ceilf(width / (float)tabs_length);
+                       const char **tabs, int tabs_length, int selected) {
+    int tab_width = (int)(width / (float)tabs_length);
     int offset_x = 0;
 
     for (int i = 0; i < tabs_length; i++) {
+        if (i == tabs_length - 1) {
+            tab_width += width % tabs_length;
+        }
+
         int tab_colour = selected == i ? GREY_DC : GREY_A0;
 
         surface_draw_box_alpha(surface, x + offset_x, y, tab_width, height,
@@ -3992,6 +4152,7 @@ void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
 
 void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
                             int height, int scrub_y, int scrub_height) {
+    // TODO just remove this? confusing.
     x += width - 12;
 
     surface_draw_border(surface, x, y, 12, height, 0);
@@ -4021,7 +4182,8 @@ void surface_draw_scrollbar(Surface *surface, int x, int y, int width,
 
 void surface_draw_status_bar(Surface *surface, int max, int current,
                              char *label, int x, int y, int width, int height,
-                             int background_colour, int foreground_colour) {
+                             int background_colour, int foreground_colour,
+                             int is_percentage) {
     int current_width = current >= max ? width : (current / (float)max) * width;
 
     surface_draw_box_alpha(surface, x, y, current_width, height,
@@ -4034,14 +4196,25 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
 
     char formatted_status[strlen(label) + 27];
 
+    // TODO maybe do surface_text_width instead and check for overflow
     if (MUD_IS_COMPACT) {
-        sprintf(formatted_status, "%d / %d", current, max);
+        if (is_percentage) {
+            sprintf(formatted_status, "%.2f%%",
+                    (current / (float)max) * 100.0f);
+        } else {
+            sprintf(formatted_status, "%d / %d", current, max);
+        }
     } else {
-        sprintf(formatted_status, "%s: %d / %d", label, current, max);
+        if (is_percentage) {
+            sprintf(formatted_status, "%s: %.2f%%", label,
+                    (current / (float)max) * 100.0f);
+        } else {
+            sprintf(formatted_status, "%s: %d / %d", label, current, max);
+        }
     }
 
     surface_draw_string_centre(surface, formatted_status, x + (width / 2),
-                               y + 12, 0, WHITE);
+                               y + height - 4, 0, WHITE);
 }
 
 #ifdef RENDER_GL

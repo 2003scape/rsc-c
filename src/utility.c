@@ -1,5 +1,4 @@
 #include "utility.h"
-#include <assert.h>
 
 int sin_cos_512[512] = {0};
 int sin_cos_2048[2048] = {0};
@@ -89,6 +88,60 @@ int _3ds_gl_framebuffer_offsets_y[] = {
     69,   68,   65,   64,   21,   20,   17,   16,   5,    4,    1,    0};
 #endif
 
+void mud_log(char *format, ...) {
+    va_list args = {0};
+    va_start(args, format);
+
+#if !defined(_3DS) && !defined(WII)
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format,
+                    args);
+#else
+    vprintf(format, args);
+#endif
+
+    va_end(args);
+}
+
+void mud_error(char *format, ...) {
+    va_list args = {0};
+    va_start(args, format);
+
+#if !defined(_3DS) && !defined(WII)
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR,
+                    format, args);
+#else
+    vfprintf(stderr, format, args);
+#endif
+
+    va_end(args);
+}
+
+char *strcat_realloc(char *s, const char *new) {
+    size_t ol = strlen(s);
+    size_t nl = strlen(new);
+    char *np = realloc(s, ol + nl + 1);
+
+    assert(np != NULL);
+    memcpy(np + ol, new, nl);
+    np[ol + nl] = '\0';
+    return np;
+}
+
+char *mud_strdup(const char *s) {
+#if defined(__unix__) || defined(__unix) ||                                    \
+    (defined(__APPLE__) && defined(__MACH__))
+    /* strdup is defined in POSIX rather than ISO C */
+    return strdup(s);
+#else
+    size_t len = strlen(s) + 1;
+    char *n = malloc(len);
+    if (n != NULL) {
+        memcpy(n, s, len);
+    }
+    return n;
+#endif
+}
+
 void strtrim(char *s) {
     unsigned char *p = (unsigned char *)s;
     int l = strlen(s);
@@ -114,11 +167,12 @@ void strtolower(char *s) {
 int get_signed_byte(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return buffer[offset];
@@ -127,11 +181,12 @@ int get_signed_byte(void *b, size_t offset, size_t buflen) {
 int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return buffer[offset] & 0xff;
@@ -140,24 +195,42 @@ int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
 int get_unsigned_short(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 2) || (buflen - offset) < 2) {
-        fprintf(stderr,
-                "WARNING: tried to read excess short from buffer, off %zu len "
-                "%zu\n",
-                offset, buflen);
+        mud_error(
+            "WARNING: tried to read excess short from buffer, off %zu len "
+            "%zu\n",
+            offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return ((buffer[offset] & 0xff) << 8) + (buffer[offset + 1] & 0xff);
 }
 
+int get_unsigned_short_le(void *b, size_t offset, size_t buflen) {
+    int8_t *buffer = b;
+    if (offset > (SIZE_MAX - 2) || (buflen - offset) < 2) {
+        mud_error(
+            "WARNING: tried to read excess short from buffer, off %zu len "
+            "%zu\n",
+            offset, buflen);
+
+        assert(0);
+
+        return 0;
+    }
+    return ((buffer[offset + 1] & 0xff) << 8) + (buffer[offset] & 0xff);
+}
+
 int get_unsigned_int(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess int from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return ((buffer[offset] & 0xff) << 24) +
@@ -188,11 +261,12 @@ int get_signed_short(void *buffer, size_t offset, size_t buflen) {
 int get_stack_int(void *b, size_t offset, size_t buflen) {
     uint8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
 
@@ -201,11 +275,12 @@ int get_stack_int(void *b, size_t offset, size_t buflen) {
     }
 
     if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess int from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
 
@@ -222,10 +297,9 @@ int get_bit_mask(void *b, size_t offset, size_t buflen, size_t nbits) {
 
     for (; nbits > bit_offset; bit_offset = 8) {
         if (byte_offset > (SIZE_MAX - 1) || (buflen - byte_offset) < 1) {
-            fprintf(stderr,
-                    "WARNING: tried to read excess byte from buffer, off %zu "
-                    "len %zu\n",
-                    offset, buflen);
+            mud_error("WARNING: tried to read excess byte from buffer, off %zu "
+                      "len %zu\n",
+                      offset, buflen);
             assert(0);
             return 0;
         }
@@ -648,7 +722,7 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
     sprintf(dest, "%s%s%c", use_colour ? colour : "", formatted_amount, suffix);
 }
 
-void url_encode(char *s, char *dest) {
+void url_encode(const char *s, char *dest) {
     const char *hex = "0123456789abcdef";
 
     int pos = 0;
@@ -795,8 +869,7 @@ void gl_load_texture(GLuint *texture_id, char *file) {
     SDL_Surface *texture_image = IMG_Load(file);
 
     if (!texture_image) {
-        fprintf(stderr, "unable to load %s texture\n%s\n", file,
-                IMG_GetError());
+        mud_error("unable to load %s texture\n%s\n", file, IMG_GetError());
 
         exit(1);
     }

@@ -38,6 +38,8 @@ typedef struct Options Options;
      "browser_command = %s\n\n"                                                \
      "; Diversify NPCs sent by server (custom)\n"                              \
      "diversify_npcs = %d\n\n"                                                 \
+     "; Rename Herblaw items for ease of identification (custom)\n"            \
+     "rename_herblaw_items = %d\n\n"                                           \
                                                                                \
      "; Scroll panel lists, chatbox, and camera (if zoom enabled) with "       \
      "wheel\n"                                                                 \
@@ -67,6 +69,8 @@ typedef struct Options Options;
      "; Hold to buy/sell items from shops in bulk (matches trade screen)\n"    \
      "hold_to_buy = %d\n\n"                                                    \
                                                                                \
+     "; Low memory mode\n"                                                     \
+     "lowmem = %d\n"                                                           \
      "; F1 mode - only render every second scanline\n"                         \
      "interlace = %d\n"                                                        \
      "; Display the FPS at the bottom right of the screen\n"                   \
@@ -102,8 +106,12 @@ typedef struct Options Options;
      "status_bars = %d\n"                                                      \
      "; Use ground item models instead of billboarded sprites\n"               \
      "ground_item_models = %d\n"                                               \
+     "; Show text for valuable ground items to make them stand out\n"          \
+     "ground_item_text = %d\n"                                                 \
      "; Always animate objects like fires\n"                                   \
      "distant_animation = %d\n"                                                \
+     "; Load less compressed (2001 era) sprites\n"                             \
+     "tga_sprites = %d\n"                                                      \
      "; Show hover tooltip menu\n"                                             \
      "show_hover_tooltip = %d\n\n"                                             \
                                                                                \
@@ -176,6 +184,9 @@ struct Options {
     /* diversify NPCs sent by server (custom) */
     int diversify_npcs;
 
+    /* rename Herblaw items to something clearer (custom) */
+    int rename_herblaw_items;
+
     /* command to use to open web browser (on desktop) */
     char browser_command[255];
 
@@ -221,6 +232,9 @@ struct Options {
 
     /* hold to buy/sell items from shops in bulk (matches trade screen) */
     int hold_to_buy;
+
+    /* low memory mode */
+    int lowmem;
 
     /* F1 mode - only render every second scanline */
     int interlace;
@@ -272,8 +286,14 @@ struct Options {
     /* use ground item models instead of billboarded sprites */
     int ground_item_models;
 
+    /* display text overlay/highlight for valuable ground items */
+    int ground_item_text;
+
     /* always animate objects like fires */
     int distant_animation;
+
+    /* load less compressed (2001 era) sprites */
+    int tga_sprites;
 
     /* withdraw multiple unstackable items */
     int bank_unstackble_withdraw;
