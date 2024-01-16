@@ -1,17 +1,12 @@
 {
     "short_name": "2003Scape",
     "name": "2003Scape: A massive 3d multiplayer adventure",
-    "icons": [
-        {
-            "src": "/icon.png",
-            "type": "image/png",
-            "sizes": "128x128"
-        }
-    ],
+    "icons": [{ "src": "/icon.png", "type": "image/png", "sizes": "128x128" }],
     "start_url": "/",
     "background_color": "#000000",
     "display": "fullscreen",
     "scope": "/",
     "theme_color": "#486020",
-    "description": "Runescape is a massive 3d multiplayer adventure, with monsters to kill, quests to complete, and treasure to win."
+    "description": "Runescape is a massive 3d multiplayer adventure, with monsters to kill, quests to complete, and treasure to win.",
+    "categories": ["games"]
 }

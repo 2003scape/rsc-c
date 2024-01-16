@@ -372,7 +372,15 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, FontStyle font_style, char **list_entries,
                           int list_entry_count, int list_entry_position,
                           int is_interactive) {
-    int displayed_entry_count = height / surface_text_height(font_style);
+    int is_touch = mudclient_is_touch(panel->surface->mud);
+
+    // ugly hack for now :(
+    if (panel == panel->surface->mud->panel_quests) {
+        is_touch = 0;
+    }
+
+    int entry_height = surface_text_height(font_style) + (is_touch ? 6 : 0);
+    int displayed_entry_count = height / entry_height;
     int max_entries = list_entry_count - displayed_entry_count;
 
     if (list_entry_position > max_entries) {
@@ -484,15 +492,8 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         panel->control_list_entry_mouse_over[control] = -1;
     }
 
-    int is_touch = mudclient_is_touch(panel->surface->mud);
-
-    // ugly hack for now :(
-    if (panel == panel->surface->mud->panel_quests) {
-        is_touch = 0;
-    }
-
     int list_start_y =
-        height - displayed_entry_count * surface_text_height(font_style);
+        height - displayed_entry_count * entry_height;
 
     int list_y =
         y + (((surface_text_height(font_style) * 5) / 6) + list_start_y / 2) +
@@ -527,7 +528,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
             surface_draw_string(panel->surface, list_entries[i], x + 2, list_y,
                                 font_style, text_colour);
 
-            list_y += surface_text_height(font_style) + (is_touch ? 6 : 0);
+            list_y += entry_height;
         } else {
             panel_draw_string(panel, control, x + 2, list_y, list_entries[i],
                               font_style);
