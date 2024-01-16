@@ -1,6 +1,6 @@
 #include "magic-tab.h"
 
-char *magic_tabs[] = {"Magic", "Prayers"};
+static const char *magic_tabs[] = {"Magic", "Prayers"};
 
 void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - MAGIC_WIDTH - 3;

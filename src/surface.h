@@ -412,7 +412,7 @@ int surface_text_height_font(FontStyle font);
 int surface_text_height(FontStyle font);
 int surface_text_width(const char *text, FontStyle font);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
-                       char **tabs, int tabs_length, int selected);
+                       const char **tabs, int tabs_length, int selected);
 void surface_draw_item(Surface *surface, int x, int y, int slot_width,
                        int slot_height, int item_id);
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,
