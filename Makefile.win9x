@@ -23,4 +23,7 @@ mudclient.exe: $(OBJ)
 clean:
 	cd src/
 	del /Q /F /S "*.o"
+	cd ../win9x
+	del /Q /F /S "*.o"
+	cd ../
 	del mudclient.exe
