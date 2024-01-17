@@ -3426,7 +3426,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     mud->local_upper_x = section_x * REGION_SIZE + 32;
     mud->local_upper_y = section_y * REGION_SIZE + 32;
 
-    world_load_section_from3(mud->world, lx, ly, mud->last_plane_index);
+    world_load_section(mud->world, lx, ly, mud->last_plane_index);
 
     mud->region_x -= mud->plane_width;
     mud->region_y -= mud->plane_height;
@@ -3466,7 +3466,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
                              -world_get_elevation(mud->world, base_x, base_y),
                              base_y);
 
-            world_remove_object2(mud->world, object_x, object_y, object_id);
+            world_register_object(mud->world, object_x, object_y, object_id);
 
             if (object_id == WINDMILL_SAILS_ID) {
                 game_model_translate(game_model, 0, -480, 0);
@@ -3487,9 +3487,9 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         int wall_object_id = mud->wall_objects[i].id;
         int wall_object_dir = mud->wall_objects[i].direction;
 
-        world_set_object_adjacency_from4(mud->world, wall_object_x,
-                                         wall_object_y, wall_object_dir,
-                                         wall_object_id);
+        world_register_wall_object(mud->world, wall_object_x,
+                                   wall_object_y, wall_object_dir,
+                                   wall_object_id);
 
         game_model_destroy(mud->wall_objects[i].model);
         free(mud->wall_objects[i].model);
