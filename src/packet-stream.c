@@ -103,6 +103,13 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         struct in_addr addr = {0};
         memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
         strcpy(server_ip, inet_ntoa(addr));
+#elif WIN9X
+        struct hostent *host_addr = gethostbyname(mud->options->server);
+
+        struct in_addr addr = {0};
+        if (host_addr)
+            memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
+        strcpy(server_ip, inet_ntoa(addr));
 #else
         struct addrinfo hints = {0};
         struct addrinfo *result = {0};
@@ -133,7 +140,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #endif
     }
 
-#ifdef WIN32
+#if defined (WIN32) && !defined (WIN9X)
     ret = InetPton(AF_INET, server_ip, &server_addr.sin_addr);
 #else
     ret = inet_aton(server_ip, &server_addr.sin_addr);
