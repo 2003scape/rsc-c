@@ -448,8 +448,8 @@ void mudclient_render_login_scene_sprites(mudclient *mud) {
     int region_x = 50; // 49;
     int region_y = 50; // 47;
 
-    world_load_section_from3(mud->world, region_x * 48 + 23, region_y * 48 + 23,
-                             plane);
+    world_load_section(mud->world, region_x * 48 + 23, region_y * 48 + 23,
+                       plane);
 
     world_add_models(mud->world, mud->game_models);
 

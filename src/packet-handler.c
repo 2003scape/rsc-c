@@ -638,7 +638,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
 
-                    world_remove_object2(mud->world, area_x, area_y, object_id);
+                    world_register_object(mud->world, area_x, area_y, object_id);
 
                     if (object_id == WINDMILL_SAILS_ID) {
                         game_model_translate(model, 0, -480, 0);
@@ -1050,8 +1050,8 @@ void mudclient_packet_tick(mudclient *mud) {
                         return;
                     }
 
-                    world_set_object_adjacency_from4(mud->world, l_x, l_y,
-                                                     direction, id);
+                    world_register_wall_object(mud->world, l_x, l_y,
+                                               direction, id);
 
                     GameModel *model = mudclient_create_wall_object(
                         mud, l_x, l_y, direction, id, mud->wall_object_count);
