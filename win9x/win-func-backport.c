@@ -1,4 +1,6 @@
 #include "win-func-backport.h"
+#include <stdio.h>
+#include <errno.h>
 
 static const char *
 inet_ntop4 (const u_char *src, char *dst, socklen_t size)
@@ -6,10 +8,10 @@ inet_ntop4 (const u_char *src, char *dst, socklen_t size)
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
 
-	//if (sprintf((tmp, fmt, src[0], src[1], src[2], src[3])) >= size) {
-		//__set_errno (ENOSPC);
-		//return (NULL);
-	//}
+	if (sprintf(tmp, fmt, src[0], src[1], src[2], src[3]) >= size) {
+		errno = (ENOSPC);
+		return (NULL);
+	}
 	return strcpy(dst, tmp);
 }
 
@@ -22,7 +24,7 @@ inet_ntop (int af, const void *src, char *dst, socklen_t size)
 	//case AF_INET6:
 	//	return (inet_ntop6(src, dst, size));
 	default:
-		//__set_errno (EAFNOSUPPORT);
+		errno = (EAFNOSUPPORT);
 		return (NULL);
 	}
 	/* NOTREACHED */
