@@ -64,17 +64,17 @@ inet_aton(cp_arg, addr)
 	const char *cp_arg;
 	struct in_addr *addr;
 {
-	register const u_char *cp = cp_arg;
-	register u_long val;
-	register int base;
+	const u_char *cp = cp_arg;
+	u_long val;
+	int base;
 #ifdef WIN32
-	register ULONG_PTR n;
+	ULONG_PTR n;
 #else
-	register unsigned long n;
+	unsigned long n;
 #endif
-	register u_char c;
+	u_char c;
 	u_int parts[4];
-	register u_int *pp = parts;
+	u_int *pp = parts;
 
 	for (;;) {
 		/*
