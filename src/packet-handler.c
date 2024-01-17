@@ -158,9 +158,8 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_REGION_PLAYERS: {
         mud->known_player_count = mud->player_count;
 
-        for (int i = 0; i < mud->known_player_count; i++) {
-            mud->known_players[i] = mud->players[i];
-        }
+        memcpy(mud->known_players, mud->players,
+	    mud->known_player_count * sizeof(GameCharacter *));
 
         int offset = 8;
 
@@ -529,14 +528,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if (o_x != 0 || o_y != 0) {
                         if (i != index) {
-                            mud->objects[index].model = mud->objects[i].model;
+                            mud->objects[index] = mud->objects[i];
                             mud->objects[index].model->key = index;
-                            mud->objects[index].x = mud->objects[i].x;
-                            mud->objects[index].y = mud->objects[i].y;
-                            mud->objects[index].id = mud->objects[i].id;
-
-                            mud->objects[index].direction =
-                                mud->objects[i].direction;
                         }
 
                         index++;
@@ -709,9 +702,8 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->known_npc_count = mud->npc_count;
         mud->npc_count = 0;
 
-        for (int i = 0; i < mud->known_npc_count; i++) {
-            mud->known_npcs[i] = mud->npcs[i];
-        }
+        memcpy(mud->known_npcs, mud->npcs,
+	    mud->known_npc_count * sizeof(GameCharacter *));
 
         int offset = 8;
 
@@ -895,17 +887,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->ground_items[entity_count].x =
-                            mud->ground_items[j].x;
-
-                        mud->ground_items[entity_count].y =
-                            mud->ground_items[j].y;
-
-                        mud->ground_items[entity_count].id =
-                            mud->ground_items[j].id;
-
-                        mud->ground_items[entity_count].z =
-                            mud->ground_items[j].z;
+                        mud->ground_items[entity_count] = mud->ground_items[j];
                     }
 
                     entity_count++;
@@ -921,15 +903,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->objects[entity_count].model =
-                            mud->objects[j].model;
+                        mud->objects[entity_count] = mud->objects[j];
                         mud->objects[entity_count].model->key = entity_count;
-                        mud->objects[entity_count].x = mud->objects[j].x;
-                        mud->objects[entity_count].y = mud->objects[j].y;
-                        mud->objects[entity_count].id = mud->objects[j].id;
-
-                        mud->objects[entity_count].direction =
-                            mud->objects[j].direction;
                     }
 
                     entity_count++;
@@ -956,23 +931,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->wall_objects[entity_count].model =
-                            mud->wall_objects[j].model;
-
+                        mud->wall_objects[entity_count] = mud->wall_objects[j];
                         mud->wall_objects[entity_count].model->key =
                             entity_count + 10000;
-
-                        mud->wall_objects[entity_count].x =
-                            mud->wall_objects[j].x;
-
-                        mud->wall_objects[entity_count].y =
-                            mud->wall_objects[j].y;
-
-                        mud->wall_objects[entity_count].direction =
-                            mud->wall_objects[j].direction;
-
-                        mud->wall_objects[entity_count].id =
-                            mud->wall_objects[j].id;
                     }
 
                     entity_count++;
@@ -1020,18 +981,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if (s_x != 0 || s_y != 0) {
                         if (i != index) {
-                            mud->wall_objects[index].model =
-                                mud->wall_objects[i].model;
-
+                            mud->wall_objects[index] = mud->wall_objects[i];
                             mud->wall_objects[index].model->key = index + 10000;
-                            mud->wall_objects[index].x = mud->wall_objects[i].x;
-                            mud->wall_objects[index].y = mud->wall_objects[i].y;
-
-                            mud->wall_objects[index].direction =
-                                mud->wall_objects[i].direction;
-
-                            mud->wall_objects[index].id =
-                                mud->wall_objects[i].id;
                         }
 
                         index++;
@@ -1068,18 +1019,8 @@ void mudclient_packet_tick(mudclient *mud) {
                         mud->wall_objects[i].y != l_y ||
                         mud->wall_objects[i].direction != direction) {
                         if (i != count) {
-                            mud->wall_objects[count].model =
-                                mud->wall_objects[i].model;
-
+                            mud->wall_objects[count] = mud->wall_objects[i];
                             mud->wall_objects[count].model->key = count + 10000;
-                            mud->wall_objects[count].x = mud->wall_objects[i].x;
-                            mud->wall_objects[count].y = mud->wall_objects[i].y;
-
-                            mud->wall_objects[count].direction =
-                                mud->wall_objects[i].direction;
-
-                            mud->wall_objects[count].id =
-                                mud->wall_objects[i].id;
                         }
 
                         count++;
@@ -1151,11 +1092,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if (g_x != 0 || g_y != 0) {
                         if (i != index) {
-                            mud->ground_items[index].x = mud->ground_items[i].x;
-                            mud->ground_items[index].y = mud->ground_items[i].y;
-                            mud->ground_items[index].id =
-                                mud->ground_items[i].id;
-                            mud->ground_items[index].z = mud->ground_items[i].z;
+                            mud->ground_items[index] = mud->ground_items[i];
                         }
 
                         index++;
@@ -1207,17 +1144,7 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->ground_items[i].y != area_y ||
                             mud->ground_items[i].id != item_id) {
                             if (i != index) {
-                                mud->ground_items[index].x =
-                                    mud->ground_items[i].x;
-
-                                mud->ground_items[index].y =
-                                    mud->ground_items[i].y;
-
-                                mud->ground_items[index].id =
-                                    mud->ground_items[i].id;
-
-                                mud->ground_items[index].z =
-                                    mud->ground_items[i].z;
+                                mud->ground_items[index] = mud->ground_items[i];
                             }
 
                             index++;
