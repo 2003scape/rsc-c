@@ -3996,7 +3996,7 @@ void mudclient_handle_game_input(mudclient *mud) {
         int direction = 1;
 
         if (j3 != 0) {
-            mud->an_int_707++;
+            mud->camera_auto_counter++;
 
             if (j3 > 128) {
                 direction = -1;
@@ -4012,11 +4012,11 @@ void mudclient_handle_game_input(mudclient *mud) {
             }
 
             mud->camera_rotation +=
-                ((mud->an_int_707 * j3 + 255) / 256) * direction;
+                ((mud->camera_auto_counter * j3 + 255) / 256) * direction;
 
             mud->camera_rotation &= 0xff;
         } else {
-            mud->an_int_707 = 0;
+            mud->camera_auto_counter = 0;
         }
     } else if (mud->camera_momentum != 0) {
         int sign = mud->camera_momentum > 0 ? 1 : -1;
@@ -4084,7 +4084,7 @@ void mudclient_handle_game_input(mudclient *mud) {
     mud->last_mouse_button_down = 0;
 
     if (mud->settings_camera_auto) {
-        if (mud->an_int_707 == 0) {
+        if (mud->camera_auto_counter == 0) {
             if (mud->key_left) {
                 mud->camera_angle = (mud->camera_angle + 1) & 7;
                 mud->key_left = 0;
