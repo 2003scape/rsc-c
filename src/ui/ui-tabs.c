@@ -3,6 +3,43 @@
 char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
+void mudclient_draw_inventory_count(mudclient *mud) {
+    if (!mud->options->inventory_count) {
+        return;
+    }
+
+    int is_touch = mudclient_is_touch(mud);
+
+    int x = is_touch ? UI_TABS_TOUCH_X + 18 : mud->surface->width - 17;
+    int y = is_touch ? UI_TABS_TOUCH_Y + 21 : 24;
+
+    int count = mud->inventory_items_count;
+
+    char colour[6] = {0};
+
+    if (count == 30) {
+        strcpy(colour, "@red@");
+    } else if (count > 25) {
+        strcpy(colour, "@or3@");
+    } else if (count > 20) {
+        strcpy(colour, "@or2@");
+    } else if (count > 15) {
+        strcpy(colour, "@or1@");
+    } else if (count > 10) {
+        strcpy(colour, "@gr1@");
+    } else if (count > 5) {
+        strcpy(colour, "@gr2@");
+    } else {
+        strcpy(colour, "@gre@");
+    }
+
+    char formatted_count[17] = {0};
+    sprintf(formatted_count, "%s%d", colour, count);
+
+    surface_draw_string_centre(mud->surface, formatted_count, x, y,
+                               FONT_BOLD_13, WHITE);
+}
+
 void mudclient_draw_ui_tabs(mudclient *mud) {
     int is_touch = mudclient_is_touch(mud);
 
@@ -37,6 +74,8 @@ void mudclient_draw_ui_tabs(mudclient *mud) {
     surface_draw_sprite_alpha(mud->surface, button_x, 3, mud->sprite_media,
                               128);
 #endif
+
+    mudclient_draw_inventory_count(mud);
 }
 
 void mudclient_toggle_ui_tab(mudclient *mud, int tab) {
@@ -190,4 +229,6 @@ void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus) {
         surface_draw_sprite(mud->surface, selected_x, selected_y,
                             mud->sprite_media + mud->show_ui_tab);
     }
+
+    mudclient_draw_inventory_count(mud);
 }

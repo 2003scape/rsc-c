@@ -1204,6 +1204,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->inventory_items_count = get_unsigned_byte(data, offset++, size);
+
         if (mud->inventory_items_count > INVENTORY_ITEMS_MAX) {
             mud->inventory_items_count = INVENTORY_ITEMS_MAX;
         }
@@ -1242,6 +1243,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int stack = 1;
 
         int index = get_unsigned_byte(data, offset++, size);
+
         if (index >= INVENTORY_ITEMS_MAX) {
             return;
         }
@@ -1250,9 +1252,11 @@ void mudclient_packet_tick(mudclient *mud) {
         offset += 2;
 
         int id = id_equip & 32767;
+
         if (id >= game_data.item_count) {
             id = IRON_MACE_ID;
         }
+
         int equipped = id_equip / 32768;
 
         if (game_data.items[id & 32767].stackable == 0) {
@@ -1642,6 +1646,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
         int new_item_count = get_unsigned_byte(data, offset++, size);
+
         if (new_item_count > 40) {
             /* TODO: use some kind of constant to determine this (also below) */
             return;
@@ -1685,7 +1690,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     break;
                 }
 
-                if (mud->inventory_item_id[i] == 10) {
+                if (mud->inventory_item_id[i] == COINS_ID) {
                     unsellable = 1;
                 }
 
@@ -1716,6 +1721,7 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_TRADE_OPEN:
     case SERVER_DUEL_OPEN: {
         int player_index = get_unsigned_short(data, 1, size);
+
         if (player_index >= PLAYERS_SERVER_MAX) {
             return;
         }

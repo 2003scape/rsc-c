@@ -4906,37 +4906,6 @@ void mudclient_draw_ui(mudclient *mud) {
         mudclient_draw_hover_tooltip(mud);
     }
 
-    if (mud->options->inventory_count) {
-        int x = mud->surface->width - 17;
-        int y = 24;
-
-        int count = mud->inventory_items_count;
-
-        char colour[6] = {0};
-
-        if (count == 30) {
-            strcpy(colour, "@red@");
-        } else if (count > 25) {
-            strcpy(colour, "@or3@");
-        } else if (count > 20) {
-            strcpy(colour, "@or2@");
-        } else if (count > 15) {
-            strcpy(colour, "@or1@");
-        } else if (count > 10) {
-            strcpy(colour, "@gr1@");
-        } else if (count > 5) {
-            strcpy(colour, "@gr2@");
-        } else {
-            strcpy(colour, "@gre@");
-        }
-
-        char formatted_count[17] = {0};
-        sprintf(formatted_count, "%s%d", colour, count);
-
-        surface_draw_string_centre(mud->surface, formatted_count, x, y,
-                                   FONT_BOLD_13, WHITE);
-    }
-
     mud->mouse_button_click = 0;
 }
 
@@ -5679,8 +5648,6 @@ void mudclient_on_resize(mudclient *mud) {
 
     mud->game_width = new_width;
     mud->game_height = new_height;
-
-    mud_log("new size: %d %d\n", mud->game_width, mud->game_height);
 
     if (mud->surface != NULL) {
         if (mudclient_is_ui_scaled(mud)) {
