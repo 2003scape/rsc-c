@@ -25,6 +25,7 @@
 #include "social-tab.h"
 #include "stats-tab.h"
 
+void mudclient_draw_inventory_count(mudclient *mud);
 void mudclient_draw_ui_tabs(mudclient *mud);
 void mudclient_draw_ui_tab_label(mudclient *mud, int selected_tab, int width,
                                  int x, int y);
