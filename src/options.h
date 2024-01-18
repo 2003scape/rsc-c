@@ -67,7 +67,9 @@ typedef struct Options Options;
      "; Combat style menu is usable outside of combat\n"                       \
      "combat_style_always = %d\n"                                              \
      "; Hold to buy/sell items from shops in bulk (matches trade screen)\n"    \
-     "hold_to_buy = %d\n\n"                                                    \
+     "hold_to_buy = %d\n"                                                    \
+     "; Drag vertically to zoom camera\n"                                      \
+     "touch_vertical_drag = %d\n\n"                                            \
                                                                                \
      "; Low memory mode\n"                                                     \
      "lowmem = %d\n"                                                           \
@@ -235,6 +237,9 @@ struct Options {
     /* hold to buy/sell items from shops in bulk (matches trade screen) */
     int hold_to_buy;
 
+    /* drag vertically to zoom camera */
+    int touch_vertical_drag;
+
     /* low memory mode */
     int lowmem;
 
@@ -311,9 +316,6 @@ struct Options {
 
     /* adds total high alchemy value to the bank */
     int bank_value;
-
-    /* TODO: adds a deposit-all from inventory to the bank */
-    int bank_deposit_all;
 
     /* expand bank item grid with client height */
     int bank_expand;

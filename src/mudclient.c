@@ -3306,6 +3306,7 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_appearance_panel(mud);
     mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
+
     if (!mud->options->lowmem) {
         mudclient_render_login_scene_sprites(mud);
     }
@@ -5302,6 +5303,7 @@ void mudclient_draw_game(mudclient *mud) {
     if (!mud->options->lowmem) {
         mudclient_animate_objects(mud);
     }
+
     mudclient_draw_entity_sprites(mud);
 
     mud->surface->interlace = 0;
@@ -6193,12 +6195,15 @@ void mudclient_poll_events(mudclient *mud) {
                                             mudclient_touch_start_y, 2);
                 }
 
-                if (mud->show_ui_tab == 0 &&
+                if (mud->options->touch_vertical_drag != 0 &&
+                    mud->show_ui_tab == 0 &&
                     (mudclient_vertical_drag || abs(delta_y) > 30)) {
                     mudclient_vertical_drag = 1;
 
                     mud->mouse_scroll_delta =
-                        (event.tfinger.dy / 3.0f) * mud->game_height;
+                        (event.tfinger.dy *
+                         (mud->options->touch_vertical_drag / 100.0f)) *
+                        mud->game_height;
                 }
 
                 mudclient_mouse_moved(mud, touch_x, touch_y);

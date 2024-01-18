@@ -28,7 +28,7 @@ void options_new(Options *options) {
 void options_set_server(Options *options) {
 #if REVISION_177
     /* openrsc preservation */
-    strcpy(options->server, "game.openrsc.com"); // 206.251.222.229
+    strcpy(options->server, "game.openrsc.com"); // 50.73.67.9
     options->port = 43596;
 
     strcpy(options->rsa_exponent, "00010001");
@@ -87,6 +87,7 @@ void options_set_defaults(Options *options) {
     options->wiki_lookup = 1;
     options->combat_style_always = 0;
     options->hold_to_buy = 1;
+    options->touch_vertical_drag = 33;
 
     /* display */
     options->lowmem = 0;
@@ -153,6 +154,7 @@ void options_set_vanilla(Options *options) {
     options->wiki_lookup = 0;
     options->combat_style_always = 0;
     options->hold_to_buy = 0;
+    options->touch_vertical_drag = 33;
 
     /* display */
     options->lowmem = 0;
@@ -315,6 +317,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("wiki_lookup", options->wiki_lookup, 0, 1);
     OPTION_INI_INT("combat_style_always", options->combat_style_always, 0, 1);
     OPTION_INI_INT("hold_to_buy", options->hold_to_buy, 0, 1);
+    OPTION_INI_INT("touch_vertical_drag", options->touch_vertical_drag, 0, 100);
 
     /* display */
     OPTION_INI_INT("lowmem", options->lowmem, 0, 1);

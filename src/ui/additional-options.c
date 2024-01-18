@@ -299,6 +299,17 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->control_options[control] = &mud->options->hold_to_buy;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
+    y += OPTION_HORIZ_GAP;
+
+    sprintf(formatted_digits, "%d", mud->options->touch_vertical_drag);
+
+    control = mudclient_add_option_panel_string(
+        mud->panel_control_options,
+        "@whi@Vertical drag (touch): ", formatted_digits, 4, x, y);
+
+    mud->control_options[control] = &mud->options->touch_vertical_drag;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_INT;
+
     /* ui */
     x = ui_x + 4;
     y = ui_y + OPTION_HORIZ_GAP + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
@@ -482,15 +493,6 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Show total value: ", mud->options->bank_value, x, y);
 
     mud->bank_options[control] = &mud->options->bank_value;
-    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
-
-    y += OPTION_HORIZ_GAP;
-
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_bank_options,
-        "@whi@Deposit all: ", mud->options->bank_deposit_all, x, y);
-
-    mud->bank_options[control] = &mud->options->bank_deposit_all;
     mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += OPTION_HORIZ_GAP;
