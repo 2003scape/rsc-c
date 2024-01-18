@@ -963,7 +963,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                     mud->menu_items_count++;
                 }
-            } else if (type == 2) {
+            } else if (type == 2 && !mud->options->ground_item_models) {
                 mudclient_menu_add_ground_item(mud, index);
             } else if (type == 3) {
                 GameCharacter *npc = mud->npcs[index];

@@ -1141,9 +1141,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef SDL12
     mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
                                    SDL_OPENGL | SDL_RESIZABLE);
-  
+
     GLenum error = glGetError();
-  
+
     if (error != GL_NO_ERROR) {
         mud_log("Error initializing OpenGL! %s\n", gluErrorString(error));
         exit(0);
@@ -3487,9 +3487,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         int wall_object_id = mud->wall_objects[i].id;
         int wall_object_dir = mud->wall_objects[i].direction;
 
-        world_register_wall_object(mud->world, wall_object_x,
-                                   wall_object_y, wall_object_dir,
-                                   wall_object_id);
+        world_register_wall_object(mud->world, wall_object_x, wall_object_y,
+                                   wall_object_dir, wall_object_id);
 
         game_model_destroy(mud->wall_objects[i].model);
         free(mud->wall_objects[i].model);
@@ -6793,20 +6792,21 @@ void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
                                 float depth_bottom) {
-
     int32_t highlight_colour = highlight_item(id);
 
     if (highlight_colour != 0 && mud->options->ground_item_text &&
         mud->overworld_text_count < OVERWORLD_TEXT_MAX) {
-        struct OverworldText t = {0};
-        t.text = game_data.items[id].name;
-        t.colour = highlight_colour;
-        t.x = x + (width / 2);
-        t.y = y - (height / 2);
-        mud->overworld_text[mud->overworld_text_count++] = t;
+        struct OverworldText text = {0};
+
+        text.text = game_data.items[id].name;
+        text.colour = highlight_colour;
+        text.x = x + (width / 2);
+        text.y = y - (height / 2);
+
+        mud->overworld_text[mud->overworld_text_count++] = text;
     }
 
-    if (mud->item_models == NULL || mud->item_models[id] == NULL) {
+    if (!mud->options->ground_item_models) {
         int picture = game_data.items[id].sprite + mud->sprite_item;
         int mask = game_data.items[id].mask;
 
@@ -7132,10 +7132,10 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
     }
 }
 #ifdef WIN9X
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-    PSTR lpCmdLine, int nCmdShow) {
-	int argc; // = nCmdShow?
-	char **argv; // = lpCmdLine?
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
+                   int nCmdShow) {
+    int argc;    // = nCmdShow?
+    char **argv; // = lpCmdLine?
 #else
 int main(int argc, char **argv) {
 #endif
