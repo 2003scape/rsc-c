@@ -4,11 +4,12 @@ char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
 void mudclient_draw_inventory_count(mudclient *mud) {
-    if (!mud->options->inventory_count) {
+    int is_touch = mudclient_is_touch(mud);
+
+    if (!mud->options->inventory_count ||
+        (is_touch && mud->selected_item_inventory_index >= 0)) {
         return;
     }
-
-    int is_touch = mudclient_is_touch(mud);
 
     int x = is_touch ? UI_TABS_TOUCH_X + 18 : mud->surface->width - 17;
     int y = is_touch ? UI_TABS_TOUCH_Y + 21 : 24;
@@ -40,6 +41,29 @@ void mudclient_draw_inventory_count(mudclient *mud) {
                                FONT_BOLD_13, WHITE);
 }
 
+void mudclient_draw_inventory_icon(mudclient *mud, int x, int y,
+                                   int is_selected) {
+    if (is_selected) {
+        surface_draw_box(mud->surface, x, y, 32, 32, 0x000084);
+    } else {
+        surface_draw_box_alpha(mud->surface, x, y, 32, 32, GREY_B5, 128);
+    }
+
+    mudclient_draw_item(
+        mud, x, y + 5, 32, 22,
+        mud->inventory_item_id[mud->selected_item_inventory_index]);
+}
+
+void mudclient_draw_magic_icon(mudclient *mud, int x, int y, int is_selected) {
+    if (is_selected) {
+        surface_draw_box(mud->surface, x, y, 32, 32, 0x000084);
+        surface_draw_sprite(mud->surface, x, y, mud->sprite_projectile + 1);
+    } else {
+        surface_draw_box_alpha(mud->surface, x, y, 32, 32, GREY_B5, 128);
+        surface_draw_sprite(mud->surface, x, y, mud->sprite_projectile + 1);
+    }
+}
+
 void mudclient_draw_ui_tabs(mudclient *mud) {
     int is_touch = mudclient_is_touch(mud);
 
@@ -58,8 +82,18 @@ void mudclient_draw_ui_tabs(mudclient *mud) {
     }
 
     for (int i = 0; i < 6; i++) {
-        surface_draw_sprite_alpha(mud->surface, button_x, button_y,
-                                  mud->sprite_media + 33 + i, 128);
+        int selected_tab = i + 1;
+
+        if (is_touch && selected_tab == INVENTORY_TAB &&
+            mud->selected_item_inventory_index >= 0) {
+            mudclient_draw_inventory_icon(mud, button_x, button_y, 0);
+        } else if (is_touch && selected_tab == MAGIC_TAB &&
+                   mud->selected_spell >= 0) {
+            mudclient_draw_magic_icon(mud, button_x, button_y, 0);
+        } else {
+            surface_draw_sprite_alpha(mud->surface, button_x, button_y,
+                                      mud->sprite_media + 33 + i, 128);
+        }
 
         if (is_touch) {
             button_y += UI_BUTTON_SIZE - 2;
@@ -221,6 +255,16 @@ void mudclient_draw_active_ui_tab(mudclient *mud, int no_menus) {
 
             selected_y =
                 UI_TABS_TOUCH_Y + (mud->show_ui_tab - 1) * (UI_BUTTON_SIZE - 2);
+
+            if (mud->show_ui_tab == INVENTORY_TAB &&
+                mud->selected_item_inventory_index >= 0) {
+                mudclient_draw_inventory_icon(mud, selected_x, selected_y, 1);
+                return;
+            } else if (mud->show_ui_tab == MAGIC_TAB &&
+                       mud->selected_spell >= 0) {
+                mudclient_draw_magic_icon(mud, selected_x, selected_y, 1);
+                return;
+            }
         }
 #else
         int selected_x = mud->surface->width - UI_TABS_WIDTH - 3;
