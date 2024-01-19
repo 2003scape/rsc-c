@@ -44,8 +44,8 @@ void options_set_server(Options *options) {
 #endif
 #else
     strcpy(options->server, "127.0.0.1");
-    //strcpy(options->server, "192.168.100.178");
-    //strcpy(options->server, "192.168.100.113");
+    // strcpy(options->server, "192.168.100.178");
+    // strcpy(options->server, "192.168.100.113");
     options->port = 43594;
 #endif
 }
@@ -88,6 +88,7 @@ void options_set_defaults(Options *options) {
     options->combat_style_always = 0;
     options->hold_to_buy = 1;
     options->touch_vertical_drag = 33;
+    options->touch_pinch = 50;
 
     /* display */
     options->lowmem = 0;
@@ -155,6 +156,7 @@ void options_set_vanilla(Options *options) {
     options->combat_style_always = 0;
     options->hold_to_buy = 0;
     options->touch_vertical_drag = 33;
+    options->touch_pinch = 50;
 
     /* display */
     options->lowmem = 0;
@@ -240,6 +242,8 @@ void options_save(Options *options) {
             options->wiki_lookup,           //
             options->combat_style_always,   //
             options->hold_to_buy,           //
+            options->touch_vertical_drag,   //
+            options->touch_pinch,           //
                                             //
             options->lowmem,                //
             options->interlace,             //
@@ -317,7 +321,9 @@ void options_load(Options *options) {
     OPTION_INI_INT("wiki_lookup", options->wiki_lookup, 0, 1);
     OPTION_INI_INT("combat_style_always", options->combat_style_always, 0, 1);
     OPTION_INI_INT("hold_to_buy", options->hold_to_buy, 0, 1);
-    OPTION_INI_INT("touch_vertical_drag", options->touch_vertical_drag, 0, 100);
+    OPTION_INI_INT("touch_vertical_drag", options->touch_vertical_drag, -100,
+                   100);
+    OPTION_INI_INT("touch_pinch", options->touch_pinch, -100, 100);
 
     /* display */
     OPTION_INI_INT("lowmem", options->lowmem, 0, 1);

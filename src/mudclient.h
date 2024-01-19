@@ -180,7 +180,7 @@
 #define MENU_MAX 250
 #define PATH_STEPS_MAX 8000
 #define BANK_ITEMS_MAX 256
-#define SHOP_ITEMS_MAX 256
+#define SHOP_ITEMS_MAX 256 // TODO also just make this 40? (SHOP_GRID_MAX)
 #define TRADE_ITEMS_MAX 14
 #define DUEL_ITEMS_MAX 8
 

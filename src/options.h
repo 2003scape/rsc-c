@@ -67,9 +67,11 @@ typedef struct Options Options;
      "; Combat style menu is usable outside of combat\n"                       \
      "combat_style_always = %d\n"                                              \
      "; Hold to buy/sell items from shops in bulk (matches trade screen)\n"    \
-     "hold_to_buy = %d\n"                                                    \
+     "hold_to_buy = %d\n"                                                      \
      "; Drag vertically to zoom camera\n"                                      \
-     "touch_vertical_drag = %d\n\n"                                            \
+     "touch_vertical_drag = %d\n"                                              \
+     "; Drag horizontally to pan camera\n"                                     \
+     "touch_pinch = %d\n\n"                                          \
                                                                                \
      "; Low memory mode\n"                                                     \
      "lowmem = %d\n"                                                           \
@@ -239,6 +241,9 @@ struct Options {
 
     /* drag vertically to zoom camera */
     int touch_vertical_drag;
+
+    /* drag horizontally to pan camera */
+    int touch_pinch;
 
     /* low memory mode */
     int lowmem;

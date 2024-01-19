@@ -310,6 +310,17 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->control_options[control] = &mud->options->touch_vertical_drag;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
+    y += OPTION_HORIZ_GAP;
+
+    sprintf(formatted_digits, "%d", mud->options->touch_pinch);
+
+    control = mudclient_add_option_panel_string(
+        mud->panel_control_options,
+        "@whi@Horizontal pinch (touch): ", formatted_digits, 4, x, y);
+
+    mud->control_options[control] = &mud->options->touch_pinch;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_INT;
+
     /* ui */
     x = ui_x + 4;
     y = ui_y + OPTION_HORIZ_GAP + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;

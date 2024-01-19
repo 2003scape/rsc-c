@@ -6172,14 +6172,17 @@ void mudclient_poll_events(mudclient *mud) {
                 mudclient_finger_2_y = touch_y;
             }
 
-            if (mudclient_finger_1_down && mudclient_finger_2_down) {
+            if (mud->options->touch_pinch != 0 &&
+                mudclient_finger_1_down && mudclient_finger_2_down) {
                 double pinch_distance =
                     distance(mudclient_finger_1_x, mudclient_finger_1_y,
                              mudclient_finger_2_x, mudclient_finger_2_y);
 
                 if (mudclient_pinch_distance > 0) {
+                    float scale = mud->options->touch_pinch / 100.0f;
+
                     mud->mouse_scroll_delta =
-                        ((mudclient_pinch_distance - pinch_distance) / 2.0f);
+                        (mudclient_pinch_distance - pinch_distance) * scale;
                 }
 
                 mudclient_pinch_distance = pinch_distance;
