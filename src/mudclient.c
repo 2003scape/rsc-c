@@ -1614,7 +1614,7 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
         mud->mouse_y /= 2;
     }
 
-    if (mud->options->middle_click_camera && button == 2) {
+    if (mud->options->middle_click_camera != 0 && button == 2) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
         mud->origin_mouse_x = x;
@@ -3881,7 +3881,7 @@ void mudclient_handle_game_input(mudclient *mud) {
         mud->key_tab = 0;
     }
 
-    if (mud->options->middle_click_camera && mud->middle_button_down) {
+    if (mud->options->middle_click_camera != 0 && mud->middle_button_down) {
         int ticks = get_ticks();
 
         if (ticks - mud->last_mouse_sample_ticks >= 250) {
@@ -4135,10 +4135,13 @@ void mudclient_handle_game_input(mudclient *mud) {
     mouse_x = mud->gl_mouse_x;
 #endif
 
-    if (!mud->settings_camera_auto && mud->options->middle_click_camera &&
+    if (!mud->settings_camera_auto && mud->options->middle_click_camera != 0 &&
         mud->middle_button_down) {
+        float scale = mud->options->middle_click_camera / 100.0f;
+
         mud->camera_rotation =
-            (mud->origin_rotation + ((mouse_x - mud->origin_mouse_x) / 4)) &
+            (mud->origin_rotation +
+             (int)((mouse_x - mud->origin_mouse_x) * scale)) &
             0xff;
     }
 
@@ -6172,8 +6175,8 @@ void mudclient_poll_events(mudclient *mud) {
                 mudclient_finger_2_y = touch_y;
             }
 
-            if (mud->options->touch_pinch != 0 &&
-                mudclient_finger_1_down && mudclient_finger_2_down) {
+            if (mud->options->touch_pinch != 0 && mudclient_finger_1_down &&
+                mudclient_finger_2_down) {
                 double pinch_distance =
                     distance(mudclient_finger_1_x, mudclient_finger_1_y,
                              mudclient_finger_2_x, mudclient_finger_2_y);

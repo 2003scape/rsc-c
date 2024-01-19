@@ -71,7 +71,7 @@ typedef struct Options Options;
      "; Drag vertically to zoom camera\n"                                      \
      "touch_vertical_drag = %d\n"                                              \
      "; Drag horizontally to pan camera\n"                                     \
-     "touch_pinch = %d\n\n"                                          \
+     "touch_pinch = %d\n\n"                                                    \
                                                                                \
      "; Low memory mode\n"                                                     \
      "lowmem = %d\n"                                                           \
