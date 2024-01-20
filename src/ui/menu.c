@@ -561,134 +561,136 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
         }
     }
 
-    if (mud->menu_items_count > 20) {
-        mud->menu_items_count = 20;
+    if (mud->menu_items_count <= 0) {
+        return;
     }
 
-    if (mud->menu_items_count > 0) {
-        int index = -1;
+    if (mud->menu_items_count > MENU_ITEMS_MAX) {
+        mud->menu_items_count = MENU_ITEMS_MAX;
+    }
+
+    int index = -1;
+
+    for (int i = 0; i < mud->menu_items_count; i++) {
+        if (strlen(mud->menu_item_text2[mud->menu_indices[i]]) <= 0) {
+            continue;
+        }
+
+        index = i;
+        break;
+    }
+
+    char menu_text[255] = {0};
+
+#if !defined(WII) && !defined(_3DS)
+    if ((index == -1 || !mud->selected_wiki) && mud->is_hand_cursor) {
+        SDL_SetCursor(mud->default_cursor);
+        mud->is_hand_cursor = 0;
+    }
+#endif
+
+    if (index == -1 && mud->selected_wiki) {
+        strcpy(menu_text, "@cya@Choose a wiki lookup target");
+    } else if ((mud->selected_item_inventory_index >= 0 ||
+                mud->selected_spell >= 0) &&
+               mud->menu_items_count == 1) {
+        strcpy(menu_text, "Choose a target");
+    } else if ((mud->selected_item_inventory_index >= 0 ||
+                mud->selected_spell >= 0) &&
+               mud->menu_items_count > 1) {
+        sprintf(menu_text, "@whi@%s %s",
+                mud->menu_item_text1[mud->menu_indices[0]],
+                mud->menu_item_text2[mud->menu_indices[0]]);
+    } else if (index != -1) {
+#if !defined(WII) && !defined(_3DS)
+        if (mud->selected_wiki && !mud->is_hand_cursor) {
+            SDL_SetCursor(mud->hand_cursor);
+            mud->is_hand_cursor = 1;
+        }
+#endif
+
+        sprintf(menu_text, "%s: @whi@%s",
+                mud->menu_item_text2[mud->menu_indices[index]],
+                mud->menu_item_text1[mud->menu_indices[0]]);
+    }
+
+    if (mud->menu_items_count == 2 && strlen(menu_text) > 0) {
+        strcat(menu_text, "@whi@ / 1 more option");
+    }
+
+    if (mud->menu_items_count > 2 && strlen(menu_text) > 0) {
+        char more_options[33] = {0};
+
+        sprintf(more_options, "@whi@ / %d more options",
+                mud->menu_items_count - 1);
+
+        strcat(menu_text, more_options);
+    }
+
+    int is_touch = mudclient_is_touch(mud);
+
+    if (!is_touch && strlen(menu_text) > 0) {
+        surface_draw_string(mud->surface, menu_text, 6, 14, FONT_BOLD_12,
+                            YELLOW);
+    }
+
+    if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 1) ||
+        (mud->settings_mouse_button_one && mud->mouse_button_click == 1 &&
+         mud->menu_items_count == 1)) {
+        mudclient_menu_item_click(mud, mud->menu_indices[0]);
+        mud->mouse_button_click = 0;
+        return;
+    }
+
+    if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 2) ||
+        (mud->settings_mouse_button_one && mud->mouse_button_click == 1)) {
+        int entry_height = is_touch ? 19 : 15;
+
+        mud->menu_height = (mud->menu_items_count + 1) * entry_height;
+        mud->menu_width = surface_text_width("Choose option", 1) + 5;
+
+        if (is_touch) {
+            mud->menu_height += 3;
+        }
 
         for (int i = 0; i < mud->menu_items_count; i++) {
-            if (strlen(mud->menu_item_text2[mud->menu_indices[i]]) <= 0) {
-                continue;
-            }
+            char *menu_item_text1 = mud->menu_item_text1[i];
+            char *menu_item_text2 = mud->menu_item_text2[i];
 
-            index = i;
-            break;
+            char menu_item_text[strlen(menu_item_text1) +
+                                strlen(menu_item_text2) + 2];
+
+            sprintf(menu_item_text, "%s %s", menu_item_text1,
+                    menu_item_text2);
+
+            int text_width = surface_text_width(menu_item_text, 1) + 5;
+
+            if (text_width > mud->menu_width) {
+                mud->menu_width = text_width;
+            }
         }
 
-        char menu_text[255] = {0};
+        mud->menu_x = mud->mouse_x - (mud->menu_width / 2);
+        mud->menu_y = mud->mouse_y - 7;
+        mud->show_right_click_menu = 1;
 
-#if !defined(WII) && !defined(_3DS)
-        if ((index == -1 || !mud->selected_wiki) && mud->is_hand_cursor) {
-            SDL_SetCursor(mud->default_cursor);
-            mud->is_hand_cursor = 0;
-        }
-#endif
-
-        if (index == -1 && mud->selected_wiki) {
-            strcpy(menu_text, "@cya@Choose a wiki lookup target");
-        } else if ((mud->selected_item_inventory_index >= 0 ||
-                    mud->selected_spell >= 0) &&
-                   mud->menu_items_count == 1) {
-            strcpy(menu_text, "Choose a target");
-        } else if ((mud->selected_item_inventory_index >= 0 ||
-                    mud->selected_spell >= 0) &&
-                   mud->menu_items_count > 1) {
-            sprintf(menu_text, "@whi@%s %s",
-                    mud->menu_item_text1[mud->menu_indices[0]],
-                    mud->menu_item_text2[mud->menu_indices[0]]);
-        } else if (index != -1) {
-#if !defined(WII) && !defined(_3DS)
-            if (mud->selected_wiki && !mud->is_hand_cursor) {
-                SDL_SetCursor(mud->hand_cursor);
-                mud->is_hand_cursor = 1;
-            }
-#endif
-
-            sprintf(menu_text, "%s: @whi@%s",
-                    mud->menu_item_text2[mud->menu_indices[index]],
-                    mud->menu_item_text1[mud->menu_indices[0]]);
+        if (mud->menu_x < 0) {
+            mud->menu_x = 0;
         }
 
-        if (mud->menu_items_count == 2 && strlen(menu_text) > 0) {
-            strcat(menu_text, "@whi@ / 1 more option");
+        if (mud->menu_y < 0) {
+            mud->menu_y = 0;
         }
 
-        if (mud->menu_items_count > 2 && strlen(menu_text) > 0) {
-            char more_options[33] = {0};
-
-            sprintf(more_options, "@whi@ / %d more options",
-                    mud->menu_items_count - 1);
-
-            strcat(menu_text, more_options);
+        if (mud->menu_x + mud->menu_width > mud->surface->width - 2) {
+            mud->menu_x = mud->surface->width - 2 - mud->menu_width;
         }
 
-        int is_touch = mudclient_is_touch(mud);
-
-        if (!is_touch && strlen(menu_text) > 0) {
-            surface_draw_string(mud->surface, menu_text, 6, 14, FONT_BOLD_12,
-                                YELLOW);
+        if (mud->menu_y + mud->menu_height > mud->surface->height - 31) {
+            mud->menu_y = mud->surface->height - 31 - mud->menu_height;
         }
 
-        if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 1) ||
-            (mud->settings_mouse_button_one && mud->mouse_button_click == 1 &&
-             mud->menu_items_count == 1)) {
-            mudclient_menu_item_click(mud, mud->menu_indices[0]);
-            mud->mouse_button_click = 0;
-            return;
-        }
-
-        if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 2) ||
-            (mud->settings_mouse_button_one && mud->mouse_button_click == 1)) {
-            int entry_height = is_touch ? 19 : 15;
-
-            mud->menu_height = (mud->menu_items_count + 1) * entry_height;
-            mud->menu_width = surface_text_width("Choose option", 1) + 5;
-
-            if (is_touch) {
-                mud->menu_height += 3;
-            }
-
-            for (int i = 0; i < mud->menu_items_count; i++) {
-                char *menu_item_text1 = mud->menu_item_text1[i];
-                char *menu_item_text2 = mud->menu_item_text2[i];
-
-                char menu_item_text[strlen(menu_item_text1) +
-                                    strlen(menu_item_text2) + 2];
-
-                sprintf(menu_item_text, "%s %s", menu_item_text1,
-                        menu_item_text2);
-
-                int text_width = surface_text_width(menu_item_text, 1) + 5;
-
-                if (text_width > mud->menu_width) {
-                    mud->menu_width = text_width;
-                }
-            }
-
-            mud->menu_x = mud->mouse_x - (mud->menu_width / 2);
-            mud->menu_y = mud->mouse_y - 7;
-            mud->show_right_click_menu = 1;
-
-            if (mud->menu_x < 0) {
-                mud->menu_x = 0;
-            }
-
-            if (mud->menu_y < 0) {
-                mud->menu_y = 0;
-            }
-
-            if (mud->menu_x + mud->menu_width > mud->surface->width - 2) {
-                mud->menu_x = mud->surface->width - 2 - mud->menu_width;
-            }
-
-            if (mud->menu_y + mud->menu_height > mud->surface->height - 31) {
-                mud->menu_y = mud->surface->height - 31 - mud->menu_height;
-            }
-
-            mud->mouse_button_click = 0;
-        }
+        mud->mouse_button_click = 0;
     }
 }
 
