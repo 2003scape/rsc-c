@@ -139,8 +139,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
 #ifdef RENDER_GL
 #ifdef __SWITCH__
-    gl_load_texture(&surface->gl_sprite_texture,
-                    "romfs:/textures/sprites.png");
+    gl_load_texture(&surface->gl_sprite_texture, "romfs:/textures/sprites.png");
 
     for (int i = 0; i < ENTITY_TEXTURE_LENGTH; i++) {
         char filename[32] = {0};
@@ -1601,8 +1600,7 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
         surface->sprite_translate_x[sprite_id] = 0;
         surface->sprite_translate_y[sprite_id] = 0;
 #ifdef USE_LOCOLOUR
-        palette_to_locolour((uint8_t *)pixels,
-                            width * height, (uint32_t *)map);
+        palette_to_locolour((uint8_t *)pixels, width * height, (uint32_t *)map);
         surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
 #else
         surface->sprite_palette[sprite_id] = map;
@@ -1639,7 +1637,8 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
                 surface->sprite_translate_y[sprite_id] = 0;
 #ifdef USE_LOCOLOUR
                 palette_to_locolour((uint8_t *)frame_pixels,
-                                    frame_width * frame_height, (uint32_t *)map);
+                                    frame_width * frame_height,
+                                    (uint32_t *)map);
                 surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
 #else
                 surface->sprite_palette[sprite_id] = map;
@@ -1754,8 +1753,8 @@ void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
 #endif
 
 #ifdef USE_LOCOLOUR
-        palette_to_locolour((uint8_t *)surface->sprite_colours[i],
-                            area, (uint32_t *)colours);
+        palette_to_locolour((uint8_t *)surface->sprite_colours[i], area,
+                            (uint32_t *)colours);
         surface->sprite_palette[i] = (int32_t *)ibm_vga_palette;
 #elif defined(RENDER_SW)
         surface->sprite_palette[i] = calloc(colour_count, sizeof(int32_t));
@@ -1959,8 +1958,8 @@ void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id) {
     surface->sprite_palette[sprite_id] = palette;
 #else
     uint8_t *colours = calloc(sprite_size, sizeof(uint8_t));
-    rgb_to_locolour((uint32_t *)surface->surface_pixels[sprite_id],
-                    sprite_size, colours);
+    rgb_to_locolour((uint32_t *)surface->surface_pixels[sprite_id], sprite_size,
+                    colours);
     surface->sprite_colours[sprite_id] = (int8_t *)colours;
     surface->sprite_palette[sprite_id] = (int32_t *)ibm_vga_palette;
 #endif
@@ -2432,8 +2431,9 @@ void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
 #endif
 }
 
-void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
-                                int scale_y, int sprite_id, int alpha) {
+void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y,
+                                     int scale_x, int scale_y, int sprite_id,
+                                     int alpha) {
 #ifdef RENDER_SW
     int sprite_width = surface->sprite_width[sprite_id];
     int sprite_height = surface->sprite_height[sprite_id];

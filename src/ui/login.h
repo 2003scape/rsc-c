@@ -5,13 +5,10 @@ typedef enum {
     LOGIN_STAGE_WELCOME = 0,
     LOGIN_STAGE_NEW = 1,
     LOGIN_STAGE_EXISTING = 2,
-    LOGIN_STAGE_REGISTER = 3, // TODO don't think we're using this
-    LOGIN_STAGE_RECOVER = 4
+    LOGIN_STAGE_RECOVER = 3
 } LOGIN_STAGE;
 
 #include "../mudclient.h"
-
-#define LOGIN_BACKGROUND_HEIGHT ((int)((200 / 512.0f) * (float)(MUD_WIDTH)))
 
 #ifdef RENDER_3DS_GL
 #define LOGIN_RENDER_DELAY 250

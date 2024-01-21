@@ -857,7 +857,17 @@ void mudclient_resize(mudclient *mud) {
             calloc(mud->game_width * mud->game_height, sizeof(int32_t));
 #endif
 
+        // TODO only when size is different? doesn't really matter
+        panel_destroy(mud->panel_login_welcome);
+        panel_destroy(mud->panel_login_new_user);
+        panel_destroy(mud->panel_login_existing_user);
+
+        mudclient_create_login_panels(mud);
+
         mud->scene->raster = mud->surface->pixels;
+
+        int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
+                         mud->surface->height < MUD_VANILLA_HEIGHT;
 
         int is_touch = mudclient_is_touch(mud);
 
@@ -866,19 +876,27 @@ void mudclient_resize(mudclient *mud) {
         int half_offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
         int half_offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
 
+        int login_offset_x =
+            (mud->surface->width / 2) -
+            (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) / 2;
+
+        int login_offset_y =
+            (mud->surface->height / 2) -
+            (is_compact ? MUD_MIN_HEIGHT : MUD_VANILLA_HEIGHT) / 2;
+
         if (mud->panel_login_welcome != NULL) {
-            mud->panel_login_welcome->offset_x = half_offset_x;
-            mud->panel_login_welcome->offset_y = half_offset_y;
+            mud->panel_login_welcome->offset_x = login_offset_x;
+            mud->panel_login_welcome->offset_y = login_offset_y;
         }
 
         if (mud->panel_login_new_user != NULL) {
-            mud->panel_login_new_user->offset_x = half_offset_x;
-            mud->panel_login_new_user->offset_y = half_offset_y;
+            mud->panel_login_new_user->offset_x = login_offset_x;
+            mud->panel_login_new_user->offset_y = login_offset_y;
         }
 
         if (mud->panel_login_existing_user != NULL) {
-            mud->panel_login_existing_user->offset_x = half_offset_x;
-            mud->panel_login_existing_user->offset_y = half_offset_y;
+            mud->panel_login_existing_user->offset_x = login_offset_x;
+            mud->panel_login_existing_user->offset_y = login_offset_y;
         }
 
         if (mud->panel_appearance != NULL) {
@@ -4976,8 +4994,9 @@ void mudclient_draw_overhead(mudclient *mud) {
         int scale_x = (39 * scale) / 100;
         int scale_y = (27 * scale) / 100;
 
-        surface_draw_action_bubble(mud->surface, x - (scale_x / 2), y - scale_y,
-                                   scale_x, scale_y, mud->sprite_media + 9, 85);
+        surface_draw_sprite_scale_alpha(mud->surface, x - (scale_x / 2),
+                                        y - scale_y, scale_x, scale_y,
+                                        mud->sprite_media + 9, 85);
 
         int scale_x_clip = (36 * scale) / 100;
         int scale_y_clip = (24 * scale) / 100;
