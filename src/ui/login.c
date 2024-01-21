@@ -777,8 +777,6 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
         /* fade the left/right of the login scene if the width exceeds 512 */
         if (offset_x > 0) {
-            int background_width = mud->surface->sprite_width[mud->sprite_logo];
-
             for (int i = 0; i < 3; i++) {
                 int alpha = 192 - (i * 64);
 
@@ -789,7 +787,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
                 /* right */
                 surface_draw_box_alpha(
-                    mud->surface, background_width - (i * 2) + offset_x,
+                    mud->surface, login_background_width - (i * 2) + offset_x,
                     10 + offset_y, 2, login_background_height, BLACK, alpha);
             }
         }
