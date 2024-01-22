@@ -64,7 +64,7 @@ void mudclient_draw_combat_style(mudclient *mud) {
 
     if (is_compact) {
         surface_draw_string_centre(mud->surface, "Combat style",
-           ui_x + (combat_style_width / 2), ui_y + y, FONT_REGULAR_11, WHITE);
+           ui_x + (combat_style_width / 2), ui_y + y, FONT_BOLD_12, WHITE);
     } else {
         surface_draw_string_centre(mud->surface, "Select combat style",
            ui_x + (combat_style_width / 2), ui_y + y, FONT_BOLD_13, WHITE);

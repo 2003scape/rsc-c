@@ -4196,25 +4196,25 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
 
     char formatted_status[strlen(label) + 27];
 
-    // TODO maybe do surface_text_width instead and check for overflow
-    if (MUD_IS_COMPACT) {
-        if (is_percentage) {
-            sprintf(formatted_status, "%.2f%%",
-                    (current / (float)max) * 100.0f);
-        } else {
-            sprintf(formatted_status, "%d / %d", current, max);
-        }
+    if (is_percentage) {
+        sprintf(formatted_status, "%s: %.2f%%", label,
+                (current / (float)max) * 100.0f);
     } else {
-        if (is_percentage) {
-            sprintf(formatted_status, "%s: %.2f%%", label,
-                    (current / (float)max) * 100.0f);
-        } else {
-            sprintf(formatted_status, "%s: %d / %d", label, current, max);
-        }
+        sprintf(formatted_status, "%s: %d / %d", label, current, max);
     }
 
-    surface_draw_string_centre(surface, formatted_status, x + (width / 2),
-                               y + height - 4, 0, WHITE);
+    char *draw_status_text = formatted_status;
+
+    if (surface_text_width(formatted_status, FONT_REGULAR_11) > width - 4) {
+        while (draw_status_text[0] != ' ') {
+            draw_status_text++;
+        }
+
+        draw_status_text++;
+    }
+
+    surface_draw_string_centre(surface, draw_status_text, x + (width / 2),
+                               y + height - 4, FONT_REGULAR_11, WHITE);
 }
 
 #ifdef RENDER_GL
