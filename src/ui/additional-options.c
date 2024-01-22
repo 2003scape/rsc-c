@@ -442,6 +442,17 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->ui_options[control] = &mud->options->combat_style_always;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
+    y += OPTION_HORIZ_GAP;
+
+    sprintf(formatted_digits, "%d", mud->options->ran_target_fps);
+
+    control = mudclient_add_option_panel_string(mud->panel_ui_options,
+                                                "@whi@Text effect FPS: ", formatted_digits,
+                                                4, x, y);
+
+    mud->game_options[control] = &mud->options->ran_target_fps;
+    mud->game_option_types[control] = ADDITIONAL_OPTIONS_INT;
+
     /* bank */
     x = ui_x + 4;
     y = ui_y + OPTION_HORIZ_GAP + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
