@@ -817,15 +817,20 @@ int colour_str_to_colour(const char *colour_str, int ran_target_fps) {
     } else if (strcmp(colour_str, "ora") == 0) {
         colour = STRING_ORA;
     } else if (strcmp(colour_str, "ran") == 0) {
-        if (ran_target_fps == 0) {
+        /* prevent divide by zero */
+        if (ran_target_fps < 1) {
             ran_target_fps = 1;
         }
-        if ((get_ticks() - last_random_colour) >= (1000 / ran_target_fps)) {
-            printf("%d\n", ran_target_fps);
-            random_colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
-            last_random_colour = get_ticks();
+        if (ran_target_fps < 50) {
+            /* limit the framerate if desired */
+            if ((get_ticks() - last_random_colour) >= (1000 / ran_target_fps)) {
+                random_colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+                last_random_colour = get_ticks();
+            }
+            colour = random_colour;
+        } else {
+            colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
         }
-        colour = random_colour;
     } else if (strcmp(colour_str, "or1") == 0) {
         colour = STRING_OR1;
     } else if (strcmp(colour_str, "or2") == 0) {
