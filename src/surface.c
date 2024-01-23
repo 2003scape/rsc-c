@@ -924,8 +924,8 @@ void surface_gl_blur_texture(Surface *surface, int sprite_id, int blur_height,
 #ifdef RENDER_GL
     int offset_x = MINIMAP_SPRITE_WIDTH;
 
-    int offset_y =
-        (sprite_id - surface->mud->sprite_logo) * LOGIN_BACKGROUND_HEIGHT;
+    int offset_y = (sprite_id - surface->mud->sprite_logo) *
+                   surface->sprite_height[surface->mud->sprite_logo];
 
     uint8_t *texture_data = surface->gl_dynamic_texture_buffer;
 #elif defined(RENDER_3DS_GL)
@@ -3776,8 +3776,8 @@ void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
             strncpy(sliced, text + start, end - start);
             strtolower(sliced);
 
-            int string_colour = colour_str_to_colour(sliced,
-                surface->mud->options->ran_target_fps);
+            int string_colour = colour_str_to_colour(
+                sliced, surface->mud->options->ran_target_fps);
 
             if (string_colour >= 0) {
                 colour = string_colour;
@@ -4219,7 +4219,8 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
     }
 
     surface_draw_string_centre(surface, draw_status_text, x + (width / 2),
-                               y + height - (is_touch ? 3 : 4), FONT_REGULAR_11, WHITE);
+                               y + height - (is_touch ? 3 : 4), FONT_REGULAR_11,
+                               WHITE);
 }
 
 #ifdef RENDER_GL
