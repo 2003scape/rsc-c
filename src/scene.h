@@ -257,26 +257,6 @@ int scene_gl_model_time_compare(const void *a, const void *b);
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int max_sprite_count);
-void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
-                            int l, int i1, int j1, int k1, int l1, int i2,
-                            int j2, int k2, int l2);
-void scene_texture_back_translucent_scanline(int32_t *raster,
-                                             int32_t *texture_pixels, int l,
-                                             int i1, int j1, int k1, int l1,
-                                             int i2, int j2, int k2, int l2,
-                                             int i3);
-void scene_texture_scanline2(int32_t *raster, int32_t *texture_pixels, int k,
-                             int l, int i1, int j1, int k1, int l1, int i2,
-                             int j2, int k2, int l2);
-void scene_texture_back_translucent_scanline2(int32_t *raster,
-                                              int32_t *texture_pixels, int l,
-                                              int i1, int j1, int k1, int l1,
-                                              int i2, int j2, int k2, int l2,
-                                              int i3);
-void scene_gradient_translucent_scanline(int32_t *raster, int i, int j,
-                                         int32_t *ramp, int l, int i1);
-void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
-                             int32_t *ramp, int ramp_index, int ramp_inc);
 void scene_add_model(Scene *scene, GameModel *model);
 void scene_remove_model(Scene *scene, GameModel *model);
 void scene_null_model(Scene *scene, GameModel *model);
@@ -289,32 +269,14 @@ void scene_set_local_player(Scene *scene, int i);
 void scene_set_sprite_translate_x(Scene *scene, int i, int n);
 void scene_set_mouse_location(Scene *scene, int x, int y);
 void scene_set_bounds(Scene *scene, int width, int height);
-void scene_polygons_intersect_sort(Scene *scene, int step,
-                                   GamePolygon **polygons, int count);
-int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
-                         int end);
 void scene_set_frustum(Scene *scene, int x, int y, int z);
-void scene_initialise_polygons_2d(Scene *scene);
-void scene_render_polygon_2d_face(Scene *scene, int face);
 void scene_render(Scene *scene);
-void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
-                              int32_t *plane_y, int32_t *vertex_shade,
-                              GameModel *game_model, int face);
-void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
-                     int32_t *vertices_y, int32_t *vertices_z, int face_fill,
-                     GameModel *game_model);
 void scene_set_camera(Scene *scene, int x, int z, int y, int pitch, int yaw,
                       int roll, int distance);
-void scene_initialise_polygon_3d(Scene *scene, int polygon_index);
-void scene_initialise_polygon_2d(Scene *scene, int polygon_index);
-int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
-int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128);
 void scene_define_texture(Scene *scene, int id, int8_t *colours,
                           int32_t *palette, int wide128);
-void scene_prepare_texture(Scene *scene, int id);
-void scene_set_texture_pixels(Scene *scene, int id);
 #ifdef RENDER_SW
 void scene_scroll_texture(Scene *scene, int id);
 #endif
@@ -323,13 +285,6 @@ int scene_get_fill_colour(Scene *scene, int face_fill);
 void scene_set_light_from3(Scene *scene, int x, int y, int z);
 void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
                            int y, int z);
-int scene_method306(int i, int j, int k, int l, int i1);
-int scene_method307(int i, int j, int k, int l, int flag);
-int scene_method308(int i, int j, int k, int flag);
-int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
-                    int *vertex_view_x_b, int *vertex_view_y_b, int length_a,
-                    int length_b);
-
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene);
 #endif
