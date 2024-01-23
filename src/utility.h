@@ -98,9 +98,6 @@
 
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
-extern int BITMASK[];
-
-extern int certificate_items[][2];
 
 #ifdef RENDER_3DS_GL
 extern int _3ds_gl_framebuffer_offsets_x[];
@@ -147,8 +144,8 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
                           int use_commas, char *dest);
 void url_encode(const char *s, char *dest);
 int get_certificate_item_id(int item_id);
-int is_ip_address(char *address);
-int colour_str_to_colour(char *colour_str);
+int is_ip_address(const char *address);
+int colour_str_to_colour(const char *colour_str, int ran_target_fps);
 double distance(int x1, int y1, int x2, int y2);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)

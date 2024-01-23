@@ -10,10 +10,17 @@ void mudclient_draw_status_bars(mudclient *mud) {
     // TODO maybe make COMBAT_BUTTON_HEIGHT_COMPACT etc.
     int combat_button_height = is_compact ? 22 : 20;
 
-    int status_bar_width = (is_compact ? 106 : 175) / 2 - 1;
-    int status_bar_height = is_touch ? 14 : 16;
+    int status_bar_width = 175 / 2 - 1;
 
-    int ui_x = is_touch ? 9 : 7;
+    if (is_touch) {
+        status_bar_width = (mud->surface->width * 0.353f) / 2 - 6;
+    } else if (is_compact) {
+        status_bar_width = 106 / 2 - 1;
+    }
+
+    int status_bar_height = is_touch ? 13 : 16;
+
+    int ui_x = is_touch ? 4 : 7;
 
     int ui_y = is_touch ? mud->surface->height - status_bar_height
                         : 15 + (combat_button_height * 5) + 6;
@@ -27,7 +34,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
     surface_draw_status_bar(mud->surface, max_hits, current_hits, "Hits", x, y,
                             status_bar_width, status_bar_height, RED, GREEN, 0);
 
-    x += status_bar_width + (is_touch ? 10 : 3);
+    x += status_bar_width + (is_touch ? 4 : 3);
 
     int max_prayer = mud->player_skill_base[SKILL_PRAYER];
     int current_prayer = mud->player_skill_current[SKILL_PRAYER];
@@ -38,10 +45,14 @@ void mudclient_draw_status_bars(mudclient *mud) {
 
     GameCharacter *opponent = mudclient_get_opponent(mud);
 
-    if (opponent != NULL && opponent->max_hits != 0 &&
-        (is_touch ? mud->surface->width > 508 : 1)) {
+    if (is_touch) {
+        x += status_bar_width + mud->surface->width * 0.293f + 9;
+    }
+
+    int show_opponent_health = opponent != NULL && opponent->max_hits != 0;
+
+    if (show_opponent_health) {
         if (is_touch) {
-            x += status_bar_width + 10;
             y = ui_y;
         } else {
             x = ui_x;
@@ -61,27 +72,37 @@ void mudclient_draw_status_bars(mudclient *mud) {
 
         surface_draw_status_bar(mud->surface, opponent->max_hits,
                                 opponent->current_hits, opponent_name, x, y,
-                                (status_bar_width * 2) + 3, status_bar_height,
-                                RED, GREEN, 0);
+                                is_touch ? status_bar_width
+                                         : (status_bar_width * 2) + 3,
+                                status_bar_height, RED, GREEN, 0);
 
         if (is_touch) {
-            x += status_bar_width + 3;
+            x += status_bar_width + 4;
         }
     }
 
     if (!mud->is_sleeping) {
         if (is_touch) {
-            x += status_bar_width + 10;
             y = ui_y;
         } else {
             x = ui_x;
             y += status_bar_height + 5;
         }
 
-        surface_draw_status_bar(
-            mud->surface, 750, mud->stat_fatigue, "Fatigue", x, y,
-            is_touch ? (int)(status_bar_width * 1.33f) : (status_bar_width * 2) + 3,
-            status_bar_height, BLACK, 0xe2e2e2, 1);
+        int width = status_bar_width * 2 + 3;
+
+        if (is_touch) {
+            if (show_opponent_health) {
+                width = status_bar_width;
+            } else {
+                width = status_bar_width * 1.75f;
+                x += (mud->surface->width * 0.353f / 2) - (width / 2) - 3;
+            }
+        }
+
+        surface_draw_status_bar(mud->surface, 750, mud->stat_fatigue, "Fatigue",
+                                x, y, width, status_bar_height, BLACK, 0xe2e2e2,
+                                1);
     }
 
     x = is_touch ? 86 : mud->game_width - 2;
@@ -126,8 +147,8 @@ void mudclient_draw_status_bars(mudclient *mud) {
                  colour, skill_names[i], mud->player_skill_current[i],
                  mud->player_skill_base[i]);
 
-        surface_draw_string_right(mud->surface, formatted_effect,
-                                  x, y, FONT_REGULAR_11, WHITE);
+        surface_draw_string_right(mud->surface, formatted_effect, x, y,
+                                  FONT_REGULAR_11, WHITE);
 
         y += 14;
     }

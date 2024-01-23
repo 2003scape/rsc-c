@@ -3,7 +3,8 @@
 int sin_cos_512[512] = {0};
 int sin_cos_2048[2048] = {0};
 
-int BITMASK[] = {0,          1,          3,         7,         15,
+static const int BITMASK[] = {
+                 0,          1,          3,         7,         15,
                  31,         63,         127,       255,       511,
                  1023,       2047,       4095,      8191,      16383,
                  32767,      65535,      0x1ffff,   0x3ffff,   0x7ffff,
@@ -12,12 +13,15 @@ int BITMASK[] = {0,          1,          3,         7,         15,
                  0x3fffffff, 0x7fffffff, -1};
 
 // TODO typed
-int certificate_items[][2] = {
+static const int certificate_items[][2] = {
     {517, 151},  {521, 152}, {519, 153},  {518, 155},  {528, 170},  {529, 171},
     {532, 172},  {530, 173}, {1271, 220}, {536, 369},  {535, 370},  {534, 372},
     {533, 373},  {520, 383}, {531, 384},  {1272, 483}, {1273, 486}, {1275, 492},
     {1274, 495}, {631, 545}, {630, 546},  {629, 554},  {628, 555},  {713, 633},
     {712, 634},  {711, 635}, {1270, 814}};
+
+static int random_colour = 0;
+static int random_colour_ticks = 0;
 
 void init_utility_global(void) {
     for (int i = 0; i < 256; i++) {
@@ -754,7 +758,7 @@ int get_certificate_item_id(int item_id) {
     return -1;
 }
 
-int is_ip_address(char *address) {
+int is_ip_address(const char *address) {
     int length = strlen(address);
     int segment = 0;
     int segment_count = 0;
@@ -785,7 +789,7 @@ int is_ip_address(char *address) {
 }
 
 /* turn @colour@ into integer colour */
-int colour_str_to_colour(char *colour_str) {
+int colour_str_to_colour(const char *colour_str, int ran_target_fps) {
     int colour = -1;
 
     if (strcmp(colour_str, "red") == 0) {
@@ -812,6 +816,17 @@ int colour_str_to_colour(char *colour_str) {
         colour = STRING_ORA;
     } else if (strcmp(colour_str, "ran") == 0) {
         colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+        if (ran_target_fps < 1) {
+            colour = STRING_MAG;
+        } else if (ran_target_fps < 50) {
+            /* limit the framerate if desired */
+            if (get_ticks() >= random_colour_ticks) {
+                /* next colour */
+                random_colour = colour;
+                random_colour_ticks = get_ticks() + (1000 / ran_target_fps);
+            }
+            colour = random_colour;
+        }
     } else if (strcmp(colour_str, "or1") == 0) {
         colour = STRING_OR1;
     } else if (strcmp(colour_str, "or2") == 0) {

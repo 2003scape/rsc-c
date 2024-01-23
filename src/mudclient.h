@@ -195,8 +195,8 @@
 #define MUD_MIN_HEIGHT 240
 
 #ifdef _3DS
-#define MUD_WIDTH 320
-#define MUD_HEIGHT 240
+#define MUD_WIDTH MUD_MIN_WIDTH
+#define MUD_HEIGHT MUD_MIN_HEIGHT
 #else
 #define MUD_WIDTH MUD_VANILLA_WIDTH
 #define MUD_HEIGHT MUD_VANILLA_HEIGHT
@@ -204,7 +204,8 @@
 //#define MUD_HEIGHT 240
 #endif
 
-#define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
+// TODO make this a function
+#define MUD_IS_COMPACT (MUD_WIDTH < MUD_VANILLA_WIDTH || MUD_HEIGHT < MUD_VANILLA_HEIGHT)
 
 /* npc IDs */
 #define SHIFTY_MAN_ID 24
