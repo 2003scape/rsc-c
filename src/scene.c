@@ -3,21 +3,10 @@
 #include "custom/toonscape.h"
 #endif
 
-static int scene_intersect(int *, int *, int *, int *, int, int);
-static int scene_heuristic_polygon(GamePolygon *, GamePolygon *);
-static int scene_separate_polygon(GamePolygon *, GamePolygon *);
-static void scene_generate_scanlines(Scene *, int, int32_t *, int32_t *,
-                                     int32_t *, GameModel *, int);
-static void scene_polygons_intersect_sort(Scene *, int, GamePolygon **, int);
-static int scene_polygons_order(Scene *, GamePolygon **, int, int);
-static void scene_initialise_polygon_2d(Scene *, int);
-static void scene_initialise_polygon_3d(Scene *, int);
-static void scene_render_polygon_2d_face(Scene *, int);
 static void scene_prepare_texture(Scene *, int);
 static void scene_set_texture_pixels(Scene *, int);
-static int scene_method306(int i, int j, int k, int l, int i1);
-static int scene_method307(int i, int j, int k, int l, int flag);
-static int scene_method308(int i, int j, int k, int flag);
+
+#ifdef RENDER_SW
 static void scene_texture128_scanline(int32_t *restrict,
                                       int32_t *restrict,
                                       int, int, int, int, int,
@@ -42,6 +31,20 @@ static void scene_colour_scanline(int32_t *restrict, int, int,
                                   int32_t *restrict, int, int);
 static void scene_rasterize(Scene *, int, int32_t *, int32_t *, int32_t *,
                             int, GameModel *);
+static void scene_generate_scanlines(Scene *, int, int32_t *, int32_t *,
+                            int32_t *, GameModel *, int);
+static int scene_method306(int i, int j, int k, int l, int i1);
+static int scene_method307(int i, int j, int k, int l, int flag);
+static int scene_method308(int i, int j, int k, int flag);
+static void scene_polygons_intersect_sort(Scene *, int, GamePolygon **, int);
+static int scene_polygons_order(Scene *, GamePolygon **, int, int);
+static int scene_intersect(int *, int *, int *, int *, int, int);
+static int scene_heuristic_polygon(GamePolygon *, GamePolygon *);
+static int scene_separate_polygon(GamePolygon *, GamePolygon *);
+static void scene_initialise_polygon_3d(Scene *, int);
+static void scene_initialise_polygon_2d(Scene *, int);
+static void scene_render_polygon_2d_face(Scene *, int);
+#endif
 
 #ifdef RENDER_3DS_GL
 void _3ds_gl_perspective(float fov, float aspect, float near, float far,
@@ -276,6 +279,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #endif
 }
 
+#ifdef RENDER_SW
 static void scene_texture128_scanline(int32_t *restrict raster,
                                       int32_t *restrict texture_pixels,
                                       int k, int l, int i1, int j1, int k1,
@@ -1054,6 +1058,7 @@ static void scene_colour_scanline(int32_t *restrict raster, int i,
         }
     }
 }
+#endif /* RENDER_SW */
 
 void scene_add_model(Scene *scene, GameModel *model) {
     if (model == NULL) {
@@ -1231,6 +1236,7 @@ void scene_set_bounds(Scene *scene, int width, int height) {
 #endif
 }
 
+#ifdef RENDER_SW
 static void scene_polygons_intersect_sort(Scene *scene, int step,
                                           GamePolygon **polygons, int count) {
     for (int i = 0; i <= count; i++) {
@@ -1340,6 +1346,7 @@ static int scene_polygons_order(Scene *scene, GamePolygon **polygons,
         end = scene->new_end;
     } while (1);
 }
+#endif /* RENDER_SW */
 
 void scene_set_frustum(Scene *scene, int x, int y, int z) {
     int yaw = (-scene->camera_yaw + 1024) & 1023;
@@ -1861,6 +1868,7 @@ void scene_render(Scene *scene) {
     scene->mouse_picking_active = 0;
 }
 
+#ifdef RENDER_SW
 static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                                      int32_t *plane_y, int32_t *vertex_shade,
                                      GameModel *game_model, int face) {
@@ -2916,6 +2924,7 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
         }
     }
 }
+#endif /* RENDER_SW */
 
 void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
                       int roll, int distance) {
@@ -2964,6 +2973,7 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
 #endif
 }
 
+#ifdef RENDER_SW
 static void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     GamePolygon *polygon = scene->visible_polygons[polygon_index];
     GameModel *game_model = polygon->model;
@@ -3383,6 +3393,7 @@ static int scene_heuristic_polygon(GamePolygon *polygon_a,
 
     return !flag;
 }
+#endif
 
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128) {
@@ -3658,6 +3669,7 @@ void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
     }
 }
 
+#ifdef RENDER_SW
 static int scene_method306(int i, int j, int k, int l, int i1) {
     if (l == j) {
         return i;
@@ -4292,6 +4304,7 @@ static int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 
     return scene_method308(j6, k10, k15, flag);
 }
+#endif /* RENDER_SW */
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene) {
