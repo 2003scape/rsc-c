@@ -1,7 +1,11 @@
 #include "duel.h"
 
-void mudclient_draw_duel_option(mudclient *mud, int x, int y, int width,
-                                int option) {
+
+static void mudclient_draw_duel_option(mudclient *mud, int x, int y, int width,
+                                       int option);
+
+static void mudclient_draw_duel_option(mudclient *mud, int x, int y, int width,
+                                       int option) {
     surface_draw_border(mud->surface, x + width, y, DUEL_CHECKBOX_WIDTH,
                         DUEL_CHECKBOX_HEIGHT, YELLOW);
 

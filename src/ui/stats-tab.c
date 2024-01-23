@@ -41,7 +41,7 @@ static const char *members_quests[] = {
 char **quest_names;
 int quests_length = 0;
 
-void init_stats_tab_global() {
+void init_stats_tab_global(void) {
     skills_length = sizeof(skill_names) / sizeof(skill_names[0]);
 
     int total_exp = 0;

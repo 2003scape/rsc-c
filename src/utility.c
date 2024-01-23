@@ -19,7 +19,7 @@ int certificate_items[][2] = {
     {1274, 495}, {631, 545}, {630, 546},  {629, 554},  {628, 555},  {713, 633},
     {712, 634},  {711, 635}, {1270, 814}};
 
-void init_utility_global() {
+void init_utility_global(void) {
     for (int i = 0; i < 256; i++) {
         sin_cos_512[i] = (int)(sin((double)i * 0.02454369) * 32768);
         sin_cos_512[i + 256] = (int)(cos((double)i * 0.02454369) * 32768);
@@ -598,7 +598,7 @@ void format_confirm_amount(int amount, char *formatted) {
     }
 }
 
-int get_ticks() {
+int get_ticks(void) {
 #if !defined(WII) && !defined(_3DS)
     return SDL_GetTicks();
 #endif

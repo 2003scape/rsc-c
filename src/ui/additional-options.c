@@ -4,15 +4,24 @@
 
 const char *option_tabs[] = {"Game", "Controls", "UI", "Bank"};
 
-int mudclient_add_option_panel_label(Panel *panel, char *label, int x, int y) {
+static int mudclient_add_option_panel_label(Panel *panel, char *label,
+                                            int x, int y);
+static int mudclient_add_option_panel_string(Panel *panel, char *label,
+                                             char *default_text,
+                                             int max_length, int x, int y);
+static int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
+                                               int is_checked, int x, int y);
+
+static int mudclient_add_option_panel_label(Panel *panel, char *label,
+                                            int x, int y) {
     panel_add_text(panel, x, y, label, 1, 0);
 
     return surface_text_width(label, 1) + 2;
 }
 
-int mudclient_add_option_panel_string(Panel *panel, char *label,
-                                      char *default_text, int max_length, int x,
-                                      int y) {
+static int mudclient_add_option_panel_string(Panel *panel, char *label,
+                                             char *default_text, int max_length,
+                                             int x, int y) {
     int label_width = mudclient_add_option_panel_label(panel, label, x, y);
 
     int control = panel_add_text_input(panel, x + label_width, y,
@@ -24,8 +33,8 @@ int mudclient_add_option_panel_string(Panel *panel, char *label,
     return control;
 }
 
-int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
-                                        int is_checked, int x, int y) {
+static int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
+                                               int is_checked, int x, int y) {
     int label_width = mudclient_add_option_panel_label(panel, label, x, y);
 
     int control = panel_add_checkbox(panel, x + label_width, y - 7, 14, 14);

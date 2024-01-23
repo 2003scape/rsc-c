@@ -1,3 +1,4 @@
+#include "../custom/clarify-herblaw-items.h"
 #include "../game-data.h"
 #include "../utility.h"
 #include <assert.h>

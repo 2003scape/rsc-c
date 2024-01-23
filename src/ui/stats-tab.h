@@ -15,7 +15,7 @@ extern int quests_length;
 #define STATS_TAB_HEIGHT 24
 #define STATS_LINE_BREAK (MUD_IS_COMPACT ? 11 : 12)
 
-void init_stats_tab_global();
+void init_stats_tab_global(void);
 
 void mudclient_draw_equipment_status(mudclient *mud, int x, int y,
                                      int line_break, int no_menus);

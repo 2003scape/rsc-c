@@ -3,6 +3,8 @@
 char *mudclient_ui_tab_names[] = {"Inventory", "Map",     "Stats",
                                   "Spellbook", "Friends", "Options"};
 
+static void mudclient_toggle_ui_tab(mudclient *mud, int tab);
+
 void mudclient_draw_inventory_count(mudclient *mud) {
     int is_touch = mudclient_is_touch(mud);
 
@@ -112,7 +114,7 @@ void mudclient_draw_ui_tabs(mudclient *mud) {
     mudclient_draw_inventory_count(mud);
 }
 
-void mudclient_toggle_ui_tab(mudclient *mud, int tab) {
+static void mudclient_toggle_ui_tab(mudclient *mud, int tab) {
     if (mud->mouse_button_click != 0) {
         mud->show_ui_tab = mud->show_ui_tab == tab ? 0 : tab;
         mud->mouse_button_click = 0;

@@ -5,6 +5,11 @@
 
 struct MudConfig game_data;
 
+static int game_data_get_unsigned_byte(void);
+static int game_data_get_unsigned_short(void);
+static int game_data_get_unsigned_int(void);
+static char *game_data_get_string(void);
+
 int game_data_get_model_index(char *name) {
     strtolower(name);
 
@@ -23,19 +28,19 @@ int game_data_get_model_index(char *name) {
     return game_data.model_count - 1;
 }
 
-static int game_data_get_unsigned_byte() {
+static int game_data_get_unsigned_byte(void) {
     return get_unsigned_byte(game_data.data_integer, game_data.offset++,
                              game_data.data_integer_len);
 }
 
-static int game_data_get_unsigned_short() {
+static int game_data_get_unsigned_short(void) {
     int i = get_unsigned_short(game_data.data_integer, game_data.offset,
                                game_data.data_integer_len);
     game_data.offset += 2;
     return i;
 }
 
-static int game_data_get_unsigned_int() {
+static int game_data_get_unsigned_int(void) {
     int i = get_unsigned_int(game_data.data_integer, game_data.offset,
                              game_data.data_integer_len);
     game_data.offset += 4;
@@ -47,7 +52,7 @@ static int game_data_get_unsigned_int() {
     return i;
 }
 
-static char *game_data_get_string() {
+static char *game_data_get_string(void) {
     int start = game_data.string_offset;
 
     while (game_data.data_string[game_data.string_offset]) {

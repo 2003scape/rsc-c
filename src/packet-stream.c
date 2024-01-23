@@ -51,10 +51,12 @@ int get_client_opcode_friend(int opcode) {
     return -1;
 }
 
-void init_packet_stream_global() { THREAT_LENGTH = strlen(SPOOKY_THREAT); }
+void init_packet_stream_global(void) { THREAT_LENGTH = strlen(SPOOKY_THREAT); }
 #endif
 
 #ifdef HAVE_SIGNALS
+void on_signal_do_nothing(int dummy);
+
 void on_signal_do_nothing(int dummy) { (void)dummy; }
 #endif
 

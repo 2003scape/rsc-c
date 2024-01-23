@@ -107,7 +107,7 @@ extern int _3ds_gl_framebuffer_offsets_x[];
 extern int _3ds_gl_framebuffer_offsets_y[];
 #endif
 
-void init_utility_global();
+void init_utility_global(void);
 
 void mud_log(char *format, ...);
 void mud_error(char *format, ...);
@@ -138,7 +138,7 @@ void *unpack_data(const char *file_name, size_t extra_size, void *archive_data,
 void *load_data(const char *file_name, size_t extra_size,
                   void *archive_data, size_t *size_out);
 void format_confirm_amount(int amount, char *formatted);
-int get_ticks();
+int get_ticks(void);
 void delay_ticks(int ticks);
 void get_level_difference_colour(int level_difference, char *colour);
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
