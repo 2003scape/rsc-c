@@ -35,7 +35,7 @@ int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
 }
 
 void mudclient_create_options_panel(mudclient *mud) {
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < ADDITIONAL_OPTIONS_MAX; i++) {
         mud->game_option_types[i] = -1;
         mud->control_option_types[i] = -1;
         mud->ui_option_types[i] = -1;
@@ -471,11 +471,11 @@ void mudclient_create_options_panel(mudclient *mud) {
     sprintf(formatted_digits, "%d", mud->options->ran_target_fps);
 
     control = mudclient_add_option_panel_string(mud->panel_ui_options,
-                                                "@whi@Text effect FPS: ", formatted_digits,
-                                                4, x, y);
+                                                "@whi@Text effect FPS: ",
+                                                formatted_digits, 4, x, y);
 
-    mud->game_options[control] = &mud->options->ran_target_fps;
-    mud->game_option_types[control] = ADDITIONAL_OPTIONS_INT;
+    mud->ui_options[control] = &mud->options->ran_target_fps;
+    mud->ui_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
     /* bank */
     x = ui_x + 4;

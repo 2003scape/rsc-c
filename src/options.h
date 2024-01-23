@@ -8,6 +8,8 @@
 #include <fat.h>
 #endif
 
+#define ADDITIONAL_OPTIONS_MAX 128
+
 typedef struct Options Options;
 
 #include "lib/ini.h"
