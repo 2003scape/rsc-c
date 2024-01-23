@@ -79,6 +79,8 @@ typedef struct Options Options;
      "interlace = %d\n"                                                        \
      "; Underground lighting flicker\n"                                        \
      "flicker = %d\n"                                                          \
+     "; Target framerate of @ran@ text effect\n"                               \
+     "ran_target_fps = %d\n"                                                   \
      "; Display the FPS at the bottom right of the screen\n"                   \
      "display_fps = %d\n"                                                      \
      "; Double the UI size but keep the scene size if window is over double "  \
@@ -253,6 +255,9 @@ struct Options {
 
     /* underground lighting flicker */
     int flicker;
+
+    /* target framerate of @ran@ text effect */
+    int ran_target_fps;
 
     /* display the FPS at the bottom right of the screen */
     int display_fps;

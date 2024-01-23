@@ -3776,7 +3776,8 @@ void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
             strncpy(sliced, text + start, end - start);
             strtolower(sliced);
 
-            int string_colour = colour_str_to_colour(sliced);
+            int string_colour = colour_str_to_colour(sliced,
+                surface->mud->options->ran_target_fps);
 
             if (string_colour >= 0) {
                 colour = string_colour;
