@@ -340,9 +340,6 @@ struct Options {
     /* TODO: censor chat and private messages */
     // int word_filter;
 
-    /* TODO: adjust input and layout for mobile-friendliness */
-    // int mobile;
-
     /* presets without UI configuration in additional options: */
     /* support account registration, password changes and recovery within the
      * client */

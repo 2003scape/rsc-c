@@ -4192,7 +4192,11 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
     surface_draw_box_alpha(surface, x + current_width, y, width - current_width,
                            height, background_colour, 128);
 
-    surface_draw_border(surface, x, y, width, height, BLACK);
+    int is_touch = mudclient_is_touch(surface->mud);
+
+    if (!is_touch) {
+        surface_draw_border(surface, x, y, width, height, BLACK);
+    }
 
     char formatted_status[strlen(label) + 27];
 
@@ -4214,7 +4218,7 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
     }
 
     surface_draw_string_centre(surface, draw_status_text, x + (width / 2),
-                               y + height - 4, FONT_REGULAR_11, WHITE);
+                               y + height - (is_touch ? 3 : 4), FONT_REGULAR_11, WHITE);
 }
 
 #ifdef RENDER_GL
