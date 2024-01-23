@@ -1,7 +1,4 @@
 #include "scene.h"
-#ifdef USE_TOONSCAPE
-#include "custom/toonscape.h"
-#endif
 
 static void scene_prepare_texture(Scene *scene, int id);
 static void scene_set_texture_pixels(Scene *scene, int id);
@@ -9,31 +6,30 @@ static void scene_initialise_polygons_2d(Scene *scene);
 
 #ifdef RENDER_SW
 static void scene_texture128_scanline(int32_t *restrict raster,
-                                      int32_t *restrict texture_pixels,
-                                      int k, int l, int i1, int j1, int k1,
-                                      int l1, int i2, int j2, int k2, int l2);
+                                      int32_t *restrict texture_pixels, int k,
+                                      int l, int i1, int j1, int k1, int l1,
+                                      int i2, int j2, int k2, int l2);
 static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
-                                               int32_t *restrict texture,
-                                               int l, int i1, int j1, int k1,
-                                               int l1, int i2, int j2, int k2,
-                                               int l2, int i3);
+                                               int32_t *restrict texture, int l,
+                                               int i1, int j1, int k1, int l1,
+                                               int i2, int j2, int k2, int l2,
+                                               int i3);
 static void scene_texture64_scanline(int32_t *restrict raster,
-                                     int32_t *restrict texture_pixels,
-                                     int k, int l, int i1, int j1, int k1,
-                                     int l1, int i2, int j2, int k2, int l2);
+                                     int32_t *restrict texture_pixels, int k,
+                                     int l, int i1, int j1, int k1, int l1,
+                                     int i2, int j2, int k2, int l2);
 static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                                               int32_t *restrict texture_pixels,
                                               int l, int i1, int j1, int k1,
                                               int l1, int i2, int j2, int k2,
                                               int l2, int i3);
-static void scene_colour_translucent_scanline(int32_t *restrict raster,
-                                              int i, int raster_idx,
+static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
+                                              int raster_idx,
                                               int32_t *restrict ramp,
                                               int ramp_index, int ramp_inc);
 static void scene_colour_scanline(int32_t *restrict raster, int i,
-                                  int raster_idx,
-                                  int32_t *restrict ramp, int ramp_index,
-                                  int ramp_inc);
+                                  int raster_idx, int32_t *restrict ramp,
+                                  int ramp_index, int ramp_inc);
 static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                                      int32_t *plane_y, int32_t *vertex_shade,
                                      GameModel *game_model, int face);
@@ -54,8 +50,10 @@ static int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
 static int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
                            int *vertex_view_x_b, int *vertex_view_y_b,
                            int length_a, int length_b);
-static int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
-static int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
+static int scene_separate_polygon(GamePolygon *polygon_a,
+                                  GamePolygon *polygon_b);
+static int scene_heuristic_polygon(GamePolygon *polygon_a,
+                                   GamePolygon *polygon_b);
 static void scene_initialise_polygon_3d(Scene *scene, int polygon_index);
 static void scene_initialise_polygon_2d(Scene *scene, int polygon_index);
 static void scene_render_polygon_2d_face(Scene *scene, int face);
@@ -296,9 +294,9 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
 #ifdef RENDER_SW
 static void scene_texture128_scanline(int32_t *restrict raster,
-                                      int32_t *restrict texture_pixels,
-                                      int k, int l, int i1, int j1, int k1,
-                                      int l1, int i2, int j2, int k2, int l2) {
+                                      int32_t *restrict texture_pixels, int k,
+                                      int l, int i1, int j1, int k1, int l1,
+                                      int i2, int j2, int k2, int l2) {
     if (i2 <= 0) {
         return;
     }
@@ -442,10 +440,10 @@ static void scene_texture128_scanline(int32_t *restrict raster,
 }
 
 static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
-                                               int32_t *restrict texture,
-                                               int l, int i1, int j1, int k1,
-                                               int l1, int i2, int j2, int k2,
-                                               int l2, int i3) {
+                                               int32_t *restrict texture, int l,
+                                               int i1, int j1, int k1, int l1,
+                                               int i2, int j2, int k2, int l2,
+                                               int i3) {
     if (j2 <= 0) {
         return;
     }
@@ -649,9 +647,9 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
 }
 
 static void scene_texture64_scanline(int32_t *restrict raster,
-                                     int32_t *restrict texture_pixels,
-                                     int k, int l, int i1, int j1, int k1,
-                                     int l1, int i2, int j2, int k2, int l2) {
+                                     int32_t *restrict texture_pixels, int k,
+                                     int l, int i1, int j1, int k1, int l1,
+                                     int i2, int j2, int k2, int l2) {
     if (i2 <= 0) {
         return;
     }
@@ -994,8 +992,8 @@ static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
     }
 }
 
-static void scene_colour_translucent_scanline(int32_t *restrict raster,
-                                              int i, int raster_idx,
+static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
+                                              int raster_idx,
                                               int32_t *restrict ramp,
                                               int ramp_index, int ramp_inc) {
     if (i >= 0) {
@@ -1037,9 +1035,8 @@ static void scene_colour_translucent_scanline(int32_t *restrict raster,
 }
 
 static void scene_colour_scanline(int32_t *restrict raster, int i,
-                                  int raster_idx,
-                                  int32_t *restrict ramp, int ramp_index,
-                                  int ramp_inc) {
+                                  int raster_idx, int32_t *restrict ramp,
+                                  int ramp_index, int ramp_inc) {
     if (i >= 0) {
         return;
     }
@@ -1304,8 +1301,8 @@ static void scene_polygons_intersect_sort(Scene *scene, int step,
     } while (1);
 }
 
-static int scene_polygons_order(Scene *scene, GamePolygon **polygons,
-                                int start, int end) {
+static int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
+                                int end) {
     do {
         GamePolygon *polygon_start = polygons[start];
 
@@ -1442,7 +1439,8 @@ static void scene_initialise_polygons_2d(Scene *scene) {
             view_x + (view_width / 2) >= -scene->clip_x &&
             view_y - view_height <= scene->clip_y && view_y >= -scene->clip_y) {
 
-            if (scene->visible_polygons_count >= (scene->max_polygon_count - 1)) {
+            if (scene->visible_polygons_count >=
+                (scene->max_polygon_count - 1)) {
                 break;
             }
 
@@ -1629,7 +1627,8 @@ void scene_render(Scene *scene) {
                     }
 
                     if (view_y_count == 3) {
-                        if (scene->visible_polygons_count >= (scene->max_polygon_count - 1)) {
+                        if (scene->visible_polygons_count >=
+                            (scene->max_polygon_count - 1)) {
                             break;
                         }
 
@@ -2555,6 +2554,7 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
 
             int k10 = (j7 * vertex_z - k8 * vertex_y)
                       //<< (-scene->view_distance + 16);
+                      //* 128
                       << 7;
 
             int i11 = (k8 * vertex_x - i6 * vertex_z)
@@ -2899,8 +2899,8 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                     k6 = l4 - j;
                 }
 
-                scene_colour_translucent_scanline(
-                    scene->raster, -k6, l2 + j, scene->gradient_ramp, l7, i9);
+                scene_colour_translucent_scanline(scene->raster, -k6, l2 + j,
+                                                  scene->gradient_ramp, l7, i9);
 
                 l2 += i2;
             }
@@ -2933,7 +2933,7 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
             }
 
             scene_colour_scanline(scene->raster, -i7, l2 + j,
-                                    scene->gradient_ramp, j8, k9);
+                                  scene->gradient_ramp, j8, k9);
 
             l2 += i2;
         }

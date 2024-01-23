@@ -1,9 +1,4 @@
-#include "../custom/clarify-herblaw-items.h"
-#include "../game-data.h"
-#include "../utility.h"
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include "clarify-herblaw-items.h"
 
 void modify_unidentified_herbs(void) {
     /* citing https://oldschool.runescape.wiki/w/Gielinor's_flora_-_herbs */

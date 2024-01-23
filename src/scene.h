@@ -47,6 +47,10 @@ typedef struct Scene Scene;
 #include "surface.h"
 #include "utility.h"
 
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
+
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 #include "gl/textures/model_textures.h"
 
