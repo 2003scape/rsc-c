@@ -159,7 +159,7 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->known_player_count = mud->player_count;
 
         memcpy(mud->known_players, mud->players,
-	    mud->known_player_count * sizeof(GameCharacter *));
+               mud->known_player_count * sizeof(GameCharacter *));
 
         int offset = 8;
 
@@ -638,7 +638,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
 
-                    world_register_object(mud->world, area_x, area_y, object_id);
+                    world_register_object(mud->world, area_x, area_y,
+                                          object_id);
 
                     if (object_id == WINDMILL_SAILS_ID) {
                         game_model_translate(model, 0, -480, 0);
@@ -703,7 +704,7 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->npc_count = 0;
 
         memcpy(mud->known_npcs, mud->npcs,
-	    mud->known_npc_count * sizeof(GameCharacter *));
+               mud->known_npc_count * sizeof(GameCharacter *));
 
         int offset = 8;
 
@@ -887,7 +888,17 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->ground_items[entity_count] = mud->ground_items[j];
+                        mud->ground_items[entity_count].x =
+                            mud->ground_items[j].x;
+
+                        mud->ground_items[entity_count].y =
+                            mud->ground_items[j].y;
+
+                        mud->ground_items[entity_count].id =
+                            mud->ground_items[j].id;
+
+                        mud->ground_items[entity_count].z =
+                            mud->ground_items[j].z;
                     }
 
                     entity_count++;
@@ -1050,8 +1061,8 @@ void mudclient_packet_tick(mudclient *mud) {
                         return;
                     }
 
-                    world_register_wall_object(mud->world, l_x, l_y,
-                                               direction, id);
+                    world_register_wall_object(mud->world, l_x, l_y, direction,
+                                               id);
 
                     GameModel *model = mudclient_create_wall_object(
                         mud, l_x, l_y, direction, id, mud->wall_object_count);
@@ -1077,9 +1088,11 @@ void mudclient_packet_tick(mudclient *mud) {
             if (get_unsigned_byte(data, offset, size) == 255) {
                 /* remove the item */
                 int index = 0;
+
                 int l_x = (mud->local_region_x +
                            get_signed_byte(data, offset + 1, size)) /
                           8;
+
                 int l_y = (mud->local_region_y +
                            get_signed_byte(data, offset + 2, size)) /
                           8;
@@ -1092,7 +1105,13 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if (g_x != 0 || g_y != 0) {
                         if (i != index) {
-                            mud->ground_items[index] = mud->ground_items[i];
+                            mud->ground_items[index].x = mud->ground_items[i].x;
+                            mud->ground_items[index].y = mud->ground_items[i].y;
+
+                            mud->ground_items[index].id =
+                                mud->ground_items[i].id;
+
+                            mud->ground_items[index].z = mud->ground_items[i].z;
                         }
 
                         index++;
@@ -1113,9 +1132,11 @@ void mudclient_packet_tick(mudclient *mud) {
                     if (item_id >= game_data.item_count) {
                         item_id = IRON_MACE_ID;
                     }
+
                     if (mud->ground_item_count >= GROUND_ITEMS_MAX) {
                         return;
                     }
+
                     mud->ground_items[mud->ground_item_count].x = area_x;
                     mud->ground_items[mud->ground_item_count].y = area_y;
                     mud->ground_items[mud->ground_item_count].id = item_id;
@@ -1143,8 +1164,19 @@ void mudclient_packet_tick(mudclient *mud) {
                         if (mud->ground_items[i].x != area_x ||
                             mud->ground_items[i].y != area_y ||
                             mud->ground_items[i].id != item_id) {
+
                             if (i != index) {
-                                mud->ground_items[index] = mud->ground_items[i];
+                                mud->ground_items[index].x =
+                                    mud->ground_items[i].x;
+
+                                mud->ground_items[index].y =
+                                    mud->ground_items[i].y;
+
+                                mud->ground_items[index].id =
+                                    mud->ground_items[i].id;
+
+                                mud->ground_items[index].z =
+                                    mud->ground_items[i].z;
                             }
 
                             index++;
@@ -1172,6 +1204,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->inventory_items_count = get_unsigned_byte(data, offset++, size);
+
         if (mud->inventory_items_count > INVENTORY_ITEMS_MAX) {
             mud->inventory_items_count = INVENTORY_ITEMS_MAX;
         }
@@ -1210,6 +1243,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int stack = 1;
 
         int index = get_unsigned_byte(data, offset++, size);
+
         if (index >= INVENTORY_ITEMS_MAX) {
             return;
         }
@@ -1218,9 +1252,11 @@ void mudclient_packet_tick(mudclient *mud) {
         offset += 2;
 
         int id = id_equip & 32767;
+
         if (id >= game_data.item_count) {
             id = IRON_MACE_ID;
         }
+
         int equipped = id_equip / 32768;
 
         if (game_data.items[id & 32767].stackable == 0) {
@@ -1610,6 +1646,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
         int new_item_count = get_unsigned_byte(data, offset++, size);
+
         if (new_item_count > 40) {
             /* TODO: use some kind of constant to determine this (also below) */
             return;
@@ -1653,7 +1690,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     break;
                 }
 
-                if (mud->inventory_item_id[i] == 10) {
+                if (mud->inventory_item_id[i] == COINS_ID) {
                     unsellable = 1;
                 }
 
@@ -1684,6 +1721,7 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_TRADE_OPEN:
     case SERVER_DUEL_OPEN: {
         int player_index = get_unsigned_short(data, 1, size);
+
         if (player_index >= PLAYERS_SERVER_MAX) {
             return;
         }

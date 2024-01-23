@@ -219,12 +219,14 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += OPTION_HORIZ_GAP;
 
-    control = mudclient_add_option_panel_checkbox(
+    sprintf(formatted_digits, "%d", mud->options->middle_click_camera);
+
+    control = mudclient_add_option_panel_string(
         mud->panel_control_options,
-        "@whi@Middle click camera: ", mud->options->middle_click_camera, x, y);
+        "@whi@Middle click camera: ", formatted_digits, 4, x, y);
 
     mud->control_options[control] = &mud->options->middle_click_camera;
-    mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
     y += OPTION_HORIZ_GAP;
 
@@ -298,6 +300,28 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     mud->control_options[control] = &mud->options->hold_to_buy;
     mud->control_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += OPTION_HORIZ_GAP;
+
+    sprintf(formatted_digits, "%d", mud->options->touch_vertical_drag);
+
+    control = mudclient_add_option_panel_string(
+        mud->panel_control_options,
+        "@whi@Vertical drag (touch): ", formatted_digits, 4, x, y);
+
+    mud->control_options[control] = &mud->options->touch_vertical_drag;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_INT;
+
+    y += OPTION_HORIZ_GAP;
+
+    sprintf(formatted_digits, "%d", mud->options->touch_pinch);
+
+    control = mudclient_add_option_panel_string(
+        mud->panel_control_options,
+        "@whi@Horizontal pinch (touch): ", formatted_digits, 4, x, y);
+
+    mud->control_options[control] = &mud->options->touch_pinch;
+    mud->control_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
     /* ui */
     x = ui_x + 4;
@@ -493,15 +517,6 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Show total value: ", mud->options->bank_value, x, y);
 
     mud->bank_options[control] = &mud->options->bank_value;
-    mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
-
-    y += OPTION_HORIZ_GAP;
-
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_bank_options,
-        "@whi@Deposit all: ", mud->options->bank_deposit_all, x, y);
-
-    mud->bank_options[control] = &mud->options->bank_deposit_all;
     mud->bank_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += OPTION_HORIZ_GAP;

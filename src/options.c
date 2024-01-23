@@ -28,7 +28,7 @@ void options_new(Options *options) {
 void options_set_server(Options *options) {
 #if REVISION_177
     /* openrsc preservation */
-    strcpy(options->server, "game.openrsc.com"); // 206.251.222.229
+    strcpy(options->server, "game.openrsc.com"); // 50.73.67.9
     options->port = 43596;
 
     strcpy(options->rsa_exponent, "00010001");
@@ -44,8 +44,8 @@ void options_set_server(Options *options) {
 #endif
 #else
     strcpy(options->server, "127.0.0.1");
-    //strcpy(options->server, "192.168.100.178");
-    //strcpy(options->server, "192.168.100.113");
+    // strcpy(options->server, "192.168.100.178");
+    // strcpy(options->server, "192.168.100.113");
     options->port = 43594;
 #endif
 }
@@ -76,7 +76,7 @@ void options_set_defaults(Options *options) {
     options->off_handle_scroll_drag = 1;
     options->escape_clear = 1;
     options->mouse_wheel = 1;
-    options->middle_click_camera = 1;
+    options->middle_click_camera = 25;
     options->zoom_camera = 1;
     options->tab_respond = 1;
     options->option_numbers = 1;
@@ -87,13 +87,15 @@ void options_set_defaults(Options *options) {
     options->wiki_lookup = 1;
     options->combat_style_always = 0;
     options->hold_to_buy = 1;
+    options->touch_vertical_drag = 33;
+    options->touch_pinch = 50;
 
     /* display */
     options->lowmem = 0;
     options->interlace = 0;
     options->flicker = 1;
     options->ran_target_fps = 10;
-    options->display_fps = 1;
+    options->display_fps = 0;
     options->number_commas = 1;
     options->show_roofs = 1;
     options->remaining_experience = 1;
@@ -154,6 +156,8 @@ void options_set_vanilla(Options *options) {
     options->wiki_lookup = 0;
     options->combat_style_always = 0;
     options->hold_to_buy = 0;
+    options->touch_vertical_drag = 33;
+    options->touch_pinch = 50;
 
     /* display */
     options->lowmem = 0;
@@ -240,6 +244,8 @@ void options_save(Options *options) {
             options->wiki_lookup,           //
             options->combat_style_always,   //
             options->hold_to_buy,           //
+            options->touch_vertical_drag,   //
+            options->touch_pinch,           //
                                             //
             options->lowmem,                //
             options->interlace,             //
@@ -307,7 +313,7 @@ void options_load(Options *options) {
 
     /* controls */
     OPTION_INI_INT("mouse_wheel", options->mouse_wheel, 0, 1);
-    OPTION_INI_INT("middle_click_camera", options->middle_click_camera, 0, 1);
+    OPTION_INI_INT("middle_click_camera", options->middle_click_camera, -100, 100);
     OPTION_INI_INT("zoom_camera", options->zoom_camera, 0, 1);
     OPTION_INI_INT("tab_respond", options->tab_respond, 0, 1);
     OPTION_INI_INT("option_numbers", options->option_numbers, 0, 1);
@@ -318,6 +324,9 @@ void options_load(Options *options) {
     OPTION_INI_INT("wiki_lookup", options->wiki_lookup, 0, 1);
     OPTION_INI_INT("combat_style_always", options->combat_style_always, 0, 1);
     OPTION_INI_INT("hold_to_buy", options->hold_to_buy, 0, 1);
+    OPTION_INI_INT("touch_vertical_drag", options->touch_vertical_drag, -100,
+                   100);
+    OPTION_INI_INT("touch_pinch", options->touch_pinch, -100, 100);
 
     /* display */
     OPTION_INI_INT("lowmem", options->lowmem, 0, 1);

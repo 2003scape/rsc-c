@@ -322,7 +322,7 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 float depth_top, float depth_bottom);
 void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
                                int alpha);
-void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
+void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y, int scale_x,
                                 int scale_y, int sprite_id, int alpha);
 void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
                                     int height, int sprite_id, int colour);

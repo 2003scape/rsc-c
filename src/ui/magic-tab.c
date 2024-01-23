@@ -96,6 +96,10 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                 strcpy(colour_prefix, "@bla@");
             }
 
+            if (is_touch && mud->selected_spell == i) {
+                strcpy(colour_prefix, "@gre@");
+            }
+
             char formatted_spell[64] = {0};
 
             sprintf(formatted_spell, "%sLevel %d: %s", colour_prefix,
@@ -313,7 +317,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                     mud->selected_spell = spell_index;
                     mud->selected_item_inventory_index = -1;
 
-                    if (MUD_IS_COMPACT) {
+                    if (MUD_IS_COMPACT || is_touch) {
                         mud->show_ui_tab = 0;
                     }
                 }
