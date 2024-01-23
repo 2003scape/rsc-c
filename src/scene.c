@@ -3,6 +3,64 @@
 #include "custom/toonscape.h"
 #endif
 
+static void scene_prepare_texture(Scene *scene, int id);
+static void scene_set_texture_pixels(Scene *scene, int id);
+static void scene_initialise_polygons_2d(Scene *scene);
+
+#ifdef RENDER_SW
+static void scene_texture128_scanline(int32_t *restrict raster,
+                                      int32_t *restrict texture_pixels,
+                                      int k, int l, int i1, int j1, int k1,
+                                      int l1, int i2, int j2, int k2, int l2);
+static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
+                                               int32_t *restrict texture,
+                                               int l, int i1, int j1, int k1,
+                                               int l1, int i2, int j2, int k2,
+                                               int l2, int i3);
+static void scene_texture64_scanline(int32_t *restrict raster,
+                                     int32_t *restrict texture_pixels,
+                                     int k, int l, int i1, int j1, int k1,
+                                     int l1, int i2, int j2, int k2, int l2);
+static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
+                                              int32_t *restrict texture_pixels,
+                                              int l, int i1, int j1, int k1,
+                                              int l1, int i2, int j2, int k2,
+                                              int l2, int i3);
+static void scene_colour_translucent_scanline(int32_t *restrict raster,
+                                              int i, int raster_idx,
+                                              int32_t *restrict ramp,
+                                              int ramp_index, int ramp_inc);
+static void scene_colour_scanline(int32_t *restrict raster, int i,
+                                  int raster_idx,
+                                  int32_t *restrict ramp, int ramp_index,
+                                  int ramp_inc);
+static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
+                                     int32_t *plane_y, int32_t *vertex_shade,
+                                     GameModel *game_model, int face);
+static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
+                            int32_t *vertices_y, int32_t *vertices_z,
+                            int face_fill, GameModel *game_model);
+static int scene_method306(int i, int j, int k, int l, int i1);
+static int scene_method307(int i, int j, int k, int l, int flag);
+static int scene_method308(int i, int j, int k, int flag);
+static void scene_polygons_intersect_sort(Scene *scene, int step,
+                                          GamePolygon **polygons, int count);
+static int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
+                                int end);
+static void scene_polygons_intersect_sort(Scene *scene, int step,
+                                          GamePolygon **polygons, int count);
+static int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
+                                int end);
+static int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
+                           int *vertex_view_x_b, int *vertex_view_y_b,
+                           int length_a, int length_b);
+static int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
+static int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
+static void scene_initialise_polygon_3d(Scene *scene, int polygon_index);
+static void scene_initialise_polygon_2d(Scene *scene, int polygon_index);
+static void scene_render_polygon_2d_face(Scene *scene, int face);
+#endif
+
 #ifdef RENDER_3DS_GL
 void _3ds_gl_perspective(float fov, float aspect, float near, float far,
                          mat4 projection) {
@@ -236,9 +294,11 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #endif
 }
 
-void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
-                            int l, int i1, int j1, int k1, int l1, int i2,
-                            int j2, int k2, int l2) {
+#ifdef RENDER_SW
+static void scene_texture128_scanline(int32_t *restrict raster,
+                                      int32_t *restrict texture_pixels,
+                                      int k, int l, int i1, int j1, int k1,
+                                      int l1, int i2, int j2, int k2, int l2) {
     if (i2 <= 0) {
         return;
     }
@@ -381,10 +441,11 @@ void scene_texture_scanline(int32_t *raster, int32_t *texture_pixels, int k,
     }
 }
 
-void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
-                                             int l, int i1, int j1, int k1,
-                                             int l1, int i2, int j2, int k2,
-                                             int l2, int i3) {
+static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
+                                               int32_t *restrict texture,
+                                               int l, int i1, int j1, int k1,
+                                               int l1, int i2, int j2, int k2,
+                                               int l2, int i3) {
     if (j2 <= 0) {
         return;
     }
@@ -434,7 +495,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
 
         if (j4 < 16) {
             for (int l4 = 0; l4 < j4; l4++) {
-                if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+                if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                     raster[k2] = i;
                 }
 
@@ -449,7 +510,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
                 }
             }
         } else {
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -457,7 +518,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -465,7 +526,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -473,42 +534,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
-                raster[k2] = i;
-            }
-
-            k2++;
-            j += l3;
-            k += i4;
-            j = (j & 0x3fff) + (l2 & 0x600000);
-            k4 = l2 >> 23;
-            l2 += i3;
-
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
-                raster[k2] = i;
-            }
-
-            k2++;
-            j += l3;
-            k += i4;
-
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
-                raster[k2] = i;
-            }
-
-            k2++;
-            j += l3;
-            k += i4;
-
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
-                raster[k2] = i;
-            }
-
-            k2++;
-            j += l3;
-            k += i4;
-
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -519,7 +545,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             k4 = l2 >> 23;
             l2 += i3;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -527,7 +553,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -535,7 +561,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -543,7 +569,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -554,7 +580,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             k4 = l2 >> 23;
             l2 += i3;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -562,7 +588,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -570,7 +596,7 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -578,7 +604,42 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
             j += l3;
             k += i4;
 
-            if ((i = ai1[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+                raster[k2] = i;
+            }
+
+            k2++;
+            j += l3;
+            k += i4;
+            j = (j & 0x3fff) + (l2 & 0x600000);
+            k4 = l2 >> 23;
+            l2 += i3;
+
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+                raster[k2] = i;
+            }
+
+            k2++;
+            j += l3;
+            k += i4;
+
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+                raster[k2] = i;
+            }
+
+            k2++;
+            j += l3;
+            k += i4;
+
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
+                raster[k2] = i;
+            }
+
+            k2++;
+            j += l3;
+            k += i4;
+
+            if ((i = texture[(k & 0x3f80) + (j >> 7)] >> k4) != 0) {
                 raster[k2] = i;
             }
 
@@ -587,9 +648,10 @@ void scene_texture_back_translucent_scanline(int32_t *raster, int32_t *ai1,
     }
 }
 
-void scene_texture_scanline2(int32_t *raster, int32_t *texture_pixels, int k,
-                             int l, int i1, int j1, int k1, int l1, int i2,
-                             int j2, int k2, int l2) {
+static void scene_texture64_scanline(int32_t *restrict raster,
+                                     int32_t *restrict texture_pixels,
+                                     int k, int l, int i1, int j1, int k1,
+                                     int l1, int i2, int j2, int k2, int l2) {
     if (i2 <= 0) {
         return;
     }
@@ -708,11 +770,11 @@ void scene_texture_scanline2(int32_t *raster, int32_t *texture_pixels, int k,
     }
 }
 
-void scene_texture_back_translucent_scanline2(int32_t *raster,
-                                              int32_t *texture_pixels, int l,
-                                              int i1, int j1, int k1, int l1,
-                                              int i2, int j2, int k2, int l2,
-                                              int i3) {
+static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
+                                              int32_t *restrict texture_pixels,
+                                              int l, int i1, int j1, int k1,
+                                              int l1, int i2, int j2, int k2,
+                                              int l2, int i3) {
     if (j2 <= 0) {
         return;
     }
@@ -932,9 +994,10 @@ void scene_texture_back_translucent_scanline2(int32_t *raster,
     }
 }
 
-void scene_gradient_translucent_scanline(int32_t *raster, int i, int raster_idx,
-                                         int32_t *ramp, int ramp_index,
-                                         int ramp_inc) {
+static void scene_colour_translucent_scanline(int32_t *restrict raster,
+                                              int i, int raster_idx,
+                                              int32_t *restrict ramp,
+                                              int ramp_index, int ramp_inc) {
     if (i >= 0) {
         return;
     }
@@ -973,8 +1036,10 @@ void scene_gradient_translucent_scanline(int32_t *raster, int i, int raster_idx,
     }
 }
 
-void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
-                             int32_t *ramp, int ramp_index, int ramp_inc) {
+static void scene_colour_scanline(int32_t *restrict raster, int i,
+                                  int raster_idx,
+                                  int32_t *restrict ramp, int ramp_index,
+                                  int ramp_inc) {
     if (i >= 0) {
         return;
     }
@@ -1008,6 +1073,7 @@ void scene_gradient_scanline(int32_t *raster, int i, int raster_idx,
         }
     }
 }
+#endif /* RENDER_SW */
 
 void scene_add_model(Scene *scene, GameModel *model) {
     if (model == NULL) {
@@ -1185,8 +1251,9 @@ void scene_set_bounds(Scene *scene, int width, int height) {
 #endif
 }
 
-void scene_polygons_intersect_sort(Scene *scene, int step,
-                                   GamePolygon **polygons, int count) {
+#ifdef RENDER_SW
+static void scene_polygons_intersect_sort(Scene *scene, int step,
+                                          GamePolygon **polygons, int count) {
     for (int i = 0; i <= count; i++) {
         polygons[i]->visited = 0;
         polygons[i]->index = i;
@@ -1237,8 +1304,8 @@ void scene_polygons_intersect_sort(Scene *scene, int step,
     } while (1);
 }
 
-int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
-                         int end) {
+static int scene_polygons_order(Scene *scene, GamePolygon **polygons,
+                                int start, int end) {
     do {
         GamePolygon *polygon_start = polygons[start];
 
@@ -1294,6 +1361,7 @@ int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
         end = scene->new_end;
     } while (1);
 }
+#endif /* RENDER_SW */
 
 void scene_set_frustum(Scene *scene, int x, int y, int z) {
     int yaw = (-scene->camera_yaw + 1024) & 1023;
@@ -1349,7 +1417,7 @@ void scene_set_frustum(Scene *scene, int x, int y, int z) {
     }
 }
 
-void scene_initialise_polygons_2d(Scene *scene) {
+static void scene_initialise_polygons_2d(Scene *scene) {
     for (int face = 0; face < scene->view->face_count; face++) {
         uint16_t *face_vertices = scene->view->face_vertices[face];
         uint16_t face_vertex_index = face_vertices[0];
@@ -1395,7 +1463,7 @@ void scene_initialise_polygons_2d(Scene *scene) {
     }
 }
 
-void scene_render_polygon_2d_face(Scene *scene, int face) {
+static void scene_render_polygon_2d_face(Scene *scene, int face) {
     uint16_t *face_vertices = scene->view->face_vertices[face];
     uint16_t face_0 = face_vertices[0];
     int view_x = scene->view->vertex_view_x[face_0];
@@ -1815,9 +1883,10 @@ void scene_render(Scene *scene) {
     scene->mouse_picking_active = 0;
 }
 
-void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
-                              int32_t *plane_y, int32_t *vertex_shade,
-                              GameModel *game_model, int face) {
+#ifdef RENDER_SW
+static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
+                                     int32_t *plane_y, int32_t *vertex_shade,
+                                     GameModel *game_model, int face) {
     int start_x = 0;
     int end_x = 0;
     int start_s = 0;
@@ -2447,9 +2516,9 @@ void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
     }
 }
 
-void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
-                     int32_t *vertices_y, int32_t *vertices_z, int face_fill,
-                     GameModel *game_model) {
+static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
+                            int32_t *vertices_y, int32_t *vertices_z,
+                            int face_fill, GameModel *game_model) {
 #ifdef USE_TOONSCAPE
     face_fill = apply_toonscape(face_fill);
 #endif
@@ -2566,7 +2635,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                             l20 = j18 - j;
                         }
 
-                        scene_texture_scanline(
+                        scene_texture128_scanline(
                             scene->raster, scene->texture_pixels[face_fill],
                             l9 + k14 * j, k11 + i15 * j, i13 + k15 * j, k10,
                             i12, k13, l20, i17 + j, j22, l23 << 2);
@@ -2607,7 +2676,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                         i21 = l18 - j;
                     }
 
-                    scene_texture_back_translucent_scanline(
+                    scene_texture128_alphakey_scanline(
                         scene->raster, scene->texture_pixels[face_fill],
                         l9 + k14 * j, k11 + i15 * j, i13 + k15 * j, k10, i12,
                         k13, i21, i17 + j, k22, i24);
@@ -2705,7 +2774,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                         k21 = l19 - j;
                     }
 
-                    scene_texture_scanline2(
+                    scene_texture64_scanline(
                         scene->raster, scene->texture_pixels[face_fill],
                         i10 + l14 * j, l11 + j15 * j, j13 + l15 * j, l10, j12,
                         l13, k21, j17 + j, i23, k24);
@@ -2746,7 +2815,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                     l21 = j20 - j;
                 }
 
-                scene_texture_back_translucent_scanline2(
+                scene_texture64_alphakey_scanline(
                     scene->raster, scene->texture_pixels[face_fill],
                     i10 + l14 * j, l11 + j15 * j, j13 + l15 * j, l10, j12, l13,
                     l21, j17 + j, j23, l24);
@@ -2830,7 +2899,7 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                     k6 = l4 - j;
                 }
 
-                scene_gradient_translucent_scanline(
+                scene_colour_translucent_scanline(
                     scene->raster, -k6, l2 + j, scene->gradient_ramp, l7, i9);
 
                 l2 += i2;
@@ -2863,13 +2932,14 @@ void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                 i7 = l5 - j;
             }
 
-            scene_gradient_scanline(scene->raster, -i7, l2 + j,
+            scene_colour_scanline(scene->raster, -i7, l2 + j,
                                     scene->gradient_ramp, j8, k9);
 
             l2 += i2;
         }
     }
 }
+#endif /* RENDER_SW */
 
 void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
                       int roll, int distance) {
@@ -2918,7 +2988,8 @@ void scene_set_camera(Scene *scene, int x, int y, int z, int yaw, int pitch,
 #endif
 }
 
-void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
+#ifdef RENDER_SW
+static void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     GamePolygon *polygon = scene->visible_polygons[polygon_index];
     GameModel *game_model = polygon->model;
     int face = polygon->face;
@@ -3067,7 +3138,8 @@ void scene_initialise_polygon_2d(Scene *scene, int polygon_index) {
     polygon->max_plane_y = max_plane_y;
 }
 
-int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
+static int scene_separate_polygon(GamePolygon *polygon_a,
+                                  GamePolygon *polygon_b) {
     if (polygon_a->min_plane_x >= polygon_b->max_plane_x) {
         return 1;
     }
@@ -3259,7 +3331,8 @@ int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
                             vertex_view_y_b, length_a, length_b);
 }
 
-int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
+static int scene_heuristic_polygon(GamePolygon *polygon_a,
+                                   GamePolygon *polygon_b) {
     GameModel *game_model_a = polygon_a->model;
     GameModel *game_model_b = polygon_b->model;
     int face_a = polygon_a->face;
@@ -3335,6 +3408,7 @@ int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b) {
 
     return !flag;
 }
+#endif
 
 void scene_allocate_textures(Scene *scene, int count, int length_64,
                              int length_128) {
@@ -3375,7 +3449,7 @@ void scene_define_texture(Scene *scene, int id, int8_t *colours,
     scene_prepare_texture(scene, id);
 }
 
-void scene_prepare_texture(Scene *scene, int id) {
+static void scene_prepare_texture(Scene *scene, int id) {
     if (id < 0) {
         return;
     }
@@ -3453,7 +3527,7 @@ void scene_prepare_texture(Scene *scene, int id) {
     scene_set_texture_pixels(scene, id);
 }
 
-void scene_set_texture_pixels(Scene *scene, int id) {
+static void scene_set_texture_pixels(Scene *scene, int id) {
     int texture_width = scene->texture_dimension[id] ? 128 : 64;
     int32_t *colours = scene->texture_pixels[id];
     int colour_count = 0;
@@ -3610,7 +3684,8 @@ void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
     }
 }
 
-int scene_method306(int i, int j, int k, int l, int i1) {
+#ifdef RENDER_SW
+static int scene_method306(int i, int j, int k, int l, int i1) {
     if (l == j) {
         return i;
     }
@@ -3618,7 +3693,7 @@ int scene_method306(int i, int j, int k, int l, int i1) {
     return i + (((k - i) * (i1 - j)) / (l - j));
 }
 
-int scene_method307(int i, int j, int k, int l, int flag) {
+static int scene_method307(int i, int j, int k, int l, int flag) {
     if ((flag && i <= k) || i < k) {
         if (i > l) {
             return 1;
@@ -3650,7 +3725,7 @@ int scene_method307(int i, int j, int k, int l, int flag) {
     return flag;
 }
 
-int scene_method308(int i, int j, int k, int flag) {
+static int scene_method308(int i, int j, int k, int flag) {
     if ((flag && i <= k) || i < k) {
         if (j > k) {
             return 1;
@@ -3666,9 +3741,9 @@ int scene_method308(int i, int j, int k, int flag) {
     return flag;
 }
 
-int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
-                    int *vertex_view_x_b, int *vertex_view_y_b, int length_a,
-                    int length_b) {
+static int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
+                           int *vertex_view_x_b, int *vertex_view_y_b,
+                           int length_a, int length_b) {
     int8_t byte0 = 0;
     int view_y_a = vertex_view_y_a[0];
     int k20 = view_y_a;
@@ -4244,6 +4319,7 @@ int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
 
     return scene_method308(j6, k10, k15, flag);
 }
+#endif /* RENDER_SW */
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene) {
