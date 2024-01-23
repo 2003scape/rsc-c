@@ -839,10 +839,13 @@ void game_model_reset_transform(GameModel *game_model) {
 
     // TODO only scene->view needs this
     //#ifdef RENDER_SW
-    for (int i = 0; i < game_model->vertex_count; i++) {
-        game_model->vertex_transformed_x[i] = game_model->vertex_x[i];
-        game_model->vertex_transformed_y[i] = game_model->vertex_y[i];
-        game_model->vertex_transformed_z[i] = game_model->vertex_z[i];
+    if (!game_model->autocommit) {
+        memcpy(game_model->vertex_transformed_x, game_model->vertex_x,
+               game_model->vertex_count * sizeof(int16_t));
+        memcpy(game_model->vertex_transformed_y, game_model->vertex_y,
+               game_model->vertex_count * sizeof(int16_t));
+        memcpy(game_model->vertex_transformed_z, game_model->vertex_z,
+               game_model->vertex_count * sizeof(int16_t));
     }
     //#endif
 
@@ -1017,10 +1020,13 @@ void game_model_commit(GameModel *game_model) {
 
     // TODO only scene->view needs this
     //#ifdef RENDER_SW
-    for (int i = 0; i < game_model->vertex_count; i++) {
-        game_model->vertex_x[i] = game_model->vertex_transformed_x[i];
-        game_model->vertex_y[i] = game_model->vertex_transformed_y[i];
-        game_model->vertex_z[i] = game_model->vertex_transformed_z[i];
+    if (!game_model->autocommit) {
+        memcpy(game_model->vertex_x, game_model->vertex_transformed_x,
+               game_model->vertex_count * sizeof(int16_t));
+        memcpy(game_model->vertex_y, game_model->vertex_transformed_y,
+               game_model->vertex_count * sizeof(int16_t));
+        memcpy(game_model->vertex_z, game_model->vertex_transformed_z,
+               game_model->vertex_count * sizeof(int16_t));
     }
     //#endif
 
