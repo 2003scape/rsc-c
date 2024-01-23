@@ -3,47 +3,62 @@
 #include "custom/toonscape.h"
 #endif
 
-static void scene_prepare_texture(Scene *, int);
-static void scene_set_texture_pixels(Scene *, int);
+static void scene_prepare_texture(Scene *scene, int id);
+static void scene_set_texture_pixels(Scene *scene, int id);
+static void scene_initialise_polygons_2d(Scene *scene);
 
 #ifdef RENDER_SW
-static void scene_texture128_scanline(int32_t *restrict,
-                                      int32_t *restrict,
-                                      int, int, int, int, int,
-                                      int, int, int, int, int);
-static void scene_texture128_alphakey_scanline(int32_t *restrict,
-                                               int32_t *restrict,
-                                               int, int, int, int,
-                                               int, int, int, int,
-                                               int, int);
+static void scene_texture128_scanline(int32_t *restrict raster,
+                                      int32_t *restrict texture_pixels,
+                                      int k, int l, int i1, int j1, int k1,
+                                      int l1, int i2, int j2, int k2, int l2);
+static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
+                                               int32_t *restrict texture,
+                                               int l, int i1, int j1, int k1,
+                                               int l1, int i2, int j2, int k2,
+                                               int l2, int i3);
 static void scene_texture64_scanline(int32_t *restrict raster,
                                      int32_t *restrict texture_pixels,
-                                     int, int, int, int, int, int,
-                                     int, int, int, int);
-static void scene_texture64_alphakey_scanline(int32_t *restrict,
-                                              int32_t *restrict,
-                                              int, int, int, int,
-                                              int, int, int, int,
-                                              int, int);
-static void scene_colour_translucent_scanline(int32_t *restrict, int, int,
-                                              int32_t *restrict, int, int);
-static void scene_colour_scanline(int32_t *restrict, int, int,
-                                  int32_t *restrict, int, int);
-static void scene_rasterize(Scene *, int, int32_t *, int32_t *, int32_t *,
-                            int, GameModel *);
-static void scene_generate_scanlines(Scene *, int, int32_t *, int32_t *,
-                            int32_t *, GameModel *, int);
+                                     int k, int l, int i1, int j1, int k1,
+                                     int l1, int i2, int j2, int k2, int l2);
+static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
+                                              int32_t *restrict texture_pixels,
+                                              int l, int i1, int j1, int k1,
+                                              int l1, int i2, int j2, int k2,
+                                              int l2, int i3);
+static void scene_colour_translucent_scanline(int32_t *restrict raster,
+                                              int i, int raster_idx,
+                                              int32_t *restrict ramp,
+                                              int ramp_index, int ramp_inc);
+static void scene_colour_scanline(int32_t *restrict raster, int i,
+                                  int raster_idx,
+                                  int32_t *restrict ramp, int ramp_index,
+                                  int ramp_inc);
+static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
+                                     int32_t *plane_y, int32_t *vertex_shade,
+                                     GameModel *game_model, int face);
+static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
+                            int32_t *vertices_y, int32_t *vertices_z,
+                            int face_fill, GameModel *game_model);
 static int scene_method306(int i, int j, int k, int l, int i1);
 static int scene_method307(int i, int j, int k, int l, int flag);
 static int scene_method308(int i, int j, int k, int flag);
-static void scene_polygons_intersect_sort(Scene *, int, GamePolygon **, int);
-static int scene_polygons_order(Scene *, GamePolygon **, int, int);
-static int scene_intersect(int *, int *, int *, int *, int, int);
-static int scene_heuristic_polygon(GamePolygon *, GamePolygon *);
-static int scene_separate_polygon(GamePolygon *, GamePolygon *);
-static void scene_initialise_polygon_3d(Scene *, int);
-static void scene_initialise_polygon_2d(Scene *, int);
-static void scene_render_polygon_2d_face(Scene *, int);
+static void scene_polygons_intersect_sort(Scene *scene, int step,
+                                          GamePolygon **polygons, int count);
+static int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
+                                int end);
+static void scene_polygons_intersect_sort(Scene *scene, int step,
+                                          GamePolygon **polygons, int count);
+static int scene_polygons_order(Scene *scene, GamePolygon **polygons, int start,
+                                int end);
+static int scene_intersect(int *vertex_view_x_a, int *vertex_view_y_a,
+                           int *vertex_view_x_b, int *vertex_view_y_b,
+                           int length_a, int length_b);
+static int scene_separate_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
+static int scene_heuristic_polygon(GamePolygon *polygon_a, GamePolygon *polygon_b);
+static void scene_initialise_polygon_3d(Scene *scene, int polygon_index);
+static void scene_initialise_polygon_2d(Scene *scene, int polygon_index);
+static void scene_render_polygon_2d_face(Scene *scene, int face);
 #endif
 
 #ifdef RENDER_3DS_GL
