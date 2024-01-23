@@ -1,5 +1,4 @@
 #include "utility.h"
-#include "lib/isaac.h"
 
 int sin_cos_512[512] = {0};
 int sin_cos_2048[2048] = {0};
@@ -23,7 +22,7 @@ static const int certificate_items[][2] = {
 
 
 static int random_colour = 0;
-static int last_random_colour = 0;
+static int random_colour_ticks = 0;
 
 void init_utility_global() {
     for (int i = 0; i < 256; i++) {
@@ -823,9 +822,9 @@ int colour_str_to_colour(const char *colour_str, int ran_target_fps) {
         }
         if (ran_target_fps < 50) {
             /* limit the framerate if desired */
-            if ((get_ticks() - last_random_colour) >= (1000 / ran_target_fps)) {
+            if (get_ticks() >= random_colour_ticks) {
                 random_colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
-                last_random_colour = get_ticks();
+                random_colour_ticks = get_ticks() + (1000 / ran_target_fps);
             }
             colour = random_colour;
         } else {
