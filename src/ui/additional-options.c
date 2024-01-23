@@ -35,7 +35,7 @@ int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
 }
 
 void mudclient_create_options_panel(mudclient *mud) {
-    for (int i = 0; i < ADDITIONAL_OPTIONS_MAX; i++) {
+    for (int i = 0; i < 50; i++) {
         mud->game_option_types[i] = -1;
         mud->control_option_types[i] = -1;
         mud->ui_option_types[i] = -1;

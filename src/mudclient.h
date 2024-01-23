@@ -1044,8 +1044,8 @@ struct mudclient {
     int options_tab;
 
     Panel *panel_game_options;
-    void *game_options[ADDITIONAL_OPTIONS_MAX];
-    int game_option_types[ADDITIONAL_OPTIONS_MAX];
+    void *game_options[50];
+    int game_option_types[50];
 
     Panel *panel_control_options;
     void *control_options[50];
