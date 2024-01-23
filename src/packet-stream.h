@@ -63,7 +63,7 @@ typedef struct PacketStream PacketStream;
 #include "utility.h"
 
 #ifdef REVISION_177
-void init_packet_stream_global();
+void init_packet_stream_global(void);
 #endif
 
 struct PacketStream {

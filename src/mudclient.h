@@ -1142,8 +1142,10 @@ void mudclient_draw_blue_bar(mudclient *mud);
 int mudclient_is_in_combat(mudclient *mud);
 GameCharacter *mudclient_get_opponent(mudclient *mud);
 void mudclient_draw_ui(mudclient *mud);
+int mudclient_compare_text(const void *v1, const void *v2);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);
+void mudclient_draw_entity_sprites(mudclient *mud);
 void mudclient_draw_game(mudclient *mud);
 void mudclient_reset_game(mudclient *mud);
 void mudclient_login(mudclient *mud, char *username, char *password,

@@ -65,7 +65,7 @@ typedef enum TILE_TIPE {
 extern int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
 int rgb_to_texture_colour(int r, int g, int b);
-void init_world_global();
+void init_world_global(void);
 
 struct World {
     Scene *scene;

@@ -27,7 +27,9 @@ int character_width[256] = {0};
 
 int32_t *surface_texture_pixels = NULL;
 
-void init_surface_global() {
+static int surface_blend_alpha(int background_colour, int colour, int alpha);
+
+void init_surface_global(void) {
     memset(game_fonts, '\0', sizeof(game_fonts));
 
     for (int i = 0; i < 256; i++) {
@@ -2699,7 +2701,7 @@ void surface_plot_scale_from13(int32_t *dest, int32_t *src, int j, int k,
     }
 }
 
-int surface_blend_alpha(int background_colour, int colour, int alpha) {
+static int surface_blend_alpha(int background_colour, int colour, int alpha) {
     int background_alpha = 256 - alpha;
 
     return ((((colour & 0xff00ff) * alpha +

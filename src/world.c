@@ -25,7 +25,7 @@ static int world_get_tile_type(World *, int, int);
 
 int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
-void init_world_global() {
+void init_world_global(void) {
     for (int i = 0; i < 64; i++) {
         terrain_colours[i] = scene_rgb_to_fill(
             255 - i * 4, 255 - (int)((double)i * 1.75), 255 - i * 4);
