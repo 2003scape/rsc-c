@@ -816,19 +816,17 @@ int colour_str_to_colour(const char *colour_str, int ran_target_fps) {
     } else if (strcmp(colour_str, "ora") == 0) {
         colour = STRING_ORA;
     } else if (strcmp(colour_str, "ran") == 0) {
-        /* prevent divide by zero */
+        colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
         if (ran_target_fps < 1) {
-            ran_target_fps = 1;
-        }
-        if (ran_target_fps < 50) {
+            colour = STRING_MAG;
+        } else if (ran_target_fps < 50) {
             /* limit the framerate if desired */
             if (get_ticks() >= random_colour_ticks) {
-                random_colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+                /* next colour */
+                random_colour = colour;
                 random_colour_ticks = get_ticks() + (1000 / ran_target_fps);
             }
             colour = random_colour;
-        } else {
-            colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
         }
     } else if (strcmp(colour_str, "or1") == 0) {
         colour = STRING_OR1;
