@@ -9,29 +9,27 @@ static void scene_initialise_polygons_2d(Scene *scene);
 static void scene_texture128_scanline(int32_t *restrict raster,
                                       int32_t *restrict texture, int k, int l,
                                       int i1, int j1, int k1, int l1,
-                                      int length, int raster_idx, int k2,
-                                      int l2);
+                                      int length, int k2, int l2);
 static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                                                int32_t *restrict texture, int l,
                                                int i1, int j1, int k1, int l1,
-                                               int i2, int length,
-                                               int raster_idx, int l2, int i3);
+                                               int i2, int length, int l2,
+                                               int i3);
 static void scene_texture64_scanline(int32_t *restrict raster,
                                      int32_t *restrict texture, int k, int l,
                                      int i1, int j1, int k1, int l1, int length,
-                                     int raster_idx, int k2, int l2);
+                                     int k2, int l2);
 static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                                               int32_t *restrict texture, int l,
                                               int i1, int j1, int k1, int l1,
-                                              int i2, int length,
-                                              int raster_idx, int l2, int i3);
+                                              int i2, int length, int l2,
+                                              int i3);
 static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
-                                              int raster_idx,
                                               int32_t *restrict ramp,
                                               int ramp_index, int ramp_inc);
 static void scene_colour_scanline(int32_t *restrict raster, int i,
-                                  int raster_idx, int32_t *restrict ramp,
-                                  int ramp_index, int ramp_inc);
+                                  int32_t *restrict ramp, int ramp_index,
+                                  int ramp_inc);
 static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                                      int32_t *plane_y, int32_t *vertex_shade,
                                      GameModel *game_model, int face);
@@ -297,8 +295,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 static void scene_texture128_scanline(int32_t *restrict raster,
                                       int32_t *restrict texture, int k, int l,
                                       int i1, int j1, int k1, int l1,
-                                      int length, int raster_idx, int k2,
-                                      int l2) {
+                                      int length, int k2, int l2) {
     // 2 ** 7 = 128
     static const int texture_shift = 7;
     const int texture_size = (int)pow(2, texture_shift);
@@ -350,7 +347,7 @@ static void scene_texture128_scanline(int32_t *restrict raster,
             k2 += l2;
 
             for (int k_ = 0; k_ < 4; k_++) {
-                raster[raster_idx++] =
+                (*raster++) =
                     texture[(j & texture_area) + (i >> texture_shift)] >> i4;
 
                 i += k3;
@@ -387,8 +384,7 @@ static void scene_texture128_scanline(int32_t *restrict raster,
             k2 += l2;
         }
 
-        raster[raster_idx++] =
-            texture[(j & texture_area) + (i >> texture_shift)] >> i4;
+        (*raster++) = texture[(j & texture_area) + (i >> texture_shift)] >> i4;
 
         i += k3;
         j += l3;
@@ -398,8 +394,8 @@ static void scene_texture128_scanline(int32_t *restrict raster,
 static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                                                int32_t *restrict texture, int l,
                                                int i1, int j1, int k1, int l1,
-                                               int i2, int length,
-                                               int raster_idx, int l2, int i3) {
+                                               int i2, int length, int l2,
+                                               int i3) {
     // 2 ** 7 = 128
     static const int texture_shift = 7;
     const int texture_size = (int)pow(2, texture_shift);
@@ -457,10 +453,10 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                 if ((colour =
                          texture[(k & texture_area) + (j >> texture_shift)] >>
                          k4) != 0) {
-                    raster[raster_idx] = colour;
+                    (*raster) = colour;
                 }
 
-                raster_idx++;
+                raster++;
                 j += l3;
                 k += i4;
 
@@ -478,10 +474,10 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                     if ((colour = texture[(k & texture_area) +
                                           (j >> texture_shift)] >>
                                   k4) != 0) {
-                        raster[raster_idx] = colour;
+                        (*raster) = colour;
                     }
 
-                    raster_idx++;
+                    raster++;
                     j += l3;
                     k += i4;
                 }
@@ -497,7 +493,7 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
 static void scene_texture64_scanline(int32_t *restrict raster,
                                      int32_t *restrict texture, int k, int l,
                                      int i1, int j1, int k1, int l1, int length,
-                                     int raster_idx, int k2, int l2) {
+                                     int k2, int l2) {
     // 2 ** 6 = 64
     static const int texture_shift = 6;
     int texture_size = (int)pow(2, texture_shift);
@@ -551,7 +547,7 @@ static void scene_texture64_scanline(int32_t *restrict raster,
 
         if (i_ < 16) {
             for (int j_ = 0; j_ < i_; j_++) {
-                raster[raster_idx++] =
+                (*raster++) =
                     texture[(j & texture_area) + (i >> texture_shift)] >> j4;
 
                 i += k3;
@@ -568,7 +564,7 @@ static void scene_texture64_scanline(int32_t *restrict raster,
         } else {
             for (int j_ = 0; j_ < 4; j_++) {
                 for (int k_ = 0; k_ < 4; k_++) {
-                    raster[raster_idx++] =
+                    (*raster++) =
                         texture[(j & texture_area) + (i >> texture_shift)] >>
                         j4;
 
@@ -576,7 +572,7 @@ static void scene_texture64_scanline(int32_t *restrict raster,
                     j += l3;
                 }
 
-                if (j_== 3) {
+                if (j_ == 3) {
                     break;
                 }
 
@@ -591,8 +587,8 @@ static void scene_texture64_scanline(int32_t *restrict raster,
 static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                                               int32_t *restrict texture, int l,
                                               int i1, int j1, int k1, int l1,
-                                              int i2, int length,
-                                              int raster_idx, int l2, int i3) {
+                                              int i2, int length, int l2,
+                                              int i3) {
     // 2 ** 6 = 64
     static const int texture_shift = 6;
     const int texture_size = (int)pow(2, texture_shift);
@@ -650,16 +646,17 @@ static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                 if ((colour =
                          texture[(k & texture_area) + (j >> texture_shift)] >>
                          k4) != 0) {
-                    raster[raster_idx] = colour;
+                    (*raster) = colour;
                 }
 
-                raster_idx++;
+                raster++;
                 j += l3;
                 k += i4;
 
                 if ((j_ & 3) == 3) {
                     j = (j & (texture_area + texture_size - 1)) +
                         (l2 & 0xc0000);
+
                     k4 = l2 >> 20;
                     l2 += i3;
                 }
@@ -670,10 +667,10 @@ static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                     if ((colour = texture[(k & texture_area) +
                                           (j >> texture_shift)] >>
                                   k4) != 0) {
-                        raster[raster_idx] = colour;
+                        (*raster) = colour;
                     }
 
-                    raster_idx++;
+                    raster++;
                     j += l3;
                     k += i4;
                 }
@@ -691,7 +688,6 @@ static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
 }
 
 static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
-                                              int raster_idx,
                                               int32_t *restrict ramp,
                                               int ramp_index, int ramp_inc) {
     if (i >= 0) {
@@ -706,10 +702,8 @@ static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
     for (int i1 = length; i1 < 0; i1++) {
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < 4; k++) {
-                raster[raster_idx] =
-                    colour + ((raster[raster_idx + 1] >> 1) & 0x7f7f7f);
-
-                raster_idx++;
+                (*raster) = colour + ((*(raster + 1) >> 1) & 0x7f7f7f);
+                raster++;
             }
 
             colour = ramp[(ramp_index / RAMP_SIZE) & 0xff];
@@ -720,10 +714,8 @@ static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
     length = -(i % 16);
 
     for (int i1 = 0; i1 < length; i1++) {
-        raster[raster_idx] =
-            colour + ((raster[raster_idx + 1] >> 1) & 0x7f7f7f);
-
-        raster_idx++;
+        (*raster) = colour + ((*(raster + 1) >> 1) & 0x7f7f7f);
+        raster++;
 
         if ((i1 & 3) == 3) {
             colour = ramp[(ramp_index / RAMP_SIZE) & 0xff];
@@ -733,8 +725,8 @@ static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
 }
 
 static void scene_colour_scanline(int32_t *restrict raster, int i,
-                                  int raster_idx, int32_t *restrict ramp,
-                                  int ramp_index, int ramp_inc) {
+                                  int32_t *restrict ramp, int ramp_index,
+                                  int ramp_inc) {
     if (i >= 0) {
         return;
     }
@@ -748,7 +740,7 @@ static void scene_colour_scanline(int32_t *restrict raster, int i,
     for (int i1 = length; i1 < 0; i1++) {
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < (RAMP_WIDE ? 2 : 4); k++) {
-                raster[raster_idx++] = colour;
+                (*raster++) = colour;
             }
 
             colour = ramp[(ramp_index / RAMP_SIZE) & 0xff];
@@ -760,7 +752,7 @@ static void scene_colour_scanline(int32_t *restrict raster, int i,
     int ramp_flag = (RAMP_WIDE ? 1 : 3);
 
     for (int i1 = 0; i1 < length; i1++) {
-        raster[raster_idx++] = colour;
+        (*raster++) = colour;
 
         if ((i1 & ramp_flag) == ramp_flag) {
             colour = ramp[(ramp_index >> 8) & 0xff];
@@ -2393,9 +2385,9 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                         }
 
                         scene_texture128_scanline(
-                            scene->raster, scene->texture_pixels[face_fill],
+                            scene->raster + (i17 + j), scene->texture_pixels[face_fill],
                             l9 + k14 * j, k11 + i15 * j, i13 + k15 * j, k10,
-                            i12, k13, length, i17 + j, j22, l23 << 2);
+                            i12, k13, length, j22, l23 << 2);
 
                         l9 += i11;
                         k11 += k12;
@@ -2434,9 +2426,9 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                     }
 
                     scene_texture128_alphakey_scanline(
-                        scene->raster, scene->texture_pixels[face_fill],
+                        scene->raster + (i17 + j), scene->texture_pixels[face_fill],
                         l9 + k14 * j, k11 + i15 * j, i13 + k15 * j, k10, i12,
-                        k13, length, i17 + j, k22, i24);
+                        k13, length, k22, i24);
 
                     l9 += i11;
                     k11 += k12;
@@ -2531,10 +2523,11 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                         length = l19 - j;
                     }
 
-                    scene_texture64_scanline(
-                        scene->raster, scene->texture_pixels[face_fill],
-                        i10 + l14 * j, l11 + j15 * j, j13 + l15 * j, l10, j12,
-                        l13, length, j17 + j, i23, k24);
+                    scene_texture64_scanline(scene->raster + (j17 + j),
+                                             scene->texture_pixels[face_fill],
+                                             i10 + l14 * j, l11 + j15 * j,
+                                             j13 + l15 * j, l10, j12, l13,
+                                             length, i23, k24);
 
                     i10 += j11;
                     l11 += l12;
@@ -2573,9 +2566,9 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                 }
 
                 scene_texture64_alphakey_scanline(
-                    scene->raster, scene->texture_pixels[face_fill],
+                    scene->raster + (j17 + j), scene->texture_pixels[face_fill],
                     i10 + l14 * j, l11 + j15 * j, j13 + l15 * j, l10, j12, l13,
-                    l21, j17 + j, j23, l24);
+                    l21, j23, l24);
 
                 i10 += j11;
                 l11 += l12;
@@ -2656,7 +2649,7 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                     k6 = l4 - j;
                 }
 
-                scene_colour_translucent_scanline(scene->raster, -k6, l2 + j,
+                scene_colour_translucent_scanline(scene->raster + (l2 + j), -k6,
                                                   scene->gradient_ramp,
                                                   ramp_index, ramp_inc);
 
@@ -2690,7 +2683,7 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                 i7 = l5 - j;
             }
 
-            scene_colour_scanline(scene->raster, -i7, l2 + j,
+            scene_colour_scanline(scene->raster + (l2 + j), -i7,
                                   scene->gradient_ramp, ramp_index, ramp_inc);
 
             l2 += i2;
