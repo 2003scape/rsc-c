@@ -301,10 +301,8 @@ static void scene_texture128_scanline(int32_t *restrict raster,
                                       int l2) {
     // 2 ** 7 = 128
     static const int texture_shift = 7;
-    static const int texture_size = (int)pow(2, texture_shift);
-
-    static const int texture_area =
-        (texture_size * texture_size) - texture_size;
+    const int texture_size = (int)pow(2, texture_shift);
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
         return;
@@ -404,10 +402,8 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                                                int raster_idx, int l2, int i3) {
     // 2 ** 7 = 128
     static const int texture_shift = 7;
-    static const int texture_size = (int)pow(2, texture_shift);
-
-    static const int texture_area =
-        (texture_size * texture_size) - texture_size;
+    const int texture_size = (int)pow(2, texture_shift);
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
         return;
@@ -504,10 +500,8 @@ static void scene_texture64_scanline(int32_t *restrict raster,
                                      int raster_idx, int k2, int l2) {
     // 2 ** 6 = 64
     static const int texture_shift = 6;
-    static const int texture_size = (int)pow(2, texture_shift);
-
-    static const int texture_area =
-        (texture_size * texture_size) - texture_size;
+    int texture_size = (int)pow(2, texture_shift);
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
         return;
@@ -601,10 +595,8 @@ static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                                               int raster_idx, int l2, int i3) {
     // 2 ** 6 = 64
     static const int texture_shift = 6;
-    static const int texture_size = (int)pow(2, texture_shift);
-
-    static const int texture_area =
-        (texture_size * texture_size) - texture_size;
+    const int texture_size = (int)pow(2, texture_shift);
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
         return;
