@@ -1245,7 +1245,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->_3ds_gl_render_target =
         C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
     // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
-    // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 
     mud->_3ds_gl_offscreen_render_target =
         C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA5551, GPU_RB_DEPTH16);
@@ -1347,13 +1346,13 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         } else if (code == K_F1) {
             mud->options->interlace = !mud->options->interlace;
 
-            for (int i = 0; i < mud->panel_ui_options->control_count; i++) {
+            /*for (int i = 0; i < mud->panel_game_options->control_count; i++) {
                 if ((int *)mud->ui_options[i] == &mud->options->interlace) {
                     panel_toggle_checkbox(mud->panel_ui_options, i,
                                           mud->options->interlace);
                     break;
                 }
-            }
+            }*/
         } else if (mud->options->escape_clear && code == K_ESCAPE) {
             memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
@@ -5593,12 +5592,6 @@ void mudclient_sdl1_on_resize(mudclient *mud, int width, int height) {
     mud->game_height = new_height;
 
     if (mud->surface != NULL) {
-#ifdef RENDER_GL
-        // TODO we actually don't need to do this since we only generate
-        // the login scenes on boot
-        // surface_gl_create_framebuffer(mud->surface);
-#endif
-
         if (mudclient_is_ui_scaled(mud)) {
             mud->surface->width = new_width / 2;
             mud->surface->height = new_height / 2;
@@ -6101,7 +6094,7 @@ void mudclient_poll_events(mudclient *mud) {
     if (!mudclient_has_right_clicked && !mudclient_horizontal_drag &&
         !mudclient_vertical_drag && mudclient_finger_1_down &&
         !mudclient_finger_2_down &&
-        get_ticks() - mudclient_touch_start >= 350) {
+        get_ticks() - mudclient_touch_start >= mud->options->touch_menu_delay) {
         mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_has_right_clicked = 1;

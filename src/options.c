@@ -89,6 +89,7 @@ void options_set_defaults(Options *options) {
     options->hold_to_buy = 1;
     options->touch_vertical_drag = 33;
     options->touch_pinch = 50;
+    options->touch_menu_delay = 350;
 
     /* display */
     options->lowmem = 0;
@@ -158,6 +159,7 @@ void options_set_vanilla(Options *options) {
     options->hold_to_buy = 0;
     options->touch_vertical_drag = 33;
     options->touch_pinch = 50;
+    options->touch_menu_delay = 350;
 
     /* display */
     options->lowmem = 0;
@@ -246,6 +248,7 @@ void options_save(Options *options) {
             options->hold_to_buy,           //
             options->touch_vertical_drag,   //
             options->touch_pinch,           //
+            options->touch_menu_delay,      //
                                             //
             options->lowmem,                //
             options->interlace,             //
@@ -313,7 +316,8 @@ void options_load(Options *options) {
 
     /* controls */
     OPTION_INI_INT("mouse_wheel", options->mouse_wheel, 0, 1);
-    OPTION_INI_INT("middle_click_camera", options->middle_click_camera, -100, 100);
+    OPTION_INI_INT("middle_click_camera", options->middle_click_camera, -100,
+                   100);
     OPTION_INI_INT("zoom_camera", options->zoom_camera, 0, 1);
     OPTION_INI_INT("tab_respond", options->tab_respond, 0, 1);
     OPTION_INI_INT("option_numbers", options->option_numbers, 0, 1);
@@ -327,6 +331,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("touch_vertical_drag", options->touch_vertical_drag, -100,
                    100);
     OPTION_INI_INT("touch_pinch", options->touch_pinch, -100, 100);
+    OPTION_INI_INT("touch_menu_delay", options->touch_menu_delay, 80, 2000);
 
     /* display */
     OPTION_INI_INT("lowmem", options->lowmem, 0, 1);
