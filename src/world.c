@@ -1,5 +1,4 @@
 #include "world.h"
-#include "version.h"
 
 static void world_set_blocked(World *, int, int, int);
 static void world_set_unblocked(World *, int, int, int);
@@ -62,8 +61,8 @@ static void world_set_unblocked(World *world, int x, int y, int value) {
     world->object_adjacency[x][y] &= 0xffff - value;
 }
 
-static int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
-                         int y) {
+static int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT],
+                                int x, int y) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return 0;
     }
@@ -89,8 +88,9 @@ static int world_get_wall_east_west(World *world, int x, int y) {
     return get_byte_plane_coord(world->walls_east_west, x, y);
 }
 
-static void world_set_terrain_ambience(World *world, int terrain_x, int terrain_y,
-                                int vertex_x, int vertex_y, int ambience) {
+static void world_set_terrain_ambience(World *world, int terrain_x,
+                                       int terrain_y, int vertex_x,
+                                       int vertex_y, int ambience) {
     GameModel *game_model = world->terrain_models[terrain_x + terrain_y * 8];
 
     for (int i = 0; i < game_model->vertex_count; i++) {
@@ -324,7 +324,8 @@ static void world_draw_map_tile(World *world, int x, int y, int direction,
     }
 }
 
-static void world_load_section_jm(World *world, uint8_t *map_data, size_t len, int chunk) {
+static void world_load_section_jm(World *world, uint8_t *map_data, size_t len,
+                                  int chunk) {
     size_t offset = 0;
     int prev = 0;
 
@@ -626,7 +627,8 @@ static void world_load_section_files(World *world, int x, int y, int plane,
     }
 }
 
-static void world_update_shadow_rect(World *world, int x, int y, int width, int height) {
+static void world_update_shadow_rect(World *world, int x, int y, int width,
+                                     int height) {
     if (x < 1 || y < 1 || x + width >= REGION_WIDTH ||
         y + height >= REGION_HEIGHT) {
         return;
@@ -741,7 +743,8 @@ static int world_decoration_or_colour(World *world, int x, int y, int colour) {
     return game_data.tiles[decoration - 1].decoration;
 }
 
-static void world_set_tile_decoration(World *world, int x, int y, int decoration) {
+static void world_set_tile_decoration(World *world, int x, int y,
+                                      int decoration) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return;
     }
@@ -978,9 +981,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
         game_model_destroy(world->parent_model);
     }
 
-    game_model_from7(world->parent_model,
-                     TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
-                     1, 1, 0, 0, 1);
+    game_model_from7(world->parent_model, TERRAIN_MAX_VERTICES,
+                     TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     /* create terrain */
 
@@ -996,9 +998,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
         GameModel *game_model = world->parent_model;
 
         game_model_destroy(game_model);
-        game_model_from7(game_model,
-                         TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
-                         1, 1, 0, 0, 1);
+        game_model_from7(game_model, TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES, 1,
+                         1, 0, 0, 1);
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -1087,11 +1088,11 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                         int diagonal = world_get_wall_diagonal(world, r_x, r_y);
 
                         if (diagonal > 0 && diagonal < 24000) {
-                            if (world_decoration_or_colour(
-                                    world, r_x - 1, r_y, colour_2) !=
+                            if (world_decoration_or_colour(world, r_x - 1, r_y,
+                                                           colour_2) !=
                                     COLOUR_TRANSPARENT &&
-                                world_decoration_or_colour(
-                                    world, r_x, r_y - 1, colour_2) !=
+                                world_decoration_or_colour(world, r_x, r_y - 1,
+                                                           colour_2) !=
                                     COLOUR_TRANSPARENT) {
                                 colour = world_decoration_or_colour(
                                     world, r_x - 1, r_y, colour_2);
@@ -1182,7 +1183,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                 if (colour != colour_1 || i17 != 0) {
                     if (direction == 0) {
                         if (colour != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_vertices[0] = r_y + r_x * 96 + 96;
                             colour_vertices[1] = r_y + r_x * 96;
@@ -1200,7 +1202,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_1_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_1_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_1_vertices[0] = r_y + r_x * 96 + 1;
                             colour_1_vertices[1] = r_y + r_x * 96 + 96 + 1;
@@ -1218,7 +1221,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                         }
                     } else {
                         if (colour != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_vertices[0] = r_y + r_x * 96 + 1;
                             colour_vertices[1] = r_y + r_x * 96 + 96 + 1;
@@ -1236,7 +1240,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_1_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_1_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_1_vertices[0] = r_y + r_x * 96 + 96;
                             colour_1_vertices[1] = r_y + r_x * 96;
@@ -1369,10 +1374,11 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                     if (decoration_north > 0 &&
                         game_data.tiles[decoration_north - 1].type ==
                             BRIDGE_TILE_TYPE) {
-                        int fill_front =
-                            game_data.tiles[world_get_tile_decoration(
-                                                          world, r_x, r_y - 1) -
-                                                      1].decoration;
+                        int fill_front = game_data
+                                             .tiles[world_get_tile_decoration(
+                                                        world, r_x, r_y - 1) -
+                                                    1]
+                                             .decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
@@ -1526,9 +1532,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    game_model_from7(world->parent_model,
-                     TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
-                     1, 1, 0, 0, 1);
+    game_model_from7(world->parent_model, TERRAIN_MAX_VERTICES,
+                     TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     int colour = 0x606060;
 
@@ -1547,8 +1552,7 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                     world->object_adjacency[r_x][r_y] |= 1;
 
                     if (r_y > 0) {
-                        world_set_blocked(world, r_x, r_y - 1,
-                                                         4);
+                        world_set_blocked(world, r_x, r_y - 1, 4);
                     }
                 }
 
@@ -1766,9 +1770,9 @@ static void world_load_assemble(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    game_model_from7(world->parent_model,
-                     TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES,
-                     1, 1, 0, 0, 1);
+
+    game_model_from7(world->parent_model, TERRAIN_MAX_VERTICES,
+                     TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
@@ -2238,8 +2242,8 @@ void world_add_models(World *world, GameModel **models) {
 
 /* create wall face */
 static void world_create_wall(World *world, GameModel *game_model,
-                       int wall_object_id,
-                       int x1, int y1, int x2, int y2) {
+                              int wall_object_id, int x1, int y1, int x2,
+                              int y2) {
     int thick_walls = world->thick_walls;
 
     world_vertex_shadow(world, x1, y1, 40);
@@ -2359,8 +2363,7 @@ void world_load_section(World *world, int x, int y, int plane) {
         world_load_assemble(world, x, y, 1, 0);
         world_load_assemble(world, x, y, 2, 0);
 
-        world_load_section_files(world, section_x - 1, section_y - 1, plane,
-                                  0);
+        world_load_section_files(world, section_x - 1, section_y - 1, plane, 0);
 
         world_load_section_files(world, section_x, section_y - 1, plane, 1);
         world_load_section_files(world, section_x - 1, section_y, plane, 2);
@@ -2461,9 +2464,8 @@ static int world_has_neighbouring_roof(World *world, int x, int y) {
 }
 
 /* move wall (objects) and roofs to the upper-plane */
-static void world_raise_wall_object(World *world, int wall_object_id,
-                                   int x1, int y1,
-                                   int x2, int y2) {
+static void world_raise_wall_object(World *world, int wall_object_id, int x1,
+                                    int y1, int x2, int y2) {
     int height = game_data.wall_objects[wall_object_id].height;
 
     if (world->terrain_height_local[x1][y1] < PLANE_HEIGHT) {

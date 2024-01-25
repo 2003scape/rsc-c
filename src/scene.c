@@ -695,11 +695,12 @@ static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
     }
 
     ramp_inc *= 4;
+
     int colour = ramp[(ramp_index / RAMP_SIZE) & 0xff];
     ramp_index += ramp_inc;
     int length = i / 16;
 
-    for (int i1 = length; i1 < 0; i1++) {
+    for (int i_ = length; i_ < 0; i_++) {
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < 4; k++) {
                 (*raster) = colour + ((*(raster + 1) >> 1) & 0x7f7f7f);
@@ -713,11 +714,11 @@ static void scene_colour_translucent_scanline(int32_t *restrict raster, int i,
 
     length = -(i % 16);
 
-    for (int i1 = 0; i1 < length; i1++) {
+    for (int i_ = 0; i_ < length; i_++) {
         (*raster) = colour + ((*(raster + 1) >> 1) & 0x7f7f7f);
         raster++;
 
-        if ((i1 & 3) == 3) {
+        if ((i_ & 3) == 3) {
             colour = ramp[(ramp_index / RAMP_SIZE) & 0xff];
             ramp_index += ramp_inc * 2;
         }
@@ -737,7 +738,7 @@ static void scene_colour_scanline(int32_t *restrict raster, int i,
     ramp_index += ramp_inc;
     int length = i / (RAMP_WIDE ? 8 : 16);
 
-    for (int i1 = length; i1 < 0; i1++) {
+    for (int i_ = length; i_ < 0; i_++) {
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < (RAMP_WIDE ? 2 : 4); k++) {
                 (*raster++) = colour;
@@ -751,10 +752,10 @@ static void scene_colour_scanline(int32_t *restrict raster, int i,
     length = -(i % (RAMP_WIDE ? 8 : 16));
     int ramp_flag = (RAMP_WIDE ? 1 : 3);
 
-    for (int i1 = 0; i1 < length; i1++) {
+    for (int i_ = 0; i_ < length; i_++) {
         (*raster++) = colour;
 
-        if ((i1 & ramp_flag) == ramp_flag) {
+        if ((i_ & ramp_flag) == ramp_flag) {
             colour = ramp[(ramp_index >> 8) & 0xff];
             ramp_index += ramp_inc;
         }

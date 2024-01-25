@@ -27,6 +27,7 @@
 typedef struct World World;
 
 #include "mudclient.h"
+#include "version.h"
 
 #define REGION_WIDTH 96
 #define REGION_HEIGHT 96

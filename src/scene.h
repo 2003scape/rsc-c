@@ -61,7 +61,7 @@ typedef struct Scene Scene;
 #define RAMP_COUNT 50
 #define RAMP_SIZE 256
 
-/* originally Scene had a wide_band property and a second gradient_scanline
+/* originally Scene had a wide_band property and a second colour_scanline
  * function that was unused */
 #define RAMP_WIDE 0
 
