@@ -2427,12 +2427,12 @@ void mudclient_load_models(mudclient *mud) {
         GameModel *game_model = malloc(sizeof(GameModel));
 
         if (offset != 0) {
-            game_model_from_bytes(game_model, models_jag + offset, len);
+            game_model_new_ob3(game_model, models_jag + offset, len);
         } else {
             mud_error("missing model \"%s.ob3\" from %s\n", model_name,
                       models_filename);
 
-            game_model_from2(game_model, 1, 1);
+            game_model_new_alloc(game_model, 1, 1);
         }
 
         mud->game_models[i] = game_model;
@@ -2460,7 +2460,7 @@ void mudclient_load_models(mudclient *mud) {
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag + offset, len);
+            game_model_new_ob3(game_model, models_jag + offset, len);
 
             int mask_colour = game_data.items[i].mask;
 
@@ -2499,7 +2499,7 @@ void mudclient_load_models(mudclient *mud) {
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag + offset, len);
+            game_model_new_ob3(game_model, models_jag + offset, len);
 
             mud->item_models[i] = game_model;
         }
@@ -3345,7 +3345,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     int height = game_data.wall_objects[id].height;
 
     GameModel *game_model = malloc(sizeof(GameModel));
-    game_model_from2(game_model, 4, 1);
+    game_model_new_alloc(game_model, 4, 1);
 
     if (direction == 0) {
         x2 = x + 1;
@@ -3381,7 +3381,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_create_face(game_model, 4, vertices, front_texture,
                            back_texture);
 
-    game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
+    game_model_set_light(game_model, 0, 60, 24, -50, -10, -50);
 
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
         scene_add_model(mud->scene, game_model);
@@ -4316,7 +4316,7 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
 
         scene_add_model(mud->scene, game_model);
 
-        game_model_set_light_from6(game_model, 1, 48, 48, -50, -10, -50);
+        game_model_set_light(game_model, 1, 48, 48, -50, -10, -50);
         game_model_copy_position(game_model, mud->objects[object_index].model);
 
         game_model->key = object_index;
@@ -5339,7 +5339,7 @@ void mudclient_draw_game(mudclient *mud) {
         int ambience = 40 + ((float)rand() / (float)RAND_MAX) * 3;
         int diffuse = 40 + ((float)rand() / (float)RAND_MAX) * 7;
 
-        scene_set_light_from5(mud->scene, ambience, diffuse, -50, -10, -50);
+        scene_set_light(mud->scene, ambience, diffuse, -50, -10, -50);
     }
 
     mud->action_bubble_count = 0;

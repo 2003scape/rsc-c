@@ -173,14 +173,18 @@ struct GameModel {
 };
 
 void game_model_new(GameModel *game_model);
-void game_model_from2(GameModel *game_model, int vertex_count, int face_count);
-void game_model_from2a(GameModel *game_model, GameModel **pieces, int count);
-void game_model_from6(GameModel *game_model, GameModel **pieces, int count,
-                      int autocommit, int isolated, int unlit, int unpickable);
-void game_model_from7(GameModel *game_model, int vertex_count, int face_count,
-                      int autocommit, int isolated, int unlit, int unpickable,
-                      int projected);
-void game_model_from_bytes(GameModel *game_model, int8_t *data, size_t len);
+void game_model_new_alloc(GameModel *game_model,
+                          int vertex_count, int face_count);
+void game_model_new_merge(GameModel *game_model, GameModel **pieces, int count);
+void game_model_new_merge_flags(GameModel *game_model, GameModel **pieces,
+                                int count, int autocommit, int isolated,
+                                int unlit, int unpickable);
+void game_model_new_alloc_flags(GameModel *game_model,
+                                int vertex_count, int face_count,
+                                int autocommit, int isolated,
+                                int unlit, int unpickable,
+                                int projected);
+void game_model_new_ob3(GameModel *game_model, int8_t *data, size_t len);
 void game_model_reset(GameModel *game_model);
 void game_model_allocate(GameModel *game_model, int vertex_count,
                          int face_count);
@@ -198,11 +202,12 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
                       int pickable);
 void game_model_copy_lighting(GameModel *game_model, GameModel *model,
                               uint16_t *src_vertices, int vertex_count, int in_face);
-void game_model_set_light_from3(GameModel *game_model, int x, int y, int z);
-void game_model_set_light_from5(GameModel *game_model, int ambience,
-                                int diffuse, int x, int y, int z);
-void game_model_set_light_from6(GameModel *game_model, int gouraud,
-                                int ambience, int diffuse, int x, int y, int z);
+void game_model_set_light_dir(GameModel *game_model, int x, int y, int z);
+void game_model_set_light_intensity(GameModel *game_model, int ambience,
+                                    int diffuse, int x, int y, int z);
+void game_model_set_light(GameModel *game_model, int gouraud,
+                          int ambience, int diffuse,
+                          int x, int y, int z);
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience);
 void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll);
@@ -213,6 +218,7 @@ void game_model_determine_transform_type(GameModel *game_model);
 void game_model_apply_translate(GameModel *game_model, int dx, int dy, int dz);
 void game_model_apply_rotation(GameModel *game_model, int yaw, int roll,
                                int pitch);
+
 void game_model_compute_bounds(GameModel *game_model);
 void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
                                  int16_t *vertex_y, int16_t *vertex_z,
@@ -234,7 +240,7 @@ void game_model_project(GameModel *game_model, int camera_x, int camera_y,
                         int camera_yaw, int view_distance, int clip_near);
 void game_model_commit(GameModel *game_model);
 GameModel *game_model_copy(GameModel *game_model);
-GameModel *game_model_copy_from4(GameModel *game_model, int autocommit,
+GameModel *game_model_copy_flags(GameModel *game_model, int autocommit,
                                  int isolated, int unlit, int pickable);
 void game_model_copy_position(GameModel *game_model, GameModel *source);
 void game_model_destroy(GameModel *game_model);

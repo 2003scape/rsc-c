@@ -161,8 +161,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     GameModel *view = malloc(sizeof(GameModel));
 
     /* 2D sprites */
-    game_model_from2(view, scene->max_sprite_count * 2,
-                     scene->max_sprite_count);
+    game_model_new_alloc(view, scene->max_sprite_count * 2,
+                               scene->max_sprite_count);
 
     scene->view = view;
 
@@ -3357,25 +3357,25 @@ int scene_get_fill_colour(Scene *scene, int face_fill) {
     return 0;
 }
 
-void scene_set_light_from3(Scene *scene, int x, int y, int z) {
+void scene_set_light_dir(Scene *scene, int x, int y, int z) {
     if (x == 0 && y == 0 && z == 0) {
         x = 32;
     }
 
     for (int i = 0; i < scene->model_count; i++) {
-        game_model_set_light_from3(scene->models[i], x, y, z);
+        game_model_set_light_dir(scene->models[i], x, y, z);
     }
 }
 
-void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
-                           int y, int z) {
+void scene_set_light(Scene *scene, int ambience, int diffuse,
+                               int x, int y, int z) {
     if (x == 0 && y == 0 && z == 0) {
         x = 32;
     }
 
     for (int i = 0; i < scene->model_count; i++) {
-        game_model_set_light_from5(scene->models[i], ambience, diffuse, x, y,
-                                   z);
+        game_model_set_light_intensity(scene->models[i], ambience, diffuse,
+                                       x, y, z);
     }
 }
 

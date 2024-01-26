@@ -64,7 +64,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
                 10,
             model_y);
 
-        game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+        game_model_set_light(model, 1, 48, 48, -50, -10, -50);
 
         scene_add_model(mud->scene, model);
 
@@ -636,7 +636,7 @@ void mudclient_packet_tick(mudclient *mud) {
                         -world_get_elevation(mud->world, model_x, model_y),
                         model_y);
 
-                    game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+                    game_model_set_light(model, 1, 48, 48, -50, -10, -50);
 
                     world_register_object(mud->world, area_x, area_y,
                                           object_id);
