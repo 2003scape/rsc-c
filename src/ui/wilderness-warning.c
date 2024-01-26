@@ -1,8 +1,10 @@
 #include "wilderness-warning.h"
 
 void mudclient_draw_wilderness_warning(mudclient *mud) {
+    int is_touch = mudclient_is_touch(mud);
+
     int wilderness_warning_width =
-        (mud->surface->width < 340 ? MUD_WIDTH : 340);
+        (mud->surface->width < 340 ? MUD_MIN_WIDTH : 340);
 
     int dialog_x = mud->surface->width / 2 - wilderness_warning_width / 2;
     int dialog_y = mud->surface->height / 2 - WILDERNESS_WARNING_HEIGHT / 2 - 6;
@@ -51,9 +53,13 @@ void mudclient_draw_wilderness_warning(mudclient *mud) {
 
     y += 22;
 
-    surface_draw_string_centre(
-        mud->surface, "In the wilderness an indicator at the bottom-right", x,
-        y, FONT_BOLD_12, WHITE);
+    char indicator_line[51] = {0};
+
+    sprintf(indicator_line, "In the wilderness an indicator at the bottom-%s",
+            is_touch ? "left" : "right");
+
+    surface_draw_string_centre(mud->surface, indicator_line, x, y, FONT_BOLD_12,
+                               WHITE);
 
     y += 13;
 
@@ -70,8 +76,11 @@ void mudclient_draw_wilderness_warning(mudclient *mud) {
         text_colour = RED;
     }
 
-    surface_draw_string_centre(mud->surface, "Click here to close window", x, y,
-                               FONT_BOLD_12, text_colour);
+    char close_line[27] = {0};
+    sprintf(close_line, "%s here to close window", is_touch ? "Tap" : "Click");
+
+    surface_draw_string_centre(mud->surface, close_line, x, y, FONT_BOLD_12,
+                               text_colour);
 
     if (mud->mouse_button_click != 0) {
         if (mud->mouse_y > y - 12 && mud->mouse_y <= y &&
