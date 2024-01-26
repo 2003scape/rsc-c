@@ -122,10 +122,12 @@ static void surface_plot_letter(int32_t *restrict dest,
                                 int font_pos, int dest_pos,
                                 int width, int height,
                                 int dest_offset, int font_data_offset);
-#else
+#endif /* RENDER_SW */
+
+#ifdef RENDER_GL
 static void surface_gl_quad_new(Surface *surface, gl_quad *quad,
                                 int x, int y, int width, int height);
-#endif /* RENDER_SW */
+#endif
 
 void init_surface_global(void) {
     memset(game_fonts, '\0', sizeof(game_fonts));
