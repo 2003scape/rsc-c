@@ -286,9 +286,9 @@ void scene_scroll_texture(Scene *scene, int id);
 #endif
 int16_t scene_rgb_to_fill(uint8_t, uint8_t, uint8_t);
 int scene_get_fill_colour(Scene *scene, int face_fill);
-void scene_set_light_from3(Scene *scene, int x, int y, int z);
-void scene_set_light_from5(Scene *scene, int ambience, int diffuse, int x,
-                           int y, int z);
+void scene_set_light_dir(Scene *scene, int x, int y, int z);
+void scene_set_light(Scene *scene, int ambience, int diffuse,
+                     int x, int y, int z);
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene);
 #endif
