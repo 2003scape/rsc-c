@@ -326,39 +326,15 @@ void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y, int scale_x
                                 int scale_y, int sprite_id, int alpha);
 void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
                                     int height, int sprite_id, int colour);
-void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
-                         int width, int height, int dest_offset, int src_offset,
-                         int y_inc);
-void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
-                                 int32_t *palette, int src_pos, int dest_pos,
-                                 int width, int height, int dest_offset,
-                                 int src_offset, int y_inc);
-void surface_plot_scale_from13(int32_t *dest, int32_t *src, int j, int k,
-                               int dest_pos, int i1, int j1, int k1, int l1,
-                               int i2, int j2, int k2);
-void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int src_pos,
-                                      int size, int width, int height,
-                                      int extra_x_spcae, int k1, int y_inc,
-                                      int alpha);
-void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colour_idx,
-                                       int32_t *colours, int list_pos, int size,
-                                       int width, int height, int extra_x_space,
-                                       int j1, int y_inc, int alpha);
 void surface_transparent_scale(int32_t *dest, int32_t *src, int j, int k,
                                int dest_pos, int i1, int j1, int k1, int l1,
                                int i2, int j2, int y_inc, int alpha);
-void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k, int l,
-                               int i1, int width, int height, int l1, int i2,
-                               int j2, int y_inc, int colour);
 void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
                                  int rotation, int scale);
 void surface_draw_minimap(int32_t *dest, int32_t *src, int j, int k, int l,
                           int i1, int j1, int k1, int l1);
 void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
                                     int l, int i1, int j1, int k1, int l1);
-void surface_draw_sprite_transform_mask_software(
-    Surface *surface, int x, int y, int draw_width, int draw_height,
-    int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip);
 void surface_draw_sprite_transform_mask(Surface *surface, int x, int y,
                                         int width, int height, int sprite_id,
                                         int mask_colour, int skin_colour,
@@ -369,33 +345,8 @@ void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
                                               int skin_colour, int skew_x,
                                               int flip, float depth_top,
                                               float depth_bottom);
-void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
-                                            int32_t *src, int j, int k,
-                                            int dest_pos, int i1, int j1,
-                                            int k1, int l1, int i2, int j2,
-                                            int k2, int l2, int i3);
-void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
-                                            int32_t *src, int j, int k,
-                                            int dest_pos, int i1, int j1,
-                                            int k1, int l1, int i2, int j2,
-                                            int k2, int l2, int i3, int j3);
-void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
-                                             int8_t *colour_idx,
-                                             int32_t *colours, int j, int k,
-                                             int l, int i1, int j1, int k1,
-                                             int l1, int i2, int j2, int k2,
-                                             int l2, int i3);
-void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
-                                            int8_t *colour_idx,
-                                            int32_t *colours, int j, int k,
-                                            int l, int i1, int j1, int k1,
-                                            int l1, int i2, int j2, int k2,
-                                            int l2, int i3, int j3);
 #ifdef RENDER_SW
 void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id);
-void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
-                         int font_pos, int dest_pos, int width, int height,
-                         int dest_offset, int font_data_offset);
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
 void surface_draw_blur(Surface *surface, int blur_height, int x, int y,

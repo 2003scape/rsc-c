@@ -27,7 +27,107 @@ int character_width[256] = {0};
 
 int32_t *surface_texture_pixels = NULL;
 
+#ifdef RENDER_SW
 static int surface_blend_alpha(int background_colour, int colour, int alpha);
+
+static void surface_draw_sprite_transform_mask_software(
+    Surface *surface, int x, int y, int draw_width, int draw_height,
+    int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip);
+
+static void surface_plot_sprite32(int32_t *restrict dest, int32_t *restrict src,
+                                  int src_pos, int dest_pos,
+                                  int width, int height,
+                                  int dest_offset, int src_offset, int y_inc);
+
+static void surface_plot_sprite32_alpha(int32_t *restrict dest,
+                                        int32_t *restrict src, int src_pos,
+                                        int dest_pos, int width, int height,
+                                        int dest_offset, int src_offset,
+                                        int y_inc, int alpha);
+
+static void surface_plot_sprite32_alpha_scale(int32_t *restrict dest,
+                                              int32_t *restrict src,
+                                              int j, int k, int dest_pos,
+                                              int dest_offset, int width,
+                                              int height, int l1, int i2,
+                                              int j2, int y_inc, int alpha);
+
+static void surface_plot_sprite32_scale(int32_t *restrict dest,
+                                        int32_t *restrict src, int j, int k,
+                                        int dest_pos, int dest_offset,
+                                        int width, int height, int l1, int i2,
+                                        int j2, int y_inc);
+
+static void surface_plot_sprite32_scale_mask(int32_t *restrict dest,
+                                             int32_t *restrict src,
+                                             int j, int k, int dest_pos,
+                                             int dest_offset, int width,
+                                             int height, int l1, int i2, int j2,
+                                             int y_inc, int mask_colour);
+
+static void surface_plot_sprite32_transform(Surface *surface,
+                                            int32_t *restrict dest,
+                                            int32_t *restrict src,
+                                            int j, int k, int dest_pos,
+                                            int width, int height,
+                                            int k1, int l1, int i2,
+                                            int mask_colour, int k2, int l2,
+                                            int y_inc);
+
+static void surface_plot_sprite32_transform_dual_mask(Surface *surface,
+                                                      int32_t *restrict dest,
+                                                      int32_t *restrict src,
+                                                      int j, int k,
+                                                      int dest_pos, int i1, int j1,
+                                                      int k1, int l1, int i2,
+                                                      int mask_colour, int skin_colour,
+                                                      int l2, int i3, int j3);
+
+static void surface_plot_sprite8(int32_t *restrict dest,
+                                 int8_t *restrict colours,
+                                 int32_t *restrict palette,
+                                 int src_pos, int dest_pos,
+                                 int width, int height, int dest_offset,
+                                 int src_offset, int y_inc);
+
+static void surface_plot_sprite8_alpha(int32_t *restrict dest,
+                                       int8_t *restrict colours,
+                                       int32_t *restrict palette, int src_pos,
+                                       int dest_pos, int width, int height,
+                                       int dest_offset, int src_offset,
+                                       int y_inc, int alpha);
+
+static void surface_plot_sprite8_transform(Surface *surface,
+                                           int32_t *restrict dest,
+                                           int8_t *restrict colour_idx,
+                                           int32_t *restrict colours,
+                                           int j, int k,
+                                           int l, int i1, int height, int k1,
+                                           int l1, int i2, int mask_colour,
+                                           int k2, int l2, int i3);
+
+static void surface_plot_sprite8_transform_dual_mask(Surface *surface,
+                                                     int32_t *restrict dest,
+                                                     int8_t *restrict colours,
+                                                     int32_t *restrict palette,
+                                                     int j, int k, int l, int i1,
+                                                     int height, int k1,
+                                                     int l1, int i2,
+                                                     int mask_colour,
+                                                     int skin_colour,
+                                                     int l2, int i3, int j3);
+
+static void surface_plot_letter(int32_t *restrict dest,
+                                int8_t *restrict font_data, int colour,
+                                int font_pos, int dest_pos,
+                                int width, int height,
+                                int dest_offset, int font_data_offset);
+#endif /* RENDER_SW */
+
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+static void surface_gl_quad_new(Surface *surface, gl_quad *quad,
+                                int x, int y, int width, int height);
+#endif
 
 void init_surface_global(void) {
     memset(game_fonts, '\0', sizeof(game_fonts));
@@ -231,8 +331,8 @@ void surface_gl_reset_context(Surface *surface) {
     surface->gl_context_count = 1;
 }
 
-void surface_gl_quad_new(Surface *surface, gl_quad *quad, int x, int y,
-                         int width, int height) {
+static void surface_gl_quad_new(Surface *surface, gl_quad *quad,
+                                int x, int y, int width, int height) {
 #ifdef RENDER_GL
     float left_x = surface_gl_translate_x(surface, x);
     float right_x = surface_gl_translate_x(surface, x + width);
@@ -2202,14 +2302,15 @@ void surface_draw_sprite(Surface *surface, int x, int y, int sprite_id) {
     }
 
     if (surface->surface_pixels[sprite_id] == NULL) {
-        surface_plot_palette_sprite(
+        surface_plot_sprite8(
             surface->pixels, surface->sprite_colours[sprite_id],
             surface->sprite_palette[sprite_id], src_pos, dest_pos, width,
             height, dest_offset, sprite_offset, y_inc);
     } else {
-        surface_plot_sprite(surface->pixels, surface->surface_pixels[sprite_id],
-                            src_pos, dest_pos, width, height, dest_offset,
-                            sprite_offset, y_inc);
+        surface_plot_sprite32(surface->pixels,
+                              surface->surface_pixels[sprite_id],
+                              src_pos, dest_pos, width, height, dest_offset,
+                              sprite_offset, y_inc);
     }
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
@@ -2311,7 +2412,7 @@ void surface_draw_sprite_scale(Surface *surface, int x, int y, int width,
         }
     }
 
-    surface_plot_scale_from13(
+    surface_plot_sprite32_scale(
         surface->pixels, surface->surface_pixels[sprite_id], l1, i2, dest_pos,
         k3, width, height, j2, k2, sprite_width, y_inc);
 
@@ -2418,12 +2519,12 @@ void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
     }
 
     if (surface->surface_pixels[sprite_id] == NULL) {
-        surface_draw_sprite_alpha_from11a(
+        surface_plot_sprite8_alpha(
             surface->pixels, surface->sprite_colours[sprite_id],
             surface->sprite_palette[sprite_id], src_pos, size, width, height,
             dest_offset, src_offset, y_inc, alpha);
     } else {
-        surface_draw_sprite_alpha_from11(
+        surface_plot_sprite32_alpha(
             surface->pixels, surface->surface_pixels[sprite_id], src_pos, size,
             width, height, dest_offset, src_offset, y_inc, alpha);
     }
@@ -2433,6 +2534,7 @@ void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
 #endif
 }
 
+/* only works with non-palette sprites */
 void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y,
                                      int scale_x, int scale_y, int sprite_id,
                                      int alpha) {
@@ -2526,7 +2628,7 @@ void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y,
         }
     }
 
-    surface_transparent_scale(
+    surface_plot_sprite32_alpha_scale(
         surface->pixels, surface->surface_pixels[sprite_id], i2, j2, j3, l3,
         scale_x, scale_y, k2, l2, sprite_width, y_inc, alpha);
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -2535,7 +2637,7 @@ void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y,
 #endif
 }
 
-/* only works with palette sprites */
+/* only works with non-palette sprites */
 void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
                                     int height, int sprite_id, int colour) {
 #ifdef RENDER_SW
@@ -2628,7 +2730,7 @@ void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
         }
     }
 
-    surface_plot_scale_from14(
+    surface_plot_sprite32_scale_mask(
         surface->pixels, surface->surface_pixels[sprite_id], i2, j2, j3, l3,
         width, height, k2, l2, sprite_width, y_inc, colour);
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -2637,9 +2739,11 @@ void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
 #endif
 }
 
-void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
-                         int width, int height, int dest_offset, int src_offset,
-                         int y_inc) {
+#ifdef RENDER_SW
+static void surface_plot_sprite32(int32_t * dest, int32_t * src,
+                                  int src_pos, int dest_pos,
+                                  int width, int height,
+                                  int dest_offset, int src_offset, int y_inc) {
     for (int y = 0 - height; y < 0; y += y_inc) {
         for (int x = -width; x < 0; x++) {
             int colour = src[src_pos++];
@@ -2656,8 +2760,10 @@ void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
     }
 }
 
-void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
-                                 int32_t *palette, int src_pos, int dest_pos,
+static void surface_plot_sprite8(int32_t *restrict dest,
+                                 int8_t *restrict colours,
+                                 int32_t *restrict palette,
+                                 int src_pos, int dest_pos,
                                  int width, int height, int dest_offset,
                                  int src_offset, int y_inc) {
     for (int y = 0 - height; y < 0; y += y_inc) {
@@ -2676,9 +2782,10 @@ void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
     }
 }
 
-void surface_plot_scale_from13(int32_t *dest, int32_t *src, int j, int k,
-                               int dest_pos, int dest_offset, int width,
-                               int height, int l1, int i2, int j2, int y_inc) {
+static void surface_plot_sprite32_scale(int32_t *dest, int32_t *src, int j,
+                                        int k, int dest_pos, int dest_offset,
+                                        int width, int height, int l1, int i2,
+                                        int j2, int y_inc) {
     int l2 = j;
 
     for (int y = -height; y < 0; y += y_inc) {
@@ -2713,10 +2820,11 @@ static int surface_blend_alpha(int background_colour, int colour, int alpha) {
            8;
 }
 
-void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int src_pos,
-                                      int dest_pos, int width, int height,
-                                      int dest_offset, int src_offset,
-                                      int y_inc, int alpha) {
+static void surface_plot_sprite32_alpha(int32_t *restrict dest,
+                                        int32_t *restrict src, int src_pos,
+                                        int dest_pos, int width, int height,
+                                        int dest_offset, int src_offset,
+                                        int y_inc, int alpha) {
     for (int y = -height; y < 0; y += y_inc) {
         for (int x = -width; x < 0; x++) {
             int colour = src[src_pos++];
@@ -2736,8 +2844,8 @@ void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int src_pos,
     }
 }
 
-void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colours,
-                                       int32_t *palette, int src_pos,
+static void surface_plot_sprite8_alpha(int32_t *dest, int8_t *restrict colours,
+                                       int32_t *restrict palette, int src_pos,
                                        int dest_pos, int width, int height,
                                        int dest_offset, int src_offset,
                                        int y_inc, int alpha) {
@@ -2762,10 +2870,12 @@ void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colours,
     }
 }
 
-void surface_transparent_scale(int32_t *dest, int32_t *src, int j, int k,
-                               int dest_pos, int dest_offset, int width,
-                               int height, int l1, int i2, int j2, int y_inc,
-                               int alpha) {
+static void surface_plot_sprite32_alpha_scale(int32_t *restrict dest,
+                                              int32_t *restrict src,
+                                              int j, int k, int dest_pos,
+                                              int dest_offset, int width,
+                                              int height, int l1, int i2,
+                                              int j2, int y_inc, int alpha) {
     int j3 = j;
 
     for (int y = -height; y < 0; y += y_inc) {
@@ -2791,10 +2901,11 @@ void surface_transparent_scale(int32_t *dest, int32_t *src, int j, int k,
     }
 }
 
-void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k,
-                               int dest_pos, int dest_offset, int width,
-                               int height, int l1, int i2, int j2, int y_inc,
-                               int mask_colour) {
+static void surface_plot_sprite32_scale_mask(int32_t *restrict dest,
+                                             int32_t *restrict src, int j, int k,
+                                             int dest_pos, int dest_offset, int width,
+                                             int height, int l1, int i2, int j2,
+                                             int y_inc, int mask_colour) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -2829,6 +2940,7 @@ void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k,
         dest_pos += dest_offset;
     }
 }
+#endif /* RENDER_SW */
 
 void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
                                  int rotation, int scale) {
@@ -3205,7 +3317,8 @@ void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int dest_pos,
     }
 }
 
-void surface_draw_sprite_transform_mask_software(
+#ifdef RENDER_SW
+static void surface_draw_sprite_transform_mask_software(
     Surface *surface, int x, int y, int draw_width, int draw_height,
     int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip) {
     if (mask_colour == 0) {
@@ -3294,13 +3407,13 @@ void surface_draw_sprite_transform_mask_software(
     if (skin_colour == WHITE) {
         if (surface->surface_pixels[sprite_id] != NULL) {
             if (!flip) {
-                surface_transparent_sprite_plot_from15(
+                surface_plot_sprite32_transform(
                     surface, surface->pixels,
                     surface->surface_pixels[sprite_id], offset_x, offset_y, j4,
                     draw_width, draw_height, width_ratio, height_ratio,
                     sprite_width, mask_colour, i3, l3, y_inc);
             } else {
-                surface_transparent_sprite_plot_from15(
+                surface_plot_sprite32_transform(
                     surface, surface->pixels,
                     surface->surface_pixels[sprite_id],
                     (surface->sprite_width[sprite_id] << 16) - offset_x - 1,
@@ -3309,14 +3422,14 @@ void surface_draw_sprite_transform_mask_software(
             }
         } else {
             if (!flip) {
-                surface_transparent_sprite_plot_from16a(
+                surface_plot_sprite8_transform(
                     surface, surface->pixels,
                     surface->sprite_colours[sprite_id],
                     surface->sprite_palette[sprite_id], offset_x, offset_y, j4,
                     draw_width, draw_height, width_ratio, height_ratio,
                     sprite_width, mask_colour, i3, l3, y_inc);
             } else {
-                surface_transparent_sprite_plot_from16a(
+                surface_plot_sprite8_transform(
                     surface, surface->pixels,
                     surface->sprite_colours[sprite_id],
                     surface->sprite_palette[sprite_id],
@@ -3328,14 +3441,14 @@ void surface_draw_sprite_transform_mask_software(
     } else {
         if (surface->surface_pixels[sprite_id] != NULL) {
             if (!flip) {
-                surface_transparent_sprite_plot_from16(
+                surface_plot_sprite32_transform_dual_mask(
                     surface, surface->pixels,
                     surface->surface_pixels[sprite_id], offset_x, offset_y, j4,
                     draw_width, draw_height, width_ratio, height_ratio,
                     sprite_width, mask_colour, skin_colour, i3, l3, y_inc);
 
             } else {
-                surface_transparent_sprite_plot_from16(
+                surface_plot_sprite32_transform_dual_mask(
                     surface, surface->pixels,
                     surface->surface_pixels[sprite_id],
                     (surface->sprite_width[sprite_id] << 16) - offset_x - 1,
@@ -3345,14 +3458,14 @@ void surface_draw_sprite_transform_mask_software(
             }
         } else {
             if (!flip) {
-                surface_transparent_sprite_plot_from17(
+                surface_plot_sprite8_transform_dual_mask(
                     surface, surface->pixels,
                     surface->sprite_colours[sprite_id],
                     surface->sprite_palette[sprite_id], offset_x, offset_y, j4,
                     draw_width, draw_height, width_ratio, height_ratio,
                     sprite_width, mask_colour, skin_colour, i3, l3, y_inc);
             } else {
-                surface_transparent_sprite_plot_from17(
+                surface_plot_sprite8_transform_dual_mask(
                     surface, surface->pixels,
                     surface->sprite_colours[sprite_id],
                     surface->sprite_palette[sprite_id],
@@ -3364,6 +3477,7 @@ void surface_draw_sprite_transform_mask_software(
         }
     }
 }
+#endif
 
 /* applies scale, both grey and skin colour masks, skew/shear and flip. used
  * for entity sprites */
@@ -3402,9 +3516,12 @@ void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
 #endif
 }
 
-void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
-                                            int32_t *src, int j, int k,
-                                            int dest_pos, int width, int height,
+#ifdef RENDER_SW
+static void surface_plot_sprite32_transform(Surface *surface,
+                                            int32_t *restrict dest,
+                                            int32_t *restrict src,
+                                            int j, int k, int dest_pos,
+                                            int width, int height,
                                             int k1, int l1, int i2,
                                             int mask_colour, int k2, int l2,
                                             int y_inc) {
@@ -3461,12 +3578,14 @@ void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
     }
 }
 
-void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
-                                            int32_t *src, int j, int k,
-                                            int dest_pos, int i1, int j1,
-                                            int k1, int l1, int i2,
-                                            int mask_colour, int skin_colour,
-                                            int l2, int i3, int j3) {
+static void surface_plot_sprite32_transform_dual_mask(Surface *surface,
+                                                      int32_t *restrict dest,
+                                                      int32_t *restrict src,
+                                                      int j, int k, int dest_pos,
+                                                      int i1, int j1,
+                                                      int k1, int l1, int i2,
+                                                      int mask_colour, int skin_colour,
+                                                      int l2, int i3, int j3) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -3527,12 +3646,13 @@ void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
     }
 }
 
-void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
-                                             int8_t *colour_idx,
-                                             int32_t *colours, int j, int k,
-                                             int l, int i1, int height, int k1,
-                                             int l1, int i2, int mask_colour,
-                                             int k2, int l2, int i3) {
+static void surface_plot_sprite8_transform(Surface *surface,
+                                           int32_t *restrict dest,
+                                           int8_t *restrict colour_idx,
+                                           int32_t *restrict colours, int j, int k,
+                                           int l, int i1, int height, int k1,
+                                           int l1, int i2, int mask_colour,
+                                           int k2, int l2, int i3) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -3588,12 +3708,14 @@ void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
     }
 }
 
-void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
-                                            int8_t *colous, int32_t *palette,
-                                            int j, int k, int l, int i1,
-                                            int height, int k1, int l1, int i2,
-                                            int mask_colour, int skin_colour,
-                                            int l2, int i3, int j3) {
+static void surface_plot_sprite8_transform_dual_mask(Surface *surface,
+                                                     int32_t *restrict dest,
+                                                     int8_t *restrict colours,
+                                                     int32_t *restrict palette,
+                                                     int j, int k, int l, int i1,
+                                                     int height, int k1, int l1, int i2,
+                                                     int mask_colour, int skin_colour,
+                                                     int l2, int i3, int j3) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -3623,7 +3745,7 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
 
         if (j3 != 0) {
             for (int k7 = k6; k7 < k6 + l6; k7++) {
-                int colour = colous[(j >> 16) + j6] & 0xff;
+                int colour = colours[(j >> 16) + j6] & 0xff;
 
                 if (colour != 0) {
                     colour = palette[colour];
@@ -3656,10 +3778,11 @@ void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
     }
 }
 
-#ifdef RENDER_SW
-void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
-                         int font_pos, int dest_pos, int width, int height,
-                         int dest_offset, int font_data_offset) {
+static void surface_plot_letter(int32_t *restrict dest,
+                                int8_t *restrict font_data, int colour,
+                                int font_pos, int dest_pos,
+                                int width, int height,
+                                int dest_offset, int font_data_offset) {
     for (int y = -height; y < 0; y++) {
         for (int x = -width; x < 0; x++) {
             if (font_data[font_pos++] != 0) {
@@ -3760,7 +3883,7 @@ void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
     }
 }
 
-#endif
+#endif /* RENDER_SW */
 
 void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
                                FontStyle font, int colour, float depth) {
