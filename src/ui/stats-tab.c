@@ -12,8 +12,8 @@ const char *skill_names[] = {
 
 int skills_length;
 
-static const char *equipment_stat_names[] = {
-    "Armour", "WeaponAim", "WeaponPower", "Magic", "Prayer"};
+static const char *equipment_stat_names[] = {"Armour", "WeaponAim",
+                                             "WeaponPower", "Magic", "Prayer"};
 
 static int experience_array[100];
 
@@ -195,6 +195,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
     surface_draw_tabs(mud->surface, ui_x, ui_y, STATS_WIDTH, STATS_TAB_HEIGHT,
                       stats_tabs, is_compact ? 3 : 2,
                       mud->ui_tab_stats_sub_tab);
+
+    mud->ui_tab_stats_sub_tab = !is_compact && mud->ui_tab_stats_sub_tab > 1
+                                    ? 1
+                                    : mud->ui_tab_stats_sub_tab;
 
     /* the handler for the skills/equipment tab */
     if (mud->ui_tab_stats_sub_tab == 0) {

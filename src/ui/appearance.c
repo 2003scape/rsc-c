@@ -262,6 +262,7 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
     panel_draw_panel(mud->panel_appearance);
 
     int x = mud->surface->width / 2;
+
     int y = (MUD_IS_COMPACT ? -7 : 25) +
             (mud->surface->height / 2 - MUD_HEIGHT / 2);
 
