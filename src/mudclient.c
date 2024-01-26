@@ -5023,9 +5023,6 @@ void mudclient_draw_overhead(mudclient *mud) {
         for (int j = 0; j < mud->overworld_text_count; j++) {
             int x2 = mud->overworld_text[j].x;
             int y2 = mud->overworld_text[j].y;
-            int width2 = surface_text_width(mud->overworld_text[j].text,
-                                            FONT_REGULAR_11);
-            int height2 = surface_text_height(FONT_REGULAR_11);
             if ((x + width + 2) < x2 || (x - width - 2) > x2) {
                 continue;
             }
@@ -6495,6 +6492,15 @@ int mudclient_is_touch(mudclient *mud) {
 void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
                                 int x, int y, int width, int height, int font,
                                 int is_centred) {
+    (void)mud;
+    (void)text;
+    (void)is_password;
+    (void)x;
+    (void)y;
+    (void)width;
+    (void)height;
+    (void)font;
+    (void)is_centred;
 #ifdef ANDROID
     SDL_StartTextInput();
 #elif defined(EMSCRIPTEN)

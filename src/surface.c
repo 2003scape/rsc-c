@@ -3892,6 +3892,9 @@ int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,
     int end = 0;
     int text_length = strlen(text);
 
+    /* TODO: eliminate use of globals */
+    (void)surface;
+
     for (int i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
             i += 4;

@@ -107,8 +107,8 @@ void mudclient_draw_ui_tabs(mudclient *mud) {
     int button_x =
         mud->surface->width - mud->surface->sprite_width[mud->sprite_media] - 3;
 
-    surface_draw_sprite_alpha(mud->surface, button_x, 3, mud->sprite_media,
-                              128);
+    surface_draw_sprite_alpha(mud->surface, button_x, button_y,
+                              mud->sprite_media, 128);
 #endif
 
     mudclient_draw_inventory_count(mud);
