@@ -124,7 +124,7 @@ static void surface_plot_letter(int32_t *restrict dest,
                                 int dest_offset, int font_data_offset);
 #endif /* RENDER_SW */
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 static void surface_gl_quad_new(Surface *surface, gl_quad *quad,
                                 int x, int y, int width, int height);
 #endif
