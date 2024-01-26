@@ -134,7 +134,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
 
     int8_t *data = mud->incoming_packet;
-    SERVER_OPCODE opcode = data[0] & 0xff;
+    ServerOpcode opcode = data[0] & 0xff;
 
 #ifndef NO_ISAAC
     if (mud->packet_stream->isaac_ready) {
@@ -1649,6 +1649,7 @@ void mudclient_packet_tick(mudclient *mud) {
 
         if (new_item_count > 40) {
             /* TODO: use some kind of constant to determine this (also below) */
+            /* shop.h columns * rows = 40 */
             return;
         }
 

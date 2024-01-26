@@ -475,7 +475,7 @@ int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer) {
 }
 
 void packet_stream_new_packet(PacketStream *packet_stream,
-                              CLIENT_OPCODE opcode) {
+                              ClientOpcode opcode) {
 #if 0
     packet_stream->opcode_friend = get_client_opcode_friend(opcode);
 #endif

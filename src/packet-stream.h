@@ -115,7 +115,7 @@ int packet_stream_read_byte(PacketStream *packet_stream);
 int packet_stream_has_packet(PacketStream *packet_stream);
 int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer);
 void packet_stream_new_packet(PacketStream *packet_stream,
-                              CLIENT_OPCODE opcode);
+                              ClientOpcode opcode);
 /*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);*/
 int packet_stream_write_packet(PacketStream *packet_stream, int i);
 void packet_stream_send_packet(PacketStream *packet_stream);
