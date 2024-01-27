@@ -861,8 +861,10 @@ void mudclient_resize(mudclient *mud) {
         panel_destroy(mud->panel_login_welcome);
         panel_destroy(mud->panel_login_new_user);
         panel_destroy(mud->panel_login_existing_user);
-
         mudclient_create_login_panels(mud);
+
+        panel_destroy(mud->panel_appearance);
+        mudclient_create_appearance_panel(mud);
 
         mud->scene->raster = mud->surface->pixels;
 
@@ -876,32 +878,32 @@ void mudclient_resize(mudclient *mud) {
         int half_offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
         int half_offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
 
-        int login_offset_x =
+        int dynamic_offset_x =
             (mud->surface->width / 2) -
             (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) / 2;
 
-        int login_offset_y =
+        int dynamic_offset_y =
             (mud->surface->height / 2) -
             (is_compact ? MUD_MIN_HEIGHT : MUD_VANILLA_HEIGHT) / 2;
 
         if (mud->panel_login_welcome != NULL) {
-            mud->panel_login_welcome->offset_x = login_offset_x;
-            mud->panel_login_welcome->offset_y = login_offset_y;
+            mud->panel_login_welcome->offset_x = dynamic_offset_x;
+            mud->panel_login_welcome->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_login_new_user != NULL) {
-            mud->panel_login_new_user->offset_x = login_offset_x;
-            mud->panel_login_new_user->offset_y = login_offset_y;
+            mud->panel_login_new_user->offset_x = dynamic_offset_x;
+            mud->panel_login_new_user->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_login_existing_user != NULL) {
-            mud->panel_login_existing_user->offset_x = login_offset_x;
-            mud->panel_login_existing_user->offset_y = login_offset_y;
+            mud->panel_login_existing_user->offset_x = dynamic_offset_x;
+            mud->panel_login_existing_user->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_appearance != NULL) {
-            mud->panel_appearance->offset_x = half_offset_x;
-            mud->panel_appearance->offset_y = half_offset_y;
+            mud->panel_appearance->offset_x = dynamic_offset_x;
+            mud->panel_appearance->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_message_tabs != NULL && !is_touch) {
