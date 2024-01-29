@@ -5375,9 +5375,8 @@ void mudclient_draw_game(mudclient *mud) {
      * 512x346 client when resized beyond that.
      */
     if (mud->game_height > MUD_VANILLA_HEIGHT) {
-        int clip_far = mud->scene->clip_far_3d;
+        int clip_far = mud->scene->clip_far_3d / (MUD_VANILLA_HEIGHT / (float)mud->game_height);
 
-        clip_far /= (MUD_VANILLA_HEIGHT / (float)mud->game_height);
         mud->scene->clip_far_3d = clip_far;
         mud->scene->clip_far_2d = clip_far;
         mud->scene->fog_z_distance = clip_far - 100;

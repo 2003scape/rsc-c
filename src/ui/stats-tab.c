@@ -133,8 +133,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
     int is_touch = mudclient_is_touch(mud);
 
-    int is_compact =
-        is_touch || mud->surface->height < (height + STATS_LINE_BREAK) + ui_y;
+    int is_compact = is_touch || mud->surface->height < (height + 12) + ui_y;
 
     const char *stats_tabs[3];
 

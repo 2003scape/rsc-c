@@ -13,7 +13,6 @@ extern int quests_length;
 #define STATS_HEIGHT 275
 #define STATS_COMPACT_HEIGHT 171
 #define STATS_TAB_HEIGHT 24
-#define STATS_LINE_BREAK (MUD_IS_COMPACT ? 11 : 12)
 
 void init_stats_tab_global(void);
 
