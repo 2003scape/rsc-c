@@ -14,17 +14,14 @@ void mudclient_draw_server_message(mudclient *mud) {
     }
 
     surface_draw_box(mud->surface, dialog_x - (width / 2),
-                     dialog_y - (height / 2), width, height,
-                     BLACK);
+                     dialog_y - (height / 2), width, height, BLACK);
 
     surface_draw_border(mud->surface, dialog_x - (width / 2),
-                        dialog_y - (height / 2), width, height,
-                        WHITE);
+                        dialog_y - (height / 2), width, height, WHITE);
 
     if (is_compact) {
         int character_at = surface_paragraph_height(
-            mud->surface, mud->server_message, FONT_BOLD_12,
-            width - 40, 196);
+            mud->surface, mud->server_message, FONT_BOLD_12, width - 40, 196);
 
         if (character_at > -1) {
             mud->server_message[character_at - 1] = '\0';
@@ -39,8 +36,7 @@ void mudclient_draw_server_message(mudclient *mud) {
                              : mud->server_message_next;
 
     surface_draw_paragraph(mud->surface, draw_message, dialog_x,
-                           dialog_y - (height / 2) + 20, 1, WHITE,
-                           width - 40);
+                           dialog_y - (height / 2) + 20, 1, WHITE, width - 40);
 
     int offset_y = (dialog_y - 10) + (height / 2);
     int text_colour = WHITE;
@@ -97,15 +93,15 @@ void mudclient_draw_server_message(mudclient *mud) {
         text_colour = RED;
     }
 
-    surface_draw_string_centre(mud->surface, "Click here to close window",
-                               dialog_x, offset_y, 1, text_colour);
+    surface_draw_stringf_centre(mud->surface, dialog_x, offset_y, FONT_BOLD_12,
+                                text_colour, "%s here to close window",
+                                mudclient_is_touch(mud) ? "Tap" : "Click");
 
     if (mud->mouse_button_click == 1 &&
-        (text_colour == RED ||
-         ((mud->mouse_x < dialog_x - (width / 2) ||
-           mud->mouse_x > dialog_x + (width / 2)) &&
-          (mud->mouse_y < dialog_y - (height / 2) ||
-           mud->mouse_y > dialog_y + (height / 2))))) {
+        (text_colour == RED || ((mud->mouse_x < dialog_x - (width / 2) ||
+                                 mud->mouse_x > dialog_x + (width / 2)) &&
+                                (mud->mouse_y < dialog_y - (height / 2) ||
+                                 mud->mouse_y > dialog_y + (height / 2))))) {
         mud->server_message_page = 0;
         mud->show_dialog_server_message = 0;
     }

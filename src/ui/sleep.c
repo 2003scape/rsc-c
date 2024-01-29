@@ -64,15 +64,11 @@ void mudclient_draw_sleep(mudclient *mud) {
     surface_draw_string_centre(mud->surface, "You are sleeping", x, y,
                                FONT_BOLD_24, YELLOW);
 
-    char formatted_fatigue[22] = {0};
-
-    sprintf(formatted_fatigue, "Fatigue: %d%%",
-            (mud->fatigue_sleeping * 100) / 750);
-
     y += (is_compact ? 28 : 40);
 
-    surface_draw_string_centre(mud->surface, formatted_fatigue, x, y,
-                               FONT_BOLD_24, YELLOW);
+    surface_draw_stringf_centre(mud->surface, x, y, FONT_BOLD_24, YELLOW,
+                                "Fatigue: %d%%",
+                                (mud->fatigue_sleeping * 100) / 750);
 
     y += (is_compact ? 25 : 50);
 
@@ -104,13 +100,10 @@ void mudclient_draw_sleep(mudclient *mud) {
     surface_draw_string_centre(mud->surface, line_bottom, x, y, FONT_BOLD_16,
                                WHITE);
 
-    char formatted_input[strlen(mud->input_text_current) + 2];
-    sprintf(formatted_input, "%s*", mud->input_text_current);
-
     y += 20;
 
-    surface_draw_string_centre(mud->surface, formatted_input, x, y,
-                               FONT_BOLD_16, CYAN);
+    surface_draw_stringf_centre(mud->surface, x, y, FONT_BOLD_16, CYAN, "%s*",
+                                mud->input_text_current);
 
     y += (is_compact ? 16 : 49);
 
@@ -133,11 +126,9 @@ void mudclient_draw_sleep(mudclient *mud) {
 
     y += 15;
 
-    // TODO tap here
-
-    surface_draw_string_centre(mud->surface,
-                               "@yel@click here@whi@ to get a different one", x,
-                               y, FONT_BOLD_12, WHITE);
+    surface_draw_stringf_centre(mud->surface, x, y, FONT_BOLD_12, WHITE,
+                                "@yel@%s here@whi@ to get a different one",
+                                is_touch ? "tap" : "click");
 
     surface_draw(mud->surface);
 }

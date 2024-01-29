@@ -1,6 +1,8 @@
 #include "shop.h"
 
 void mudclient_draw_shop(mudclient *mud) {
+    int is_touch = mudclient_is_touch(mud);
+
     int is_compact =
         mud->surface->width < (SHOP_COLUMNS * ITEM_GRID_SLOT_WIDTH) + 16 ||
         mud->surface->height < (SHOP_ROWS * ITEM_GRID_SLOT_HEIGHT) + 96;
@@ -11,16 +13,18 @@ void mudclient_draw_shop(mudclient *mud) {
     int shop_width = ((slot_width * SHOP_COLUMNS) + (is_compact ? 11 : 16));
     int shop_height = ((slot_height * SHOP_ROWS) + 76);
 
+    int item_grid_height = slot_height * SHOP_ROWS;
+
     int x = (mud->surface->width / 2) - (shop_width / 2);
     int y = (mud->surface->height / 2) - (shop_height / 2) - 6;
-    int item_grid_height = slot_height * SHOP_ROWS;
+
     int mouse_x = mud->mouse_x - x;
     int mouse_y = mud->mouse_y - y;
 
     if (mud->shop_selected_item_index >= 0 &&
         (mud->mouse_button_click || mud->mouse_item_count_increment)) {
-
         int item_id = mud->shop_items[mud->shop_selected_item_index];
+
         if (item_id != -1) {
             if (mud->shop_items_count[mud->shop_selected_item_index] > 0 &&
                 (is_compact
@@ -153,7 +157,6 @@ void mudclient_draw_shop(mudclient *mud) {
         mud, mudclient_get_inventory_count(mud, COINS_ID), formatted_amount);
 
     char formatted_money[29] = {0};
-
     sprintf(formatted_money, "Your money: %sgp", formatted_amount);
 
     if (is_compact) {
@@ -232,9 +235,10 @@ void mudclient_draw_shop(mudclient *mud) {
                     text_colour = RED;
                 }
 
-                surface_draw_string_right(
-                    mud->surface, "Click here to buy", x + shop_width - 3,
-                    y + item_grid_height + 44, FONT_BOLD_13, text_colour);
+                surface_draw_stringf_right(
+                    mud->surface, x + shop_width - 3, y + item_grid_height + 44,
+                    FONT_BOLD_13, text_colour, "%s here to buy",
+                    is_touch ? "Tap" : "Click");
             }
         } else {
             surface_draw_string_centre(
@@ -258,10 +262,10 @@ void mudclient_draw_shop(mudclient *mud) {
 
             char *item_name = game_data.items[selected_item_id].name;
 
-            char formatted_sell[strlen(item_name) + 29];
+            char formatted_sell[SURFACE_STRING_MAX] = {0};
 
-            sprintf(formatted_sell, "Sell your %s for %dgp", item_name,
-                    item_price);
+            snprintf(formatted_sell, SURFACE_STRING_MAX,
+                     "Sell your %s for %dgp", item_name, item_price);
 
             if (is_compact) {
                 text_colour = WHITE;
@@ -290,9 +294,10 @@ void mudclient_draw_shop(mudclient *mud) {
                     text_colour = RED;
                 }
 
-                surface_draw_string(mud->surface, "Click here to sell", x + 2,
-                                    y + item_grid_height + 69, FONT_BOLD_13,
-                                    text_colour);
+                surface_draw_stringf(mud->surface, x + 2,
+                                     y + item_grid_height + 69, FONT_BOLD_13,
+                                     text_colour, "%s here to sell",
+                                     is_touch ? "Tap" : "Click");
             }
 
             return;

@@ -3970,28 +3970,35 @@ void surface_draw_string_centre(Surface *surface, const char *text, int x,
                         colour);
 }
 
+#define SURFACE_DRAW_STRINGF(surface, draw_function, x, y, font, colour, text, \
+                             ...)                                              \
+    do {                                                                       \
+        char buffer[SURFACE_STRING_MAX] = {0};                                 \
+                                                                               \
+        va_list args = {0};                                                    \
+        va_start(args, text);                                                  \
+        vsnprintf(buffer, SURFACE_STRING_MAX, text, args);                     \
+        va_end(args);                                                          \
+                                                                               \
+        draw_function(surface, buffer, x, y, font, colour);                    \
+    } while (0)
+
 void surface_draw_stringf(Surface *surface, int x, int y, FontStyle font,
                           int colour, const char *text, ...) {
-    char buffer[SURFACE_STRING_MAX] = {0};
-
-    va_list args = {0};
-    va_start(args, text);
-    vsnprintf(buffer, SURFACE_STRING_MAX, text, args);
-    va_end(args);
-
-    surface_draw_string(surface, buffer, x, y, font, colour);
+    SURFACE_DRAW_STRINGF(surface, surface_draw_string, x, y, font, colour, text,
+                         ...);
 }
 
 void surface_draw_stringf_centre(Surface *surface, int x, int y, FontStyle font,
                                  int colour, const char *text, ...) {
-    char buffer[SURFACE_STRING_MAX] = {0};
+    SURFACE_DRAW_STRINGF(surface, surface_draw_string_centre, x, y, font,
+                         colour, text, ...);
+}
 
-    va_list args = {0};
-    va_start(args, text);
-    vsnprintf(buffer, SURFACE_STRING_MAX, text, args);
-    va_end(args);
-
-    surface_draw_string_centre(surface, buffer, x, y, font, colour);
+void surface_draw_stringf_right(Surface *surface, int x, int y, FontStyle font,
+                                int colour, const char *text, ...) {
+    SURFACE_DRAW_STRINGF(surface, surface_draw_string_right, x, y, font, colour,
+                         text, ...);
 }
 
 int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,

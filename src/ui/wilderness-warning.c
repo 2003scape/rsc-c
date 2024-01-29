@@ -76,11 +76,9 @@ void mudclient_draw_wilderness_warning(mudclient *mud) {
         text_colour = RED;
     }
 
-    char close_line[27] = {0};
-    sprintf(close_line, "%s here to close window", is_touch ? "Tap" : "Click");
-
-    surface_draw_string_centre(mud->surface, close_line, x, y, FONT_BOLD_12,
-                               text_colour);
+    surface_draw_stringf_centre(mud->surface, x, y, FONT_BOLD_12, text_colour,
+                                "%s here to close window",
+                                is_touch ? "Tap" : "Click");
 
     if (mud->mouse_button_click != 0) {
         if (mud->mouse_y > y - 12 && mud->mouse_y <= y &&

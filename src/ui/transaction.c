@@ -869,12 +869,20 @@ void mudclient_draw_transaction_confirm(mudclient *mud, int dialog_x,
 
         y += 15;
 
-        surface_draw_string_centre(
-            mud->surface,
-            is_trade ? "Remember that not all players are trustworthy"
-                     : "If you are sure click 'Accept' to begin the duel",
-            dialog_x + (transaction_width / 2), dialog_y + y, FONT_BOLD_12,
-            WHITE);
+        char confirmation_line[49] = {0};
+
+        if (is_trade) {
+            strcpy(confirmation_line,
+                   "Remember that not all players are trustworthy");
+        } else {
+            sprintf(confirmation_line,
+                    "If you are sure %s 'Accept' to begin the duel",
+                    mudclient_is_touch(mud) ? "tap" : "click");
+        }
+
+        surface_draw_string_centre(mud->surface, confirmation_line,
+                                   dialog_x + (transaction_width / 2),
+                                   dialog_y + y, FONT_BOLD_12, WHITE);
 
         y += 20;
     }

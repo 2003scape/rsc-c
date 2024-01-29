@@ -231,21 +231,24 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
 
     panel_draw_panel(mud->panel_social_list);
 
+    char *activate_verb = is_touch ? "Tap" : "Click";
+    char formatted[SURFACE_STRING_MAX] = {0};
+
     if (mud->ui_tab_social_sub_tab == 0) {
         int friend_index = panel_get_list_entry_index(mud->panel_social_list,
                                                       mud->control_list_social);
 
-        char formatted[48] = {0};
-        strcpy(formatted, "Click a name to send a message");
+        snprintf(formatted, SURFACE_STRING_MAX, "%s a name to send a message",
+                 activate_verb);
 
         if (friend_index >= 0 && mud->mouse_x < ui_x + 176) {
             char username[USERNAME_LENGTH + 1] = {0};
             decode_username(mud->friend_list[friend_index], username);
 
             if (mud->mouse_x > ui_x + 116) {
-                sprintf(formatted, "Click to remove %s", username);
+                sprintf(formatted, "%s to remove %s", activate_verb, username);
             } else if (mud->friend_list_online[friend_index] == FRIEND_ONLINE) {
-                sprintf(formatted, "Click to message %s", username);
+                sprintf(formatted, "%s to message %s", activate_verb, username);
             } else if (mud->friend_list_online[friend_index] > 0) {
 #ifdef REVISION_177
                 sprintf(formatted, "%s is on world %d", username,
@@ -277,21 +280,22 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
             text_colour = WHITE;
         }
 
-        surface_draw_string_centre(mud->surface, "Click here to add a friend",
-                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + height - 3,
-                                   FONT_BOLD_12, text_colour);
+        surface_draw_stringf_centre(mud->surface, ui_x + (SOCIAL_WIDTH / 2),
+                                    ui_y + height - 3, FONT_BOLD_12,
+                                    text_colour, "%s here to add a friend",
+                                    activate_verb);
+
     } else if (mud->ui_tab_social_sub_tab == 1) {
         int ignore_index = panel_get_list_entry_index(mud->panel_social_list,
                                                       mud->control_list_social);
 
-        char formatted[USERNAME_LENGTH + 17] = {0};
         strcpy(formatted, "Blocking messages from:");
 
         if (ignore_index >= 0 && mud->mouse_x < ui_x + 176 &&
             mud->mouse_x > ui_x + 116) {
             char username[USERNAME_LENGTH + 1] = {0};
             decode_username(mud->ignore_list[ignore_index], username);
-            sprintf(formatted, "Click to remove %s", username);
+            sprintf(formatted, "%s to remove %s", activate_verb, username);
         }
 
         surface_draw_string_centre(mud->surface, formatted,
@@ -307,9 +311,9 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
             text_colour = WHITE;
         }
 
-        surface_draw_string_centre(mud->surface, "Click here to add a name",
-                                   ui_x + (SOCIAL_WIDTH / 2), ui_y + height - 3,
-                                   FONT_BOLD_12, text_colour);
+        surface_draw_stringf_centre(
+            mud->surface, ui_x + (SOCIAL_WIDTH / 2), ui_y + height - 3,
+            FONT_BOLD_12, text_colour, "%s here to add a name", activate_verb);
     }
 
     if (!no_menus) {
