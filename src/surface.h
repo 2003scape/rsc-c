@@ -104,6 +104,8 @@ extern gl_atlas_position gl_white_atlas_position;
 extern gl_atlas_position gl_transparent_atlas_position;
 #endif
 
+#define SURFACE_STRING_MAX 256
+
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
@@ -267,8 +269,8 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
                                 int height, int top_colour, int bottom_colour);
 void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode);
-void surface_gl_blur_texture(Surface *surface, int sprite_id,
-                                 int blur_height, int x, int y, int height);
+void surface_gl_blur_texture(Surface *surface, int sprite_id, int blur_height,
+                             int x, int y, int height);
 void surface_gl_apply_login_filter(Surface *surface, int sprite_id);
 #endif
 
@@ -299,8 +301,8 @@ void surface_fade_to_black(Surface *surface);
 void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
 void surface_parse_sprite_tga(Surface *surface, int sprite_id,
-                              uint8_t *sprite_data, size_t len,
-                              int columns, int rows);
+                              uint8_t *sprite_data, size_t len, int columns,
+                              int rows);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
 void surface_read_sleep_word(Surface *surface, int sprite_id,
@@ -322,8 +324,9 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 float depth_top, float depth_bottom);
 void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
                                int alpha);
-void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y, int scale_x,
-                                int scale_y, int sprite_id, int alpha);
+void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y,
+                                     int scale_x, int scale_y, int sprite_id,
+                                     int alpha);
 void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
                                     int height, int sprite_id, int colour);
 void surface_transparent_scale(int32_t *dest, int32_t *src, int j, int k,
@@ -361,8 +364,12 @@ void surface_draw_string_right(Surface *surface, const char *text, int x, int y,
 void surface_draw_string_centre_depth(Surface *surface, const char *text, int x,
                                       int y, FontStyle font, int colour,
                                       float depth);
-void surface_draw_string_centre(Surface *surface, const char *text, int x, int y,
-                                FontStyle font, int colour);
+void surface_draw_string_centre(Surface *surface, const char *text, int x,
+                                int y, FontStyle font, int colour);
+void surface_draw_stringf(Surface *surface, int x, int y, FontStyle font,
+                          int colour, const char *text, ...);
+void surface_draw_stringf_centre(Surface *surface, int x, int y, FontStyle font,
+                                 int colour, const char *text, ...);
 int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,
                              int max, int max_height);
 void surface_draw_paragraph(Surface *surface, const char *text, int x, int y,

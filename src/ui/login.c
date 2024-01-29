@@ -282,13 +282,13 @@ void mudclient_create_login_panels(mudclient *mud) {
         y -= 34;
 
         mud->control_login_status = panel_add_text_centre(
-            mud->panel_login_existing_user, x, y - 10,
-            "", FONT_BOLD_13, 1);
+            mud->panel_login_existing_user, x, y - 10, "", FONT_BOLD_13, 1);
 
         y += 13;
 
         mud->control_login_status_bottom = panel_add_text_centre(
-            mud->panel_login_existing_user, x, y - 10, "Please enter your username and password", FONT_BOLD_13, 1);
+            mud->panel_login_existing_user, x, y - 10,
+            "Please enter your username and password", FONT_BOLD_13, 1);
 
         y += 24;
 

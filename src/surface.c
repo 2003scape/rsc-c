@@ -35,9 +35,9 @@ static void surface_draw_sprite_transform_mask_software(
     int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip);
 
 static void surface_plot_sprite32(int32_t *restrict dest, int32_t *restrict src,
-                                  int src_pos, int dest_pos,
-                                  int width, int height,
-                                  int dest_offset, int src_offset, int y_inc);
+                                  int src_pos, int dest_pos, int width,
+                                  int height, int dest_offset, int src_offset,
+                                  int y_inc);
 
 static void surface_plot_sprite32_alpha(int32_t *restrict dest,
                                         int32_t *restrict src, int src_pos,
@@ -46,8 +46,8 @@ static void surface_plot_sprite32_alpha(int32_t *restrict dest,
                                         int y_inc, int alpha);
 
 static void surface_plot_sprite32_alpha_scale(int32_t *restrict dest,
-                                              int32_t *restrict src,
-                                              int j, int k, int dest_pos,
+                                              int32_t *restrict src, int j,
+                                              int k, int dest_pos,
                                               int dest_offset, int width,
                                               int height, int l1, int i2,
                                               int j2, int y_inc, int alpha);
@@ -59,36 +59,27 @@ static void surface_plot_sprite32_scale(int32_t *restrict dest,
                                         int j2, int y_inc);
 
 static void surface_plot_sprite32_scale_mask(int32_t *restrict dest,
-                                             int32_t *restrict src,
-                                             int j, int k, int dest_pos,
+                                             int32_t *restrict src, int j,
+                                             int k, int dest_pos,
                                              int dest_offset, int width,
                                              int height, int l1, int i2, int j2,
                                              int y_inc, int mask_colour);
 
-static void surface_plot_sprite32_transform(Surface *surface,
-                                            int32_t *restrict dest,
-                                            int32_t *restrict src,
-                                            int j, int k, int dest_pos,
-                                            int width, int height,
-                                            int k1, int l1, int i2,
-                                            int mask_colour, int k2, int l2,
-                                            int y_inc);
+static void surface_plot_sprite32_transform(
+    Surface *surface, int32_t *restrict dest, int32_t *restrict src, int j,
+    int k, int dest_pos, int width, int height, int k1, int l1, int i2,
+    int mask_colour, int k2, int l2, int y_inc);
 
-static void surface_plot_sprite32_transform_dual_mask(Surface *surface,
-                                                      int32_t *restrict dest,
-                                                      int32_t *restrict src,
-                                                      int j, int k,
-                                                      int dest_pos, int i1, int j1,
-                                                      int k1, int l1, int i2,
-                                                      int mask_colour, int skin_colour,
-                                                      int l2, int i3, int j3);
+static void surface_plot_sprite32_transform_dual_mask(
+    Surface *surface, int32_t *restrict dest, int32_t *restrict src, int j,
+    int k, int dest_pos, int i1, int j1, int k1, int l1, int i2,
+    int mask_colour, int skin_colour, int l2, int i3, int j3);
 
 static void surface_plot_sprite8(int32_t *restrict dest,
                                  int8_t *restrict colours,
-                                 int32_t *restrict palette,
-                                 int src_pos, int dest_pos,
-                                 int width, int height, int dest_offset,
-                                 int src_offset, int y_inc);
+                                 int32_t *restrict palette, int src_pos,
+                                 int dest_pos, int width, int height,
+                                 int dest_offset, int src_offset, int y_inc);
 
 static void surface_plot_sprite8_alpha(int32_t *restrict dest,
                                        int8_t *restrict colours,
@@ -97,36 +88,26 @@ static void surface_plot_sprite8_alpha(int32_t *restrict dest,
                                        int dest_offset, int src_offset,
                                        int y_inc, int alpha);
 
-static void surface_plot_sprite8_transform(Surface *surface,
-                                           int32_t *restrict dest,
-                                           int8_t *restrict colour_idx,
-                                           int32_t *restrict colours,
-                                           int j, int k,
-                                           int l, int i1, int height, int k1,
-                                           int l1, int i2, int mask_colour,
-                                           int k2, int l2, int i3);
+static void surface_plot_sprite8_transform(
+    Surface *surface, int32_t *restrict dest, int8_t *restrict colour_idx,
+    int32_t *restrict colours, int j, int k, int l, int i1, int height, int k1,
+    int l1, int i2, int mask_colour, int k2, int l2, int i3);
 
-static void surface_plot_sprite8_transform_dual_mask(Surface *surface,
-                                                     int32_t *restrict dest,
-                                                     int8_t *restrict colours,
-                                                     int32_t *restrict palette,
-                                                     int j, int k, int l, int i1,
-                                                     int height, int k1,
-                                                     int l1, int i2,
-                                                     int mask_colour,
-                                                     int skin_colour,
-                                                     int l2, int i3, int j3);
+static void surface_plot_sprite8_transform_dual_mask(
+    Surface *surface, int32_t *restrict dest, int8_t *restrict colours,
+    int32_t *restrict palette, int j, int k, int l, int i1, int height, int k1,
+    int l1, int i2, int mask_colour, int skin_colour, int l2, int i3, int j3);
 
 static void surface_plot_letter(int32_t *restrict dest,
                                 int8_t *restrict font_data, int colour,
-                                int font_pos, int dest_pos,
-                                int width, int height,
-                                int dest_offset, int font_data_offset);
+                                int font_pos, int dest_pos, int width,
+                                int height, int dest_offset,
+                                int font_data_offset);
 #endif /* RENDER_SW */
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-static void surface_gl_quad_new(Surface *surface, gl_quad *quad,
-                                int x, int y, int width, int height);
+static void surface_gl_quad_new(Surface *surface, gl_quad *quad, int x, int y,
+                                int width, int height);
 #endif
 
 void init_surface_global(void) {
@@ -331,8 +312,8 @@ void surface_gl_reset_context(Surface *surface) {
     surface->gl_context_count = 1;
 }
 
-static void surface_gl_quad_new(Surface *surface, gl_quad *quad,
-                                int x, int y, int width, int height) {
+static void surface_gl_quad_new(Surface *surface, gl_quad *quad, int x, int y,
+                                int width, int height) {
 #ifdef RENDER_GL
     float left_x = surface_gl_translate_x(surface, x);
     float right_x = surface_gl_translate_x(surface, x + width);
@@ -2307,10 +2288,9 @@ void surface_draw_sprite(Surface *surface, int x, int y, int sprite_id) {
             surface->sprite_palette[sprite_id], src_pos, dest_pos, width,
             height, dest_offset, sprite_offset, y_inc);
     } else {
-        surface_plot_sprite32(surface->pixels,
-                              surface->surface_pixels[sprite_id],
-                              src_pos, dest_pos, width, height, dest_offset,
-                              sprite_offset, y_inc);
+        surface_plot_sprite32(
+            surface->pixels, surface->surface_pixels[sprite_id], src_pos,
+            dest_pos, width, height, dest_offset, sprite_offset, y_inc);
     }
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_gl_buffer_sprite(surface, sprite_id, x, y, -1, -1, 0, 0, 0, 255, 0,
@@ -2740,9 +2720,8 @@ void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
 }
 
 #ifdef RENDER_SW
-static void surface_plot_sprite32(int32_t * dest, int32_t * src,
-                                  int src_pos, int dest_pos,
-                                  int width, int height,
+static void surface_plot_sprite32(int32_t *dest, int32_t *src, int src_pos,
+                                  int dest_pos, int width, int height,
                                   int dest_offset, int src_offset, int y_inc) {
     for (int y = 0 - height; y < 0; y += y_inc) {
         for (int x = -width; x < 0; x++) {
@@ -2762,10 +2741,9 @@ static void surface_plot_sprite32(int32_t * dest, int32_t * src,
 
 static void surface_plot_sprite8(int32_t *restrict dest,
                                  int8_t *restrict colours,
-                                 int32_t *restrict palette,
-                                 int src_pos, int dest_pos,
-                                 int width, int height, int dest_offset,
-                                 int src_offset, int y_inc) {
+                                 int32_t *restrict palette, int src_pos,
+                                 int dest_pos, int width, int height,
+                                 int dest_offset, int src_offset, int y_inc) {
     for (int y = 0 - height; y < 0; y += y_inc) {
         for (int x = -width; x < 0; x++) {
             int8_t index = colours[src_pos++];
@@ -2871,8 +2849,8 @@ static void surface_plot_sprite8_alpha(int32_t *dest, int8_t *restrict colours,
 }
 
 static void surface_plot_sprite32_alpha_scale(int32_t *restrict dest,
-                                              int32_t *restrict src,
-                                              int j, int k, int dest_pos,
+                                              int32_t *restrict src, int j,
+                                              int k, int dest_pos,
                                               int dest_offset, int width,
                                               int height, int l1, int i2,
                                               int j2, int y_inc, int alpha) {
@@ -2902,8 +2880,9 @@ static void surface_plot_sprite32_alpha_scale(int32_t *restrict dest,
 }
 
 static void surface_plot_sprite32_scale_mask(int32_t *restrict dest,
-                                             int32_t *restrict src, int j, int k,
-                                             int dest_pos, int dest_offset, int width,
+                                             int32_t *restrict src, int j,
+                                             int k, int dest_pos,
+                                             int dest_offset, int width,
                                              int height, int l1, int i2, int j2,
                                              int y_inc, int mask_colour) {
     int mask_r = (mask_colour >> 16) & 0xff;
@@ -3517,14 +3496,10 @@ void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
 }
 
 #ifdef RENDER_SW
-static void surface_plot_sprite32_transform(Surface *surface,
-                                            int32_t *restrict dest,
-                                            int32_t *restrict src,
-                                            int j, int k, int dest_pos,
-                                            int width, int height,
-                                            int k1, int l1, int i2,
-                                            int mask_colour, int k2, int l2,
-                                            int y_inc) {
+static void surface_plot_sprite32_transform(
+    Surface *surface, int32_t *restrict dest, int32_t *restrict src, int j,
+    int k, int dest_pos, int width, int height, int k1, int l1, int i2,
+    int mask_colour, int k2, int l2, int y_inc) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -3578,14 +3553,10 @@ static void surface_plot_sprite32_transform(Surface *surface,
     }
 }
 
-static void surface_plot_sprite32_transform_dual_mask(Surface *surface,
-                                                      int32_t *restrict dest,
-                                                      int32_t *restrict src,
-                                                      int j, int k, int dest_pos,
-                                                      int i1, int j1,
-                                                      int k1, int l1, int i2,
-                                                      int mask_colour, int skin_colour,
-                                                      int l2, int i3, int j3) {
+static void surface_plot_sprite32_transform_dual_mask(
+    Surface *surface, int32_t *restrict dest, int32_t *restrict src, int j,
+    int k, int dest_pos, int i1, int j1, int k1, int l1, int i2,
+    int mask_colour, int skin_colour, int l2, int i3, int j3) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -3646,13 +3617,10 @@ static void surface_plot_sprite32_transform_dual_mask(Surface *surface,
     }
 }
 
-static void surface_plot_sprite8_transform(Surface *surface,
-                                           int32_t *restrict dest,
-                                           int8_t *restrict colour_idx,
-                                           int32_t *restrict colours, int j, int k,
-                                           int l, int i1, int height, int k1,
-                                           int l1, int i2, int mask_colour,
-                                           int k2, int l2, int i3) {
+static void surface_plot_sprite8_transform(
+    Surface *surface, int32_t *restrict dest, int8_t *restrict colour_idx,
+    int32_t *restrict colours, int j, int k, int l, int i1, int height, int k1,
+    int l1, int i2, int mask_colour, int k2, int l2, int i3) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -3708,14 +3676,10 @@ static void surface_plot_sprite8_transform(Surface *surface,
     }
 }
 
-static void surface_plot_sprite8_transform_dual_mask(Surface *surface,
-                                                     int32_t *restrict dest,
-                                                     int8_t *restrict colours,
-                                                     int32_t *restrict palette,
-                                                     int j, int k, int l, int i1,
-                                                     int height, int k1, int l1, int i2,
-                                                     int mask_colour, int skin_colour,
-                                                     int l2, int i3, int j3) {
+static void surface_plot_sprite8_transform_dual_mask(
+    Surface *surface, int32_t *restrict dest, int8_t *restrict colours,
+    int32_t *restrict palette, int j, int k, int l, int i1, int height, int k1,
+    int l1, int i2, int mask_colour, int skin_colour, int l2, int i3, int j3) {
     int mask_r = (mask_colour >> 16) & 0xff;
     int mask_g = (mask_colour >> 8) & 0xff;
     int mask_b = mask_colour & 0xff;
@@ -3780,9 +3744,9 @@ static void surface_plot_sprite8_transform_dual_mask(Surface *surface,
 
 static void surface_plot_letter(int32_t *restrict dest,
                                 int8_t *restrict font_data, int colour,
-                                int font_pos, int dest_pos,
-                                int width, int height,
-                                int dest_offset, int font_data_offset) {
+                                int font_pos, int dest_pos, int width,
+                                int height, int dest_offset,
+                                int font_data_offset) {
     for (int y = -height; y < 0; y++) {
         for (int x = -width; x < 0; x++) {
             if (font_data[font_pos++] != 0) {
@@ -4004,6 +3968,30 @@ void surface_draw_string_centre(Surface *surface, const char *text, int x,
     surface_draw_string(surface, text,
                         x - (int)(surface_text_width(text, font) / 2), y, font,
                         colour);
+}
+
+void surface_draw_stringf(Surface *surface, int x, int y, FontStyle font,
+                          int colour, const char *text, ...) {
+    char buffer[SURFACE_STRING_MAX] = {0};
+
+    va_list args = {0};
+    va_start(args, text);
+    vsnprintf(buffer, SURFACE_STRING_MAX, text, args);
+    va_end(args);
+
+    surface_draw_string(surface, buffer, x, y, font, colour);
+}
+
+void surface_draw_stringf_centre(Surface *surface, int x, int y, FontStyle font,
+                                 int colour, const char *text, ...) {
+    char buffer[SURFACE_STRING_MAX] = {0};
+
+    va_list args = {0};
+    va_start(args, text);
+    vsnprintf(buffer, SURFACE_STRING_MAX, text, args);
+    va_end(args);
+
+    surface_draw_string_centre(surface, buffer, x, y, font, colour);
 }
 
 int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,
