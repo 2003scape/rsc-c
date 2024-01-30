@@ -18,7 +18,7 @@ void mudclient_draw_combat_style(mudclient *mud) {
     int combat_style_width = is_compact ? 106 : 175;
 
     int ui_x = is_touch ? 13 : 7;
-    int ui_y = is_touch ? 108 : 15;
+    int ui_y = is_touch ? 132 : 15;
 
     int combat_styles_length = sizeof(combat_styles) / sizeof(combat_styles[0]);
 
