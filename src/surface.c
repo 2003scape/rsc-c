@@ -2132,6 +2132,9 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
 #elif defined(RENDER_GL)
+    (void)x;
+    (void)y;
+
     glReadPixels(0, 0, surface->mud->game_width, surface->mud->game_height,
                  GL_RGBA, GL_UNSIGNED_BYTE, surface->gl_screen_pixels);
 
@@ -2159,6 +2162,9 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
 
     surface_gl_update_dynamic_texture(surface);
 #elif defined(RENDER_3DS_GL)
+    (void)x;
+    (void)y;
+
     int offset_x = 0;
     int offset_y = 0;
 
@@ -2225,6 +2231,9 @@ void surface_draw_sprite_reversed(Surface *surface, int sprite_id, int x, int y,
 
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
+#else
+    (void)x;
+    (void)y;
 #endif
 }
 
