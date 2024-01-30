@@ -33,10 +33,10 @@
 /* This is what we know about each huffman coding group */
 struct group_data {
     /* We have an extra slot at the end of limit[] for a sentinal value. */
-    int limit[MAX_HUFCODE_BITS + 1], base[MAX_HUFCODE_BITS],
+    uint32_t limit[MAX_HUFCODE_BITS + 1], base[MAX_HUFCODE_BITS],
         permute[MAX_SYMBOLS];
 
-    int minLen, maxLen;
+    size_t minLen, maxLen;
 };
 
 /* Structure holding all the housekeeping data, including IO buffers and
@@ -46,18 +46,18 @@ typedef struct {
     int writeCopies, writePos, writeRunCountdown, writeCount, writeCurrent;
 
     /* I/O tracking data (file handles, buffers, positions, etc.) */
-    int in_fd, out_fd, inbufCount, inbufPos /*,outbufPos*/;
-    unsigned char *inbuf /*,*outbuf*/;
-    unsigned int inbufBitCount, inbufBits;
+    int in_fd, out_fd, inbufCount, inbufPos;
+    uint8_t *inbuf;
+    uint32_t inbufBitCount, inbufBits;
 
     /* The CRC values stored in the block header and calculated from the data */
-    unsigned int crc32Table[256], headerCRC, totalCRC, writeCRC;
+    uint32_t crc32Table[256], headerCRC, totalCRC, writeCRC;
 
     /* Intermediate buffer and its size (in bytes) */
-    unsigned int *dbuf, dbufSize;
+    uint32_t *dbuf, dbufSize;
 
     /* These things are a bit too big to go on the stack */
-    unsigned char selectors[32768];       /* nSelectors=15 bits */
+    uint8_t selectors[32768];             /* nSelectors=15 bits */
     struct group_data groups[MAX_GROUPS]; /* huffman coding tables */
 
     /* For I/O error handling */
@@ -67,7 +67,7 @@ typedef struct {
 extern char BZIP_HEADER[];
 extern char *bunzip_errors[];
 
-void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
-                     int archive_size, int offset);
+void bzip_decompress(int8_t *file_data, int8_t *archive_data, int archive_size,
+                     int offset);
 
 #endif

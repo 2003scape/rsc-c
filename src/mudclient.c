@@ -1892,9 +1892,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     if (archive_size_compressed != archive_size) {
         int8_t *decompressed = malloc(archive_size);
-
-        bzip_decompress(decompressed, archive_size, archive_data,
-                        archive_size_compressed, 0);
+        bzip_decompress(decompressed, archive_data, archive_size_compressed, 0);
 
 #ifndef WII
         free(archive_data);
@@ -1913,10 +1911,12 @@ void mudclient_load_jagex(mudclient *mud) {
 
     if (jagex_jag != NULL) {
         if (!mud->options->lowmem) {
-            size_t len;
+            size_t len = 0;
             int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
+
             surface_parse_sprite_tga(mud->surface, SPRITE_LIMIT - 1, logo_tga,
                                      len, 0, 0);
+
             free(logo_tga);
         }
 
@@ -1935,7 +1935,7 @@ void mudclient_load_jagex(mudclient *mud) {
         mud, "fonts" VERSION_STR(VERSION_FONTS) ".jag", "Game fonts", 5);
 
     if (fonts_jag != NULL) {
-        for (int i = 0; i < FONT_FILES_LENGTH; i++) {
+        for (size_t i = 0; i < FONT_FILES_LENGTH; i++) {
             create_font(load_data(font_files[i], 0, fonts_jag, NULL), i);
         }
 
@@ -2041,6 +2041,10 @@ void mudclient_load_media(mudclient *mud) {
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 39,
                          load_data("message.dat", 0, media_jag, NULL),
+                         index_dat, 1);
+
+    surface_parse_sprite(mud->surface, mud->sprite_media + 40,
+                         load_data("keyboard.dat", 0, media_jag, NULL),
                          index_dat, 1);
 #endif
 
@@ -2172,7 +2176,7 @@ void mudclient_load_entities(mudclient *mud) {
 
         bool older_is_better = false;
         const char *extension = "dat";
-        uint8_t *archive_file = entity_jag;
+        int8_t *archive_file = entity_jag;
 
         const char **older_names = anims_older_is_better;
 

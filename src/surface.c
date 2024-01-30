@@ -1608,9 +1608,8 @@ void surface_clear(Surface *surface) {
     }
 }
 
-void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
+void surface_parse_sprite_tga(Surface *surface, int sprite_id, int8_t *buffer,
                               size_t len, int columns, int rows) {
-
     size_t offset = 0;
 
     uint8_t image_id_len = get_unsigned_byte(buffer, offset++, len);
@@ -1655,7 +1654,7 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
 
     offset += image_id_len;
 
-    uint32_t *map = calloc(colour_map_len + 1, sizeof(uint32_t));
+    int32_t *map = calloc(colour_map_len + 1, sizeof(uint32_t));
     assert(map != NULL);
 
     for (int i = 0; i < colour_map_len; ++i) {
@@ -1667,7 +1666,7 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
 
     map[0] = MAGENTA;
 
-    uint8_t *pixels = malloc(width * height);
+    int8_t *pixels = malloc(width * height);
     assert(pixels != NULL);
 
     for (int y = (height - 1); y >= 0; --y) {
@@ -1698,20 +1697,26 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
 
         for (int y = 0; y < rows; ++y) {
             for (int x = 0; x < columns; ++x) {
-                uint8_t *frame_pixels = malloc(frame_width * frame_height);
+                int8_t *frame_pixels = malloc(frame_width * frame_height);
+
                 assert(frame_pixels != NULL);
+
                 for (int i = 0; i < frame_height; ++i) {
                     offset =
                         (x * frame_width) + ((y * frame_height) + i) * width;
+
                     memcpy(frame_pixels + (i * frame_width), pixels + offset,
                            frame_width);
                 }
+
                 int frame_len = frame_width * frame_height;
+
                 for (int i = 0; i < frame_len; ++i) {
                     if (map[frame_pixels[i]] == 0xff00ff) {
                         frame_pixels[i] = 0;
                     }
                 }
+
                 free(surface->surface_pixels[sprite_id]);
                 surface->surface_pixels[sprite_id] = NULL;
                 surface->sprite_colours[sprite_id] = frame_pixels;
@@ -1734,6 +1739,7 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, uint8_t *buffer,
         }
         free(pixels);
     }
+
 #ifdef USE_LOCOLOUR
     free(map);
 #endif

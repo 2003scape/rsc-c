@@ -33,20 +33,19 @@
 
 char BZIP_HEADER[] = {'B', 'Z', 'h', '1'};
 
-char *bunzip_errors[] = {
-    NULL,
-    "Bad file checksum",
-    "Not bzip data",
-    "Unexpected input EOF",
-    "Unexpected output EOF",
-    "Data error",
-    "Out of memory",
-    "Obsolete (pre 0.9.5) bzip format not supported."};
+char *bunzip_errors[] = {NULL,
+                         "Bad file checksum",
+                         "Not bzip data",
+                         "Unexpected input EOF",
+                         "Unexpected output EOF",
+                         "Data error",
+                         "Out of memory",
+                         "Obsolete (pre 0.9.5) bzip format not supported."};
 
 /* Return the next nnn bits of input.  All reads from the compressed input
    are done through this function.  All reads are big endian */
-static unsigned int get_bits(bunzip_data *bd, char bits_wanted) {
-    unsigned int bits = 0;
+static uint32_t get_bits(bunzip_data *bd, uint8_t bits_wanted) {
+    uint32_t bits = 0;
 
     /* If we need to get more data from the byte buffer, do so.  (Loop getting
        one byte at a time to enforce endianness and avoid unaligned access.) */
@@ -84,10 +83,10 @@ static unsigned int get_bits(bunzip_data *bd, char bits_wanted) {
 /* Unpacks the next block and sets up for the inverse burrows-wheeler step. */
 static int get_next_block(bunzip_data *bd) {
     struct group_data *hufGroup;
-    int dbufCount, nextSym, dbufSize, groupCount, *base, *limit, selector, i, j,
-        k, t, runPos, symCount, symTotal, nSelectors, byteCount[256];
-    unsigned char uc, symToByte[256], mtfSymbol[256], *selectors;
-    unsigned int *dbuf, origPtr;
+    uint32_t dbufCount, nextSym, dbufSize, groupCount, *base, *limit, selector,
+        i, j, k, t, runPos, symCount, symTotal, nSelectors, byteCount[256];
+    uint8_t uc, symToByte[256], mtfSymbol[256], *selectors;
+    uint32_t *dbuf, origPtr;
 
     dbuf = bd->dbuf;
     dbufSize = bd->dbufSize;
@@ -188,8 +187,8 @@ static int get_next_block(bunzip_data *bd) {
     symCount = symTotal + 2;
 
     for (j = 0; j < groupCount; j++) {
-        unsigned char length[MAX_SYMBOLS], temp[MAX_HUFCODE_BITS + 1];
-        int minLen, maxLen, pp;
+        uint8_t length[MAX_SYMBOLS], temp[MAX_HUFCODE_BITS + 1];
+        uint32_t minLen, maxLen, pp;
 
         /* Read huffman code lengths for each symbol.  They're stored in
            a way similar to mtf; record a starting value for the first symbol,
@@ -302,7 +301,7 @@ static int get_next_block(bunzip_data *bd) {
     /* Initialize symbol occurrence counters and symbol Move To Front table */
     for (i = 0; i < 256; i++) {
         byteCount[i] = 0;
-        mtfSymbol[i] = (unsigned char)i;
+        mtfSymbol[i] = (uint8_t)i;
     }
 
     /* Loop through compressed symbols. */
@@ -439,7 +438,7 @@ static int get_next_block(bunzip_data *bd) {
 
         /* We have our literal byte.  Save it into dbuf. */
         byteCount[uc]++;
-        dbuf[dbufCount++] = (unsigned int)uc;
+        dbuf[dbufCount++] = (uint32_t)uc;
     }
 
     /* At this point, we've read all the huffman-coded symbols (and repeated
@@ -460,7 +459,7 @@ static int get_next_block(bunzip_data *bd) {
 
     /* Figure out what order dbuf would be in if we sorted it. */
     for (i = 0; i < dbufCount; i++) {
-        uc = (unsigned char)(dbuf[i] & 0xff);
+        uc = (uint8_t)(dbuf[i] & 0xff);
         dbuf[byteCount[uc]] |= (i << 8);
         byteCount[uc]++;
     }
@@ -474,7 +473,7 @@ static int get_next_block(bunzip_data *bd) {
         }
 
         bd->writePos = dbuf[origPtr];
-        bd->writeCurrent = (unsigned char)(bd->writePos & 0xff);
+        bd->writeCurrent = (uint8_t)(bd->writePos & 0xff);
         bd->writePos >>= 8;
         bd->writeRunCountdown = 5;
     }
@@ -491,8 +490,8 @@ static int get_next_block(bunzip_data *bd) {
    are ignored, data is written to out_fd and return is RETVAL_OK or error.
 */
 
-static int read_bunzip(bunzip_data *bd, char *outbuf, int len) {
-    const unsigned int *dbuf;
+static int read_bunzip(bunzip_data *bd, int8_t *outbuf, int len) {
+    const uint32_t *dbuf;
     int pos, current, previous, gotcount;
 
     /* If last read was short due to end of file, return last block now */
@@ -600,12 +599,11 @@ static int read_bunzip(bunzip_data *bd, char *outbuf, int len) {
 /* Allocate the structure, read file header.  If in_fd==-1, inbuf must contain
    a complete bunzip file (len bytes long).  If in_fd!=-1, inbuf and len are
    ignored, and data is read from file handle into temporary buffer. */
-static int start_bunzip(bunzip_data **bdp, int in_fd, char *inbuf, int len) {
+static int start_bunzip(bunzip_data **bdp, int in_fd, uint8_t *inbuf, int len) {
     bunzip_data *bd;
-    unsigned int i, j, c;
-    const unsigned int BZh0 = (((unsigned int)'B') << 24) +
-                              (((unsigned int)'Z') << 16) +
-                              (((unsigned int)'h') << 8) + (unsigned int)'0';
+    uint32_t i, j, c;
+    const uint32_t BZh0 = (((uint32_t)'B') << 24) + (((uint32_t)'Z') << 16) +
+                          (((uint32_t)'h') << 8) + (uint32_t)'0';
 
     /* Figure out how much data to allocate */
     i = sizeof(bunzip_data);
@@ -627,7 +625,7 @@ static int start_bunzip(bunzip_data **bdp, int in_fd, char *inbuf, int len) {
         bd->inbuf = inbuf;
         bd->inbufCount = len;
     } else {
-        bd->inbuf = (unsigned char *)(bd + 1);
+        bd->inbuf = (uint8_t *)(bd + 1);
     }
 
     /* Init the CRC32 table (big endian) */
@@ -651,7 +649,7 @@ static int start_bunzip(bunzip_data **bdp, int in_fd, char *inbuf, int len) {
     /* Ensure that file starts with "BZh['1'-'9']." */
     i = get_bits(bd, 32);
 
-    if (((unsigned int)(i - BZh0 - 1)) >= 9) {
+    if (((uint32_t)(i - BZh0 - 1)) >= 9) {
         return RETVAL_NOT_BZIP_DATA;
     }
 
@@ -671,9 +669,9 @@ static void bzip_fatal(int retval) {
     exit(1);
 }
 
-void bzip_decompress(int8_t *file_data, int file_size, int8_t *archive_data,
-                     int archive_size, int offset) {
-    int8_t *headered = malloc(archive_size + 4);
+void bzip_decompress(int8_t *file_data, int8_t *archive_data, int archive_size,
+                     int offset) {
+    uint8_t *headered = malloc(archive_size + 4);
     memcpy(headered, BZIP_HEADER, 4);
     memcpy(headered + 4, archive_data + offset, archive_size);
 

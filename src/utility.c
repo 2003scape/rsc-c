@@ -527,8 +527,8 @@ void *unpack_data(const char *file_name, size_t extra_size, void *archive_data,
             }
 
             if (file_size != archive_size) {
-                bzip_decompress(data_out, file_size, (int8_t *)archive_data,
-                                archive_size, offset);
+                bzip_decompress(data_out, (int8_t *)archive_data, archive_size,
+                                offset);
             } else {
                 memcpy(data_out, ((uint8_t *)archive_data + offset), file_size);
             }
