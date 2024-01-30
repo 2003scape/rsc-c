@@ -96,6 +96,7 @@ const char *animated_models[] = {
     "firespell2",   "firespell3", "lightning2", "lightning3",   "clawspell2",
     "clawspell3",   "clawspell4", "clawspell5", "spellcharge2", "spellcharge3"};
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
 /*
  * animations that experienced a loss of fine detail in January 2002 with the
  * "Compression" update
@@ -110,6 +111,7 @@ static const char *anims_older_is_better[] = {
     "camel",  "bat",           "battleaxe", "bear",  "fbody1",
     "fhead1", "fplatemailtop", "head1",     "head2", "head3",
     "head4",  "platemailtop",  "staff",     "body1", NULL};
+#endif
 
 char login_screen_status[255] = {0};
 
@@ -2178,9 +2180,9 @@ void mudclient_load_entities(mudclient *mud) {
         const char *extension = "dat";
         int8_t *archive_file = entity_jag;
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
         const char **older_names = anims_older_is_better;
 
-#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
         if (mud->options->tga_sprites) {
             while (*older_names != NULL) {
                 if (strcmp(animation_name, *older_names) == 0) {

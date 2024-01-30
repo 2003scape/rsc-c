@@ -1,25 +1,5 @@
 #include "shader.h"
 
-#if defined(OPENGL15) && !defined(GLAD)
-#define glCreateShader glCreateShaderObjectARB
-#define glShaderSource glShaderSourceARB
-#define glCompileShader glCompileShaderARB
-#define glGetShaderiv glGetObjectParameterfvARB
-#define glGetShaderInfoLog glGetInfoLogARB
-#define glCreateProgram glCreateProgramObjectARB
-#define glAttachShader glAttachObjectARB
-#define glBindAttribLocation glBindAttribLocationARB
-#define glLinkProgram glLinkProgramARB
-#define glDeleteShader glDeleteObjectARB
-#define glUseProgram glUseProgramObjectARB
-#define glGetUniformLocation glGetUniformLocationARB
-#define glUniform1i glUniform1iARB
-#define glUniform1f glUniform1fARB
-#define glUniform1fv glUniform1fvARB
-#define glUniformMatrix4fv glUniformMatrix4fvARB
-#define glUniform3fv glUniform3fvARB
-#endif
-
 #ifdef RENDER_GL
 char *buffer_file(char *path) {
     FILE *file = fopen(path, "r");
@@ -57,7 +37,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
     const char *vertex_shader_code = buffer_file(vertex_path);
     const char *fragment_shader_code = buffer_file(fragment_path);
 
-    #ifdef OPENGL15
+#ifdef OPENGL15
     GLhandleARB vertex = glCreateShaderObjectARB(GL_VERTEX_SHADER);
     glShaderSourceARB(vertex, 1, &vertex_shader_code, NULL);
     glCompileShaderARB(vertex);
@@ -88,12 +68,13 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
     glAttachObjectARB(id, vertex);
     glAttachObjectARB(id, fragment);
 
-    //flats
+    /* flats */
     glBindAttribLocationARB(id, 0, "position");
     glBindAttribLocationARB(id, 1, "colour");
     glBindAttribLocationARB(id, 2, "texture_position");
     glBindAttribLocationARB(id, 3, "base_texture_position");
-    //game_models
+
+    /* game_models */
     glBindAttribLocationARB(id, 1, "normal");
     glBindAttribLocationARB(id, 2, "lighting");
     glBindAttribLocationARB(id, 3, "front_colour");
@@ -115,8 +96,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 
     glDeleteObjectARB(vertex);
     glDeleteObjectARB(fragment);
-
-    #else //OpenGL2+
+#else // OpenGL2+
     GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vertex_shader_code, NULL);
     glCompileShader(vertex);
@@ -147,20 +127,21 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
     glAttachShader(id, vertex);
     glAttachShader(id, fragment);
 
-    #ifdef OPENGL20
-    //flats
+#ifdef OPENGL20
+    /* flats */
     glBindAttribLocation(id, 0, "position");
     glBindAttribLocation(id, 1, "colour");
     glBindAttribLocation(id, 2, "texture_position");
     glBindAttribLocation(id, 3, "base_texture_position");
-    //game_models
+
+    /* game_models */
     glBindAttribLocation(id, 1, "normal");
     glBindAttribLocation(id, 2, "lighting");
     glBindAttribLocation(id, 3, "front_colour");
     glBindAttribLocation(id, 4, "front_texture_position");
     glBindAttribLocation(id, 5, "back_colour");
     glBindAttribLocation(id, 6, "back_texture_position");
-    #endif
+#endif
 
     glLinkProgram(id);
 
@@ -182,9 +163,7 @@ void shader_new(Shader *shader, char *vertex_path, char *fragment_path) {
 #endif
 }
 
-void shader_use(Shader *shader) { 
-    glUseProgram(shader->id);
-}
+void shader_use(Shader *shader) { glUseProgram(shader->id); }
 
 void shader_set_int(Shader *shader, char *name, int value) {
     glUniform1i(glGetUniformLocation(shader->id, name), value);

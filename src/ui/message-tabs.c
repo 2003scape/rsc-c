@@ -220,7 +220,9 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     panel_draw_panel(mud->panel_message_tabs);
     panel_text_list_entry_height_mod = 0;
 
-    surface_draw_sprite(mud->surface, 9, 108, mud->sprite_media + 40);
+    if (mudclient_is_touch(mud)) {
+        surface_draw_sprite(mud->surface, 9, 108, mud->sprite_media + 40);
+    }
 }
 
 void mudclient_send_command_string(mudclient *mud, char *command) {
