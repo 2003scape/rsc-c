@@ -980,6 +980,7 @@ struct mudclient {
     int bank_last_scroll;
     int8_t bank_handle_dragged;
     int bank_visible_rows;
+    int8_t bank_search_focus;
 
     /* ./ui/shop.c */
     int8_t show_dialog_shop;

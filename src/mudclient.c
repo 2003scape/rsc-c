@@ -1311,10 +1311,9 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
         if (mud->show_change_password_step == PASSWORD_STEP_NONE &&
             mud->show_dialog_social_input == 0 &&
             mud->show_dialog_offer_x == 0 &&
-            !(mud->options->bank_search && mud->show_dialog_bank) &&
+            !(mud->bank_search_focus && mud->show_dialog_bank) &&
             /*mud->show_dialog_report_abuse_step == 0 &&*/
             !mud->is_sleeping && mud->panel_message_tabs) {
-
             int is_option_number = mud->options->option_numbers &&
                                    mud->show_option_menu && key_code >= '1' &&
                                    key_code <= '5';
@@ -1389,6 +1388,8 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         }
     }
 
+    int should_append_pm = (mud->show_dialog_bank ? mud->bank_search_focus : 1);
+
     if (found_text) {
         if (!mud->show_dialog_offer_x) {
             int current_length = strlen(mud->input_text_current);
@@ -1400,15 +1401,12 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
             int pm_length = strlen(mud->input_pm_current);
 
-            if (pm_length < INPUT_PM_LENGTH) {
+            if (pm_length < INPUT_PM_LENGTH && should_append_pm) {
                 mud->input_pm_current[pm_length] = char_code;
                 mud->input_pm_current[pm_length + 1] = '\0';
             }
-        }
-
-        if (mud->options->offer_x &&
-            (IS_DIGIT_SEPARATOR(char_code) || IS_DIGIT_SUFFIX(char_code) ||
-             isdigit(char_code))) {
+        } else if ((IS_DIGIT_SEPARATOR(char_code) ||
+                    IS_DIGIT_SUFFIX(char_code) || isdigit(char_code))) {
             int digits_length = strlen(mud->input_digits_current);
 
             if (digits_length < INPUT_DIGITS_LENGTH) {
@@ -1442,7 +1440,10 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
     if (code == K_ENTER) {
         strcpy(mud->input_text_final, mud->input_text_current);
-        strcpy(mud->input_pm_final, mud->input_pm_current);
+
+        if (should_append_pm) {
+            strcpy(mud->input_pm_final, mud->input_pm_current);
+        }
 
         if (mud->options->offer_x) {
             char filtered_digits[INPUT_DIGITS_LENGTH + 1] = {0};
@@ -1487,7 +1488,7 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
         int pm_length = strlen(mud->input_pm_current);
 
-        if (pm_length > 0) {
+        if (pm_length > 0 && should_append_pm) {
             mud->input_pm_current[pm_length - 1] = '\0';
         }
 
@@ -5381,7 +5382,8 @@ void mudclient_draw_game(mudclient *mud) {
      * 512x346 client when resized beyond that.
      */
     if (mud->game_height > MUD_VANILLA_HEIGHT) {
-        int clip_far = mud->scene->clip_far_3d / (MUD_VANILLA_HEIGHT / (float)mud->game_height);
+        int clip_far = mud->scene->clip_far_3d /
+                       (MUD_VANILLA_HEIGHT / (float)mud->game_height);
 
         mud->scene->clip_far_3d = clip_far;
         mud->scene->clip_far_2d = clip_far;

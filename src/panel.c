@@ -375,7 +375,8 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
     int is_touch = mudclient_is_touch(panel->surface->mud);
 
     // ugly hack for now :(
-    if (panel == panel->surface->mud->panel_quests) {
+    if (panel == panel->surface->mud->panel_quests ||
+        panel == panel->surface->mud->panel_message_tabs) {
         is_touch = 0;
     }
 
@@ -404,8 +405,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         int scrub_y =
             ((height - 27 - scrub_height) * list_entry_position) / max_entries;
 
-        if (!mudclient_is_touch(panel->surface->mud) &&
-            panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
+        if (!is_touch && panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
             panel->mouse_x < x + width && panel->mouse_y > y &&
             panel->mouse_y < y + height) {
             list_entry_position += panel->mouse_scroll_delta;
@@ -492,8 +492,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         panel->control_list_entry_mouse_over[control] = -1;
     }
 
-    int list_start_y =
-        height - displayed_entry_count * entry_height;
+    int list_start_y = height - displayed_entry_count * entry_height;
 
     int list_y =
         y + (((surface_text_height(font_style) * 5) / 6) + list_start_y / 2) +
@@ -750,8 +749,7 @@ void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
 void panel_update_text(Panel *panel, int control, char *text) {
     if (panel->control_type[control] == PANEL_TEXT_INPUT ||
         panel->control_type[control] == PANEL_LIST_INPUT) {
-        snprintf(panel->control_text[control],
-                 PANEL_MAX_TEXT_LEN, "%s", text);
+        snprintf(panel->control_text[control], PANEL_MAX_TEXT_LEN, "%s", text);
     } else {
         panel->control_text[control] = text;
     }
