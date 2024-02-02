@@ -1,19 +1,19 @@
 #include "./additional-options.h"
 
-#define OPTION_HORIZ_GAP	(18)
+#define OPTION_HORIZ_GAP (18)
 
 const char *option_tabs[] = {"Game", "Controls", "UI", "Bank"};
 
-static int mudclient_add_option_panel_label(Panel *panel, char *label,
-                                            int x, int y);
+static int mudclient_add_option_panel_label(Panel *panel, char *label, int x,
+                                            int y);
 static int mudclient_add_option_panel_string(Panel *panel, char *label,
-                                             char *default_text,
-                                             int max_length, int x, int y);
+                                             char *default_text, int max_length,
+                                             int x, int y);
 static int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
                                                int is_checked, int x, int y);
 
-static int mudclient_add_option_panel_label(Panel *panel, char *label,
-                                            int x, int y) {
+static int mudclient_add_option_panel_label(Panel *panel, char *label, int x,
+                                            int y) {
     panel_add_text(panel, x, y, label, 1, 0);
 
     return surface_text_width(label, 1) + 2;
@@ -25,8 +25,8 @@ static int mudclient_add_option_panel_string(Panel *panel, char *label,
     int label_width = mudclient_add_option_panel_label(panel, label, x, y);
 
     int control = panel_add_text_input(panel, x + label_width, y,
-                                       (ADDITIONAL_OPTIONS_WIDTH / 2) - 10, 15, 1,
-                                       max_length, 0, 1);
+                                       (ADDITIONAL_OPTIONS_WIDTH / 2) - 10, 15,
+                                       FONT_BOLD_12, max_length, 0, 1);
 
     panel_update_text(panel, control, default_text);
 
@@ -63,8 +63,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     panel_new(mud->panel_game_options, mud->surface, 50);
 
     int control = mudclient_add_option_panel_string(
-        mud->panel_game_options, "@whi@Server: ", mud->options->server,
-        255, x, y);
+        mud->panel_game_options, "@whi@Server: ", mud->options->server, 255, x,
+        y);
 
     mud->game_options[control] = &mud->options->server;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_STRING;
@@ -74,9 +74,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     char formatted_digits[12] = {0};
     sprintf(formatted_digits, "%d", mud->options->port);
 
-    control = mudclient_add_option_panel_string(mud->panel_game_options,
-                                                "@whi@Port: ", formatted_digits,
-                                                15, x, y);
+    control = mudclient_add_option_panel_string(
+        mud->panel_game_options, "@whi@Port: ", formatted_digits, 15, x, y);
 
     mud->game_options[control] = &mud->options->port;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_INT;
@@ -84,8 +83,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options, "@whi@Members: ", mud->options->members,
-        x, y);
+        mud->panel_game_options, "@whi@Members: ", mud->options->members, x, y);
 
     mud->game_options[control] = &mud->options->members;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -139,7 +137,8 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_game_options,
-        "@whi@Rename Herblaw items: ", mud->options->rename_herblaw_items, x, y);
+        "@whi@Rename Herblaw items: ", mud->options->rename_herblaw_items, x,
+        y);
 
     mud->game_options[control] = &mud->options->rename_herblaw_items;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -166,8 +165,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options,
-        "@whi@Show roofs: ", mud->options->show_roofs, x, y);
+        mud->panel_game_options, "@whi@Show roofs: ", mud->options->show_roofs,
+        x, y);
 
     mud->game_options[control] = &mud->options->show_roofs;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -204,8 +203,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     sprintf(formatted_digits, "%d", mud->options->field_of_view);
 
     control = mudclient_add_option_panel_string(
-        mud->panel_game_options, "@whi@Field of view: ", formatted_digits, 3,
-        x, y);
+        mud->panel_game_options, "@whi@Field of view: ", formatted_digits, 3, x,
+        y);
 
     mud->game_options[control] = &mud->options->field_of_view;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_INT;
@@ -351,8 +350,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     panel_new(mud->panel_ui_options, mud->surface, 50);
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_ui_options,
-        "@whi@Display FPS: ", mud->options->display_fps, x, y);
+        mud->panel_ui_options, "@whi@Display FPS: ", mud->options->display_fps,
+        x, y);
 
     mud->ui_options[control] = &mud->options->display_fps;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -360,8 +359,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_ui_options, "@whi@UI Scale: ", mud->options->ui_scale,
-        x, y);
+        mud->panel_ui_options, "@whi@UI Scale: ", mud->options->ui_scale, x, y);
 
     mud->ui_options[control] = &mud->options->ui_scale;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -369,8 +367,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_ui_options,
-        "@whi@Anti-alias: ", mud->options->anti_alias, x, y);
+        mud->panel_ui_options, "@whi@Anti-alias: ", mud->options->anti_alias, x,
+        y);
 
     mud->ui_options[control] = &mud->options->anti_alias;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -444,8 +442,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_ui_options,
-        "@whi@Status bars: ", mud->options->status_bars, x, y);
+        mud->panel_ui_options, "@whi@Status bars: ", mud->options->status_bars,
+        x, y);
 
     mud->ui_options[control] = &mud->options->status_bars;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -471,8 +469,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_ui_options,
-        "@whi@Wiki lookup: ", mud->options->wiki_lookup, x, y);
+        mud->panel_ui_options, "@whi@Wiki lookup: ", mud->options->wiki_lookup,
+        x, y);
 
     mud->ui_options[control] = &mud->options->wiki_lookup;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -490,9 +488,9 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     sprintf(formatted_digits, "%d", mud->options->ran_target_fps);
 
-    control = mudclient_add_option_panel_string(mud->panel_ui_options,
-                                                "@whi@Text effect FPS: ",
-                                                formatted_digits, 4, x, y);
+    control = mudclient_add_option_panel_string(
+        mud->panel_ui_options, "@whi@Text effect FPS: ", formatted_digits, 4, x,
+        y);
 
     mud->ui_options[control] = &mud->options->ran_target_fps;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_INT;
@@ -638,16 +636,14 @@ void mudclient_sync_options_panel(Panel *panel, void **options,
 }
 
 void mudclient_sync_options_panels(mudclient *mud) {
-    mudclient_sync_options_panel(mud->panel_game_options,
-                                 mud->game_options,
+    mudclient_sync_options_panel(mud->panel_game_options, mud->game_options,
                                  mud->game_option_types);
 
     mudclient_sync_options_panel(mud->panel_control_options,
                                  mud->control_options,
                                  mud->control_option_types);
 
-    mudclient_sync_options_panel(mud->panel_ui_options,
-                                 mud->ui_options,
+    mudclient_sync_options_panel(mud->panel_ui_options, mud->ui_options,
                                  mud->ui_option_types);
 
     mudclient_sync_options_panel(mud->panel_bank_options, mud->bank_options,

@@ -9,7 +9,6 @@ void mudclient_create_login_panels(mudclient *mud) {
     int login_background_height = is_compact ? 125 : 200;
 
     mud->panel_login_welcome = malloc(sizeof(Panel));
-
     panel_new(mud->panel_login_welcome, mud->surface, 50);
 
     int x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) / 2;

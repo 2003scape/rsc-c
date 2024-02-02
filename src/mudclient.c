@@ -859,13 +859,20 @@ void mudclient_resize(mudclient *mud) {
             calloc(mud->game_width * mud->game_height, sizeof(int32_t));
 #endif
 
-        // TODO only when size is different? doesn't really matter
         panel_destroy(mud->panel_login_welcome);
+        free(mud->panel_login_welcome);
+
         panel_destroy(mud->panel_login_new_user);
+        free(mud->panel_login_new_user);
+
         panel_destroy(mud->panel_login_existing_user);
+        free(mud->panel_login_existing_user);
+
         mudclient_create_login_panels(mud);
 
         panel_destroy(mud->panel_appearance);
+        free(mud->panel_appearance);
+
         mudclient_create_appearance_panel(mud);
 
         mud->scene->raster = mud->surface->pixels;
@@ -1147,6 +1154,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, windowflags);
+
+    SDL_SetWindowMinimumSize(mud->window, MUD_MIN_WIDTH, MUD_MIN_HEIGHT);
 #endif
 
     mudclient_resize(mud);
@@ -1203,6 +1212,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->gl_window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, windowflags);
+
+    SDL_SetWindowMinimumSize(mud->gl_window, MUD_MIN_WIDTH, MUD_MIN_HEIGHT);
 
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 

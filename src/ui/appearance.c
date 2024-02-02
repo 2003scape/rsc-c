@@ -25,7 +25,7 @@ mudclient_create_appearance_box(mudclient *mud, char *type, int x, int y) {
 
     char *type_split = strtok(type_copy, "\n");
 
-    char *type_1 = malloc(strlen(type_split) + 1);
+    char type_1[strlen(type_split) + 1];
     strcpy(type_1, type_split);
 
     type_split = strtok(NULL, "\n");
@@ -37,7 +37,7 @@ mudclient_create_appearance_box(mudclient *mud, char *type, int x, int y) {
         panel_add_text_centre(mud->panel_appearance, x, y - box_padding, type_1,
                               FONT_BOLD_12, 1);
 
-        char *type_2 = malloc(strlen(type_split) + 1);
+        char type_2[strlen(type_split) + 1];
         strcpy(type_2, type_split);
 
         panel_add_text_centre(mud->panel_appearance, x, y + box_padding, type_2,
