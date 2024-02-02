@@ -564,8 +564,8 @@ int panel_add_text(Panel *panel, int x, int y, char *text, FontStyle font_style,
     panel->control_font_style[panel->control_count] = font_style;
     panel->control_use_alternative_colour[panel->control_count] = flag;
 
-    strncpy(panel->control_text[panel->control_count], text,
-            PANEL_MAX_TEXT_LEN);
+    snprintf(panel->control_text[panel->control_count], PANEL_MAX_TEXT_LEN,
+             "%s", text);
 
     return panel_prepare_component(panel, PANEL_TEXT, x, y);
 }
@@ -575,8 +575,8 @@ int panel_add_text_centre(Panel *panel, int x, int y, char *text,
     panel->control_font_style[panel->control_count] = font_style;
     panel->control_use_alternative_colour[panel->control_count] = flag;
 
-    strncpy(panel->control_text[panel->control_count], text,
-            PANEL_MAX_TEXT_LEN);
+    snprintf(panel->control_text[panel->control_count], PANEL_MAX_TEXT_LEN,
+             "%s", text);
 
     return panel_prepare_component(panel, PANEL_CENTRE_TEXT, x, y);
 }
