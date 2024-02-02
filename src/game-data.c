@@ -390,9 +390,11 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     for (i = 0; i < game_data.tile_count; i++) {
         int fill = game_data_get_unsigned_int();
+
         if (fill == JAGEX_TRANSPARENT) {
             fill = COLOUR_TRANSPARENT;
         }
+
         game_data.tiles[i].decoration = fill;
     }
 

@@ -1286,7 +1286,6 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                 if (decoration > 0 &&
                     game_data.tiles[decoration - 1].type == BRIDGE_TILE_TYPE) {
                     int fill_front = game_data.tiles[decoration - 1].decoration;
-
                     uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
                     vertices[0] = game_model_vertex_at(
@@ -1467,7 +1466,7 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                     if (decoration_west > 0 &&
                         game_data.tiles[decoration_west - 1].type ==
                             BRIDGE_TILE_TYPE) {
-                        int face_fill =
+                        int fill_front =
                             game_data.tiles[decoration_west - 1].decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
@@ -1493,7 +1492,7 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                             (r_y + 1) * TILE_SIZE);
 
                         int tile_face = game_model_create_face(
-                            game_model, 4, vertices, face_fill,
+                            game_model, 4, vertices, fill_front,
                             COLOUR_TRANSPARENT);
 
                         world->local_x[tile_face] = r_x;
@@ -1502,8 +1501,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
                         game_model->face_tag[tile_face] =
                             TILE_FACE_TAG + tile_face;
 
-                        world_draw_map_tile(world, r_x, r_y, 0, face_fill,
-                                            face_fill);
+                        world_draw_map_tile(world, r_x, r_y, 0, fill_front,
+                                            fill_front);
                     }
                 }
             }
