@@ -892,6 +892,9 @@ void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
 
     int drawn_quads = 0;
 
+    GLuint last_texture = 0;
+    GLuint last_base_texture = 0;
+
     for (int i = 0; i < surface->gl_context_count; i++) {
         SurfaceGlContext *context = &surface->gl_contexts[i];
 
@@ -916,13 +919,21 @@ void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
 
         GLuint texture = context->texture;
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        if (texture != last_texture) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture);
+
+            last_texture = texture;
+        }
 
         GLuint base_texture = context->base_texture;
 
-        glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, base_texture);
+        if (base_texture != last_base_texture) {
+            glActiveTexture(GL_TEXTURE0 + 1);
+            glBindTexture(GL_TEXTURE_2D, base_texture);
+
+            last_base_texture = base_texture;
+        }
 
         int quad_count = context->quad_count;
 
