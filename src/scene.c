@@ -4075,7 +4075,7 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         return;
     }
 
-    glBindVertexArray(game_model->gl_buffer->vao);
+    vertex_buffer_gl_bind(game_model->gl_buffer);
 
     shader_set_mat4(&scene->game_model_shader, "model", game_model->transform);
 

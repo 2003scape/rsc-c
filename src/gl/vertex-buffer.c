@@ -1,5 +1,7 @@
 #include "vertex-buffer.h"
 
+static gl_vertex_buffer *gl_bound_vertex_buffer = NULL;
+
 // TODO vertex_length = vertex_size
 void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
                           int vbo_length, int ebo_length) {
@@ -43,6 +45,10 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
 }
 
 void vertex_buffer_gl_bind(gl_vertex_buffer *vertex_buffer) {
+    if (gl_bound_vertex_buffer == vertex_buffer) {
+        return;
+    }
+
 #ifdef RENDER_GL
     glBindVertexArray(vertex_buffer->vao);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer->vbo);
@@ -51,6 +57,8 @@ void vertex_buffer_gl_bind(gl_vertex_buffer *vertex_buffer) {
     C3D_SetAttrInfo(&vertex_buffer->attr_info);
     C3D_SetBufInfo(&vertex_buffer->buf_info);
 #endif
+
+    gl_bound_vertex_buffer = vertex_buffer;
 }
 
 void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
