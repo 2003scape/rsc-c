@@ -16,6 +16,8 @@ gl_atlas_position gl_transparent_atlas_position = {
     .right_u = 3.0f / GL_TEXTURE_SIZE,
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
     .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
+
+static GLuint last_base_texture = 0;
 #endif
 
 int an_int_346 = 0;
@@ -893,7 +895,6 @@ void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
     int drawn_quads = 0;
 
     GLuint last_texture = 0;
-    GLuint last_base_texture = 0;
 
     for (int i = 0; i < surface->gl_context_count; i++) {
         SurfaceGlContext *context = &surface->gl_contexts[i];
