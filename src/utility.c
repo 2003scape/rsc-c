@@ -12,8 +12,7 @@ static const int BITMASK[] = {
                  0x1ffffff,  0x3ffffff,  0x7ffffff, 0xfffffff, 0x1fffffff,
                  0x3fffffff, 0x7fffffff, -1};
 
-// TODO typed
-static const int certificate_items[][2] = {
+static const CertificateItem certificate_items[] = {
     {517, 151},  {521, 152}, {519, 153},  {518, 155},  {528, 170},  {529, 171},
     {532, 172},  {530, 173}, {1271, 220}, {536, 369},  {535, 370},  {534, 372},
     {533, 373},  {520, 383}, {531, 384},  {1272, 483}, {1273, 486}, {1275, 492},
@@ -750,8 +749,8 @@ int get_certificate_item_id(int item_id) {
     int length = sizeof(certificate_items) / sizeof(certificate_items[0]);
 
     for (int i = 0; i < length; i++) {
-        if (certificate_items[i][0] == item_id) {
-            return certificate_items[i][1];
+        if (certificate_items[i].item_id  == item_id) {
+            return certificate_items[i].certificate_id;
         }
     }
 

@@ -96,6 +96,11 @@
 #define FLOAT_TO_VERTEX(f) (int)(f * VERTEX_SCALE)
 #endif
 
+typedef struct CertificateItem {
+    int certificate_id;
+    int item_id;
+} CertificateItem;
+
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
 
