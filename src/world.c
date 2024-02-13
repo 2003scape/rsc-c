@@ -981,8 +981,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
         game_model_destroy(world->parent_model);
     }
 
-    game_model_new_alloc_flags(world->parent_model,
-        TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
+    game_model_new_alloc_flags(world->parent_model, TERRAIN_MAX_VERTICES,
+                               TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     /* create terrain */
 
@@ -998,8 +998,9 @@ static void world_load_assemble(World *world, int x, int y, int plane,
         GameModel *game_model = world->parent_model;
 
         game_model_destroy(game_model);
-        game_model_new_alloc_flags(game_model,
-            TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
+
+        game_model_new_alloc_flags(game_model, TERRAIN_MAX_VERTICES,
+                                   TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -1531,8 +1532,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    game_model_new_alloc_flags(world->parent_model,
-        TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
+    game_model_new_alloc_flags(world->parent_model, TERRAIN_MAX_VERTICES,
+                               TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     int colour = 0x606060;
 
@@ -1770,8 +1771,8 @@ static void world_load_assemble(World *world, int x, int y, int plane,
 
     game_model_destroy(world->parent_model);
 
-    game_model_new_alloc_flags(world->parent_model,
-        TERRAIN_MAX_VERTICES, TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
+    game_model_new_alloc_flags(world->parent_model, TERRAIN_MAX_VERTICES,
+                               TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
@@ -2199,8 +2200,8 @@ void world_add_models(World *world, GameModel **models) {
 
                 scene_add_model(world->scene, game_model);
 
-                game_model_set_light_intensity(game_model,
-                                               48, 48, -50, -10, -50);
+                game_model_set_light_intensity(game_model, 48, 48, -50, -10,
+                                               -50);
 
                 if (width > 1 || height > 1) {
                     for (int xx = x; xx < x + width; xx++) {

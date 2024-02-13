@@ -151,6 +151,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     // TODO we need to re-allocate more polygons when client is resized, or just
     // add more to initial polygon_count
     polygon_count = 32767;
+
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
@@ -162,7 +163,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     /* 2D sprites */
     game_model_new_alloc(view, scene->max_sprite_count * 2,
-                               scene->max_sprite_count);
+                         scene->max_sprite_count);
 
     scene->view = view;
 
@@ -482,7 +483,13 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                     k += i4;
                 }
 
-                j = (j & (texture_area + texture_size - 1)) + (l2 & 0x600000);
+                if (j_ == 3) {
+                    break;
+                }
+
+                j = (j & (texture_area + texture_size - 1)) +
+                    (l2 & 0x600000);
+
                 k4 = l2 >> 23;
                 l2 += i3;
             }
@@ -1447,7 +1454,7 @@ void scene_render(Scene *scene) {
         if (game_model == scene->view) {
             scene_render_polygon_2d_face(scene, face);
         } else {
-            int k8 = 0;
+            int plane_index = 0;
             int vertex_shade = 0;
             uint16_t face_vertex_count = game_model->face_vertex_count[face];
             uint16_t *face_vertices = game_model->face_vertices[face];
@@ -1486,22 +1493,22 @@ void scene_render(Scene *scene) {
 
                 if (game_model->project_vertex_z[vertex_index] >=
                     scene->clip_near) {
-                    scene->plane_x[k8] =
+                    scene->plane_x[plane_index] =
                         game_model->vertex_view_x[vertex_index];
 
-                    scene->plane_y[k8] =
+                    scene->plane_y[plane_index] =
                         game_model->vertex_view_y[vertex_index];
 
-                    scene->vertex_shade[k8] = vertex_shade;
+                    scene->vertex_shade[plane_index] = vertex_shade;
 
                     if (game_model->project_vertex_z[vertex_index] >
                         scene->fog_z_distance) {
-                        scene->vertex_shade[k8] +=
+                        scene->vertex_shade[plane_index] +=
                             (game_model->project_vertex_z[vertex_index] -
                              scene->fog_z_distance);
                     }
 
-                    k8++;
+                    plane_index++;
                 } else {
                     uint16_t previous_vertex_index = 0;
 
@@ -1536,16 +1543,16 @@ void scene_render(Scene *scene) {
                               scene->clip_near)) /
                                 k7;
 
-                        scene->plane_x[k8] =
+                        scene->plane_x[plane_index] =
                             //(i5 << scene->view_distance) / scene->clip_near;
                             (i5 * scene->view_distance) / scene->clip_near;
 
-                        scene->plane_y[k8] =
+                        scene->plane_y[plane_index] =
                             //(j6 << scene->view_distance) / scene->clip_near;
                             (j6 * scene->view_distance) / scene->clip_near;
 
-                        scene->vertex_shade[k8] = vertex_shade;
-                        k8++;
+                        scene->vertex_shade[plane_index] = vertex_shade;
+                        plane_index++;
                     }
 
                     if (j == face_vertex_count - 1) {
@@ -1583,16 +1590,16 @@ void scene_render(Scene *scene) {
                               scene->clip_near)) /
                                 l7;
 
-                        scene->plane_x[k8] =
+                        scene->plane_x[plane_index] =
                             //(j5 << scene->view_distance) / scene->clip_near;
                             (j5 * scene->view_distance) / scene->clip_near;
 
-                        scene->plane_y[k8] =
+                        scene->plane_y[plane_index] =
                             //(k6 << scene->view_distance) / scene->clip_near;
                             (k6 * scene->view_distance) / scene->clip_near;
 
-                        scene->vertex_shade[k8] = vertex_shade;
-                        k8++;
+                        scene->vertex_shade[plane_index] = vertex_shade;
+                        plane_index++;
                     }
                 }
             }
@@ -1613,8 +1620,9 @@ void scene_render(Scene *scene) {
                 }
             }
 
-            scene_generate_scanlines(scene, k8, scene->plane_x, scene->plane_y,
-                                     scene->vertex_shade, game_model, face);
+            scene_generate_scanlines(scene, plane_index, scene->plane_x,
+                                     scene->plane_y, scene->vertex_shade,
+                                     game_model, face);
 
             if (scene->max_y > scene->min_y) {
                 scene_rasterize(scene, face_vertex_count, scene->vertex_x,
@@ -1656,8 +1664,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int j13 = 0;
         int l13 = 0;
         int j14 = 0;
-        int l14 = COLOUR_TRANSPARENT;
-        int j15 = -COLOUR_TRANSPARENT;
+        int l14 = 12345678;
+        int j15 = -12345678;
 
         if (plane_y_2 != plane_y_0) {
             j13 = ((plane_x_2 - plane_x_0) << 8) / (plane_y_2 - plane_y_0);
@@ -1692,8 +1700,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int j16 = 0;
         int l16 = 0;
         int j17 = 0;
-        int l17 = COLOUR_TRANSPARENT;
-        int j18 = -COLOUR_TRANSPARENT;
+        int l17 = 12345678;
+        int j18 = -12345678;
 
         if (plane_y_1 != plane_y_0) {
             j16 = ((plane_x_1 - plane_x_0) << 8) / (plane_y_1 - plane_y_0);
@@ -1728,8 +1736,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int j19 = 0;
         int l19 = 0;
         int j20 = 0;
-        int l20 = COLOUR_TRANSPARENT;
-        int j21 = -COLOUR_TRANSPARENT;
+        int l20 = 12345678;
+        int j21 = -12345678;
 
         if (plane_y_2 != plane_y_1) {
             j19 = ((plane_x_2 - plane_x_1) << 8) / (plane_y_2 - plane_y_1);
@@ -1852,8 +1860,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int i15 = 0;
         int k15 = 0;
         int i16 = 0;
-        int k16 = COLOUR_TRANSPARENT;
-        int i17 = -COLOUR_TRANSPARENT;
+        int k16 = 12345678;
+        int i17 = -12345678;
 
         if (plane_y_3 != plane_y_0) {
             i15 = ((plane_x_3 - plane_x_0) << 8) / (plane_y_3 - plane_y_0);
@@ -1887,8 +1895,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int i18 = 0;
         int k18 = 0;
         int i19 = 0;
-        int k19 = COLOUR_TRANSPARENT;
-        int i20 = -COLOUR_TRANSPARENT;
+        int k19 = 12345678;
+        int i20 = -12345678;
 
         if (plane_y_1 != plane_y_0) {
             i18 = ((plane_x_1 - plane_x_0) << 8) / (plane_y_1 - plane_y_0);
@@ -1922,8 +1930,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int i21 = 0;
         int k21 = 0;
         int i22 = 0;
-        int j22 = COLOUR_TRANSPARENT;
-        int k22 = -COLOUR_TRANSPARENT;
+        int j22 = 12345678;
+        int k22 = -12345678;
 
         if (plane_y_2 != plane_y_1) {
             i21 = ((plane_x_2 - plane_x_1) << 8) / (plane_y_2 - plane_y_1);
@@ -1957,8 +1965,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         int i23 = 0;
         int j23 = 0;
         int k23 = 0;
-        int l23 = COLOUR_TRANSPARENT;
-        int i24 = -COLOUR_TRANSPARENT;
+        int l23 = 12345678;
+        int i24 = -12345678;
 
         if (plane_y_3 != plane_y_2) {
             i23 = ((plane_x_3 - plane_x_2) << 8) / (plane_y_3 - plane_y_2);
@@ -2178,6 +2186,7 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
                 int l6 = plane_x[y] << 8;
                 int j8 = ((plane_x[k5] - plane_x[y]) << 8) / (j4 - j3);
                 int l9 = vertex_shade[y] << 8;
+
                 int l10 =
                     ((vertex_shade[k5] - vertex_shade[y]) << 8) / (j4 - j3);
 
@@ -2386,9 +2395,10 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                         }
 
                         scene_texture128_scanline(
-                            scene->raster + (i17 + j), scene->texture_pixels[face_fill],
-                            l9 + k14 * j, k11 + i15 * j, i13 + k15 * j, k10,
-                            i12, k13, length, j22, l23 << 2);
+                            scene->raster + (i17 + j),
+                            scene->texture_pixels[face_fill], l9 + k14 * j,
+                            k11 + i15 * j, i13 + k15 * j, k10, i12, k13, length,
+                            j22, l23 << 2);
 
                         l9 += i11;
                         k11 += k12;
@@ -2427,9 +2437,10 @@ static void scene_rasterize(Scene *scene, int vertex_count, int32_t *vertices_x,
                     }
 
                     scene_texture128_alphakey_scanline(
-                        scene->raster + (i17 + j), scene->texture_pixels[face_fill],
-                        l9 + k14 * j, k11 + i15 * j, i13 + k15 * j, k10, i12,
-                        k13, length, k22, i24);
+                        scene->raster + (i17 + j),
+                        scene->texture_pixels[face_fill], l9 + k14 * j,
+                        k11 + i15 * j, i13 + k15 * j, k10, i12, k13, length,
+                        k22, i24);
 
                     l9 += i11;
                     k11 += k12;
@@ -3367,15 +3378,15 @@ void scene_set_light_dir(Scene *scene, int x, int y, int z) {
     }
 }
 
-void scene_set_light(Scene *scene, int ambience, int diffuse,
-                               int x, int y, int z) {
+void scene_set_light(Scene *scene, int ambience, int diffuse, int x, int y,
+                     int z) {
     if (x == 0 && y == 0 && z == 0) {
         x = 32;
     }
 
     for (int i = 0; i < scene->model_count; i++) {
-        game_model_set_light_intensity(scene->models[i], ambience, diffuse,
-                                       x, y, z);
+        game_model_set_light_intensity(scene->models[i], ambience, diffuse, x,
+                                       y, z);
     }
 }
 
@@ -4261,12 +4272,6 @@ void scene_gl_render(Scene *scene) {
     if (scene->gl_terrain_pick_step == GL_PICK_STEP_SAMPLE) {
         int mouse_x = scene->mouse_x + (scene->surface->width / 2);
         int mouse_y = scene->surface->height - scene->mouse_y;
-
-        /* we discard every even row, so there's no depth data either */
-        // TODO probably remove this? i don't think interlace works on gl
-        if (scene->interlace && mouse_y % 2 == 0) {
-            mouse_y -= 1;
-        }
 
         float mouse_z = 0;
 
