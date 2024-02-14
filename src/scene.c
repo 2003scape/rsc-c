@@ -132,6 +132,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
                int polygon_count, int max_sprite_count) {
     memset(scene, 0, sizeof(Scene));
 
+    // TODO we need to re-allocate more polygons when client is resized, or just
+    // add more to initial polygon_count
+    polygon_count = 32767;
+
     scene->surface = surface;
     scene->max_model_count = model_count;
     scene->max_polygon_count = polygon_count;
@@ -147,11 +151,6 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 #endif
 
     scene->models = calloc(model_count, sizeof(GameModel *));
-
-    // TODO we need to re-allocate more polygons when client is resized, or just
-    // add more to initial polygon_count
-    polygon_count = 32767;
-
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
@@ -487,8 +486,7 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                     break;
                 }
 
-                j = (j & (texture_area + texture_size - 1)) +
-                    (l2 & 0x600000);
+                j = (j & (texture_area + texture_size - 1)) + (l2 & 0x600000);
 
                 k4 = l2 >> 23;
                 l2 += i3;
@@ -2759,18 +2757,36 @@ static void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     uint16_t *face_vertices = game_model->face_vertices[face];
     uint8_t face_vertex_count = game_model->face_vertex_count[face];
     int normal_scale = game_model->normal_scale[face];
-    int vcx = game_model->project_vertex_x[face_vertices[0]];
-    int vcy = game_model->project_vertex_y[face_vertices[0]];
-    int vcz = game_model->project_vertex_z[face_vertices[0]];
-    int vcx1 = game_model->project_vertex_x[face_vertices[1]] - vcx;
-    int vcy1 = game_model->project_vertex_y[face_vertices[1]] - vcy;
-    int vcz1 = game_model->project_vertex_z[face_vertices[1]] - vcz;
-    int vcx2 = game_model->project_vertex_x[face_vertices[2]] - vcx;
-    int vcy2 = game_model->project_vertex_y[face_vertices[2]] - vcy;
-    int vcz2 = game_model->project_vertex_z[face_vertices[2]] - vcz;
-    int normal_x = vcy1 * vcz2 - vcy2 * vcz1;
-    int normal_y = vcz1 * vcx2 - vcz2 * vcx1;
-    int normal_z = vcx1 * vcy2 - vcx2 * vcy1;
+    int project_x_a = game_model->project_vertex_x[face_vertices[0]];
+    int project_y_a = game_model->project_vertex_y[face_vertices[0]];
+    int project_z_a = game_model->project_vertex_z[face_vertices[0]];
+
+    int project_x_delta_ba =
+        game_model->project_vertex_x[face_vertices[1]] - project_x_a;
+
+    int project_y_delta_ba =
+        game_model->project_vertex_y[face_vertices[1]] - project_y_a;
+
+    int project_z_delta_ba =
+        game_model->project_vertex_z[face_vertices[1]] - project_z_a;
+
+    int project_x_delta_ca =
+        game_model->project_vertex_x[face_vertices[2]] - project_x_a;
+
+    int project_y_delta_ca =
+        game_model->project_vertex_y[face_vertices[2]] - project_y_a;
+
+    int project_z_delta_ca =
+        game_model->project_vertex_z[face_vertices[2]] - project_z_a;
+
+    int normal_x = project_y_delta_ba * project_z_delta_ca -
+                   project_y_delta_ca * project_z_delta_ba;
+
+    int normal_y = project_z_delta_ba * project_x_delta_ca -
+                   project_z_delta_ca * project_x_delta_ba;
+
+    int normal_z = project_x_delta_ba * project_y_delta_ca -
+                   project_x_delta_ca * project_y_delta_ba;
 
     if (normal_scale == -1) {
         normal_scale = 0;
@@ -2796,7 +2812,9 @@ static void scene_initialise_polygon_3d(Scene *scene, int polygon_index) {
     }
 
     // TODO rename from visibility?
-    polygon->visibility = vcx * normal_x + vcy * normal_y + vcz * normal_z;
+    polygon->visibility = project_x_a * normal_x + project_y_a * normal_y +
+                          project_z_a * normal_z;
+
     polygon->normal_x = normal_x;
     polygon->normal_y = normal_y;
     polygon->normal_z = normal_z;
@@ -3125,7 +3143,6 @@ void scene_allocate_textures(Scene *scene, int count, int length_64,
     scene->texture_pixels = calloc(count, sizeof(int32_t *));
 
     scene_texture_count_loaded = 0;
-    // scene_texture_count_loaded = (1L << 30L) - 5000;
 
     for (int i = 0; i < count; i++) {
         scene->texture_loaded_number[i] = 0;
@@ -3158,11 +3175,18 @@ static void scene_prepare_texture(Scene *scene, int id) {
         return;
     }
 
-    // TODO do something when this is close to (1L << 30L)
+    int max_id = 1 << 30;
+    int old_id = 0;
+
+    // TODO we can probably move this increment below the NULL check block
     scene_texture_count_loaded++;
     scene->texture_loaded_number[id] = scene_texture_count_loaded;
 
-    // mud_log("id=%d tcl=%ld\n", id, scene_texture_count_loaded);
+    /* without this we eventually get undefined behaviour */
+    if (scene_texture_count_loaded == max_id - 1) {
+        scene_texture_count_loaded = 0;
+        scene->texture_loaded_number[id] = scene_texture_count_loaded;
+    }
 
     if (scene->texture_pixels[id] != NULL) {
         return;
@@ -3180,44 +3204,23 @@ static void scene_prepare_texture(Scene *scene, int id) {
                 return;
             }
         }
+    } else {
+        // is 128 wide
+        for (int i = 0; i < scene->length_128; i++) {
+            if (scene->texture_colours_128[i] == NULL) {
+                scene->texture_colours_128[i] =
+                    calloc(256 * 256, sizeof(int32_t));
 
-        int max_id = 1 << 30;
-        int old_id = 0;
-
-        for (int i = 0; i < scene->texture_count; i++) {
-            if (i != id && scene->texture_dimension[i] == 0 &&
-                scene->texture_pixels[i] != NULL &&
-                scene->texture_loaded_number[i] < max_id) {
-                max_id = scene->texture_loaded_number[i];
-                old_id = i;
+                scene->texture_pixels[id] = scene->texture_colours_128[i];
+                scene_set_texture_pixels(scene, id);
+                return;
             }
         }
-
-        free(scene->texture_pixels[id]);
-
-        scene->texture_pixels[id] = scene->texture_pixels[old_id];
-        scene->texture_pixels[old_id] = NULL;
-
-        scene_set_texture_pixels(scene, id);
-        return;
     }
-
-    // is 128 wide
-    for (int i = 0; i < scene->length_128; i++) {
-        if (scene->texture_colours_128[i] == NULL) {
-            scene->texture_colours_128[i] = calloc(256 * 256, sizeof(int32_t));
-
-            scene->texture_pixels[id] = scene->texture_colours_128[i];
-            scene_set_texture_pixels(scene, id);
-            return;
-        }
-    }
-
-    int max_id = 1 << 30;
-    int old_id = 0;
 
     for (int i = 0; i < scene->texture_count; i++) {
-        if (i != id && scene->texture_dimension[i] == 1 &&
+        if (i != id &&
+            scene->texture_dimension[i] == scene->texture_dimension[id] &&
             scene->texture_pixels[i] != NULL &&
             scene->texture_loaded_number[i] < max_id) {
             max_id = scene->texture_loaded_number[i];

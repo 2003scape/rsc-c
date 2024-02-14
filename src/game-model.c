@@ -708,23 +708,23 @@ void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
         int vertex_x_a = vertex_x[face_vertices[0]];
         int vertex_y_a = vertex_y[face_vertices[0]];
         int vertex_z_a = vertex_z[face_vertices[0]];
-        int vertex_x_difference_ba = vertex_x[face_vertices[1]] - vertex_x_a;
-        int vertex_y_difference_ba = vertex_y[face_vertices[1]] - vertex_y_a;
-        int vertex_z_difference_ba = vertex_z[face_vertices[1]] - vertex_z_a;
-        int vertex_x_difference_ca = vertex_x[face_vertices[2]] - vertex_x_a;
-        int vertex_y_difference_ca = vertex_y[face_vertices[2]] - vertex_y_a;
-        int vertex_z_difference_ca = vertex_z[face_vertices[2]] - vertex_z_a;
+        int vertex_x_delta_ba = vertex_x[face_vertices[1]] - vertex_x_a;
+        int vertex_y_delta_ba = vertex_y[face_vertices[1]] - vertex_y_a;
+        int vertex_z_delta_ba = vertex_z[face_vertices[1]] - vertex_z_a;
+        int vertex_x_delta_ca = vertex_x[face_vertices[2]] - vertex_x_a;
+        int vertex_y_delta_ca = vertex_y[face_vertices[2]] - vertex_y_a;
+        int vertex_z_delta_ca = vertex_z[face_vertices[2]] - vertex_z_a;
 
-        int normal_x = vertex_y_difference_ba * vertex_z_difference_ca -
-                       vertex_y_difference_ca * vertex_z_difference_ba;
+        int normal_x = vertex_y_delta_ba * vertex_z_delta_ca -
+                       vertex_y_delta_ca * vertex_z_delta_ba;
 
-        int normal_y = vertex_z_difference_ba * vertex_x_difference_ca -
-                       vertex_z_difference_ca * vertex_x_difference_ba;
+        int normal_y = vertex_z_delta_ba * vertex_x_delta_ca -
+                       vertex_z_delta_ca * vertex_x_delta_ba;
 
         int normal_z = 0;
 
-        for (normal_z = vertex_x_difference_ba * vertex_y_difference_ca -
-                        vertex_x_difference_ca * vertex_y_difference_ba;
+        for (normal_z = vertex_x_delta_ba * vertex_y_delta_ca -
+                        vertex_x_delta_ca * vertex_y_delta_ba;
              normal_x > 8192 || normal_y > 8192 || normal_z > 8192 ||
              normal_x < -8192 || normal_y < -8192 || normal_z < -8192;
              normal_z /= 2) {
@@ -846,8 +846,10 @@ void game_model_reset_transform(GameModel *game_model) {
     if (!game_model->autocommit) {
         memcpy(game_model->vertex_transformed_x, game_model->vertex_x,
                game_model->vertex_count * sizeof(int16_t));
+
         memcpy(game_model->vertex_transformed_y, game_model->vertex_y,
                game_model->vertex_count * sizeof(int16_t));
+
         memcpy(game_model->vertex_transformed_z, game_model->vertex_z,
                game_model->vertex_count * sizeof(int16_t));
     }
@@ -950,29 +952,30 @@ void game_model_project_view(GameModel *game_model, int camera_x, int camera_y,
         int y = game_model->vertex_transformed_y[i] - camera_y;
         int z = game_model->vertex_transformed_z[i] - camera_z;
 
+        // TODO can probably be commented out since yaw isn't used.
         if (camera_yaw != 0) {
-            int X = (y * yaw_sin + x * yaw_cos) / 32768;
-            y = (y * yaw_cos - x * yaw_sin) / 32768;
+            int X = (y * yaw_sin + x * yaw_cos) >> 15;
+            y = (y * yaw_cos - x * yaw_sin) >> 15;
             x = X;
         }
 
         if (camera_roll != 0) {
-            int X = (z * roll_sin + x * roll_cos) / 32768;
-            z = (z * roll_cos - x * roll_sin) / 32768;
+            int X = (z * roll_sin + x * roll_cos) >> 15;
+            z = (z * roll_cos - x * roll_sin) >> 15;
             x = X;
         }
 
         if (camera_pitch != 0) {
-            int Y = (y * pitch_cos - z * pitch_sin) / 32768;
-            z = (y * pitch_sin + z * pitch_cos) / 32768;
+            int Y = (y * pitch_cos - z * pitch_sin) >> 15;
+            z = (y * pitch_sin + z * pitch_cos) >> 15;
             y = Y;
         }
 
         if (z >= clip_near) {
             // game_model->vertex_view_x[i] = (int)((x << view_distance) / z);
             // game_model->vertex_view_y[i] = (int)((y << view_distance) / z);
-            game_model->vertex_view_x[i] = (int)((x * view_distance) / z);
-            game_model->vertex_view_y[i] = (int)((y * view_distance) / z);
+            game_model->vertex_view_x[i] = (x * view_distance) / z;
+            game_model->vertex_view_y[i] = (y * view_distance) / z;
         } else {
             // game_model->vertex_view_x[i] = x << view_distance;
             // game_model->vertex_view_y[i] = y << view_distance;
