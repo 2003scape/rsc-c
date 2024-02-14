@@ -4,7 +4,7 @@
 #include "../mudclient.h"
 
 #define ADDITIONAL_OPTIONS_WIDTH 320
-#define ADDITIONAL_OPTIONS_HEIGHT 218
+#define ADDITIONAL_OPTIONS_HEIGHT 224
 
 /* tabs */
 #define ADDITIONAL_OPTIONS_TAB_HEIGHT 24
@@ -19,12 +19,8 @@
 #define ADDITIONAL_OPTIONS_INT 1
 #define ADDITIONAL_OPTIONS_CHECKBOX 2
 
-extern char *option_tabs[];
+extern const char *option_tabs[];
 
-int mudclient_add_option_panel_label(Panel *panel, char *label, int x, int y);
-int mudclient_add_option_panel_string(Panel *panel, char *label,
-                                      char *default_text, int max_length, int x,
-                                      int y);
 void mudclient_create_options_panel(mudclient *mud);
 Panel *mudclient_get_active_option_panel(mudclient *mud);
 void mudclient_get_active_options(mudclient *mud, void ***options,

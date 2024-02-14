@@ -126,6 +126,6 @@ typedef enum {
     SERVER_WELCOME = 182,
     SERVER_WORLD_INFO = 25
 #endif
-} SERVER_OPCODE;
+} ServerOpcode;
 
 #endif

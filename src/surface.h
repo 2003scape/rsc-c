@@ -35,8 +35,16 @@
 #endif
 
 #ifdef RENDER_GL
+#ifdef GLAD
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
+#include "../../glad/glad.h"
+#endif
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
+#endif
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -96,6 +104,8 @@ extern gl_atlas_position gl_white_atlas_position;
 extern gl_atlas_position gl_transparent_atlas_position;
 #endif
 
+#define SURFACE_STRING_MAX 256
+
 #define SLEEP_WIDTH 255
 #define SLEEP_HEIGHT 40
 
@@ -136,7 +146,7 @@ extern int8_t *game_fonts[50];
 extern int character_width[256];
 extern int32_t *surface_texture_pixels;
 
-void init_surface_global();
+void init_surface_global(void);
 
 struct Surface {
     int limit;
@@ -146,13 +156,13 @@ struct Surface {
     int32_t **surface_pixels; // TODO rename
     int8_t **sprite_colours;
     int32_t **sprite_palette;
-    int *sprite_width;
-    int *sprite_height;
-    int *sprite_width_full;
-    int *sprite_height_full;
+    int16_t *sprite_width;
+    int16_t *sprite_height;
+    int16_t *sprite_width_full;
+    int16_t *sprite_height_full;
     int8_t *sprite_translate;
-    int *sprite_translate_x;
-    int *sprite_translate_y;
+    int16_t *sprite_translate_x;
+    int16_t *sprite_translate_y;
 
     int8_t interlace;
     int8_t draw_string_shadow;
@@ -259,8 +269,8 @@ void surface_gl_buffer_circle(Surface *surface, int x, int y, int radius,
 void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
                                 int height, int top_colour, int bottom_colour);
 void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode);
-void surface_gl_blur_texture(Surface *surface, int sprite_id,
-                                 int blur_height, int x, int y, int height);
+void surface_gl_blur_texture(Surface *surface, int sprite_id, int blur_height,
+                             int x, int y, int height);
 void surface_gl_apply_login_filter(Surface *surface, int sprite_id);
 #endif
 
@@ -291,8 +301,8 @@ void surface_fade_to_black(Surface *surface);
 void surface_apply_login_filter(Surface *surface, int background_height);
 void surface_clear(Surface *surface);
 void surface_parse_sprite_tga(Surface *surface, int sprite_id,
-                              uint8_t *sprite_data, size_t len,
-                              int columns, int rows);
+                              int8_t *sprite_data, size_t len, int columns,
+                              int rows);
 void surface_parse_sprite(Surface *surface, int sprite_id, int8_t *sprite_data,
                           int8_t *index_data, int frame_count);
 void surface_read_sleep_word(Surface *surface, int sprite_id,
@@ -314,43 +324,20 @@ void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 float depth_top, float depth_bottom);
 void surface_draw_sprite_alpha(Surface *surface, int x, int y, int sprite_id,
                                int alpha);
-void surface_draw_action_bubble(Surface *surface, int x, int y, int scale_x,
-                                int scale_y, int sprite_id, int alpha);
+void surface_draw_sprite_scale_alpha(Surface *surface, int x, int y,
+                                     int scale_x, int scale_y, int sprite_id,
+                                     int alpha);
 void surface_draw_sprite_scale_mask(Surface *surface, int x, int y, int width,
                                     int height, int sprite_id, int colour);
-void surface_plot_sprite(int32_t *dest, int32_t *src, int src_pos, int dest_pos,
-                         int width, int height, int dest_offset, int src_offset,
-                         int y_inc);
-void surface_plot_palette_sprite(int32_t *dest, int8_t *colours,
-                                 int32_t *palette, int src_pos, int dest_pos,
-                                 int width, int height, int dest_offset,
-                                 int src_offset, int y_inc);
-void surface_plot_scale_from13(int32_t *dest, int32_t *src, int j, int k,
-                               int dest_pos, int i1, int j1, int k1, int l1,
-                               int i2, int j2, int k2);
-void surface_draw_sprite_alpha_from11(int32_t *dest, int32_t *src, int src_pos,
-                                      int size, int width, int height,
-                                      int extra_x_spcae, int k1, int y_inc,
-                                      int alpha);
-void surface_draw_sprite_alpha_from11a(int32_t *dest, int8_t *colour_idx,
-                                       int32_t *colours, int list_pos, int size,
-                                       int width, int height, int extra_x_space,
-                                       int j1, int y_inc, int alpha);
 void surface_transparent_scale(int32_t *dest, int32_t *src, int j, int k,
                                int dest_pos, int i1, int j1, int k1, int l1,
                                int i2, int j2, int y_inc, int alpha);
-void surface_plot_scale_from14(int32_t *dest, int32_t *src, int j, int k, int l,
-                               int i1, int width, int height, int l1, int i2,
-                               int j2, int y_inc, int colour);
 void surface_draw_minimap_sprite(Surface *surface, int x, int y, int sprite_id,
                                  int rotation, int scale);
 void surface_draw_minimap(int32_t *dest, int32_t *src, int j, int k, int l,
                           int i1, int j1, int k1, int l1);
 void surface_draw_minimap_translate(int32_t *dest, int32_t *src, int j, int k,
                                     int l, int i1, int j1, int k1, int l1);
-void surface_draw_sprite_transform_mask_software(
-    Surface *surface, int x, int y, int draw_width, int draw_height,
-    int sprite_id, int mask_colour, int skin_colour, int skew_x, int flip);
 void surface_draw_sprite_transform_mask(Surface *surface, int x, int y,
                                         int width, int height, int sprite_id,
                                         int mask_colour, int skin_colour,
@@ -361,33 +348,8 @@ void surface_draw_sprite_transform_mask_depth(Surface *surface, int x, int y,
                                               int skin_colour, int skew_x,
                                               int flip, float depth_top,
                                               float depth_bottom);
-void surface_transparent_sprite_plot_from15(Surface *surface, int32_t *dest,
-                                            int32_t *src, int j, int k,
-                                            int dest_pos, int i1, int j1,
-                                            int k1, int l1, int i2, int j2,
-                                            int k2, int l2, int i3);
-void surface_transparent_sprite_plot_from16(Surface *surface, int32_t *dest,
-                                            int32_t *src, int j, int k,
-                                            int dest_pos, int i1, int j1,
-                                            int k1, int l1, int i2, int j2,
-                                            int k2, int l2, int i3, int j3);
-void surface_transparent_sprite_plot_from16a(Surface *surface, int32_t *dest,
-                                             int8_t *colour_idx,
-                                             int32_t *colours, int j, int k,
-                                             int l, int i1, int j1, int k1,
-                                             int l1, int i2, int j2, int k2,
-                                             int l2, int i3);
-void surface_transparent_sprite_plot_from17(Surface *surface, int32_t *dest,
-                                            int8_t *colour_idx,
-                                            int32_t *colours, int j, int k,
-                                            int l, int i1, int j1, int k1,
-                                            int l1, int i2, int j2, int k2,
-                                            int l2, int i3, int j3);
 #ifdef RENDER_SW
 void surface_screen_raster_to_palette_sprite(Surface *surface, int sprite_id);
-void surface_plot_letter(int32_t *dest, int8_t *font_data, int colour,
-                         int font_pos, int dest_pos, int width, int height,
-                         int dest_offset, int font_data_offset);
 void surface_draw_character(Surface *surface, int font_offset, int x, int y,
                             int colour, int8_t *font_data);
 void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
@@ -402,8 +364,14 @@ void surface_draw_string_right(Surface *surface, const char *text, int x, int y,
 void surface_draw_string_centre_depth(Surface *surface, const char *text, int x,
                                       int y, FontStyle font, int colour,
                                       float depth);
-void surface_draw_string_centre(Surface *surface, const char *text, int x, int y,
-                                FontStyle font, int colour);
+void surface_draw_string_centre(Surface *surface, const char *text, int x,
+                                int y, FontStyle font, int colour);
+void surface_draw_stringf(Surface *surface, int x, int y, FontStyle font,
+                          int colour, const char *text, ...);
+void surface_draw_stringf_centre(Surface *surface, int x, int y, FontStyle font,
+                                 int colour, const char *text, ...);
+void surface_draw_stringf_right(Surface *surface, int x, int y, FontStyle font,
+                                 int colour, const char *text, ...);
 int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,
                              int max, int max_height);
 void surface_draw_paragraph(Surface *surface, const char *text, int x, int y,
@@ -412,7 +380,7 @@ int surface_text_height_font(FontStyle font);
 int surface_text_height(FontStyle font);
 int surface_text_width(const char *text, FontStyle font);
 void surface_draw_tabs(Surface *surface, int x, int y, int width, int height,
-                       char **tabs, int tabs_length, int selected);
+                       const char **tabs, int tabs_length, int selected);
 void surface_draw_item(Surface *surface, int x, int y, int slot_width,
                        int slot_height, int item_id);
 void surface_draw_item_grid(Surface *surface, int x, int y, int rows,

@@ -1,8 +1,10 @@
 #ifndef _H_UTILITY
 #define _H_UTILITY
 
+#include <assert.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,12 +26,28 @@
 #include <tex3ds.h>
 #endif
 #else
+#ifdef __SWITCH__
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 
 #ifdef RENDER_GL
+#ifdef __SWITCH__
+#include <SDL2/SDL_image.h>
+#else
 #include <SDL_image.h>
+#endif
+#ifdef GLAD
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
+#include "../../glad/glad.h"
+#endif
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
+#endif
 #endif
 #endif
 
@@ -78,18 +96,23 @@
 #define FLOAT_TO_VERTEX(f) (int)(f * VERTEX_SCALE)
 #endif
 
+typedef struct CertificateItem {
+    int certificate_id;
+    int item_id;
+} CertificateItem;
+
 extern int sin_cos_512[512];
 extern int sin_cos_2048[2048];
-extern int BITMASK[];
-
-extern int certificate_items[][2];
 
 #ifdef RENDER_3DS_GL
 extern int _3ds_gl_framebuffer_offsets_x[];
 extern int _3ds_gl_framebuffer_offsets_y[];
 #endif
 
-void init_utility_global();
+void init_utility_global(void);
+
+void mud_log(char *format, ...);
+void mud_error(char *format, ...);
 
 char *strcat_realloc(char *s, const char *new);
 char *mud_strdup(const char *s);
@@ -117,17 +140,17 @@ void *unpack_data(const char *file_name, size_t extra_size, void *archive_data,
 void *load_data(const char *file_name, size_t extra_size,
                   void *archive_data, size_t *size_out);
 void format_confirm_amount(int amount, char *formatted);
-int get_ticks();
+int get_ticks(void);
 void delay_ticks(int ticks);
 void get_level_difference_colour(int level_difference, char *colour);
 void ulaw_to_linear(long size, uint8_t *u_ptr, int16_t *out_ptr);
 void format_number_commas(int number, char *dest);
 void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
                           int use_commas, char *dest);
-void url_encode(char *s, char *dest);
+void url_encode(const char *s, char *dest);
 int get_certificate_item_id(int item_id);
-int is_ip_address(char *address);
-int colour_str_to_colour(char *colour_str);
+int is_ip_address(const char *address);
+int colour_str_to_colour(const char *colour_str, int ran_target_fps);
 double distance(int x1, int y1, int x2, int y2);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)

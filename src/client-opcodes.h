@@ -230,6 +230,6 @@ typedef enum {
     CLIENT_WALL_OBJECT_COMMAND1 = 14,
     CLIENT_WALL_OBJECT_COMMAND2 = 127
 #endif
-} CLIENT_OPCODE;
+} ClientOpcode;
 
 #endif

@@ -32,8 +32,8 @@ struct WallConfig {
     char *description;
     char *command1;
     char *command2;
-    int texture_front;
-    int texture_back;
+    int16_t texture_front;
+    int16_t texture_back;
     uint16_t height;
     uint8_t blocking;
     uint8_t interactive;
@@ -88,7 +88,7 @@ struct ItemConfig {
 };
 
 struct TileConfig {
-    int decoration;
+    int16_t decoration;
     uint8_t type;
     uint8_t blocking;
 };

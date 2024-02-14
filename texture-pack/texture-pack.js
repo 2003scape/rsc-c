@@ -161,7 +161,8 @@ const mediaSprites = new MediaSprites(config);
 mediaSprites.trim = true;
 
 await mediaSprites.init();
-mediaSprites.loadArchive(await fs.readFile(`${cacheDirectory}/media58.jag`));
+//mediaSprites.loadArchive(await fs.readFile(`${cacheDirectory}/media58.jag`));
+mediaSprites.loadArchive(await fs.readFile(`${cacheDirectory}/media59.jag`));
 
 const fonts = new Fonts(Fonts.FONTS);
 await fonts.init();
@@ -267,7 +268,7 @@ async function writeHeaderC(name, members) {
 
     name = name.toLowerCase();
 
-    await fs.writeFile(`${cOutputDirectory}/${name}.h`, header);
+    await fs.writeFile(`${cOutputDirectory}/${name}.h`, header + '\n');
 }
 
 // members = struct definitions
@@ -294,7 +295,7 @@ async function writeAtlasC(name, members) {
         })
     ].join('\n');
 
-    await fs.writeFile(`${cOutputDirectory}/${name}.c`, object);
+    await fs.writeFile(`${cOutputDirectory}/${name}.c`, object + '\n');
 }
 
 function createCircle() {
@@ -668,7 +669,7 @@ async function packMedia() {
         '};'
     ].join('\n');
 
-    await fs.writeFile(`${cOutputDirectory}/fonts.c`, object);
+    await fs.writeFile(`${cOutputDirectory}/fonts.c`, object + '\n');
 
     const context = canvases[0].getContext('2d');
 
@@ -826,7 +827,7 @@ async function packEntities() {
         .replace('$skin_colour_length', skinColours.length)
         .replace('$entity_texture_length', canvases.length);
 
-    await fs.writeFile(`${cOutputDirectory}/entities.h`, entityHeader);
+    await fs.writeFile(`${cOutputDirectory}/entities.h`, entityHeader + '\n');
 
     const skinLines = [];
 
@@ -867,7 +868,7 @@ async function packEntities() {
         )
         .replace('$skin_positions', skinLines.join('\n'));
 
-    await fs.writeFile(`${cOutputDirectory}/entities.c`, entityObject);
+    await fs.writeFile(`${cOutputDirectory}/entities.c`, entityObject + '\n');
 }
 
 async function packModelTextures() {

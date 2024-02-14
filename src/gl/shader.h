@@ -5,9 +5,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef GLAD
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
+#include "../../glad/glad.h"
+#endif
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
+#endif
+
 #include <cglm/cglm.h>
+
+#include "../utility.h"
+
+#if defined(OPENGL15) && !defined(GLAD)
+#define glCreateShader glCreateShaderObjectARB
+#define glShaderSource glShaderSourceARB
+#define glCompileShader glCompileShaderARB
+#define glGetShaderiv glGetObjectParameterfvARB
+#define glGetShaderInfoLog glGetInfoLogARB
+#define glCreateProgram glCreateProgramObjectARB
+#define glAttachShader glAttachObjectARB
+#define glBindAttribLocation glBindAttribLocationARB
+#define glLinkProgram glLinkProgramARB
+#define glDeleteShader glDeleteObjectARB
+#define glUseProgram glUseProgramObjectARB
+#define glGetUniformLocation glGetUniformLocationARB
+#define glUniform1i glUniform1iARB
+#define glUniform1f glUniform1fARB
+#define glUniform1fv glUniform1fvARB
+#define glUniformMatrix4fv glUniformMatrix4fvARB
+#define glUniform3fv glUniform3fvARB
+#endif
 
 typedef struct Shader {
     int id;
@@ -23,6 +54,5 @@ void shader_set_mat4(Shader *shader, char *name, mat4 value);
 void shader_set_vec3(Shader *shader, char *name, vec3 value);
 void shader_set_vec3_array(Shader *shader, char *name, vec3 *values,
                            int length);
-// get_uniform_loc
 #endif
 #endif

@@ -14,6 +14,9 @@
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#ifdef WIN9X
+#include "../win9x/win-func-backport.h"
+#endif
 #else
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -60,7 +63,7 @@ typedef struct PacketStream PacketStream;
 #include "utility.h"
 
 #ifdef REVISION_177
-void init_packet_stream_global();
+void init_packet_stream_global(void);
 #endif
 
 struct PacketStream {
@@ -112,7 +115,7 @@ int packet_stream_read_byte(PacketStream *packet_stream);
 int packet_stream_has_packet(PacketStream *packet_stream);
 int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer);
 void packet_stream_new_packet(PacketStream *packet_stream,
-                              CLIENT_OPCODE opcode);
+                              ClientOpcode opcode);
 /*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);*/
 int packet_stream_write_packet(PacketStream *packet_stream, int i);
 void packet_stream_send_packet(PacketStream *packet_stream);

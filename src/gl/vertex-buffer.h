@@ -3,9 +3,19 @@
 
 #include <stdlib.h>
 
+#include "../utility.h"
+
 #ifdef RENDER_GL
+#ifdef GLAD
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
+#include "../../glad/glad.h"
+#endif
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
+#endif
 #elif defined(RENDER_3DS_GL)
 #include <citro3d.h>
 #include <tex3ds.h>

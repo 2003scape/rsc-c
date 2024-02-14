@@ -100,7 +100,6 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, FontStyle font_style, char **list_entries,
                           int list_entry_count, int list_entry_position,
                           int is_interactive);
-int panel_prepare_component(Panel *panel, PanelControlType type, int x, int y);
 int panel_add_text(Panel *panel, int x, int y, char *text, FontStyle font_style,
                    int flag);
 int panel_add_text_centre(Panel *panel, int x, int y, char *text,

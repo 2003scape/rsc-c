@@ -1,5 +1,8 @@
 #include "bank.h"
 
+static void mudclient_draw_bank_page(mudclient *mud, int x, int y, int page,
+                                     int width);
+
 /* handle withdrawing or depositing */
 void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
                                 int opcode) {
@@ -84,8 +87,8 @@ void mudclient_bank_transaction(mudclient *mud, int item_id, int amount,
 }
 
 /* draw the page numbers in the title bar */
-void mudclient_draw_bank_page(mudclient *mud, int x, int y, int page,
-                              int width) {
+static void mudclient_draw_bank_page(mudclient *mud, int x, int y, int page,
+                                     int width) {
     int text_colour = WHITE;
 
     if (mud->bank_active_page == page - 1) {
@@ -95,10 +98,8 @@ void mudclient_draw_bank_page(mudclient *mud, int x, int y, int page,
         text_colour = YELLOW;
     }
 
-    char formatted[19] = {0};
-    sprintf(formatted, "<page %d>", page);
-
-    surface_draw_string(mud->surface, formatted, x, y + 10, 1, text_colour);
+    surface_draw_stringf(mud->surface, x, y + 10, FONT_BOLD_12, text_colour,
+                         "<page %d>", page);
 }
 
 void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
@@ -111,7 +112,8 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
         text_colour = RED;
     }
 
-    surface_draw_string(mud->surface, "One", x + 2, y + 10, 1, text_colour);
+    surface_draw_string(mud->surface, "One", x + 2, y + 10, FONT_BOLD_12,
+                        text_colour);
 
     offset_x += 30;
 
@@ -123,14 +125,13 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
             text_colour = RED;
         }
 
-        surface_draw_string(mud->surface, "Five", x + offset_x + 2, y + 10, 1,
-                            text_colour);
+        surface_draw_string(mud->surface, "Five", x + offset_x + 2, y + 10,
+                            FONT_BOLD_12, text_colour);
     }
 
     offset_x += 30; // 60
 
     int ui_amount = mud->options->offer_x ? 10 : 25;
-    char formatted_ui_amount[12] = {0};
 
     if (amount >= ui_amount) {
         text_colour = WHITE;
@@ -140,10 +141,8 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
             text_colour = RED;
         }
 
-        sprintf(formatted_ui_amount, "%d", ui_amount);
-
-        surface_draw_string(mud->surface, formatted_ui_amount, x + offset_x + 2,
-                            y + 10, 1, text_colour);
+        surface_draw_stringf(mud->surface, x + offset_x + 2, y + 10,
+                             FONT_BOLD_12, text_colour, "%d", ui_amount);
     }
 
     offset_x += 25; // 85
@@ -161,10 +160,8 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
             text_colour = RED;
         }
 
-        sprintf(formatted_ui_amount, "%d", ui_amount);
-
-        surface_draw_string(mud->surface, formatted_ui_amount, x + offset_x + 2,
-                            y + 10, 1, text_colour);
+        surface_draw_stringf(mud->surface, x + offset_x + 2, y + 10,
+                             FONT_BOLD_12, text_colour, "%d", ui_amount);
     }
 
     offset_x += 30 - (show_last_offer_x ? 7 : 0); // 115 or 108
@@ -180,9 +177,8 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
             text_colour = RED;
         }
 
-        char *ui_text = mud->options->offer_x ? "X" : "500";
-
-        surface_draw_string(mud->surface, ui_text, x + offset_x + 2, y + 10, 1,
+        surface_draw_string(mud->surface, mud->options->offer_x ? "X" : "500",
+                            x + offset_x + 2, y + 10, FONT_BOLD_12,
                             text_colour);
     }
 
@@ -200,7 +196,7 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
         format_amount_suffix(last_x, 0, 1, 0, formatted);
 
         surface_draw_string(mud->surface, formatted, x + offset_x + 2, y + 10,
-                            1, text_colour);
+                            FONT_BOLD_12, text_colour);
     }
 
     if (show_last_offer_x) {
@@ -217,10 +213,9 @@ void mudclient_draw_bank_amounts(mudclient *mud, int amount, int last_x, int x,
             text_colour = RED;
         }
 
-        char *ui_text = mud->options->offer_x ? "All" : "2500";
-
-        surface_draw_string(mud->surface, ui_text, x + offset_x + 2, y + 10, 1,
-                            text_colour);
+        surface_draw_string(
+            mud->surface, mud->options->offer_x ? "All" : "2500",
+            x + offset_x + 2, y + 10, FONT_BOLD_12, text_colour);
     }
 }
 
@@ -374,17 +369,11 @@ void mudclient_draw_bank(mudclient *mud) {
                                : active_page * items_per_page;
 
     int bank_item_count = 0;
-    int bank_items[BANK_ITEMS_MAX];
-    int bank_items_count[BANK_ITEMS_MAX];
+    int bank_items[BANK_ITEMS_MAX] = {0};
+    int bank_items_count[BANK_ITEMS_MAX] = {0};
 
     // TODO strtrim
     if (mud->options->bank_search && strlen(mud->input_pm_current) > 0) {
-        /* clear on enter */
-        /*if (strlen(mud->input_pm_final)) {
-            memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
-            memset(mud->input_pm_final, '\0', INPUT_PM_LENGTH + 1);
-        }*/
-
         int prefix_match_items[BANK_ITEMS_MAX] = {0};
         int prefix_match_items_count[BANK_ITEMS_MAX] = {0};
         int prefix_match_length = 0;
@@ -570,10 +559,32 @@ void mudclient_draw_bank(mudclient *mud) {
     int mouse_y = mud->mouse_y - ui_y + offset_y;
     int mouse_handled = 0;
 
+    int bank_search_y = ui_y + item_grid_height + (is_compact ? 66 : 92);
+
+    int keyboard_x = ui_x + 49;
+    int keyboard_y = bank_search_y - 15;
+
     if (mud->show_dialog_offer_x) {
         mouse_handled = 1;
-    } else if (mouse_x >= 0 && mouse_y >= 12 + offset_y &&
-               mouse_x < bank_width && mouse_y < item_grid_height + 76) {
+    } else if (mud->mouse_button_click != 0) {
+        if (mud->mouse_x >= ui_x && mud->mouse_x <= ui_x + bank_width &&
+            mud->mouse_y >= keyboard_y && mud->mouse_y <= keyboard_y + 20) {
+            if (is_touch) {
+                mudclient_trigger_keyboard(
+                    mud, mud->input_pm_current, 0, keyboard_x, keyboard_y,
+                    bank_width - 49, 20, FONT_BOLD_12, 0);
+            }
+
+            mud->bank_search_focus = 1;
+
+            mud->mouse_button_click = 0;
+        } else {
+            mud->bank_search_focus = 0;
+        }
+    }
+
+    if (!mouse_handled && mouse_x >= 0 && mouse_y >= 12 + offset_y &&
+        mouse_x < bank_width && mouse_y < item_grid_height + 76) {
         mouse_handled = 1;
 
         int slot_index = bank_item_offset;
@@ -786,8 +797,8 @@ void mudclient_draw_bank(mudclient *mud) {
         9 + (show_bank_scroll ? 13 : 0) - (is_compact ? 3 : 0),
         item_grid_height, GREY_98, 160);
 
-    surface_draw_string(mud->surface, bank_title, ui_x + 1, ui_y + 10, 1,
-                        WHITE);
+    surface_draw_string(mud->surface, bank_title, ui_x + 1, ui_y + 10,
+                        FONT_BOLD_12, WHITE);
 
     if (!show_bank_scroll) {
         if (bank_item_count > items_per_page) {
@@ -825,14 +836,16 @@ void mudclient_draw_bank(mudclient *mud) {
     }
 
     surface_draw_string_right(mud->surface, "Close window",
-                              ui_x + bank_width - 2, ui_y + 10, 1, text_colour);
+                              ui_x + bank_width - 2, ui_y + 10, FONT_BOLD_12,
+                              text_colour);
 
     if (!is_compact) {
         surface_draw_string(mud->surface, "Number in bank in green", ui_x + 7,
-                            ui_y + 24, 1, GREEN);
+                            ui_y + 24, FONT_BOLD_12, GREEN);
 
         surface_draw_string(mud->surface, "Number held in blue",
-                            ui_x + bank_width - 119, ui_y + 24, 1, CYAN);
+                            ui_x + bank_width - 119, ui_y + 24, FONT_BOLD_12,
+                            CYAN);
 
         if (mud->options->bank_value) {
             int total_value = 0;
@@ -862,9 +875,12 @@ void mudclient_draw_bank(mudclient *mud) {
                 sprintf(formatted_money, "Total value: %sgp", formatted_amount);
             }
 
+            FontStyle font =
+                total_value >= 10000000 ? FONT_REGULAR_11 : FONT_BOLD_12;
+
             surface_draw_string_centre(mud->surface, formatted_money,
                                        ui_x + (bank_width / 2) + 12, ui_y + 24,
-                                       total_value >= 10000000 ? 0 : 1, YELLOW);
+                                       font, YELLOW);
         }
     }
 
@@ -913,13 +929,10 @@ void mudclient_draw_bank(mudclient *mud) {
                                          (is_compact ? 52 : 76),
                                      bank_width - 10, BLACK);
 
-        char formatted_search[INPUT_PM_LENGTH + 10] = {0};
-
-        sprintf(formatted_search, "Search: %s*", mud->input_pm_current);
-
-        surface_draw_string(mud->surface, formatted_search, ui_x + 2,
-                            ui_y + item_grid_height + (is_compact ? 66 : 92), 1,
-                            WHITE);
+        surface_draw_stringf(mud->surface, ui_x + 2, bank_search_y,
+                             FONT_BOLD_12, WHITE, "Search: %s%c",
+                             mud->input_pm_current,
+                             mud->bank_search_focus ? '*' : ' ');
     }
 
     if (item_id != -1) {
@@ -934,14 +947,11 @@ void mudclient_draw_bank(mudclient *mud) {
 
         if (bank_count > 0) {
             char *item_name = game_data.items[item_id].name;
-            char formatted_withdraw[strlen(item_name) + 10];
 
-            sprintf(formatted_withdraw, "Withdraw %s",
-                    is_compact ? "" : item_name);
-
-            surface_draw_string(
-                mud->surface, formatted_withdraw, ui_x + 2,
-                ui_y + item_grid_height + (is_compact ? 30 : 44), 1, WHITE);
+            surface_draw_stringf(
+                mud->surface, ui_x + 2,
+                ui_y + item_grid_height + (is_compact ? 30 : 44), FONT_BOLD_12,
+                WHITE, "Withdraw %s", is_compact ? "" : item_name);
 
             mudclient_draw_bank_amounts(
                 mud, bank_count, mud->bank_last_withdraw_offer,
@@ -953,14 +963,11 @@ void mudclient_draw_bank(mudclient *mud) {
 
         if (inventory_count > 0) {
             char *item_name = game_data.items[item_id].name;
-            char formatted_deposit[strlen(item_name) + 9];
 
-            sprintf(formatted_deposit, "Deposit %s",
-                    is_compact ? "" : item_name);
-
-            surface_draw_string(
-                mud->surface, formatted_deposit, ui_x + 2,
-                ui_y + item_grid_height + (is_compact ? 48 : 69), 1, WHITE);
+            surface_draw_stringf(
+                mud->surface, ui_x + 2,
+                ui_y + item_grid_height + (is_compact ? 48 : 69), FONT_BOLD_12,
+                WHITE, "Deposit %s", is_compact ? "" : item_name);
 
             mudclient_draw_bank_amounts(
                 mud, inventory_count, mud->bank_last_deposit_offer,
@@ -971,7 +978,8 @@ void mudclient_draw_bank(mudclient *mud) {
         surface_draw_string_centre(
             mud->surface, "Select an object to withdraw or deposit",
             ui_x + bank_width / 2,
-            ui_y + item_grid_height + (is_compact ? 30 : 44), 3, YELLOW);
+            ui_y + item_grid_height + (is_compact ? 30 : 44), FONT_BOLD_13,
+            YELLOW);
     }
 
     if (mud->show_dialog_offer_x) {

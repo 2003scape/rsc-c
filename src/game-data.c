@@ -1,6 +1,14 @@
 #include "game-data.h"
+#include "scene.h"
+
+#define JAGEX_TRANSPARENT    (12345678)
 
 struct MudConfig game_data;
+
+static int game_data_get_unsigned_byte(void);
+static int game_data_get_unsigned_short(void);
+static int game_data_get_unsigned_int(void);
+static char *game_data_get_string(void);
 
 int game_data_get_model_index(char *name) {
     strtolower(name);
@@ -20,19 +28,19 @@ int game_data_get_model_index(char *name) {
     return game_data.model_count - 1;
 }
 
-static int game_data_get_unsigned_byte() {
+static int game_data_get_unsigned_byte(void) {
     return get_unsigned_byte(game_data.data_integer, game_data.offset++,
                              game_data.data_integer_len);
 }
 
-static int game_data_get_unsigned_short() {
+static int game_data_get_unsigned_short(void) {
     int i = get_unsigned_short(game_data.data_integer, game_data.offset,
                                game_data.data_integer_len);
     game_data.offset += 2;
     return i;
 }
 
-static int game_data_get_unsigned_int() {
+static int game_data_get_unsigned_int(void) {
     int i = get_unsigned_int(game_data.data_integer, game_data.offset,
                              game_data.data_integer_len);
     game_data.offset += 4;
@@ -44,7 +52,7 @@ static int game_data_get_unsigned_int() {
     return i;
 }
 
-static char *game_data_get_string() {
+static char *game_data_get_string(void) {
     int start = game_data.string_offset;
 
     while (game_data.data_string[game_data.string_offset]) {
@@ -343,11 +351,19 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data.wall_object_count; i++) {
-        game_data.wall_objects[i].texture_front = game_data_get_unsigned_int();
+        int fill = game_data_get_unsigned_int();
+        if (fill == JAGEX_TRANSPARENT) {
+            fill = COLOUR_TRANSPARENT;
+        }
+        game_data.wall_objects[i].texture_front = fill;
     }
 
     for (i = 0; i < game_data.wall_object_count; i++) {
-        game_data.wall_objects[i].texture_back = game_data_get_unsigned_int();
+        int fill = game_data_get_unsigned_int();
+        if (fill == JAGEX_TRANSPARENT) {
+            fill = COLOUR_TRANSPARENT;
+        }
+        game_data.wall_objects[i].texture_back = fill;
     }
 
     for (i = 0; i < game_data.wall_object_count; i++) {
@@ -373,7 +389,13 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     game_data.tiles = calloc(game_data.tile_count, sizeof(struct TileConfig));
 
     for (i = 0; i < game_data.tile_count; i++) {
-        game_data.tiles[i].decoration = game_data_get_unsigned_int();
+        int fill = game_data_get_unsigned_int();
+
+        if (fill == JAGEX_TRANSPARENT) {
+            fill = COLOUR_TRANSPARENT;
+        }
+
+        game_data.tiles[i].decoration = fill;
     }
 
     for (i = 0; i < game_data.tile_count; i++) {

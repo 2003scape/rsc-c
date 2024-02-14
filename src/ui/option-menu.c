@@ -6,7 +6,7 @@ void mudclient_draw_option_menu(mudclient *mud) {
     FontStyle font_style = is_touch ? FONT_BOLD_13 : FONT_BOLD_12;
     int font_height = is_touch ? 22 : 12;
     int ui_x = is_touch ? 12 : 6;
-    int ui_y = is_touch ? 108 : 0;
+    int ui_y = is_touch ? 132 : 0;
 
     if (mud->options->option_numbers) {
         int index = -1;

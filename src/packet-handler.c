@@ -7,9 +7,11 @@ void mudclient_update_ground_item_models(mudclient *mud) {
         }
 
         scene_remove_model(mud->scene, mud->ground_items[i].model);
+
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
         game_model_destroy(mud->ground_items[i].model);
 #endif
+
         free(mud->ground_items[i].model);
 
         mud->ground_items[i].model = NULL;
@@ -62,7 +64,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
                 10,
             model_y);
 
-        game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+        game_model_set_light(model, 1, 48, 48, -50, -10, -50);
 
         scene_add_model(mud->scene, model);
 
@@ -77,9 +79,9 @@ void mudclient_update_ground_item_models(mudclient *mud) {
             ground_item_model[i] = mud->ground_items[i].model;
         }
 
-        game_model_gl_buffer_models(
-            &mud->scene->gl_item_buffers, &mud->scene->gl_item_buffer_length,
-            ground_item_model, mud->ground_item_count);
+        game_model_gl_buffer_models(&mud->scene->gl_item_buffers,
+                                    &mud->scene->gl_item_buffer_length,
+                                    ground_item_model, mud->ground_item_count);
     }
 #endif
 }
@@ -132,7 +134,7 @@ void mudclient_packet_tick(mudclient *mud) {
     }
 
     int8_t *data = mud->incoming_packet;
-    SERVER_OPCODE opcode = data[0] & 0xff;
+    ServerOpcode opcode = data[0] & 0xff;
 
 #ifndef NO_ISAAC
     if (mud->packet_stream->isaac_ready) {
@@ -156,9 +158,8 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_REGION_PLAYERS: {
         mud->known_player_count = mud->player_count;
 
-        for (int i = 0; i < mud->known_player_count; i++) {
-            mud->known_players[i] = mud->players[i];
-        }
+        memcpy(mud->known_players, mud->players,
+               mud->known_player_count * sizeof(GameCharacter *));
 
         int offset = 8;
 
@@ -326,12 +327,15 @@ void mudclient_packet_tick(mudclient *mud) {
             GameCharacter *player = mud->player_server[player_index];
 
             int update_type = get_unsigned_byte(data, offset++, size);
+
             if (update_type == 0) {
                 /* action bubble with an item in it */
                 int item_id = get_unsigned_short(data, offset, size);
+
                 if (item_id >= game_data.item_count) {
                     item_id = IRON_MACE_ID;
                 }
+
                 offset += 2;
 
                 if (player != NULL) {
@@ -436,7 +440,8 @@ void mudclient_packet_tick(mudclient *mud) {
                     player->server_id = get_unsigned_short(data, offset, size);
                     offset += 2;
 
-                    player->encoded_username = get_unsigned_long(data, offset, size);
+                    player->encoded_username =
+                        get_unsigned_long(data, offset, size);
                     offset += 8;
 
                     decode_username(player->encoded_username, player->name);
@@ -453,12 +458,22 @@ void mudclient_packet_tick(mudclient *mud) {
                         player->animations[j] = 0;
                     }
 
-                    player->hair_colour = get_unsigned_byte(data, offset++, size);
-                    player->top_colour = get_unsigned_byte(data, offset++, size);
-                    player->bottom_colour = get_unsigned_byte(data, offset++, size);
-                    player->skin_colour = get_unsigned_byte(data, offset++, size);
+                    player->hair_colour =
+                        get_unsigned_byte(data, offset++, size);
+
+                    player->top_colour =
+                        get_unsigned_byte(data, offset++, size);
+
+                    player->bottom_colour =
+                        get_unsigned_byte(data, offset++, size);
+
+                    player->skin_colour =
+                        get_unsigned_byte(data, offset++, size);
+
                     player->level = get_unsigned_byte(data, offset++, size);
-                    player->skull_visible = get_unsigned_byte(data, offset++, size);
+
+                    player->skull_visible =
+                        get_unsigned_byte(data, offset++, size);
                 } else {
                     offset += 14;
 
@@ -499,9 +514,11 @@ void mudclient_packet_tick(mudclient *mud) {
                 /* remove the object */
                 int index = 0;
                 int l_x = (mud->local_region_x +
-                    get_signed_byte(data, offset + 1, size)) / 8;
+                           get_signed_byte(data, offset + 1, size)) /
+                          8;
                 int l_y = (mud->local_region_y +
-                    get_signed_byte(data, offset + 2, size)) / 8;
+                           get_signed_byte(data, offset + 2, size)) /
+                          8;
 
                 offset += 3;
 
@@ -511,14 +528,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if (o_x != 0 || o_y != 0) {
                         if (i != index) {
-                            mud->objects[index].model = mud->objects[i].model;
+                            mud->objects[index] = mud->objects[i];
                             mud->objects[index].model->key = index;
-                            mud->objects[index].x = mud->objects[i].x;
-                            mud->objects[index].y = mud->objects[i].y;
-                            mud->objects[index].id = mud->objects[i].id;
-
-                            mud->objects[index].direction =
-                                mud->objects[i].direction;
                         }
 
                         index++;
@@ -532,6 +543,7 @@ void mudclient_packet_tick(mudclient *mud) {
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
                         game_model_destroy(mud->objects[i].model);
 #endif
+
                         free(mud->objects[i].model);
                         mud->objects[i].model = NULL;
                     }
@@ -542,10 +554,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int object_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int area_x = mud->local_region_x +
-                    get_signed_byte(data, offset++, size);
-                int area_y = mud->local_region_y +
-                    get_signed_byte(data, offset++, size);
+                int area_x =
+                    mud->local_region_x + get_signed_byte(data, offset++, size);
+                int area_y =
+                    mud->local_region_y + get_signed_byte(data, offset++, size);
                 int object_index = 0;
 
                 for (int i = 0; i < mud->object_count; i++) {
@@ -555,7 +567,8 @@ void mudclient_packet_tick(mudclient *mud) {
                             mud->objects[object_index].model =
                                 mud->objects[i].model;
 
-                            mud->objects[object_index].model->key = object_index;
+                            mud->objects[object_index].model->key =
+                                object_index;
                             mud->objects[object_index].x = mud->objects[i].x;
                             mud->objects[object_index].y = mud->objects[i].y;
                             mud->objects[object_index].id = mud->objects[i].id;
@@ -575,6 +588,7 @@ void mudclient_packet_tick(mudclient *mud) {
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
                         game_model_destroy(mud->objects[i].model);
 #endif
+
                         free(mud->objects[i].model);
                         mud->objects[i].model = NULL;
                     }
@@ -622,9 +636,10 @@ void mudclient_packet_tick(mudclient *mud) {
                         -world_get_elevation(mud->world, model_x, model_y),
                         model_y);
 
-                    game_model_set_light_from6(model, 1, 48, 48, -50, -10, -50);
+                    game_model_set_light(model, 1, 48, 48, -50, -10, -50);
 
-                    world_remove_object2(mud->world, area_x, area_y, object_id);
+                    world_register_object(mud->world, area_x, area_y,
+                                          object_id);
 
                     if (object_id == WINDMILL_SAILS_ID) {
                         game_model_translate(model, 0, -480, 0);
@@ -688,9 +703,8 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->known_npc_count = mud->npc_count;
         mud->npc_count = 0;
 
-        for (int i = 0; i < mud->known_npc_count; i++) {
-            mud->known_npcs[i] = mud->npcs[i];
-        }
+        memcpy(mud->known_npcs, mud->npcs,
+               mud->known_npc_count * sizeof(GameCharacter *));
 
         int offset = 8;
 
@@ -858,11 +872,13 @@ void mudclient_packet_tick(mudclient *mud) {
         int length = (size - 1) / 4;
 
         for (int i = 0; i < length; i++) {
-            int delta_x =
-                (mud->local_region_x + get_signed_short(data, 1 + i * 4, size)) / 8;
+            int delta_x = (mud->local_region_x +
+                           get_signed_short(data, 1 + i * 4, size)) /
+                          8;
 
-            int delta_y =
-                (mud->local_region_y + get_signed_short(data, 3 + i * 4, size)) / 8;
+            int delta_y = (mud->local_region_y +
+                           get_signed_short(data, 3 + i * 4, size)) /
+                          8;
 
             int entity_count = 0;
 
@@ -898,14 +914,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->objects[entity_count].model = mud->objects[j].model;
+                        mud->objects[entity_count] = mud->objects[j];
                         mud->objects[entity_count].model->key = entity_count;
-                        mud->objects[entity_count].x = mud->objects[j].x;
-                        mud->objects[entity_count].y = mud->objects[j].y;
-                        mud->objects[entity_count].id = mud->objects[j].id;
-
-                        mud->objects[entity_count].direction =
-                            mud->objects[j].direction;
                     }
 
                     entity_count++;
@@ -932,23 +942,9 @@ void mudclient_packet_tick(mudclient *mud) {
 
                 if (x != 0 || y != 0) {
                     if (j != entity_count) {
-                        mud->wall_objects[entity_count].model =
-                            mud->wall_objects[j].model;
-
+                        mud->wall_objects[entity_count] = mud->wall_objects[j];
                         mud->wall_objects[entity_count].model->key =
                             entity_count + 10000;
-
-                        mud->wall_objects[entity_count].x =
-                            mud->wall_objects[j].x;
-
-                        mud->wall_objects[entity_count].y =
-                            mud->wall_objects[j].y;
-
-                        mud->wall_objects[entity_count].direction =
-                            mud->wall_objects[j].direction;
-
-                        mud->wall_objects[entity_count].id =
-                            mud->wall_objects[j].id;
                     }
 
                     entity_count++;
@@ -982,9 +978,11 @@ void mudclient_packet_tick(mudclient *mud) {
                 /* remove the bound */
                 int index = 0;
                 int l_x = (mud->local_region_x +
-                    get_signed_byte(data, offset + 1, size)) / 8;
+                           get_signed_byte(data, offset + 1, size)) /
+                          8;
                 int l_y = (mud->local_region_y +
-                    get_signed_byte(data, offset + 2, size)) / 8;
+                           get_signed_byte(data, offset + 2, size)) /
+                          8;
 
                 offset += 3;
 
@@ -994,17 +992,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     if (s_x != 0 || s_y != 0) {
                         if (i != index) {
-                            mud->wall_objects[index].model =
-                                mud->wall_objects[i].model;
-
+                            mud->wall_objects[index] = mud->wall_objects[i];
                             mud->wall_objects[index].model->key = index + 10000;
-                            mud->wall_objects[index].x = mud->wall_objects[i].x;
-                            mud->wall_objects[index].y = mud->wall_objects[i].y;
-
-                            mud->wall_objects[index].direction =
-                                mud->wall_objects[i].direction;
-
-                            mud->wall_objects[index].id = mud->wall_objects[i].id;
                         }
 
                         index++;
@@ -1029,10 +1018,10 @@ void mudclient_packet_tick(mudclient *mud) {
                 int id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int l_x = mud->local_region_x +
-                    get_signed_byte(data, offset++, size);
-                int l_y = mud->local_region_y +
-                    get_signed_byte(data, offset++, size);
+                int l_x =
+                    mud->local_region_x + get_signed_byte(data, offset++, size);
+                int l_y =
+                    mud->local_region_y + get_signed_byte(data, offset++, size);
                 int direction = get_signed_byte(data, offset++, size);
                 int count = 0;
 
@@ -1041,17 +1030,8 @@ void mudclient_packet_tick(mudclient *mud) {
                         mud->wall_objects[i].y != l_y ||
                         mud->wall_objects[i].direction != direction) {
                         if (i != count) {
-                            mud->wall_objects[count].model =
-                                mud->wall_objects[i].model;
-
+                            mud->wall_objects[count] = mud->wall_objects[i];
                             mud->wall_objects[count].model->key = count + 10000;
-                            mud->wall_objects[count].x = mud->wall_objects[i].x;
-                            mud->wall_objects[count].y = mud->wall_objects[i].y;
-
-                            mud->wall_objects[count].direction =
-                                mud->wall_objects[i].direction;
-
-                            mud->wall_objects[count].id = mud->wall_objects[i].id;
                         }
 
                         count++;
@@ -1081,8 +1061,8 @@ void mudclient_packet_tick(mudclient *mud) {
                         return;
                     }
 
-                    world_set_object_adjacency_from4(mud->world, l_x, l_y,
-                                                     direction, id);
+                    world_register_wall_object(mud->world, l_x, l_y, direction,
+                                               id);
 
                     GameModel *model = mudclient_create_wall_object(
                         mud, l_x, l_y, direction, id, mud->wall_object_count);
@@ -1108,10 +1088,14 @@ void mudclient_packet_tick(mudclient *mud) {
             if (get_unsigned_byte(data, offset, size) == 255) {
                 /* remove the item */
                 int index = 0;
+
                 int l_x = (mud->local_region_x +
-                    get_signed_byte(data, offset + 1, size)) / 8;
+                           get_signed_byte(data, offset + 1, size)) /
+                          8;
+
                 int l_y = (mud->local_region_y +
-                    get_signed_byte(data, offset + 2, size)) / 8;
+                           get_signed_byte(data, offset + 2, size)) /
+                          8;
 
                 offset += 3;
 
@@ -1123,7 +1107,10 @@ void mudclient_packet_tick(mudclient *mud) {
                         if (i != index) {
                             mud->ground_items[index].x = mud->ground_items[i].x;
                             mud->ground_items[index].y = mud->ground_items[i].y;
-                            mud->ground_items[index].id = mud->ground_items[i].id;
+
+                            mud->ground_items[index].id =
+                                mud->ground_items[i].id;
+
                             mud->ground_items[index].z = mud->ground_items[i].z;
                         }
 
@@ -1136,18 +1123,20 @@ void mudclient_packet_tick(mudclient *mud) {
                 int item_id = get_unsigned_short(data, offset, size);
                 offset += 2;
 
-                int area_x = mud->local_region_x +
-                    get_signed_byte(data, offset++, size);
-                int area_y = mud->local_region_y +
-                    get_signed_byte(data, offset++, size);
+                int area_x =
+                    mud->local_region_x + get_signed_byte(data, offset++, size);
+                int area_y =
+                    mud->local_region_y + get_signed_byte(data, offset++, size);
 
                 if ((item_id & 32768) == 0) {
                     if (item_id >= game_data.item_count) {
                         item_id = IRON_MACE_ID;
                     }
+
                     if (mud->ground_item_count >= GROUND_ITEMS_MAX) {
                         return;
                     }
+
                     mud->ground_items[mud->ground_item_count].x = area_x;
                     mud->ground_items[mud->ground_item_count].y = area_y;
                     mud->ground_items[mud->ground_item_count].id = item_id;
@@ -1175,6 +1164,7 @@ void mudclient_packet_tick(mudclient *mud) {
                         if (mud->ground_items[i].x != area_x ||
                             mud->ground_items[i].y != area_y ||
                             mud->ground_items[i].id != item_id) {
+
                             if (i != index) {
                                 mud->ground_items[index].x =
                                     mud->ground_items[i].x;
@@ -1214,6 +1204,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         mud->inventory_items_count = get_unsigned_byte(data, offset++, size);
+
         if (mud->inventory_items_count > INVENTORY_ITEMS_MAX) {
             mud->inventory_items_count = INVENTORY_ITEMS_MAX;
         }
@@ -1252,6 +1243,7 @@ void mudclient_packet_tick(mudclient *mud) {
         int stack = 1;
 
         int index = get_unsigned_byte(data, offset++, size);
+
         if (index >= INVENTORY_ITEMS_MAX) {
             return;
         }
@@ -1260,9 +1252,11 @@ void mudclient_packet_tick(mudclient *mud) {
         offset += 2;
 
         int id = id_equip & 32767;
+
         if (id >= game_data.item_count) {
             id = IRON_MACE_ID;
         }
+
         int equipped = id_equip / 32768;
 
         if (game_data.items[id & 32767].stackable == 0) {
@@ -1306,7 +1300,8 @@ void mudclient_packet_tick(mudclient *mud) {
         int offset = 1;
 
         for (int i = 0; i < skills_length; i++) {
-            mud->player_skill_current[i] = get_unsigned_byte(data, offset++, size);
+            mud->player_skill_current[i] =
+                get_unsigned_byte(data, offset++, size);
         }
 
         for (int i = 0; i < skills_length; i++) {
@@ -1323,7 +1318,8 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_PLAYER_STAT_EQUIPMENT_BONUS: {
         for (int i = 0; i < PLAYER_STAT_EQUIPMENT_COUNT; i++) {
-            mud->player_stat_equipment[i] = get_unsigned_byte(data, 1 + i, size);
+            mud->player_stat_equipment[i] =
+                get_unsigned_byte(data, 1 + i, size);
         }
 
         break;
@@ -1352,9 +1348,11 @@ void mudclient_packet_tick(mudclient *mud) {
         mud->player_skill_current[skill_index] =
             get_unsigned_byte(data, offset++, size);
 
-        mud->player_skill_base[skill_index] = get_unsigned_byte(data, offset++, size);
+        mud->player_skill_base[skill_index] =
+            get_unsigned_byte(data, offset++, size);
 
-        mud->player_experience[skill_index] = get_unsigned_int(data, offset, size);
+        mud->player_experience[skill_index] =
+            get_unsigned_int(data, offset, size);
         break;
     }
     case SERVER_PLAYER_STAT_FATIGUE: {
@@ -1375,7 +1373,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
         for (int i = 0; i < mud->friend_list_count; i++) {
             mud->friend_list[i] = get_unsigned_long(data, 2 + i * 9, size);
-            mud->friend_list_online[i] = get_unsigned_byte(data, 10 + i * 9, size);
+            mud->friend_list_online[i] =
+                get_unsigned_byte(data, 10 + i * 9, size);
         }
 
         mudclient_sort_friends(mud);
@@ -1647,8 +1646,10 @@ void mudclient_packet_tick(mudclient *mud) {
 
         int offset = 1;
         int new_item_count = get_unsigned_byte(data, offset++, size);
+
         if (new_item_count > 40) {
             /* TODO: use some kind of constant to determine this (also below) */
+            /* shop.h columns * rows = 40 */
             return;
         }
 
@@ -1690,7 +1691,7 @@ void mudclient_packet_tick(mudclient *mud) {
                     break;
                 }
 
-                if (mud->inventory_item_id[i] == 10) {
+                if (mud->inventory_item_id[i] == COINS_ID) {
                     unsellable = 1;
                 }
 
@@ -1721,6 +1722,7 @@ void mudclient_packet_tick(mudclient *mud) {
     case SERVER_TRADE_OPEN:
     case SERVER_DUEL_OPEN: {
         int player_index = get_unsigned_short(data, 1, size);
+
         if (player_index >= PLAYERS_SERVER_MAX) {
             return;
         }

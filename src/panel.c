@@ -1,5 +1,8 @@
 #include "panel.h"
 
+static int panel_prepare_component(Panel *panel, PanelControlType type, int x,
+                                   int y);
+
 int panel_base_sprite_start = 0;
 int panel_text_list_entry_height_mod = 0;
 
@@ -29,6 +32,10 @@ void panel_new(Panel *panel, Surface *surface, int max) {
     panel->control_font_style = calloc(max, sizeof(FontStyle));
     panel->control_text = calloc(max, sizeof(char *));
     panel->control_list_entries = calloc(max, sizeof(char **));
+
+    for (int i = 0; i < max; i++) {
+        panel->control_text[i] = calloc(PANEL_MAX_TEXT_LEN, sizeof(char));
+    }
 }
 
 // TODO should we just remove the arguments and use mud? they're the same 100%
@@ -372,7 +379,16 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
                           int height, FontStyle font_style, char **list_entries,
                           int list_entry_count, int list_entry_position,
                           int is_interactive) {
-    int displayed_entry_count = height / surface_text_height(font_style);
+    int is_touch = mudclient_is_touch(panel->surface->mud);
+
+    // ugly hack for now :(
+    if (panel == panel->surface->mud->panel_quests ||
+        panel == panel->surface->mud->panel_message_tabs) {
+        is_touch = 0;
+    }
+
+    int entry_height = surface_text_height(font_style) + (is_touch ? 6 : 0);
+    int displayed_entry_count = height / entry_height;
     int max_entries = list_entry_count - displayed_entry_count;
 
     if (list_entry_position > max_entries) {
@@ -396,8 +412,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         int scrub_y =
             ((height - 27 - scrub_height) * list_entry_position) / max_entries;
 
-        if (!mudclient_is_touch(panel->surface->mud) &&
-            panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
+        if (!is_touch && panel->mouse_scroll_delta != 0 && panel->mouse_x > x &&
             panel->mouse_x < x + width && panel->mouse_y > y &&
             panel->mouse_y < y + height) {
             list_entry_position += panel->mouse_scroll_delta;
@@ -484,15 +499,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
         panel->control_list_entry_mouse_over[control] = -1;
     }
 
-    int is_touch = mudclient_is_touch(panel->surface->mud);
-
-    // ugly hack for now :(
-    if (panel == panel->surface->mud->panel_quests) {
-        is_touch = 0;
-    }
-
-    int list_start_y =
-        height - displayed_entry_count * surface_text_height(font_style);
+    int list_start_y = height - displayed_entry_count * entry_height;
 
     int list_y =
         y + (((surface_text_height(font_style) * 5) / 6) + list_start_y / 2) +
@@ -527,7 +534,7 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
             surface_draw_string(panel->surface, list_entries[i], x + 2, list_y,
                                 font_style, text_colour);
 
-            list_y += surface_text_height(font_style) + (is_touch ? 6 : 0);
+            list_y += entry_height;
         } else {
             panel_draw_string(panel, control, x + 2, list_y, list_entries[i],
                               font_style);
@@ -542,7 +549,8 @@ void panel_draw_text_list(Panel *panel, int control, int x, int y, int width,
     }
 }
 
-int panel_prepare_component(Panel *panel, PanelControlType type, int x, int y) {
+static int panel_prepare_component(Panel *panel, PanelControlType type, int x,
+                                   int y) {
     panel->control_type[panel->control_count] = type;
     panel->control_shown[panel->control_count] = 1;
     panel->control_x[panel->control_count] = x;
@@ -555,7 +563,9 @@ int panel_add_text(Panel *panel, int x, int y, char *text, FontStyle font_style,
                    int flag) {
     panel->control_font_style[panel->control_count] = font_style;
     panel->control_use_alternative_colour[panel->control_count] = flag;
-    panel->control_text[panel->control_count] = text;
+
+    snprintf(panel->control_text[panel->control_count], PANEL_MAX_TEXT_LEN,
+             "%s", text);
 
     return panel_prepare_component(panel, PANEL_TEXT, x, y);
 }
@@ -564,7 +574,9 @@ int panel_add_text_centre(Panel *panel, int x, int y, char *text,
                           FontStyle font_style, int flag) {
     panel->control_font_style[panel->control_count] = font_style;
     panel->control_use_alternative_colour[panel->control_count] = flag;
-    panel->control_text[panel->control_count] = text;
+
+    snprintf(panel->control_text[panel->control_count], PANEL_MAX_TEXT_LEN,
+             "%s", text);
 
     return panel_prepare_component(panel, PANEL_CENTRE_TEXT, x, y);
 }
@@ -618,9 +630,6 @@ int panel_add_text_list_input(Panel *panel, int x, int y, int width, int height,
     panel->control_height[panel->control_count] = height;
     panel->control_input_max_length[panel->control_count] = max_length;
 
-    panel->control_text[panel->control_count] =
-        calloc(max_length + 1, sizeof(char *));
-
     return panel_prepare_component(panel, PANEL_LIST_INPUT, x, y);
 }
 
@@ -633,9 +642,6 @@ int panel_add_text_input(Panel *panel, int x, int y, int width, int height,
     panel->control_width[panel->control_count] = width;
     panel->control_height[panel->control_count] = height;
     panel->control_input_max_length[panel->control_count] = max_length;
-
-    panel->control_text[panel->control_count] =
-        calloc((max_length + 1), sizeof(char *));
 
     return panel_prepare_component(panel, PANEL_TEXT_INPUT, x, y);
 }
@@ -747,13 +753,7 @@ void panel_add_list_entry_wrapped(Panel *panel, int control, char *text,
 }
 
 void panel_update_text(Panel *panel, int control, char *text) {
-    if (panel->control_type[control] == PANEL_TEXT_INPUT ||
-        panel->control_type[control] == PANEL_LIST_INPUT) {
-        snprintf(panel->control_text[control],
-                 PANEL_MAX_TEXT_LEN, "%s", text);
-    } else {
-        panel->control_text[control] = text;
-    }
+    snprintf(panel->control_text[control], PANEL_MAX_TEXT_LEN, "%s", text);
 }
 
 char *panel_get_text(Panel *panel, int control) {
@@ -804,10 +804,7 @@ int panel_get_list_entry_index(Panel *panel, int control) {
 
 void panel_destroy(Panel *panel) {
     for (int i = 0; i < panel->max_controls; i++) {
-        if (panel->control_type[i] == PANEL_LIST_INPUT ||
-            panel->control_type[i] == PANEL_TEXT_INPUT) {
-            free(panel->control_text[i]);
-        }
+        free(panel->control_text[i]);
     }
 
     free(panel->control_shown);

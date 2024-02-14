@@ -1,31 +1,47 @@
 #include "appearance.h"
 
-struct appearance_buttons
+struct appearance_buttons {
+    int left;
+    int right;
+};
+
+static struct appearance_buttons
+mudclient_create_appearance_box(mudclient *mud, char *type, int x, int y);
+
+static struct appearance_buttons
 mudclient_create_appearance_box(mudclient *mud, char *type, int x, int y) {
+    int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
+                     mud->surface->height < MUD_VANILLA_HEIGHT;
+
+    /* box around type text */
+    int box_padding = (is_compact ? 5 : 8);
+    int box_height = (box_padding + (is_compact ? 25 : 33));
+
     panel_add_box_rounded(mud->panel_appearance, x, y, APPEARANCE_BOX_WIDTH,
-                          APPEARANCE_BOX_HEIGHT);
+                          box_height);
 
     char type_copy[strlen(type) + 1];
     strcpy(type_copy, type);
 
     char *type_split = strtok(type_copy, "\n");
 
-    char *type_1 = malloc(strlen(type_split) + 1);
+    char type_1[strlen(type_split) + 1];
     strcpy(type_1, type_split);
 
     type_split = strtok(NULL, "\n");
 
     if (type_split == NULL) {
-        panel_add_text_centre(mud->panel_appearance, x, y, type_1, 1, 1);
+        panel_add_text_centre(mud->panel_appearance, x, y, type_1, FONT_BOLD_12,
+                              1);
     } else {
-        panel_add_text_centre(mud->panel_appearance, x,
-                              y - APPEARANCE_BOX_PADDING, type_1, 1, 1);
+        panel_add_text_centre(mud->panel_appearance, x, y - box_padding, type_1,
+                              FONT_BOLD_12, 1);
 
-        char *type_2 = malloc(strlen(type_split) + 1);
+        char type_2[strlen(type_split) + 1];
         strcpy(type_2, type_split);
 
-        panel_add_text_centre(mud->panel_appearance, x,
-                              y + APPEARANCE_BOX_PADDING, type_2, 1, 1);
+        panel_add_text_centre(mud->panel_appearance, x, y + box_padding, type_2,
+                              FONT_BOLD_12, 1);
     }
 
     struct appearance_buttons buttons = {0};
@@ -51,26 +67,36 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->panel_appearance = malloc(sizeof(Panel));
     panel_new(mud->panel_appearance, mud->surface, 100);
 
-    int x = MUD_WIDTH / 2;
+    int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
+                     mud->surface->height < MUD_VANILLA_HEIGHT;
+
+    int x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) / 2;
     int y = 10;
 
-    if (!MUD_IS_COMPACT) {
+    if (!is_compact) {
         panel_add_text_centre(mud->panel_appearance, x, y,
-                              "Please design Your Character", 4, 1);
+                              "Please design Your Character", FONT_BOLD_14, 1);
 
         y += 14;
 
         panel_add_text_centre(mud->panel_appearance, x - 55, y + 110, "Front",
-                              3, 1);
+                              FONT_BOLD_13, 1);
 
-        panel_add_text_centre(mud->panel_appearance, x, y + 110, "Side", 3, 1);
-        panel_add_text_centre(mud->panel_appearance, x + 55, y + 110, "Back", 3,
-                              1);
+        panel_add_text_centre(mud->panel_appearance, x, y + 110, "Side",
+                              FONT_BOLD_13, 1);
+
+        panel_add_text_centre(mud->panel_appearance, x + 55, y + 110, "Back",
+                              FONT_BOLD_13, 1);
 
         y += 145;
     } else {
         y += 102;
     }
+
+    /* box around type text */
+    int box_padding = (is_compact ? 5 : 8);
+    int box_height = (box_padding + (is_compact ? 25 : 33));
+    int box_margin = (box_height + (is_compact ? 3 : 9));
 
     struct appearance_buttons head_buttons = mudclient_create_appearance_box(
         mud, "Head\nType", x - APPEARANCE_COLUMN_WIDTH, y);
@@ -84,7 +110,7 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->control_appearance_hair_left = hair_buttons.left;
     mud->control_appearance_hair_right = hair_buttons.right;
 
-    y += APPEARANCE_BOX_MARGIN;
+    y += box_margin;
 
     struct appearance_buttons gender_buttons = mudclient_create_appearance_box(
         mud, "Gender", x - APPEARANCE_COLUMN_WIDTH, y);
@@ -98,7 +124,7 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->control_appearance_top_left = top_buttons.left;
     mud->control_appearance_top_right = top_buttons.right;
 
-    y += APPEARANCE_BOX_MARGIN;
+    y += box_margin;
 
     struct appearance_buttons skin_buttons = mudclient_create_appearance_box(
         mud, "Skin\nColor", x - APPEARANCE_COLUMN_WIDTH, y);
@@ -112,7 +138,7 @@ void mudclient_create_appearance_panel(mudclient *mud) {
     mud->control_appearance_bottom_left = bottom_buttons.left;
     mud->control_appearance_bottom_right = bottom_buttons.right;
 
-    y += APPEARANCE_BOX_MARGIN - (MUD_IS_COMPACT ? -1 : 3);
+    y += box_margin - (is_compact ? -1 : 3);
 
     panel_add_button_background(mud->panel_appearance, x, y,
                                 APPEARANCE_ACCEPT_WIDTH,
@@ -174,17 +200,18 @@ void mudclient_handle_appearance_panel_input(mudclient *mud) {
         panel_is_clicked(mud->panel_appearance,
                          mud->control_appearance_gender_right)) {
         for (mud->appearance_head_gender = 3 - mud->appearance_head_gender;
-             (game_data.animations[mud->appearance_head_type].gender & 3) != 1 ||
+             (game_data.animations[mud->appearance_head_type].gender & 3) !=
+                 1 ||
              (game_data.animations[mud->appearance_head_type].gender &
               (4 * mud->appearance_head_gender)) == 0;
              mud->appearance_head_type =
                  (mud->appearance_head_type + 1) % game_data.animation_count)
             ;
 
-        for (;
-             (game_data.animations[mud->appearance_body_type].gender & 3) != 2 ||
-             (game_data.animations[mud->appearance_body_type].gender &
-              (4 * mud->appearance_head_gender)) == 0;
+        for (; (game_data.animations[mud->appearance_body_type].gender & 3) !=
+                   2 ||
+               (game_data.animations[mud->appearance_body_type].gender &
+                (4 * mud->appearance_head_gender)) == 0;
              mud->appearance_body_type =
                  (mud->appearance_body_type + 1) % game_data.animation_count)
             ;
@@ -259,11 +286,17 @@ void mudclient_handle_appearance_panel_input(mudclient *mud) {
 void mudclient_draw_appearance_panel(mudclient *mud) {
     mud->surface->interlace = 0;
     surface_black_screen(mud->surface);
+
     panel_draw_panel(mud->panel_appearance);
 
+    int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
+                     mud->surface->height < MUD_VANILLA_HEIGHT;
+
     int x = mud->surface->width / 2;
-    int y = (MUD_IS_COMPACT ? -7 : 25) +
-            (mud->surface->height / 2 - MUD_HEIGHT / 2);
+
+    int y = (is_compact ? -7 : 25) +
+            (mud->surface->height / 2 -
+             (is_compact ? MUD_MIN_HEIGHT : MUD_VANILLA_HEIGHT) / 2);
 
     surface_draw_sprite_scale_mask(
         mud->surface, x - 32 - 55, y, APPEARANCE_CHARACTER_WIDTH,
@@ -323,7 +356,9 @@ void mudclient_draw_appearance_panel(mudclient *mud) {
         player_hair_colours[mud->appearance_hair_colour],
         player_skin_colours[mud->appearance_skin_colour], 0, 0);
 
-    mudclient_draw_blue_bar(mud);
+    if (!mud->options->lowmem) {
+        mudclient_draw_blue_bar(mud);
+    }
 
     surface_draw(mud->surface);
 }

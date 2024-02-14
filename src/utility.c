@@ -1,10 +1,10 @@
 #include "utility.h"
-#include <assert.h>
 
 int sin_cos_512[512] = {0};
 int sin_cos_2048[2048] = {0};
 
-int BITMASK[] = {0,          1,          3,         7,         15,
+static const int BITMASK[] = {
+                 0,          1,          3,         7,         15,
                  31,         63,         127,       255,       511,
                  1023,       2047,       4095,      8191,      16383,
                  32767,      65535,      0x1ffff,   0x3ffff,   0x7ffff,
@@ -12,15 +12,17 @@ int BITMASK[] = {0,          1,          3,         7,         15,
                  0x1ffffff,  0x3ffffff,  0x7ffffff, 0xfffffff, 0x1fffffff,
                  0x3fffffff, 0x7fffffff, -1};
 
-// TODO typed
-int certificate_items[][2] = {
+static const CertificateItem certificate_items[] = {
     {517, 151},  {521, 152}, {519, 153},  {518, 155},  {528, 170},  {529, 171},
     {532, 172},  {530, 173}, {1271, 220}, {536, 369},  {535, 370},  {534, 372},
     {533, 373},  {520, 383}, {531, 384},  {1272, 483}, {1273, 486}, {1275, 492},
     {1274, 495}, {631, 545}, {630, 546},  {629, 554},  {628, 555},  {713, 633},
     {712, 634},  {711, 635}, {1270, 814}};
 
-void init_utility_global() {
+static int random_colour = 0;
+static int random_colour_ticks = 0;
+
+void init_utility_global(void) {
     for (int i = 0; i < 256; i++) {
         sin_cos_512[i] = (int)(sin((double)i * 0.02454369) * 32768);
         sin_cos_512[i + 256] = (int)(cos((double)i * 0.02454369) * 32768);
@@ -89,6 +91,34 @@ int _3ds_gl_framebuffer_offsets_y[] = {
     69,   68,   65,   64,   21,   20,   17,   16,   5,    4,    1,    0};
 #endif
 
+void mud_log(char *format, ...) {
+    va_list args = {0};
+    va_start(args, format);
+
+#if !defined(_3DS) && !defined(WII) && !defined (SDL12)
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format,
+                    args);
+#else
+    vprintf(format, args);
+#endif
+
+    va_end(args);
+}
+
+void mud_error(char *format, ...) {
+    va_list args = {0};
+    va_start(args, format);
+
+#if !defined(_3DS) && !defined(WII) && !defined (SDL12)
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR,
+                    format, args);
+#else
+    vfprintf(stderr, format, args);
+#endif
+
+    va_end(args);
+}
+
 char *strcat_realloc(char *s, const char *new) {
     size_t ol = strlen(s);
     size_t nl = strlen(new);
@@ -101,8 +131,8 @@ char *strcat_realloc(char *s, const char *new) {
 }
 
 char *mud_strdup(const char *s) {
-#if defined(__unix__) || defined(__unix) || \
-        (defined(__APPLE__) && defined(__MACH__))
+#if defined(__unix__) || defined(__unix) ||                                    \
+    (defined(__APPLE__) && defined(__MACH__))
     /* strdup is defined in POSIX rather than ISO C */
     return strdup(s);
 #else
@@ -140,11 +170,12 @@ void strtolower(char *s) {
 int get_signed_byte(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return buffer[offset];
@@ -153,11 +184,12 @@ int get_signed_byte(void *b, size_t offset, size_t buflen) {
 int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return buffer[offset] & 0xff;
@@ -166,11 +198,13 @@ int get_unsigned_byte(void *b, size_t offset, size_t buflen) {
 int get_unsigned_short(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 2) || (buflen - offset) < 2) {
-        fprintf(stderr,
-                "WARNING: tried to read excess short from buffer, off %zu len "
-                "%zu\n",
-                offset, buflen);
+        mud_error(
+            "WARNING: tried to read excess short from buffer, off %zu len "
+            "%zu\n",
+            offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return ((buffer[offset] & 0xff) << 8) + (buffer[offset + 1] & 0xff);
@@ -179,11 +213,13 @@ int get_unsigned_short(void *b, size_t offset, size_t buflen) {
 int get_unsigned_short_le(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 2) || (buflen - offset) < 2) {
-        fprintf(stderr,
-                "WARNING: tried to read excess short from buffer, off %zu len "
-                "%zu\n",
-                offset, buflen);
+        mud_error(
+            "WARNING: tried to read excess short from buffer, off %zu len "
+            "%zu\n",
+            offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return ((buffer[offset + 1] & 0xff) << 8) + (buffer[offset] & 0xff);
@@ -192,11 +228,12 @@ int get_unsigned_short_le(void *b, size_t offset, size_t buflen) {
 int get_unsigned_int(void *b, size_t offset, size_t buflen) {
     int8_t *buffer = b;
     if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess int from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
     return ((buffer[offset] & 0xff) << 24) +
@@ -227,11 +264,12 @@ int get_signed_short(void *buffer, size_t offset, size_t buflen) {
 int get_stack_int(void *b, size_t offset, size_t buflen) {
     uint8_t *buffer = b;
     if (offset > (SIZE_MAX - 1) || (buflen - offset) < 1) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess byte from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
 
@@ -240,11 +278,12 @@ int get_stack_int(void *b, size_t offset, size_t buflen) {
     }
 
     if (offset > (SIZE_MAX - 4) || (buflen - offset) < 4) {
-        fprintf(
-            stderr,
+        mud_error(
             "WARNING: tried to read excess int from buffer, off %zu len %zu\n",
             offset, buflen);
+
         assert(0);
+
         return 0;
     }
 
@@ -261,10 +300,9 @@ int get_bit_mask(void *b, size_t offset, size_t buflen, size_t nbits) {
 
     for (; nbits > bit_offset; bit_offset = 8) {
         if (byte_offset > (SIZE_MAX - 1) || (buflen - byte_offset) < 1) {
-            fprintf(stderr,
-                    "WARNING: tried to read excess byte from buffer, off %zu "
-                    "len %zu\n",
-                    offset, buflen);
+            mud_error("WARNING: tried to read excess byte from buffer, off %zu "
+                      "len %zu\n",
+                      offset, buflen);
             assert(0);
             return 0;
         }
@@ -488,8 +526,8 @@ void *unpack_data(const char *file_name, size_t extra_size, void *archive_data,
             }
 
             if (file_size != archive_size) {
-                bzip_decompress(data_out, file_size, (int8_t *)archive_data,
-                                archive_size, offset);
+                bzip_decompress(data_out, (int8_t *)archive_data, archive_size,
+                                offset);
             } else {
                 memcpy(data_out, ((uint8_t *)archive_data + offset), file_size);
             }
@@ -563,7 +601,7 @@ void format_confirm_amount(int amount, char *formatted) {
     }
 }
 
-int get_ticks() {
+int get_ticks(void) {
 #if !defined(WII) && !defined(_3DS)
     return SDL_GetTicks();
 #endif
@@ -687,7 +725,7 @@ void format_amount_suffix(int amount, int use_colour, int convert_ten_thousands,
     sprintf(dest, "%s%s%c", use_colour ? colour : "", formatted_amount, suffix);
 }
 
-void url_encode(char *s, char *dest) {
+void url_encode(const char *s, char *dest) {
     const char *hex = "0123456789abcdef";
 
     int pos = 0;
@@ -711,15 +749,15 @@ int get_certificate_item_id(int item_id) {
     int length = sizeof(certificate_items) / sizeof(certificate_items[0]);
 
     for (int i = 0; i < length; i++) {
-        if (certificate_items[i][0] == item_id) {
-            return certificate_items[i][1];
+        if (certificate_items[i].item_id  == item_id) {
+            return certificate_items[i].certificate_id;
         }
     }
 
     return -1;
 }
 
-int is_ip_address(char *address) {
+int is_ip_address(const char *address) {
     int length = strlen(address);
     int segment = 0;
     int segment_count = 0;
@@ -750,7 +788,7 @@ int is_ip_address(char *address) {
 }
 
 /* turn @colour@ into integer colour */
-int colour_str_to_colour(char *colour_str) {
+int colour_str_to_colour(const char *colour_str, int ran_target_fps) {
     int colour = -1;
 
     if (strcmp(colour_str, "red") == 0) {
@@ -777,6 +815,17 @@ int colour_str_to_colour(char *colour_str) {
         colour = STRING_ORA;
     } else if (strcmp(colour_str, "ran") == 0) {
         colour = (int)(((float)rand() / (float)RAND_MAX) * (float)WHITE);
+        if (ran_target_fps < 1) {
+            colour = STRING_MAG;
+        } else if (ran_target_fps < 50) {
+            /* limit the framerate if desired */
+            if (get_ticks() >= random_colour_ticks) {
+                /* next colour */
+                random_colour = colour;
+                random_colour_ticks = get_ticks() + (1000 / ran_target_fps);
+            }
+            colour = random_colour;
+        }
     } else if (strcmp(colour_str, "or1") == 0) {
         colour = STRING_OR1;
     } else if (strcmp(colour_str, "or2") == 0) {
@@ -817,8 +866,13 @@ void gl_create_texture(GLuint *texture_id) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+#ifdef GLAD
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#else
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+#endif
 
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 }
@@ -829,8 +883,7 @@ void gl_load_texture(GLuint *texture_id, char *file) {
     SDL_Surface *texture_image = IMG_Load(file);
 
     if (!texture_image) {
-        fprintf(stderr, "unable to load %s texture\n%s\n", file,
-                IMG_GetError());
+        mud_error("unable to load %s texture\n%s\n", file, IMG_GetError());
 
         exit(1);
     }

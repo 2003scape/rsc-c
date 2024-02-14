@@ -61,16 +61,28 @@
 #endif
 
 #if !defined(WII) && !defined(_3DS)
+#ifdef __SWITCH__
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define MUD_IS_BIG_ENDIAN
 #endif
 
 #ifdef RENDER_GL
+#ifdef GLAD
+#ifdef __SWITCH__
+#include <glad/glad.h>
+#else
+#include "../../glad/glad.h"
+#endif
+#else
 #include <GL/glew.h>
 #include <GL/glu.h>
-#ifndef SDL12
+#endif
+#if !defined (SDL12) && !defined (__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 
@@ -147,7 +159,7 @@
 #define GAME_OBJECTS_MAX 1000
 #define WALL_OBJECTS_MAX 500
 #define OBJECTS_MAX 1500
-#define PLAYERS_SERVER_MAX 4000
+#define PLAYERS_SERVER_MAX 2000
 #define PLAYERS_MAX 500
 #define NPCS_SERVER_MAX 5000
 #define NPCS_MAX 500
@@ -168,7 +180,7 @@
 #define MENU_MAX 250
 #define PATH_STEPS_MAX 8000
 #define BANK_ITEMS_MAX 256
-#define SHOP_ITEMS_MAX 256
+#define SHOP_ITEMS_MAX 256 // TODO also just make this 40? (SHOP_GRID_MAX)
 #define TRADE_ITEMS_MAX 14
 #define DUEL_ITEMS_MAX 8
 
@@ -183,8 +195,8 @@
 #define MUD_MIN_HEIGHT 240
 
 #ifdef _3DS
-#define MUD_WIDTH 320
-#define MUD_HEIGHT 240
+#define MUD_WIDTH MUD_MIN_WIDTH
+#define MUD_HEIGHT MUD_MIN_HEIGHT
 #else
 #define MUD_WIDTH MUD_VANILLA_WIDTH
 #define MUD_HEIGHT MUD_VANILLA_HEIGHT
@@ -192,7 +204,8 @@
 //#define MUD_HEIGHT 240
 #endif
 
-#define MUD_IS_COMPACT (MUD_WIDTH < 512 || MUD_HEIGHT < 346)
+// TODO make this a function
+#define MUD_IS_COMPACT (MUD_WIDTH < MUD_VANILLA_WIDTH || MUD_HEIGHT < MUD_VANILLA_HEIGHT)
 
 /* npc IDs */
 #define SHIFTY_MAN_ID 24
@@ -308,6 +321,10 @@ typedef struct mudclient mudclient;
 #include "custom/diverse-npcs.h"
 #include "custom/item-highlight.h"
 
+#ifdef USE_TOONSCAPE
+#include "custom/toonscape.h"
+#endif
+
 #ifdef WII
 /* these are doubled for the wii */
 #define KEY_WIDTH 23
@@ -386,6 +403,8 @@ extern int mudclient_finger_2_x;
 extern int mudclient_finger_2_y;
 extern int mudclient_finger_2_down;
 
+extern int mudclient_full_width;
+extern int mudclient_full_height;
 
 // TODO this was moved
 extern const char *font_files[];
@@ -399,8 +418,8 @@ extern char login_screen_status[255];
  */
 struct ServerBoundary {
     GameModel *model;
-    uint16_t x;
-    uint16_t y;
+    int16_t x;
+    int16_t y;
     uint16_t id;
     uint8_t direction;
     uint8_t already_in_menu;
@@ -408,16 +427,16 @@ struct ServerBoundary {
 
 struct ItemSpawn {
     GameModel *model; /* only used when 3D items enabled */
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
+    int16_t x;
+    int16_t y;
+    int16_t z;
     uint16_t id;
     uint8_t already_in_menu;
 };
 
 struct Scenery {
-    uint16_t x;
-    uint16_t y;
+    int16_t x;
+    int16_t y;
     uint16_t id;
     uint8_t direction;
     GameModel *model;
@@ -772,7 +791,7 @@ struct mudclient {
     int camera_rotation_y_increment;
     int camera_auto_rotate_player_x;
     int camera_auto_rotate_player_y;
-    int an_int_707;
+    int camera_auto_counter;
 
     int8_t is_in_wilderness;
     int loading_area;
@@ -961,6 +980,7 @@ struct mudclient {
     int bank_last_scroll;
     int8_t bank_handle_dragged;
     int bank_visible_rows;
+    int8_t bank_search_focus;
 
     /* ./ui/shop.c */
     int8_t show_dialog_shop;
@@ -1024,17 +1044,17 @@ struct mudclient {
     int show_additional_options;
     int options_tab;
 
-    Panel *panel_connection_options;
-    void *connection_options[50];
-    int connection_option_types[50];
+    Panel *panel_game_options;
+    void *game_options[50];
+    int game_option_types[50];
 
     Panel *panel_control_options;
     void *control_options[50];
     int control_option_types[50];
 
-    Panel *panel_display_options;
-    void *display_options[50];
-    int display_option_types[50];
+    Panel *panel_ui_options;
+    void *ui_options[50];
+    int ui_option_types[50];
 
     Panel *panel_bank_options;
     void *bank_options[50];
@@ -1123,8 +1143,10 @@ void mudclient_draw_blue_bar(mudclient *mud);
 int mudclient_is_in_combat(mudclient *mud);
 GameCharacter *mudclient_get_opponent(mudclient *mud);
 void mudclient_draw_ui(mudclient *mud);
+int mudclient_compare_text(const void *v1, const void *v2);
 void mudclient_draw_overhead(mudclient *mud);
 void mudclient_animate_objects(mudclient *mud);
+void mudclient_draw_entity_sprites(mudclient *mud);
 void mudclient_draw_game(mudclient *mud);
 void mudclient_reset_game(mudclient *mud);
 void mudclient_login(mudclient *mud, char *username, char *password,

@@ -19,6 +19,15 @@ QR code for 3DS install:
 
 ![](./3ds-cia.png?raw=true)
 
+### controls (3ds):
+
+* d-pad/circle pad to control camera
+* touch screen for mouse input
+* hold L whilst tapping touch screen for right click
+* start to toggle on-screen keyboard
+* select to toggle top screen's power
+* A, B, X, Y, R to select option menus (context dependent)
+
 ### controls (wii):
 
 * d-pad to control camera
@@ -30,16 +39,6 @@ QR code for 3DS install:
 * 1 to toggle F1/interlace mode
 
 a USB keyboard and mouse can also be used.
-
-### controls (3ds):
-
-* d-pad/circle pad to control camera
-* touch screen for mouse input
-* hold L whilst tapping touch screen for right click
-* tap R to toggle top screen zoom
-* hold L whilst using d-pad or analogue stick to pan top screen zoom
-* start to toggle on-screen keyboard
-* select to toggle F1/interlace mode
 
 ### controls (switch):
 
@@ -81,6 +80,39 @@ use [wine](https://packages.debian.org/sid/wine) to test locally.
 
 distribute with `./SDL2.dll`, `./glew32.dll` and `./cache` directory.
 
+## build (windows 9x)
+
+download [gcc-win98](https://github.com/fsb4000/gcc-for-Windows98/releases).
+
+download [mingw](https://sourceforge.net/projects/mingw/files/MinGW/Extension/make/mingw32-make-3.80-3/).
+
+### setup
+
+extract gcc win98 to C:\gcc_win98
+
+install mingw to C:\mingw
+
+inside C:\mingw\bin copy the mingw32-make.exe as make.exe
+
+test locally.
+
+### run requirements
+
+pentium processor
+
+64MB of ram
+
+windows 95 or 98
+
+note OS must have winsock 2
+
+on windows 95 might need to install ws2setup.exe
+
+    make -f Makefile.win9x
+    mudclient.exe
+
+distribute with `./SDL-1.2.15/bin/SDL.dll`, and `./cache` directory.
+
 ## build (web)
 
 install and activate
@@ -90,6 +122,24 @@ install and activate
     $ python3 -m http.server 1337 # @ http://localhost:1337/mudclient.html
 
 host `mudclient.{html,data,js,wasm}` and `./cache/` directory.
+
+## build (android)
+
+[follow the pre-requisites listed on SDL's website](https://wiki.libsdl.org/SDL2/Android).
+
+you should only need to run the following commands:
+
+    export ANDROID_HOME="/usr/src/android-sdk-linux"
+    export ANDROID_NDK_HOME="/usr/src/android-ndk-rXXx"
+    cd org.scape2003.mudclient/
+    ./gradlew assembleDebug
+
+the APK will be located at `./app/build/outputs/apk/debug/app-debug.apk`. you
+can also use `./gradlew installDebug` to automatically build and install the APK
+to a connected developer device.
+
+tested with
+[android-ndk-r24](https://github.com/android/ndk/wiki/Unsupported-Downloads).
 
 ## build (wii)
 
@@ -149,8 +199,8 @@ web they're passed in the URL hash separated by commas
 
 ```
 ; IPv4 address with revision 177 compatible protocol support
-server = 127.0.0.1
-port = 43594
+server = game.openrsc.com
+port = 43596
 ; Disable registration and load sounds, P2P landscape and items (requires
 ; restart)
 members = 1
@@ -158,8 +208,8 @@ members = 1
 registration = 1
 ; Used together to encrypt passwords, Must be represented as hexadecimal string
 ; 0-padded to a multiple of eight characters
-rsa_exponent =
-rsa_modulus =
+rsa_exponent = 00010001
+rsa_modulus = 87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41fefbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25
 ; Log out when mouse is idle
 idle_logout = 0
 ; Remember username on login screen
@@ -172,6 +222,12 @@ password =
 
 ; System command to use to open the web browser (only on desktop)
 browser_command = xdg-open "%s"
+
+; Diversify NPCs sent by server (custom)
+diversify_npcs = 0
+
+; Rename Herblaw items for ease of identification (custom)
+rename_herblaw_items = 1
 
 ; Scroll panel lists, chatbox, and camera (if zoom enabled) with wheel
 mouse_wheel = 1
@@ -193,12 +249,16 @@ offer_x = 1
 last_offer_x = 1
 ; Add RuneScape Wiki lookup button instead of report abuse
 wiki_lookup = 1
+; Combat style menu is usable outside of combat
+combat_style_always = 0
+; Hold to buy/sell items from shops in bulk (matches trade screen)
+hold_to_buy = 1
 
 ; F1 mode - only render every second scanline
 interlace = 0
 ; Display the FPS at the bottom right of the screen
 display_fps = 0
-; Double the UI size but keep the scene size if window is over doubleoriginal
+; Double the UI size but keep the scene size if window is over double original
 ; size (GL only)
 ui_scale = 1
 ; Enable multi-sampling
@@ -215,7 +275,7 @@ remaining_experience = 1
 ; Show your total experience in the skills tab
 total_experience = 1
 ; Show experience drops
-experience_drops = 1
+experience_drops = 0
 ; Show a count of inventory items on the UI
 inventory_count = 0
 ; Condenses item amounts with K and M and add their amounts to examine
@@ -228,6 +288,14 @@ wilderness_warning = 1
 status_bars = 0
 ; Use ground item models instead of billboarded sprites
 ground_item_models = 1
+; Show text for valuable ground items to make them stand out
+ground_item_text = 1
+; Always animate objects like fires
+distant_animation = 1
+; Load less compressed (2001 era) sprites
+tga_sprites = 0
+; Show hover tooltip menu
+show_hover_tooltip = 0
 
 ; Add filtering to the bank
 bank_search = 1
@@ -249,15 +317,17 @@ bank_maintain_slot = 1
 
 ## libraries used
 
-* [tiny-bignum-c](https://github.com/kokke/tiny-bignum-c) for RSA encryption on
-login/registration
-* [micro-bunzip](https://landley.net/code/) for decompressing cache archives
-* [libsdl2](https://www.libsdl.org/index.php) for input/output on desktop
 * [glew](http://glew.sourceforge.net/) for runtime opengl extension loading
 * [ini](https://github.com/rxi/ini) for parsing *options.ini*
+* [isaac](https://burtleburtle.net/bob/rand/isaacafa.html) for authentic packet
+decoding
+* [libsdl2](https://www.libsdl.org/index.php) for input/output on desktop
+* [micro-bunzip](https://landley.net/code/) for decompressing cache archives
+* [tiny-bignum-c](https://github.com/kokke/tiny-bignum-c) for RSA encryption on
+login/registration
 
 ## license
-Copyright 2022  2003Scape Team
+Copyright 2024  2003Scape Team
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the

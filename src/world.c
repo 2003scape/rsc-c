@@ -1,29 +1,46 @@
 #include "world.h"
-#include "version.h"
 
-int terrain_colours[TERRAIN_COLOUR_COUNT];
+static void world_set_blocked(World *, int, int, int);
+static void world_set_unblocked(World *, int, int, int);
+static int world_get_wall_east_west(World *, int, int);
+static int world_get_wall_diagonal(World *, int, int);
+static void world_map_set_pixel(World *, int, int, int);
+static void world_load_section_jm(World *, uint8_t *, size_t, int);
+static int world_get_object_adjacency(World *, int, int);
+static int world_has_roof(World *, int, int);
+static int world_get_terrain_colour(World *, int, int);
+static void world_fill_edges(World *);
+static int world_get_wall_north_south(World *, int, int);
+static int world_get_tile_decoration(World *, int, int);
+static int world_decoration_or_colour(World *, int, int, int);
+static void world_set_tile_decoration(World *, int, int, int);
+static int world_get_terrain_height(World *, int, int);
+static int world_has_neighbouring_roof(World *, int, int);
+static void world_raise_wall_object(World *, int, int, int, int, int);
+static void world_create_wall(World *, GameModel *, int, int, int, int, int);
+static void world_update_shadow_rect(World *, int, int, int, int);
+static void world_vertex_shadow(World *, int, int, int);
+static int world_get_tile_type(World *, int, int);
 
-int rgb_to_texture_colour(int r, int g, int b) {
-    return -1 - (r / 8) * 1024 - (g / 8) * 32 - (b / 8);
-}
+int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
-void init_world_global() {
+void init_world_global(void) {
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i] = rgb_to_texture_colour(
+        terrain_colours[i] = scene_rgb_to_fill(
             255 - i * 4, 255 - (int)((double)i * 1.75), 255 - i * 4);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 64] = rgb_to_texture_colour(i * 3, 144, 0);
+        terrain_colours[i + 64] = scene_rgb_to_fill(i * 3, 144, 0);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 128] = rgb_to_texture_colour(
+        terrain_colours[i + 128] = scene_rgb_to_fill(
             192 - (int)((double)i * 1.5), 144 - (int)((double)i * 1.5), 0);
     }
 
     for (int i = 0; i < 64; i++) {
-        terrain_colours[i + 192] = rgb_to_texture_colour(
+        terrain_colours[i + 192] = scene_rgb_to_fill(
             96 - (int)((double)i * 1.5), 48 + (int)((double)i * 1.5), 0);
     }
 }
@@ -36,8 +53,16 @@ void world_new(World *world, Scene *scene, Surface *surface) {
     world->player_alive = 0;
 }
 
-int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
-                         int y) {
+static void world_set_blocked(World *world, int x, int y, int value) {
+    world->object_adjacency[x][y] |= value;
+}
+
+static void world_set_unblocked(World *world, int x, int y, int value) {
+    world->object_adjacency[x][y] &= 0xffff - value;
+}
+
+static int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT],
+                                int x, int y) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return 0;
     }
@@ -59,12 +84,13 @@ int get_byte_plane_coord(int8_t plane_array[PLANE_COUNT][TILE_COUNT], int x,
     return plane_array[height][x * REGION_SIZE + y] & 0xff;
 }
 
-int world_get_wall_east_west(World *world, int x, int y) {
+static int world_get_wall_east_west(World *world, int x, int y) {
     return get_byte_plane_coord(world->walls_east_west, x, y);
 }
 
-void world_set_terrain_ambience(World *world, int terrain_x, int terrain_y,
-                                int vertex_x, int vertex_y, int ambience) {
+static void world_set_terrain_ambience(World *world, int terrain_x,
+                                       int terrain_y, int vertex_x,
+                                       int vertex_y, int ambience) {
     GameModel *game_model = world->terrain_models[terrain_x + terrain_y * 8];
 
     for (int i = 0; i < game_model->vertex_count; i++) {
@@ -110,7 +136,7 @@ int world_get_elevation(World *world, int x, int y) {
             ((height_south * a_y) / TILE_SIZE));
 }
 
-int world_get_wall_diagonal(World *world, int x, int y) {
+static int world_get_wall_diagonal(World *world, int x, int y) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return 0;
     }
@@ -132,8 +158,7 @@ int world_get_wall_diagonal(World *world, int x, int y) {
     return world->walls_diagonal[height][x * REGION_SIZE + y];
 }
 
-// TODO i don't think this removes
-void world_remove_object2(World *world, int x, int y, int id) {
+void world_register_object(World *world, int x, int y, int id) {
     if (x < 0 || y < 0 || x >= 95 || y >= 95) {
         return;
     }
@@ -152,6 +177,12 @@ void world_remove_object2(World *world, int x, int y, int id) {
             model_width = game_data.objects[id].height;
         }
 
+        /*
+         * update the adjacency array to reflect walkability of the area around
+         * this scenery. a lot of scenery blocks completely, some can be walked
+         * through.
+         */
+
         for (int mx = x; mx < x + model_width; mx++) {
             for (int my = y; my < y + model_height; my++) {
                 if (game_data.objects[id].type == 1) {
@@ -160,31 +191,31 @@ void world_remove_object2(World *world, int x, int y, int id) {
                     world->object_adjacency[mx][my] |= 2;
 
                     if (mx > 0) {
-                        world_set_object_adjacency_from3(world, mx - 1, my, 8);
+                        world_set_blocked(world, mx - 1, my, 8);
                     }
                 } else if (tile_direction == 2) {
                     world->object_adjacency[mx][my] |= 4;
 
                     if (my < 95) {
-                        world_set_object_adjacency_from3(world, mx, my + 1, 1);
+                        world_set_blocked(world, mx, my + 1, 1);
                     }
                 } else if (tile_direction == 4) {
                     world->object_adjacency[mx][my] |= 8;
 
                     if (mx < 95) {
-                        world_set_object_adjacency_from3(world, mx + 1, my, 2);
+                        world_set_blocked(world, mx + 1, my, 2);
                     }
                 } else if (tile_direction == 6) {
                     world->object_adjacency[mx][my] |= 1;
 
                     if (my > 0) {
-                        world_set_object_adjacency_from3(world, mx, my - 1, 4);
+                        world_set_blocked(world, mx, my - 1, 4);
                     }
                 }
             }
         }
 
-        world_method404(world, x, y, model_width, model_height);
+        world_update_shadow_rect(world, x, y, model_width, model_height);
     }
 }
 
@@ -198,13 +229,13 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
             world->object_adjacency[x][y] &= 0xfffe;
 
             if (y > 0) {
-                world_method407(world, x, y - 1, 4);
+                world_set_unblocked(world, x, y - 1, 4);
             }
         } else if (k == 1) {
             world->object_adjacency[x][y] &= 0xfffd;
 
             if (x > 0) {
-                world_method407(world, x - 1, y, 8);
+                world_set_unblocked(world, x - 1, y, 8);
             }
         } else if (k == 2) {
             world->object_adjacency[x][y] &= 0xffef;
@@ -212,11 +243,11 @@ void world_remove_wall_object(World *world, int x, int y, int k, int id) {
             world->object_adjacency[x][y] &= 0xffdf;
         }
 
-        world_method404(world, x, y, 1, 1);
+        world_update_shadow_rect(world, x, y, 1, 1);
     }
 }
 
-void world_map_set_pixel(World *world, int x, int y, int colour) {
+static void world_map_set_pixel(World *world, int x, int y, int colour) {
 #ifdef RENDER_SW
     surface_set_pixel(world->surface, x, y, colour);
 #elif defined(RENDER_GL)
@@ -245,8 +276,8 @@ void world_map_set_pixel(World *world, int x, int y, int colour) {
 #endif
 }
 
-void world_map_line_horizontal(World *world, int x, int y, int width,
-                               int colour) {
+static void world_map_line_horizontal(World *world, int x, int y, int width,
+                                      int colour) {
 #ifdef RENDER_SW
     surface_draw_line_horizontal(world->surface, x, y, width, colour);
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -256,8 +287,8 @@ void world_map_line_horizontal(World *world, int x, int y, int width,
 #endif
 }
 
-void world_map_line_vertical(World *world, int x, int y, int height,
-                             int colour) {
+static void world_map_line_vertical(World *world, int x, int y, int height,
+                                    int colour) {
 #ifdef RENDER_SW
     surface_draw_line_vertical(world->surface, x, y, height, colour);
 #elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
@@ -267,8 +298,8 @@ void world_map_line_vertical(World *world, int x, int y, int height,
 #endif
 }
 
-void world_draw_map_tile(World *world, int x, int y, int direction,
-                         int face_fill_1, int face_fill_2) {
+static void world_draw_map_tile(World *world, int x, int y, int direction,
+                                int face_fill_1, int face_fill_2) {
     int line_x = x * 3;
     int line_y = y * 3;
     int colour_1 = scene_get_fill_colour(world->scene, face_fill_1);
@@ -293,7 +324,8 @@ void world_draw_map_tile(World *world, int x, int y, int direction,
     }
 }
 
-static void world_load_section_jm(World *world, uint8_t *map_data, size_t len, int chunk) {
+static void world_load_section_jm(World *world, uint8_t *map_data, size_t len,
+                                  int chunk) {
     size_t offset = 0;
     int prev = 0;
 
@@ -341,13 +373,13 @@ static void world_load_section_jm(World *world, uint8_t *map_data, size_t len, i
     }
 }
 
-void world_load_section_files(World *world, int x, int y, int plane,
-                               int chunk) {
+static void world_load_section_files(World *world, int x, int y, int plane,
+                                     int chunk) {
     char map_name[37]; // 2 digits for %d (10), m (1), file ext (4) and null
     sprintf(map_name, "m%d%d%d%d%d", plane, x / 10, x % 10, y / 10, y % 10);
     int map_name_length = strlen(map_name);
     size_t len = 0;
-    int8_t *map_data;
+    uint8_t *map_data;
 
     /* assume map in old file format */
     if (world->landscape_pack == NULL) {
@@ -595,9 +627,8 @@ void world_load_section_files(World *world, int x, int y, int plane,
     }
 }
 
-/* TODO add adjacent shadows? */
-
-void world_method404(World *world, int x, int y, int width, int height) {
+static void world_update_shadow_rect(World *world, int x, int y, int width,
+                                     int height) {
     if (x < 1 || y < 1 || x + width >= REGION_WIDTH ||
         y + height >= REGION_HEIGHT) {
         return;
@@ -610,15 +641,15 @@ void world_method404(World *world, int x, int y, int width, int height) {
                 (world_get_object_adjacency(world, xx, yy - 1) & 0x56) != 0 ||
                 (world_get_object_adjacency(world, xx - 1, yy - 1) & 0x6c) !=
                     0) {
-                world_method425(world, xx, yy, 35);
+                world_vertex_shadow(world, xx, yy, 35);
             } else {
-                world_method425(world, xx, yy, 0);
+                world_vertex_shadow(world, xx, yy, 0);
             }
         }
     }
 }
 
-int world_get_object_adjacency(World *world, int x, int y) {
+static int world_get_object_adjacency(World *world, int x, int y) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return 0;
     }
@@ -626,18 +657,14 @@ int world_get_object_adjacency(World *world, int x, int y) {
     return world->object_adjacency[x][y];
 }
 
-int world_has_roof(World *world, int x, int y) {
+static int world_has_roof(World *world, int x, int y) {
     return world_get_wall_roof(world, x, y) > 0 &&
            world_get_wall_roof(world, x - 1, y) > 0 &&
            world_get_wall_roof(world, x - 1, y - 1) > 0 &&
            world_get_wall_roof(world, x, y - 1) > 0;
 }
 
-void world_method407(World *world, int i, int j, int k) {
-    world->object_adjacency[i][j] &= 0xffff - k;
-}
-
-int world_get_terrain_colour(World *world, int x, int y) {
+static int world_get_terrain_colour(World *world, int x, int y) {
     return get_byte_plane_coord(world->terrain_colour, x, y);
 }
 
@@ -672,8 +699,7 @@ void world_reset(World *world, int dispose) {
     }
 }
 
-// TODO adds the water and sloping tiles for map edges
-void world_set_tiles(World *world) {
+static void world_fill_edges(World *world) {
     for (int x = 0; x < REGION_WIDTH; x++) {
         for (int y = 0; y < REGION_HEIGHT; y++) {
             if (world_get_tile_decoration(world, x, y) != 250) {
@@ -695,7 +721,7 @@ void world_set_tiles(World *world) {
     }
 }
 
-int world_get_wall_north_south(World *world, int x, int y) {
+static int world_get_wall_north_south(World *world, int x, int y) {
     return get_byte_plane_coord(world->walls_north_south, x, y);
 }
 
@@ -703,12 +729,11 @@ int world_get_tile_direction(World *world, int x, int y) {
     return get_byte_plane_coord(world->tile_direction, x, y);
 }
 
-int world_get_tile_decoration(World *world, int x, int y) {
+static int world_get_tile_decoration(World *world, int x, int y) {
     return get_byte_plane_coord(world->tile_decoration, x, y) & 0xff;
 }
 
-// TODO rename
-int world_get_tile_decoration_from4(World *world, int x, int y, int colour) {
+static int world_decoration_or_colour(World *world, int x, int y, int colour) {
     int decoration = world_get_tile_decoration(world, x, y);
 
     if (decoration == 0) {
@@ -718,7 +743,8 @@ int world_get_tile_decoration_from4(World *world, int x, int y, int colour) {
     return game_data.tiles[decoration - 1].decoration;
 }
 
-void world_set_tile_decoration(World *world, int x, int y, int decoration) {
+static void world_set_tile_decoration(World *world, int x, int y,
+                                      int decoration) {
     if (x < 0 || x >= REGION_WIDTH || y < 0 || y >= REGION_HEIGHT) {
         return;
     }
@@ -908,8 +934,7 @@ int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
     return read_ptr;
 }
 
-void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
-                                      int id) {
+void world_register_wall_object(World *world, int x, int y, int dir, int id) {
     if (x < 0 || y < 0 || x >= 95 || y >= 95) {
         return;
     }
@@ -919,13 +944,13 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
             world->object_adjacency[x][y] |= 1;
 
             if (y > 0) {
-                world_set_object_adjacency_from3(world, x, y - 1, 4);
+                world_set_blocked(world, x, y - 1, 4);
             }
         } else if (dir == 1) {
             world->object_adjacency[x][y] |= 2;
 
             if (x > 0) {
-                world_set_object_adjacency_from3(world, x - 1, y, 8);
+                world_set_blocked(world, x - 1, y, 8);
             }
         } else if (dir == 2) {
             world->object_adjacency[x][y] |= 0x10;
@@ -933,13 +958,13 @@ void world_set_object_adjacency_from4(World *world, int x, int y, int dir,
             world->object_adjacency[x][y] |= 0x20;
         }
 
-        world_method404(world, x, y, 1, 1);
+        world_update_shadow_rect(world, x, y, 1, 1);
     }
 }
 
 /* assemble a 3D model from world section */
-void world_load_section_from4(World *world, int x, int y, int plane,
-                              int is_current_plane) {
+static void world_load_assemble(World *world, int x, int y, int plane,
+                                int is_current_plane) {
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
     int section_y = (y + (REGION_SIZE / 2)) / REGION_SIZE;
 
@@ -948,7 +973,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     world_load_section_files(world, section_x - 1, section_y, plane, 2);
     world_load_section_files(world, section_x, section_y, plane, 3);
 
-    world_set_tiles(world);
+    world_fill_edges(world);
 
     if (world->parent_model == NULL) {
         world->parent_model = malloc(sizeof(GameModel));
@@ -956,7 +981,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         game_model_destroy(world->parent_model);
     }
 
-    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    game_model_new_alloc_flags(world->parent_model, TERRAIN_MAX_VERTICES,
+                               TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     /* create terrain */
 
@@ -972,7 +998,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         GameModel *game_model = world->parent_model;
 
         game_model_destroy(game_model);
-        game_model_from7(game_model, 18688, 18688, 1, 1, 0, 0, 1);
+
+        game_model_new_alloc_flags(game_model, TERRAIN_MAX_VERTICES,
+                                   TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
         for (int r_x = 0; r_x < REGION_WIDTH; r_x++) {
             for (int r_y = 0; r_y < REGION_HEIGHT; r_y++) {
@@ -1061,43 +1089,43 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         int diagonal = world_get_wall_diagonal(world, r_x, r_y);
 
                         if (diagonal > 0 && diagonal < 24000) {
-                            if (world_get_tile_decoration_from4(
-                                    world, r_x - 1, r_y, colour_2) !=
+                            if (world_decoration_or_colour(world, r_x - 1, r_y,
+                                                           colour_2) !=
                                     COLOUR_TRANSPARENT &&
-                                world_get_tile_decoration_from4(
-                                    world, r_x, r_y - 1, colour_2) !=
+                                world_decoration_or_colour(world, r_x, r_y - 1,
+                                                           colour_2) !=
                                     COLOUR_TRANSPARENT) {
-                                colour = world_get_tile_decoration_from4(
+                                colour = world_decoration_or_colour(
                                     world, r_x - 1, r_y, colour_2);
 
                                 direction = 0;
-                            } else if (world_get_tile_decoration_from4(
+                            } else if (world_decoration_or_colour(
                                            world, r_x + 1, r_y, colour_2) !=
                                            COLOUR_TRANSPARENT &&
-                                       world_get_tile_decoration_from4(
+                                       world_decoration_or_colour(
                                            world, r_x, r_y + 1, colour_2) !=
                                            COLOUR_TRANSPARENT) {
-                                colour_1 = world_get_tile_decoration_from4(
+                                colour_1 = world_decoration_or_colour(
                                     world, r_x + 1, r_y, colour_2);
 
                                 direction = 0;
-                            } else if (world_get_tile_decoration_from4(
+                            } else if (world_decoration_or_colour(
                                            world, r_x + 1, r_y, colour_2) !=
                                            COLOUR_TRANSPARENT &&
-                                       world_get_tile_decoration_from4(
+                                       world_decoration_or_colour(
                                            world, r_x, r_y - 1, colour_2) !=
                                            COLOUR_TRANSPARENT) {
-                                colour_1 = world_get_tile_decoration_from4(
+                                colour_1 = world_decoration_or_colour(
                                     world, r_x + 1, r_y, colour_2);
 
                                 direction = 1;
-                            } else if (world_get_tile_decoration_from4(
+                            } else if (world_decoration_or_colour(
                                            world, r_x - 1, r_y, colour_2) !=
                                            COLOUR_TRANSPARENT &&
-                                       world_get_tile_decoration_from4(
+                                       world_decoration_or_colour(
                                            world, r_x, r_y + 1, colour_2) !=
                                            COLOUR_TRANSPARENT) {
-                                colour = world_get_tile_decoration_from4(
+                                colour = world_decoration_or_colour(
                                     world, r_x - 1, r_y, colour_2);
 
                                 direction = 1;
@@ -1156,7 +1184,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 if (colour != colour_1 || i17 != 0) {
                     if (direction == 0) {
                         if (colour != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_vertices[0] = r_y + r_x * 96 + 96;
                             colour_vertices[1] = r_y + r_x * 96;
@@ -1174,7 +1203,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_1_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_1_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_1_vertices[0] = r_y + r_x * 96 + 1;
                             colour_1_vertices[1] = r_y + r_x * 96 + 96 + 1;
@@ -1192,7 +1222,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
                     } else {
                         if (colour != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_vertices[0] = r_y + r_x * 96 + 1;
                             colour_vertices[1] = r_y + r_x * 96 + 96 + 1;
@@ -1210,7 +1241,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         }
 
                         if (colour_1 != COLOUR_TRANSPARENT) {
-                            uint16_t *colour_1_vertices = calloc(3, sizeof(uint16_t));
+                            uint16_t *colour_1_vertices =
+                                calloc(3, sizeof(uint16_t));
 
                             colour_1_vertices[0] = r_y + r_x * 96 + 96;
                             colour_1_vertices[1] = r_y + r_x * 96;
@@ -1255,7 +1287,6 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                 if (decoration > 0 &&
                     game_data.tiles[decoration - 1].type == BRIDGE_TILE_TYPE) {
                     int fill_front = game_data.tiles[decoration - 1].decoration;
-
                     uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
                     vertices[0] = game_model_vertex_at(
@@ -1343,10 +1374,11 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     if (decoration_north > 0 &&
                         game_data.tiles[decoration_north - 1].type ==
                             BRIDGE_TILE_TYPE) {
-                        int fill_front =
-                            game_data.tiles[world_get_tile_decoration(
-                                                          world, r_x, r_y - 1) -
-                                                      1].decoration;
+                        int fill_front = game_data
+                                             .tiles[world_get_tile_decoration(
+                                                        world, r_x, r_y - 1) -
+                                                    1]
+                                             .decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
 
@@ -1435,7 +1467,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     if (decoration_west > 0 &&
                         game_data.tiles[decoration_west - 1].type ==
                             BRIDGE_TILE_TYPE) {
-                        int face_fill =
+                        int fill_front =
                             game_data.tiles[decoration_west - 1].decoration;
 
                         uint16_t *vertices = calloc(4, sizeof(uint16_t));
@@ -1461,7 +1493,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                             (r_y + 1) * TILE_SIZE);
 
                         int tile_face = game_model_create_face(
-                            game_model, 4, vertices, face_fill,
+                            game_model, 4, vertices, fill_front,
                             COLOUR_TRANSPARENT);
 
                         world->local_x[tile_face] = r_x;
@@ -1470,14 +1502,14 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                         game_model->face_tag[tile_face] =
                             TILE_FACE_TAG + tile_face;
 
-                        world_draw_map_tile(world, r_x, r_y, 0, face_fill,
-                                            face_fill);
+                        world_draw_map_tile(world, r_x, r_y, 0, fill_front,
+                                            fill_front);
                     }
                 }
             }
         }
 
-        game_model_set_light_from6(game_model, 1, 40, 48, -50, -10, -50);
+        game_model_set_light(game_model, 1, 40, 48, -50, -10, -50);
 
         game_model_split(world->parent_model, world->terrain_models, 1536, 1536,
                          8, 64, 233, 0);
@@ -1500,7 +1532,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+    game_model_new_alloc_flags(world->parent_model, TERRAIN_MAX_VERTICES,
+                               TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     int colour = 0x606060;
 
@@ -1519,8 +1552,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world->object_adjacency[r_x][r_y] |= 1;
 
                     if (r_y > 0) {
-                        world_set_object_adjacency_from3(world, r_x, r_y - 1,
-                                                         4);
+                        world_set_blocked(world, r_x, r_y - 1, 4);
                     }
                 }
 
@@ -1541,8 +1573,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
                     world->object_adjacency[r_x][r_y] |= 2;
 
                     if (r_x > 0) {
-                        world_set_object_adjacency_from3(world, r_x - 1, r_y,
-                                                         8);
+                        world_set_blocked(world, r_x - 1, r_y, 8);
                     }
                 }
 
@@ -1604,7 +1635,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
             MINIMAP_SPRITE_WIDTH, MINIMAP_SPRITE_WIDTH);
     }
 
-    game_model_set_light_from6(world->parent_model, 0, 60, 24, -50, -10, -50);
+    game_model_set_light(world->parent_model, 0, 60, 24, -50, -10, -50);
 
     // TODO thick walls needs more faces/vertices
     game_model_split(world->parent_model, world->wall_models[plane], 1536, 1536,
@@ -1739,7 +1770,9 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     }
 
     game_model_destroy(world->parent_model);
-    game_model_from7(world->parent_model, 18688, 18688, 1, 1, 0, 0, 1);
+
+    game_model_new_alloc_flags(world->parent_model, TERRAIN_MAX_VERTICES,
+                               TERRAIN_MAX_FACES, 1, 1, 0, 0, 1);
 
     for (int r_x = 1; r_x < REGION_WIDTH - 1; r_x++) {
         for (int r_y = 1; r_y < REGION_HEIGHT - 1; r_y++) {
@@ -2090,7 +2123,7 @@ void world_load_section_from4(World *world, int x, int y, int plane,
         }
     }
 
-    game_model_set_light_from6(world->parent_model, 1, 50, 50, -50, -10, -50);
+    game_model_set_light(world->parent_model, 1, 50, 50, -50, -10, -50);
 
     game_model_split(world->parent_model, world->roof_models[plane], 1536, 1536,
                      8, 64, 169, 1);
@@ -2115,12 +2148,8 @@ void world_load_section_from4(World *world, int x, int y, int plane,
     game_model_destroy(world->parent_model);
 }
 
-void world_set_object_adjacency_from3(World *world, int i, int j, int k) {
-    world->object_adjacency[i][j] |= k;
-}
-
-int world_get_tile_type(World *world, int i, int j) {
-    int decoration = world_get_tile_decoration(world, i, j);
+static int world_get_tile_type(World *world, int x, int y) {
+    int decoration = world_get_tile_decoration(world, x, y);
 
     if (decoration == 0) {
         return -1;
@@ -2151,9 +2180,9 @@ void world_add_models(World *world, GameModel **models) {
                     width = game_data.objects[object_id].height;
                 }
 
-                world_remove_object2(world, x, y, object_id);
+                world_register_object(world, x, y, object_id);
 
-                GameModel *game_model = game_model_copy_from4(
+                GameModel *game_model = game_model_copy_flags(
                     models[game_data.objects[object_id].model_index], 0, 1, 0,
                     0);
 
@@ -2171,7 +2200,8 @@ void world_add_models(World *world, GameModel **models) {
 
                 scene_add_model(world->scene, game_model);
 
-                game_model_set_light_from5(game_model, 48, 48, -50, -10, -50);
+                game_model_set_light_intensity(game_model, 48, 48, -50, -10,
+                                               -50);
 
                 if (width > 1 || height > 1) {
                     for (int xx = x; xx < x + width; xx++) {
@@ -2212,12 +2242,13 @@ void world_add_models(World *world, GameModel **models) {
 }
 
 /* create wall face */
-void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
-                       int x1, int y1, int x2, int y2) {
+static void world_create_wall(World *world, GameModel *game_model,
+                              int wall_object_id, int x1, int y1, int x2,
+                              int y2) {
     int thick_walls = world->thick_walls;
 
-    world_method425(world, x1, y1, 40);
-    world_method425(world, x2, y2, 40);
+    world_vertex_shadow(world, x1, y1, 40);
+    world_vertex_shadow(world, x2, y2, 40);
 
     int height = game_data.wall_objects[wall_object_id].height;
     int front = game_data.wall_objects[wall_object_id].texture_front;
@@ -2307,11 +2338,11 @@ void world_create_wall(World *world, GameModel *game_model, int wall_object_id,
     }
 }
 
-int world_get_terrain_height(World *world, int x, int y) {
+static int world_get_terrain_height(World *world, int x, int y) {
     return (get_byte_plane_coord(world->terrain_height, x, y) & 0xff) * 3;
 }
 
-void world_load_section_from3(World *world, int x, int y, int plane) {
+void world_load_section(World *world, int x, int y, int plane) {
     world_reset(world, 1);
 
     int section_x = (x + (REGION_SIZE / 2)) / REGION_SIZE;
@@ -2327,20 +2358,19 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     world_gl_create_world_models_buffer(world, max_models);
 #endif
 
-    world_load_section_from4(world, x, y, plane, 1);
+    world_load_assemble(world, x, y, plane, 1);
 
     if (plane == 0) {
-        world_load_section_from4(world, x, y, 1, 0);
-        world_load_section_from4(world, x, y, 2, 0);
+        world_load_assemble(world, x, y, 1, 0);
+        world_load_assemble(world, x, y, 2, 0);
 
-        world_load_section_files(world, section_x - 1, section_y - 1, plane,
-                                  0);
+        world_load_section_files(world, section_x - 1, section_y - 1, plane, 0);
 
         world_load_section_files(world, section_x, section_y - 1, plane, 1);
         world_load_section_files(world, section_x - 1, section_y, plane, 2);
         world_load_section_files(world, section_x, section_y, plane, 3);
 
-        world_set_tiles(world);
+        world_fill_edges(world);
     }
 
     game_model_destroy(world->parent_model);
@@ -2348,28 +2378,28 @@ void world_load_section_from3(World *world, int x, int y, int plane) {
     world->parent_model = NULL;
 }
 
-/* TODO add terrain shadow */
-void world_method425(World *world, int vertex_x, int vertex_z, int ambience) {
+static void world_vertex_shadow(World *world, int vertex_x, int vertex_z,
+                                int ambience) {
     int terrain_x = vertex_x / 12;
     int terrain_y = vertex_z / 12;
-    int j1 = (vertex_x - 1) / 12;
-    int k1 = (vertex_z - 1) / 12;
+    int x2 = (vertex_x - 1) / 12;
+    int y2 = (vertex_z - 1) / 12;
 
     world_set_terrain_ambience(world, terrain_x, terrain_y, vertex_x, vertex_z,
                                ambience);
 
-    if (terrain_x != j1) {
-        world_set_terrain_ambience(world, j1, terrain_y, vertex_x, vertex_z,
+    if (terrain_x != x2) {
+        world_set_terrain_ambience(world, x2, terrain_y, vertex_x, vertex_z,
                                    ambience);
     }
 
-    if (terrain_y != k1) {
-        world_set_terrain_ambience(world, terrain_x, k1, vertex_x, vertex_z,
+    if (terrain_y != y2) {
+        world_set_terrain_ambience(world, terrain_x, y2, vertex_x, vertex_z,
                                    ambience);
     }
 
-    if (terrain_x != j1 && terrain_y != k1) {
-        world_set_terrain_ambience(world, j1, k1, vertex_x, vertex_z, ambience);
+    if (terrain_x != x2 && terrain_y != y2) {
+        world_set_terrain_ambience(world, x2, y2, vertex_x, vertex_z, ambience);
     }
 }
 
@@ -2399,35 +2429,35 @@ void world_remove_object(World *world, int x, int y, int id) {
                     world->object_adjacency[xx][yy] &= 0xfffd;
 
                     if (xx > 0) {
-                        world_method407(world, xx - 1, yy, 8);
+                        world_set_unblocked(world, xx - 1, yy, 8);
                     }
                 } else if (tile_direction == 2) {
                     world->object_adjacency[xx][yy] &= 0xfffb;
 
                     if (yy < (REGION_HEIGHT - 1)) {
-                        world_method407(world, xx, yy + 1, 1);
+                        world_set_unblocked(world, xx, yy + 1, 1);
                     }
                 } else if (tile_direction == 4) {
                     world->object_adjacency[xx][yy] &= 0xfff7;
 
                     if (xx < (REGION_WIDTH - 1)) {
-                        world_method407(world, xx + 1, yy, 2);
+                        world_set_unblocked(world, xx + 1, yy, 2);
                     }
                 } else if (tile_direction == 6) {
                     world->object_adjacency[xx][yy] &= 0xfffe;
 
                     if (yy > 0) {
-                        world_method407(world, xx, yy - 1, 4);
+                        world_set_unblocked(world, xx, yy - 1, 4);
                     }
                 }
             }
         }
 
-        world_method404(world, x, y, width, height);
+        world_update_shadow_rect(world, x, y, width, height);
     }
 }
 
-int world_has_neighbouring_roof(World *world, int x, int y) {
+static int world_has_neighbouring_roof(World *world, int x, int y) {
     return (world_get_wall_roof(world, x, y) > 0 ||
             world_get_wall_roof(world, x - 1, y) > 0 ||
             world_get_wall_roof(world, x - 1, y - 1) > 0 ||
@@ -2435,8 +2465,8 @@ int world_has_neighbouring_roof(World *world, int x, int y) {
 }
 
 /* move wall (objects) and roofs to the upper-plane */
-void world_raise_wall_object(World *world, int wall_object_id, int x1, int y1,
-                             int x2, int y2) {
+static void world_raise_wall_object(World *world, int wall_object_id, int x1,
+                                    int y1, int x2, int y2) {
     int height = game_data.wall_objects[wall_object_id].height;
 
     if (world->terrain_height_local[x1][y1] < PLANE_HEIGHT) {

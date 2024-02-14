@@ -81,6 +81,9 @@ int mudclient_finger_2_x = 0;
 int mudclient_finger_2_y = 0;
 int mudclient_finger_2_down = 0;
 
+int mudclient_full_width = 0;
+int mudclient_full_height = 0;
+
 int mudclient_has_right_clicked = 0;
 
 const char *font_files[] = {"h11p.jf", "h12b.jf", "h12p.jf", "h13b.jf",
@@ -93,6 +96,7 @@ const char *animated_models[] = {
     "firespell2",   "firespell3", "lightning2", "lightning3",   "clawspell2",
     "clawspell3",   "clawspell4", "clawspell5", "spellcharge2", "spellcharge3"};
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
 /*
  * animations that experienced a loss of fine detail in January 2002 with the
  * "Compression" update
@@ -104,9 +108,10 @@ const char *animated_models[] = {
  * human tops - belt buckles lose detail or become flesh (ew).
  */
 static const char *anims_older_is_better[] = {
-    "camel", "bat", "battleaxe", "bear", "fbody1", "fhead1", "fplatemailtop",
-    "head1", "head2", "head3", "head4", "platemailtop", "staff", NULL
-};
+    "camel",  "bat",           "battleaxe", "bear",  "fbody1",
+    "fhead1", "fplatemailtop", "head1",     "head2", "head3",
+    "head4",  "platemailtop",  "staff",     "body1", NULL};
+#endif
 
 char login_screen_status[255] = {0};
 
@@ -854,7 +859,26 @@ void mudclient_resize(mudclient *mud) {
             calloc(mud->game_width * mud->game_height, sizeof(int32_t));
 #endif
 
+        panel_destroy(mud->panel_login_welcome);
+        free(mud->panel_login_welcome);
+
+        panel_destroy(mud->panel_login_new_user);
+        free(mud->panel_login_new_user);
+
+        panel_destroy(mud->panel_login_existing_user);
+        free(mud->panel_login_existing_user);
+
+        mudclient_create_login_panels(mud);
+
+        panel_destroy(mud->panel_appearance);
+        free(mud->panel_appearance);
+
+        mudclient_create_appearance_panel(mud);
+
         mud->scene->raster = mud->surface->pixels;
+
+        int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
+                         mud->surface->height < MUD_VANILLA_HEIGHT;
 
         int is_touch = mudclient_is_touch(mud);
 
@@ -863,24 +887,32 @@ void mudclient_resize(mudclient *mud) {
         int half_offset_x = (mud->surface->width / 2) - (MUD_WIDTH / 2);
         int half_offset_y = (mud->surface->height / 2) - (MUD_HEIGHT / 2);
 
+        int dynamic_offset_x =
+            (mud->surface->width / 2) -
+            (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) / 2;
+
+        int dynamic_offset_y =
+            (mud->surface->height / 2) -
+            (is_compact ? MUD_MIN_HEIGHT : MUD_VANILLA_HEIGHT) / 2;
+
         if (mud->panel_login_welcome != NULL) {
-            mud->panel_login_welcome->offset_x = half_offset_x;
-            mud->panel_login_welcome->offset_y = half_offset_y;
+            mud->panel_login_welcome->offset_x = dynamic_offset_x;
+            mud->panel_login_welcome->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_login_new_user != NULL) {
-            mud->panel_login_new_user->offset_x = half_offset_x;
-            mud->panel_login_new_user->offset_y = half_offset_y;
+            mud->panel_login_new_user->offset_x = dynamic_offset_x;
+            mud->panel_login_new_user->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_login_existing_user != NULL) {
-            mud->panel_login_existing_user->offset_x = half_offset_x;
-            mud->panel_login_existing_user->offset_y = half_offset_y;
+            mud->panel_login_existing_user->offset_x = dynamic_offset_x;
+            mud->panel_login_existing_user->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_appearance != NULL) {
-            mud->panel_appearance->offset_x = half_offset_x;
-            mud->panel_appearance->offset_y = half_offset_y;
+            mud->panel_appearance->offset_x = dynamic_offset_x;
+            mud->panel_appearance->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_message_tabs != NULL && !is_touch) {
@@ -911,9 +943,9 @@ void mudclient_resize(mudclient *mud) {
             }
         }
 
-        if (mud->panel_connection_options != NULL) {
-            mud->panel_connection_options->offset_x = half_offset_x;
-            mud->panel_connection_options->offset_y = half_offset_y;
+        if (mud->panel_game_options != NULL) {
+            mud->panel_game_options->offset_x = half_offset_x;
+            mud->panel_game_options->offset_y = half_offset_y;
         }
 
         if (mud->panel_control_options != NULL) {
@@ -921,9 +953,9 @@ void mudclient_resize(mudclient *mud) {
             mud->panel_control_options->offset_y = half_offset_y;
         }
 
-        if (mud->panel_display_options != NULL) {
-            mud->panel_display_options->offset_x = half_offset_x;
-            mud->panel_display_options->offset_y = half_offset_y;
+        if (mud->panel_ui_options != NULL) {
+            mud->panel_ui_options->offset_x = half_offset_x;
+            mud->panel_ui_options->offset_y = half_offset_y;
         }
 
         if (mud->panel_bank_options != NULL) {
@@ -985,7 +1017,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     Result romfs_res = romfsInit();
 
     if (romfs_res) {
-        fprintf(stderr, "romfsInit: %08lX\n", romfs_res);
+        mud_error("romfsInit: %08lX\n", romfs_res);
         exit(1);
     }
 
@@ -1004,14 +1036,14 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SOC_buffer = (u32 *)memalign(SOC_ALIGN, SOC_BUFFER_SIZE);
 
     if (SOC_buffer == NULL) {
-        fprintf(stderr, "memalign() fail\n");
+        mud_error("memalign() fail\n");
         exit(1);
     }
 
     int ret = -1;
 
     if ((ret = socInit(SOC_buffer, SOC_BUFFER_SIZE)) != 0) {
-        fprintf(stderr, "socInit: 0x%08X\n", (unsigned int)ret);
+        mud_error("socInit: 0x%08X\n", (unsigned int)ret);
         exit(1);
     }
 
@@ -1049,7 +1081,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
     int ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
 
     if (ret < 0) {
-        fprintf(stderr, "WSAStartup() error: %d\n", WSAGetLastError());
+        mud_error("WSAStartup() error: %d\n", WSAGetLastError());
         exit(1);
     }
 #endif
@@ -1058,14 +1090,14 @@ void mudclient_start_application(mudclient *mud, char *title) {
     Result romfs_res = romfsInit();
 
     if (romfs_res) {
-        fprintf(stderr, "romfsInit: %08lX\n", romfs_res);
+        mud_error("romfsInit: %08lX\n", romfs_res);
         exit(1);
     }
 #endif
 
     int init = SDL_INIT_VIDEO;
 
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         init |= SDL_INIT_AUDIO;
     }
 
@@ -1074,7 +1106,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
     if (SDL_Init(init) < 0) {
-        fprintf(stderr, "SDL_Init(): %s\n", SDL_GetError());
+        mud_error("SDL_Init(): %s\n", SDL_GetError());
         exit(1);
     }
 
@@ -1086,7 +1118,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 /* XXX: currently require non-callback-based audio from SDL >= 2.0.4 */
 #ifdef SDL_VERSION_ATLEAST
 #if SDL_VERSION_ATLEAST(2, 0, 4)
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         SDL_AudioSpec wanted_audio;
 
         wanted_audio.freq = SAMPLE_RATE;
@@ -1097,7 +1129,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
         wanted_audio.callback = NULL;
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
-            fprintf(stderr, "SDL_OpenAudio(): %s\n", SDL_GetError());
+            mud_error("SDL_OpenAudio(): %s\n", SDL_GetError());
             exit(1);
         }
     }
@@ -1106,7 +1138,7 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 #ifdef SDL12
     SDL_WM_SetCaption("Runescape by Andrew Gower", NULL);
-// SDL_WM_SetIcon(IMG_Load("win/2003scape.png"),NULL);
+    // SDL_WM_SetIcon(IMG_Load("win/2003scape.png"),NULL);
 #else
     uint32_t windowflags = SDL_WINDOW_SHOWN;
 #if !defined(WII) && !defined(_3DS) && !defined(EMSCRIPTEN)
@@ -1122,6 +1154,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->window =
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, windowflags);
+
+    SDL_SetWindowMinimumSize(mud->window, MUD_MIN_WIDTH, MUD_MIN_HEIGHT);
 #endif
 
     mudclient_resize(mud);
@@ -1133,16 +1167,16 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
 #ifdef RENDER_GL
     /*if (IMG_Init(IMG_INIT_PNG) == 0) {
-        fprintf(stderr, "unable to initialize sdl_image: %s\n", IMG_GetError());
+        mud_error("unable to initialize sdl_image: %s\n", IMG_GetError());
     }*/
 #ifdef SDL12
     mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
                                    SDL_OPENGL | SDL_RESIZABLE);
 
-    // Check for error
     GLenum error = glGetError();
+
     if (error != GL_NO_ERROR) {
-        printf("Error initializing OpenGL! %s\n", gluErrorString(error));
+        mud_log("Error initializing OpenGL! %s\n", gluErrorString(error));
         exit(0);
     }
 #else
@@ -1179,24 +1213,31 @@ void mudclient_start_application(mudclient *mud, char *title) {
         SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          mud->game_width, mud->game_height, windowflags);
 
+    SDL_SetWindowMinimumSize(mud->gl_window, MUD_MIN_WIDTH, MUD_MIN_HEIGHT);
+
     SDL_GLContext *context = SDL_GL_CreateContext(mud->gl_window);
 
     if (!context) {
-        fprintf(stderr, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
+        mud_error("SDL_GL_CreateContext(): %s\n", SDL_GetError());
         exit(1);
     }
 
     SDL_GL_MakeCurrent(mud->gl_window, context);
 #endif
 
+#ifdef GLAD
+    gladLoadGL();
+#else
+
     glewExperimental = GL_TRUE;
 
     GLenum glew_error = glewInit();
 
     if (glew_error != GLEW_OK) {
-        fprintf(stderr, "GLEW error: %s\n", glewGetErrorString(glew_error));
+        mud_error("GLEW error: %s\n", glewGetErrorString(glew_error));
         exit(1);
     }
+#endif
 
     glViewport(0, 0, mud->game_width, mud->game_height);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1209,6 +1250,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    glEnable(GL_SCISSOR_TEST);
+
     glDisable(GL_MULTISAMPLE);
 #endif
 #endif
@@ -1219,7 +1262,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
     mud->_3ds_gl_render_target =
         C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
     // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
-    // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
 
     mud->_3ds_gl_offscreen_render_target =
         C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA5551, GPU_RB_DEPTH16);
@@ -1235,10 +1277,14 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
     surface_set_bounds(mud->surface, 0, 0, mud->game_width, mud->game_height);
 
-    printf("Started application\n");
+    mud_log("Started application\n");
 
 #ifdef _3DS
     mudclient_3ds_draw_top_background(mud);
+#endif
+
+#ifdef ANDROID
+    SDL_SetWindowFullscreen(mud->window, SDL_WINDOW_FULLSCREEN);
 #endif
 
     mudclient_run(mud);
@@ -1278,10 +1324,9 @@ void mudclient_handle_key_press(mudclient *mud, int key_code) {
         if (mud->show_change_password_step == PASSWORD_STEP_NONE &&
             mud->show_dialog_social_input == 0 &&
             mud->show_dialog_offer_x == 0 &&
-            !(mud->options->bank_search && mud->show_dialog_bank) &&
+            !(mud->bank_search_focus && mud->show_dialog_bank) &&
             /*mud->show_dialog_report_abuse_step == 0 &&*/
             !mud->is_sleeping && mud->panel_message_tabs) {
-
             int is_option_number = mud->options->option_numbers &&
                                    mud->show_option_menu && key_code >= '1' &&
                                    key_code <= '5';
@@ -1317,15 +1362,13 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         } else if (code == K_F1) {
             mud->options->interlace = !mud->options->interlace;
 
-            for (int i = 0; i < mud->panel_display_options->control_count;
-                 i++) {
-                if ((int *)mud->display_options[i] ==
-                    &mud->options->interlace) {
-                    panel_toggle_checkbox(mud->panel_display_options, i,
+            /*for (int i = 0; i < mud->panel_game_options->control_count; i++) {
+                if ((int *)mud->ui_options[i] == &mud->options->interlace) {
+                    panel_toggle_checkbox(mud->panel_ui_options, i,
                                           mud->options->interlace);
                     break;
                 }
-            }
+            }*/
         } else if (mud->options->escape_clear && code == K_ESCAPE) {
             memset(mud->input_text_current, '\0', INPUT_TEXT_LENGTH + 1);
             memset(mud->input_pm_current, '\0', INPUT_PM_LENGTH + 1);
@@ -1358,6 +1401,8 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         }
     }
 
+    int should_append_pm = (mud->show_dialog_bank ? mud->bank_search_focus : 1);
+
     if (found_text) {
         if (!mud->show_dialog_offer_x) {
             int current_length = strlen(mud->input_text_current);
@@ -1369,15 +1414,12 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
             int pm_length = strlen(mud->input_pm_current);
 
-            if (pm_length < INPUT_PM_LENGTH) {
+            if (pm_length < INPUT_PM_LENGTH && should_append_pm) {
                 mud->input_pm_current[pm_length] = char_code;
                 mud->input_pm_current[pm_length + 1] = '\0';
             }
-        }
-
-        if (mud->options->offer_x &&
-            (IS_DIGIT_SEPARATOR(char_code) || IS_DIGIT_SUFFIX(char_code) ||
-             isdigit(char_code))) {
+        } else if ((IS_DIGIT_SEPARATOR(char_code) ||
+                    IS_DIGIT_SUFFIX(char_code) || isdigit(char_code))) {
             int digits_length = strlen(mud->input_digits_current);
 
             if (digits_length < INPUT_DIGITS_LENGTH) {
@@ -1411,7 +1453,10 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
     if (code == K_ENTER) {
         strcpy(mud->input_text_final, mud->input_text_current);
-        strcpy(mud->input_pm_final, mud->input_pm_current);
+
+        if (should_append_pm) {
+            strcpy(mud->input_pm_final, mud->input_pm_current);
+        }
 
         if (mud->options->offer_x) {
             char filtered_digits[INPUT_DIGITS_LENGTH + 1] = {0};
@@ -1456,7 +1501,7 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
         int pm_length = strlen(mud->input_pm_current);
 
-        if (pm_length > 0) {
+        if (pm_length > 0 && should_append_pm) {
             mud->input_pm_current[pm_length - 1] = '\0';
         }
 
@@ -1604,7 +1649,7 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
         mud->mouse_y /= 2;
     }
 
-    if (mud->options->middle_click_camera && button == 2) {
+    if (mud->options->middle_click_camera != 0 && button == 2) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
         mud->origin_mouse_x = x;
@@ -1650,20 +1695,22 @@ void mudclient_draw_loading_progress(mudclient *mud, int percent, char *text) {
     /* hide the previously drawn textures */
     surface_draw_box(mud->surface, 0, 0, 128, 128, BLACK);
 
-    /* jagex logo */
-    int logo_sprite_id = SPRITE_LIMIT - 1;
+    if (!mud->options->lowmem) {
+        /* jagex logo */
+        int logo_sprite_id = SPRITE_LIMIT - 1;
 
-    if (mud->surface->sprite_width[logo_sprite_id]) {
-        int offset_x = 2;
+        if (mud->surface->sprite_width[logo_sprite_id]) {
+            int offset_x = 2;
 
-        int logo_x = (mud->game_width / 2) -
-                     (mud->surface->sprite_width[logo_sprite_id] / 2) -
-                     offset_x;
+            int logo_x = (mud->game_width / 2) -
+                         (mud->surface->sprite_width[logo_sprite_id] / 2) -
+                         offset_x;
 
-        int logo_y = (mud->game_height / 2) -
-                     (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
+            int logo_y = (mud->game_height / 2) -
+                         (mud->surface->sprite_height[logo_sprite_id] / 2) - 46;
 
-        surface_draw_sprite(mud->surface, logo_x, logo_y, logo_sprite_id);
+            surface_draw_sprite(mud->surface, logo_x, logo_y, logo_sprite_id);
+        }
     }
 
     /* loading bar */
@@ -1780,11 +1827,11 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     }
 
     if (file_data == NULL) {
-        fprintf(stderr, "Unable to read file: %s\n", file);
+        mud_error("Unable to read file: %s\n", file);
         exit(1);
     }
 
-    memcpy(header, file_data, 6);
+    memcpy(header, file_data, sizeof(header));
 #else
     int file_length = strlen(file);
 
@@ -1794,17 +1841,26 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     char *prefix = "./cache";
 #endif
 
+#ifdef ANDROID
+    char *prefixed_file = file;
+    SDL_RWops *archive_stream = SDL_RWFromFile(prefixed_file, "rb");
+#else
     char prefixed_file[file_length + strlen(prefix) + 2];
     sprintf(prefixed_file, "%s/%s", prefix, file);
 
     FILE *archive_stream = fopen(prefixed_file, "rb");
+#endif
 
     if (archive_stream == NULL) {
-        fprintf(stderr, "Unable to read file: %s\n", prefixed_file);
+        mud_error("Unable to read file: %s\n", prefixed_file);
         exit(1);
     }
 
-    fread(header, 6, 1, archive_stream);
+#ifdef ANDROID
+    SDL_RWread(archive_stream, header, sizeof(header), 1);
+#else
+    fread(header, sizeof(header), 1, archive_stream);
+#endif
 #endif
 
     int archive_size = ((header[0] & 0xff) << 16) + ((header[1] & 0xff) << 8) +
@@ -1826,7 +1882,11 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     while (read < archive_size_compressed) {
         int length = archive_size_compressed - read;
 
+#ifdef ANDROID
+        SDL_RWread(archive_stream, archive_data + read, length, 1);
+#else
         fread(archive_data + read, length, 1, archive_stream);
+#endif
 
         read += length;
 
@@ -1836,7 +1896,11 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         mudclient_draw_loading_progress(mud, percent, loading_text);
     }
 
+#ifdef ANDROID
+    SDL_RWclose(archive_stream);
+#else
     fclose(archive_stream);
+#endif
 #endif
 
     sprintf(loading_text, "Unpacking %s", description);
@@ -1844,9 +1908,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     if (archive_size_compressed != archive_size) {
         int8_t *decompressed = malloc(archive_size);
-
-        bzip_decompress(decompressed, archive_size, archive_data,
-                        archive_size_compressed, 0);
+        bzip_decompress(decompressed, archive_data, archive_size_compressed, 0);
 
 #ifndef WII
         free(archive_data);
@@ -1864,11 +1926,15 @@ void mudclient_load_jagex(mudclient *mud) {
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
-        size_t len;
-        uint8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
-        surface_parse_sprite_tga(mud->surface,
-            SPRITE_LIMIT - 1, logo_tga, len, 0, 0);
-        free(logo_tga);
+        if (!mud->options->lowmem) {
+            size_t len = 0;
+            int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
+
+            surface_parse_sprite_tga(mud->surface, SPRITE_LIMIT - 1, logo_tga,
+                                     len, 0, 0);
+
+            free(logo_tga);
+        }
 
 #ifndef WII
         free(jagex_jag);
@@ -1885,7 +1951,7 @@ void mudclient_load_jagex(mudclient *mud) {
         mud, "fonts" VERSION_STR(VERSION_FONTS) ".jag", "Game fonts", 5);
 
     if (fonts_jag != NULL) {
-        for (int i = 0; i < FONT_FILES_LENGTH; i++) {
+        for (size_t i = 0; i < FONT_FILES_LENGTH; i++) {
             create_font(load_data(font_files[i], 0, fonts_jag, NULL), i);
         }
 
@@ -1948,9 +2014,11 @@ void mudclient_load_media(mudclient *mud) {
                          load_data("bubble.dat", 0, media_jag, NULL), index_dat,
                          1);
 
-    surface_parse_sprite(mud->surface, mud->sprite_media + 10,
-                         load_data("runescape.dat", 0, media_jag, NULL),
-                         index_dat, 1);
+    if (!mud->options->lowmem) {
+        surface_parse_sprite(mud->surface, mud->sprite_media + 10,
+                             load_data("runescape.dat", 0, media_jag, NULL),
+                             index_dat, 1);
+    }
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 11,
                          load_data("splat.dat", 0, media_jag, NULL), index_dat,
@@ -1960,9 +2028,11 @@ void mudclient_load_media(mudclient *mud) {
                          load_data("icon.dat", 0, media_jag, NULL), index_dat,
                          8);
 
-    surface_parse_sprite(mud->surface, mud->sprite_media + 22,
-                         load_data("hbar.dat", 0, media_jag, NULL), index_dat,
-                         1);
+    if (!mud->options->lowmem) {
+        surface_parse_sprite(mud->surface, mud->sprite_media + 22,
+                             load_data("hbar.dat", 0, media_jag, NULL),
+                             index_dat, 1);
+    }
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 23,
                          load_data("hbar2.dat", 0, media_jag, NULL), index_dat,
@@ -1987,6 +2057,10 @@ void mudclient_load_media(mudclient *mud) {
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 39,
                          load_data("message.dat", 0, media_jag, NULL),
+                         index_dat, 1);
+
+    surface_parse_sprite(mud->surface, mud->sprite_media + 40,
+                         load_data("keyboard.dat", 0, media_jag, NULL),
                          index_dat, 1);
 #endif
 
@@ -2068,10 +2142,12 @@ void mudclient_load_entities(mudclient *mud) {
 
     int8_t *entity_jag_legacy = NULL;
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
     if (mud->options->tga_sprites) {
-        entity_jag_legacy = mudclient_read_data_file(mud,
-            "entity8.jag", "people and monsters", 37);
+        entity_jag_legacy = mudclient_read_data_file(mud, "entity8.jag",
+                                                     "people and monsters", 37);
     }
+#endif
 
     if (entity_jag == NULL) {
         mud->error_loading_data = 1;
@@ -2116,9 +2192,11 @@ void mudclient_load_entities(mudclient *mud) {
 
         bool older_is_better = false;
         const char *extension = "dat";
-        uint8_t *archive_file = entity_jag;
+        int8_t *archive_file = entity_jag;
 
+#if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
         const char **older_names = anims_older_is_better;
+
         if (mud->options->tga_sprites) {
             while (*older_names != NULL) {
                 if (strcmp(animation_name, *older_names) == 0) {
@@ -2127,9 +2205,11 @@ void mudclient_load_entities(mudclient *mud) {
                     archive_file = entity_jag_legacy;
                     break;
                 }
+
                 older_names++;
             }
         }
+#endif
 
         char file_name[255] = {0};
         sprintf(file_name, "%s.%s", animation_name, extension);
@@ -2149,8 +2229,8 @@ void mudclient_load_entities(mudclient *mud) {
                 surface_parse_sprite_tga(mud->surface, animation_index,
                                          animation_dat, len, 15, 1);
             } else {
-                surface_parse_sprite(mud->surface, animation_index, animation_dat,
-                                     animation_index_dat, 15);
+                surface_parse_sprite(mud->surface, animation_index,
+                                     animation_dat, animation_index_dat, 15);
             }
 
             frame_count += 15;
@@ -2197,7 +2277,7 @@ void mudclient_load_entities(mudclient *mud) {
 
                 if (older_is_better) {
                     surface_parse_sprite_tga(mud->surface, animation_index + 18,
-                                         f_dat, len, 9, 1);
+                                             f_dat, len, 9, 1);
                 } else {
                     surface_parse_sprite(mud->surface, animation_index + 18,
                                          f_dat, f_index_dat, 9);
@@ -2220,7 +2300,7 @@ void mudclient_load_entities(mudclient *mud) {
         i++;
     }
 
-    printf("Loaded: %d frames of animation\n", frame_count);
+    mud_log("Loaded: %d frames of animation\n", frame_count);
 
 #ifndef WII
     free(entity_jag);
@@ -2252,6 +2332,11 @@ void mudclient_load_textures(mudclient *mud) {
     Surface *surface = mud->surface;
 
     for (int i = 0; i < game_data.texture_count; i++) {
+#ifdef USE_TOONSCAPE
+        if (toonscape_avoid_load(i)) {
+            continue;
+        }
+#endif
         sprintf(file_name, "%s.dat", game_data.textures[i].name);
 
         int8_t *texture_dat = load_data(file_name, 0, textures_jag, NULL);
@@ -2262,8 +2347,10 @@ void mudclient_load_textures(mudclient *mud) {
         surface_draw_box(surface, 0, 0, 128, 128, MAGENTA);
         surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
+#ifndef USE_LOCOLOUR
         free(surface->sprite_palette[mud->sprite_texture]);
         surface->sprite_palette[mud->sprite_texture] = NULL;
+#endif
 
         free(surface->sprite_colours[mud->sprite_texture]);
         surface->sprite_colours[mud->sprite_texture] = NULL;
@@ -2285,8 +2372,10 @@ void mudclient_load_textures(mudclient *mud) {
 
                 surface_draw_sprite(surface, 0, 0, mud->sprite_texture);
 
+#ifndef USE_LOCOLOUR
                 free(surface->sprite_palette[mud->sprite_texture]);
                 surface->sprite_palette[mud->sprite_texture] = NULL;
+#endif
 
                 free(surface->sprite_colours[mud->sprite_texture]);
                 surface->sprite_colours[mud->sprite_texture] = NULL;
@@ -2328,11 +2417,13 @@ void mudclient_load_textures(mudclient *mud) {
 }
 
 void mudclient_load_models(mudclient *mud) {
-    for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
-        char name_length = strlen(animated_models[i]);
-        char *name = malloc(name_length + 1);
-        strcpy(name, animated_models[i]);
-        game_data_get_model_index(name);
+    if (!mud->options->lowmem) {
+        for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
+            char name_length = strlen(animated_models[i]);
+            char *name = malloc(name_length + 1);
+            strcpy(name, animated_models[i]);
+            game_data_get_model_index(name);
+        }
     }
 
     char *models_filename = "models" VERSION_STR(VERSION_MODELS) ".jag";
@@ -2357,12 +2448,12 @@ void mudclient_load_models(mudclient *mud) {
         GameModel *game_model = malloc(sizeof(GameModel));
 
         if (offset != 0) {
-            game_model_from_bytes(game_model, models_jag + offset, len);
+            game_model_new_ob3(game_model, models_jag + offset, len);
         } else {
-            fprintf(stderr, "missing model \"%s.ob3\" from %s\n", model_name,
-                    models_filename);
+            mud_error("missing model \"%s.ob3\" from %s\n", model_name,
+                      models_filename);
 
-            game_model_from2(game_model, 1, 1);
+            game_model_new_alloc(game_model, 1, 1);
         }
 
         mud->game_models[i] = game_model;
@@ -2390,7 +2481,7 @@ void mudclient_load_models(mudclient *mud) {
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag + offset, len);
+            game_model_new_ob3(game_model, models_jag + offset, len);
 
             int mask_colour = game_data.items[i].mask;
 
@@ -2429,7 +2520,7 @@ void mudclient_load_models(mudclient *mud) {
             }
 
             GameModel *game_model = malloc(sizeof(GameModel));
-            game_model_from_bytes(game_model, models_jag + offset, len);
+            game_model_new_ob3(game_model, models_jag + offset, len);
 
             mud->item_models[i] = game_model;
         }
@@ -2716,7 +2807,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     }
 
 #ifdef REVISION_177
-    printf("Session id: %d\n", session_id);
+    mud_log("Session id: %d\n", session_id);
 
     packet_stream_new_packet(mud->packet_stream,
                              reconnecting ? CLIENT_RECONNECT : CLIENT_LOGIN);
@@ -2744,9 +2835,9 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     int response = packet_stream_get_byte(mud->packet_stream);
 #else
 #ifdef _3DS
-    printf("Verb: Session id: %lld\n", session_id); /* ? */
+    mud_log("Verb: Session id: %lld\n", session_id); /* ? */
 #else
-    printf("Verb: Session id: %ld\n", session_id);
+    mud_log("Verb: Session id: %ld\n", session_id);
 #endif
 
     uint32_t keys[4] = {0};
@@ -2770,7 +2861,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     int response = packet_stream_get_byte(mud->packet_stream);
 #endif
 
-    printf("Login response: %d\n", response);
+    mud_log("Login response: %d\n", response);
 
     if (response == 0 || response == 25) {
         mud->moderator_level = response == 25;
@@ -2986,7 +3077,7 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
         return;
     }
 
-    printf("Session id: %d\n", session_id);
+    mud_log("Session id: %d\n", session_id);
 #endif
 
     packet_stream_new_packet(mud->packet_stream, CLIENT_REGISTER);
@@ -3014,7 +3105,7 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
 #endif
 
     int response = packet_stream_get_byte(mud->packet_stream);
-    printf("Newplayer response: %d\n", response);
+    mud_log("Newplayer response: %d\n", response);
 
     switch (response) {
     case 2:
@@ -3194,7 +3285,11 @@ void mudclient_start_game(mudclient *mud) {
     }
 
     mud->scene = malloc(sizeof(Scene));
-    scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
+    if (mud->options->lowmem) {
+        scene_new(mud->scene, mud->surface, 7500, 7500, 1000);
+    } else {
+        scene_new(mud->scene, mud->surface, 15000, 15000, 1000);
+    }
 
 #ifdef RENDER_3DS_GL
     scene_set_bounds(mud->scene, mud->game_width, mud->game_height);
@@ -3236,7 +3331,7 @@ void mudclient_start_game(mudclient *mud) {
         return;
     }
 
-    if (mud->options->members) {
+    if (mud->options->members && !mud->options->lowmem) {
         mudclient_load_sounds(mud);
     }
 
@@ -3250,7 +3345,10 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_appearance_panel(mud);
     mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
-    mudclient_render_login_scene_sprites(mud);
+
+    if (!mud->options->lowmem) {
+        mudclient_render_login_scene_sprites(mud);
+    }
 
     free(surface_texture_pixels);
     surface_texture_pixels = NULL;
@@ -3268,7 +3366,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     int height = game_data.wall_objects[id].height;
 
     GameModel *game_model = malloc(sizeof(GameModel));
-    game_model_from2(game_model, 4, 1);
+    game_model_new_alloc(game_model, 4, 1);
 
     if (direction == 0) {
         x2 = x + 1;
@@ -3304,7 +3402,7 @@ GameModel *mudclient_create_wall_object(mudclient *mud, int x, int y,
     game_model_create_face(game_model, 4, vertices, front_texture,
                            back_texture);
 
-    game_model_set_light_from6(game_model, 0, 60, 24, -50, -10, -50);
+    game_model_set_light(game_model, 0, 60, 24, -50, -10, -50);
 
     if (x >= 0 && y >= 0 && x < 96 && y < 96) {
         scene_add_model(mud->scene, game_model);
@@ -3368,7 +3466,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
     mud->local_upper_x = section_x * REGION_SIZE + 32;
     mud->local_upper_y = section_y * REGION_SIZE + 32;
 
-    world_load_section_from3(mud->world, lx, ly, mud->last_plane_index);
+    world_load_section(mud->world, lx, ly, mud->last_plane_index);
 
     mud->region_x -= mud->plane_width;
     mud->region_y -= mud->plane_height;
@@ -3408,7 +3506,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
                              -world_get_elevation(mud->world, base_x, base_y),
                              base_y);
 
-            world_remove_object2(mud->world, object_x, object_y, object_id);
+            world_register_object(mud->world, object_x, object_y, object_id);
 
             if (object_id == WINDMILL_SAILS_ID) {
                 game_model_translate(game_model, 0, -480, 0);
@@ -3429,9 +3527,8 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         int wall_object_id = mud->wall_objects[i].id;
         int wall_object_dir = mud->wall_objects[i].direction;
 
-        world_set_object_adjacency_from4(mud->world, wall_object_x,
-                                         wall_object_y, wall_object_dir,
-                                         wall_object_id);
+        world_register_wall_object(mud->world, wall_object_x, wall_object_y,
+                                   wall_object_dir, wall_object_id);
 
         game_model_destroy(mud->wall_objects[i].model);
         free(mud->wall_objects[i].model);
@@ -3823,7 +3920,7 @@ void mudclient_handle_game_input(mudclient *mud) {
         mud->key_tab = 0;
     }
 
-    if (mud->options->middle_click_camera && mud->middle_button_down) {
+    if (mud->options->middle_click_camera != 0 && mud->middle_button_down) {
         int ticks = get_ticks();
 
         if (ticks - mud->last_mouse_sample_ticks >= 250) {
@@ -3938,7 +4035,7 @@ void mudclient_handle_game_input(mudclient *mud) {
         int direction = 1;
 
         if (j3 != 0) {
-            mud->an_int_707++;
+            mud->camera_auto_counter++;
 
             if (j3 > 128) {
                 direction = -1;
@@ -3954,11 +4051,11 @@ void mudclient_handle_game_input(mudclient *mud) {
             }
 
             mud->camera_rotation +=
-                ((mud->an_int_707 * j3 + 255) / 256) * direction;
+                ((mud->camera_auto_counter * j3 + 255) / 256) * direction;
 
             mud->camera_rotation &= 0xff;
         } else {
-            mud->an_int_707 = 0;
+            mud->camera_auto_counter = 0;
         }
     } else if (mud->camera_momentum != 0) {
         int sign = mud->camera_momentum > 0 ? 1 : -1;
@@ -4026,7 +4123,7 @@ void mudclient_handle_game_input(mudclient *mud) {
     mud->last_mouse_button_down = 0;
 
     if (mud->settings_camera_auto) {
-        if (mud->an_int_707 == 0) {
+        if (mud->camera_auto_counter == 0) {
             if (mud->key_left) {
                 mud->camera_angle = (mud->camera_angle + 1) & 7;
                 mud->key_left = 0;
@@ -4077,10 +4174,13 @@ void mudclient_handle_game_input(mudclient *mud) {
     mouse_x = mud->gl_mouse_x;
 #endif
 
-    if (!mud->settings_camera_auto && mud->options->middle_click_camera &&
+    if (!mud->settings_camera_auto && mud->options->middle_click_camera != 0 &&
         mud->middle_button_down) {
+        float scale = mud->options->middle_click_camera / 100.0f;
+
         mud->camera_rotation =
-            (mud->origin_rotation + ((mouse_x - mud->origin_mouse_x) / 4)) &
+            (mud->origin_rotation +
+             (int)((mouse_x - mud->origin_mouse_x) * scale)) &
             0xff;
     }
 
@@ -4237,7 +4337,7 @@ void mudclient_update_object_animation(mudclient *mud, int object_index,
 
         scene_add_model(mud->scene, game_model);
 
-        game_model_set_light_from6(game_model, 1, 48, 48, -50, -10, -50);
+        game_model_set_light(game_model, 1, 48, 48, -50, -10, -50);
         game_model_copy_position(game_model, mud->objects[object_index].model);
 
         game_model->key = object_index;
@@ -4849,37 +4949,6 @@ void mudclient_draw_ui(mudclient *mud) {
         mudclient_draw_hover_tooltip(mud);
     }
 
-    if (mud->options->inventory_count) {
-        int x = mud->surface->width - 17;
-        int y = 24;
-
-        int count = mud->inventory_items_count;
-
-        char colour[6] = {0};
-
-        if (count == 30) {
-            strcpy(colour, "@red@");
-        } else if (count > 25) {
-            strcpy(colour, "@or3@");
-        } else if (count > 20) {
-            strcpy(colour, "@or2@");
-        } else if (count > 15) {
-            strcpy(colour, "@or1@");
-        } else if (count > 10) {
-            strcpy(colour, "@gr1@");
-        } else if (count > 5) {
-            strcpy(colour, "@gr2@");
-        } else {
-            strcpy(colour, "@gre@");
-        }
-
-        char formatted_count[17] = {0};
-        sprintf(formatted_count, "%s%d", colour, count);
-
-        surface_draw_string_centre(mud->surface, formatted_count, x, y,
-                                   FONT_BOLD_13, WHITE);
-    }
-
     mud->mouse_button_click = 0;
 }
 
@@ -4946,8 +5015,9 @@ void mudclient_draw_overhead(mudclient *mud) {
         int scale_x = (39 * scale) / 100;
         int scale_y = (27 * scale) / 100;
 
-        surface_draw_action_bubble(mud->surface, x - (scale_x / 2), y - scale_y,
-                                   scale_x, scale_y, mud->sprite_media + 9, 85);
+        surface_draw_sprite_scale_alpha(mud->surface, x - (scale_x / 2),
+                                        y - scale_y, scale_x, scale_y,
+                                        mud->sprite_media + 9, 85);
 
         int scale_x_clip = (36 * scale) / 100;
         int scale_y_clip = (24 * scale) / 100;
@@ -4969,15 +5039,12 @@ void mudclient_draw_overhead(mudclient *mud) {
     for (int i = 0; i < mud->overworld_text_count; i++) {
         int x = mud->overworld_text[i].x;
         int y = mud->overworld_text[i].y;
-        int width = surface_text_width(mud->overworld_text[i].text,
-                                       FONT_REGULAR_11);
+        int width =
+            surface_text_width(mud->overworld_text[i].text, FONT_REGULAR_11);
         int height = surface_text_height(FONT_REGULAR_11);
         for (int j = 0; j < mud->overworld_text_count; j++) {
             int x2 = mud->overworld_text[j].x;
             int y2 = mud->overworld_text[j].y;
-            int width2 = surface_text_width(mud->overworld_text[j].text,
-                                            FONT_REGULAR_11);
-            int height2 = surface_text_height(FONT_REGULAR_11);
             if ((x + width + 2) < x2 || (x - width - 2) > x2) {
                 continue;
             }
@@ -4993,8 +5060,8 @@ void mudclient_draw_overhead(mudclient *mud) {
         int x = mud->overworld_text[i].x;
         int y = mud->overworld_text[i].y;
 
-        surface_draw_string_centre(mud->surface, mud->overworld_text[i].text,
-                                   x, y, FONT_REGULAR_11, colour);
+        surface_draw_string_centre(mud->surface, mud->overworld_text[i].text, x,
+                                   y, FONT_REGULAR_11, colour);
     }
 
     for (int i = 0; i < mud->health_bar_count; i++) {
@@ -5186,11 +5253,11 @@ void mudclient_draw_entity_sprites(mudclient *mud) {
         int x = mud->ground_items[i].x * MAGIC_LOC + 64;
         int y = mud->ground_items[i].y * MAGIC_LOC + 64;
         int id = mud->ground_items[i].id;
-        int elevation = -world_get_elevation(mud->world, x, y) -
-                         mud->ground_items[i].z;
+        int elevation =
+            -world_get_elevation(mud->world, x, y) - mud->ground_items[i].z;
 
-        scene_add_sprite(mud->scene, 40000 + id, x, elevation, y,
-                         96, 64, i + GROUND_ITEM_FACE_TAG);
+        scene_add_sprite(mud->scene, 40000 + id, x, elevation, y, 96, 64,
+                         i + GROUND_ITEM_FACE_TAG);
 
         mud->scene_sprite_count++;
     }
@@ -5273,7 +5340,10 @@ void mudclient_draw_game(mudclient *mud) {
         }
     }
 
-    mudclient_animate_objects(mud);
+    if (!mud->options->lowmem) {
+        mudclient_animate_objects(mud);
+    }
+
     mudclient_draw_entity_sprites(mud);
 
     mud->surface->interlace = 0;
@@ -5283,11 +5353,11 @@ void mudclient_draw_game(mudclient *mud) {
     mud->surface->interlace = mud->options->interlace;
 
     /* flickering lights in dungeons */
-    if (mud->last_plane_index == 3) {
+    if (mud->last_plane_index == 3 && mud->options->flicker) {
         int ambience = 40 + ((float)rand() / (float)RAND_MAX) * 3;
         int diffuse = 40 + ((float)rand() / (float)RAND_MAX) * 7;
 
-        scene_set_light_from5(mud->scene, ambience, diffuse, -50, -10, -50);
+        scene_set_light(mud->scene, ambience, diffuse, -50, -10, -50);
     }
 
     mud->action_bubble_count = 0;
@@ -5325,9 +5395,9 @@ void mudclient_draw_game(mudclient *mud) {
      * 512x346 client when resized beyond that.
      */
     if (mud->game_height > MUD_VANILLA_HEIGHT) {
-        int clip_far = mud->scene->clip_far_3d;
+        int clip_far = mud->scene->clip_far_3d /
+                       (MUD_VANILLA_HEIGHT / (float)mud->game_height);
 
-        clip_far /= (MUD_VANILLA_HEIGHT / (float)mud->game_height);
         mud->scene->clip_far_3d = clip_far;
         mud->scene->clip_far_2d = clip_far;
         mud->scene->fog_z_distance = clip_far - 100;
@@ -5390,7 +5460,8 @@ void mudclient_draw_game(mudclient *mud) {
         sprintf(fps, "Fps: %d", mud->fps);
 
         surface_draw_string(mud->surface, fps,
-                            is_touch ? 9 + offset_x : mud->surface->width - 62 - offset_x,
+                            is_touch ? 9 + offset_x
+                                     : mud->surface->width - 62 - offset_x,
                             mud->surface->height - 22, FONT_BOLD_12, YELLOW);
     }
 
@@ -5419,22 +5490,21 @@ void mudclient_draw_game(mudclient *mud) {
         if (mud->is_in_wilderness) {
             int x = is_touch ? 29 : mud->surface->width - 59;
 
-            surface_draw_sprite(mud->surface, x,
-                                mud->surface->height - 68,
+            surface_draw_sprite(mud->surface, x, mud->surface->height - 68,
                                 mud->sprite_media + 13);
 
-            surface_draw_string_centre(
-                mud->surface, "Wilderness", x + 12,
-                mud->surface->height - 32, FONT_BOLD_12, YELLOW);
+            surface_draw_string_centre(mud->surface, "Wilderness", x + 12,
+                                       mud->surface->height - 32, FONT_BOLD_12,
+                                       YELLOW);
 
             int wilderness_level = 1 + (wilderness_depth / 6);
 
             char formatted_level[19] = {0};
             sprintf(formatted_level, "Level: %d", wilderness_level);
 
-            surface_draw_string_centre(
-                mud->surface, formatted_level, x + 12,
-                mud->surface->height - 19, FONT_BOLD_12, YELLOW);
+            surface_draw_string_centre(mud->surface, formatted_level, x + 12,
+                                       mud->surface->height - 19, FONT_BOLD_12,
+                                       YELLOW);
 
             if (mud->show_wilderness_warning == 0) {
                 mud->show_wilderness_warning = 2;
@@ -5492,7 +5562,7 @@ void mudclient_draw(mudclient *mud) {
 
     if (mud->error_loading_data) {
         /* TODO draw error */
-        // printf("ERROR LOADING DATA\n");
+        // mud_log("ERROR LOADING DATA\n");
         return;
     }
 
@@ -5541,12 +5611,6 @@ void mudclient_sdl1_on_resize(mudclient *mud, int width, int height) {
     mud->game_height = new_height;
 
     if (mud->surface != NULL) {
-#ifdef RENDER_GL
-        // TODO we actually don't need to do this since we only generate
-        // the login scenes on boot
-        // surface_gl_create_framebuffer(mud->surface);
-#endif
-
         if (mudclient_is_ui_scaled(mud)) {
             mud->surface->width = new_width / 2;
             mud->surface->height = new_height / 2;
@@ -5601,10 +5665,25 @@ void mudclient_on_resize(mudclient *mud) {
 #endif
 #endif
 
+#ifdef ANDROID
+    mudclient_full_width = new_width;
+    mudclient_full_height = new_height;
+
+    if (new_width > new_height) {
+        new_width =
+            roundf(360 * (mudclient_full_width / (float)mudclient_full_height));
+
+        new_height = 360;
+    } else {
+        new_width = 360;
+
+        new_height =
+            roundf(360 * (mudclient_full_height / (float)mudclient_full_width));
+    }
+#endif
+
     mud->game_width = new_width;
     mud->game_height = new_height;
-
-    printf("new size: %d %d\n", mud->game_width, mud->game_height);
 
     if (mud->surface != NULL) {
         if (mudclient_is_ui_scaled(mud)) {
@@ -6034,7 +6113,7 @@ void mudclient_poll_events(mudclient *mud) {
     if (!mudclient_has_right_clicked && !mudclient_horizontal_drag &&
         !mudclient_vertical_drag && mudclient_finger_1_down &&
         !mudclient_finger_2_down &&
-        get_ticks() - mudclient_touch_start >= 350) {
+        get_ticks() - mudclient_touch_start >= mud->options->touch_menu_delay) {
         mudclient_mouse_pressed(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_mouse_released(mud, mud->mouse_x, mud->mouse_y, 3);
         mudclient_has_right_clicked = 1;
@@ -6059,6 +6138,12 @@ void mudclient_poll_events(mudclient *mud) {
             int code;
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
             mudclient_key_released(mud, code);
+
+#ifdef ANDROID
+            if (code == K_ENTER) {
+                SDL_StopTextInput();
+            }
+#endif
             break;
         }
         case SDL_MOUSEMOTION:
@@ -6094,6 +6179,13 @@ void mudclient_poll_events(mudclient *mud) {
             }
             break;
         case SDL_FINGERMOTION: {
+#ifdef ANDROID
+            if (SDL_IsTextInputActive()) {
+                SDL_StopTextInput();
+                return;
+            }
+#endif
+
             int touch_x = event.tfinger.x * mud->game_width;
             int touch_y = event.tfinger.y * mud->game_height;
 
@@ -6114,14 +6206,17 @@ void mudclient_poll_events(mudclient *mud) {
                 mudclient_finger_2_y = touch_y;
             }
 
-            if (mudclient_finger_1_down && mudclient_finger_2_down) {
+            if (mud->options->touch_pinch != 0 && mudclient_finger_1_down &&
+                mudclient_finger_2_down) {
                 double pinch_distance =
                     distance(mudclient_finger_1_x, mudclient_finger_1_y,
                              mudclient_finger_2_x, mudclient_finger_2_y);
 
                 if (mudclient_pinch_distance > 0) {
+                    float scale = mud->options->touch_pinch / 100.0f;
+
                     mud->mouse_scroll_delta =
-                        ((mudclient_pinch_distance - pinch_distance) / 2.0f);
+                        (mudclient_pinch_distance - pinch_distance) * scale;
                 }
 
                 mudclient_pinch_distance = pinch_distance;
@@ -6137,12 +6232,15 @@ void mudclient_poll_events(mudclient *mud) {
                                             mudclient_touch_start_y, 2);
                 }
 
-                if (mud->show_ui_tab == 0 &&
+                if (mud->options->touch_vertical_drag != 0 &&
+                    mud->show_ui_tab == 0 &&
                     (mudclient_vertical_drag || abs(delta_y) > 30)) {
                     mudclient_vertical_drag = 1;
 
                     mud->mouse_scroll_delta =
-                        (event.tfinger.dy / 3.0f) * mud->game_height;
+                        (event.tfinger.dy *
+                         (mud->options->touch_vertical_drag / 100.0f)) *
+                        mud->game_height;
                 }
 
                 mudclient_mouse_moved(mud, touch_x, touch_y);
@@ -6151,6 +6249,13 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
         case SDL_FINGERDOWN: {
+#ifdef ANDROID
+            if (SDL_IsTextInputActive()) {
+                SDL_StopTextInput();
+                return;
+            }
+#endif
+
             int touch_x = event.tfinger.x * mud->game_width;
             int touch_y = event.tfinger.y * mud->game_height;
 
@@ -6191,6 +6296,13 @@ void mudclient_poll_events(mudclient *mud) {
             break;
         }
         case SDL_FINGERUP: {
+#ifdef ANDROID
+            if (SDL_IsTextInputActive()) {
+                SDL_StopTextInput();
+                return;
+            }
+#endif
+
             int touch_x = event.tfinger.x * mud->game_width;
             int touch_y = event.tfinger.y * mud->game_height;
 
@@ -6389,7 +6501,9 @@ void mudclient_poll_events(mudclient *mud) {
 int mudclient_is_touch(mudclient *mud) {
     (void)(mud);
 
-#ifdef EMSCRIPTEN
+#ifdef ANDROID
+    return 1; // TODO maybe still make this toggleable
+#elif defined(EMSCRIPTEN)
     return browser_is_touch();
 #else
     return 0;
@@ -6400,7 +6514,18 @@ int mudclient_is_touch(mudclient *mud) {
 void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
                                 int x, int y, int width, int height, int font,
                                 int is_centred) {
-#ifdef EMSCRIPTEN
+    (void)mud;
+    (void)text;
+    (void)is_password;
+    (void)x;
+    (void)y;
+    (void)width;
+    (void)height;
+    (void)font;
+    (void)is_centred;
+#ifdef ANDROID
+    SDL_StartTextInput();
+#elif defined(EMSCRIPTEN)
     if (mudclient_is_ui_scaled(mud)) {
         // TODO
     }
@@ -6685,27 +6810,27 @@ void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
                                 float depth_bottom) {
-
     int32_t highlight_colour = highlight_item(id);
 
     if (highlight_colour != 0 && mud->options->ground_item_text &&
-            mud->overworld_text_count < OVERWORLD_TEXT_MAX) {
-        struct OverworldText t = {0};
-        t.text = game_data.items[id].name;
-        t.colour = highlight_colour;
-        t.x = x + (width / 2);
-        t.y = y - (height / 2);
-        mud->overworld_text[mud->overworld_text_count++] = t;
+        mud->overworld_text_count < OVERWORLD_TEXT_MAX) {
+        struct OverworldText text = {0};
+
+        text.text = game_data.items[id].name;
+        text.colour = highlight_colour;
+        text.x = x + (width / 2);
+        text.y = y - (height / 2);
+
+        mud->overworld_text[mud->overworld_text_count++] = text;
     }
 
-    if (mud->item_models == NULL || mud->item_models[id] == NULL) {
+    if (!mud->options->ground_item_models) {
         int picture = game_data.items[id].sprite + mud->sprite_item;
         int mask = game_data.items[id].mask;
 
-        surface_draw_sprite_transform_mask_depth(mud->surface, x, y,
-                                                 width, height, picture, mask,
-                                                 0, 0, 0, depth_top,
-                                                 depth_bottom);
+        surface_draw_sprite_transform_mask_depth(mud->surface, x, y, width,
+                                                 height, picture, mask, 0, 0, 0,
+                                                 depth_top, depth_bottom);
     }
 }
 
@@ -6794,7 +6919,8 @@ void mudclient_send_logout(mudclient *mud) {
 }
 
 void mudclient_play_sound(mudclient *mud, char *name) {
-    if (!mud->options->members || mud->settings_sound_disabled) {
+    if (!mud->options->members || mud->settings_sound_disabled ||
+        mud->options->lowmem) {
         return;
     }
 
@@ -7023,12 +7149,17 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
             game_data.items[certificate_item_id].mask, 0, 0, 0);
     }
 }
-
+#ifdef WIN9X
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
+                   int nCmdShow) {
+    int argc;    // = nCmdShow?
+    char **argv; // = lpCmdLine?
+#else
 int main(int argc, char **argv) {
+#endif
 #ifdef _3DS
     osSetSpeedupEnable(true);
 #endif
-
     srand(0);
 
     init_utility_global();

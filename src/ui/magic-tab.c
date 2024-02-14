@@ -1,6 +1,6 @@
 #include "magic-tab.h"
 
-char *magic_tabs[] = {"Magic", "Prayers"};
+static const char *magic_tabs[] = {"Magic", "Prayers"};
 
 void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     int ui_x = mud->surface->width - MAGIC_WIDTH - 3;
@@ -70,6 +70,8 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
     }
 #endif
 
+    char *point = is_touch ? "Tap and hold" : "Point";
+
     if (mud->ui_tab_magic_sub_tab == 0) {
         panel_clear_list(mud->panel_magic, mud->control_list_magic);
 
@@ -92,6 +94,10 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
 
             if (game_data.spells[i].level > magic_level) {
                 strcpy(colour_prefix, "@bla@");
+            }
+
+            if (is_touch && mud->selected_spell == i) {
+                strcpy(colour_prefix, "@gre@");
             }
 
             char formatted_spell[64] = {0};
@@ -155,9 +161,19 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                 mudclient_menu_add_wiki(mud, spell_name, spell_name);
             }
         } else {
-            surface_draw_string(mud->surface,
-                                "Point at a spell for a description", ui_x + 2,
+            char directions[42] = {0};
+            sprintf(directions, "%s at a spell for a%s", point,
+                    is_touch ? "" : " description");
+
+            surface_draw_string(mud->surface, directions, ui_x + 2,
                                 description_y, FONT_BOLD_12, BLACK);
+
+            if (is_touch) {
+                surface_draw_string(mud->surface, "description", ui_x + 2,
+                                    description_y +
+                                        surface_text_height(FONT_BOLD_12),
+                                    FONT_BOLD_12, BLACK);
+            }
         }
     } else if (mud->ui_tab_magic_sub_tab == 1) {
         panel_clear_list(mud->panel_magic, mud->control_list_magic);
@@ -215,9 +231,19 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                 mudclient_menu_add_wiki(mud, prayer_name, prayer_name);
             }
         } else {
-            surface_draw_string(mud->surface,
-                                "Point at a prayer for a description", ui_x + 2,
+            char directions[43] = {0};
+            sprintf(directions, "%s at a prayer for a%s", point,
+                    is_touch ? "" : " description");
+
+            surface_draw_string(mud->surface, directions, ui_x + 2,
                                 description_y, FONT_BOLD_12, BLACK);
+
+            if (is_touch) {
+                surface_draw_string(mud->surface, "description", ui_x + 2,
+                                    description_y +
+                                        surface_text_height(FONT_BOLD_12),
+                                    FONT_BOLD_12, BLACK);
+            }
         }
     }
 
@@ -291,7 +317,7 @@ void mudclient_draw_ui_tab_magic(mudclient *mud, int no_menus) {
                     mud->selected_spell = spell_index;
                     mud->selected_item_inventory_index = -1;
 
-                    if (MUD_IS_COMPACT) {
+                    if (MUD_IS_COMPACT || is_touch) {
                         mud->show_ui_tab = 0;
                     }
                 }
