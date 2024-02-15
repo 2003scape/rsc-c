@@ -68,7 +68,7 @@ CFLAGS += -Wall -Wextra -pedantic -g
 #LDFLAGS += -fsanitize=address -static-libasan
 #LDFLAGS += -fsanitize=undefined
 else
-CFLAGS += -s -Ofast
+CFLAGS += -s -O3 -ffast-math
 LDFLAGS += -s
 endif
 
