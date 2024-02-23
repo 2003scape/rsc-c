@@ -157,7 +157,7 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_game_options,
-        "@whi@Higher quality sprites: ", mud->options->tga_sprites, x, y);
+        "@whi@HQ sprites (restart): ", mud->options->tga_sprites, x, y);
 
     mud->game_options[control] = &mud->options->tga_sprites;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
