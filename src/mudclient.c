@@ -2863,7 +2863,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
 
     mud_log("Login response: %d\n", response);
 
-    if (response == 0 || response == 25) {
+    if (response == 0 || response == 1 || response == 25) {
         mud->moderator_level = response == 25;
         mud->auto_login_attempts = 0;
 
@@ -2882,10 +2882,10 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    if (response == 1) {
+    /*if (response == 1) {
         mud->auto_login_attempts = 0;
         return;
-    }
+    }*/
 
     if (reconnecting) {
         mudclient_reset_login_screen(mud);
@@ -3588,6 +3588,21 @@ GameCharacter *mudclient_add_character(mudclient *mud,
                                        int animation, int npc_id) {
     if (character_server[server_index] == NULL) {
         if (npc_id == -1 && server_index == mud->local_player_server_index) {
+            /* unlikely but just in case */
+            for (int i = 0; i < PLAYERS_SERVER_MAX; i++) {
+                if (mud->player_server[i] == mud->local_player) {
+                    mud->player_server[i] = NULL;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < PLAYERS_MAX; i++) {
+                if (mud->players[i] == mud->local_player) {
+                    mud->players[i] = NULL;
+                    break;
+                }
+            }
+
             free(mud->local_player);
             mud->local_player = NULL;
         }
