@@ -200,6 +200,15 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += OPTION_HORIZ_GAP;
 
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_game_options,
+        "@whi@Fog of war: ", mud->options->flicker, x, y);
+
+    mud->game_options[control] = &mud->options->fog_of_war;
+    mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += OPTION_HORIZ_GAP;
+
     sprintf(formatted_digits, "%d", mud->options->field_of_view);
 
     control = mudclient_add_option_panel_string(
@@ -437,6 +446,15 @@ void mudclient_create_options_panel(mudclient *mud) {
         "@whi@Wilderness warning: ", mud->options->wilderness_warning, x, y);
 
     mud->ui_options[control] = &mud->options->wilderness_warning;
+    mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
+    y += OPTION_HORIZ_GAP;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_ui_options,
+        "@whi@Certificate items: ", mud->options->certificate_items, x, y);
+
+    mud->ui_options[control] = &mud->options->certificate_items;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += OPTION_HORIZ_GAP;

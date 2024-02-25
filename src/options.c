@@ -95,6 +95,7 @@ void options_set_defaults(Options *options) {
     options->lowmem = 0;
     options->interlace = 0;
     options->flicker = 1;
+    options->fog_of_war = 1;
     options->ran_target_fps = 10;
     options->display_fps = 0;
     options->number_commas = 1;
@@ -165,6 +166,7 @@ void options_set_vanilla(Options *options) {
     options->lowmem = 0;
     options->interlace = 0;
     options->flicker = 1;
+    options->fog_of_war = 1;
     options->ran_target_fps = 50;
     options->display_fps = 0;
     options->number_commas = 0;
@@ -200,6 +202,18 @@ void options_set_vanilla(Options *options) {
     options->field_of_view = 360;
 }
 
+void options_get_path(char *path) {
+#ifdef ANDROID
+    char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
+    snprintf(path, 1024, "%soptions.ini", pref_path);
+    SDL_free(pref_path);
+#elif defined(EMSCRIPTEN)
+    strcpy(path, "/options/options.ini");
+#else
+    strcpy(path, "./options.ini");
+#endif
+}
+
 void options_save(Options *options) {
 #ifdef WII
     if (!wii_fat_enabled) {
@@ -207,10 +221,13 @@ void options_save(Options *options) {
     }
 #endif
 
-#ifdef EMSCRIPTEN
-    FILE *ini_file = fopen("/options/options.ini", "w");
+    char path[1024] = {0};
+    options_get_path(path);
+
+#ifdef ANDROID
+    SDL_RWops *ini_file = SDL_RWFromFile(path, "w");
 #else
-    FILE *ini_file = fopen("./options.ini", "w");
+    FILE *ini_file = fopen(path, "w");
 #endif
 
     if (!ini_file) {
@@ -218,7 +235,9 @@ void options_save(Options *options) {
         return;
     }
 
-    fprintf(ini_file, OPTIONS_INI_TEMPLATE,
+    char file_buffer[65536] = {0};
+
+    sprintf(file_buffer, OPTIONS_INI_TEMPLATE,
             options->server,                //
             options->port,                  //
             options->members,               //
@@ -253,6 +272,7 @@ void options_save(Options *options) {
             options->lowmem,                //
             options->interlace,             //
             options->flicker,               //
+            options->fog_of_war,            //
             options->ran_target_fps,        //
             options->display_fps,           //
             options->ui_scale,              //
@@ -284,15 +304,25 @@ void options_save(Options *options) {
             options->bank_maintain_slot     //
     );
 
+#ifdef ANDROID
+    if (SDL_RWwrite(ini_file, file_buffer, strlen(file_buffer) + 1, 1) < 1) {
+        mud_error("failed to write options.ini file %s\n", SDL_GetError());
+    }
+
+    if (SDL_RWclose(ini_file) != 0) {
+        mud_error("failed to close options.ini file %s\n", SDL_GetError());
+    }
+#else
+    fwrite(file_buffer, strlen(file_buffer) + 1, 1, ini_file);
     fclose(ini_file);
+#endif
 }
 
 void options_load(Options *options) {
-#ifdef EMSCRIPTEN
-    ini_t *options_ini = ini_load("/options/options.ini");
-#else
-    ini_t *options_ini = ini_load("options.ini");
-#endif
+    char path[1024] = {0};
+    options_get_path(path);
+
+    ini_t *options_ini = ini_load(path);
 
     if (options_ini == NULL) {
         return;
@@ -337,6 +367,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("lowmem", options->lowmem, 0, 1);
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
     OPTION_INI_INT("flicker", options->flicker, 0, 1);
+    OPTION_INI_INT("fog_of_war", options->fog_of_war, 0, 1);
     OPTION_INI_INT("ran_target_fps", options->ran_target_fps, 0, 50);
     OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
     OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);

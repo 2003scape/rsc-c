@@ -1981,7 +1981,7 @@ void mudclient_load_game_config(mudclient *mud) {
 
     free(filter_jag);*/
 
-    if (mud->options->rename_herblaw_items) {
+    if (mud->options->members && mud->options->rename_herblaw_items) {
         modify_unidentified_herbs();
         modify_unfinished_potions();
         modify_potion_dosage();
@@ -2863,7 +2863,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
 
     mud_log("Login response: %d\n", response);
 
-    if (response == 0 || response == 25) {
+    if (response == 0 || response == 1 || response == 25) {
         mud->moderator_level = response == 25;
         mud->auto_login_attempts = 0;
 
@@ -2882,10 +2882,10 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    if (response == 1) {
+    /*if (response == 1) {
         mud->auto_login_attempts = 0;
         return;
-    }
+    }*/
 
     if (reconnecting) {
         mudclient_reset_login_screen(mud);
@@ -3588,6 +3588,21 @@ GameCharacter *mudclient_add_character(mudclient *mud,
                                        int animation, int npc_id) {
     if (character_server[server_index] == NULL) {
         if (npc_id == -1 && server_index == mud->local_player_server_index) {
+            /* unlikely but just in case */
+            for (int i = 0; i < PLAYERS_SERVER_MAX; i++) {
+                if (mud->player_server[i] == mud->local_player) {
+                    mud->player_server[i] = NULL;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < PLAYERS_MAX; i++) {
+                if (mud->players[i] == mud->local_player) {
+                    mud->players[i] = NULL;
+                    break;
+                }
+            }
+
             free(mud->local_player);
             mud->local_player = NULL;
         }
@@ -5403,6 +5418,12 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance = clip_far - 100;
     }
 #endif
+
+    if (!mud->options->fog_of_war) {
+        mud->scene->clip_far_3d = 20000;
+        mud->scene->clip_far_2d = 20000;
+        mud->scene->fog_z_distance = 20000;
+    }
 
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;

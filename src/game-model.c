@@ -1755,6 +1755,11 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
     // int MAX_VERTEX_INDEX = 2147483647;
     int total_buffers = ceil((float)ebo_offset / (float)MAX_VERTEX_INDEX);
 
+    if (total_buffers == 0) {
+        *vertex_buffers_length = 0;
+        return 0;
+    }
+
     *vertex_buffers = calloc(total_buffers, sizeof(gl_vertex_buffer *));
 
     for (int i = 0; i < total_buffers; i++) {
