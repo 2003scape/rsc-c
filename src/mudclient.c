@@ -1981,7 +1981,7 @@ void mudclient_load_game_config(mudclient *mud) {
 
     free(filter_jag);*/
 
-    if (mud->options->rename_herblaw_items) {
+    if (mud->options->members && mud->options->rename_herblaw_items) {
         modify_unidentified_herbs();
         modify_unfinished_potions();
         modify_potion_dosage();
