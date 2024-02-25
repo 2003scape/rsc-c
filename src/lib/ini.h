@@ -10,6 +10,10 @@
 
 #define INI_VERSION "0.1.1"
 
+#ifdef ANDROID
+#include <SDL.h>
+#endif
+
 typedef struct ini_t ini_t;
 
 ini_t*      ini_load(const char *filename);
