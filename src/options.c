@@ -95,6 +95,7 @@ void options_set_defaults(Options *options) {
     options->lowmem = 0;
     options->interlace = 0;
     options->flicker = 1;
+    options->fog_of_war = 1;
     options->ran_target_fps = 10;
     options->display_fps = 0;
     options->number_commas = 1;
@@ -165,6 +166,7 @@ void options_set_vanilla(Options *options) {
     options->lowmem = 0;
     options->interlace = 0;
     options->flicker = 1;
+    options->fog_of_war = 1;
     options->ran_target_fps = 50;
     options->display_fps = 0;
     options->number_commas = 0;
@@ -270,6 +272,7 @@ void options_save(Options *options) {
             options->lowmem,                //
             options->interlace,             //
             options->flicker,               //
+            options->fog_of_war,            //
             options->ran_target_fps,        //
             options->display_fps,           //
             options->ui_scale,              //
@@ -364,6 +367,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("lowmem", options->lowmem, 0, 1);
     OPTION_INI_INT("interlace", options->interlace, 0, 1);
     OPTION_INI_INT("flicker", options->flicker, 0, 1);
+    OPTION_INI_INT("fog_of_war", options->fog_of_war, 0, 1);
     OPTION_INI_INT("ran_target_fps", options->ran_target_fps, 0, 50);
     OPTION_INI_INT("display_fps", options->display_fps, 0, 1);
     OPTION_INI_INT("ui_scale", options->ui_scale, 0, 1);

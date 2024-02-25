@@ -81,6 +81,8 @@ typedef struct Options Options;
      "interlace = %d\n"                                                        \
      "; Underground lighting flicker\n"                                        \
      "flicker = %d\n"                                                          \
+     "; Fog of War (FoW)\n"                                                    \
+     "fog_of_war = %d\n"                                                       \
      "; Target framerate of @ran@ text effect\n"                               \
      "ran_target_fps = %d\n"                                                   \
      "; Display the FPS at the bottom right of the screen\n"                   \
@@ -260,6 +262,9 @@ struct Options {
 
     /* underground lighting flicker */
     int flicker;
+
+    /* fog of war */
+    int fog_of_war;
 
     /* target framerate of @ran@ text effect */
     int ran_target_fps;

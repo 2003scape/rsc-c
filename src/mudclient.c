@@ -5419,6 +5419,12 @@ void mudclient_draw_game(mudclient *mud) {
     }
 #endif
 
+    if (!mud->options->fog_of_war) {
+        mud->scene->clip_far_3d = 20000;
+        mud->scene->clip_far_2d = 20000;
+        mud->scene->fog_z_distance = 20000;
+    }
+
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;
 
