@@ -98,8 +98,17 @@ inside C:\mingw\bin copy the mingw32-make.exe as make.exe
 
 edit autoexec.bat on drive C and add
 ```
-PATH=C:\mingw\bin
+    PATH=C:\mingw\bin
 ```
+
+then run the following in a command window
+
+```
+    make -f Makefile.win9x
+```
+
+distribute with `./SDL.dll`, `./SDL_image.dll`, and `./cache` directory.
+
 test locally.
 
 ### run requirements
@@ -113,11 +122,6 @@ windows 95 or 98
 note OS must have winsock 2
 
 on windows 95 might need to install ws2setup.exe
-
-    make -f Makefile.win9x
-    mudclient.exe
-
-distribute with `./SDL.dll`, `./SDL_image.dll`, and `./cache` directory.
 
 ## build (web)
 
