@@ -13,7 +13,7 @@ LDFLAGS += -lSDL_image -lSDL -lwsock32 -lws2_32 -mwindows
 ifdef DEBUG
 CFLAGS += -Wall -Wextra -pedantic -g
 else
-CFLAGS += -march=pentium -mtune=pentium -s -Ofast
+CFLAGS += -march=pentiumpro -mtune=pentiumpro -s -O3 -ffast-math
 LDFLAGS += -s
 endif
 
