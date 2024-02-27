@@ -82,6 +82,8 @@ distribute with `./SDL2.dll`, `./glew32.dll` and `./cache` directory.
 
 ## build (windows 9x)
 
+building requires at least 256MB of ram and a pentium pro or greater processor
+
 download [gcc-win98](https://github.com/fsb4000/gcc-for-Windows98/releases).
 
 download [mingw](https://sourceforge.net/projects/mingw/files/MinGW/Extension/make/mingw32-make-3.80-3/).
@@ -94,11 +96,15 @@ install mingw to C:\mingw
 
 inside C:\mingw\bin copy the mingw32-make.exe as make.exe
 
+edit autoexec.bat on drive C and add
+```
+PATH=C:\mingw\bin
+```
 test locally.
 
 ### run requirements
 
-pentium processor
+pentium pro or greater processor
 
 64MB of ram
 
@@ -111,7 +117,7 @@ on windows 95 might need to install ws2setup.exe
     make -f Makefile.win9x
     mudclient.exe
 
-distribute with `./SDL-1.2.15/bin/SDL.dll`, and `./cache` directory.
+distribute with `./SDL.dll`, `./SDL_image.dll`, and `./cache` directory.
 
 ## build (web)
 
