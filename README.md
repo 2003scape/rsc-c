@@ -119,9 +119,9 @@ pentium pro or greater processor
 
 windows 95 or 98
 
-note OS must have winsock 2
+note OS must have comctl32, winsock 2, and msvctr
 
-on windows 95 might need to install ws2setup.exe
+on windows 95 might need to install ws2setup.exe, 401comupd.exe, and find a copy of msvctr.dll
 
 ## build (web)
 
