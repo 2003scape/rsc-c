@@ -1485,13 +1485,13 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
 
         /* -2 is the bridge in the barbarian agility course. fixes
          * https://github.com/2003scape/rsc-c/issues/76 */
-        if (fill_front == -2) {
+        /*if (fill_front == -2) {
             fill_front = COLOUR_TRANSPARENT;
         }
 
         if (fill_back == -2) {
             fill_back = COLOUR_TRANSPARENT;
-        }
+        }*/
 
         gl_face_fill face_fill_front = {0};
         game_model_gl_decode_face_fill(fill_front, &face_fill_front);
