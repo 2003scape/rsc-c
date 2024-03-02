@@ -1479,6 +1479,10 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
             fill_front = COLOUR_TRANSPARENT;
         }
 
+        if (fill_back == -2) {
+            fill_back = COLOUR_TRANSPARENT;
+        }
+
         gl_face_fill face_fill_front = {0};
         game_model_gl_decode_face_fill(fill_front, &face_fill_front);
 
