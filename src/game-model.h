@@ -44,7 +44,7 @@ typedef struct gl_face_fill {
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
-#if !defined (SDL12) && !defined (__SWITCH__)
+#if !defined(SDL12) && !defined(__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 
@@ -173,17 +173,15 @@ struct GameModel {
 };
 
 void game_model_new(GameModel *game_model);
-void game_model_new_alloc(GameModel *game_model,
-                          int vertex_count, int face_count);
+void game_model_new_alloc(GameModel *game_model, int vertex_count,
+                          int face_count);
 void game_model_new_merge(GameModel *game_model, GameModel **pieces, int count);
 void game_model_new_merge_flags(GameModel *game_model, GameModel **pieces,
                                 int count, int autocommit, int isolated,
                                 int unlit, int unpickable);
-void game_model_new_alloc_flags(GameModel *game_model,
-                                int vertex_count, int face_count,
-                                int autocommit, int isolated,
-                                int unlit, int unpickable,
-                                int projected);
+void game_model_new_alloc_flags(GameModel *game_model, int vertex_count,
+                                int face_count, int autocommit, int isolated,
+                                int unlit, int unpickable, int projected);
 void game_model_new_ob3(GameModel *game_model, int8_t *data, size_t len);
 void game_model_reset(GameModel *game_model);
 void game_model_allocate(GameModel *game_model, int vertex_count,
@@ -195,19 +193,19 @@ void game_model_reduce(GameModel *game_model, int delta_faces,
 void game_model_merge(GameModel *game_model, GameModel **pieces, int count);
 int game_model_vertex_at(GameModel *game_model, int x, int y, int z);
 int game_model_create_vertex(GameModel *game_model, int x, int y, int z);
-int game_model_create_face(GameModel *game_model, int number, uint16_t *vertices,
-                           int fill_front, int fill_back);
+int game_model_create_face(GameModel *game_model, int number,
+                           uint16_t *vertices, int fill_front, int fill_back);
 void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
                       int piece_dz, int rows, int count, int piece_max_vertices,
                       int pickable);
 void game_model_copy_lighting(GameModel *game_model, GameModel *model,
-                              uint16_t *src_vertices, int vertex_count, int in_face);
+                              uint16_t *src_vertices, int vertex_count,
+                              int in_face);
 void game_model_set_light_dir(GameModel *game_model, int x, int y, int z);
 void game_model_set_light_intensity(GameModel *game_model, int ambience,
                                     int diffuse, int x, int y, int z);
-void game_model_set_light(GameModel *game_model, int gouraud,
-                          int ambience, int diffuse,
-                          int x, int y, int z);
+void game_model_set_light(GameModel *game_model, int gouraud, int ambience,
+                          int diffuse, int x, int y, int z);
 void game_model_set_vertex_ambience(GameModel *game_model, int vertex_index,
                                     int ambience);
 void game_model_orient(GameModel *game_model, int yaw, int pitch, int roll);
@@ -224,9 +222,11 @@ void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
                                  int16_t *vertex_y, int16_t *vertex_z,
                                  int16_t *face_normal_x, int16_t *face_normal_y,
                                  int16_t *face_normal_z, int reset_scale);
-void game_model_get_vertex_normals(GameModel *game_model, int16_t *face_normal_x,
-                                   int16_t *face_normal_y, int16_t *face_normal_z,
-                                   int16_t *normal_x, int16_t *normal_y, int16_t *normal_z,
+void game_model_get_vertex_normals(GameModel *game_model,
+                                   int16_t *face_normal_x,
+                                   int16_t *face_normal_y,
+                                   int16_t *face_normal_z, int16_t *normal_x,
+                                   int16_t *normal_y, int16_t *normal_z,
                                    int32_t *normal_magnitude);
 void game_model_light(GameModel *game_model);
 void game_model_relight(GameModel *game_model);
@@ -271,7 +271,7 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
 #endif
 #if defined(RENDER_GL) && defined(EMSCRIPTEN)
 void game_model_gl_create_pick_buffer(gl_vertex_buffer *pick_buffer,
-                                   int vbo_length, int ebo_length);
+                                      int vbo_length, int ebo_length);
 void game_model_gl_buffer_pick_arrays(GameModel *game_model, int *vertex_offset,
                                       int *ebo_offset);
 void game_model_gl_buffer_pick_models(gl_vertex_buffer *pick_buffer,

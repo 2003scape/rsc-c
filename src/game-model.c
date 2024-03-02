@@ -27,12 +27,14 @@ void game_model_new(GameModel *game_model) {
 #endif
 }
 
-void game_model_new_alloc(GameModel *game_model, int vertex_count, int face_count) {
+void game_model_new_alloc(GameModel *game_model, int vertex_count,
+                          int face_count) {
     game_model_new(game_model);
     game_model_allocate(game_model, vertex_count, face_count);
 }
 
-void game_model_new_merge(GameModel *game_model, GameModel **pieces, int count) {
+void game_model_new_merge(GameModel *game_model, GameModel **pieces,
+                          int count) {
     game_model_new(game_model);
     game_model_merge(game_model, pieces, count);
 }
@@ -50,11 +52,9 @@ void game_model_new_merge_flags(GameModel *game_model, GameModel **pieces,
     game_model_merge(game_model, pieces, count);
 }
 
-void game_model_new_alloc_flags(GameModel *game_model,
-                                int vertex_count, int face_count,
-                                int autocommit, int isolated,
-                                int unlit, int unpickable,
-                                int projected) {
+void game_model_new_alloc_flags(GameModel *game_model, int vertex_count,
+                                int face_count, int autocommit, int isolated,
+                                int unlit, int unpickable, int projected) {
     game_model_new(game_model);
 
     game_model->autocommit = autocommit;
@@ -175,7 +175,7 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
     game_model->normal_magnitude = calloc(face_count, sizeof(int32_t));
 
     // TODO only scene->view needs this
-    //#ifdef RENDER_SW
+    // #ifdef RENDER_SW
     if (!game_model->projected) {
         game_model->project_vertex_x = calloc(vertex_count, sizeof(int16_t));
         game_model->project_vertex_y = calloc(vertex_count, sizeof(int16_t));
@@ -183,7 +183,7 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         game_model->vertex_view_x = calloc(vertex_count, sizeof(int32_t));
         game_model->vertex_view_y = calloc(vertex_count, sizeof(int32_t));
     }
-    //#endif
+    // #endif
 
     if (!game_model->unpickable) {
         game_model->is_local_player = calloc(face_count, sizeof(int8_t));
@@ -196,11 +196,16 @@ void game_model_allocate(GameModel *game_model, int vertex_count,
         game_model->vertex_transformed_z = game_model->vertex_z;
     } else {
         // TODO only scene->view needs this
-        //#ifdef RENDER_SW
-        game_model->vertex_transformed_x = calloc(vertex_count, sizeof(int16_t));
-        game_model->vertex_transformed_y = calloc(vertex_count, sizeof(int16_t));
-        game_model->vertex_transformed_z = calloc(vertex_count, sizeof(int16_t));
-        //#endif
+        // #ifdef RENDER_SW
+        game_model->vertex_transformed_x =
+            calloc(vertex_count, sizeof(int16_t));
+
+        game_model->vertex_transformed_y =
+            calloc(vertex_count, sizeof(int16_t));
+
+        game_model->vertex_transformed_z =
+            calloc(vertex_count, sizeof(int16_t));
+        // #endif
     }
 
     if (!game_model->unlit || !game_model->isolated) {
@@ -333,8 +338,8 @@ int game_model_create_vertex(GameModel *game_model, int x, int y, int z) {
     return game_model->vertex_count++;
 }
 
-int game_model_create_face(GameModel *game_model, int number, uint16_t *vertices,
-                           int fill_front, int fill_back) {
+int game_model_create_face(GameModel *game_model, int number,
+                           uint16_t *vertices, int fill_front, int fill_back) {
     if (game_model->face_count >= game_model->max_faces) {
         return -1;
     }
@@ -383,9 +388,8 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
 
         pieces[i] = malloc(sizeof(GameModel));
 
-        game_model_new_alloc_flags(pieces[i],
-            piece_vertex_count[i], piece_face_count[i],
-            1, 1, 1, pickable, 1);
+        game_model_new_alloc_flags(pieces[i], piece_vertex_count[i],
+                                   piece_face_count[i], 1, 1, 1, pickable, 1);
 
         pieces[i]->light_diffuse = game_model->light_diffuse;
         pieces[i]->light_ambience = game_model->light_ambience;
@@ -472,9 +476,8 @@ void game_model_set_light_intensity(GameModel *game_model, int ambience,
     game_model_set_light_dir(game_model, x, y, z);
 }
 
-void game_model_set_light(GameModel *game_model, int gouraud,
-                          int ambience, int diffuse,
-                          int x, int y, int z) {
+void game_model_set_light(GameModel *game_model, int gouraud, int ambience,
+                          int diffuse, int x, int y, int z) {
     if (game_model->unlit) {
         return;
     }
@@ -751,9 +754,11 @@ void game_model_get_face_normals(GameModel *game_model, int16_t *vertex_x,
     }
 }
 
-void game_model_get_vertex_normals(GameModel *game_model, int16_t *face_normal_x,
-                                   int16_t *face_normal_y, int16_t *face_normal_z,
-                                   int16_t *normal_x, int16_t *normal_y, int16_t *normal_z,
+void game_model_get_vertex_normals(GameModel *game_model,
+                                   int16_t *face_normal_x,
+                                   int16_t *face_normal_y,
+                                   int16_t *face_normal_z, int16_t *normal_x,
+                                   int16_t *normal_y, int16_t *normal_z,
                                    int32_t *normal_magnitude) {
     for (int i = 0; i < game_model->face_count; i++) {
         if (game_model->face_intensity[i] == GAME_MODEL_USE_GOURAUD) {
@@ -795,7 +800,8 @@ void game_model_light(GameModel *game_model) {
     int16_t *normal_y = calloc(game_model->vertex_count, sizeof(int16_t));
     int16_t *normal_z = calloc(game_model->vertex_count, sizeof(int16_t));
 
-    int32_t *normal_magnitude = calloc(game_model->vertex_count, sizeof(int32_t));
+    int32_t *normal_magnitude =
+        calloc(game_model->vertex_count, sizeof(int32_t));
 
     game_model_get_vertex_normals(game_model, game_model->face_normal_x,
                                   game_model->face_normal_y,
@@ -842,7 +848,7 @@ void game_model_reset_transform(GameModel *game_model) {
     game_model->transform_state = 0;
 
     // TODO only scene->view needs this
-    //#ifdef RENDER_SW
+    // #ifdef RENDER_SW
     if (!game_model->autocommit) {
         memcpy(game_model->vertex_transformed_x, game_model->vertex_x,
                game_model->vertex_count * sizeof(int16_t));
@@ -853,7 +859,7 @@ void game_model_reset_transform(GameModel *game_model) {
         memcpy(game_model->vertex_transformed_z, game_model->vertex_z,
                game_model->vertex_count * sizeof(int16_t));
     }
-    //#endif
+    // #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     glm_mat4_identity(game_model->transform);
@@ -903,7 +909,7 @@ void game_model_apply(GameModel *game_model) {
 #endif
 
         // TODO only scene->view needs this
-        //#ifdef RENDER_SW
+        // #ifdef RENDER_SW
         if (game_model->transform_type >= GAME_MODEL_TRANSFORM_ROTATE) {
             game_model_apply_rotation(game_model, game_model->orientation_yaw,
                                       game_model->orientation_pitch,
@@ -914,7 +920,7 @@ void game_model_apply(GameModel *game_model) {
             game_model_apply_translate(game_model, game_model->base_x,
                                        game_model->base_y, game_model->base_z);
         }
-        //#endif
+        // #endif
 
         game_model_compute_bounds(game_model);
 
@@ -1026,7 +1032,7 @@ void game_model_commit(GameModel *game_model) {
     game_model_apply(game_model);
 
     // TODO only scene->view needs this
-    //#ifdef RENDER_SW
+    // #ifdef RENDER_SW
     if (!game_model->autocommit) {
         memcpy(game_model->vertex_x, game_model->vertex_transformed_x,
                game_model->vertex_count * sizeof(int16_t));
@@ -1035,7 +1041,7 @@ void game_model_commit(GameModel *game_model) {
         memcpy(game_model->vertex_z, game_model->vertex_transformed_z,
                game_model->vertex_count * sizeof(int16_t));
     }
-    //#endif
+    // #endif
 
     game_model_reset(game_model);
 }
@@ -1103,8 +1109,8 @@ GameModel *game_model_copy_flags(GameModel *game_model, int autocommit,
     pieces[0] = game_model;
 
     GameModel *copy = malloc(sizeof(GameModel));
-    game_model_new_merge_flags(copy, pieces,
-        1, autocommit, isolated, unlit, pickable);
+    game_model_new_merge_flags(copy, pieces, 1, autocommit, isolated, unlit,
+                               pickable);
 
     copy->depth = game_model->depth;
 
@@ -1419,8 +1425,7 @@ void gl_offset_texture_uvs_atlas(gl_atlas_position texture_position,
         fabs(texture_position.top_v - texture_position.bottom_v);
 
     /* for fountain texture */
-    if (texture_width * 1024 == 64 &&
-        texture_height * 1024 == 128) {
+    if (texture_width * 1024 == 64 && texture_height * 1024 == 128) {
         texture_height /= 2;
     }
 
@@ -1452,9 +1457,14 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
                                 game_model->vertex_y, game_model->vertex_z,
                                 face_normal_x, face_normal_y, face_normal_z, 0);
 
-    int16_t *vertex_normal_x = calloc(game_model->vertex_count, sizeof(int16_t));
-    int16_t *vertex_normal_y = calloc(game_model->vertex_count, sizeof(int16_t));
-    int16_t *vertex_normal_z = calloc(game_model->vertex_count, sizeof(int16_t));
+    int16_t *vertex_normal_x =
+        calloc(game_model->vertex_count, sizeof(int16_t));
+
+    int16_t *vertex_normal_y =
+        calloc(game_model->vertex_count, sizeof(int16_t));
+
+    int16_t *vertex_normal_z =
+        calloc(game_model->vertex_count, sizeof(int16_t));
 
     int32_t *vertex_normal_magnitude =
         calloc(game_model->vertex_count, sizeof(int32_t));
