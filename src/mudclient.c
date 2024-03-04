@@ -1833,22 +1833,47 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     memcpy(header, file_data, sizeof(header));
 #else
-    int file_length = strlen(file);
-
-#if defined(_3DS) || defined(__SWITCH__)
-    char *prefix = "romfs:";
-#else
-    char *prefix = "./cache";
-#endif
 
 #ifdef ANDROID
     char *prefixed_file = file;
     SDL_RWops *archive_stream = SDL_RWFromFile(prefixed_file, "rb");
+#elif defined(_3DS) || defined(__SWITCH__)
+    char prefixed_file[PATH_MAX];
+    snprintf(prefixed_file, "romfs:/%s", file);
 #else
-    char prefixed_file[file_length + strlen(prefix) + 2];
-    sprintf(prefixed_file, "%s/%s", prefix, file);
+    char prefixed_file[PATH_MAX];
+    snprintf(prefixed_file, sizeof(prefixed_file), "./cache/%s", file);
 
+    /* attempt to read cache from the current working directory first */
+    printf("INFO: Loading %s\n", prefixed_file);
     FILE *archive_stream = fopen(prefixed_file, "rb");
+    if (archive_stream == NULL) {
+        /* cwd failed, now try the xdg home directory... */
+        const char *xdg_home = getenv("XDG_DATA_HOME");
+
+        if (xdg_home == NULL) {
+            const char *home = getenv("HOME");
+            if (home == NULL) {
+                home = "";
+            }
+            snprintf(prefixed_file, sizeof(prefixed_file),
+                "%s/.local/share/rsc-c/%s", home, file);
+        } else {
+            snprintf(prefixed_file, sizeof(prefixed_file),
+                "%s/rsc-c/%s", xdg_home, file);
+        }
+
+        printf("INFO: Loading %s\n", prefixed_file);
+        archive_stream = fopen(prefixed_file, "rb");
+
+        /* XDG failed, now try the global prefix... */
+        if (archive_stream == NULL) {
+            snprintf(prefixed_file, sizeof(prefixed_file),
+                "%s/%s", DATADIR, file);
+            printf("INFO: Loading %s\n", prefixed_file);
+            archive_stream = fopen(prefixed_file, "rb");
+        }
+    }
 #endif
 
     if (archive_stream == NULL) {
