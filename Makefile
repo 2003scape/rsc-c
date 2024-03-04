@@ -90,6 +90,12 @@ install: mudclient
 	cp -p mudclient $(DESTDIR)$(PREFIX)/$(BINDIR)
 	mkdir -p $(DESTDIR)$(PREFIX)/$(DATADIR)
 	cp -Rp cache/* $(DESTDIR)$(PREFIX)/$(DATADIR)
+	mkdir -p $(DESTDIR)$(PREFIX)/$(DATAROOTDIR)/applications
+	cp -p freedesktop/*.desktop \
+		$(DESTDIR)$(PREFIX)/$(DATAROOTDIR)/applications
+	mkdir -p $(DESTDIR)$(PREFIX)/$(DATAROOTDIR)/pixmaps
+	cp -p web/icon.png \
+		$(DESTDIR)$(PREFIX)/$(DATAROOTDIR)/pixmaps/rsc-c.png
 
 clean:
 	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o src/custom/*.o glad/*.o
