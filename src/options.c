@@ -2,6 +2,7 @@
 #if defined(__unix__) || defined(__unix) || \
     (defined(__APPLE__) && defined(__MACH__))
 #include <sys/stat.h>
+#define OPTIONS_UNIX
 #endif
 
 #ifdef WII
@@ -213,8 +214,7 @@ void options_get_path(char *path) {
     SDL_free(pref_path);
 #elif defined(EMSCRIPTEN)
     snprintf(path, PATH_MAX, "/options/options.ini");
-#elif defined(__unix__) || defined(__unix) || \
-      (defined(__APPLE__) && defined(__MACH__))
+#elif defined(OPTIONS_UNIX)
     const char *xdg = getenv("XDG_CONFIG_HOME");
     if (xdg != NULL) {
         snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
@@ -336,6 +336,11 @@ void options_save(Options *options) {
 #else
     fwrite(file_buffer, strlen(file_buffer) + 1, 1, ini_file);
     fclose(ini_file);
+#endif
+
+#ifdef OPTIONS_UNIX
+    /* restrict access to potentially sensitive info */
+    (void)chmod(path, S_IRUSR | S_IWUSR);
 #endif
 }
 
