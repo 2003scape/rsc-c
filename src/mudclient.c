@@ -4583,7 +4583,7 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = j5 + game_data.animations[animation_id].file_id;
-            if (mud->surface->sprite_palette[sprite_id] == NULL &&
+            if (mud->surface->surface_pixels[sprite_id] == NULL &&
                 mud->surface->sprite_colours[sprite_id] == NULL) {
                 /* sprite file was not loaded, probably on f2p version */
                 continue;
@@ -4741,7 +4741,7 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = k4 + game_data.animations[animation_id].file_id;
-            if (mud->surface->sprite_palette[sprite_id] == NULL &&
+            if (mud->surface->surface_pixels[sprite_id] == NULL &&
                 mud->surface->sprite_colours[sprite_id] == NULL) {
                 /* sprite file was not loaded, probably on f2p version */
                 continue;
