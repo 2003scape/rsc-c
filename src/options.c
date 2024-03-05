@@ -332,7 +332,7 @@ void options_load(Options *options) {
     OPTION_INI_STR("server", options->server, 255);
     OPTION_INI_INT("port", options->port, 0, 65535);
     OPTION_INI_INT("members", options->members, 0, 1);
-    OPTION_INI_INT("registration", options->members, 0, 1);
+    OPTION_INI_INT("registration", options->registration, 0, 1);
     OPTION_INI_STR("rsa_exponent", options->rsa_exponent, 512);
     OPTION_INI_STR("rsa_modulus", options->rsa_modulus, 512);
     OPTION_INI_INT("idle_logout", options->idle_logout, 0, 1);
