@@ -1,4 +1,9 @@
 #include "options.h"
+#if defined(__unix__) || defined(__unix) || \
+    (defined(__APPLE__) && defined(__MACH__))
+#include <sys/stat.h>
+#define OPTIONS_UNIX
+#endif
 
 #ifdef WII
 int wii_fat_enabled = 0;
@@ -205,12 +210,28 @@ void options_set_vanilla(Options *options) {
 void options_get_path(char *path) {
 #ifdef ANDROID
     char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
-    snprintf(path, 1024, "%soptions.ini", pref_path);
+    snprintf(path, PATH_MAX, "%soptions.ini", pref_path);
     SDL_free(pref_path);
 #elif defined(EMSCRIPTEN)
-    strcpy(path, "/options/options.ini");
+    snprintf(path, PATH_MAX, "/options/options.ini");
+#elif defined(OPTIONS_UNIX)
+    const char *xdg = getenv("XDG_CONFIG_HOME");
+    if (xdg != NULL) {
+        snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
+        /* don't want 'other' to read because it can contain passwords */
+        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
+        snprintf(path, PATH_MAX, "%s/rsc-c/options.ini", xdg);
+    } else {
+        const char *home = getenv("HOME");
+        if (home == NULL) {
+            home = "";
+        }
+        snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
+        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
+        snprintf(path, PATH_MAX, "%s/.config/rsc-c/options.ini", home);
+    }
 #else
-    strcpy(path, "./options.ini");
+    snprintf(path, PATH_MAX, "%s", "./options.ini");
 #endif
 }
 
@@ -221,7 +242,7 @@ void options_save(Options *options) {
     }
 #endif
 
-    char path[1024] = {0};
+    char path[PATH_MAX];
     options_get_path(path);
 
 #ifdef ANDROID
@@ -316,10 +337,15 @@ void options_save(Options *options) {
     fwrite(file_buffer, strlen(file_buffer) + 1, 1, ini_file);
     fclose(ini_file);
 #endif
+
+#ifdef OPTIONS_UNIX
+    /* restrict access to potentially sensitive info */
+    (void)chmod(path, S_IRUSR | S_IWUSR);
+#endif
 }
 
 void options_load(Options *options) {
-    char path[1024] = {0};
+    char path[PATH_MAX];
     options_get_path(path);
 
     ini_t *options_ini = ini_load(path);
