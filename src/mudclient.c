@@ -1652,6 +1652,24 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
         mud->mouse_y /= 2;
     }
 
+    /*
+     * in SDL12 mouse wheel scrolling is treated as digital button press,
+     * while in SDL2 it is handled as a different type of event entirely.
+     */
+    if (button == 4 || button == 5) {
+        if (mud->options->mouse_wheel) {
+            if (button == 4) {
+                mud->mouse_scroll_delta--;
+            } else {
+                mud->mouse_scroll_delta++;
+            }
+            return;
+        } else {
+            /* treat it as a right click when scrolling is disabled */
+            button = 3;
+        }
+    }
+
     if (mud->options->middle_click_camera != 0 && button == 2) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
