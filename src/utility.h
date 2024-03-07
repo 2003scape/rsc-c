@@ -21,7 +21,7 @@
 #elif defined(_3DS)
 #include <3ds.h>
 
-#if defined(RENDER_3DS_GL)
+#ifdef RENDER_3DS_GL
 #include <citro3d.h>
 #include <tex3ds.h>
 #endif
@@ -38,7 +38,10 @@
 #else
 #include <SDL_image.h>
 #endif
-#ifdef GLAD
+
+#ifdef ANDROID
+#include "SDL_opengles2.h"
+#elif defined(GLAD)
 #ifdef __SWITCH__
 #include <glad/glad.h>
 #else
@@ -48,6 +51,7 @@
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
+
 #endif
 #endif
 

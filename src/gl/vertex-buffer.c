@@ -17,9 +17,19 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
            vbo_length * vertex_length);*/
 
 #ifdef RENDER_GL
+#ifndef ANDROID
     glGenVertexArrays(1, &vertex_buffer->vao);
+#endif
     glGenBuffers(1, &vertex_buffer->vbo);
     glGenBuffers(1, &vertex_buffer->ebo);
+
+    vertex_buffer_gl_bind(vertex_buffer);
+
+    glBufferData(GL_ARRAY_BUFFER, vbo_length * vertex_length, NULL,
+                 GL_DYNAMIC_DRAW);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
+                 GL_DYNAMIC_DRAW);
 #elif defined(RENDER_3DS_GL)
     vertex_buffer->vbo = linearAlloc(vbo_length * vertex_length);
     vertex_buffer->ebo = linearAlloc(ebo_length * sizeof(uint16_t));
@@ -32,16 +42,6 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
     AttrInfo_Init(&vertex_buffer->attr_info);
     BufInfo_Init(&vertex_buffer->buf_info);
 #endif
-
-#ifdef RENDER_GL
-    vertex_buffer_gl_bind(vertex_buffer);
-
-    glBufferData(GL_ARRAY_BUFFER, vbo_length * vertex_length, NULL,
-                 GL_DYNAMIC_DRAW);
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_length * sizeof(GLuint), NULL,
-                 GL_DYNAMIC_DRAW);
-#endif
 }
 
 void vertex_buffer_gl_bind(gl_vertex_buffer *vertex_buffer) {
@@ -50,7 +50,9 @@ void vertex_buffer_gl_bind(gl_vertex_buffer *vertex_buffer) {
     }
 
 #ifdef RENDER_GL
+#ifndef ANDROID
     glBindVertexArray(vertex_buffer->vao);
+#endif
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertex_buffer->ebo);
 #elif defined(RENDER_3DS_GL)
@@ -96,7 +98,9 @@ void vertex_buffer_gl_destroy(gl_vertex_buffer *vertex_buffer) {
     }
 
 #ifdef RENDER_GL
+#ifndef ANDROID
     glDeleteVertexArrays(1, &vertex_buffer->vao);
+#endif
     glDeleteBuffers(1, &vertex_buffer->vbo);
     glDeleteBuffers(1, &vertex_buffer->ebo);
 #elif defined(RENDER_3DS_GL)

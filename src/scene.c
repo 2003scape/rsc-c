@@ -183,12 +183,18 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->gl_wall_buffers = calloc(1, sizeof(gl_vertex_buffer *));
     scene->gl_wall_buffers[0] = calloc(1, sizeof(gl_vertex_buffer));
 
+    // TODO
+#ifndef ANDROID
     game_model_gl_create_buffer(scene->gl_wall_buffers[0], WALL_OBJECTS_MAX * 4,
                                 WALL_OBJECTS_MAX * 6);
 #endif
+#endif
 
 #ifdef RENDER_GL
-#ifdef EMSCRIPTEN
+#ifdef ANDROID
+    shader_new(&scene->game_model_shader, "game-model.android.vs",
+               "game-model.android.fs");
+#elif defined(EMSCRIPTEN)
     shader_new(&scene->game_model_shader, "./cache/game-model.webgl.vs",
                "./cache/game-model.webgl.fs");
 
@@ -236,7 +242,10 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     shader_set_float_array(&scene->game_model_shader, "texture_light_gradient",
                            scene->texture_light_gradient, RAMP_SIZE);
 
-#ifdef __SWITCH__
+#ifdef ANDROID
+    gl_load_texture(&scene->gl_model_texture, "textures/model_textures.png");
+    scene->gl_model_surface = IMG_Load("textures/model_textures.png");
+#elif defined(__SWITCH__)
     gl_load_texture(&scene->gl_model_texture,
                     "romfs:/textures/model_textures.png");
 
@@ -4085,6 +4094,7 @@ void scene_gl_update_camera(Scene *scene) {
 
 #ifdef RENDER_GL
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
+    return;
     if (game_model->gl_ebo_offset == -1 || !game_model->visible) {
         return;
     }
@@ -4377,9 +4387,11 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         return;
     }
 
+    vertex_buffer_gl_bind(game_model->gl_buffer);
+
     // TODO should bind outside of here
-    C3D_SetAttrInfo(&game_model->gl_buffer->attr_info);
-    C3D_SetBufInfo(&game_model->gl_buffer->buf_info);
+    //C3D_SetAttrInfo(&game_model->gl_buffer->attr_info);
+    //C3D_SetBufInfo(&game_model->gl_buffer->buf_info);
 
     mat4 pica_model = {0};
     glm_mat4_copy(game_model->transform, pica_model);

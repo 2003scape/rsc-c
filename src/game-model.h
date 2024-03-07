@@ -34,7 +34,9 @@ typedef struct gl_face_fill {
 #endif
 
 #ifdef RENDER_GL
-#ifdef GLAD
+#ifdef ANDROID
+#include "SDL_opengles2.h"
+#elif defined(GLAD)
 #ifdef __SWITCH__
 #include <glad/glad.h>
 #else

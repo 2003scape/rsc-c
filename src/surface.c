@@ -16,8 +16,12 @@ gl_atlas_position gl_transparent_atlas_position = {
     .right_u = 3.0f / GL_TEXTURE_SIZE,
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
     .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
+#endif
 
+#ifdef RENDER_GL
 static GLuint last_base_texture = 0;
+#elif defined(RENDER_3DS_GL)
+static C3D_Tex *last_base_texture = NULL;
 #endif
 
 int an_int_346 = 0;
@@ -171,7 +175,9 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #ifdef RENDER_GL
     surface_gl_create_framebuffer(surface);
 
-#ifdef EMSCRIPTEN
+#ifdef ANDROID
+    shader_new(&surface->gl_flat_shader, "flat.android.vs", "flat.android.fs");
+#elif defined(EMSCRIPTEN)
     shader_new(&surface->gl_flat_shader, "./cache/flat.webgl.vs",
                "./cache/flat.webgl.fs");
 #elif defined(OPENGL15) || defined(OPENGL20)
@@ -223,7 +229,17 @@ void surface_new(Surface *surface, int width, int height, int limit,
 #endif
 
 #ifdef RENDER_GL
-#ifdef __SWITCH__
+    // TODO DRY
+#ifdef ANDROID
+    gl_load_texture(&surface->gl_sprite_texture, "textures/sprites.png");
+
+    for (int i = 0; i < ENTITY_TEXTURE_LENGTH; i++) {
+        char filename[32] = {0};
+        sprintf(filename, "textures/entities_%d.png", i);
+
+        gl_load_texture(&surface->gl_entity_textures[i], filename);
+    }
+#elif defined(__SWITCH__)
     gl_load_texture(&surface->gl_sprite_texture, "romfs:/textures/sprites.png");
 
     for (int i = 0; i < ENTITY_TEXTURE_LENGTH; i++) {

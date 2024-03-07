@@ -455,6 +455,10 @@ void mudclient_reset_login_screen(mudclient *mud) {
 }
 
 void mudclient_render_login_scene_sprites(mudclient *mud) {
+#if defined(ANDROID) && defined(RENDER_GL)
+    return;
+#endif
+
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
                      mud->surface->height < MUD_VANILLA_HEIGHT;
 

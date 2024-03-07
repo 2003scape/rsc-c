@@ -1180,7 +1180,11 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(0);
     }
 #else
-#ifdef EMSCRIPTEN
+#ifdef ANDROID
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#elif defined(EMSCRIPTEN)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -1225,10 +1229,9 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_MakeCurrent(mud->gl_window, context);
 #endif
 
-#ifdef GLAD
+#if defined(GLAD)
     gladLoadGL();
-#else
-
+#elif !defined(ANDROID)
     glewExperimental = GL_TRUE;
 
     GLenum glew_error = glewInit();
@@ -2549,9 +2552,13 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
+    // TODO
+#ifndef ANDROID
     game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
                                 &mud->scene->gl_game_model_buffer_length,
                                 models_buffer, models_length);
+#endif
+
 #endif
 }
 
@@ -3285,6 +3292,7 @@ void mudclient_start_game(mudclient *mud) {
     }
 
     mud->scene = malloc(sizeof(Scene));
+
     if (mud->options->lowmem) {
         scene_new(mud->scene, mud->surface, 7500, 7500, 1000);
     } else {
@@ -5686,7 +5694,7 @@ void mudclient_on_resize(mudclient *mud) {
 #endif
 #endif
 
-#ifdef ANDROID
+#if defined(ANDROID) && !defined(RENDER_GL)
     mudclient_full_width = new_width;
     mudclient_full_height = new_height;
 
