@@ -355,9 +355,27 @@ void mudclient_3ds_gl_frame_end() { C3D_FrameEnd(0); }
 #else
 #ifdef SDL12
 void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
+    *code = -1;
     *char_code = -1;
 
+    /* note: unicode is not set for key released */
+    if (keysym->unicode > 0 && keysym->unicode < 128) {
+        if (isprint((unsigned char)keysym->unicode)) {
+            *code = keysym->unicode;
+            *char_code = keysym->unicode;
+            return;
+        }
+    }
+
     switch (keysym->sym) {
+    case SDLK_TAB:
+        *code = K_TAB;
+        *char_code = '\t';
+        break;
+    case SDLK_BACKSPACE:
+        *code = K_BACKSPACE;
+        *char_code = '\b';
+        break;
     case SDLK_LEFT:
         *code = K_LEFT;
         break;
@@ -385,182 +403,34 @@ void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
     case SDLK_ESCAPE:
         *code = K_ESCAPE;
         break;
-    /*case SDLK_RETURN:
+    case SDLK_RETURN:
         *code = K_ENTER;
-        break;*/
-    // TODO: Swallow "bad inputs" by default? ie. numlock, capslock
-    case SDLK_NUMLOCK:
-        *code = -1;
-        *char_code = 1;
-        break;
-    case SDLK_CAPSLOCK:
-        *code = -1;
-        *char_code = 1;
-        break;
-    case SDLK_KP_DIVIDE:
-        *code = K_FWD_SLASH;
-        *char_code = K_FWD_SLASH;
-        break;
-    case SDLK_KP_MULTIPLY:
-        *code = K_ASTERISK;
-        *char_code = K_ASTERISK;
-        break;
-    case SDLK_KP_MINUS:
-        *code = K_MINUS;
-        *char_code = K_MINUS;
-        break;
-    case SDLK_KP_PLUS:
-        *code = K_PLUS;
-        *char_code = K_PLUS;
-        break;
-    case SDLK_KP_PERIOD:
-        *code = K_PERIOD;
-        *char_code = K_PERIOD;
-        break;
-    case SDLK_KP_ENTER:
-        *code = K_ENTER;
-        *char_code = K_ENTER;
-        break;
-    case SDLK_KP0:
-        *code = K_0;
-        *char_code = K_0;
+        *char_code = '\r';
         break;
     case SDLK_KP1:
+    case SDLK_1:
         *code = K_1;
         *char_code = K_1;
         break;
     case SDLK_KP2:
+    case SDLK_2:
         *code = K_2;
         *char_code = K_2;
         break;
     case SDLK_KP3:
+    case SDLK_3:
         *code = K_3;
         *char_code = K_3;
         break;
     case SDLK_KP4:
+    case SDLK_4:
         *code = K_4;
         *char_code = K_4;
         break;
     case SDLK_KP5:
+    case SDLK_5:
         *code = K_5;
         *char_code = K_5;
-        break;
-    case SDLK_KP6:
-        *code = K_6;
-        *char_code = K_6;
-        break;
-    case SDLK_KP7:
-        *code = K_7;
-        *char_code = K_7;
-        break;
-    case SDLK_KP8:
-        *code = K_8;
-        *char_code = K_8;
-        break;
-    case SDLK_KP9:
-        *code = K_9;
-        *char_code = K_9;
-        break;
-    case SDLK_LSHIFT:
-    case SDLK_RSHIFT:
-        // Ignore these on SDL12
-        break;
-    default:
-        *char_code = keysym->sym;
-
-        switch (keysym->scancode) {
-        case SDLK_TAB:
-            *code = K_TAB;
-            break;
-        case SDLK_1:
-            *code = K_1;
-            break;
-        case SDLK_2:
-            *code = K_2;
-            break;
-        case SDLK_3:
-            *code = K_3;
-            break;
-        case SDLK_4:
-            *code = K_4;
-            break;
-        case SDLK_5:
-            *code = K_5;
-            break;
-        default:
-            *code = *char_code;
-            break;
-        }
-
-        if (keysym->mod & KMOD_SHIFT) {
-            if (*char_code >= 'a' && *char_code <= 'z') {
-                *char_code -= 32;
-            } else {
-                switch (*char_code) {
-                case ';':
-                    *char_code = ':';
-                    break;
-                case '`':
-                    *char_code = '~';
-                    break;
-                case '1':
-                    *char_code = '!';
-                    break;
-                case '2':
-                    *char_code = '@';
-                    break;
-                case '3':
-                    *char_code = '#';
-                    break;
-                case '4':
-                    *char_code = '$';
-                    break;
-                case '5':
-                    *char_code = '%';
-                    break;
-                case '6':
-                    *char_code = '^';
-                    break;
-                case '7':
-                    *char_code = '&';
-                    break;
-                case '8':
-                    *char_code = '*';
-                    break;
-                case '9':
-                    *char_code = '(';
-                    break;
-                case '0':
-                    *char_code = ')';
-                    break;
-                case '-':
-                    *char_code = '_';
-                    break;
-                case '=':
-                    *char_code = '+';
-                    break;
-                case '[':
-                    *char_code = '{';
-                    break;
-                case ']':
-                    *char_code = '}';
-                    break;
-                case '\\':
-                    *char_code = '|';
-                    break;
-                case ',':
-                    *char_code = '<';
-                    break;
-                case '.':
-                    *char_code = '>';
-                    break;
-                case '/':
-                    *char_code = '?';
-                    break;
-                }
-            }
-        }
-
         break;
     }
 }
@@ -1109,6 +979,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
         mud_error("SDL_Init(): %s\n", SDL_GetError());
         exit(1);
     }
+
+#ifdef SDL12
+    (void)SDL_EnableUNICODE(1);
+#endif
 
 #ifdef __SWITCH__
     SDL_JoystickEventState(SDL_ENABLE);
