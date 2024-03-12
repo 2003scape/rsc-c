@@ -85,7 +85,7 @@ void options_set_defaults(Options *options) {
     options->zoom_camera = 1;
     options->tab_respond = 1;
     options->option_numbers = 1;
-    options->compass_menu = 1;
+    options->compass_menu = 0;
     options->transaction_menus = 1;
     options->offer_x = 1;
     options->last_offer_x = 1;
@@ -110,10 +110,10 @@ void options_set_defaults(Options *options) {
     options->experience_drops = 0;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
-    options->certificate_items = 1;
+    options->certificate_items = 0;
     options->wilderness_warning = 1;
     options->status_bars = 0;
-    options->ground_item_models = 1;
+    options->ground_item_models = 0;
     options->ground_item_text = 1;
     options->distant_animation = 1;
     options->tga_sprites = 0;
