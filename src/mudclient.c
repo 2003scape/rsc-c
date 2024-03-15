@@ -1172,13 +1172,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef SDL12
     mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
                                    SDL_OPENGL | SDL_RESIZABLE);
-
-    GLenum error = glGetError();
-
-    if (error != GL_NO_ERROR) {
-        mud_log("Error initializing OpenGL! %s\n", gluErrorString(error));
-        exit(0);
-    }
 #else
 #ifdef ANDROID
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -1229,8 +1222,19 @@ void mudclient_start_application(mudclient *mud, char *title) {
     SDL_GL_MakeCurrent(mud->gl_window, context);
 #endif
 
-#if defined(GLAD)
-    gladLoadGL();
+#ifdef GLAD
+#if defined(SDL_OPENGL) || defined(SDL_WINDOW_OPENGL)
+    if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
+        mud_error("Error loading GL library through GLAD/SDL\n");
+        exit(1);
+    }
+#else
+    if (gladLoadGL() == 0) {
+        mud_error("Error loading GL library through GLAD\n");
+        exit(1);
+    }
+#endif
+    printf("INFO: Loaded OpenGL version %d.%d\n", GLVersion.major, GLVersion.minor);
 #elif !defined(ANDROID)
     glewExperimental = GL_TRUE;
 
