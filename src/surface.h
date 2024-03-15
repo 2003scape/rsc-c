@@ -38,11 +38,7 @@
 #ifdef ANDROID
 #include "SDL_opengles2.h"
 #elif defined(GLAD)
-#ifdef __SWITCH__
 #include <glad/glad.h>
-#else
-#include "../../glad/glad.h"
-#endif
 #else
 #include <GL/glew.h>
 #include <GL/glu.h>
