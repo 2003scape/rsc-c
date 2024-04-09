@@ -1228,8 +1228,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 int object_id = mud->objects[index].id;
                 char *object_name = game_data.objects[id].name;
 
-                char formatted_object_name[strlen(object_name) + 6];
-                sprintf(formatted_object_name, "@cya@%s", object_name);
+                char formatted_object_name[64] = {0};
+                snprintf(formatted_object_name, 64, "@cya@%s", object_name);
 
                 strcpy(mud->menu_item_text2[mud->menu_items_count],
                        formatted_object_name);

@@ -529,7 +529,6 @@ void mudclient_draw_bank(mudclient *mud) {
 
     if (mud->bank_selected_item_slot != -1 &&
         bank_items[mud->bank_selected_item_slot] != mud->bank_selected_item) {
-
         if (mud->options->bank_maintain_slot) {
             if (mud->bank_selected_item != -2) {
                 for (int i = 0; i < bank_item_count; i++) {
