@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
 
 #ifdef WII
 #include <asndlib.h>
@@ -136,6 +141,10 @@
  * as 203.
  */
 #define VERSION 204
+#endif
+
+#ifndef DATADIR
+#define DATADIR "/usr/local/share/rsc-c"
 #endif
 
 #define ZOOM_MIN 450

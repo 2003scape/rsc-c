@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=rsc-c mudclient
+Comment=Cross-platform RuneScape Classic source port
+Icon=rsc-c
+Exec=mudclient
+Terminal=false
+Categories=Game;AdventureGame;RolePlaying;

@@ -1649,6 +1649,24 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
         mud->mouse_y /= 2;
     }
 
+    /*
+     * in SDL12 mouse wheel scrolling is treated as digital button press,
+     * while in SDL2 it is handled as a different type of event entirely.
+     */
+    if (button == 4 || button == 5) {
+        if (mud->options->mouse_wheel) {
+            if (button == 4) {
+                mud->mouse_scroll_delta--;
+            } else {
+                mud->mouse_scroll_delta++;
+            }
+            return;
+        } else {
+            /* treat it as a right click when scrolling is disabled */
+            button = 3;
+        }
+    }
+
     if (mud->options->middle_click_camera != 0 && button == 2) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
@@ -1833,22 +1851,47 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     memcpy(header, file_data, sizeof(header));
 #else
-    int file_length = strlen(file);
-
-#if defined(_3DS) || defined(__SWITCH__)
-    char *prefix = "romfs:";
-#else
-    char *prefix = "./cache";
-#endif
 
 #ifdef ANDROID
     char *prefixed_file = file;
     SDL_RWops *archive_stream = SDL_RWFromFile(prefixed_file, "rb");
+#elif defined(_3DS) || defined(__SWITCH__)
+    char prefixed_file[PATH_MAX];
+    snprintf(prefixed_file, "romfs:/%s", file);
 #else
-    char prefixed_file[file_length + strlen(prefix) + 2];
-    sprintf(prefixed_file, "%s/%s", prefix, file);
+    char prefixed_file[PATH_MAX];
+    snprintf(prefixed_file, sizeof(prefixed_file), "./cache/%s", file);
 
+    /* attempt to read cache from the current working directory first */
+    printf("INFO: Loading %s\n", prefixed_file);
     FILE *archive_stream = fopen(prefixed_file, "rb");
+    if (archive_stream == NULL) {
+        /* cwd failed, now try the xdg home directory... */
+        const char *xdg_home = getenv("XDG_DATA_HOME");
+
+        if (xdg_home == NULL) {
+            const char *home = getenv("HOME");
+            if (home == NULL) {
+                home = "";
+            }
+            snprintf(prefixed_file, sizeof(prefixed_file),
+                "%s/.local/share/rsc-c/%s", home, file);
+        } else {
+            snprintf(prefixed_file, sizeof(prefixed_file),
+                "%s/rsc-c/%s", xdg_home, file);
+        }
+
+        printf("INFO: Loading %s\n", prefixed_file);
+        archive_stream = fopen(prefixed_file, "rb");
+
+        /* XDG failed, now try the global prefix... */
+        if (archive_stream == NULL) {
+            snprintf(prefixed_file, sizeof(prefixed_file),
+                "%s/%s", DATADIR, file);
+            printf("INFO: Loading %s\n", prefixed_file);
+            archive_stream = fopen(prefixed_file, "rb");
+        }
+    }
 #endif
 
     if (archive_stream == NULL) {
@@ -4583,6 +4626,11 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = j5 + game_data.animations[animation_id].file_id;
+            if (mud->surface->surface_pixels[sprite_id] == NULL &&
+                mud->surface->sprite_colours[sprite_id] == NULL) {
+                /* sprite file was not loaded, probably on f2p version */
+                continue;
+            }
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -4736,6 +4784,11 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = k4 + game_data.animations[animation_id].file_id;
+            if (mud->surface->surface_pixels[sprite_id] == NULL &&
+                mud->surface->sprite_colours[sprite_id] == NULL) {
+                /* sprite file was not loaded, probably on f2p version */
+                continue;
+            }
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
