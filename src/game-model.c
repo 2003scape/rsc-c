@@ -1483,10 +1483,6 @@ void game_model_gl_buffer_arrays(GameModel *game_model, int *vertex_offset,
         int fill_front = game_model->face_fill_front[i];
         int fill_back = game_model->face_fill_back[i];
 
-        // TODO we need a way to fix mouse picking for walking. these faces
-        // need to be discarded in the shader, but we still need to be able to
-        // pick their depth data. maybe use a uniform to make this faces only
-        // appear when we're picking?
         /* -2 is the bridge in the barbarian agility course. fixes
          * https://github.com/2003scape/rsc-c/issues/76 */
         /*if (fill_front == -2) {
@@ -1768,9 +1764,9 @@ int game_model_gl_buffer_models(gl_vertex_buffer ***vertex_buffers,
 
     free(*vertex_buffers);
 
-    // TODO move this to header - only 3DS needs the small vertex index
+    // TODO move this to header
     int MAX_VERTEX_INDEX = 65535;
-    //int MAX_VERTEX_INDEX = 2147483647;
+    // int MAX_VERTEX_INDEX = 2147483647;
     int total_buffers = ceil((float)ebo_offset / (float)MAX_VERTEX_INDEX);
 
     if (total_buffers == 0) {

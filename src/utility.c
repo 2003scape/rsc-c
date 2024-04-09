@@ -602,33 +602,43 @@ void format_confirm_amount(int amount, char *formatted) {
 }
 
 int get_ticks(void) {
+#if !defined(WII) && !defined(_3DS)
+    return SDL_GetTicks();
+#endif
+
 #ifdef _3DS
     // return (int)osGetTime();
     return (int)(svcGetSystemTick() / CPU_TICKS_PER_MSEC);
-#elif defined(WII)
+#endif
+
+#ifdef WII
     uint64_t ticks = gettime();
     return (int)(ticks / TB_TIMER_CLOCK);
-#else
-    return SDL_GetTicks();
 #endif
 }
 
 void delay_ticks(int ticks) {
+#if !defined(WII) && !defined(_3DS)
+#ifdef EMSCRIPTEN
+    emscripten_sleep(ticks);
+#else
+    SDL_Delay(ticks);
+#endif
+#endif
+
 #ifdef _3DS
     svcSleepThread((s64)ticks * (s64)1000000);
     /*int end = get_ticks() + ticks;
 
     while (get_ticks() != end)
         ;*/
-#elif defined(WII)
+#endif
+
+#ifdef WII
     int end = get_ticks() + ticks;
 
     while (get_ticks() != end)
         ;
-#elif defined(EMSCRIPTEN)
-    emscripten_sleep(ticks);
-#else
-    SDL_Delay(ticks);
 #endif
 }
 
@@ -856,10 +866,7 @@ void gl_create_texture(GLuint *texture_id) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-#ifdef ANDROID
-    // https://stackoverflow.com/questions/21816425/opengl-es-2-0-texture-clamping
-    mud_log("set gl texture to edge clamp\n");
-#elif defined(GLAD)
+#ifdef GLAD
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #else
@@ -881,8 +888,7 @@ void gl_load_texture(GLuint *texture_id, char *file) {
         exit(1);
     }
 
-    // TODO changed initial GL_RGBA8 to GL_RGBA for android. confirm correct
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image->w, texture_image->h,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture_image->w, texture_image->h,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image->pixels);
 
     SDL_FreeSurface(texture_image);

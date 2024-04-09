@@ -2,35 +2,22 @@
 
 #ifdef RENDER_GL
 char *buffer_file(char *path) {
-#ifdef ANDROID
-    SDL_RWops *file = SDL_RWFromFile(path, "rb");
-#else
     FILE *file = fopen(path, "r");
-#endif
 
     if (!file) {
         mud_error("unable to open file: %s\n", path);
         exit(1);
     }
 
-#ifdef ANDROID
-    unsigned int size = SDL_RWseek(file, 0, RW_SEEK_END);
-    SDL_RWseek(file, 0, RW_SEEK_SET);
-#else
     fseek(file, 0, SEEK_END);
     unsigned int size = ftell(file);
     fseek(file, 0, SEEK_SET);
-#endif
 
     char *file_buffer = calloc(size + 1, sizeof(char));
     unsigned int total_read_size = 0;
 
     do {
-#ifdef ANDROID
-        int read_size = SDL_RWread(file, file_buffer + total_read_size, 1024, 1);
-#else
         int read_size = fread(file_buffer + total_read_size, 1024, 1, file);
-#endif
 
         if (read_size <= 0) {
             break;
@@ -39,11 +26,7 @@ char *buffer_file(char *path) {
         total_read_size += read_size * 1024;
     } while (total_read_size < size);
 
-#ifdef ANDROID
-    SDL_RWclose(file);
-#else
     fclose(file);
-#endif
 
     return file_buffer;
 }

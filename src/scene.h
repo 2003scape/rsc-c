@@ -10,9 +10,7 @@
 #endif
 
 #ifdef RENDER_GL
-#ifdef ANDROID
-#include "SDL_opengles2.h"
-#elif defined(GLAD)
+#ifdef GLAD
 #ifdef __SWITCH__
 #include <glad/glad.h>
 #else
