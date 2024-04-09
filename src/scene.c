@@ -183,11 +183,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->gl_wall_buffers = calloc(1, sizeof(gl_vertex_buffer *));
     scene->gl_wall_buffers[0] = calloc(1, sizeof(gl_vertex_buffer));
 
-    // TODO
-#ifndef ANDROID
     game_model_gl_create_buffer(scene->gl_wall_buffers[0], WALL_OBJECTS_MAX * 4,
                                 WALL_OBJECTS_MAX * 6);
-#endif
 #endif
 
 #ifdef RENDER_GL
@@ -234,7 +231,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     shader_use(&scene->game_model_shader);
 
-    shader_set_int(&scene->game_model_shader, "model_textures", 0);
+    shader_set_int(&scene->game_model_shader, "model_texture", 0);
 
     shader_set_float_array(&scene->game_model_shader, "light_gradient",
                            scene->light_gradient, RAMP_SIZE);
@@ -4094,10 +4091,34 @@ void scene_gl_update_camera(Scene *scene) {
 
 #ifdef RENDER_GL
 void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
-    return;
     if (game_model->gl_ebo_offset == -1 || !game_model->visible) {
         return;
     }
+
+    game_model->gl_buffer->attribute_index = 0;
+
+    int attribute_offset = 0;
+
+    /* vertex { x, y, z } */
+    vertex_buffer_gl_add_attribute(game_model->gl_buffer, &attribute_offset, 3);
+
+    /* normal { x, y, z, magnitude } */
+    vertex_buffer_gl_add_attribute(game_model->gl_buffer, &attribute_offset, 4);
+
+    /* lighting { face_intensity, vertex_intensity } */
+    vertex_buffer_gl_add_attribute(game_model->gl_buffer, &attribute_offset, 2);
+
+    /* front colour { r, g, b } */
+    vertex_buffer_gl_add_attribute(game_model->gl_buffer, &attribute_offset, 3);
+
+    /* front texture { s, t } */
+    vertex_buffer_gl_add_attribute(game_model->gl_buffer, &attribute_offset, 2);
+
+    /* back colour { r, g, b } */
+    vertex_buffer_gl_add_attribute(game_model->gl_buffer, &attribute_offset, 3);
+
+    /* back texture { s, t } */
+    vertex_buffer_gl_add_attribute(game_model->gl_buffer, &attribute_offset, 2);
 
     vertex_buffer_gl_bind(game_model->gl_buffer);
 
@@ -4143,14 +4164,22 @@ void scene_gl_draw_game_model(Scene *scene, GameModel *game_model) {
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
 
+#if 0
     glCullFace(GL_FRONT);
     shader_set_int(&scene->game_model_shader, "cull_front", 1);
 
     glDrawElements(GL_TRIANGLES, game_model->gl_ebo_length, GL_UNSIGNED_INT,
                    (void *)(game_model->gl_ebo_offset * sizeof(GLuint)));
+#endif
+
+    for (int i = 0; i < 7; i++) {
+        glDisableVertexAttribArray(i);
+    }
 }
 
 void scene_gl_render(Scene *scene) {
+    glClear(GL_COLOR_BUFFER_BIT);
+
     int scene_height = scene->gl_height - 1;
 
     int old_width = scene->surface->width;
@@ -4177,8 +4206,8 @@ void scene_gl_render(Scene *scene) {
         scene_render_polygon_2d_face(scene, polygon->face);
     }
 
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
+    //glEnable(GL_DEPTH_TEST);
 
     glViewport(0, 13, scene->width, scene_height);
 

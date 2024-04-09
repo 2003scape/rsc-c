@@ -901,8 +901,28 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 
 void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
 #ifdef RENDER_GL
+    surface->gl_flat_buffer.attribute_index = 0;
+
+    int attribute_offset = 0;
+
+    /* vertex { x, y, z } */
+    vertex_buffer_gl_add_attribute(&surface->gl_flat_buffer, &attribute_offset,
+                                   3);
+
+    /* colour { r, g, b, a } */
+    vertex_buffer_gl_add_attribute(&surface->gl_flat_buffer, &attribute_offset,
+                                   4);
+
+    /* greyscale texture { u, v } */
+    vertex_buffer_gl_add_attribute(&surface->gl_flat_buffer, &attribute_offset,
+                                   2);
+
+    /* base texture { u, v } */
+    vertex_buffer_gl_add_attribute(&surface->gl_flat_buffer, &attribute_offset,
+                                   2);
+
     glEnable(GL_SCISSOR_TEST);
-    glDisable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
 
     shader_use(&surface->gl_flat_shader);
 
@@ -1027,6 +1047,10 @@ void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
 
     if (depth_mode == GL_DEPTH_BOTH) {
         surface_gl_reset_context(surface);
+    }
+
+    for (int i = 0; i < 4; i++) {
+        glDisableVertexAttribArray(i);
     }
 }
 
@@ -2449,6 +2473,7 @@ void surface_draw_sprite_scale(Surface *surface, int x, int y, int width,
 void surface_draw_entity_sprite(Surface *surface, int x, int y, int width,
                                 int height, int sprite_id, int tx, int ty,
                                 float depth_top, float depth_bottom) {
+    return;
     if (sprite_id >= 50000) {
         mudclient_draw_magic_bubble(surface->mud, x, y, width, height,
                                     sprite_id - 50000,

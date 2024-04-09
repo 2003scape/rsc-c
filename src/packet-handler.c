@@ -88,6 +88,7 @@ void mudclient_update_ground_item_models(mudclient *mud) {
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void mudclient_gl_update_wall_models(mudclient *mud) {
+    return;
     int vbo_offset = 0;
     int ebo_offset = 0;
 
@@ -147,6 +148,7 @@ void mudclient_packet_tick(mudclient *mud) {
         if (mud->local_player_server_index >= PLAYERS_SERVER_MAX) {
             return;
         }
+
         mud->loading_area = 1;
         mud->local_player_server_index = get_unsigned_short(data, 1, size);
         mud->plane_width = get_unsigned_short(data, 3, size);
@@ -1214,6 +1216,7 @@ void mudclient_packet_tick(mudclient *mud) {
             offset += 2;
 
             int id = id_equip & 32767;
+
             if (id >= game_data.item_count) {
                 id = IRON_MACE_ID;
             }
