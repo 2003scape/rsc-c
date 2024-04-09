@@ -2552,9 +2552,12 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
+    // TODO
+#ifndef ANDROID
     game_model_gl_buffer_models(&mud->scene->gl_game_model_buffers,
                                 &mud->scene->gl_game_model_buffer_length,
                                 models_buffer, models_length);
+#endif
 
 #endif
 }
@@ -5463,7 +5466,7 @@ void mudclient_draw_game(mudclient *mud) {
     scene_render(mud->scene);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    //surface_gl_draw(mud->surface, GL_DEPTH_DISABLED);
+    surface_gl_draw(mud->surface, GL_DEPTH_DISABLED);
 #endif
 
     mudclient_draw_overhead(mud);
@@ -5556,13 +5559,13 @@ void mudclient_draw_game(mudclient *mud) {
     }
 
 #ifdef RENDER_GL
-    //scene_gl_render_transparent_models(mud->scene);
+    scene_gl_render_transparent_models(mud->scene);
 #elif defined(RENDER_3DS_GL)
     scene_3ds_gl_render_transparent_models(mud->scene);
 #endif
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
-    //surface_gl_draw(mud->surface, GL_DEPTH_ENABLED);
+    surface_gl_draw(mud->surface, GL_DEPTH_ENABLED);
     surface_gl_reset_context(mud->surface);
 #else
     surface_draw(mud->surface);
