@@ -22,8 +22,12 @@ void options_new(Options *options) {
     /* experimental */
     options->thick_walls = 0;
 
+
+#ifdef VANILLA_IS_DEFAULT
+    options_set_vanilla(options);
+#else
     options_set_defaults(options);
-    // options_set_vanilla(options);
+#endif
 
 #ifdef WII
     wii_fat_enabled = fatInitDefault();
