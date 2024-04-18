@@ -1,4 +1,4 @@
-#include "options.h"
+f#include "options.h"
 #if defined(__unix__) || defined(__unix) || \
     (defined(__APPLE__) && defined(__MACH__))
 #include <sys/stat.h>
@@ -110,10 +110,10 @@ void options_set_defaults(Options *options) {
     options->experience_drops = 0;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
-    options->certificate_items = 1;
+    options->certificate_items = 0;
     options->wilderness_warning = 1;
     options->status_bars = 0;
-    options->ground_item_models = 1;
+    options->ground_item_models = 0;
     options->ground_item_text = 1;
     options->distant_animation = 1;
     options->tga_sprites = 0;
