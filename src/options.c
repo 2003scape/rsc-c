@@ -1,4 +1,4 @@
-#include "options.h"
+f#include "options.h"
 #if defined(__unix__) || defined(__unix) || \
     (defined(__APPLE__) && defined(__MACH__))
 #include <sys/stat.h>
@@ -85,7 +85,7 @@ void options_set_defaults(Options *options) {
     options->zoom_camera = 1;
     options->tab_respond = 1;
     options->option_numbers = 1;
-    options->compass_menu = 0;
+    options->compass_menu = 1;
     options->transaction_menus = 1;
     options->offer_x = 1;
     options->last_offer_x = 1;
