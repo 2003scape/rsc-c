@@ -32,12 +32,16 @@ LDFLAGS += -lm
 LDFLAGS += $(shell sdl-config --libs)
 endif
 
+ifeq ($(VANILLA_IS_DEFAULT), 1)
+CFLAGS += -DVANILLA_IS_DEFAULT=1
+endif
+
 ifeq ($(USE_LOCOLOUR), 1)
-CFLAGS += -DUSE_LOCOLOUR
+CFLAGS += -DUSE_LOCOLOUR=1
 endif
 
 ifeq ($(USE_TOONSCAPE), 1)
-CFLAGS += -DUSE_TOONSCAPE
+CFLAGS += -DUSE_TOONSCAPE=1
 endif
 
 ifeq ($(RENDER_GL), 1)
