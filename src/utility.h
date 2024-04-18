@@ -39,11 +39,7 @@
 #include <SDL_image.h>
 #endif
 #ifdef GLAD
-#ifdef __SWITCH__
 #include <glad/glad.h>
-#else
-#include "../../glad/glad.h"
-#endif
 #else
 #include <GL/glew.h>
 #include <GL/glu.h>
