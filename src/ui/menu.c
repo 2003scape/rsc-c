@@ -483,7 +483,7 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
         mud->camera_rotation = menu_index;
         break;
     case MENU_WIKI_LOOKUP: {
-        char *page_name = mud->menu_wiki_page[i];
+        char *page_name = mud->menu_items[i].wiki_page;
         char encoded_page_name[128];
 
         if (strncmp(page_name, "Special:", strlen("Special:")) == 0) {
@@ -717,8 +717,8 @@ void mudclient_menu_add_wiki(mudclient *mud, const char *display,
              sizeof(mud->menu_items[mud->menu_items_count].target_text),
              "%s", display);
     mud->menu_items[mud->menu_items_count].type = MENU_WIKI_LOOKUP;
-    snprintf(mud->menu_wiki_page[mud->menu_items_count],
-             sizeof(mud->menu_wiki_page[mud->menu_items_count]),
+    snprintf(mud->menu_items[mud->menu_items_count].wiki_page,
+             sizeof(mud->menu_items[mud->menu_items_count].wiki_page),
              "%s", page);
     mud->menu_items_count++;
 }
@@ -822,11 +822,29 @@ void mudclient_create_right_click_menu(mudclient *mud) {
     GameModel **picked_models = mud->scene->mouse_picked_models;
     int *picked_faces = mud->scene->mouse_picked_faces;
 
-    for (int i = 0; i < picked_count; i++) {
-        if (mud->menu_items_count > 200) {
-            break;
-        }
+    if (mud->menu_items_size < (picked_count * 5)) {
+        size_t new_size;
+        void *new_ptr;
 
+        new_size = picked_count * 6;
+        new_ptr = realloc(mud->menu_items,
+                          new_size * sizeof(struct MenuEntry));
+        if (new_ptr == NULL) {
+            mud->menu_items_count = 0;
+            return;
+        }
+        mud->menu_items = new_ptr;
+
+        new_ptr = realloc(mud->menu_indices, new_size * sizeof(int));
+        if (new_ptr == NULL) {
+            mud->menu_items_count = 0;
+            return;
+        }
+        mud->menu_indices = new_ptr;
+        mud->menu_items_size = new_size;
+    }
+
+    for (int i = 0; i < picked_count; i++) {
         GameModel *game_model = picked_models[i];
         int face = picked_faces[i];
 

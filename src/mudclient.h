@@ -182,7 +182,6 @@
 #define OVERWORLD_TEXT_MAX 128
 
 #define INVENTORY_ITEMS_MAX 30
-#define MENU_MAX 500
 #define PATH_STEPS_MAX 8000
 #define BANK_ITEMS_MAX 256
 #define SHOP_ITEMS_MAX 256 // TODO also just make this 40? (SHOP_GRID_MAX)
@@ -479,6 +478,7 @@ struct MenuEntry {
     MenuType type;
     char action_text[64];
     char target_text[64];
+    char wiki_page[64];
     /* data related to the target entity */
     int x, y;
     uint16_t index;
@@ -867,13 +867,13 @@ struct mudclient {
     /* ./ui/menu.c */
     int8_t show_right_click_menu;
     int16_t menu_items_count;
-    int16_t menu_indices[MENU_MAX];
-    struct MenuEntry menu_items[MENU_MAX];
+    int16_t menu_items_size;
+    int16_t *menu_indices;
+    struct MenuEntry *menu_items;
     int menu_width;
     int menu_height;
     int menu_x;
     int menu_y;
-    char menu_wiki_page[MENU_MAX][192];
 
     /* ./ui/inventory-tab.c */
     int inventory_items_count;
