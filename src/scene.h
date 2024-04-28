@@ -61,8 +61,6 @@ typedef struct Scene Scene;
  * function that was unused */
 #define RAMP_WIDE 0
 
-#define MOUSE_PICKED_MAX 100
-
 /* originally 12345678 - this way we save on memory. */
 #define COLOUR_TRANSPARENT INT16_MAX
 
@@ -107,6 +105,7 @@ struct Scene {
     int max_model_count;
     int max_polygon_count;
     int max_sprite_count;
+    int max_mouse_picked;
     GameModel **models;
     GameModel *view;
     int32_t *raster;
@@ -141,8 +140,8 @@ struct Scene {
     int mouse_x;
     int mouse_y;
     int mouse_picked_count;
-    GameModel *mouse_picked_models[MOUSE_PICKED_MAX];
-    int mouse_picked_faces[MOUSE_PICKED_MAX];
+    GameModel **mouse_picked_models;
+    int *mouse_picked_faces;
     int width;
     int clip_x;
     int clip_y;
