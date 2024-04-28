@@ -182,7 +182,7 @@
 #define OVERWORLD_TEXT_MAX 128
 
 #define INVENTORY_ITEMS_MAX 30
-#define MENU_MAX 250
+#define MENU_MAX 500
 #define PATH_STEPS_MAX 8000
 #define BANK_ITEMS_MAX 256
 #define SHOP_ITEMS_MAX 256 // TODO also just make this 40? (SHOP_GRID_MAX)
@@ -473,6 +473,17 @@ struct OverworldText {
     uint16_t x;
     uint16_t y;
     uint32_t colour;
+};
+
+struct MenuEntry {
+    MenuType type;
+    char action_text[64];
+    char target_text[64];
+    /* data related to the target entity */
+    int x, y;
+    uint16_t index;
+    uint16_t source_index;
+    uint16_t target_index;
 };
 
 struct mudclient {
@@ -855,16 +866,9 @@ struct mudclient {
 
     /* ./ui/menu.c */
     int8_t show_right_click_menu;
-    int menu_items_count;
-    int menu_indices[MENU_MAX];
-    int menu_item_x[MENU_MAX];
-    int menu_item_y[MENU_MAX];
-    char menu_item_text1[MENU_MAX][64];
-    char menu_item_text2[MENU_MAX][64];
-    int menu_index[MENU_MAX];
-    int menu_source_index[MENU_MAX];
-    int menu_target_index[MENU_MAX];
-    MenuType menu_type[MENU_MAX];
+    int16_t menu_items_count;
+    int16_t menu_indices[MENU_MAX];
+    struct MenuEntry menu_items[MENU_MAX];
     int menu_width;
     int menu_height;
     int menu_x;

@@ -67,7 +67,7 @@ typedef enum {
 #include "../mudclient.h"
 #include "transaction.h"
 
-#define MENU_ITEMS_MAX 20
+#define MENU_ITEMS_MAX 300
 
 /* for mouse picking */
 #define PLAYER_FACE_TAG 10000
