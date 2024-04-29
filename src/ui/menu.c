@@ -575,12 +575,6 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
         return;
     }
 
-    int max_num_on_screen = (mud->game_height / get_entry_height(mud)) - 3;
-
-    if (mud->menu_items_count > max_num_on_screen) {
-        mud->menu_items_count = max_num_on_screen;
-    }
-
     int index = -1;
 
     for (int i = 0; i < mud->menu_items_count; i++) {
@@ -686,20 +680,20 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
         mud->menu_y = mud->mouse_y - 7;
         mud->show_right_click_menu = 1;
 
-        if (mud->menu_x < 0) {
-            mud->menu_x = 0;
-        }
-
-        if (mud->menu_y < 0) {
-            mud->menu_y = 0;
-        }
-
         if (mud->menu_x + mud->menu_width > mud->surface->width - 2) {
             mud->menu_x = mud->surface->width - 2 - mud->menu_width;
         }
 
         if (mud->menu_y + mud->menu_height > mud->surface->height - 31) {
             mud->menu_y = mud->surface->height - 31 - mud->menu_height;
+        }
+
+        if (mud->menu_x < 0) {
+            mud->menu_x = 0;
+        }
+
+        if (mud->menu_y < 0) {
+            mud->menu_y = 0;
         }
 
         mud->mouse_button_click = 0;
