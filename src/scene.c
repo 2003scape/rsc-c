@@ -174,6 +174,12 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->mouse_picked_faces = calloc(scene->max_mouse_picked,
                                         sizeof(int));
 
+#ifndef RENDER_SW
+    scene->gl_mouse_picked_size = 32;
+    scene->gl_mouse_picked_time = calloc(scene->gl_mouse_picked_size,
+                                         sizeof(GlModelTime*));
+#endif
+
     scene->clip_near = 5;
     // scene->view_distance = 9;
     scene->view_distance = 512;
@@ -4337,6 +4343,21 @@ void scene_gl_render(Scene *scene) {
                     scene->gl_terrain_walkable = 1;
                 } else {
                     GlModelTime model_time = {game_model, time};
+
+
+                    if (scene->gl_mouse_picked_size < (scene->gl_mouse_picked_count / 2)) {
+                        size_t new_size = scene->gl_mouse_picked_count * 2;
+                        void *new_ptr = NULL;
+
+                        new_ptr = realloc(scene->gl_mouse_picked_time,
+                                          new_size * sizeof(GlModelTime *));
+                        if (new_ptr == NULL) {
+                            return;
+                        }
+                        scene->gl_mouse_picked_time = new_ptr;
+                        scene->gl_mouse_picked_size = new_size;
+                    }
+
 
                     scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
                         model_time;

@@ -198,7 +198,8 @@ struct Scene {
     int gl_terrain_pick_y;
 
     /* sort based on distance */
-    GlModelTime gl_mouse_picked_time[MOUSE_PICKED_MAX];
+    GlModelTime *gl_mouse_picked_time;
+    int gl_mouse_picked_size;
 
     int gl_mouse_picked_count;
 
