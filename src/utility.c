@@ -765,7 +765,7 @@ int is_ip_address(const char *address) {
     for (int i = 0; i < length; i++) {
         char c = address[i];
 
-        if (isdigit(c)) {
+        if (isdigit((unsigned char)c)) {
             segment = segment * 10 + (c - '0');
 
             if (segment > 255) {

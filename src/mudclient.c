@@ -1296,7 +1296,8 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
                 mud->input_pm_current[pm_length + 1] = '\0';
             }
         } else if ((IS_DIGIT_SEPARATOR(char_code) ||
-                    IS_DIGIT_SUFFIX(char_code) || isdigit(char_code))) {
+                    IS_DIGIT_SUFFIX(char_code) ||
+                    isdigit((unsigned char)char_code))) {
             int digits_length = strlen(mud->input_digits_current);
 
             if (digits_length < INPUT_DIGITS_LENGTH) {
@@ -1345,10 +1346,10 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             for (int i = 0; i < digits_length; i++) {
                 char digit_char = mud->input_digits_current[i];
 
-                if (isdigit(digit_char)) {
+                if (isdigit((unsigned char)digit_char)) {
                     filtered_digits[filtered_length++] = digit_char;
-                } else if (tolower(digit_char) == 'k' ||
-                           tolower(digit_char) == 'm') {
+                } else if (tolower((unsigned char)digit_char) == 'k' ||
+                           tolower((unsigned char)digit_char) == 'm') {
                     digits_suffix = digit_char;
                 } else if (!has_decimal && digit_char == '.') {
                     filtered_digits[filtered_length++] = digit_char;
