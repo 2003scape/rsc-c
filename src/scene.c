@@ -6,6 +6,7 @@ static void scene_initialise_polygon_2d(Scene *scene, int polygon_index);
 static void scene_initialise_polygons_2d(Scene *scene);
 
 #ifdef RENDER_SW
+static void scene_mouse_pick(Scene *scene, GameModel *model, int face);
 static void scene_texture128_scanline(int32_t *restrict raster,
                                       int32_t *restrict texture, int k, int l,
                                       int i1, int j1, int k1, int l1,
@@ -57,6 +58,32 @@ static int scene_heuristic_polygon(GamePolygon *polygon_a,
 static void scene_initialise_polygon_3d(Scene *scene, int polygon_index);
 static void scene_render_polygon_2d_face(Scene *scene, int face);
 #endif
+
+static void scene_mouse_pick(Scene *scene, GameModel *model, int face) {
+    if (scene->mouse_picked_count > (scene->max_mouse_picked / 2)) {
+        size_t new_max = scene->max_mouse_picked * 2;
+        void *new_ptr;
+
+        new_ptr = realloc(scene->mouse_picked_models,
+                          new_max * sizeof(GameModel *));
+        if (new_ptr == NULL) {
+            return;
+        }
+        scene->mouse_picked_models = new_ptr;
+
+        new_ptr = realloc(scene->mouse_picked_faces,
+                          new_max * sizeof(int));
+        if (new_ptr == NULL) {
+            return;
+        }
+        scene->mouse_picked_faces = new_ptr;
+        scene->max_mouse_picked = new_max;
+    }
+
+    scene->mouse_picked_models[scene->mouse_picked_count] = model;
+    scene->mouse_picked_faces[scene->mouse_picked_count] = face;
+    scene->mouse_picked_count++;
+}
 
 #ifdef RENDER_3DS_GL
 void _3ds_gl_perspective(float fov, float aspect, float near, float far,
@@ -140,6 +167,18 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->max_model_count = model_count;
     scene->max_polygon_count = polygon_count;
     scene->max_sprite_count = max_sprite_count;
+
+    scene->max_mouse_picked = 32;
+    scene->mouse_picked_models = calloc(scene->max_mouse_picked,
+                                        sizeof(GameModel *));
+    scene->mouse_picked_faces = calloc(scene->max_mouse_picked,
+                                        sizeof(int));
+
+#ifndef RENDER_SW
+    scene->gl_mouse_picked_size = 32;
+    scene->gl_mouse_picked_time = calloc(scene->gl_mouse_picked_size,
+                                         sizeof(GlModelTime*));
+#endif
 
     scene->clip_near = 5;
     // scene->view_distance = 9;
@@ -1254,8 +1293,7 @@ static void scene_render_polygon_2d_face(Scene *scene, int face) {
                                (256 * scene->view_distance) / project_z,
                                depth_top, depth_bottom);
 
-    if (scene->mouse_picking_active &&
-        scene->mouse_picked_count < MOUSE_PICKED_MAX) {
+    if (scene->mouse_picking_active) {
         // x += (scene->sprite_translate_x[face] << scene->view_distance) /
         // project_z;
         x += (scene->sprite_translate_x[face] * scene->view_distance) /
@@ -1265,9 +1303,8 @@ static void scene_render_polygon_2d_face(Scene *scene, int face) {
             scene->mouse_x >= x && scene->mouse_x <= x + width &&
             !scene->view->unpickable &&
             scene->view->is_local_player[face] == 0) {
-            scene->mouse_picked_models[scene->mouse_picked_count] = scene->view;
-            scene->mouse_picked_faces[scene->mouse_picked_count] = face;
-            scene->mouse_picked_count++;
+
+            scene_mouse_pick(scene, scene->view, face);
         }
     }
 }
@@ -2256,7 +2293,6 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
     }
 
     if (scene->mouse_picking_active &&
-        scene->mouse_picked_count < MOUSE_PICKED_MAX &&
         scene->mouse_y >= scene->min_y && scene->mouse_y < scene->max_y) {
         Scanline *scanline_1 = &scene->scanlines[scene->mouse_y];
 
@@ -2265,9 +2301,7 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
             scanline_1->start_x <= scanline_1->end_x &&
             !game_model->unpickable && game_model->is_local_player[face] == 0) {
 
-            scene->mouse_picked_models[scene->mouse_picked_count] = game_model;
-            scene->mouse_picked_faces[scene->mouse_picked_count] = face;
-            scene->mouse_picked_count++;
+            scene_mouse_pick(scene, game_model, face);
         }
     }
 }
@@ -4310,6 +4344,21 @@ void scene_gl_render(Scene *scene) {
                 } else {
                     GlModelTime model_time = {game_model, time};
 
+
+                    if (scene->gl_mouse_picked_size < (scene->gl_mouse_picked_count / 2)) {
+                        size_t new_size = scene->gl_mouse_picked_count * 2;
+                        void *new_ptr = NULL;
+
+                        new_ptr = realloc(scene->gl_mouse_picked_time,
+                                          new_size * sizeof(GlModelTime *));
+                        if (new_ptr == NULL) {
+                            return;
+                        }
+                        scene->gl_mouse_picked_time = new_ptr;
+                        scene->gl_mouse_picked_size = new_size;
+                    }
+
+
                     scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
                         model_time;
 
@@ -4329,13 +4378,8 @@ void scene_gl_render(Scene *scene) {
           sizeof(GlModelTime), scene_gl_model_time_compare);
 
     for (int i = 0; i < scene->gl_mouse_picked_count; i++) {
-        scene->mouse_picked_models[scene->mouse_picked_count + i] =
-            scene->gl_mouse_picked_time[i].game_model;
-
-        scene->mouse_picked_faces[scene->mouse_picked_count + i] = -1;
+        scene_mouse_pick(scene, scene->gl_mouse_picked_time[i].game_model, -1);
     }
-
-    scene->mouse_picked_count += scene->gl_mouse_picked_count;
 
     scene->surface->width = old_width;
     scene->surface->height = old_height;
@@ -4586,13 +4630,8 @@ void scene_3ds_gl_render(Scene *scene) {
           sizeof(GlModelTime), scene_gl_model_time_compare);
 
     for (int i = 0; i < scene->gl_mouse_picked_count; i++) {
-        scene->mouse_picked_models[scene->mouse_picked_count + i] =
-            scene->gl_mouse_picked_time[i].game_model;
-
-        scene->mouse_picked_faces[scene->mouse_picked_count + i] = -1;
+        scene_mouse_pick(scene, scene->gl_mouse_picked_time[i].game_model, -1);
     }
-
-    scene->mouse_picked_count += scene->gl_mouse_picked_count;
 }
 
 void scene_3ds_gl_render_transparent_models(Scene *scene) {

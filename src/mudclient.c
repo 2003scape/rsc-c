@@ -658,6 +658,10 @@ void mudclient_new(mudclient *mud) {
     mud->camera_rotation_y_increment = 2;
     mud->last_plane_index = -1;
 
+    mud->menu_items_size = 32;
+    mud->menu_items = calloc(mud->menu_items_size, sizeof(struct MenuEntry));
+    mud->menu_indices = calloc(mud->menu_items_size, sizeof(int));
+
     mud->options = malloc(sizeof(Options));
 
     options_new(mud->options);
