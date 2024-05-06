@@ -1108,7 +1108,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 #endif
-    printf("INFO: Loaded OpenGL version %d.%d\n", GLVersion.major, GLVersion.minor);
+    printf("INFO: Loaded OpenGL version %d.%d\n", GLVersion.major,
+           GLVersion.minor);
 #elif !defined(ANDROID)
     glewExperimental = GL_TRUE;
 
@@ -1757,10 +1758,10 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                 home = "";
             }
             snprintf(prefixed_file, sizeof(prefixed_file),
-                "%s/.local/share/rsc-c/%s", home, file);
+                     "%s/.local/share/rsc-c/%s", home, file);
         } else {
-            snprintf(prefixed_file, sizeof(prefixed_file),
-                "%s/rsc-c/%s", xdg_home, file);
+            snprintf(prefixed_file, sizeof(prefixed_file), "%s/rsc-c/%s",
+                     xdg_home, file);
         }
 
         printf("INFO: Loading %s\n", prefixed_file);
@@ -1768,8 +1769,8 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
         /* XDG failed, now try the global prefix... */
         if (archive_stream == NULL) {
-            snprintf(prefixed_file, sizeof(prefixed_file),
-                "%s/%s", DATADIR, file);
+            snprintf(prefixed_file, sizeof(prefixed_file), "%s/%s", DATADIR,
+                     file);
             printf("INFO: Loading %s\n", prefixed_file);
             archive_stream = fopen(prefixed_file, "rb");
         }

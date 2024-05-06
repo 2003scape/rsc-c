@@ -16,7 +16,7 @@
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
-#if !defined (SDL12) && !defined (__SWITCH__)
+#if !defined(SDL12) && !defined(__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 
@@ -77,7 +77,7 @@ extern int scene_frustum_near_z;
 
 extern int64_t scene_texture_count_loaded;
 
-#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 typedef enum {
     /* no picking */
     GL_PICK_STEP_NONE = 0,
@@ -283,8 +283,8 @@ void scene_scroll_texture(Scene *scene, int id);
 int16_t scene_rgb_to_fill(uint8_t, uint8_t, uint8_t);
 int scene_get_fill_colour(Scene *scene, int face_fill);
 void scene_set_light_dir(Scene *scene, int x, int y, int z);
-void scene_set_light(Scene *scene, int ambience, int diffuse,
-                     int x, int y, int z);
+void scene_set_light(Scene *scene, int ambience, int diffuse, int x, int y,
+                     int z);
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene);
 #endif

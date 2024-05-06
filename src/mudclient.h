@@ -1,12 +1,12 @@
 #ifndef _H_MUDCLIENT
 #define _H_MUDCLIENT
 
+#include <limits.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 1024
@@ -83,7 +83,7 @@
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
-#if !defined (SDL12) && !defined (__SWITCH__)
+#if !defined(SDL12) && !defined(__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 
@@ -204,12 +204,13 @@
 #else
 #define MUD_WIDTH MUD_VANILLA_WIDTH
 #define MUD_HEIGHT MUD_VANILLA_HEIGHT
-//#define MUD_WIDTH 320
-//#define MUD_HEIGHT 240
+// #define MUD_WIDTH 320
+// #define MUD_HEIGHT 240
 #endif
 
 // TODO make this a function
-#define MUD_IS_COMPACT (MUD_WIDTH < MUD_VANILLA_WIDTH || MUD_HEIGHT < MUD_VANILLA_HEIGHT)
+#define MUD_IS_COMPACT                                                         \
+    (MUD_WIDTH < MUD_VANILLA_WIDTH || MUD_HEIGHT < MUD_VANILLA_HEIGHT)
 
 /* npc IDs */
 #define SHIFTY_MAN_ID 24
@@ -1170,7 +1171,7 @@ void mudclient_update_fov(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
 #ifdef SDL12
-void mudclient_sdl1_on_resize(mudclient *mud,int width, int height);
+void mudclient_sdl1_on_resize(mudclient *mud, int width, int height);
 #endif
 void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
@@ -1187,7 +1188,7 @@ void mudclient_3ds_draw_top_background(mudclient *mud);
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
-                                    int height, int id, float depth);
+                                 int height, int id, float depth);
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
                                 float depth_bottom);

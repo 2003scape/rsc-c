@@ -114,13 +114,12 @@ int packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
 int packet_stream_read_byte(PacketStream *packet_stream);
 int packet_stream_has_packet(PacketStream *packet_stream);
 int packet_stream_read_packet(PacketStream *packet_stream, int8_t *buffer);
-void packet_stream_new_packet(PacketStream *packet_stream,
-                              ClientOpcode opcode);
+void packet_stream_new_packet(PacketStream *packet_stream, ClientOpcode opcode);
 /*int packet_stream_decode_opcode(PacketStream *packet_stream, int opcode);*/
 int packet_stream_write_packet(PacketStream *packet_stream, int i);
 void packet_stream_send_packet(PacketStream *packet_stream);
-void packet_stream_put_bytes(PacketStream *packet_stream, void *src,
-                             int offset, int length);
+void packet_stream_put_bytes(PacketStream *packet_stream, void *src, int offset,
+                             int length);
 void packet_stream_put_byte(PacketStream *packet_stream, int i);
 void packet_stream_put_short(PacketStream *packet_stream, int i);
 void packet_stream_put_int(PacketStream *packet_stream, int i);
@@ -131,8 +130,8 @@ void packet_stream_put_password(PacketStream *packet_stream, int session_id,
                                 char *password);
 #else
 void packet_stream_put_login_block(PacketStream *packet_stream,
-                const char *username, const char *password,
-                uint32_t *isaac_keys, uint32_t uuid);
+                                   const char *username, const char *password,
+                                   uint32_t *isaac_keys, uint32_t uuid);
 #endif
 int packet_stream_get_byte(PacketStream *packet_stream);
 int packet_stream_get_short(PacketStream *packet_stream);

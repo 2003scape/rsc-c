@@ -12,7 +12,7 @@
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
-#if !defined (SDL12) && !defined (__SWITCH__)
+#if !defined(SDL12) && !defined(__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 
@@ -117,8 +117,7 @@ int world_is_under_roof(World *world, int x, int y);
 int world_get_tile_direction(World *world, int x, int y);
 int world_get_elevation(World *world, int x, int y);
 int world_get_wall_roof(World *world, int x, int y);
-void world_register_wall_object(World *world, int x, int y, int dir,
-                                int id);
+void world_register_wall_object(World *world, int x, int y, int dir, int id);
 void world_register_object(World *world, int x, int y, int id);
 void world_remove_object(World *world, int x, int y, int id);
 void world_remove_wall_object(World *world, int x, int y, int k, int id);

@@ -74,12 +74,12 @@ void mudclient_draw_option_menu(mudclient *mud) {
         int text_colour = CYAN;
 
 #ifdef _3DS
-            char entry[strlen(mud->option_menu_entry[i]) + 5];
+        char entry[strlen(mud->option_menu_entry[i]) + 5];
 
-            sprintf(entry, "(%c) %s", _3ds_option_buttons[i],
-                    mud->option_menu_entry[i]);
+        sprintf(entry, "(%c) %s", _3ds_option_buttons[i],
+                mud->option_menu_entry[i]);
 #else
-            char *entry = mud->option_menu_entry[i];
+        char *entry = mud->option_menu_entry[i];
 #endif
 
         if (mud->mouse_x > ui_x - 6 &&

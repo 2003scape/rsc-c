@@ -46,7 +46,7 @@ struct NpcConfig {
     int16_t sprites[NPC_SPRITE_COUNT];
     uint16_t width;
     uint16_t height;
-    uint8_t walk_speed; /* animation playback speed */
+    uint8_t walk_speed;   /* animation playback speed */
     uint8_t combat_speed; /* animation playback speed */
     uint8_t combat_width; /* used for e.g. long animals like dragons */
     uint8_t attack;
