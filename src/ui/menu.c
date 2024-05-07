@@ -930,6 +930,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                     mud->menu_items[mud->menu_items_count].x =
                         player->current_x;
+
                     mud->menu_items[mud->menu_items_count].y =
                         player->current_y;
 
@@ -1069,6 +1070,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                 mud->menu_items[mud->menu_items_count].x = npc->current_x;
                 mud->menu_items[mud->menu_items_count].y = npc->current_y;
+
                 mud->menu_items[mud->menu_items_count].index =
                     npc->server_index;
 
@@ -1205,6 +1207,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                     mud->menu_items[mud->menu_items_count].type =
                         MENU_NPC_EXAMINE;
+
                     mud->menu_items[mud->menu_items_count].index = npc_id;
 
                     mud->menu_items_count++;
@@ -1363,6 +1366,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
 
                 mud->menu_items[mud->menu_items_count].x =
                     mud->objects[index].x;
+
                 mud->menu_items[mud->menu_items_count].y =
                     mud->objects[index].y;
 
@@ -1549,6 +1553,7 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                    mud->selected_item_inventory_index < 0) {
             strcpy(mud->menu_items[mud->menu_items_count].action_text,
                    "Walk here");
+
             strcpy(mud->menu_items[mud->menu_items_count].target_text, "");
 
             mud->menu_items[mud->menu_items_count].type = MENU_WALK;
