@@ -64,11 +64,11 @@ void mudclient_handle_offer_x_input(mudclient *mud) {
 
 void mudclient_add_offer_menu(mudclient *mud, int type, int item_id, int amount,
                               char *display_amount, char *item_name) {
-    strcpy(mud->menu_item_text1[mud->menu_items_count], display_amount);
-    strcpy(mud->menu_item_text2[mud->menu_items_count], item_name);
-    mud->menu_type[mud->menu_items_count] = type;
-    mud->menu_index[mud->menu_items_count] = item_id;
-    mud->menu_target_index[mud->menu_items_count] = amount;
+    strcpy(mud->menu_items[mud->menu_items_count].action_text, display_amount);
+    strcpy(mud->menu_items[mud->menu_items_count].target_text, item_name);
+    mud->menu_items[mud->menu_items_count].type = type;
+    mud->menu_items[mud->menu_items_count].index = item_id;
+    mud->menu_items[mud->menu_items_count].target_index = amount;
     mud->menu_items_count++;
 }
 
@@ -122,9 +122,9 @@ void mudclient_add_offer_menus(mudclient *mud, char *type_string, int type,
                                  item_name);
     }
 
-    strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
-    strcpy(mud->menu_item_text2[mud->menu_items_count], item_name);
-    mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_EXAMINE;
-    mud->menu_index[mud->menu_items_count] = item_id;
+    strcpy(mud->menu_items[mud->menu_items_count].action_text, "Examine");
+    strcpy(mud->menu_items[mud->menu_items_count].target_text, item_name);
+    mud->menu_items[mud->menu_items_count].type = MENU_INVENTORY_EXAMINE;
+    mud->menu_items[mud->menu_items_count].index = item_id;
     mud->menu_items_count++;
 }

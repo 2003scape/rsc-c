@@ -175,7 +175,6 @@ static void split_data(ini_t *ini) {
 
 ini_t* ini_load(const char *filename) {
   ini_t *ini = NULL;
-  FILE *fp = NULL;
   int n, sz;
 
   /* Init ini struct */
@@ -186,21 +185,34 @@ ini_t* ini_load(const char *filename) {
   memset(ini, 0, sizeof(*ini));
 
   /* Open file */
-  fp = fopen(filename, "rb");
+#ifdef ANDROID
+  SDL_RWops *fp = SDL_RWFromFile(filename, "rb");
+#else
+  FILE *fp = fopen(filename, "rb");
+#endif
   if (!fp) {
     goto fail;
   }
 
   /* Get file size */
+#ifdef ANDROID
+  sz = SDL_RWseek(fp, 0, RW_SEEK_END);
+  SDL_RWseek(fp, 0, RW_SEEK_SET);
+#else
   fseek(fp, 0, SEEK_END);
   sz = ftell(fp);
   rewind(fp);
+#endif
 
   /* Load file content into memory, null terminate, init end var */
   ini->data = malloc(sz + 1);
   ini->data[sz] = '\0';
   ini->end = ini->data  + sz;
+#ifdef ANDROID
+  n = SDL_RWread(fp, ini->data, 1, sz);
+#else
   n = fread(ini->data, 1, sz, fp);
+#endif
   if (n != sz) {
     goto fail;
   }
@@ -209,11 +221,21 @@ ini_t* ini_load(const char *filename) {
   split_data(ini);
 
   /* Clean up and return */
+#ifdef ANDROID
+  SDL_RWclose(fp);
+#else
   fclose(fp);
+#endif
   return ini;
 
 fail:
-  if (fp) fclose(fp);
+  if (fp) {
+#ifdef ANDROID
+    SDL_RWclose(fp);
+#else
+    fclose(fp);
+#endif
+  }
   if (ini) ini_free(ini);
   return NULL;
 }

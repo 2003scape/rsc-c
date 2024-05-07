@@ -36,11 +36,7 @@
 
 #ifdef RENDER_GL
 #ifdef GLAD
-#ifdef __SWITCH__
 #include <glad/glad.h>
-#else
-#include "../../glad/glad.h"
-#endif
 #else
 #include <GL/glew.h>
 #include <GL/glu.h>
@@ -371,7 +367,7 @@ void surface_draw_stringf(Surface *surface, int x, int y, FontStyle font,
 void surface_draw_stringf_centre(Surface *surface, int x, int y, FontStyle font,
                                  int colour, const char *text, ...);
 void surface_draw_stringf_right(Surface *surface, int x, int y, FontStyle font,
-                                 int colour, const char *text, ...);
+                                int colour, const char *text, ...);
 int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,
                              int max, int max_height);
 void surface_draw_paragraph(Surface *surface, const char *text, int x, int y,

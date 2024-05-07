@@ -4,13 +4,12 @@ int sin_cos_512[512] = {0};
 int sin_cos_2048[2048] = {0};
 
 static const int BITMASK[] = {
-                 0,          1,          3,         7,         15,
-                 31,         63,         127,       255,       511,
-                 1023,       2047,       4095,      8191,      16383,
-                 32767,      65535,      0x1ffff,   0x3ffff,   0x7ffff,
-                 0xfffff,    0x1fffff,   0x3fffff,  0x7fffff,  0xffffff,
-                 0x1ffffff,  0x3ffffff,  0x7ffffff, 0xfffffff, 0x1fffffff,
-                 0x3fffffff, 0x7fffffff, -1};
+    0,          1,          3,         7,         15,        31,
+    63,         127,        255,       511,       1023,      2047,
+    4095,       8191,       16383,     32767,     65535,     0x1ffff,
+    0x3ffff,    0x7ffff,    0xfffff,   0x1fffff,  0x3fffff,  0x7fffff,
+    0xffffff,   0x1ffffff,  0x3ffffff, 0x7ffffff, 0xfffffff, 0x1fffffff,
+    0x3fffffff, 0x7fffffff, -1};
 
 static const CertificateItem certificate_items[] = {
     {517, 151},  {521, 152}, {519, 153},  {518, 155},  {528, 170},  {529, 171},
@@ -95,7 +94,7 @@ void mud_log(char *format, ...) {
     va_list args = {0};
     va_start(args, format);
 
-#if !defined(_3DS) && !defined(WII) && !defined (SDL12)
+#if !defined(_3DS) && !defined(WII) && !defined(SDL12)
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format,
                     args);
 #else
@@ -109,7 +108,7 @@ void mud_error(char *format, ...) {
     va_list args = {0};
     va_start(args, format);
 
-#if !defined(_3DS) && !defined(WII) && !defined (SDL12)
+#if !defined(_3DS) && !defined(WII) && !defined(SDL12)
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR,
                     format, args);
 #else
@@ -351,8 +350,9 @@ void format_auth_string(char *raw, int max_length, char *formatted) {
 }
 
 void ip_to_string(int32_t ip, char *ip_string) {
-    sprintf(ip_string, "%d.%d.%d.%d", (ip >> 24) & 0xff, (ip >> 16) & 0xff,
-            (ip >> 8) & 0xff, ip & 0xff);
+    sprintf(ip_string, "%d.%d.%d.%d", (int)((ip >> 24) & 0xff),
+            (int)((ip >> 16) & 0xff), (int)((ip >> 8) & 0xff),
+            (int)(ip & 0xff));
 }
 
 int64_t encode_username(char *username) {
@@ -749,8 +749,8 @@ int get_certificate_item_id(int item_id) {
     int length = sizeof(certificate_items) / sizeof(certificate_items[0]);
 
     for (int i = 0; i < length; i++) {
-        if (certificate_items[i].item_id  == item_id) {
-            return certificate_items[i].certificate_id;
+        if (certificate_items[i].certificate_id == item_id) {
+            return certificate_items[i].item_id;
         }
     }
 
@@ -765,7 +765,7 @@ int is_ip_address(const char *address) {
     for (int i = 0; i < length; i++) {
         char c = address[i];
 
-        if (isdigit(c)) {
+        if (isdigit((unsigned char)c)) {
             segment = segment * 10 + (c - '0');
 
             if (segment > 255) {

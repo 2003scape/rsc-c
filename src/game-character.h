@@ -11,8 +11,8 @@ typedef enum {
     ANIMATION_INDEX_HEAD = 0,
     ANIMATION_INDEX_BODY = 1,
     ANIMATION_INDEX_LEGS = 2,
-    ANIMATION_INDEX_LEFT_HAND = 3, /* shields */
-    ANIMATION_INDEX_RIGHT_HAND = 4, /* swords */
+    ANIMATION_INDEX_LEFT_HAND = 3,    /* shields */
+    ANIMATION_INDEX_RIGHT_HAND = 4,   /* swords */
     ANIMATION_INDEX_HEAD_OVERLAY = 5, /* med helms */
     ANIMATION_INDEX_BODY_OVERLAY = 6, /* chainmail */
     ANIMATION_INDEX_LEGS_OVERLAY = 7, /* skirts */
@@ -92,7 +92,7 @@ struct GameCharacter {
     int32_t attacking_npc_server_index;
 };
 
-void game_character_new(GameCharacter* game_character);
+void game_character_new(GameCharacter *game_character);
 void game_character_move(GameCharacter *character);
 
 #endif

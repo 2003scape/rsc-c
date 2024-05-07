@@ -101,7 +101,6 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     } else {
 #ifdef WII
         struct hostent *host_addr = net_gethostbyname(mud->options->server);
-
         struct in_addr addr = {0};
         memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
         strcpy(server_ip, inet_ntoa(addr));
@@ -109,8 +108,11 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         struct hostent *host_addr = gethostbyname(mud->options->server);
 
         struct in_addr addr = {0};
-        if (host_addr)
+
+        if (host_addr) {
             memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
+        }
+
         strcpy(server_ip, inet_ntoa(addr));
 #else
         struct addrinfo hints = {0};
@@ -142,7 +144,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #endif
     }
 
-#if defined (WIN32) && !defined (WIN9X)
+#if defined(WIN32) && !defined(WIN9X)
     ret = InetPton(AF_INET, server_ip, &server_addr.sin_addr);
 #else
     ret = inet_aton(server_ip, &server_addr.sin_addr);
@@ -251,8 +253,8 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
                 if (getsockopt(packet_stream->socket, SOL_SOCKET, SO_ERROR,
                                (void *)(&valopt), &lon) < 0) {
-                    mud_error("getsockopt() error:  %s (%d)\n",
-                            strerror(errno), errno);
+                    mud_error("getsockopt() error:  %s (%d)\n", strerror(errno),
+                              errno);
 
                     exit(1);
                 }
@@ -522,7 +524,7 @@ int packet_stream_write_packet(PacketStream *packet_stream, int i) {
         packet_stream->socket_exception = 0;
 
         mud_error("socket exception: %s\n",
-                packet_stream->socket_exception_message);
+                  packet_stream->socket_exception_message);
 
         return -1;
     }
@@ -645,6 +647,7 @@ static void packet_stream_put_rsa(PacketStream *packet_stream,
 
     struct bn bn = {0};
     bignum_init(&bn);
+
     for (size_t i = 0; i < input_len; i++) {
         bn.array[i] = unencoded[input_len - 1 - i];
     }
@@ -653,14 +656,11 @@ static void packet_stream_put_rsa(PacketStream *packet_stream,
     bignum_init(&result);
     bignum_pow_mod(&bn, &exponent, &modulus, &result);
 
-    int result_length = 0;
-
-    for (int i = (BN_ARRAY_SIZE - 1); i >= 0; i--) {
-        if (result.array[i] != 0) {
-            result_length = i + 1;
-            break;
-        }
-    }
+    /* in java's BigInteger byte array array, zeros at the beginning are
+     * ignored unless they're being used to indicate the MSB for sign. since
+     * the byte array lengths range from 63-65 and we always want a positive
+     * integer, we can make result_length 65 and begin with up to two 0 bytes */
+    int result_length = 65;
 
     packet_stream_put_byte(packet_stream, result_length);
 
@@ -676,6 +676,7 @@ void packet_stream_put_login_block(PacketStream *packet_stream,
                                    uint32_t *isaac_keys, uint32_t uuid) {
     uint8_t input_block[16 + (sizeof(uint32_t) * 4) + 4 + USERNAME_LENGTH +
                         PASSWORD_LENGTH];
+
     size_t username_len = strlen(username);
     size_t password_len = strlen(password);
     uint8_t *p = input_block;
@@ -687,6 +688,7 @@ void packet_stream_put_login_block(PacketStream *packet_stream,
 #ifndef NO_ISAAC
     memset(packet_stream->isaac_in.randrsl, 0,
            sizeof(packet_stream->isaac_in.randrsl));
+
     memset(packet_stream->isaac_out.randrsl, 0,
            sizeof(packet_stream->isaac_out.randrsl));
 #endif

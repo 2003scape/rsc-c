@@ -405,23 +405,31 @@ void mudclient_draw_transaction(mudclient *mud, int dialog_x, int dialog_y,
                             item_amount, formatted_item_name,
                             mud->transaction_last_offer);
                     } else {
-                        strcpy(mud->menu_item_text1[mud->menu_items_count],
-                               "Examine");
+                        strcpy(
+                            mud->menu_items[mud->menu_items_count].action_text,
+                            "Examine");
 
-                        strcpy(mud->menu_item_text2[mud->menu_items_count],
-                               formatted_item_name);
+                        strcpy(
+                            mud->menu_items[mud->menu_items_count].target_text,
+                            formatted_item_name);
 
-                        mud->menu_type[mud->menu_items_count] =
+                        mud->menu_items[mud->menu_items_count].type =
                             MENU_INVENTORY_EXAMINE;
 
-                        mud->menu_index[mud->menu_items_count] = item_id;
+                        mud->menu_items[mud->menu_items_count].index = item_id;
                         mud->menu_items_count++;
 
-                        strcpy(mud->menu_item_text1[mud->menu_items_count],
-                               "Cancel");
+                        strcpy(
+                            mud->menu_items[mud->menu_items_count].action_text,
+                            "Cancel");
 
-                        strcpy(mud->menu_item_text2[mud->menu_items_count], "");
-                        mud->menu_type[mud->menu_items_count] = MENU_CANCEL;
+                        strcpy(
+                            mud->menu_items[mud->menu_items_count].target_text,
+                            "");
+
+                        mud->menu_items[mud->menu_items_count].type =
+                            MENU_CANCEL;
+
                         mud->menu_items_count++;
                     }
                 } else if (mud->mouse_item_count_increment > 0) {

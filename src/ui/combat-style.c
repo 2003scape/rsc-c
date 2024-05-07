@@ -2,13 +2,11 @@
 
 const char *combat_styles[] = {
     "Controlled (+1 of each)", "Aggressive (+3 strength)",
-    "Accurate (+3 attack)", "Defensive (+3 defense)"
-};
+    "Accurate (+3 attack)", "Defensive (+3 defense)"};
 
 const char *combat_styles_compact[] = {
-    "Controlled (+1 each)", "Aggressive (+3 str.)",
-    "Accurate (+3 att.)", "Defensive (+3 def.)"
-};
+    "Controlled (+1 each)", "Aggressive (+3 str.)", "Accurate (+3 att.)",
+    "Defensive (+3 def.)"};
 
 void mudclient_draw_combat_style(mudclient *mud) {
     int is_compact = mud->surface->width < 390;
@@ -18,7 +16,7 @@ void mudclient_draw_combat_style(mudclient *mud) {
     int combat_style_width = is_compact ? 106 : 175;
 
     int ui_x = is_touch ? 13 : 7;
-    int ui_y = is_touch ? 132 : 15;
+    int ui_y = is_touch ? 140 : 15;
 
     int combat_styles_length = sizeof(combat_styles) / sizeof(combat_styles[0]);
 
@@ -64,10 +62,12 @@ void mudclient_draw_combat_style(mudclient *mud) {
 
     if (is_compact) {
         surface_draw_string_centre(mud->surface, "Combat style",
-           ui_x + (combat_style_width / 2), ui_y + y, FONT_BOLD_12, WHITE);
+                                   ui_x + (combat_style_width / 2), ui_y + y,
+                                   FONT_BOLD_12, WHITE);
     } else {
         surface_draw_string_centre(mud->surface, "Select combat style",
-           ui_x + (combat_style_width / 2), ui_y + y, FONT_BOLD_13, WHITE);
+                                   ui_x + (combat_style_width / 2), ui_y + y,
+                                   FONT_BOLD_13, WHITE);
     }
 
     y += combat_button_height;

@@ -355,9 +355,27 @@ void mudclient_3ds_gl_frame_end() { C3D_FrameEnd(0); }
 #else
 #ifdef SDL12
 void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
+    *code = -1;
     *char_code = -1;
 
+    /* note: unicode is not set for key released */
+    if (keysym->unicode > 0 && keysym->unicode < 128) {
+        if (isprint((unsigned char)keysym->unicode)) {
+            *code = keysym->unicode;
+            *char_code = keysym->unicode;
+            return;
+        }
+    }
+
     switch (keysym->sym) {
+    case SDLK_TAB:
+        *code = K_TAB;
+        *char_code = '\t';
+        break;
+    case SDLK_BACKSPACE:
+        *code = K_BACKSPACE;
+        *char_code = '\b';
+        break;
     case SDLK_LEFT:
         *code = K_LEFT;
         break;
@@ -385,182 +403,34 @@ void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
     case SDLK_ESCAPE:
         *code = K_ESCAPE;
         break;
-    /*case SDLK_RETURN:
+    case SDLK_RETURN:
         *code = K_ENTER;
-        break;*/
-    // TODO: Swallow "bad inputs" by default? ie. numlock, capslock
-    case SDLK_NUMLOCK:
-        *code = -1;
-        *char_code = 1;
-        break;
-    case SDLK_CAPSLOCK:
-        *code = -1;
-        *char_code = 1;
-        break;
-    case SDLK_KP_DIVIDE:
-        *code = K_FWD_SLASH;
-        *char_code = K_FWD_SLASH;
-        break;
-    case SDLK_KP_MULTIPLY:
-        *code = K_ASTERISK;
-        *char_code = K_ASTERISK;
-        break;
-    case SDLK_KP_MINUS:
-        *code = K_MINUS;
-        *char_code = K_MINUS;
-        break;
-    case SDLK_KP_PLUS:
-        *code = K_PLUS;
-        *char_code = K_PLUS;
-        break;
-    case SDLK_KP_PERIOD:
-        *code = K_PERIOD;
-        *char_code = K_PERIOD;
-        break;
-    case SDLK_KP_ENTER:
-        *code = K_ENTER;
-        *char_code = K_ENTER;
-        break;
-    case SDLK_KP0:
-        *code = K_0;
-        *char_code = K_0;
+        *char_code = '\r';
         break;
     case SDLK_KP1:
+    case SDLK_1:
         *code = K_1;
         *char_code = K_1;
         break;
     case SDLK_KP2:
+    case SDLK_2:
         *code = K_2;
         *char_code = K_2;
         break;
     case SDLK_KP3:
+    case SDLK_3:
         *code = K_3;
         *char_code = K_3;
         break;
     case SDLK_KP4:
+    case SDLK_4:
         *code = K_4;
         *char_code = K_4;
         break;
     case SDLK_KP5:
+    case SDLK_5:
         *code = K_5;
         *char_code = K_5;
-        break;
-    case SDLK_KP6:
-        *code = K_6;
-        *char_code = K_6;
-        break;
-    case SDLK_KP7:
-        *code = K_7;
-        *char_code = K_7;
-        break;
-    case SDLK_KP8:
-        *code = K_8;
-        *char_code = K_8;
-        break;
-    case SDLK_KP9:
-        *code = K_9;
-        *char_code = K_9;
-        break;
-    case SDLK_LSHIFT:
-    case SDLK_RSHIFT:
-        // Ignore these on SDL12
-        break;
-    default:
-        *char_code = keysym->sym;
-
-        switch (keysym->scancode) {
-        case SDLK_TAB:
-            *code = K_TAB;
-            break;
-        case SDLK_1:
-            *code = K_1;
-            break;
-        case SDLK_2:
-            *code = K_2;
-            break;
-        case SDLK_3:
-            *code = K_3;
-            break;
-        case SDLK_4:
-            *code = K_4;
-            break;
-        case SDLK_5:
-            *code = K_5;
-            break;
-        default:
-            *code = *char_code;
-            break;
-        }
-
-        if (keysym->mod & KMOD_SHIFT) {
-            if (*char_code >= 'a' && *char_code <= 'z') {
-                *char_code -= 32;
-            } else {
-                switch (*char_code) {
-                case ';':
-                    *char_code = ':';
-                    break;
-                case '`':
-                    *char_code = '~';
-                    break;
-                case '1':
-                    *char_code = '!';
-                    break;
-                case '2':
-                    *char_code = '@';
-                    break;
-                case '3':
-                    *char_code = '#';
-                    break;
-                case '4':
-                    *char_code = '$';
-                    break;
-                case '5':
-                    *char_code = '%';
-                    break;
-                case '6':
-                    *char_code = '^';
-                    break;
-                case '7':
-                    *char_code = '&';
-                    break;
-                case '8':
-                    *char_code = '*';
-                    break;
-                case '9':
-                    *char_code = '(';
-                    break;
-                case '0':
-                    *char_code = ')';
-                    break;
-                case '-':
-                    *char_code = '_';
-                    break;
-                case '=':
-                    *char_code = '+';
-                    break;
-                case '[':
-                    *char_code = '{';
-                    break;
-                case ']':
-                    *char_code = '}';
-                    break;
-                case '\\':
-                    *char_code = '|';
-                    break;
-                case ',':
-                    *char_code = '<';
-                    break;
-                case '.':
-                    *char_code = '>';
-                    break;
-                case '/':
-                    *char_code = '?';
-                    break;
-                }
-            }
-        }
-
         break;
     }
 }
@@ -787,6 +657,10 @@ void mudclient_new(mudclient *mud) {
     mud->camera_rotation_x_increment = 2;
     mud->camera_rotation_y_increment = 2;
     mud->last_plane_index = -1;
+
+    mud->menu_items_size = 32;
+    mud->menu_items = calloc(mud->menu_items_size, sizeof(struct MenuEntry));
+    mud->menu_indices = calloc(mud->menu_items_size, sizeof(int));
 
     mud->options = malloc(sizeof(Options));
 
@@ -1110,6 +984,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 
+#ifdef SDL12
+    (void)SDL_EnableUNICODE(1);
+#endif
+
 #ifdef __SWITCH__
     SDL_JoystickEventState(SDL_ENABLE);
     joystick = SDL_JoystickOpen(0);
@@ -1172,13 +1050,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #ifdef SDL12
     mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
                                    SDL_OPENGL | SDL_RESIZABLE);
-
-    GLenum error = glGetError();
-
-    if (error != GL_NO_ERROR) {
-        mud_log("Error initializing OpenGL! %s\n", gluErrorString(error));
-        exit(0);
-    }
 #else
 #ifdef EMSCRIPTEN
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -1226,9 +1097,20 @@ void mudclient_start_application(mudclient *mud, char *title) {
 #endif
 
 #ifdef GLAD
-    gladLoadGL();
+#if defined(SDL_OPENGL) || defined(SDL_WINDOW_OPENGL)
+    if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
+        mud_error("Error loading GL library through GLAD/SDL\n");
+        exit(1);
+    }
 #else
-
+    if (gladLoadGL() == 0) {
+        mud_error("Error loading GL library through GLAD\n");
+        exit(1);
+    }
+#endif
+    printf("INFO: Loaded OpenGL version %d.%d\n", GLVersion.major,
+           GLVersion.minor);
+#elif !defined(ANDROID)
     glewExperimental = GL_TRUE;
 
     GLenum glew_error = glewInit();
@@ -1419,7 +1301,8 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
                 mud->input_pm_current[pm_length + 1] = '\0';
             }
         } else if ((IS_DIGIT_SEPARATOR(char_code) ||
-                    IS_DIGIT_SUFFIX(char_code) || isdigit(char_code))) {
+                    IS_DIGIT_SUFFIX(char_code) ||
+                    isdigit((unsigned char)char_code))) {
             int digits_length = strlen(mud->input_digits_current);
 
             if (digits_length < INPUT_DIGITS_LENGTH) {
@@ -1468,10 +1351,10 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             for (int i = 0; i < digits_length; i++) {
                 char digit_char = mud->input_digits_current[i];
 
-                if (isdigit(digit_char)) {
+                if (isdigit((unsigned char)digit_char)) {
                     filtered_digits[filtered_length++] = digit_char;
-                } else if (tolower(digit_char) == 'k' ||
-                           tolower(digit_char) == 'm') {
+                } else if (tolower((unsigned char)digit_char) == 'k' ||
+                           tolower((unsigned char)digit_char) == 'm') {
                     digits_suffix = digit_char;
                 } else if (!has_decimal && digit_char == '.') {
                     filtered_digits[filtered_length++] = digit_char;
@@ -1647,6 +1530,24 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
     if (mudclient_is_ui_scaled(mud)) {
         mud->mouse_x /= 2;
         mud->mouse_y /= 2;
+    }
+
+    /*
+     * in SDL12 mouse wheel scrolling is treated as digital button press,
+     * while in SDL2 it is handled as a different type of event entirely.
+     */
+    if (button == 4 || button == 5) {
+        if (mud->options->mouse_wheel) {
+            if (button == 4) {
+                mud->mouse_scroll_delta--;
+            } else {
+                mud->mouse_scroll_delta++;
+            }
+            return;
+        } else {
+            /* treat it as a right click when scrolling is disabled */
+            button = 3;
+        }
     }
 
     if (mud->options->middle_click_camera != 0 && button == 2) {
@@ -1833,22 +1734,47 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     memcpy(header, file_data, sizeof(header));
 #else
-    int file_length = strlen(file);
-
-#if defined(_3DS) || defined(__SWITCH__)
-    char *prefix = "romfs:";
-#else
-    char *prefix = "./cache";
-#endif
 
 #ifdef ANDROID
     char *prefixed_file = file;
     SDL_RWops *archive_stream = SDL_RWFromFile(prefixed_file, "rb");
+#elif defined(_3DS) || defined(__SWITCH__)
+    char prefixed_file[PATH_MAX];
+    snprintf(prefixed_file, "romfs:/%s", file);
 #else
-    char prefixed_file[file_length + strlen(prefix) + 2];
-    sprintf(prefixed_file, "%s/%s", prefix, file);
+    char prefixed_file[PATH_MAX];
+    snprintf(prefixed_file, sizeof(prefixed_file), "./cache/%s", file);
 
+    /* attempt to read cache from the current working directory first */
+    printf("INFO: Loading %s\n", prefixed_file);
     FILE *archive_stream = fopen(prefixed_file, "rb");
+    if (archive_stream == NULL) {
+        /* cwd failed, now try the xdg home directory... */
+        const char *xdg_home = getenv("XDG_DATA_HOME");
+
+        if (xdg_home == NULL) {
+            const char *home = getenv("HOME");
+            if (home == NULL) {
+                home = "";
+            }
+            snprintf(prefixed_file, sizeof(prefixed_file),
+                     "%s/.local/share/rsc-c/%s", home, file);
+        } else {
+            snprintf(prefixed_file, sizeof(prefixed_file), "%s/rsc-c/%s",
+                     xdg_home, file);
+        }
+
+        printf("INFO: Loading %s\n", prefixed_file);
+        archive_stream = fopen(prefixed_file, "rb");
+
+        /* XDG failed, now try the global prefix... */
+        if (archive_stream == NULL) {
+            snprintf(prefixed_file, sizeof(prefixed_file), "%s/%s", DATADIR,
+                     file);
+            printf("INFO: Loading %s\n", prefixed_file);
+            archive_stream = fopen(prefixed_file, "rb");
+        }
+    }
 #endif
 
     if (archive_stream == NULL) {
@@ -1981,7 +1907,7 @@ void mudclient_load_game_config(mudclient *mud) {
 
     free(filter_jag);*/
 
-    if (mud->options->rename_herblaw_items) {
+    if (mud->options->members && mud->options->rename_herblaw_items) {
         modify_unidentified_herbs();
         modify_unfinished_potions();
         modify_potion_dosage();
@@ -2863,7 +2789,7 @@ void mudclient_login(mudclient *mud, char *username, char *password,
 
     mud_log("Login response: %d\n", response);
 
-    if (response == 0 || response == 25) {
+    if (response == 0 || response == 1 || response == 25) {
         mud->moderator_level = response == 25;
         mud->auto_login_attempts = 0;
 
@@ -2882,10 +2808,10 @@ void mudclient_login(mudclient *mud, char *username, char *password,
         return;
     }
 
-    if (response == 1) {
+    /*if (response == 1) {
         mud->auto_login_attempts = 0;
         return;
-    }
+    }*/
 
     if (reconnecting) {
         mudclient_reset_login_screen(mud);
@@ -3588,6 +3514,21 @@ GameCharacter *mudclient_add_character(mudclient *mud,
                                        int animation, int npc_id) {
     if (character_server[server_index] == NULL) {
         if (npc_id == -1 && server_index == mud->local_player_server_index) {
+            /* unlikely but just in case */
+            for (int i = 0; i < PLAYERS_SERVER_MAX; i++) {
+                if (mud->player_server[i] == mud->local_player) {
+                    mud->player_server[i] = NULL;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < PLAYERS_MAX; i++) {
+                if (mud->players[i] == mud->local_player) {
+                    mud->players[i] = NULL;
+                    break;
+                }
+            }
+
             free(mud->local_player);
             mud->local_player = NULL;
         }
@@ -4569,6 +4510,14 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = j5 + game_data.animations[animation_id].file_id;
 
+#ifdef RENDER_SW
+            if (mud->surface->surface_pixels[sprite_id] == NULL &&
+                mud->surface->sprite_colours[sprite_id] == NULL) {
+                /* sprite file was not loaded, probably on f2p version */
+                continue;
+            }
+#endif
+
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
 
@@ -4721,6 +4670,14 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = k4 + game_data.animations[animation_id].file_id;
+
+#ifdef RENDER_SW
+            if (mud->surface->surface_pixels[sprite_id] == NULL &&
+                mud->surface->sprite_colours[sprite_id] == NULL) {
+                /* sprite file was not loaded, probably on f2p version */
+                continue;
+            }
+#endif
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -5403,6 +5360,12 @@ void mudclient_draw_game(mudclient *mud) {
         mud->scene->fog_z_distance = clip_far - 100;
     }
 #endif
+
+    if (!mud->options->fog_of_war) {
+        mud->scene->clip_far_3d = 20000;
+        mud->scene->clip_far_2d = 20000;
+        mud->scene->fog_z_distance = 20000;
+    }
 
     int camera_x = mud->camera_auto_rotate_player_x + mud->camera_rotation_x;
     int camera_z = mud->camera_auto_rotate_player_y + mud->camera_rotation_y;

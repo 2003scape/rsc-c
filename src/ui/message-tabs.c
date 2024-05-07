@@ -189,8 +189,9 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 }
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
+    int is_touch = mudclient_is_touch(mud);
+
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
-        int is_touch = mudclient_is_touch(mud);
         int x = 7 + (is_touch ? 5 : 0);
         int y = is_touch ? 91 : mud->surface->height - 30;
 
@@ -220,7 +221,7 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     panel_draw_panel(mud->panel_message_tabs);
     panel_text_list_entry_height_mod = 0;
 
-    if (mudclient_is_touch(mud)) {
+    if (is_touch) {
         surface_draw_sprite(mud->surface, 9, 108, mud->sprite_media + 40);
     }
 }
@@ -339,7 +340,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
              mud->mouse_y <=
                  108 + mud->surface->sprite_height[mud->sprite_media + 40]);
 
-        if (mud->last_mouse_button_down == 1 &&
+        if (!mud->show_right_click_menu && mud->last_mouse_button_down == 1 &&
             (is_within_chat_input || is_within_button_input)) {
             mudclient_trigger_keyboard(mud, chat_input, 0, chat_input_x,
                                        chat_input_y, chat_input_width,
