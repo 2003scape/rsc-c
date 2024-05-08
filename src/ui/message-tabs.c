@@ -190,7 +190,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     int is_touch = mudclient_is_touch(mud);
-    bool hide_keyboard_icon = true;
+
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
         int x = 7 + (is_touch ? 5 : 0);
         int y = is_touch ? 91 : mud->surface->height - 30;
@@ -221,7 +221,7 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     panel_draw_panel(mud->panel_message_tabs);
     panel_text_list_entry_height_mod = 0;
 
-    if (is_touch && !hide_keyboard_icon) {
+    if (is_touch) {
         surface_draw_sprite(mud->surface, 9, 108, mud->sprite_media + 40);
     }
 }
