@@ -222,6 +222,10 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     panel_text_list_entry_height_mod = 0;
 
     if (is_touch) {
+        //TODO: add right, left, center positions
+        //left is 9, 109
+        //top mid is 510, 5
+        //right is mud->surface->width - 50, 150
         surface_draw_sprite(mud->surface, 9, 108, mud->sprite_media + 40);
     }
 }
@@ -331,7 +335,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             (mud->mouse_x <= chat_input_x + chat_input_trigger_width &&
              mud->mouse_y >= chat_input_y - 8 &&
              mud->mouse_y <= chat_input_y + chat_input_height + 4);
-
+        //TODO: add right, left, center positions
         int is_within_button_input =
             (mud->mouse_x >= 9 &&
              mud->mouse_x <=
