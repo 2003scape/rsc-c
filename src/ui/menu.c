@@ -633,10 +633,9 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
     int is_touch = mudclient_is_touch(mud);
 
-    if (!is_touch && strlen(menu_text) > 0) {
-        //TODO: fix position for mobile, find a good position that doesn't overlap chat or anything else
-        surface_draw_string(mud->surface, menu_text, 6, 14, FONT_BOLD_12,
-                            YELLOW);
+    if (strlen(menu_text) > 0) {
+        surface_draw_string(mud->surface, menu_text, 6, is_touch ? 11 : 14,
+                            FONT_BOLD_12, YELLOW);
     }
 
     if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 1) ||
