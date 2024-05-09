@@ -526,6 +526,8 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
 }
 
 void mudclient_create_top_mouse_menu(mudclient *mud) {
+    mud->menu_text_position = "top";
+
     int add_cancel = mud->selected_spell >= 0 ||
                      mud->selected_item_inventory_index >= 0 ||
                      mud->selected_wiki;
@@ -634,7 +636,11 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
     int is_touch = mudclient_is_touch(mud);
 
     if (strlen(menu_text) > 0) {
-        surface_draw_string(mud->surface, menu_text, 6, is_touch ? 11 : 14,
+        int yPosition = 14;
+        if (is_touch) {
+            yPosition = (strcmp(mud->menu_text_position, "top") == 0) ? 11 : mud->surface->height - 35;
+        }
+        surface_draw_string(mud->surface, menu_text, 6, yPosition,
                             FONT_BOLD_12, YELLOW);
     }
 

@@ -876,6 +876,7 @@ struct mudclient {
     int menu_height;
     int menu_x;
     int menu_y;
+    char *menu_text_position;
 
     /* ./ui/inventory-tab.c */
     int inventory_items_count;
