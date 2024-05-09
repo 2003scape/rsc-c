@@ -641,7 +641,7 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
         int xPosition = 6;
         if (is_touch) {
             if (mud->options->display_fps == 0) {
-                yOffset = 15;
+                yOffset = 18;
             }
             yPosition = (strcmp(mud->menu_text_position, "top") == 0) ? 11 : mud->surface->height - yOffset;
             if (strcmp(mud->menu_text_position, "bottom") == 0 && mud->is_in_wilderness) {
