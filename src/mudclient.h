@@ -726,6 +726,7 @@ struct mudclient {
     int message_tab_flash_private;
     char message_history[MESSAGE_HISTORY_LENGTH][255];
     int message_history_timeout[MESSAGE_HISTORY_LENGTH];
+    char *keyboard_button_position;
 
     int login_timer;
 

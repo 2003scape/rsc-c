@@ -37,6 +37,8 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
         text_list_height, FONT_BOLD_12, max_text_list_entries, 1);
 
     panel_set_focus(mud->panel_message_tabs, mud->control_text_list_all);
+
+    mud->keyboard_button_position = "left";
 }
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
@@ -222,11 +224,16 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     panel_text_list_entry_height_mod = 0;
 
     if (is_touch) {
-        //TODO: add right, left, center positions
-        //left is 9, 109
-        //top mid is 510, 5
-        //right is mud->surface->width - 50, 150
-        surface_draw_sprite(mud->surface, 9, 108, mud->sprite_media + 40);
+        int keyboardButtonX = 9; // Default to left
+        int keyboardButtonY = 108;
+        if (strcmp(mud->keyboard_button_position, "top") == 0) {
+            keyboardButtonX = 510;
+            keyboardButtonY = 5;
+        } else if (strcmp(mud->keyboard_button_position, "right") == 0) {
+            keyboardButtonX = mud->surface->width - 50;
+            keyboardButtonY = 150;
+        }
+        surface_draw_sprite(mud->surface, keyboardButtonX, keyboardButtonY, mud->sprite_media + 40);
     }
 }
 
@@ -307,6 +314,16 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
     }
 
     if (mudclient_is_touch(mud)) {
+        int keyboardButtonX = 9; // Default to left
+        int keyboardButtonY = 108;
+
+        if (strcmp(mud->keyboard_button_position, "top") == 0) {
+            keyboardButtonX = 510;
+            keyboardButtonY = 5;
+        } else if (strcmp(mud->keyboard_button_position, "right") == 0) {
+            keyboardButtonX = mud->surface->width - 50;
+            keyboardButtonY = 150;
+        }
         panel_handle_mouse(mud->panel_message_tabs, mudclient_finger_1_x,
                            mudclient_finger_1_y, mud->last_mouse_button_down,
                            mudclient_finger_1_down, mud->mouse_scroll_delta);
@@ -335,14 +352,14 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             (mud->mouse_x <= chat_input_x + chat_input_trigger_width &&
              mud->mouse_y >= chat_input_y - 8 &&
              mud->mouse_y <= chat_input_y + chat_input_height + 4);
-        //TODO: add right, left, center positions
+
         int is_within_button_input =
-            (mud->mouse_x >= 9 &&
+            (mud->mouse_x >= keyboardButtonX &&
              mud->mouse_x <=
-                 9 + mud->surface->sprite_width[mud->sprite_media + 40] &&
-             mud->mouse_y >= 108 &&
+                 keyboardButtonX + mud->surface->sprite_width[mud->sprite_media + 40] &&
+             mud->mouse_y >= keyboardButtonY &&
              mud->mouse_y <=
-                 108 + mud->surface->sprite_height[mud->sprite_media + 40]);
+                 keyboardButtonY + mud->surface->sprite_height[mud->sprite_media + 40]);
 
         if (!mud->show_right_click_menu && mud->last_mouse_button_down == 1 &&
             (is_within_chat_input || is_within_button_input)) {
