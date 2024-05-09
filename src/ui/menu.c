@@ -637,8 +637,12 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
     if (strlen(menu_text) > 0) {
         int yPosition = 14;
+        int yOffset = 35;
         if (is_touch) {
-            yPosition = (strcmp(mud->menu_text_position, "top") == 0) ? 11 : mud->surface->height - 35;
+            if (mud->options->display_fps == 0) {
+                yOffset = 15;
+            }
+            yPosition = (strcmp(mud->menu_text_position, "top") == 0) ? 11 : mud->surface->height - yOffset;
         }
         surface_draw_string(mud->surface, menu_text, 6, yPosition,
                             FONT_BOLD_12, YELLOW);
