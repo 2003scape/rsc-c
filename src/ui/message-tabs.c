@@ -38,7 +38,7 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
 
     panel_set_focus(mud->panel_message_tabs, mud->control_text_list_all);
 
-    mud->keyboard_button_position = "left";
+    mud->keyboard_button_position = "left"; /* TODO: extract this to a user-changeable option*/
 }
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
@@ -231,7 +231,7 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
             keyboardButtonY = 5;
         } else if (strcmp(mud->keyboard_button_position, "right") == 0) {
             keyboardButtonX = mud->surface->width - 50;
-            keyboardButtonY = 150;
+            keyboardButtonY = mud->surface->height - 265;
         }
         surface_draw_sprite(mud->surface, keyboardButtonX, keyboardButtonY, mud->sprite_media + 40);
     }
@@ -322,7 +322,7 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
             keyboardButtonY = 5;
         } else if (strcmp(mud->keyboard_button_position, "right") == 0) {
             keyboardButtonX = mud->surface->width - 50;
-            keyboardButtonY = 150;
+            keyboardButtonY = 100;
         }
         panel_handle_mouse(mud->panel_message_tabs, mudclient_finger_1_x,
                            mudclient_finger_1_y, mud->last_mouse_button_down,
