@@ -644,7 +644,9 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
                 yOffset = 15;
             }
             yPosition = (strcmp(mud->menu_text_position, "top") == 0) ? 11 : mud->surface->height - yOffset;
-            xPosition = mud->is_in_wilderness ? 70 : 0;
+            if (strcmp(mud->menu_text_position, "bottom") == 0) {
+                xPosition = mud->is_in_wilderness ? 70 : 0;
+            }
         }
         surface_draw_string(mud->surface, menu_text, xPosition, yPosition,
                             FONT_BOLD_12, YELLOW);
