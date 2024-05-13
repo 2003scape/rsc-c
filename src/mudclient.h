@@ -487,6 +487,17 @@ struct MenuEntry {
     uint16_t target_index;
 };
 
+typedef enum {
+    MENU_TEXT_POSITION_TOP,
+    MENU_TEXT_POSITION_BOTTOM
+} MenuTextPosition;
+
+typedef enum {
+    KEYBOARD_BUTTON_POSITION_LEFT,
+    KEYBOARD_BUTTON_POSITION_TOP,
+    KEYBOARD_BUTTON_POSITION_RIGHT
+} KeyboardButtonPosition;
+
 struct mudclient {
 #ifdef WII
     /* store two for double-buffering */
@@ -726,7 +737,7 @@ struct mudclient {
     int message_tab_flash_private;
     char message_history[MESSAGE_HISTORY_LENGTH][255];
     int message_history_timeout[MESSAGE_HISTORY_LENGTH];
-    char *keyboard_button_position;
+    KeyboardButtonPosition keyboard_button_position;
 
     int login_timer;
 
@@ -876,7 +887,7 @@ struct mudclient {
     int menu_height;
     int menu_x;
     int menu_y;
-    char *menu_text_position;
+    MenuTextPosition menu_text_position;
 
     /* ./ui/inventory-tab.c */
     int inventory_items_count;
