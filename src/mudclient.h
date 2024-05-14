@@ -482,9 +482,9 @@ struct MenuEntry {
     char wiki_page[64];
     /* data related to the target entity */
     int x, y;
-    uint16_t index;
-    uint16_t source_index;
-    uint16_t target_index;
+    int16_t index;
+    int16_t source_index;
+    int16_t target_index;
 };
 
 struct mudclient {
