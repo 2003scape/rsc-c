@@ -371,7 +371,11 @@ void options_load(Options *options) {
     OPTION_INI_STR("username", options->username, 20);
     OPTION_INI_STR("password", options->password, 20);
     OPTION_INI_STR("browser_command", options->browser_command, 20);
+#ifdef RENDER_SW
     OPTION_INI_INT("diversify_npcs", options->diversify_npcs, 0, 1);
+#else
+    OPTION_INI_INT("diversify_npcs", options->diversify_npcs, 0, 0);
+#endif
     OPTION_INI_INT("rename_herblaw_items", options->rename_herblaw_items, 0, 1);
 
     /* controls */

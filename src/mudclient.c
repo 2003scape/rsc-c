@@ -3613,9 +3613,11 @@ GameCharacter *mudclient_add_npc(mudclient *mud, int server_index, int x, int y,
         return NULL;
     }
 
+#ifdef RENDER_SW
     if (mud->options->diversify_npcs) {
         npc_id = diversify_npc(npc_id, server_index, x, y);
     }
+#endif
 
     GameCharacter *npc = mudclient_add_character(
         mud, mud->npcs_server, mud->known_npcs, mud->known_npc_count,
