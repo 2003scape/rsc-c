@@ -1769,7 +1769,7 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
         /* XDG failed, now try the global prefix... */
         if (archive_stream == NULL) {
             snprintf(prefixed_file, sizeof(prefixed_file),
-                "%s/%s", DATADIR, file);
+                "%s/%s", MUD_DATADIR, file);
             printf("INFO: Loading %s\n", prefixed_file);
             archive_stream = fopen(prefixed_file, "rb");
         }

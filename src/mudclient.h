@@ -139,8 +139,8 @@
 #define VERSION 204
 #endif
 
-#ifndef DATADIR
-#define DATADIR "/usr/local/share/rsc-c"
+#ifndef MUD_DATADIR
+#define MUD_DATADIR "/usr/local/share/rsc-c"
 #endif
 
 #define ZOOM_MIN 450

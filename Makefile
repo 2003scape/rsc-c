@@ -20,7 +20,7 @@ CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
 CFLAGS += -std=gnu99
 CFLAGS += -DREVISION_177
-CFLAGS += -DDATADIR=\"$(PREFIX)/$(DATADIR)\"
+CFLAGS += -DMUD_DATADIR=\"$(PREFIX)/$(DATADIR)\"
 
 ifeq ($(SDL2), 1)
 CFLAGS += $(shell sdl2-config --cflags)
