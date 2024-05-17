@@ -37,6 +37,7 @@ void vertex_buffer_gl_new(gl_vertex_buffer *vertex_buffer, int vertex_length,
                           int vbo_length, int ebo_length);
 void vertex_buffer_gl_bind(gl_vertex_buffer *vertex_buffer);
 void vertex_buffer_gl_add_attribute(gl_vertex_buffer *vertex_buffer,
-                                 int *attribute_offset, int attribute_length);
+                                    int *attribute_offset,
+                                    int attribute_length);
 void vertex_buffer_gl_destroy(gl_vertex_buffer *vertex_buffer);
 #endif

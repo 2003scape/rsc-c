@@ -62,20 +62,23 @@ static void scene_render_polygon_2d_face(Scene *scene, int face);
 static void scene_mouse_pick(Scene *scene, GameModel *model, int face) {
     if (scene->mouse_picked_count > (scene->max_mouse_picked / 2)) {
         size_t new_max = scene->max_mouse_picked * 2;
-        void *new_ptr;
+        void *new_ptr = NULL;
 
-        new_ptr = realloc(scene->mouse_picked_models,
-                          new_max * sizeof(GameModel *));
+        new_ptr =
+            realloc(scene->mouse_picked_models, new_max * sizeof(GameModel *));
+
         if (new_ptr == NULL) {
             return;
         }
+
         scene->mouse_picked_models = new_ptr;
 
-        new_ptr = realloc(scene->mouse_picked_faces,
-                          new_max * sizeof(int));
+        new_ptr = realloc(scene->mouse_picked_faces, new_max * sizeof(int));
+
         if (new_ptr == NULL) {
             return;
         }
+
         scene->mouse_picked_faces = new_ptr;
         scene->max_mouse_picked = new_max;
     }
@@ -169,15 +172,17 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->max_sprite_count = max_sprite_count;
 
     scene->max_mouse_picked = 32;
-    scene->mouse_picked_models = calloc(scene->max_mouse_picked,
-                                        sizeof(GameModel *));
-    scene->mouse_picked_faces = calloc(scene->max_mouse_picked,
-                                        sizeof(int));
+
+    scene->mouse_picked_models =
+        calloc(scene->max_mouse_picked, sizeof(GameModel *));
+
+    scene->mouse_picked_faces = calloc(scene->max_mouse_picked, sizeof(int));
 
 #ifndef RENDER_SW
     scene->gl_mouse_picked_size = 32;
-    scene->gl_mouse_picked_time = calloc(scene->gl_mouse_picked_size,
-                                         sizeof(GlModelTime*));
+
+    scene->gl_mouse_picked_time =
+        calloc(scene->gl_mouse_picked_size, sizeof(GlModelTime *));
 #endif
 
     scene->clip_near = 5;
@@ -2292,8 +2297,8 @@ static void scene_generate_scanlines(Scene *scene, int plane, int32_t *plane_x,
         }
     }
 
-    if (scene->mouse_picking_active &&
-        scene->mouse_y >= scene->min_y && scene->mouse_y < scene->max_y) {
+    if (scene->mouse_picking_active && scene->mouse_y >= scene->min_y &&
+        scene->mouse_y < scene->max_y) {
         Scanline *scanline_1 = &scene->scanlines[scene->mouse_y];
 
         if (scene->mouse_x >= scanline_1->start_x >> 8 &&
@@ -4344,8 +4349,8 @@ void scene_gl_render(Scene *scene) {
                 } else {
                     GlModelTime model_time = {game_model, time};
 
-
-                    if (scene->gl_mouse_picked_size < (scene->gl_mouse_picked_count / 2)) {
+                    if (scene->gl_mouse_picked_size <
+                        (scene->gl_mouse_picked_count / 2)) {
                         size_t new_size = scene->gl_mouse_picked_count * 2;
                         void *new_ptr = NULL;
 
@@ -4357,7 +4362,6 @@ void scene_gl_render(Scene *scene) {
                         scene->gl_mouse_picked_time = new_ptr;
                         scene->gl_mouse_picked_size = new_size;
                     }
-
 
                     scene->gl_mouse_picked_time[scene->gl_mouse_picked_count] =
                         model_time;

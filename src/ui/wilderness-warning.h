@@ -1,8 +1,8 @@
 #ifndef _H_WILDERNESS_WARNING
 #define _H_WILDERNESS_WARNING
 
-#include "../mudclient.h"
 #include "../colours.h"
+#include "../mudclient.h"
 
 #define WILDERNESS_WARNING_HEIGHT 180
 

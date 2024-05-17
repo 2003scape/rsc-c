@@ -133,8 +133,8 @@ uint32_t get_data_file_offset(const char *file_name, void *buffer);
 uint32_t get_data_file_length(const char *file_name, void *buffer);
 void *unpack_data(const char *file_name, size_t extra_size, void *archive_data,
                   void *data_out, size_t *size_out);
-void *load_data(const char *file_name, size_t extra_size,
-                  void *archive_data, size_t *size_out);
+void *load_data(const char *file_name, size_t extra_size, void *archive_data,
+                size_t *size_out);
 void format_confirm_amount(int amount, char *formatted);
 int get_ticks(void);
 void delay_ticks(int ticks);

@@ -3,6 +3,6 @@
 
 #include "../mudclient.h"
 
-void mudclient_draw_server_message(mudclient* mud);
+void mudclient_draw_server_message(mudclient *mud);
 
 #endif

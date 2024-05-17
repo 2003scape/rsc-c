@@ -1108,7 +1108,8 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 #endif
-    printf("INFO: Loaded OpenGL version %d.%d\n", GLVersion.major, GLVersion.minor);
+    printf("INFO: Loaded OpenGL version %d.%d\n", GLVersion.major,
+           GLVersion.minor);
 #elif !defined(ANDROID)
     glewExperimental = GL_TRUE;
 
@@ -1757,10 +1758,10 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
                 home = "";
             }
             snprintf(prefixed_file, sizeof(prefixed_file),
-                "%s/.local/share/rsc-c/%s", home, file);
+                     "%s/.local/share/rsc-c/%s", home, file);
         } else {
-            snprintf(prefixed_file, sizeof(prefixed_file),
-                "%s/rsc-c/%s", xdg_home, file);
+            snprintf(prefixed_file, sizeof(prefixed_file), "%s/rsc-c/%s",
+                     xdg_home, file);
         }
 
         printf("INFO: Loading %s\n", prefixed_file);
@@ -4510,11 +4511,14 @@ void mudclient_draw_player(mudclient *mud, int x, int y, int width, int height,
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = j5 + game_data.animations[animation_id].file_id;
+
+#ifdef RENDER_SW
             if (mud->surface->surface_pixels[sprite_id] == NULL &&
                 mud->surface->sprite_colours[sprite_id] == NULL) {
                 /* sprite file was not loaded, probably on f2p version */
                 continue;
             }
+#endif
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
@@ -4668,11 +4672,14 @@ void mudclient_draw_npc(mudclient *mud, int x, int y, int width, int height,
 
         if (i2 != 5 || game_data.animations[animation_id].has_a == 1) {
             int sprite_id = k4 + game_data.animations[animation_id].file_id;
+
+#ifdef RENDER_SW
             if (mud->surface->surface_pixels[sprite_id] == NULL &&
                 mud->surface->sprite_colours[sprite_id] == NULL) {
                 /* sprite file was not loaded, probably on f2p version */
                 continue;
             }
+#endif
 
             offset_x =
                 (offset_x * width) / mud->surface->sprite_width_full[sprite_id];
