@@ -393,9 +393,10 @@ static void world_clear_region(World *world, int plane, int chunk) {
 
 static void world_load_section_files(World *world, int x, int y, int plane,
                                      int chunk) {
-    char map_name[37]; // 2 digits for %d (10), m (1), file ext (4) and null
-    sprintf(map_name, "m%d%d%d%d%d", plane, x / 10, x % 10, y / 10, y % 10);
-    int map_name_length = strlen(map_name);
+    char map_name[64];
+    snprintf(map_name, sizeof(map_name), "m%d%d%d%d%d",
+             plane, x / 10, x % 10, y / 10, y % 10);
+    size_t map_name_length = strlen(map_name);
     size_t len = 0;
     uint8_t *map_data;
 

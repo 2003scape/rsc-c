@@ -356,8 +356,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     int ignored = 0;
 
-                    for (int i = 0; i < mud->ignore_list_count; i++) {
-                        if (mud->ignore_list[i] == player->encoded_username) {
+                    for (int j = 0; j < mud->ignore_list_count; j++) {
+                        if (mud->ignore_list[j] == player->encoded_username) {
                             ignored = 1;
                             break;
                         }

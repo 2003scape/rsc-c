@@ -722,7 +722,7 @@ void mudclient_menu_add_id_wiki(mudclient *mud, const char *display,
                                 const char *type, int id) {
     const char *name = display;
 
-    for (int i = strlen(name); i >= 0; i--) {
+    for (int i = (int)strlen(name); i >= 0; i--) {
         if (name[i] == '@') {
             name += i + 1;
             break;

@@ -368,9 +368,9 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
         int face_vertex_count = game_model->face_vertex_count[i];
         uint16_t *vertices = game_model->face_vertices[i];
 
-        for (int i = 0; i < face_vertex_count; i++) {
-            sum_x += game_model->vertex_x[vertices[i]];
-            sum_z += game_model->vertex_z[vertices[i]];
+        for (int j = 0; j < face_vertex_count; j++) {
+            sum_x += game_model->vertex_x[vertices[j]];
+            sum_z += game_model->vertex_z[vertices[j]];
         }
 
         int piece_index =
@@ -404,9 +404,9 @@ void game_model_split(GameModel *game_model, GameModel **pieces, int piece_dx,
         int face_vertex_count = game_model->face_vertex_count[i];
         uint16_t *vertices = game_model->face_vertices[i];
 
-        for (int i = 0; i < face_vertex_count; i++) {
-            sum_x += game_model->vertex_x[vertices[i]];
-            sum_z += game_model->vertex_z[vertices[i]];
+        for (int j = 0; j < face_vertex_count; j++) {
+            sum_x += game_model->vertex_x[vertices[j]];
+            sum_z += game_model->vertex_z[vertices[j]];
         }
 
         int piece_index =

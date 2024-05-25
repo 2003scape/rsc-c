@@ -726,9 +726,9 @@ void mudclient_draw_transaction_items_confirm(
     for (int i = 0; i < transaction_confirm_item_count; i++) {
         int item_id = transaction_confirm_items[i];
         char *item_name = game_data.items[item_id].name;
-        int item_length = strlen(item_name);
+        size_t item_length = strlen(item_name);
 
-        int line_length = item_length + 15;
+        size_t line_length = item_length + 15;
         char item_line[line_length];
         memset(item_line, '\0', line_length);
 

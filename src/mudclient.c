@@ -1287,14 +1287,14 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
 
     if (found_text) {
         if (!mud->show_dialog_offer_x) {
-            int current_length = strlen(mud->input_text_current);
+            size_t current_length = strlen(mud->input_text_current);
 
             if (current_length < INPUT_TEXT_LENGTH) {
                 mud->input_text_current[current_length] = char_code;
                 mud->input_text_current[current_length + 1] = '\0';
             }
 
-            int pm_length = strlen(mud->input_pm_current);
+            size_t pm_length = strlen(mud->input_pm_current);
 
             if (pm_length < INPUT_PM_LENGTH && should_append_pm) {
                 mud->input_pm_current[pm_length] = char_code;
@@ -1303,7 +1303,7 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
         } else if ((IS_DIGIT_SEPARATOR(char_code) ||
                     IS_DIGIT_SUFFIX(char_code) ||
                     isdigit((unsigned char)char_code))) {
-            int digits_length = strlen(mud->input_digits_current);
+            size_t digits_length = strlen(mud->input_digits_current);
 
             if (digits_length < INPUT_DIGITS_LENGTH) {
                 int add_digit_char = 1;
@@ -1346,9 +1346,9 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             int filtered_length = 0;
             char digits_suffix = '\0';
             int has_decimal = 0;
-            int digits_length = strlen(mud->input_digits_current);
+            size_t digits_length = strlen(mud->input_digits_current);
 
-            for (int i = 0; i < digits_length; i++) {
+            for (size_t i = 0; i < digits_length; i++) {
                 char digit_char = mud->input_digits_current[i];
 
                 if (isdigit((unsigned char)digit_char)) {
@@ -1376,20 +1376,20 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
             memset(mud->input_digits_current, '\0', INPUT_DIGITS_LENGTH + 1);
         }
     } else if (code == K_BACKSPACE) {
-        int current_length = strlen(mud->input_text_current);
+        size_t current_length = strlen(mud->input_text_current);
 
         if (current_length > 0) {
             mud->input_text_current[current_length - 1] = '\0';
         }
 
-        int pm_length = strlen(mud->input_pm_current);
+        size_t pm_length = strlen(mud->input_pm_current);
 
         if (pm_length > 0 && should_append_pm) {
             mud->input_pm_current[pm_length - 1] = '\0';
         }
 
         if (mud->options->offer_x) {
-            int digits_length = strlen(mud->input_digits_current);
+            size_t digits_length = strlen(mud->input_digits_current);
 
             if (digits_length > 0) {
                 mud->input_digits_current[digits_length - 1] = '\0';
@@ -2346,10 +2346,7 @@ void mudclient_load_textures(mudclient *mud) {
 void mudclient_load_models(mudclient *mud) {
     if (!mud->options->lowmem) {
         for (int i = 0; i < ANIMATED_MODELS_LENGTH; i++) {
-            char name_length = strlen(animated_models[i]);
-            char *name = malloc(name_length + 1);
-            strcpy(name, animated_models[i]);
-            game_data_get_model_index(name);
+            game_data_get_model_index(mud_strdup(animated_models[i]));
         }
     }
 
@@ -3650,8 +3647,8 @@ void mudclient_update_bank_items(mudclient *mud) {
         int inventory_id = mud->inventory_item_id[i];
         int has_item_in_bank = 0;
 
-        for (int i = 0; i < mud->bank_item_count; i++) {
-            if (mud->bank_items[i] == inventory_id) {
+        for (int j = 0; j < mud->bank_item_count; j++) {
+            if (mud->bank_items[j] == inventory_id) {
                 has_item_in_bank = 1;
                 break;
             }

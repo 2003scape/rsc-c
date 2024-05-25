@@ -223,7 +223,7 @@ typedef enum {
 } GL_DEPTH_MODE;
 #endif
 
-void create_font(int8_t *buffer, int id);
+void create_font(int8_t *buffer, size_t id);
 
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);

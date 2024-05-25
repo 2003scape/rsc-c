@@ -388,7 +388,7 @@ void mudclient_draw_bank(mudclient *mud) {
             strcpy(lower_item_name, item_name);
             strtolower(lower_item_name);
 
-            int search_length = strlen(mud->input_pm_current);
+            size_t search_length = strlen(mud->input_pm_current);
             char lower_search[search_length + 1];
             strcpy(lower_search, mud->input_pm_current);
             strtolower(lower_search);
