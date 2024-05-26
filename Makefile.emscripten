@@ -41,6 +41,8 @@ LDFLAGS += --preload-file ./cache/
 
 LDFLAGS += --shell-file ./web/shell.html
 
+all: mudclient.html
+
 mudclient.html: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 

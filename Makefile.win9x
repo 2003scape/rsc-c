@@ -16,6 +16,8 @@ CFLAGS += -march=pentiumpro -mtune=pentiumpro -s -O3 -ffast-math
 LDFLAGS += -s
 endif
 
+all: mudclient.exe
+
 mudclient.exe: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS) 
 
