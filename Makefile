@@ -84,6 +84,8 @@ CFLAGS += -s -O3 -ffast-math
 LDFLAGS += -s
 endif
 
+all: mudclient
+
 mudclient: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
