@@ -131,7 +131,7 @@ void init_surface_global(void) {
     surface_texture_pixels = calloc(32 * 1024, sizeof(int32_t));
 }
 
-void create_font(int8_t *buffer, int id) { game_fonts[id] = buffer; }
+void create_font(int8_t *buffer, size_t id) { game_fonts[id] = buffer; }
 
 void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud) {
@@ -1571,7 +1571,7 @@ void surface_fade_to_black_software(Surface *surface, int32_t *dest,
                   ((pixel >> 3) & 0x1f1f1f) + ((pixel >> 4) & 0xf0f0f);
 
         if (add_alpha) {
-            dest[i] += 0xff000000;
+            dest[i] += (int32_t)0xff000000;
         }
     }
 }
@@ -2094,7 +2094,7 @@ int32_t *surface_palette_sprite_to_raster(Surface *surface, int sprite_id,
 
         /* add 255 alpha for opengl textures */
         if (add_alpha && colour != 0) {
-            colour += 0xff000000;
+            colour += (int32_t)0xff000000;
         }
 
         pixels[i] = colour;
@@ -3879,12 +3879,12 @@ void surface_draw_blur(Surface *surface, int blur_height, int x, int y,
 void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
                                FontStyle font, int colour, float depth) {
     int8_t *font_data = game_fonts[font];
-    int text_length = strlen(text);
+    size_t text_length = strlen(text);
 
-    for (int i = 0; i < text_length; i++) {
+    for (size_t i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
-            int start = i + 1;
-            int end = i + 4;
+            size_t start = i + 1;
+            size_t end = i + 4;
 
             char sliced[(end - start) + 1];
             memset(sliced, '\0', (end - start) + 1);
@@ -3908,8 +3908,8 @@ void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
 
             if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' &&
                 c2 <= '9') {
-                int start = i + 1;
-                int end = i + 4;
+                size_t start = i + 1;
+                size_t end = i + 4;
                 char sliced[(end - start) + 1];
                 sliced[end - start] = '\0';
                 strncpy(sliced, text + start, end - start);
@@ -3926,8 +3926,8 @@ void surface_draw_string_depth(Surface *surface, const char *text, int x, int y,
 
             if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' &&
                 c2 <= '9' && c3 >= '0' && c3 <= '9') {
-                int start = i + 1;
-                int end = i + 5;
+                size_t start = i + 1;
+                size_t end = i + 5;
                 char sliced[(end - start) + 1];
                 sliced[end - start] = '\0';
                 strncpy(sliced, text + start, end - start);
@@ -4035,7 +4035,7 @@ int surface_paragraph_height(Surface *surface, const char *text, FontStyle font,
     int8_t *font_data = game_fonts[font];
     int start = 0;
     int end = 0;
-    int text_length = strlen(text);
+    int text_length = (int)strlen(text);
 
     /* TODO: eliminate use of globals */
     (void)surface;
@@ -4081,11 +4081,11 @@ void surface_draw_paragraph(Surface *surface, const char *text, int x, int y,
                             FontStyle font, int colour, int max) {
     int width = 0;
     int8_t *font_data = game_fonts[font];
-    int start = 0;
-    int end = 0;
-    int text_length = strlen(text);
+    size_t start = 0;
+    size_t end = 0;
+    size_t text_length = strlen(text);
 
-    for (int i = 0; i < text_length; i++) {
+    for (size_t i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
             i += 4;
         } else if (text[i] == '~' && i + 4 < text_length &&
@@ -4160,9 +4160,9 @@ int surface_text_height(FontStyle font) {
 int surface_text_width(const char *text, FontStyle font) {
     int total = 0;
     int8_t *font_data = game_fonts[font];
-    int text_length = strlen(text);
+    size_t text_length = strlen(text);
 
-    for (int i = 0; i < text_length; i++) {
+    for (size_t i = 0; i < text_length; i++) {
         if (text[i] == '@' && i + 4 < text_length && text[i + 4] == '@') {
             i += 4;
         } else if (text[i] == '~' && i + 4 < text_length &&

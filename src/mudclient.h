@@ -648,7 +648,7 @@ struct mudclient {
     char change_password_new[PASSWORD_LENGTH + 1];
 
     PacketStream *packet_stream;
-    int packet_last_read;
+    uint64_t packet_last_read;
     int8_t incoming_packet[PACKET_BUFFER_LENGTH];
 
     char username[USERNAME_LENGTH + 1];

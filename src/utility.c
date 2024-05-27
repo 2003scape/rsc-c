@@ -146,7 +146,7 @@ char *mud_strdup(const char *s) {
 
 void strtrim(char *s) {
     unsigned char *p = (unsigned char *)s;
-    int l = strlen(s);
+    int l = (int)strlen(s);
 
     while (isspace(p[l - 1])) {
         p[--l] = 0;
@@ -330,7 +330,7 @@ void write_unsigned_int(void *buffer, size_t index, int i) {
 }
 
 void format_auth_string(char *raw, int max_length, char *formatted) {
-    int raw_length = strlen(raw);
+    int raw_length = (int)strlen(raw);
 
     for (int i = 0; i < max_length; i++) {
         char char_code = raw[i];
@@ -356,10 +356,10 @@ void ip_to_string(int32_t ip, char *ip_string) {
 }
 
 int64_t encode_username(char *username) {
-    int username_length = strlen(username);
+    size_t username_length = strlen(username);
     char cleaned[username_length + 1];
 
-    for (int i = 0; i < username_length; i++) {
+    for (size_t i = 0; i < username_length; i++) {
         char char_code = username[i];
 
         if ((char_code >= 'a' && char_code <= 'z') ||
@@ -376,7 +376,7 @@ int64_t encode_username(char *username) {
 
     strtrim(cleaned);
 
-    int cleaned_length = strlen(cleaned);
+    size_t cleaned_length = strlen(cleaned);
 
     if (cleaned_length > MAX_USER_LENGTH) {
         cleaned[MAX_USER_LENGTH + 1] = '\0';
@@ -385,7 +385,7 @@ int64_t encode_username(char *username) {
 
     int64_t encoded = 0;
 
-    for (int i = 0; i < cleaned_length; i++) {
+    for (size_t i = 0; i < cleaned_length; i++) {
         char char_code = cleaned[i];
 
         encoded *= 37;
@@ -556,7 +556,7 @@ void *load_data(const char *file_name, size_t extra_size, void *archive_data,
 void format_confirm_amount(int amount, char *formatted) {
     sprintf(formatted, "%d", amount);
 
-    int formatted_length = strlen(formatted);
+    int formatted_length = (int)strlen(formatted);
 
     for (int i = formatted_length - 3; i > 0; i -= 3) {
         int begin_length = i;
@@ -729,9 +729,9 @@ void url_encode(const char *s, char *dest) {
     const char *hex = "0123456789abcdef";
 
     int pos = 0;
-    int length = strlen(s);
+    size_t length = strlen(s);
 
-    for (int i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         if (('a' <= s[i] && s[i] <= 'z') || ('A' <= s[i] && s[i] <= 'Z') ||
             ('0' <= s[i] && s[i] <= '9')) {
             dest[pos++] = s[i];
@@ -758,11 +758,11 @@ int get_certificate_item_id(int item_id) {
 }
 
 int is_ip_address(const char *address) {
-    int length = strlen(address);
+    size_t length = strlen(address);
     int segment = 0;
     int segment_count = 0;
 
-    for (int i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         char c = address[i];
 
         if (isdigit((unsigned char)c)) {

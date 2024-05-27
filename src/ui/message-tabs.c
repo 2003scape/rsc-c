@@ -450,7 +450,7 @@ void mudclient_show_message(mudclient *mud, char *message, MessageType type) {
              message += 5)
             ;
 
-        message_length = strlen(message);
+        message_length = (int)strlen(message);
         int colon_index = -1;
 
         for (int i = 0; i < message_length; i += 1) {
@@ -475,7 +475,7 @@ void mudclient_show_message(mudclient *mud, char *message, MessageType type) {
     }
 
     if (message_length == -1) {
-        message_length = strlen(message);
+        message_length = (int)strlen(message);
     }
 
     /* handle wrapping */
@@ -634,7 +634,7 @@ void mudclient_show_server_message(mudclient *mud, char *message) {
     if (strncasecmp(message, "@bor@", 5) == 0) {
         mudclient_show_message(mud, message, MESSAGE_TYPE_BOR);
     } else if (strncasecmp(message, "@que@", 5) == 0) {
-        int formatted_length = strlen(message) + 6;
+        size_t formatted_length = strlen(message) + 6;
         char formatted_message[formatted_length];
         sprintf(formatted_message, "@whi@%s", message);
         mudclient_show_message(mud, formatted_message, MESSAGE_TYPE_QUEST);

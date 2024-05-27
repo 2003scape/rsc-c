@@ -54,9 +54,9 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         y += 25;
 
-        int current_length = strlen(mud->input_text_current);
+        size_t current_length = strlen(mud->input_text_current);
 
-        for (int i = 0; i < current_length; i++) {
+        for (size_t i = 0; i < current_length; i++) {
             password_input[i] = 'X';
         }
 
@@ -78,9 +78,9 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         y += 25;
 
-        int current_length = strlen(mud->input_text_current);
+        size_t current_length = strlen(mud->input_text_current);
 
-        for (int i = 0; i < current_length; i++) {
+        for (size_t i = 0; i < current_length; i++) {
             password_input[i] = 'X';
         }
 
@@ -107,9 +107,9 @@ void mudclient_draw_change_password(mudclient *mud) {
 
         y += 25;
 
-        int current_length = strlen(mud->input_text_current);
+        size_t current_length = strlen(mud->input_text_current);
 
-        for (int i = 0; i < current_length; i++) {
+        for (size_t i = 0; i < current_length; i++) {
             password_input[i] = 'X';
         }
 

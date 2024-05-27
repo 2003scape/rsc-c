@@ -468,7 +468,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 quest_index -= 1;
 
                 char *quest_name = quest_names[quest_index];
-                int quest_name_length = strlen(quest_name);
+                int quest_name_length = (int)strlen(quest_name);
 
                 for (int i = 0; i < quest_name_length; i++) {
                     if (quest_name[i] == '(') {

@@ -98,7 +98,7 @@ void panel_key_press(Panel *panel, int key) {
     if (panel->focus_control_index != -1 &&
         panel->control_text[panel->focus_control_index] != NULL &&
         panel->control_shown[panel->focus_control_index]) {
-        int input_len = strlen(panel->control_text[panel->focus_control_index]);
+        int input_len = (int)strlen(panel->control_text[panel->focus_control_index]);
 
         /* backspace */
         if (key == 8 && input_len > 0) {
@@ -258,13 +258,13 @@ void panel_draw_string(Panel *panel, int control, int x, int y, char *text,
 
 void panel_draw_text_input(Panel *panel, int control, int x, int y, int width,
                            int height, char *text, FontStyle font_style) {
-    int text_length = strlen(text);
+    size_t text_length = strlen(text);
 
     char display_text[text_length + 2]; /* potential extra * if in focus */
     memset(display_text, 0, text_length + 2);
 
     if (panel->control_mask_text[control]) {
-        for (int i = 0; i < text_length; i++) {
+        for (size_t i = 0; i < text_length; i++) {
             display_text[i] = 'X';
         }
     } else {
