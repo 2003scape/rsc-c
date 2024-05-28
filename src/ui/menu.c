@@ -526,8 +526,6 @@ void mudclient_menu_item_click(mudclient *mud, int i) {
 }
 
 void mudclient_create_top_mouse_menu(mudclient *mud) {
-    //mud->menu_text_position = MENU_TEXT_POSITION_TOP; /* TODO: extract this to a user-changeable option*/
-
     int add_cancel = mud->selected_spell >= 0 ||
                      mud->selected_item_inventory_index >= 0 ||
                      mud->selected_wiki;

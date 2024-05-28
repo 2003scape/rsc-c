@@ -121,7 +121,7 @@ void options_set_defaults(Options *options) {
     options->distant_animation = 1;
     options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
-    options->touch_keyboard_right = 0; /* touch only */
+    options->touch_keyboard_right = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 1;
