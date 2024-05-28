@@ -633,9 +633,25 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
     int is_touch = mudclient_is_touch(mud);
 
-    if (!is_touch && strlen(menu_text) > 0) {
-        surface_draw_string(mud->surface, menu_text, 6, 14, FONT_BOLD_12,
-                            YELLOW);
+    if (strlen(menu_text) > 0) {
+        int y_position = 14;
+        int y_offset = 35;
+        int x_position = 6;
+
+        if (is_touch) {
+            if (mud->options->display_fps == 0) {
+                y_offset = 18;
+            }
+
+            y_position = mud->surface->height - y_offset;
+
+            if (mud->is_in_wilderness) {
+                x_position = 76;
+            }
+        }
+
+        surface_draw_string(mud->surface, menu_text, x_position, y_position,
+                            FONT_BOLD_12, YELLOW);
     }
 
     if ((!mud->settings_mouse_button_one && mud->mouse_button_click == 1) ||

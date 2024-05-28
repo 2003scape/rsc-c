@@ -504,6 +504,15 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->ui_options[control] = &mud->options->ran_target_fps;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_INT;
 
+    y += OPTION_HORIZ_GAP;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_ui_options, "@whi@Keyboard on right: ",
+        mud->options->touch_keyboard_right, x, y);
+
+    mud->ui_options[control] = &mud->options->touch_keyboard_right;
+    mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+
     /* bank */
     x = ui_x + 4;
     y = ui_y + OPTION_HORIZ_GAP + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
