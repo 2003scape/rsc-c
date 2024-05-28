@@ -37,8 +37,6 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
         text_list_height, FONT_BOLD_12, max_text_list_entries, 1);
 
     panel_set_focus(mud->panel_message_tabs, mud->control_text_list_all);
-
-    mud->keyboard_button_position = KEYBOARD_BUTTON_POSITION_LEFT; /* TODO: extract this to a user-changeable option*/
 }
 
 void mudclient_draw_chat_message_tabs(mudclient *mud) {
@@ -224,16 +222,17 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     panel_text_list_entry_height_mod = 0;
 
     if (is_touch) {
-        int keyboardButtonX = 9; // Default to left
-        int keyboardButtonY = 108;
-        if (mud->keyboard_button_position == KEYBOARD_BUTTON_POSITION_TOP) {
-            keyboardButtonX = 510;
-            keyboardButtonY = 5;
-        } else if (mud->keyboard_button_position == KEYBOARD_BUTTON_POSITION_RIGHT) {
-            keyboardButtonX = mud->surface->width - 50;
-            keyboardButtonY = mud->surface->height - 265;
+        /* default to left */
+        int keyboard_button_x = 9;
+        int keyboard_button_y = 108;
+
+        if (mud->options->touch_keyboard_right) {
+            keyboard_button_x = mud->surface->width - 50;
+            keyboard_button_y = mud->surface->height - 265;
         }
-        surface_draw_sprite(mud->surface, keyboardButtonX, keyboardButtonY, mud->sprite_media + 40);
+
+        surface_draw_sprite(mud->surface, keyboard_button_x, keyboard_button_y,
+                            mud->sprite_media + 40);
     }
 }
 
@@ -314,15 +313,15 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
     }
 
     if (mudclient_is_touch(mud)) {
-        int keyboardButtonX = 9; // Default to left
-        int keyboardButtonY = 108;
-        if (mud->keyboard_button_position == KEYBOARD_BUTTON_POSITION_TOP) {
-            keyboardButtonX = 510;
-            keyboardButtonY = 5;
-        } else if (mud->keyboard_button_position == KEYBOARD_BUTTON_POSITION_RIGHT) {
-            keyboardButtonX = mud->surface->width - 50;
-            keyboardButtonY = 100;
+        /* default to left */
+        int keyboard_button_x = 9;
+        int keyboard_button_y = 108;
+
+        if (mud->options->touch_keyboard_right) {
+            keyboard_button_x = mud->surface->width - 50;
+            keyboard_button_y = 100;
         }
+
         panel_handle_mouse(mud->panel_message_tabs, mudclient_finger_1_x,
                            mudclient_finger_1_y, mud->last_mouse_button_down,
                            mudclient_finger_1_down, mud->mouse_scroll_delta);
@@ -353,12 +352,14 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
              mud->mouse_y <= chat_input_y + chat_input_height + 4);
 
         int is_within_button_input =
-            (mud->mouse_x >= keyboardButtonX &&
+            (mud->mouse_x >= keyboard_button_x &&
              mud->mouse_x <=
-                 keyboardButtonX + mud->surface->sprite_width[mud->sprite_media + 40] &&
-             mud->mouse_y >= keyboardButtonY &&
+                 keyboard_button_x +
+                     mud->surface->sprite_width[mud->sprite_media + 40] &&
+             mud->mouse_y >= keyboard_button_y &&
              mud->mouse_y <=
-                 keyboardButtonY + mud->surface->sprite_height[mud->sprite_media + 40]);
+                 keyboard_button_y +
+                     mud->surface->sprite_height[mud->sprite_media + 40]);
 
         if (!mud->show_right_click_menu && mud->last_mouse_button_down == 1 &&
             (is_within_chat_input || is_within_button_input)) {

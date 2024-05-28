@@ -125,7 +125,9 @@ typedef struct Options Options;
      "; Load less compressed (2001 era) sprites\n"                             \
      "tga_sprites = %d\n"                                                      \
      "; Show hover tooltip menu\n"                                             \
-     "show_hover_tooltip = %d\n\n"                                             \
+     "show_hover_tooltip = %d\n"                                               \
+     "; Move the keyboard button to the right\n"                               \
+     "touch_keyboard_right = %d\n\n"                                           \
                                                                                \
      "; Add filtering to the bank\n"                                           \
      "bank_search = %d\n"                                                      \
@@ -384,6 +386,9 @@ struct Options {
 
     /* show the current action where the mouse is */
     int show_hover_tooltip;
+
+    /* move the keyboard button to the right */
+    int touch_keyboard_right;
 };
 
 void options_new(Options *options);

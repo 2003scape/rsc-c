@@ -121,6 +121,7 @@ void options_set_defaults(Options *options) {
     options->distant_animation = 1;
     options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
+    options->touch_keyboard_right = 0; /* touch only */
 
     /* bank */
     options->bank_unstackble_withdraw = 1;
@@ -192,6 +193,7 @@ void options_set_vanilla(Options *options) {
     options->distant_animation = 0;
     options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
+    options->touch_keyboard_right = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 0;
@@ -219,6 +221,7 @@ void options_get_path(char *path) {
     snprintf(path, PATH_MAX, "/options/options.ini");
 #elif defined(OPTIONS_UNIX)
     const char *xdg = getenv("XDG_CONFIG_HOME");
+
     if (xdg != NULL) {
         snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
         /* don't want 'other' to read because it can contain passwords */
@@ -226,9 +229,11 @@ void options_get_path(char *path) {
         snprintf(path, PATH_MAX, "%s/rsc-c/options.ini", xdg);
     } else {
         const char *home = getenv("HOME");
+
         if (home == NULL) {
             home = "";
         }
+
         snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
         (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
         snprintf(path, PATH_MAX, "%s/.config/rsc-c/options.ini", home);
@@ -317,6 +322,7 @@ void options_save(Options *options) {
             options->distant_animation,     //
             options->tga_sprites,           //
             options->show_hover_tooltip,    //
+            options->touch_keyboard_right,  //
                                             //
             options->bank_search,           //
             options->bank_capacity,         //
@@ -418,6 +424,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("distant_animation", options->distant_animation, 0, 1);
     OPTION_INI_INT("tga_sprites", options->tga_sprites, 0, 1);
     OPTION_INI_INT("show_hover_tooltip", options->show_hover_tooltip, 0, 1);
+    OPTION_INI_INT("touch_keyboard_right", options->touch_keyboard_right, 0, 1);
 
     /* bank */
     OPTION_INI_INT("bank_search", options->bank_search, 0, 1);
