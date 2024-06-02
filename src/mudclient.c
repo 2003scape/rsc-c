@@ -7173,8 +7173,10 @@ void mudclient_draw_item(mudclient *mud, int x, int y, int slot_width,
 #ifdef WIN9X
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
                    int nCmdShow) {
-    int argc;    // = nCmdShow?
-    char **argv; // = lpCmdLine?
+    int argc;
+    char **argv;
+    
+    argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 #else
 int main(int argc, char **argv) {
 #endif
