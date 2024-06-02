@@ -985,7 +985,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
                     panel_get_text(mud->panel_login_new_user,
                                    mud->control_register_confirm_password);
 
-                int password_length = strlen(password);
+                size_t password_length = strlen(password);
 
                 if (strlen(username) == 0 || password_length == 0 ||
                     strlen(confirm_password) == 0) {

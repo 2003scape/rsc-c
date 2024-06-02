@@ -148,15 +148,6 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_game_options,
-        "@whi@Certificate items: ", mud->options->certificate_items, x, y);
-
-    mud->game_options[control] = &mud->options->certificate_items;
-    mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
-
-    y += OPTION_HORIZ_GAP;
-
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options,
         "@whi@HQ sprites (restart): ", mud->options->tga_sprites, x, y);
 
     mud->game_options[control] = &mud->options->tga_sprites;
@@ -201,8 +192,8 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options,
-        "@whi@Fog of war: ", mud->options->flicker, x, y);
+        mud->panel_game_options, "@whi@Fog of war: ", mud->options->flicker, x,
+        y);
 
     mud->game_options[control] = &mud->options->fog_of_war;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -512,6 +503,15 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     mud->ui_options[control] = &mud->options->ran_target_fps;
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_INT;
+
+    y += OPTION_HORIZ_GAP;
+
+    control = mudclient_add_option_panel_checkbox(
+        mud->panel_ui_options, "@whi@Keyboard on right: ",
+        mud->options->touch_keyboard_right, x, y);
+
+    mud->ui_options[control] = &mud->options->touch_keyboard_right;
+    mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     /* bank */
     x = ui_x + 4;

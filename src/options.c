@@ -1,4 +1,9 @@
 #include "options.h"
+#if defined(__unix__) || defined(__unix) ||                                    \
+    (defined(__APPLE__) && defined(__MACH__))
+#include <sys/stat.h>
+#define OPTIONS_UNIX
+#endif
 
 #ifdef WII
 int wii_fat_enabled = 0;
@@ -17,8 +22,11 @@ void options_new(Options *options) {
     /* experimental */
     options->thick_walls = 0;
 
+#ifdef VANILLA_IS_DEFAULT
+    options_set_vanilla(options);
+#else
     options_set_defaults(options);
-    // options_set_vanilla(options);
+#endif
 
 #ifdef WII
     wii_fat_enabled = fatInitDefault();
@@ -105,14 +113,15 @@ void options_set_defaults(Options *options) {
     options->experience_drops = 0;
     options->inventory_count = 0;
     options->condense_item_amounts = 1;
-    options->certificate_items = 1;
+    options->certificate_items = 0;
     options->wilderness_warning = 1;
     options->status_bars = 0;
-    options->ground_item_models = 1;
+    options->ground_item_models = 0;
     options->ground_item_text = 1;
     options->distant_animation = 1;
     options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
+    options->touch_keyboard_right = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 1;
@@ -184,6 +193,7 @@ void options_set_vanilla(Options *options) {
     options->distant_animation = 0;
     options->tga_sprites = 0;
     options->show_hover_tooltip = 0;
+    options->touch_keyboard_right = 0;
 
     /* bank */
     options->bank_unstackble_withdraw = 0;
@@ -205,12 +215,31 @@ void options_set_vanilla(Options *options) {
 void options_get_path(char *path) {
 #ifdef ANDROID
     char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
-    snprintf(path, 1024, "%soptions.ini", pref_path);
+    snprintf(path, PATH_MAX, "%soptions.ini", pref_path);
     SDL_free(pref_path);
 #elif defined(EMSCRIPTEN)
-    strcpy(path, "/options/options.ini");
+    snprintf(path, PATH_MAX, "/options/options.ini");
+#elif defined(OPTIONS_UNIX)
+    const char *xdg = getenv("XDG_CONFIG_HOME");
+
+    if (xdg != NULL) {
+        snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
+        /* don't want 'other' to read because it can contain passwords */
+        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
+        snprintf(path, PATH_MAX, "%s/rsc-c/options.ini", xdg);
+    } else {
+        const char *home = getenv("HOME");
+
+        if (home == NULL) {
+            home = "";
+        }
+
+        snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
+        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
+        snprintf(path, PATH_MAX, "%s/.config/rsc-c/options.ini", home);
+    }
 #else
-    strcpy(path, "./options.ini");
+    snprintf(path, PATH_MAX, "%s", "./options.ini");
 #endif
 }
 
@@ -221,7 +250,7 @@ void options_save(Options *options) {
     }
 #endif
 
-    char path[1024] = {0};
+    char path[PATH_MAX];
     options_get_path(path);
 
 #ifdef ANDROID
@@ -293,6 +322,7 @@ void options_save(Options *options) {
             options->distant_animation,     //
             options->tga_sprites,           //
             options->show_hover_tooltip,    //
+            options->touch_keyboard_right,  //
                                             //
             options->bank_search,           //
             options->bank_capacity,         //
@@ -316,10 +346,15 @@ void options_save(Options *options) {
     fwrite(file_buffer, strlen(file_buffer) + 1, 1, ini_file);
     fclose(ini_file);
 #endif
+
+#ifdef OPTIONS_UNIX
+    /* restrict access to potentially sensitive info */
+    (void)chmod(path, S_IRUSR | S_IWUSR);
+#endif
 }
 
 void options_load(Options *options) {
-    char path[1024] = {0};
+    char path[PATH_MAX];
     options_get_path(path);
 
     ini_t *options_ini = ini_load(path);
@@ -332,7 +367,7 @@ void options_load(Options *options) {
     OPTION_INI_STR("server", options->server, 255);
     OPTION_INI_INT("port", options->port, 0, 65535);
     OPTION_INI_INT("members", options->members, 0, 1);
-    OPTION_INI_INT("registration", options->members, 0, 1);
+    OPTION_INI_INT("registration", options->registration, 0, 1);
     OPTION_INI_STR("rsa_exponent", options->rsa_exponent, 512);
     OPTION_INI_STR("rsa_modulus", options->rsa_modulus, 512);
     OPTION_INI_INT("idle_logout", options->idle_logout, 0, 1);
@@ -341,7 +376,11 @@ void options_load(Options *options) {
     OPTION_INI_STR("username", options->username, 20);
     OPTION_INI_STR("password", options->password, 20);
     OPTION_INI_STR("browser_command", options->browser_command, 20);
+#ifdef RENDER_SW
     OPTION_INI_INT("diversify_npcs", options->diversify_npcs, 0, 1);
+#else
+    OPTION_INI_INT("diversify_npcs", options->diversify_npcs, 0, 0);
+#endif
     OPTION_INI_INT("rename_herblaw_items", options->rename_herblaw_items, 0, 1);
 
     /* controls */
@@ -389,6 +428,7 @@ void options_load(Options *options) {
     OPTION_INI_INT("distant_animation", options->distant_animation, 0, 1);
     OPTION_INI_INT("tga_sprites", options->tga_sprites, 0, 1);
     OPTION_INI_INT("show_hover_tooltip", options->show_hover_tooltip, 0, 1);
+    OPTION_INI_INT("touch_keyboard_right", options->touch_keyboard_right, 0, 1);
 
     /* bank */
     OPTION_INI_INT("bank_search", options->bank_search, 0, 1);

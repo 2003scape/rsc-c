@@ -1,7 +1,7 @@
 #include "game-data.h"
 #include "scene.h"
 
-#define JAGEX_TRANSPARENT    (12345678)
+#define JAGEX_TRANSPARENT (12345678)
 
 struct MudConfig game_data;
 
@@ -73,11 +73,11 @@ static char *game_data_get_string(void) {
 void game_data_load_data(int8_t *buffer, int is_members) {
     memset(game_data.model_name, 0, 5000 * sizeof(char *));
 
-    game_data.data_string = load_data("string.dat", 0, buffer,
-                                      &game_data.data_string_len);
+    game_data.data_string =
+        load_data("string.dat", 0, buffer, &game_data.data_string_len);
     game_data.string_offset = 0;
-    game_data.data_integer = load_data("integer.dat", 0, buffer,
-                                       &game_data.data_integer_len);
+    game_data.data_integer =
+        load_data("integer.dat", 0, buffer, &game_data.data_integer_len);
     game_data.offset = 0;
 
     int i = 0;
@@ -236,7 +236,8 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     game_data.texture_count = game_data_get_unsigned_short();
-    game_data.textures = calloc(game_data.texture_count, sizeof(struct TextureConfig));
+    game_data.textures =
+        calloc(game_data.texture_count, sizeof(struct TextureConfig));
 
     for (i = 0; i < game_data.texture_count; i++) {
         game_data.textures[i].name = game_data_get_string();
@@ -279,7 +280,8 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     game_data.object_count = game_data_get_unsigned_short();
-    game_data.objects = calloc(game_data.object_count, sizeof(struct ObjectConfig));
+    game_data.objects =
+        calloc(game_data.object_count, sizeof(struct ObjectConfig));
 
     for (i = 0; i < game_data.object_count; i++) {
         game_data.objects[i].name = game_data_get_string();
@@ -301,7 +303,8 @@ void game_data_load_data(int8_t *buffer, int is_members) {
         char *model_name = game_data_get_string();
 
         int old_count = game_data.model_count;
-        game_data.objects[i].model_index = game_data_get_model_index(model_name);
+        game_data.objects[i].model_index =
+            game_data_get_model_index(model_name);
 
         /* we re-use an existing string if it's been called before */
         if (game_data.model_count == old_count) {
@@ -408,7 +411,8 @@ void game_data_load_data(int8_t *buffer, int is_members) {
 
     game_data.projectile_sprite = game_data_get_unsigned_short();
     game_data.spell_count = game_data_get_unsigned_short();
-    game_data.spells = calloc(game_data.spell_count, sizeof(struct SpellConfig));
+    game_data.spells =
+        calloc(game_data.spell_count, sizeof(struct SpellConfig));
 
     for (i = 0; i < game_data.spell_count; i++) {
         game_data.spells[i].name = game_data_get_string();
@@ -447,7 +451,8 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     game_data.prayer_count = game_data_get_unsigned_short();
-    game_data.prayers = calloc(game_data.prayer_count, sizeof(struct PrayerConfig));
+    game_data.prayers =
+        calloc(game_data.prayer_count, sizeof(struct PrayerConfig));
 
     for (i = 0; i < game_data.prayer_count; i++) {
         game_data.prayers[i].name = game_data_get_string();

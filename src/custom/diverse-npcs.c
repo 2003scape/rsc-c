@@ -745,10 +745,12 @@ diversify_npc(int id, int server_index, int x, int y) {
 
     (void)x;
     (void)y;
+
     if (!has_diverse_npcs) {
         add_diverse_npcs();
         has_diverse_npcs = true;
     }
+
     switch (id) {
         case NPC_MAN:
             r = roll_isaac(server_index, 4);

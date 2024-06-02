@@ -460,12 +460,11 @@ void mudclient_draw_social_input(mudclient *mud) {
                                    FONT_BOLD_14, WHITE);
 
         char *username = mud->input_text_final;
-        int username_length = strlen(username);
 
-        if (username_length > 0) {
+        if (username[0] != '\0') {
             int64_t encoded_username = encode_username(username);
 
-            if (username_length > 0 &&
+            if (username[0] != '\0' &&
                 encoded_username != mud->local_player->encoded_username) {
                 mudclient_add_friend(mud, username);
             }
@@ -495,9 +494,8 @@ void mudclient_draw_social_input(mudclient *mud) {
                                    FONT_BOLD_14, WHITE);
 
         char *message = mud->input_pm_final;
-        int message_length = strlen(message);
 
-        if (message_length > 0) {
+        if (message[0] != '\0') {
             int length = chat_message_encode(message);
 
             mudclient_send_private_message(mud, mud->private_message_target,
@@ -536,12 +534,11 @@ void mudclient_draw_social_input(mudclient *mud) {
                                    FONT_BOLD_14, WHITE);
 
         char *username = mud->input_text_final;
-        int username_length = strlen(username);
 
-        if (username_length > 0) {
+        if (username[0] != '\0') {
             int64_t encoded_username = encode_username(username);
 
-            if (username_length > 0 &&
+            if (username[0] != '\0' &&
                 encoded_username != mud->local_player->encoded_username) {
                 mudclient_add_ignore(mud, username);
             }

@@ -21,6 +21,7 @@ static void world_create_wall(World *, GameModel *, int, int, int, int, int);
 static void world_update_shadow_rect(World *, int, int, int, int);
 static void world_vertex_shadow(World *, int, int, int);
 static int world_get_tile_type(World *, int, int);
+static void world_clear_region(World *world, int plane, int chunk);
 
 int16_t terrain_colours[TERRAIN_COLOUR_COUNT];
 
@@ -373,11 +374,29 @@ static void world_load_section_jm(World *world, uint8_t *map_data, size_t len,
     }
 }
 
+static void world_clear_region(World *world, int plane, int chunk) {
+    memset(world->terrain_height[chunk], 0, TILE_COUNT);
+    memset(world->terrain_colour[chunk], 0, TILE_COUNT);
+    memset(world->walls_north_south[chunk], 0, TILE_COUNT);
+    memset(world->walls_east_west[chunk], 0, TILE_COUNT);
+    memset(world->walls_diagonal[chunk], 0, TILE_COUNT * sizeof(uint16_t));
+    memset(world->walls_roof[chunk], 0, TILE_COUNT);
+    if (plane == 0) {
+        memset(world->tile_decoration[chunk], -6, TILE_COUNT);
+    } else if (plane == 3) {
+        memset(world->tile_decoration[chunk], 8, TILE_COUNT);
+    } else {
+        memset(world->tile_decoration[chunk], 0, TILE_COUNT);
+    }
+    memset(world->tile_direction[chunk], 0, TILE_COUNT);
+}
+
 static void world_load_section_files(World *world, int x, int y, int plane,
                                      int chunk) {
-    char map_name[37]; // 2 digits for %d (10), m (1), file ext (4) and null
-    sprintf(map_name, "m%d%d%d%d%d", plane, x / 10, x % 10, y / 10, y % 10);
-    int map_name_length = strlen(map_name);
+    char map_name[64];
+    snprintf(map_name, sizeof(map_name), "m%d%d%d%d%d",
+             plane, x / 10, x % 10, y / 10, y % 10);
+    size_t map_name_length = strlen(map_name);
     size_t len = 0;
     uint8_t *map_data;
 
@@ -388,6 +407,8 @@ static void world_load_section_files(World *world, int x, int y, int plane,
         if (map_data != NULL) {
             world_load_section_jm(world, map_data, len, chunk);
             free(map_data);
+        } else {
+            world_clear_region(world, plane, chunk);
         }
         return;
     }
@@ -636,24 +657,7 @@ static void world_load_section_files(World *world, int x, int y, int plane,
             free(map_data);
         }
     } else {
-        for (int tile = 0; tile < TILE_COUNT; tile++) {
-            world->terrain_height[chunk][tile] = 0;
-            world->terrain_colour[chunk][tile] = 0;
-            world->walls_north_south[chunk][tile] = 0;
-            world->walls_east_west[chunk][tile] = 0;
-            world->walls_diagonal[chunk][tile] = 0;
-            world->walls_roof[chunk][tile] = 0;
-
-            if (plane == 0) {
-                world->tile_decoration[chunk][tile] = -6;
-            } else if (plane == 3) {
-                world->tile_decoration[chunk][tile] = 8;
-            } else {
-                world->tile_decoration[chunk][tile] = 0;
-            }
-
-            world->tile_direction[chunk][tile] = 0;
-        }
+        world_clear_region(world, plane, chunk);
     }
 }
 

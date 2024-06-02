@@ -1,11 +1,16 @@
 #ifndef _H_MUDCLIENT
 #define _H_MUDCLIENT
 
+#include <limits.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
 
 #ifdef WII
 #include <asndlib.h>
@@ -73,16 +78,12 @@
 
 #ifdef RENDER_GL
 #ifdef GLAD
-#ifdef __SWITCH__
 #include <glad/glad.h>
-#else
-#include "../../glad/glad.h"
-#endif
 #else
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
-#if !defined (SDL12) && !defined (__SWITCH__)
+#if !defined(SDL12) && !defined(__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 
@@ -138,6 +139,10 @@
 #define VERSION 204
 #endif
 
+#ifndef MUD_DATADIR
+#define MUD_DATADIR "/usr/local/share/rsc-c"
+#endif
+
 #define ZOOM_MIN 450
 #define ZOOM_MAX 2250 // old 1250
 #define ZOOM_INDOORS 550
@@ -177,7 +182,6 @@
 #define OVERWORLD_TEXT_MAX 128
 
 #define INVENTORY_ITEMS_MAX 30
-#define MENU_MAX 250
 #define PATH_STEPS_MAX 8000
 #define BANK_ITEMS_MAX 256
 #define SHOP_ITEMS_MAX 256 // TODO also just make this 40? (SHOP_GRID_MAX)
@@ -200,12 +204,13 @@
 #else
 #define MUD_WIDTH MUD_VANILLA_WIDTH
 #define MUD_HEIGHT MUD_VANILLA_HEIGHT
-//#define MUD_WIDTH 320
-//#define MUD_HEIGHT 240
+// #define MUD_WIDTH 320
+// #define MUD_HEIGHT 240
 #endif
 
 // TODO make this a function
-#define MUD_IS_COMPACT (MUD_WIDTH < MUD_VANILLA_WIDTH || MUD_HEIGHT < MUD_VANILLA_HEIGHT)
+#define MUD_IS_COMPACT                                                         \
+    (MUD_WIDTH < MUD_VANILLA_WIDTH || MUD_HEIGHT < MUD_VANILLA_HEIGHT)
 
 /* npc IDs */
 #define SHIFTY_MAN_ID 24
@@ -470,6 +475,18 @@ struct OverworldText {
     uint32_t colour;
 };
 
+struct MenuEntry {
+    MenuType type;
+    char action_text[64];
+    char target_text[64];
+    char wiki_page[64];
+    /* data related to the target entity */
+    int x, y;
+    int16_t index;
+    int16_t source_index;
+    int16_t target_index;
+};
+
 struct mudclient {
 #ifdef WII
     /* store two for double-buffering */
@@ -631,7 +648,7 @@ struct mudclient {
     char change_password_new[PASSWORD_LENGTH + 1];
 
     PacketStream *packet_stream;
-    int packet_last_read;
+    uint64_t packet_last_read;
     int8_t incoming_packet[PACKET_BUFFER_LENGTH];
 
     char username[USERNAME_LENGTH + 1];
@@ -850,21 +867,14 @@ struct mudclient {
 
     /* ./ui/menu.c */
     int8_t show_right_click_menu;
-    int menu_items_count;
-    int menu_indices[MENU_MAX];
-    int menu_item_x[MENU_MAX];
-    int menu_item_y[MENU_MAX];
-    char menu_item_text1[MENU_MAX][64];
-    char menu_item_text2[MENU_MAX][64];
-    int menu_index[MENU_MAX];
-    int menu_source_index[MENU_MAX];
-    int menu_target_index[MENU_MAX];
-    MenuType menu_type[MENU_MAX];
+    int16_t menu_items_count;
+    int16_t menu_items_size;
+    int16_t *menu_indices;
+    struct MenuEntry *menu_items;
     int menu_width;
     int menu_height;
     int menu_x;
     int menu_y;
-    char menu_wiki_page[MENU_MAX][192];
 
     /* ./ui/inventory-tab.c */
     int inventory_items_count;
@@ -1161,7 +1171,7 @@ void mudclient_update_fov(mudclient *mud);
 void mudclient_start_game(mudclient *mud);
 void mudclient_draw(mudclient *mud);
 #ifdef SDL12
-void mudclient_sdl1_on_resize(mudclient *mud,int width, int height);
+void mudclient_sdl1_on_resize(mudclient *mud, int width, int height);
 #endif
 void mudclient_on_resize(mudclient *mud);
 void mudclient_poll_events(mudclient *mud);
@@ -1178,7 +1188,7 @@ void mudclient_3ds_draw_top_background(mudclient *mud);
 void mudclient_run(mudclient *mud);
 void mudclient_remove_ignore(mudclient *mud, int64_t encoded_username);
 void mudclient_draw_magic_bubble(mudclient *mud, int x, int y, int width,
-                                    int height, int id, float depth);
+                                 int height, int id, float depth);
 void mudclient_draw_ground_item(mudclient *mud, int x, int y, int width,
                                 int height, int id, float depth_top,
                                 float depth_bottom);

@@ -3,10 +3,10 @@
 void mudclient_draw_option_menu(mudclient *mud) {
     int is_touch = mudclient_is_touch(mud);
 
-    FontStyle font_style = is_touch ? FONT_BOLD_13 : FONT_BOLD_12;
-    int font_height = is_touch ? 22 : 12;
+    FontStyle font_style = is_touch ? FONT_BOLD_14 : FONT_BOLD_12;
+    int font_height = is_touch ? 24 : 12;
     int ui_x = is_touch ? 12 : 6;
-    int ui_y = is_touch ? 132 : 0;
+    int ui_y = is_touch ? 136 : 0;
 
     if (mud->options->option_numbers) {
         int index = -1;
@@ -74,12 +74,12 @@ void mudclient_draw_option_menu(mudclient *mud) {
         int text_colour = CYAN;
 
 #ifdef _3DS
-            char entry[strlen(mud->option_menu_entry[i]) + 5];
+        char entry[strlen(mud->option_menu_entry[i]) + 5];
 
-            sprintf(entry, "(%c) %s", _3ds_option_buttons[i],
-                    mud->option_menu_entry[i]);
+        sprintf(entry, "(%c) %s", _3ds_option_buttons[i],
+                mud->option_menu_entry[i]);
 #else
-            char *entry = mud->option_menu_entry[i];
+        char *entry = mud->option_menu_entry[i];
 #endif
 
         if (mud->mouse_x > ui_x - 6 &&

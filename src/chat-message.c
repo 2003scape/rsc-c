@@ -81,7 +81,7 @@ char *chat_message_decode(int8_t *buffer, int offset, int length) {
 }
 
 int chat_message_encode(char *message) {
-    int message_length = strlen(message);
+    size_t message_length = strlen(message);
 
     if (message_length > CHAT_MESSAGE_MAX_INPUT_LENGTH) {
         message_length = CHAT_MESSAGE_MAX_INPUT_LENGTH;
@@ -90,7 +90,7 @@ int chat_message_encode(char *message) {
     int offset = 0;
     int left_shift = -1;
 
-    for (int i = 0; i < message_length; i++) {
+    for (size_t i = 0; i < message_length; i++) {
         char current_char = tolower((unsigned char)message[i]);
         int char_map_index = 0;
 

@@ -2,20 +2,21 @@ CC = C:\gcc_win98\bin\gcc
 #DEBUG = 1
 SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c win9x/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_SW -DSDL12 -DWIN9X -DSDL_MAIN_HANDLED -DREVISION_177 #-DUSE_LOCOLOUR
+CFLAGS = -fwrapv -std=gnu99 -I ./cglm/include -DRENDER_SW -DSDL12 -DWIN9X -DSDL_MAIN_HANDLED -DREVISION_177 #-DUSE_LOCOLOUR
 CFLAGS += -I ./SDL-1.2.15/include/SDL #-fPIE
 CFLAGS += -I ./SDL_image-1.2.12/include
 LDFLAGS = -lm -L ./SDL-1.2.15/lib -lmingw32
 LDFLAGS += -L ./SDL_image-1.2.12/lib/x86
-LDFLAGS += -L ./glew-2.1.0/lib/Release/Win32/ -lopengl32 -lglu32 -lglew32
 LDFLAGS += -lSDL_image -lSDL -lwsock32 -lws2_32 -mwindows
 
 ifdef DEBUG
 CFLAGS += -Wall -Wextra -pedantic -g
 else
-CFLAGS += -march=pentium -mtune=pentium -s -Ofast
+CFLAGS += -march=pentiumpro -mtune=pentiumpro -s -O3 -ffast-math
 LDFLAGS += -s
 endif
+
+all: mudclient.exe
 
 mudclient.exe: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS) 

@@ -356,8 +356,8 @@ void mudclient_packet_tick(mudclient *mud) {
 
                     int ignored = 0;
 
-                    for (int i = 0; i < mud->ignore_list_count; i++) {
-                        if (mud->ignore_list[i] == player->encoded_username) {
+                    for (int j = 0; j < mud->ignore_list_count; j++) {
+                        if (mud->ignore_list[j] == player->encoded_username) {
                             ignored = 1;
                             break;
                         }
@@ -1194,9 +1194,9 @@ void mudclient_packet_tick(mudclient *mud) {
         break;
     }
     case SERVER_MESSAGE: {
-        char message[size + 1];
-        memset(message, '\0', size + 1);
-        strncpy(message, (char *)data + 1, size - 1);
+        char message[size];
+        memcpy(message, data + 1, size - 1);
+        message[size - 1] = '\0';
         mudclient_show_server_message(mud, message);
         break;
     }
@@ -1546,12 +1546,14 @@ void mudclient_packet_tick(mudclient *mud) {
     }
     case SERVER_SERVER_MESSAGE:
     case SERVER_SERVER_MESSAGE_ONTOP: {
-        strncpy(mud->server_message, (char *)data + 1, size);
-        mud->server_message[size] = '\0';
-        mud->show_dialog_server_message = 1;
-        mud->server_message_box_top = opcode == SERVER_SERVER_MESSAGE_ONTOP;
-        strcpy(mud->server_message_next, "");
-        mud->server_message_page = 0;
+        if (size >= 1 && (size_t)(size - 1) < sizeof(mud->server_message)) {
+            memcpy(mud->server_message, (char *)data + 1, size - 1);
+            mud->server_message[size - 1] = '\0';
+            mud->show_dialog_server_message = 1;
+            mud->server_message_box_top = opcode == SERVER_SERVER_MESSAGE_ONTOP;
+            strcpy(mud->server_message_next, "");
+            mud->server_message_page = 0;
+        }
         break;
     }
     case SERVER_BANK_OPEN: {

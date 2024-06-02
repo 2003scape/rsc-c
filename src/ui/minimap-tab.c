@@ -181,28 +181,28 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
 
     if (mud->options->compass_menu && mouse_x > 0 && mouse_x <= 32 &&
         mouse_y > 0 && mouse_y <= 32) {
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
-        strcpy(mud->menu_item_text2[mud->menu_items_count], "North");
-        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
-        mud->menu_index[mud->menu_items_count] = 128;
+        strcpy(mud->menu_items[mud->menu_items_count].action_text, "Look");
+        strcpy(mud->menu_items[mud->menu_items_count].target_text, "North");
+        mud->menu_items[mud->menu_items_count].type = MENU_MAP_LOOK;
+        mud->menu_items[mud->menu_items_count].index = 128;
         mud->menu_items_count++;
 
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
-        strcpy(mud->menu_item_text2[mud->menu_items_count], "East");
-        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
-        mud->menu_index[mud->menu_items_count] = 192;
+        strcpy(mud->menu_items[mud->menu_items_count].action_text, "Look");
+        strcpy(mud->menu_items[mud->menu_items_count].target_text, "East");
+        mud->menu_items[mud->menu_items_count].type = MENU_MAP_LOOK;
+        mud->menu_items[mud->menu_items_count].index = 192;
         mud->menu_items_count++;
 
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
-        strcpy(mud->menu_item_text2[mud->menu_items_count], "South");
-        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
-        mud->menu_index[mud->menu_items_count] = 0;
+        strcpy(mud->menu_items[mud->menu_items_count].action_text, "Look");
+        strcpy(mud->menu_items[mud->menu_items_count].target_text, "South");
+        mud->menu_items[mud->menu_items_count].type = MENU_MAP_LOOK;
+        mud->menu_items[mud->menu_items_count].index = 0;
         mud->menu_items_count++;
 
-        strcpy(mud->menu_item_text1[mud->menu_items_count], "Look");
-        strcpy(mud->menu_item_text2[mud->menu_items_count], "West");
-        mud->menu_type[mud->menu_items_count] = MENU_MAP_LOOK;
-        mud->menu_index[mud->menu_items_count] = 64;
+        strcpy(mud->menu_items[mud->menu_items_count].action_text, "Look");
+        strcpy(mud->menu_items[mud->menu_items_count].target_text, "West");
+        mud->menu_items[mud->menu_items_count].type = MENU_MAP_LOOK;
+        mud->menu_items[mud->menu_items_count].index = 64;
         mud->menu_items_count++;
         return;
     }

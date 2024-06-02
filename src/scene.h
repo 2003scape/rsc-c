@@ -11,16 +11,12 @@
 
 #ifdef RENDER_GL
 #ifdef GLAD
-#ifdef __SWITCH__
 #include <glad/glad.h>
-#else
-#include "../../glad/glad.h"
-#endif
 #else
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
-#if !defined (SDL12) && !defined (__SWITCH__)
+#if !defined(SDL12) && !defined(__SWITCH__)
 #include <SDL_opengl.h>
 #endif
 
@@ -65,8 +61,6 @@ typedef struct Scene Scene;
  * function that was unused */
 #define RAMP_WIDE 0
 
-#define MOUSE_PICKED_MAX 100
-
 /* originally 12345678 - this way we save on memory. */
 #define COLOUR_TRANSPARENT INT16_MAX
 
@@ -83,7 +77,7 @@ extern int scene_frustum_near_z;
 
 extern int64_t scene_texture_count_loaded;
 
-#if defined(RENDER_GL) || defined (RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 typedef enum {
     /* no picking */
     GL_PICK_STEP_NONE = 0,
@@ -111,6 +105,7 @@ struct Scene {
     int max_model_count;
     int max_polygon_count;
     int max_sprite_count;
+    int max_mouse_picked;
     GameModel **models;
     GameModel *view;
     int32_t *raster;
@@ -145,8 +140,8 @@ struct Scene {
     int mouse_x;
     int mouse_y;
     int mouse_picked_count;
-    GameModel *mouse_picked_models[MOUSE_PICKED_MAX];
-    int mouse_picked_faces[MOUSE_PICKED_MAX];
+    GameModel **mouse_picked_models;
+    int *mouse_picked_faces;
     int width;
     int clip_x;
     int clip_y;
@@ -203,7 +198,8 @@ struct Scene {
     int gl_terrain_pick_y;
 
     /* sort based on distance */
-    GlModelTime gl_mouse_picked_time[MOUSE_PICKED_MAX];
+    GlModelTime *gl_mouse_picked_time;
+    int gl_mouse_picked_size;
 
     int gl_mouse_picked_count;
 
@@ -287,8 +283,8 @@ void scene_scroll_texture(Scene *scene, int id);
 int16_t scene_rgb_to_fill(uint8_t, uint8_t, uint8_t);
 int scene_get_fill_colour(Scene *scene, int face_fill);
 void scene_set_light_dir(Scene *scene, int x, int y, int z);
-void scene_set_light(Scene *scene, int ambience, int diffuse,
-                     int x, int y, int z);
+void scene_set_light(Scene *scene, int ambience, int diffuse, int x, int y,
+                     int z);
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
 void scene_gl_update_camera(Scene *scene);
 #endif

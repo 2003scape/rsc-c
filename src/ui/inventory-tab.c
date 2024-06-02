@@ -118,17 +118,17 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
     } else {
         if (mud->selected_spell >= 0) {
             if (game_data.spells[mud->selected_spell].type == 3) {
-                sprintf(mud->menu_item_text1[mud->menu_items_count],
+                sprintf(mud->menu_items[mud->menu_items_count].action_text,
                         "Cast %s on",
                         game_data.spells[mud->selected_spell].name);
 
-                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                strcpy(mud->menu_items[mud->menu_items_count].target_text,
                        formatted_item_name);
 
-                mud->menu_type[mud->menu_items_count] = MENU_CAST_INVITEM;
-                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items[mud->menu_items_count].type = MENU_CAST_INVITEM;
+                mud->menu_items[mud->menu_items_count].index = item_index;
 
-                mud->menu_source_index[mud->menu_items_count] =
+                mud->menu_items[mud->menu_items_count].source_index =
                     mud->selected_spell;
 
                 mud->menu_items_count++;
@@ -137,16 +137,17 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
             }
         } else {
             if (mud->selected_item_inventory_index >= 0) {
-                sprintf(mud->menu_item_text1[mud->menu_items_count],
+                sprintf(mud->menu_items[mud->menu_items_count].action_text,
                         "Use %s with:", mud->selected_item_name);
 
-                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                strcpy(mud->menu_items[mud->menu_items_count].target_text,
                        formatted_item_name);
 
-                mud->menu_type[mud->menu_items_count] = MENU_USEWITH_INVITEM;
-                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items[mud->menu_items_count].type =
+                    MENU_USEWITH_INVITEM;
+                mud->menu_items[mud->menu_items_count].index = item_index;
 
-                mud->menu_source_index[mud->menu_items_count] =
+                mud->menu_items[mud->menu_items_count].source_index =
                     mud->selected_item_inventory_index;
 
                 mud->menu_items_count++;
@@ -155,65 +156,71 @@ void mudclient_draw_ui_tab_inventory(mudclient *mud, int no_menus) {
             }
 
             if (mud->inventory_equipped[item_index] == 1) {
-                strcpy(mud->menu_item_text1[mud->menu_items_count], "Remove");
+                strcpy(mud->menu_items[mud->menu_items_count].action_text,
+                       "Remove");
 
-                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                strcpy(mud->menu_items[mud->menu_items_count].target_text,
                        formatted_item_name);
 
-                mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_UNEQUIP;
-                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items[mud->menu_items_count].type =
+                    MENU_INVENTORY_UNEQUIP;
+                mud->menu_items[mud->menu_items_count].index = item_index;
                 mud->menu_items_count++;
             } else if (game_data.items[item_id].wearable != 0) {
                 int is_wield = (game_data.items[item_id].wearable & 24);
 
-                strcpy(mud->menu_item_text1[mud->menu_items_count],
+                strcpy(mud->menu_items[mud->menu_items_count].action_text,
                        is_wield ? "Wield" : "Wear");
 
-                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                strcpy(mud->menu_items[mud->menu_items_count].target_text,
                        formatted_item_name);
 
-                mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_WEAR;
-                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items[mud->menu_items_count].type =
+                    MENU_INVENTORY_WEAR;
+                mud->menu_items[mud->menu_items_count].index = item_index;
                 mud->menu_items_count++;
             }
 
             if (strlen(game_data.items[item_id].command) > 0) {
-                strcpy(mud->menu_item_text1[mud->menu_items_count],
+                strcpy(mud->menu_items[mud->menu_items_count].action_text,
                        game_data.items[item_id].command);
 
-                strcpy(mud->menu_item_text2[mud->menu_items_count],
+                strcpy(mud->menu_items[mud->menu_items_count].target_text,
                        formatted_item_name);
 
-                mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_COMMAND;
-                mud->menu_index[mud->menu_items_count] = item_index;
+                mud->menu_items[mud->menu_items_count].type =
+                    MENU_INVENTORY_COMMAND;
+                mud->menu_items[mud->menu_items_count].index = item_index;
                 mud->menu_items_count++;
             }
 
-            strcpy(mud->menu_item_text1[mud->menu_items_count], "Use");
+            strcpy(mud->menu_items[mud->menu_items_count].action_text, "Use");
 
-            strcpy(mud->menu_item_text2[mud->menu_items_count],
+            strcpy(mud->menu_items[mud->menu_items_count].target_text,
                    formatted_item_name);
 
-            mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_USE;
-            mud->menu_index[mud->menu_items_count] = item_index;
+            mud->menu_items[mud->menu_items_count].type = MENU_INVENTORY_USE;
+            mud->menu_items[mud->menu_items_count].index = item_index;
             mud->menu_items_count++;
 
-            strcpy(mud->menu_item_text1[mud->menu_items_count], "Drop");
+            strcpy(mud->menu_items[mud->menu_items_count].action_text, "Drop");
 
-            strcpy(mud->menu_item_text2[mud->menu_items_count],
+            strcpy(mud->menu_items[mud->menu_items_count].target_text,
                    formatted_item_name);
 
-            mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_DROP;
-            mud->menu_index[mud->menu_items_count] = item_index;
+            mud->menu_items[mud->menu_items_count].type = MENU_INVENTORY_DROP;
+            mud->menu_items[mud->menu_items_count].index = item_index;
             mud->menu_items_count++;
 
-            strcpy(mud->menu_item_text1[mud->menu_items_count], "Examine");
+            strcpy(mud->menu_items[mud->menu_items_count].action_text,
+                   "Examine");
 
-            strcpy(mud->menu_item_text2[mud->menu_items_count],
+            strcpy(mud->menu_items[mud->menu_items_count].target_text,
                    formatted_item_name);
 
-            mud->menu_type[mud->menu_items_count] = MENU_INVENTORY_EXAMINE;
-            mud->menu_index[mud->menu_items_count] = item_id;
+            mud->menu_items[mud->menu_items_count].type =
+                MENU_INVENTORY_EXAMINE;
+            mud->menu_items[mud->menu_items_count].index = item_id;
             mud->menu_items_count++;
         }
     }

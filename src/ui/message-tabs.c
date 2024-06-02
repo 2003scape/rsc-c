@@ -189,8 +189,9 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
 }
 
 void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
+    int is_touch = mudclient_is_touch(mud);
+
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
-        int is_touch = mudclient_is_touch(mud);
         int x = 7 + (is_touch ? 5 : 0);
         int y = is_touch ? 91 : mud->surface->height - 30;
 
@@ -220,8 +221,18 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     panel_draw_panel(mud->panel_message_tabs);
     panel_text_list_entry_height_mod = 0;
 
-    if (mudclient_is_touch(mud)) {
-        surface_draw_sprite(mud->surface, 9, 108, mud->sprite_media + 40);
+    if (is_touch) {
+        /* default to left */
+        int keyboard_button_x = 9;
+        int keyboard_button_y = 108;
+
+        if (mud->options->touch_keyboard_right) {
+            keyboard_button_x = mud->surface->width - 50;
+            keyboard_button_y = mud->surface->height - 265;
+        }
+
+        surface_draw_sprite(mud->surface, keyboard_button_x, keyboard_button_y,
+                            mud->sprite_media + 40);
     }
 }
 
@@ -302,6 +313,15 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
     }
 
     if (mudclient_is_touch(mud)) {
+        /* default to left */
+        int keyboard_button_x = 9;
+        int keyboard_button_y = 108;
+
+        if (mud->options->touch_keyboard_right) {
+            keyboard_button_x = mud->surface->width - 50;
+            keyboard_button_y = 100;
+        }
+
         panel_handle_mouse(mud->panel_message_tabs, mudclient_finger_1_x,
                            mudclient_finger_1_y, mud->last_mouse_button_down,
                            mudclient_finger_1_down, mud->mouse_scroll_delta);
@@ -332,14 +352,16 @@ void mudclient_handle_message_tabs_input(mudclient *mud) {
              mud->mouse_y <= chat_input_y + chat_input_height + 4);
 
         int is_within_button_input =
-            (mud->mouse_x >= 9 &&
+            (mud->mouse_x >= keyboard_button_x &&
              mud->mouse_x <=
-                 9 + mud->surface->sprite_width[mud->sprite_media + 40] &&
-             mud->mouse_y >= 108 &&
+                 keyboard_button_x +
+                     mud->surface->sprite_width[mud->sprite_media + 40] &&
+             mud->mouse_y >= keyboard_button_y &&
              mud->mouse_y <=
-                 108 + mud->surface->sprite_height[mud->sprite_media + 40]);
+                 keyboard_button_y +
+                     mud->surface->sprite_height[mud->sprite_media + 40]);
 
-        if (mud->last_mouse_button_down == 1 &&
+        if (!mud->show_right_click_menu && mud->last_mouse_button_down == 1 &&
             (is_within_chat_input || is_within_button_input)) {
             mudclient_trigger_keyboard(mud, chat_input, 0, chat_input_x,
                                        chat_input_y, chat_input_width,
@@ -449,7 +471,7 @@ void mudclient_show_message(mudclient *mud, char *message, MessageType type) {
              message += 5)
             ;
 
-        message_length = strlen(message);
+        message_length = (int)strlen(message);
         int colon_index = -1;
 
         for (int i = 0; i < message_length; i += 1) {
@@ -474,7 +496,7 @@ void mudclient_show_message(mudclient *mud, char *message, MessageType type) {
     }
 
     if (message_length == -1) {
-        message_length = strlen(message);
+        message_length = (int)strlen(message);
     }
 
     /* handle wrapping */
@@ -633,7 +655,7 @@ void mudclient_show_server_message(mudclient *mud, char *message) {
     if (strncasecmp(message, "@bor@", 5) == 0) {
         mudclient_show_message(mud, message, MESSAGE_TYPE_BOR);
     } else if (strncasecmp(message, "@que@", 5) == 0) {
-        int formatted_length = strlen(message) + 6;
+        size_t formatted_length = strlen(message) + 6;
         char formatted_message[formatted_length];
         sprintf(formatted_message, "@whi@%s", message);
         mudclient_show_message(mud, formatted_message, MESSAGE_TYPE_QUEST);
