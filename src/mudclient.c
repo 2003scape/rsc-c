@@ -2994,6 +2994,21 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
 #ifdef REVISION_177
     int session_id = packet_stream_get_int(mud->packet_stream);
     mud->session_id = session_id;
+#else
+    packet_stream_new_packet(mud->packet_stream, CLIENT_SESSION);
+
+    int64_t encoded_username = encode_username(formatted_username);
+
+    packet_stream_put_byte(mud->packet_stream,
+                           (int)((encoded_username >> 16) & 31));
+
+    if (packet_stream_flush_packet(mud->packet_stream) < 0) {
+        goto register_fail;
+    }
+
+    int64_t session_id = packet_stream_get_long(mud->packet_stream);
+    mud->session_id = session_id;
+#endif
 
     if (mud->session_id == 0) {
         mudclient_show_login_screen_status(mud, "Login server offline.",
@@ -3001,13 +3016,12 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
         return;
     }
 
+#ifdef REVISION_177
     mud_log("Session id: %d\n", session_id);
-#endif
 
     packet_stream_new_packet(mud->packet_stream, CLIENT_REGISTER);
     packet_stream_put_short(mud->packet_stream, VERSION);
 
-#ifdef REVISION_177
     packet_stream_put_long(mud->packet_stream,
                            encode_username(formatted_username));
 
@@ -3026,6 +3040,25 @@ void mudclient_register(mudclient *mud, char *username, char *password) {
 
     packet_stream_get_byte(mud->packet_stream);
 #else
+    mud_log("Verb: Session id: %ld\n", session_id);
+
+    uint32_t keys[4] = {0};
+    keys[0] = (int)(((float)rand() / (float)RAND_MAX) * (float)99999999);
+    keys[1] = (int)(((float)rand() / (float)RAND_MAX) * (float)99999999);
+    keys[2] = (int32_t)(session_id >> 32);
+    keys[3] = (int32_t)(session_id);
+
+    packet_stream_new_packet(mud->packet_stream, CLIENT_REGISTER);
+    packet_stream_put_byte(mud->packet_stream, 0);
+    packet_stream_put_short(mud->packet_stream, VERSION);
+    packet_stream_put_byte(mud->packet_stream, 0); /* limit30 */
+
+    packet_stream_put_login_block(mud->packet_stream, formatted_username,
+                                  formatted_password, keys, 0);
+
+    if (packet_stream_flush_packet(mud->packet_stream) < 0) {
+        goto register_fail;
+    }
 #endif
 
     int response = packet_stream_get_byte(mud->packet_stream);
@@ -7117,7 +7150,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
                    int nCmdShow) {
     int argc;
     char **argv;
-    
+
     argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 #else
 int main(int argc, char **argv) {
