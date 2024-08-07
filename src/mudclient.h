@@ -284,6 +284,7 @@ typedef struct mudclient mudclient;
 #include "game-character.h"
 #include "game-data.h"
 #include "game-model.h"
+#include "hydra.h"
 #include "lib/bzip.h"
 #include "options.h"
 #include "packet-handler.h"

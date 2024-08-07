@@ -2788,6 +2788,8 @@ void mudclient_login(mudclient *mud, char *username, char *password,
     mud_log("Login response: %d\n", response);
 
     if (response == 0 || response == 1 || response == 25) {
+        printf("log success\n");
+
         mud->moderator_level = response == 25;
         mud->auto_login_attempts = 0;
 
@@ -4216,6 +4218,8 @@ void mudclient_handle_inputs(mudclient *mud) {
     }
 
     mud->login_timer++;
+
+    mudclient_handle_stdin(mud);
 
     if (mud->logged_in == 0) {
         mud->mouse_action_timeout = 0;
@@ -6681,6 +6685,23 @@ void mudclient_run(mudclient *mud) {
         mudclient_on_resize(mud);
 #endif
     }
+
+    /* set stdin to non-blocking */
+    int flags = flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+
+    if (flags == -1) {
+        mud_error("fcntl F_GETFL");
+        exit(1);
+    }
+
+    flags |= O_NONBLOCK;
+
+    if (fcntl(STDIN_FILENO, F_SETFL, flags) == -1) {
+        mud_error("fcntl F_SETFL");
+        exit(1);
+    }
+
+    setbuf(stdout, NULL);
 
     int timing_index = 0;
     int j = 256;

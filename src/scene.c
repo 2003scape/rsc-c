@@ -178,7 +178,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
     scene->mouse_picked_faces = calloc(scene->max_mouse_picked, sizeof(int));
 
-#ifndef RENDER_SW
+#ifdef RENDER_GL
     scene->gl_mouse_picked_size = 32;
 
     scene->gl_mouse_picked_time =
