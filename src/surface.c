@@ -1674,11 +1674,15 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, int8_t *buffer,
         uint8_t g = buffer[offset++];
         uint8_t r = buffer[offset++];
         map[i] = (r << 16) + (g << 8) + b;
+        /* see palette_sprite_to_raster */
+        if (map[i] == 0) {
+            map[i] = 1;
+        }
     }
 
-    map[0] = MAGENTA;
+    size_t full_size = width * height;
 
-    int8_t *pixels = malloc(width * height);
+    uint8_t *pixels = malloc(full_size);
     assert(pixels != NULL);
 
     for (int y = (height - 1); y >= 0; --y) {
@@ -1686,11 +1690,41 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, int8_t *buffer,
         offset += width;
     }
 
-    if (rows == 0 && columns == 0) {
+    /*
+     * ensure magenta is always first
+     * in a classic case of spaghetti, magenta and 0 are used for transparency
+     * in different places
+     */
+    if (map[0] != MAGENTA) {
+        int magenta_idx = 255;
+
+        for (int i = 1; i < colour_map_len; ++i) {
+            if (map[i] == MAGENTA) {
+                magenta_idx = i;
+                break;
+            }
+        }
+
+        for (size_t i = 0; i < full_size; ++i) {
+            if (map[pixels[i]] == MAGENTA) {
+                pixels[i] = 0;
+                continue;
+            }
+            if (pixels[i] == 0) {
+                pixels[i] = magenta_idx;
+            }
+        }
+        map[magenta_idx] = map[0];
+        map[0] = MAGENTA;
+    }
+
+    assert(map[0] == MAGENTA);
+
+    if (rows <= 1 && columns <= 1) {
         free(surface->surface_pixels[sprite_id]);
         surface->surface_pixels[sprite_id] = NULL;
-        surface->sprite_colours[sprite_id] = pixels;
-        surface->sprite_translate[sprite_id] = 0;
+        surface->sprite_colours[sprite_id] = (int8_t *)pixels;
+        surface->sprite_translate[sprite_id] = 1;
         surface->sprite_translate_x[sprite_id] = 0;
         surface->sprite_translate_y[sprite_id] = 0;
 #ifdef USE_LOCOLOUR
@@ -1721,18 +1755,10 @@ void surface_parse_sprite_tga(Surface *surface, int sprite_id, int8_t *buffer,
                            frame_width);
                 }
 
-                int frame_len = frame_width * frame_height;
-
-                for (int i = 0; i < frame_len; ++i) {
-                    if (map[frame_pixels[i]] == 0xff00ff) {
-                        frame_pixels[i] = 0;
-                    }
-                }
-
                 free(surface->surface_pixels[sprite_id]);
                 surface->surface_pixels[sprite_id] = NULL;
                 surface->sprite_colours[sprite_id] = frame_pixels;
-                surface->sprite_translate[sprite_id] = 0;
+                surface->sprite_translate[sprite_id] = 1;
                 surface->sprite_translate_x[sprite_id] = 0;
                 surface->sprite_translate_y[sprite_id] = 0;
 #ifdef USE_LOCOLOUR
