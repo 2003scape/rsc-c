@@ -50,7 +50,6 @@ static int darkwizard2_start = -1;
 static int al_kharid_banker_start = -1;
 static int fairy_banker_start = -1;
 static int tribesman_start = -1;
-static int jungle_savage_start = -1;
 static int earth_warrior_start = -1;
 static int thug_start = -1;
 
@@ -68,6 +67,7 @@ static int thug_start = -1;
 #define NPC_MOSS_GIANT                  (104)
 #define NPC_ICE_GIANT                   (135)
 #define NPC_PIRATE                      (137)
+#define NPC_ZAMBO                       (165)
 #define NPC_DARK_WARRIOR                (199)
 #define NPC_DRUID                       (200)
 #define NPC_FAIRY_BANKER                (224)
@@ -222,6 +222,7 @@ add_diverse_npcs(void) {
     game_data.npcs[game_data.npc_count++] = npc;
 
     npc = game_data.npcs[NPC_BARBARIAN];
+    npc.sprites[ANIMATION_INDEX_HEAD] = ANIM_HEAD1;
     npc.sprites[ANIMATION_INDEX_BODY] = ANIM_FBODY1;
     npc.sprites[ANIMATION_INDEX_BODY_OVERLAY] = -1;
     npc.sprites[ANIMATION_INDEX_RIGHT_HAND] = ANIM_MACE_IRON;
@@ -668,11 +669,15 @@ add_diverse_npcs(void) {
 
     /* Jungle Savage */
 
-    jungle_savage_start = game_data.npc_count;
-
     /* MODIFIED to not be racist */
     game_data.npcs[NPC_JUNGLE_SAVAGE].name = "Tormented Warrior";
     game_data.npcs[NPC_JUNGLE_SAVAGE].description = "A Kharazi warrior, tormented by evil spirits.";
+
+    /* Zambo */
+
+    /* MODIFIED to not be racist */
+    game_data.npcs[NPC_ZAMBO].name = "Zembo";
+    game_data.npcs[NPC_ZAMBO].description = "He appears slightly drunk";
 
     /* By the way, Karamja has Adamantite deposits. */
 
@@ -836,9 +841,6 @@ diversify_npc(int id, int server_index, int x, int y) {
         case NPC_TRIBESMAN:
             r = roll_isaac(server_index, 4);
             return r == 0 ? NPC_TRIBESMAN : tribesman_start + (r - 1);
-        case NPC_JUNGLE_SAVAGE:
-            r = roll_isaac(server_index, 4);
-            return r == 0 ? NPC_JUNGLE_SAVAGE : jungle_savage_start + (r - 1);
         case NPC_EARTH_WARRIOR:
             r = roll_isaac(server_index, 4);
             return r == 0 ? NPC_EARTH_WARRIOR : earth_warrior_start + (r - 1);
