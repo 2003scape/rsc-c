@@ -2083,7 +2083,7 @@ static void mudclient_load_media_tga(mudclient *mud, void *media_jag) {
     data = load_data("corners.tga", 0, media_jag, &len);
     assert(data != NULL);
     surface_parse_sprite_tga(mud->surface, mud->sprite_util + 2,
-                             data, len, 2, 1);
+                             data, len, 4, 1);
 
     data = load_data("arrows.tga", 0, media_jag, &len);
     assert(data != NULL);
