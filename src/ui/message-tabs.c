@@ -179,7 +179,7 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         mud->surface, is_compact ? "Private" : "Private history",
         x + (button_width * 3) + 1, y, FONT_REGULAR_11, text_colour);
 
-    if (!is_compact) {
+    if (!is_compact && VERSION_MEDIA > 42) {
         surface_draw_string_centre(
             mud->surface,
             mud->options->wiki_lookup ? "Wiki lookup" : "Report abuse",
