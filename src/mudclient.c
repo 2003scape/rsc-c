@@ -1913,16 +1913,7 @@ void mudclient_load_game_config(mudclient *mud) {
     }
 }
 
-void mudclient_load_media(mudclient *mud) {
-#if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
-    int8_t *media_jag = mudclient_read_data_file(
-        mud, "media" VERSION_STR(VERSION_MEDIA) ".jag", "2d graphics", 20);
-
-    if (media_jag == NULL) {
-        mud->error_loading_data = 1;
-        return;
-    }
-
+static void mudclient_load_media_dat(mudclient *mud, void *media_jag) {
     int8_t *index_dat = load_data("index.dat", 0, media_jag, NULL);
 
 #if (VERSION_MEDIA < 59)
@@ -2024,10 +2015,127 @@ void mudclient_load_media(mudclient *mud) {
     }
 
     free(index_dat);
+}
 
-#ifndef WII
-    free(media_jag);
-#endif
+static void mudclient_load_media_tga(mudclient *mud, void *media_jag) {
+    void *data;
+    size_t len;
+
+    data = load_data("inv1.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media,
+                         data, len, 1, 1);
+
+    data = load_data("inv2.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media + 1,
+                         data, len, 1, 6);
+
+    data = load_data("bubble.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media + 9,
+                         data, len, 1, 1);
+
+    if (!mud->options->lowmem) {
+        data = load_data("runescape.tga", 0, media_jag, &len);
+        assert(data != NULL);
+        surface_parse_sprite_tga(mud->surface, mud->sprite_media + 10,
+                             data, len, 1, 1);
+    }
+
+    data = load_data("splat.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media + 11,
+                             data, len, 3, 1);
+
+    data = load_data("icon.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media + 14,
+                             data, len, 4, 2);
+
+    if (!mud->options->lowmem) {
+        data = load_data("hbar.tga", 0, media_jag, &len);
+        assert(data != NULL);
+        surface_parse_sprite_tga(mud->surface, mud->sprite_media + 22,
+                                 data, len, 1, 1);
+    }
+
+    data = load_data("hbar2.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media + 23,
+                             data, len, 1, 1);
+
+    data = load_data("compass.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media + 24,
+                             data, len, 1, 1);
+
+    data = load_data("buttons.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_media + 25,
+                             data, len, 1, 2);
+
+    data = load_data("scrollbar.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_util,
+                             data, len, 2, 1);
+
+    data = load_data("corners.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_util + 2,
+                             data, len, 2, 1);
+
+    data = load_data("arrows.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_util + 6,
+                         data, len, 2, 1);
+
+    data = load_data("projectile.tga", 0, media_jag, &len);
+    assert(data != NULL);
+    surface_parse_sprite_tga(mud->surface, mud->sprite_projectile,
+                             data, len, 3, 1);
+
+    int sprite_count = game_data.item_sprite_count;
+
+    for (int i = 1; sprite_count > 0; i++) {
+        char file_name[32];
+
+        snprintf(file_name, sizeof(file_name), "objects%d.tga", i);
+        puts(file_name);
+
+        data = load_data(file_name, 0, media_jag, &len);
+        if (data == NULL) {
+            break;
+        }
+
+        int current_sprite_count = sprite_count;
+        sprite_count -= 30;
+
+        if (current_sprite_count > 30) {
+            current_sprite_count = 30;
+        }
+
+        surface_parse_sprite_tga(mud->surface, mud->sprite_item + (i - 1) * 30,
+                             data, len, 10, 3);
+        /*assert(mud->surface->sprite_colours[mud->sprite_item + (i - 1) * 30][0] == 0);
+        assert(mud->surface->sprite_palette[mud->sprite_item + (i - 1) * 30][0] == MAGENTA);*/
+    }
+}
+
+void mudclient_load_media(mudclient *mud) {
+#if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
+    int8_t *media_jag = mudclient_read_data_file(
+        mud, "media" VERSION_STR(VERSION_MEDIA) ".jag", "2d graphics", 20);
+
+    if (media_jag == NULL) {
+        mud->error_loading_data = 1;
+        return;
+    }
+
+#if VERSION_MEDIA > 27
+    mudclient_load_media_dat(mud, media_jag);
+#else
+    mudclient_load_media_tga(mud, media_jag);
 #endif
 
 #ifdef RENDER_SW
@@ -2056,6 +2164,11 @@ void mudclient_load_media(mudclient *mud) {
     for (int i = 0; i < game_data.item_sprite_count; i++) {
         surface_load_sprite(mud->surface, mud->sprite_item + i);
     }
+#endif
+
+#ifndef WII
+    free(media_jag);
+#endif
 #endif
 }
 
