@@ -2101,7 +2101,6 @@ static void mudclient_load_media_tga(mudclient *mud, void *media_jag) {
         char file_name[32];
 
         snprintf(file_name, sizeof(file_name), "objects%d.tga", i);
-        puts(file_name);
 
         data = load_data(file_name, 0, media_jag, &len);
         if (data == NULL) {
@@ -2117,8 +2116,6 @@ static void mudclient_load_media_tga(mudclient *mud, void *media_jag) {
 
         surface_parse_sprite_tga(mud->surface, mud->sprite_item + (i - 1) * 30,
                              data, len, 10, 3);
-        /*assert(mud->surface->sprite_colours[mud->sprite_item + (i - 1) * 30][0] == 0);
-        assert(mud->surface->sprite_palette[mud->sprite_item + (i - 1) * 30][0] == MAGENTA);*/
     }
 }
 
