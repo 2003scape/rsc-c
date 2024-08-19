@@ -154,6 +154,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         height -= line_break;
     }
 
+    if (mud->options->max_skills < 18) {
+        height -= line_break;
+    }
+
     if (mud->options->total_experience || mud->options->remaining_experience) {
         height += line_break;
     }
@@ -222,10 +226,21 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             y += line_break + 1;
         }
 
+        int skills_per_column;
+        const char **display_skills;
+
+        if (mud->options->max_skills < 18) {
+            skills_per_column = 8;
+            display_skills = skill_names;
+        } else {
+            skills_per_column = 9;
+            display_skills = short_skill_names;
+        }
+
         /* draw two columns with each skill name and current/base levels */
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < skills_per_column; i++) {
             total_experience += mud->player_experience[i];
-            total_experience += mud->player_experience[i + 9];
+            total_experience += mud->player_experience[i + skills_per_column];
 
             /* left column */
             int text_colour = WHITE;
@@ -241,7 +256,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
              * (1), slash (1) */
             char formatted_skill[23] = {0};
 
-            sprintf(formatted_skill, "%s:@yel@%d/%d", short_skill_names[i],
+            sprintf(formatted_skill, "%s:@yel@%d/%d", display_skills[i],
                     mud->player_skill_current[i], mud->player_skill_base[i]);
 
             surface_draw_string(mud->surface, formatted_skill, ui_x + 5, y,
@@ -255,16 +270,24 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 mud->mouse_y < y - (is_compact ? 0 : (line_break - 1)) &&
                 mud->mouse_x < ui_x + STATS_WIDTH) {
                 text_colour = RED;
-                selected_skill = i + 9;
+                selected_skill = i + skills_per_column;
             }
 
-            sprintf(formatted_skill, "%s:@yel@%d/%d", short_skill_names[i + 9],
-                    mud->player_skill_current[i + 9],
-                    mud->player_skill_base[i + 9]);
+            sprintf(formatted_skill, "%s:@yel@%d/%d",
+                    display_skills[i + skills_per_column],
+                    mud->player_skill_current[i + skills_per_column],
+                    mud->player_skill_base[i + skills_per_column]);
+
+            int x;
+
+            if (skills_per_column < 9) {
+                x = ui_x + (STATS_WIDTH / 2) - 7;
+            } else {
+                x = ui_x + (STATS_WIDTH / 2) - 5;
+            }
 
             surface_draw_string(mud->surface, formatted_skill,
-                                ui_x + (STATS_WIDTH / 2) - 5,
-                                y - (is_compact ? 0 : line_break + 1),
+                                x, y - (is_compact ? 0 : line_break + 1),
                                 FONT_BOLD_12, text_colour);
 
             y += line_break + 1;

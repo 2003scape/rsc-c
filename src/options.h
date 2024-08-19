@@ -24,6 +24,8 @@ typedef struct Options Options;
      "fatigue = %d\n"                                                          \
      "; Maximum number of quests to display (50 for final version of RSC)"     \
      "max_quests = %d\n"                                                       \
+     "; Maximum number of skills to display (18 for final version of RSC)"     \
+     "max_skills = %d\n"                                                       \
      "; If enabled, override members option and always show New User button\n" \
      "registration = %d\n"                                                     \
      "; Used together to encrypt passwords, Must be represented as "           \
@@ -189,6 +191,9 @@ struct Options {
 
     /* maximum number of quests to display */
     int max_quests;
+
+    /* maximum number of skills to display */
+    int max_skills;
 
     /* if enabled, override members option and always show New User button */
     int registration;
