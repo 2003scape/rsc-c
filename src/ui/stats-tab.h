@@ -1,6 +1,7 @@
 #ifndef _H_STATS_TAB
 #define _H_STATS_TAB
 
+extern const char *short_skill_names[];
 extern const char *skill_names[];
 extern int skills_length;
 

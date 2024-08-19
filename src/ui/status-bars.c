@@ -81,7 +81,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
         }
     }
 
-    if (!mud->is_sleeping) {
+    if (!mud->is_sleeping && mud->options->fatigue) {
         if (is_touch) {
             y = ui_y;
         } else {

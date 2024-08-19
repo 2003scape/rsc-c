@@ -1,6 +1,6 @@
 #include "stats-tab.h"
 
-static const char *short_skill_names[] = {
+const char *short_skill_names[] = {
     "Attack",   "Defense",  "Strength", "Hits",      "Ranged",  "Prayer",
     "Magic",    "Cooking",  "Woodcut",  "Fletching", "Fishing", "Firemaking",
     "Crafting", "Smithing", "Mining",   "Herblaw",   "Agility", "Thieving"};
@@ -150,6 +150,10 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
     int line_break = (is_compact && !is_touch ? 11 : 12);
 
+    if (!is_compact && !mud->options->fatigue) {
+        height -= line_break;
+    }
+
     if (mud->options->total_experience || mud->options->remaining_experience) {
         height += line_break;
     }
@@ -290,26 +294,26 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             y += line_break;
         }
 
-        if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
-            mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 5 &&
-            mud->mouse_y > y - (line_break * 2) &&
-            mud->mouse_y < y - (line_break - 1)) {
-            mudclient_menu_add_wiki(mud, "Fatigue", "Fatigue");
+        if (mud->options->fatigue) {
+            char formatted_fatigue[27] = {0};
+
+            if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
+                mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 5 &&
+                mud->mouse_y > y - (line_break * 2) &&
+                mud->mouse_y < y - (line_break - 1)) {
+                mudclient_menu_add_wiki(mud, "Fatigue", "Fatigue");
+            }
+
+            sprintf(formatted_fatigue, "Fatigue: @yel@%d%%",
+                    (mud->stat_fatigue * 100) / 750);
+
+            surface_draw_string(mud->surface, formatted_fatigue, ui_x + 5, y - 13,
+                                FONT_BOLD_12, WHITE);
+
+            y += is_compact ? 2 : 8;
         }
 
-        char formatted_fatigue[27] = {0};
-
-        sprintf(formatted_fatigue, "Fatigue: @yel@%d%%",
-                (mud->stat_fatigue * 100) / 750);
-
-        surface_draw_string(mud->surface, formatted_fatigue, ui_x + 5, y - 13,
-                            FONT_BOLD_12, WHITE);
-
-        if (is_compact) {
-            y += 2;
-        } else {
-            y += 8;
-
+        if (!is_compact) {
             mudclient_draw_equipment_status(mud, ui_x, y, line_break, no_menus);
 
             y += 51;
@@ -491,7 +495,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         panel_add_list_entry(mud->panel_quests, mud->control_list_quest, 0,
                              "@whi@Quest-list (green=completed)");
 
-        for (int i = 0; i < quests_length; i++) {
+        for (int i = 0; i < mud->options->max_quests; i++) {
             char *quest_name = quest_names[i];
             char coloured_quest[strlen(quest_name) + 6];
 

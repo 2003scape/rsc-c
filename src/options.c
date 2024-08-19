@@ -61,6 +61,8 @@ void options_set_server(Options *options) {
 void options_set_defaults(Options *options) {
     /* server */
     options->members = 1;
+    options->fatigue = 1;
+    options->max_quests = 50;
     options->registration = 1;
     options->idle_logout = 0;
     options->remember_username = 0;
@@ -143,6 +145,8 @@ void options_set_defaults(Options *options) {
 void options_set_vanilla(Options *options) {
     /* connection */
     options->members = 1;
+    options->fatigue = 1;
+    options->max_quests = 50;
     options->registration = 0;
     options->idle_logout = 1;
     options->remember_username = 0;
@@ -270,6 +274,8 @@ void options_save(Options *options) {
             options->server,                //
             options->port,                  //
             options->members,               //
+            options->fatigue,               //
+            options->max_quests,            //
             options->registration,          //
             options->rsa_exponent,          //
             options->rsa_modulus,           //
@@ -367,6 +373,8 @@ void options_load(Options *options) {
     OPTION_INI_STR("server", options->server, 255);
     OPTION_INI_INT("port", options->port, 0, 65535);
     OPTION_INI_INT("members", options->members, 0, 1);
+    OPTION_INI_INT("fatigue", options->fatigue, 0, 1);
+    OPTION_INI_INT("max_quests", options->max_quests, 0, 50);
     OPTION_INI_INT("registration", options->registration, 0, 1);
     OPTION_INI_STR("rsa_exponent", options->rsa_exponent, 512);
     OPTION_INI_STR("rsa_modulus", options->rsa_modulus, 512);

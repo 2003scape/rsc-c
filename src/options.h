@@ -20,6 +20,10 @@ typedef struct Options Options;
      "; Disable registration and load sounds, P2P landscape and items ("       \
      "requires\n; restart)\n"                                                  \
      "members = %d\n"                                                          \
+     "; Disables display of Fatigue, for servers that don't support it"        \
+     "fatigue = %d\n"                                                          \
+     "; Maximum number of quests to display (50 for final version of RSC)"     \
+     "max_quests = %d\n"                                                       \
      "; If enabled, override members option and always show New User button\n" \
      "registration = %d\n"                                                     \
      "; Used together to encrypt passwords, Must be represented as "           \
@@ -179,6 +183,12 @@ struct Options {
     /* disable registration and load sounds, P2P landscape and items (requires
      * restart) */
     int members;
+
+    /* disable display of fatigue */
+    int fatigue;
+
+    /* maximum number of quests to display */
+    int max_quests;
 
     /* if enabled, override members option and always show New User button */
     int registration;
