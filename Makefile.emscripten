@@ -1,7 +1,7 @@
 CC = emcc
 DEBUG ?= 0
 RENDER_GL ?= 0
-SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/lib/rsa/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
 # remove -fwrapv when code is converted to use unsigned ints or
 # overflow checks are added
@@ -47,5 +47,6 @@ mudclient.html: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o src/custom/*.o
+	rm -f src/*.o src/lib/*.o src/lib/rsa/*.o src/ui/*.o
+	rm -f src/gl/*.o src/gl/textures/*.o src/custom/*.o
 	rm -f mudclient mudclient.*

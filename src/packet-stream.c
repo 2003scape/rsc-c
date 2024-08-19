@@ -71,8 +71,11 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #endif
 
 #ifndef NO_RSA
-    packet_stream->rsa_exponent = mud->options->rsa_exponent;
-    packet_stream->rsa_modulus = mud->options->rsa_modulus;
+    if (rsa_init(&packet_stream->rsa,
+        mud->options->rsa_exponent, mud->options->rsa_modulus) < 0) {
+            mud_error("rsa_init failed\n");
+            exit(1);
+    }
 #endif
 
     int ret = 0;
@@ -630,42 +633,28 @@ void packet_stream_put_string(PacketStream *packet_stream, char *s) {
 
 #ifndef NO_RSA
 static void packet_stream_put_rsa(PacketStream *packet_stream,
-                                  const void *input, size_t input_len) {
-    const uint8_t *unencoded = input;
+                                  void *input, size_t input_len) {
+    uint8_t result[64] = {0};
+    int res_len;
 
-    struct bn exponent = {0};
-    bignum_init(&exponent);
-
-    bignum_from_string(&exponent, packet_stream->rsa_exponent,
-                       strlen(packet_stream->rsa_exponent));
-
-    struct bn modulus = {0};
-    bignum_init(&modulus);
-
-    bignum_from_string(&modulus, packet_stream->rsa_modulus,
-                       strlen(packet_stream->rsa_modulus));
-
-    struct bn bn = {0};
-    bignum_init(&bn);
-
-    for (size_t i = 0; i < input_len; i++) {
-        bn.array[i] = unencoded[input_len - 1 - i];
+    res_len = rsa_crypt(&packet_stream->rsa,
+                  input, input_len, result, sizeof(result));
+    if (res_len < 0) {
+        mud_error("failed to rsa_crypt\n");
+        return;
     }
 
-    struct bn result = {0};
-    bignum_init(&result);
-    bignum_pow_mod(&bn, &exponent, &modulus, &result);
+    packet_stream_put_byte(packet_stream, sizeof(result));
 
     /* in java's BigInteger byte array array, zeros at the beginning are
      * ignored unless they're being used to indicate the MSB for sign. since
      * the byte array lengths range from 63-65 and we always want a positive
      * integer, we can make result_length 65 and begin with up to two 0 bytes */
-    int result_length = 65;
-
-    packet_stream_put_byte(packet_stream, result_length);
-
-    for (int i = result_length - 1; i >= 0; i--) {
-        packet_stream_put_byte(packet_stream, result.array[i]);
+    for (size_t i = 0; i < (sizeof(result) - res_len); ++i) {
+        packet_stream_put_byte(packet_stream, 0);
+    }
+    for (int i = 0; i < res_len; ++i) {
+        packet_stream_put_byte(packet_stream, result[i]);
     }
 }
 #endif
