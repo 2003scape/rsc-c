@@ -227,14 +227,17 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         }
 
         int skills_per_column;
+        int second_column_indent;
         const char **display_skills;
 
         if (mud->options->max_skills < 18) {
             skills_per_column = 8;
             display_skills = skill_names;
+            second_column_indent = ui_x + (STATS_WIDTH / 2) - 7;
         } else {
             skills_per_column = 9;
             display_skills = short_skill_names;
+            second_column_indent = ui_x + (STATS_WIDTH / 2) - 5;
         }
 
         /* draw two columns with each skill name and current/base levels */
@@ -278,16 +281,9 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                     mud->player_skill_current[i + skills_per_column],
                     mud->player_skill_base[i + skills_per_column]);
 
-            int x;
-
-            if (skills_per_column < 9) {
-                x = ui_x + (STATS_WIDTH / 2) - 7;
-            } else {
-                x = ui_x + (STATS_WIDTH / 2) - 5;
-            }
-
             surface_draw_string(mud->surface, formatted_skill,
-                                x, y - (is_compact ? 0 : line_break + 1),
+                                second_column_indent,
+                                y - (is_compact ? 0 : line_break + 1),
                                 FONT_BOLD_12, text_colour);
 
             y += line_break + 1;
@@ -298,7 +294,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         }
 
         if (no_menus && mud->selected_wiki &&
-            mud->mouse_x > ui_x + (STATS_WIDTH / 2) - 5 &&
+            mud->mouse_x > second_column_indent &&
             mud->mouse_y > y - (line_break * 2) &&
             mud->mouse_y < y - (line_break - 1)) {
             mudclient_menu_add_wiki(mud, "Quest Points", "Quest Points");
@@ -310,7 +306,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 mud->player_quest_points);
 
         surface_draw_string(mud->surface, formatted_quest_points,
-                            ui_x + (STATS_WIDTH / 2) - 5, y - 13, FONT_BOLD_12,
+                            second_column_indent, y - 13, FONT_BOLD_12,
                             WHITE);
 
         if (!is_compact) {
