@@ -20,11 +20,11 @@ typedef struct Options Options;
      "; Disable registration and load sounds, P2P landscape and items ("       \
      "requires\n; restart)\n"                                                  \
      "members = %d\n"                                                          \
-     "; Disables display of Fatigue, for servers that don't support it"        \
+     "; Disables display of Fatigue, for servers that don't support it\n"      \
      "fatigue = %d\n"                                                          \
-     "; Maximum number of quests to display (50 for final version of RSC)"     \
+     "; Maximum number of quests to display (50 for final version of RSC)\n"   \
      "max_quests = %d\n"                                                       \
-     "; Maximum number of skills to display (18 for final version of RSC)"     \
+     "; Maximum number of skills to display (18 for final version of RSC)\n"   \
      "max_skills = %d\n"                                                       \
      "; If enabled, override members option and always show New User button\n" \
      "registration = %d\n"                                                     \
