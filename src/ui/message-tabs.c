@@ -6,7 +6,7 @@ void mudclient_create_message_tabs_panel(mudclient *mud) {
 
     int is_touch = mudclient_is_touch(mud);
 
-    int x = 7 + (is_touch ? 5 : 0);
+    int x = 5 + (is_touch ? 5 : 0);
     int y = is_touch ? 100 : MUD_HEIGHT - 22;
 
     int width = MUD_WIDTH - 14 - (is_touch ? 14 : 0);
@@ -192,7 +192,7 @@ void mudclient_draw_chat_message_tabs_panel(mudclient *mud) {
     int is_touch = mudclient_is_touch(mud);
 
     if (mud->message_tab_selected == MESSAGE_TAB_ALL) {
-        int x = 7 + (is_touch ? 5 : 0);
+        int x = 5 + (is_touch ? 5 : 0);
         int y = is_touch ? 91 : mud->surface->height - 30;
 
         for (int i = 0; i < MESSAGE_HISTORY_LENGTH; i++) {
