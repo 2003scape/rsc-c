@@ -1,6 +1,7 @@
 build/
 src/*.o
 src/lib/*.o
+src/lib/rsa/*.o
 src/ui/*.o
 src/wii/*.o
 src/gl/*.o

@@ -9,7 +9,7 @@ include $(DEVKITPPC)/wii_rules
 #DEBUG = 0
 TARGET := mudclient
 BUILD := build
-SOURCES := src src/lib src/ui src/custom src/wii
+SOURCES := src src/lib src/lib/rsa src/ui src/custom src/wii
 DATA := cache
 INCLUDES :=
 

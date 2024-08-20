@@ -37,7 +37,7 @@
 #endif
 
 #ifndef NO_RSA
-#include "lib/bn.h"
+#include "lib/rsa/rsa.h"
 #endif
 
 #if !defined(WIN32) && !defined(WII)
@@ -84,8 +84,7 @@ struct PacketStream {
     int available_offset;
 
 #ifndef NO_RSA
-    char *rsa_exponent;
-    char *rsa_modulus;
+    struct rsa rsa;
 #endif
 
 #ifndef NO_ISAAC

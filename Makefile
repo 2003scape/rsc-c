@@ -4,6 +4,10 @@ SDL2 ?= 1
 GLAD ?= 0
 RENDER_GL ?= 0
 LEGACY_GL ?= 0
+VANILLA_IS_DEFAULT ?= 0
+USE_LOCOLOUR ?= 0
+USE_TOONSCAPE ?= 0
+WITH_OPENSSL ?= 0
 
 DESTDIR?=
 PREFIX?= /usr/local
@@ -11,7 +15,7 @@ BINDIR?= bin
 DATAROOTDIR?= share
 DATADIR?= $(DATAROOTDIR)/rsc-c
 
-SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/lib/rsa/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
 
 # remove -fwrapv when code is converted to use unsigned ints or
@@ -74,6 +78,13 @@ else
 CFLAGS += -DRENDER_SW
 endif
 
+# Faster RSA encryption
+ifeq ($(WITH_OPENSSL), 1)
+CFLAGS += -DWITH_RSA_OPENSSL
+CFLAGS += $(shell pkg-config --cflags libcrypto)
+LDFLAGS += $(shell pkg-config --libs libcrypto)
+endif
+
 ifeq ($(DEBUG), 1)
 CFLAGS += -O0 -Wall -Wextra -pedantic -g
 #CFLAGS += -fsanitize=undefined
@@ -102,5 +113,6 @@ install: mudclient
 		$(DESTDIR)$(PREFIX)/$(DATAROOTDIR)/pixmaps/rsc-c.png
 
 clean:
-	rm -f src/*.o src/lib/*.o src/ui/*.o src/gl/*.o src/gl/textures/*.o src/custom/*.o glad/*.o
+	rm -f src/*.o src/lib/*.o src/lib/rsa/*.o src/ui/*.o
+	rm -f src/gl/*.o src/gl/textures/*.o src/custom/*.o glad/*.o
 	rm -f mudclient

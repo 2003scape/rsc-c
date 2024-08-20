@@ -1,6 +1,6 @@
 CC = C:\gcc_win98\bin\gcc
 #DEBUG = 1
-SRC = $(wildcard src/*.c src/lib/*.c src/ui/*.c src/custom/*.c win9x/*.c)
+SRC = $(wildcard src/*.c src/lib/*.c src/lib/rsa/*.c src/ui/*.c src/custom/*.c win9x/*.c)
 OBJ = $(SRC:.c=.o)
 CFLAGS = -fwrapv -std=gnu99 -I ./cglm/include -DRENDER_SW -DSDL12 -DWIN9X -DSDL_MAIN_HANDLED -DREVISION_177 #-DUSE_LOCOLOUR
 CFLAGS += -I ./SDL-1.2.15/include/SDL #-fPIE

@@ -39,7 +39,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/lib src/ui src/custom src/gl src/gl/textures
+SOURCES		:=	src src/lib src/lib/rsa src/ui src/custom src/gl src/gl/textures
 DATA		:=
 INCLUDES	:=	src cglm/include
 ROMFS		:=	cache
