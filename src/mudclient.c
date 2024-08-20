@@ -1911,6 +1911,8 @@ void mudclient_load_game_config(mudclient *mud) {
     if (mud->options->members && mud->options->rename_herblaw_items) {
         modify_unidentified_herbs();
         modify_unfinished_potions();
+    }
+    if (mud->options->rename_herblaw_items) {
         modify_potion_dosage();
     }
 }

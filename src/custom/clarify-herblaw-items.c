@@ -139,6 +139,9 @@ void modify_unfinished_potions(void) {
 }
 
 static void append_dosage(int id) {
+    if (strcmp(game_data.items[id].name, "Members object") == 0) {
+        return;
+    }
     game_data.items[id].name = strcat_realloc(game_data.items[id].name, " (3)");
     game_data.items[id + 1].name =
         strcat_realloc(game_data.items[id + 1].name, " (2)");
