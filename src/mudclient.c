@@ -2131,7 +2131,7 @@ void mudclient_load_media(mudclient *mud) {
         return;
     }
 
-#if VERSION_MEDIA > 27
+#if !MEDIA_IS_TGA
     mudclient_load_media_dat(mud, media_jag);
 #else
     mudclient_load_media_tga(mud, media_jag);
@@ -2184,6 +2184,9 @@ void mudclient_load_entities(mudclient *mud) {
         entity_jag_legacy = mudclient_read_data_file(mud, "entity8.jag",
                                                      "people and monsters", 37);
     }
+    if (ENTITY_IS_TGA) {
+        entity_jag_legacy = entity_jag;
+    }
 #endif
 
     if (entity_jag == NULL) {
@@ -2195,7 +2198,7 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *entity_jag_mem = NULL;
     int8_t *index_dat_mem = NULL;
 
-    if (mud->options->members) {
+    if (mud->options->members && !ENTITY_IS_TGA) {
         entity_jag_mem = mudclient_read_data_file(
             mud, "entity" VERSION_STR(VERSION_ENTITY) ".mem", "member graphics",
             45);
@@ -2232,9 +2235,11 @@ void mudclient_load_entities(mudclient *mud) {
         int8_t *archive_file = entity_jag;
 
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
-        const char **older_names = anims_older_is_better;
-
-        if (mud->options->tga_sprites) {
+        if (ENTITY_IS_TGA) {
+            older_is_better = true;
+            extension = "tga";
+        } else if (mud->options->tga_sprites) {
+            const char **older_names = anims_older_is_better;
             while (*older_names != NULL) {
                 if (strcmp(animation_name, *older_names) == 0) {
                     older_is_better = true;
@@ -2290,6 +2295,10 @@ void mudclient_load_entities(mudclient *mud) {
                     a_index_dat = index_dat_mem;
                 }
 
+                if (a_dat == NULL) {
+                    goto fallthrough;
+                }
+
                 if (older_is_better) {
                     surface_parse_sprite_tga(mud->surface, animation_index + 15,
                                              a_dat, len, 3, 1);
@@ -2323,6 +2332,7 @@ void mudclient_load_entities(mudclient *mud) {
                 frame_count += 9;
             }
 
+fallthrough:
             /* TODO why? */
             if (game_data.animations[i].gender != 0) {
                 for (int j = animation_index; j < animation_index + 27; j++) {
@@ -2341,7 +2351,9 @@ void mudclient_load_entities(mudclient *mud) {
 
 #ifndef WII
     free(entity_jag);
-    free(entity_jag_legacy);
+    if (entity_jag_legacy != entity_jag) {
+        free(entity_jag_legacy);
+    }
     free(entity_jag_mem);
 #endif
 
