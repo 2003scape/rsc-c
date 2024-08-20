@@ -1,6 +1,6 @@
 #include "stats-tab.h"
 
-static const char *short_skill_names[] = {
+const char *short_skill_names[] = {
     "Attack",   "Defense",  "Strength", "Hits",      "Ranged",  "Prayer",
     "Magic",    "Cooking",  "Woodcut",  "Fletching", "Fishing", "Firemaking",
     "Crafting", "Smithing", "Mining",   "Herblaw",   "Agility", "Thieving"};
@@ -150,6 +150,14 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
 
     int line_break = (is_compact && !is_touch ? 11 : 12);
 
+    if (!is_compact && !mud->options->fatigue) {
+        height -= line_break;
+    }
+
+    if (mud->options->max_skills < 18) {
+        height -= line_break;
+    }
+
     if (mud->options->total_experience || mud->options->remaining_experience) {
         height += line_break;
     }
@@ -218,10 +226,24 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
             y += line_break + 1;
         }
 
+        int skills_per_column;
+        int second_column_indent;
+        const char **display_skills;
+
+        if (mud->options->max_skills < 18) {
+            skills_per_column = 8;
+            display_skills = skill_names;
+            second_column_indent = ui_x + (STATS_WIDTH / 2) - 7;
+        } else {
+            skills_per_column = 9;
+            display_skills = short_skill_names;
+            second_column_indent = ui_x + (STATS_WIDTH / 2) - 5;
+        }
+
         /* draw two columns with each skill name and current/base levels */
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < skills_per_column; i++) {
             total_experience += mud->player_experience[i];
-            total_experience += mud->player_experience[i + 9];
+            total_experience += mud->player_experience[i + skills_per_column];
 
             /* left column */
             int text_colour = WHITE;
@@ -237,7 +259,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
              * (1), slash (1) */
             char formatted_skill[23] = {0};
 
-            sprintf(formatted_skill, "%s:@yel@%d/%d", short_skill_names[i],
+            sprintf(formatted_skill, "%s:@yel@%d/%d", display_skills[i],
                     mud->player_skill_current[i], mud->player_skill_base[i]);
 
             surface_draw_string(mud->surface, formatted_skill, ui_x + 5, y,
@@ -251,15 +273,16 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 mud->mouse_y < y - (is_compact ? 0 : (line_break - 1)) &&
                 mud->mouse_x < ui_x + STATS_WIDTH) {
                 text_colour = RED;
-                selected_skill = i + 9;
+                selected_skill = i + skills_per_column;
             }
 
-            sprintf(formatted_skill, "%s:@yel@%d/%d", short_skill_names[i + 9],
-                    mud->player_skill_current[i + 9],
-                    mud->player_skill_base[i + 9]);
+            sprintf(formatted_skill, "%s:@yel@%d/%d",
+                    display_skills[i + skills_per_column],
+                    mud->player_skill_current[i + skills_per_column],
+                    mud->player_skill_base[i + skills_per_column]);
 
             surface_draw_string(mud->surface, formatted_skill,
-                                ui_x + (STATS_WIDTH / 2) - 5,
+                                second_column_indent,
                                 y - (is_compact ? 0 : line_break + 1),
                                 FONT_BOLD_12, text_colour);
 
@@ -271,7 +294,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         }
 
         if (no_menus && mud->selected_wiki &&
-            mud->mouse_x > ui_x + (STATS_WIDTH / 2) - 5 &&
+            mud->mouse_x > second_column_indent &&
             mud->mouse_y > y - (line_break * 2) &&
             mud->mouse_y < y - (line_break - 1)) {
             mudclient_menu_add_wiki(mud, "Quest Points", "Quest Points");
@@ -283,33 +306,33 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
                 mud->player_quest_points);
 
         surface_draw_string(mud->surface, formatted_quest_points,
-                            ui_x + (STATS_WIDTH / 2) - 5, y - 13, FONT_BOLD_12,
+                            second_column_indent, y - 13, FONT_BOLD_12,
                             WHITE);
 
         if (!is_compact) {
             y += line_break;
         }
 
-        if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
-            mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 5 &&
-            mud->mouse_y > y - (line_break * 2) &&
-            mud->mouse_y < y - (line_break - 1)) {
-            mudclient_menu_add_wiki(mud, "Fatigue", "Fatigue");
+        if (mud->options->fatigue) {
+            char formatted_fatigue[27] = {0};
+
+            if (no_menus && mud->selected_wiki && mud->mouse_x > ui_x + 5 &&
+                mud->mouse_x < ui_x + (STATS_WIDTH / 2) - 5 &&
+                mud->mouse_y > y - (line_break * 2) &&
+                mud->mouse_y < y - (line_break - 1)) {
+                mudclient_menu_add_wiki(mud, "Fatigue", "Fatigue");
+            }
+
+            sprintf(formatted_fatigue, "Fatigue: @yel@%d%%",
+                    (mud->stat_fatigue * 100) / 750);
+
+            surface_draw_string(mud->surface, formatted_fatigue, ui_x + 5, y - 13,
+                                FONT_BOLD_12, WHITE);
+
+            y += is_compact ? 2 : 8;
         }
 
-        char formatted_fatigue[27] = {0};
-
-        sprintf(formatted_fatigue, "Fatigue: @yel@%d%%",
-                (mud->stat_fatigue * 100) / 750);
-
-        surface_draw_string(mud->surface, formatted_fatigue, ui_x + 5, y - 13,
-                            FONT_BOLD_12, WHITE);
-
-        if (is_compact) {
-            y += 2;
-        } else {
-            y += 8;
-
+        if (!is_compact) {
             mudclient_draw_equipment_status(mud, ui_x, y, line_break, no_menus);
 
             y += 51;
@@ -491,7 +514,7 @@ void mudclient_draw_ui_tab_stats(mudclient *mud, int no_menus) {
         panel_add_list_entry(mud->panel_quests, mud->control_list_quest, 0,
                              "@whi@Quest-list (green=completed)");
 
-        for (int i = 0; i < quests_length; i++) {
+        for (int i = 0; i < mud->options->max_quests; i++) {
             char *quest_name = quest_names[i];
             char coloured_quest[strlen(quest_name) + 6];
 
