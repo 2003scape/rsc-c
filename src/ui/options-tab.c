@@ -1,4 +1,9 @@
+#include <stdbool.h>
 #include "options-tab.h"
+
+static bool sound_visible(mudclient *mud) {
+    return mud->options->members && !mud->options->lowmem;
+}
 
 void mudclient_send_privacy_settings(mudclient *mud, int chat, int private_chat,
                                      int trade, int duel) {
@@ -181,7 +186,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
         height = 152;
     }
 
-    if (mud->options->show_additional_options) {
+    if (mud->options->show_additional_options && sound_visible(mud)) {
         height += OPTIONS_LINE_BREAK;
     }
 
@@ -217,7 +222,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
         controls_box_height += 9;
     }
 
-    if (mud->options->show_additional_options) {
+    if (mud->options->show_additional_options && sound_visible(mud)) {
         controls_box_height += OPTIONS_LINE_BREAK;
     }
 
@@ -290,15 +295,15 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
     y += OPTIONS_LINE_BREAK;
 
-    if (mud->options->members && !mud->options->lowmem) {
+    if (sound_visible(mud)) {
         sprintf(settings_string, "Sound effects - %s",
                 (mud->settings_sound_disabled ? "@red@off" : "@gre@on"));
 
         surface_draw_string(mud->surface, settings_string, x, y, FONT_BOLD_12,
                             WHITE);
-    }
 
-    y += OPTIONS_LINE_BREAK;
+        y += OPTIONS_LINE_BREAK;
+    }
 
     if (mud->options->show_additional_options) {
         int text_colour = WHITE;
@@ -310,7 +315,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
         surface_draw_string(mud->surface, "Additional options...", x, y,
                             FONT_BOLD_12, text_colour);
+    }
 
+    if (mud->options->show_additional_options || !sound_visible(mud)) {
         y += OPTIONS_LINE_BREAK;
     }
 
@@ -531,7 +538,7 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
 
         y += OPTIONS_LINE_BREAK;
 
-        if (mud->options->members && mud->mouse_x > x &&
+        if (sound_visible(mud) && mud->mouse_x > x &&
             mud->mouse_x < x + OPTIONS_WIDTH && mud->mouse_y > y - 12 &&
             mud->mouse_y < y + 4 && mud->mouse_button_click == 1) {
             mud->settings_sound_disabled = !mud->settings_sound_disabled;
@@ -544,7 +551,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
             packet_stream_send_packet(mud->packet_stream);
         }
 
-        y += OPTIONS_LINE_BREAK;
+        if (sound_visible(mud)) {
+            y += OPTIONS_LINE_BREAK;
+        }
 
         if (mud->options->show_additional_options) {
             if (mud->mouse_x > x && mud->mouse_x < x + OPTIONS_WIDTH &&
@@ -552,7 +561,9 @@ void mudclient_draw_ui_tab_options(mudclient *mud, int no_menus) {
                 mud->mouse_button_click == 1) {
                 mud->show_additional_options = 1;
             }
+        }
 
+        if (mud->options->show_additional_options || !sound_visible(mud)) {
             y += OPTIONS_LINE_BREAK;
         }
 
