@@ -135,10 +135,17 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += OPTION_HORIZ_GAP;
 
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options,
-        "@whi@Rename Herblaw items: ", mud->options->rename_herblaw_items, x,
-        y);
+    if (mud->options->members) {
+        control = mudclient_add_option_panel_checkbox(
+            mud->panel_game_options,
+            "@whi@Rename Herblaw items: ", mud->options->rename_herblaw_items, x,
+            y);
+    } else {
+        control = mudclient_add_option_panel_checkbox(
+            mud->panel_game_options,
+            "@whi@Show potion dosage: ", mud->options->rename_herblaw_items, x,
+            y);
+    }
 
     mud->game_options[control] = &mud->options->rename_herblaw_items;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
