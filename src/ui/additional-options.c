@@ -146,6 +146,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
     y = ui_y + (OPTION_HORIZ_GAP * 3) + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
+#if VERSION_ENTITY > 8
     control = mudclient_add_option_panel_checkbox(
         mud->panel_game_options,
         "@whi@HQ sprites (restart): ", mud->options->tga_sprites, x, y);
@@ -154,6 +155,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += OPTION_HORIZ_GAP;
+#endif
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_game_options, "@whi@Show roofs: ", mud->options->show_roofs,
@@ -477,6 +479,7 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += OPTION_HORIZ_GAP;
 
+#if VERSION_MEDIA > 42
     control = mudclient_add_option_panel_checkbox(
         mud->panel_ui_options, "@whi@Wiki lookup: ", mud->options->wiki_lookup,
         x, y);
@@ -485,6 +488,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     y += OPTION_HORIZ_GAP;
+#endif
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_ui_options,
