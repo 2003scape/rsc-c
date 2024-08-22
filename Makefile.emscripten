@@ -9,6 +9,9 @@ CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
 CFLAGS += -std=gnu99 -s USE_SDL=2
 CFLAGS += -DREVISION_177
+
+# build both wasm and js
+LDFLAGS += -sWASM=2
 LDFLAGS += -sWEBSOCKET_URL=wss://
 LDFLAGS += -lm -lSDL2
 
@@ -17,8 +20,12 @@ SRC += $(wildcard src/gl/*.c src/gl/textures/*.c)
 CFLAGS += -I ./cglm/include -DRENDER_GL
 CFLAGS += -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
 LDFLAGS += -lSDL2_image -lGLEW -lGL
+LDFLAGS += --use-preload-plugins -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
+LDFLAGS += -s MAX_WEBGL_VERSION=2 -sFULL_ES2 -sFULL_ES3
+LDFLAGS += --preload-file ./cache/textures/
 else
 CFLAGS += -DRENDER_SW
+CFLAGS += -s USE_SDL_IMAGE=0
 endif
 
 ifeq ($(DEBUG), 1)
@@ -31,12 +38,18 @@ endif
 LDFLAGS += -sEXPORTED_FUNCTIONS=_browser_mouse_moved,_browser_key_pressed,_main
 LDFLAGS += -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
 
-LDFLAGS += -s INITIAL_MEMORY=50MB -s ALLOW_MEMORY_GROWTH=1 -s USE_SDL=2
-LDFLAGS += --use-preload-plugins -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
-LDFLAGS += -s ASYNCIFY -s ASYNCIFY_STACK_SIZE=16384
-LDFLAGS += -s MAX_WEBGL_VERSION=2 -sFULL_ES2 -sFULL_ES3
+CFLAGS += -s DEFAULT_TO_CXX=false
+CFLAGS += -s DISABLE_EXCEPTION_THROWING=1
+CFLAGS += -s MIN_FIREFOX_VERSION=52
 
-LDFLAGS += --preload-file ./cache/textures/
+# apparently these default to 1
+CFLAGS += -s USE_SDL_TTF=0
+CFLAGS += -s USE_SDL_NET=0
+CFLAGS += -s USE_SDL_MIXER=0
+
+LDFLAGS += -s INITIAL_MEMORY=50MB -s ALLOW_MEMORY_GROWTH=1 -s USE_SDL=2
+LDFLAGS += -s ASYNCIFY -s ASYNCIFY_STACK_SIZE=16384
+
 LDFLAGS += --preload-file ./cache/
 
 LDFLAGS += --shell-file ./web/shell.html
