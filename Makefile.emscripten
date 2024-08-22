@@ -32,7 +32,8 @@ ifeq ($(DEBUG), 1)
 CFLAGS += -Wall -Wextra -pedantic -g
 LDFLAGS += -s SOCKET_DEBUG=1
 else
-CFLAGS += -s -O3 -ffast-math #-fno-signed-zeros -freciprocal-math -ffp-contract=fast
+CFLAGS += -s -O3 -ffast-math -flto
+LDFLAGS += -flto
 endif
 
 LDFLAGS += -sEXPORTED_FUNCTIONS=_browser_mouse_moved,_browser_key_pressed,_main
