@@ -2118,8 +2118,9 @@ static void mudclient_load_media_tga(mudclient *mud, void *media_jag) {
             current_sprite_count = 30;
         }
 
+
         surface_parse_sprite_tga(mud->surface, mud->sprite_item + (i - 1) * 30,
-                             data, len, 10, 3);
+                             data, len, 10, i < 7 ? 3 : 1);
     }
 }
 
