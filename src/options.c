@@ -1,4 +1,5 @@
 #include "options.h"
+
 #if defined(__unix__) || defined(__unix) ||                                    \
     (defined(__APPLE__) && defined(__MACH__))
 #include <sys/stat.h>
@@ -218,36 +219,6 @@ void options_set_vanilla(Options *options) {
     options->field_of_view = 360;
 }
 
-void options_get_path(char *path) {
-#ifdef ANDROID
-    char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
-    snprintf(path, PATH_MAX, "%soptions.ini", pref_path);
-    SDL_free(pref_path);
-#elif defined(EMSCRIPTEN)
-    snprintf(path, PATH_MAX, "/options/options.ini");
-#elif defined(OPTIONS_UNIX)
-    const char *xdg = getenv("XDG_CONFIG_HOME");
-
-    if (xdg != NULL) {
-        snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
-        /* don't want 'other' to read because it can contain passwords */
-        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
-        snprintf(path, PATH_MAX, "%s/rsc-c/options.ini", xdg);
-    } else {
-        const char *home = getenv("HOME");
-
-        if (home == NULL) {
-            home = "";
-        }
-
-        snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
-        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
-        snprintf(path, PATH_MAX, "%s/.config/rsc-c/options.ini", home);
-    }
-#else
-    snprintf(path, PATH_MAX, "%s", "./options.ini");
-#endif
-}
 
 void options_save(Options *options) {
 #ifdef WII
@@ -257,7 +228,8 @@ void options_save(Options *options) {
 #endif
 
     char path[PATH_MAX];
-    options_get_path(path);
+
+    get_config_path("options.ini", path);
 
 #ifdef ANDROID
     SDL_RWops *ini_file = SDL_RWFromFile(path, "w");
@@ -364,7 +336,8 @@ void options_save(Options *options) {
 
 void options_load(Options *options) {
     char path[PATH_MAX];
-    options_get_path(path);
+
+    get_config_path("options.ini", path);
 
     ini_t *options_ini = ini_load(path);
 

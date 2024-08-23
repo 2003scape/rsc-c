@@ -1,8 +1,10 @@
 #include "worldlist.h"
 #include <stdio.h>
 
-#ifndef EMSCRIPTEN
-#define EMSCRIPTEN 0
+#ifdef EMSCRIPTEN
+#define USE_WEBSOCKS 1
+#else
+#define USE_WEBSOCKS 0
 #endif
 
 struct server_type {
@@ -15,57 +17,25 @@ struct server_type {
 
 static struct server_type list[256] = {0};
 
-static void worldlist_path(char *path);
 static void worldlist_set_defaults(void);
 static void worldlist_read_presets(struct mudclient *mud);
 
-static void worldlist_path(char *path) {
-#ifdef ANDROID
-    char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
-    snprintf(path, PATH_MAX, "%sworlds.cfg", pref_path);
-    SDL_free(pref_path);
-#elif defined(EMSCRIPTEN)
-    snprintf(path, PATH_MAX, "/options/worlds.cfg");
-#elif defined(OPTIONS_UNIX)
-    const char *xdg = getenv("XDG_CONFIG_HOME");
-
-    if (xdg != NULL) {
-        snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
-        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
-        snprintf(path, PATH_MAX, "%s/rsc-c/worlds.cfg", xdg);
-    } else {
-        const char *home = getenv("HOME");
-
-        if (home == NULL) {
-            home = "";
-        }
-
-        snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
-        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
-        snprintf(path, PATH_MAX, "%s/.config/rsc-c/worlds.cfg", home);
-    }
-#else
-    snprintf(path, PATH_MAX, "%s", "./worlds.cfg");
-#endif
-
-}
-
 static void worldlist_set_defaults(void) {
-    strcpy(list[0].name, "OpenRSC Preservation");
+    strcpy(list[0].name, "OpenRSC_Preservation");
     strcpy(list[0].host, "game.openrsc.com");
-    list[0].port = EMSCRIPTEN ? 43496 : 43596; /* websockets */
+    list[0].port = USE_WEBSOCKS ? 43496 : 43596; /* websockets */
     strcpy(list[0].rsa_exponent, "00010001");
     strcpy(list[0].rsa_modulus, "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41fefbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
 
-    strcpy(list[1].name, "OpenRSC Uranium");
+    strcpy(list[1].name, "OpenRSC_Uranium");
     strcpy(list[1].host, "game.openrsc.com");
-    list[1].port = EMSCRIPTEN ? 43435 : 43235;
+    list[1].port = USE_WEBSOCKS ? 43435 : 43235;
     strcpy(list[1].rsa_exponent, "00010001");
     strcpy(list[1].rsa_modulus, "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41fefbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
 
-    strcpy(list[2].name, "Neat F2P");
+    strcpy(list[2].name, "Neat_F2P");
     strcpy(list[2].host, "192.3.118.9");
-    list[2].port = EMSCRIPTEN ? 43494 : 43594;
+    list[2].port = USE_WEBSOCKS ? 43494 : 43594;
     strcpy(list[2].rsa_exponent, "00010001");
     strcpy(list[2].rsa_modulus, "86b03ac30518bdb3e508ca9660efc7738a73ee7dbedbcebf8c56d030a2bdae70503c60829b7fb5eceb529442234c21bce6d529c8da4fce870e83ceffc379e281");
 }
@@ -76,12 +46,21 @@ static void worldlist_read_presets(struct mudclient *mud) {
 
     panel_clear_list(mud->panel_login_worldlist, mud->control_list_worlds);
 
-    worldlist_path(path);
+    get_config_path("worlds.cfg", path);
 
     FILE *file = fopen(path, "r");
     if (file == NULL) {
         worldlist_set_defaults();
-        goto end;
+        file = fopen(path, "w");
+        if (file != NULL) {
+            for (int i = 0; list[i].name[0] != '\0'; ++i) {
+                fprintf(file, "%s %s %d %s %s\n",
+                    list[i].name, list[i].host, list[i].port,
+                    list[i].rsa_exponent, list[i].rsa_modulus);
+            }
+            fclose(file);
+        }
+        return;
     }
     for (;;) {
         int res = fscanf(file, "%30s %60s %d %500s %500s\n",
@@ -90,21 +69,9 @@ static void worldlist_read_presets(struct mudclient *mud) {
         if (res <= 0) {
             break;
         }
-        for (int i = 0; list[num].name[i] != '\0'; ++i) {
-            if (list[num].name[i] == '_') {
-                list[num].name[i] = ' ';
-            }
-        }
         num++;
     }
     fclose(file);
-
-end:
-    for (int i = 0; list[i].name[0] != '\0'; ++i) {
-        panel_add_list_entry(mud->panel_login_worldlist,
-                             mud->control_list_worlds, i,
-                             list[i].name);
-    }
 }
 
 void worldlist_new(struct mudclient *mud) {
@@ -140,4 +107,15 @@ void worldlist_new(struct mudclient *mud) {
     mud->control_list_worlds = panel_add_text_list_interactive(
         mud->panel_login_worldlist, x - 150, y, 250, 170, FONT_REGULAR_11, 256, 1);
     worldlist_read_presets(mud);
+
+    for (int i = 0; list[i].name[0] != '\0'; ++i) {
+        for (int j = 0; list[i].name[j] != '\0'; ++j) {
+            if (list[i].name[j] == '_') {
+                list[i].name[j] = ' ';
+            }
+        }
+        panel_add_list_entry(mud->panel_login_worldlist,
+                             mud->control_list_worlds, i,
+                             list[i].name);
+    }
 }

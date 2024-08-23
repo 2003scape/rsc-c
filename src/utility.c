@@ -1,5 +1,11 @@
 #include "utility.h"
 
+#if defined(__unix__) || defined(__unix) ||                                    \
+    (defined(__APPLE__) && defined(__MACH__))
+#include <sys/stat.h>
+#define OPTIONS_UNIX
+#endif
+
 int sin_cos_512[512] = {0};
 int sin_cos_2048[2048] = {0};
 
@@ -32,6 +38,36 @@ void init_utility_global(void) {
         sin_cos_2048[i] = (int)(sin((double)i * 0.00613592315) * 32768);
         sin_cos_2048[i + 1024] = (int)(cos((double)i * 0.00613592315) * 32768);
     }
+}
+
+void get_config_path(const char *file, char *path) {
+#ifdef ANDROID
+    char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
+    snprintf(path, PATH_MAX, "%sworlds.cfg", pref_path);
+    SDL_free(pref_path);
+#elif defined(EMSCRIPTEN)
+    snprintf(path, PATH_MAX, "/options/%s", file);
+#elif defined(OPTIONS_UNIX)
+    const char *xdg = getenv("XDG_CONFIG_HOME");
+
+    if (xdg != NULL) {
+        snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
+        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
+        snprintf(path, PATH_MAX, "%s/rsc-c/%s", xdg, file);
+    } else {
+        const char *home = getenv("HOME");
+
+        if (home == NULL) {
+            home = "";
+        }
+
+        snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
+        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
+        snprintf(path, PATH_MAX, "%s/.config/rsc-c/%s", home, file);
+    }
+#else
+    snprintf(path, PATH_MAX, "%s", "./worlds.cfg");
+#endif
 }
 
 #ifdef RENDER_3DS_GL
