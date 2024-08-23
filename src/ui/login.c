@@ -87,7 +87,7 @@ void mudclient_create_login_panels(mudclient *mud) {
         int button_x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) - 36;
 
         int button_y =
-            is_compact ? MUD_MIN_HEIGHT - 26 : MUD_VANILLA_HEIGHT - 32;
+            is_compact ? MUD_MIN_HEIGHT - 59 : MUD_VANILLA_HEIGHT - 55;
 
         panel_add_button_background(mud->panel_login_welcome, button_x,
                                     button_y, 60, 20);
@@ -96,6 +96,17 @@ void mudclient_create_login_panels(mudclient *mud) {
                               "Options", FONT_BOLD_12, 0);
 
         mud->control_welcome_options = panel_add_button(
+            mud->panel_login_welcome, button_x, button_y, 60, 20);
+
+        button_y += 23;
+
+        panel_add_button_background(mud->panel_login_welcome, button_x,
+                                    button_y, 60, 20);
+
+        panel_add_text_centre(mud->panel_login_welcome, button_x, button_y,
+                              "Worlds", FONT_BOLD_12, 0);
+
+        mud->control_welcome_worlds = panel_add_button(
             mud->panel_login_welcome, button_x, button_y, 60, 20);
     }
 
@@ -718,15 +729,7 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     surface_black_screen(mud->surface);
 
-    int show_background = 0;
-
-    if (mud->options->account_management) {
-        show_background = mud->login_screen == LOGIN_STAGE_WELCOME ||
-                          mud->login_screen == LOGIN_STAGE_EXISTING;
-    } else {
-        show_background = mud->login_screen >= LOGIN_STAGE_WELCOME &&
-                          mud->login_screen <= LOGIN_STAGE_RECOVER;
-    }
+    int show_background = mud->login_screen != LOGIN_STAGE_RECOVER;
 
     if (mud->options->lowmem) {
         show_background = 0;
@@ -820,6 +823,9 @@ void mudclient_draw_login_screens(mudclient *mud) {
     }
     case LOGIN_STAGE_RECOVER:
         // TODO
+        break;
+    case LOGIN_STAGE_WORLD:
+        panel_draw_panel(mud->panel_login_worldlist);
         break;
     }
 
@@ -942,6 +948,9 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
         } else if (panel_is_clicked(mud->panel_login_welcome,
                                     mud->control_welcome_options)) {
             mud->show_additional_options = 1;
+        } else if (panel_is_clicked(mud->panel_login_welcome,
+                                    mud->control_welcome_worlds)) {
+            mud->login_screen = LOGIN_STAGE_WORLD;
         }
         return;
     case LOGIN_STAGE_NEW:
@@ -1109,7 +1118,16 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
         }*/
         return;
     case LOGIN_STAGE_RECOVER:
-        // TODO
+        return;
+    case LOGIN_STAGE_WORLD:
+        panel_handle_mouse(mud->panel_login_worldlist, mud->mouse_x,
+                           mud->mouse_y, mud->last_mouse_button_down,
+                           mud->mouse_button_down, mud->mouse_scroll_delta);
+
+        if (panel_is_clicked(mud->panel_login_worldlist,
+                             mud->control_worldlist_button)) {
+            mud->login_screen = 0;
+        }
         return;
     }
 }
