@@ -729,7 +729,13 @@ void mudclient_draw_login_screens(mudclient *mud) {
 
     surface_black_screen(mud->surface);
 
-    int show_background = mud->login_screen != LOGIN_STAGE_RECOVER;
+    int show_background = mud->login_screen != LOGIN_STAGE_RECOVER &&
+                          mud->login_screen != LOGIN_STAGE_NEW;
+
+    if (mud->login_screen == LOGIN_STAGE_NEW &&
+        !mud->options->account_management) {
+        show_background = 1;
+    }
 
     if (mud->options->lowmem) {
         show_background = 0;
