@@ -586,7 +586,7 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
     char menu_text[256] = {0};
 
-#if !defined(WII) && !defined(_3DS)
+#if !defined(WII) && !defined(_3DS) && !defined(SDL12)
     if ((index == -1 || !mud->selected_wiki) && mud->is_hand_cursor) {
         SDL_SetCursor(mud->default_cursor);
         mud->is_hand_cursor = 0;
@@ -606,7 +606,7 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
                  mud->menu_items[mud->menu_indices[0]].action_text,
                  mud->menu_items[mud->menu_indices[0]].target_text);
     } else if (index != -1) {
-#if !defined(WII) && !defined(_3DS)
+#if !defined(WII) && !defined(_3DS) && !defined(SDL12)
         if (mud->selected_wiki && !mud->is_hand_cursor) {
             SDL_SetCursor(mud->hand_cursor);
             mud->is_hand_cursor = 1;
