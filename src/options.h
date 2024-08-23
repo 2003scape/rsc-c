@@ -391,7 +391,6 @@ struct Options {
 };
 
 void options_new(Options *options);
-void options_set_server(Options *options);
 void options_set_defaults(Options *options);
 void options_set_vanilla(Options *options);
 void options_load(Options *options);
