@@ -81,7 +81,7 @@ static void worldlist_read_presets(struct mudclient *mud) {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
         worldlist_set_defaults();
-        return;
+        goto end;
     }
     for (;;) {
         int res = fscanf(file, "%30s %60s %d %500s %500s\n",
@@ -95,12 +95,16 @@ static void worldlist_read_presets(struct mudclient *mud) {
                 list[num].name[i] = ' ';
             }
         }
-        panel_add_list_entry(mud->panel_login_worldlist,
-                             mud->control_list_worlds, num,
-                             list[num].name);
         num++;
     }
     fclose(file);
+
+end:
+    for (int i = 0; list[i].name[0] != '\0'; ++i) {
+        panel_add_list_entry(mud->panel_login_worldlist,
+                             mud->control_list_worlds, i,
+                             list[i].name);
+    }
 }
 
 void worldlist_new(struct mudclient *mud) {
@@ -110,28 +114,30 @@ void worldlist_new(struct mudclient *mud) {
     int login_background_height = is_compact ? 125 : 200;
 
     int x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) / 2;
-    int y = login_background_height + 20;
+    int y = login_background_height + 18;
 
     mud->panel_login_worldlist = malloc(sizeof(Panel));
     assert(mud->panel_login_worldlist != NULL);
     panel_new(mud->panel_login_worldlist, mud->surface, 10);
 
     panel_add_text_centre(
-        mud->panel_login_worldlist, x, y, "Select a world", FONT_BOLD_12, 1);
-    y += 25;
-
-    mud->control_list_worlds = panel_add_text_list_interactive(
-        mud->panel_login_worldlist, x, y, 250, 170, FONT_BOLD_12, 256, 1);
-    worldlist_read_presets(mud);
+        mud->panel_login_worldlist, x, y, "Select a world:", FONT_BOLD_12, 1);
+    y += 12;
 
     int button_x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) - 36;
 
     int button_y =
-        is_compact ? MUD_MIN_HEIGHT - 59 : MUD_VANILLA_HEIGHT - 55;
+        is_compact ? MUD_MIN_HEIGHT - 36 : MUD_VANILLA_HEIGHT - 32;
 
+    panel_add_button_background(mud->panel_login_worldlist,
+        button_x, button_y, 60, 20);
     panel_add_text_centre(mud->panel_login_worldlist, button_x, button_y,
                               "Back", FONT_BOLD_12, 0);
 
     mud->control_worldlist_button = panel_add_button( 
         mud->panel_login_worldlist, button_x, button_y, 60, 20);
+
+    mud->control_list_worlds = panel_add_text_list_interactive(
+        mud->panel_login_worldlist, x - 150, y, 250, 170, FONT_REGULAR_11, 256, 1);
+    worldlist_read_presets(mud);
 }
