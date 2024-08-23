@@ -3,5 +3,6 @@
 
 #include "../mudclient.h"
 
-void worldlist_new(struct mudclient *mud);
+void worldlist_new(mudclient *mud);
+void worldlist_handle_mouse(mudclient *mud);
 #endif

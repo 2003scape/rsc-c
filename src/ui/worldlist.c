@@ -74,7 +74,7 @@ static void worldlist_read_presets(struct mudclient *mud) {
     fclose(file);
 }
 
-void worldlist_new(struct mudclient *mud) {
+void worldlist_new(mudclient *mud) {
     int is_compact = mud->surface->width < MUD_VANILLA_WIDTH ||
                      mud->surface->height < MUD_VANILLA_HEIGHT;
 
@@ -101,7 +101,7 @@ void worldlist_new(struct mudclient *mud) {
     panel_add_text_centre(mud->panel_login_worldlist, button_x, button_y,
                               "Back", FONT_BOLD_12, 0);
 
-    mud->control_worldlist_button = panel_add_button( 
+    mud->control_worldlist_button = panel_add_button(
         mud->panel_login_worldlist, button_x, button_y, 60, 20);
 
     mud->control_list_worlds = panel_add_text_list_interactive(
@@ -117,5 +117,34 @@ void worldlist_new(struct mudclient *mud) {
         panel_add_list_entry(mud->panel_login_worldlist,
                              mud->control_list_worlds, i,
                              list[i].name);
+    }
+
+    if (mud->server[0] == '\0') {
+        strcpy(mud->server, list[0].host);
+        strcpy(mud->rsa_exponent, list[0].rsa_exponent);
+        strcpy(mud->rsa_modulus, list[0].rsa_modulus);
+        mud->port = list[0].port;
+    }
+}
+
+void worldlist_handle_mouse(mudclient *mud) {
+    panel_handle_mouse(mud->panel_login_worldlist, mud->mouse_x,
+                           mud->mouse_y, mud->last_mouse_button_down,
+                           mud->mouse_button_down, mud->mouse_scroll_delta);
+    if (panel_is_clicked(mud->panel_login_worldlist,
+                         mud->control_list_worlds)) {
+        int world_index =
+            mud->panel_login_worldlist
+                ->control_list_entry_mouse_over[mud->control_list_worlds];
+        if (world_index >= 0) {
+            strcpy(mud->server, list[world_index].host);
+            strcpy(mud->rsa_exponent, list[world_index].rsa_exponent);
+            strcpy(mud->rsa_modulus, list[world_index].rsa_modulus);
+            printf("INFO: Changed world to %s\n", list[world_index].name);
+            mud->port = list[world_index].port;
+        }
+    } else if (panel_is_clicked(mud->panel_login_worldlist,
+                               mud->control_worldlist_button)) {
+        mud->login_screen = 0;
     }
 }

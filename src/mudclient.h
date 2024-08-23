@@ -1086,6 +1086,12 @@ struct mudclient {
 
     /* wiki */
     int selected_wiki;
+
+    char server[64];
+    int port;
+
+    char rsa_exponent[512];
+    char rsa_modulus[512];
 };
 
 void mudclient_new(mudclient *mud);

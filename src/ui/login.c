@@ -1120,14 +1120,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
     case LOGIN_STAGE_RECOVER:
         return;
     case LOGIN_STAGE_WORLD:
-        panel_handle_mouse(mud->panel_login_worldlist, mud->mouse_x,
-                           mud->mouse_y, mud->last_mouse_button_down,
-                           mud->mouse_button_down, mud->mouse_scroll_delta);
-
-        if (panel_is_clicked(mud->panel_login_worldlist,
-                             mud->control_worldlist_button)) {
-            mud->login_screen = 0;
-        }
+        worldlist_handle_mouse(mud);
         return;
     }
 }
