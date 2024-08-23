@@ -7,7 +7,7 @@ OBJ = $(SRC:.c=.o)
 # overflow checks are added
 CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
-CFLAGS += -std=gnu99 -s USE_SDL=2
+CFLAGS += -std=gnu99 -s USE_SDL=2 -DSDL2
 CFLAGS += -DREVISION_177
 LDFLAGS += -sWEBSOCKET_URL=wss://
 LDFLAGS += -lm -lSDL2
