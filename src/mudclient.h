@@ -23,7 +23,6 @@
 #include "entity24_jag.h"
 #include "entity24_mem.h"
 #include "filter2_jag.h"
-#include "fonts1_jag.h"
 #include "jagex_jag.h"
 #include "land63_jag.h"
 #include "land63_mem.h"
