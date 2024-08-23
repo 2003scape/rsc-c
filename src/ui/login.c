@@ -1124,6 +1124,7 @@ void mudclient_handle_login_screen_input(mudclient *mud) {
         }*/
         return;
     case LOGIN_STAGE_RECOVER:
+        // TODO
         return;
     case LOGIN_STAGE_WORLD:
         worldlist_handle_mouse(mud);
