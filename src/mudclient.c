@@ -1008,7 +1008,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
             mud_error("SDL_OpenAudio(): %s\n", SDL_GetError());
-            exit(1);
         }
     }
 #endif
