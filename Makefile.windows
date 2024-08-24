@@ -1,7 +1,7 @@
 CC = i686-w64-mingw32-gcc
 DEBUG = 1
 SRC = $(wildcard src/*.c src/lib/*.c src/lib/rsa/*.c src/ui/*.c src/custom/*.c)
-OBJ = $(SRC:.c=.o)
+OBJ = $(SRC:.c=.o) ./win/icon.res ./win/meta.res
 CFLAGS = -std=gnu99 -fwrapv -I ./cglm/include -I ./glew-2.1.0/include
 CFLAGS += -DRENDER_SW
 CFLAGS += -I ./SDL2-2.0.20/i686-w64-mingw32/include/SDL2 #-fPIE
@@ -20,6 +20,12 @@ endif
 
 all: mudclient.exe
 
+./win/icon.res: ./win/icon.rc
+	i686-w64-mingw32-windres ./win/icon.rc -O coff -o ./win/icon.res
+
+./win/meta.res: ./win/meta.rc
+	i686-w64-mingw32-windres ./win/meta.rc -O coff -o ./win/meta.res
+
 mudclient.exe: $(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -27,3 +33,4 @@ clean:
 	rm -f src/*.o src/lib/*.o src/lib/rsa/*.o src/ui/*.o
 	rm -f src/gl/*.o src/gl/textures/*.o src/custom/*.o
 	rm -f mudclient.exe
+	rm -f win/*.res
