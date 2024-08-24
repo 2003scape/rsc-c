@@ -1,11 +1,14 @@
-CC = x86_64-w64-mingw32-gcc
+CC = i686-w64-mingw32-gcc
 DEBUG = 1
 SRC = $(wildcard src/*.c src/lib/*.c src/lib/rsa/*.c src/ui/*.c src/custom/*.c)
 OBJ = $(SRC:.c=.o)
-CFLAGS = -I ./cglm/include -I ./glew-2.1.0/include -DRENDER_SW -DREVISION_177
-CFLAGS += -I ./SDL2-2.0.20/x86_64-w64-mingw32/include/SDL2 #-fPIE
-LDFLAGS = -lm -L ./SDL2-2.0.20/x86_64-w64-mingw32/lib -lmingw32
-LDFLAGS += -L ./glew-2.1.0/lib/Release/x64/ -lopengl32 -lglu32 -lglew32
+CFLAGS = -std=gnu99 -fwrapv -I ./cglm/include -I ./glew-2.1.0/include
+CFLAGS += -DRENDER_SW
+CFLAGS += -I ./SDL2-2.0.20/i686-w64-mingw32/include/SDL2 #-fPIE
+# Target Windows XP
+CFLAGS += -D_WIN32_WINNT=0x0501
+LDFLAGS = -lm -L ./SDL2-2.0.20/i686-w64-mingw32/lib -lmingw32
+LDFLAGS += -L ./glew-2.1.0/lib/Release/Win32/ -lopengl32 -lglu32 -lglew32
 LDFLAGS += -lSDL2main -lSDL2 -lwsock32 -lws2_32
 
 ifdef DEBUG
@@ -18,7 +21,7 @@ endif
 all: mudclient.exe
 
 mudclient.exe: $(OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS) ./win/icon.res ./win/meta.res
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f src/*.o src/lib/*.o src/lib/rsa/*.o src/ui/*.o
