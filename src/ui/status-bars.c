@@ -34,7 +34,15 @@ void mudclient_draw_status_bars(mudclient *mud) {
     surface_draw_status_bar(mud->surface, max_hits, current_hits, "Hits", x, y,
                             status_bar_width, status_bar_height, RED, GREEN, 0);
 
-    x += status_bar_width + (is_touch ? 4 : 3);
+    GameCharacter *opponent = mudclient_get_opponent(mud);
+
+    int show_opponent_health = opponent != NULL && opponent->max_hits != 0;
+
+    if (status_bar_width >= (mud->game_width / 6) && !show_opponent_health) {
+        y += status_bar_height + 5;
+    } else {
+        x += status_bar_width + (is_touch ? 4 : 3);
+    }
 
     int max_prayer = mud->player_skill_base[SKILL_PRAYER];
     int current_prayer = mud->player_skill_current[SKILL_PRAYER];
@@ -43,13 +51,9 @@ void mudclient_draw_status_bars(mudclient *mud) {
                             x, y, status_bar_width, status_bar_height, BLACK,
                             CYAN, 0);
 
-    GameCharacter *opponent = mudclient_get_opponent(mud);
-
     if (is_touch) {
         x += status_bar_width + mud->surface->width * 0.293f + 9;
     }
-
-    int show_opponent_health = opponent != NULL && opponent->max_hits != 0;
 
     if (show_opponent_health) {
         if (is_touch) {
@@ -89,7 +93,14 @@ void mudclient_draw_status_bars(mudclient *mud) {
             y += status_bar_height + 5;
         }
 
-        int width = status_bar_width * 2 + 3;
+        int width;
+
+        if (status_bar_width >= (mud->game_width / 6) &&
+            !show_opponent_health) {
+            width = status_bar_width;
+        } else {
+            width = status_bar_width * 2 + 3;
+        }
 
         if (is_touch) {
             if (show_opponent_health) {
