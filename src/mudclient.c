@@ -1699,8 +1699,6 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     if (strcmp(file, "jagex.jag") == 0) {
         file_data = (int8_t *)jagex_jag;
-    } else if (strcmp(file, "fonts" VERSION_STR(VERSION_FONTS) ".jag") == 0) {
-        file_data = (int8_t *)fonts1_jag;
     } else if (strcmp(file, "config" VERSION_STR(VERSION_CONFIG) ".jag") == 0) {
         file_data = (int8_t *)config85_jag;
     } else if (strcmp(file, "media" VERSION_STR(VERSION_MEDIA) ".jag") == 0) {
@@ -1861,6 +1859,13 @@ void mudclient_load_jagex(mudclient *mud) {
 
             free(logo_tga);
         }
+        for (size_t i = 0; i < FONT_FILES_LENGTH; i++) {
+            int8_t *font = load_data(font_files[i], 0, jagex_jag, NULL);
+            if (font == NULL) {
+                break;
+            }
+            create_font(font, i);
+        }
 
 #ifndef WII
         free(jagex_jag);
@@ -1872,17 +1877,6 @@ void mudclient_load_jagex(mudclient *mud) {
     mud->surface->sprite_width[logo_sprite_id] = 281;
     mud->surface->sprite_height[logo_sprite_id] = 85;
 #endif
-
-    int8_t *fonts_jag = mudclient_read_data_file(
-        mud, "fonts" VERSION_STR(VERSION_FONTS) ".jag", "Game fonts", 5);
-
-    if (fonts_jag != NULL) {
-        for (size_t i = 0; i < FONT_FILES_LENGTH; i++) {
-            create_font(load_data(font_files[i], 0, fonts_jag, NULL), i);
-        }
-
-        free(fonts_jag);
-    }
 }
 
 void mudclient_load_game_config(mudclient *mud) {
