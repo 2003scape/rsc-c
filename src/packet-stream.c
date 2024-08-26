@@ -87,7 +87,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
 #ifndef NO_RSA
     if (rsa_init(&packet_stream->rsa,
-        mud->options->rsa_exponent, mud->options->rsa_modulus) < 0) {
+        mud->rsa_exponent, mud->rsa_modulus) < 0) {
             mud_error("rsa_init failed\n");
             exit(1);
     }
@@ -110,10 +110,10 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     struct sockaddr_in server_addr = {0};
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(mud->options->port);
+    server_addr.sin_port = htons(mud->port);
 
 #if defined(WIN9X) || defined(WII)
-    struct hostent *host_addr = gethostbyname(mud->options->server);
+    struct hostent *host_addr = gethostbyname(mud->server);
 
     if (host_addr) {
         memcpy(&server_addr.sin_addr, host_addr->h_addr_list[0],
@@ -127,7 +127,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    int status = getaddrinfo(mud->options->server, NULL, &hints, &result);
+    int status = getaddrinfo(mud->server, NULL, &hints, &result);
 
     if (status != 0) {
         mud_error("getaddrinfo(): %s\n", gai_strerror(status));

@@ -166,7 +166,7 @@ mediaSprites.loadArchive(await fs.readFile(`${cacheDirectory}/media59.jag`));
 
 const fonts = new Fonts(Fonts.FONTS);
 await fonts.init();
-fonts.loadArchive(await fs.readFile(`${cacheDirectory}/fonts1.jag`));
+fonts.loadArchive(await fs.readFile(`${cacheDirectory}/jagex.jag`));
 
 const entitySprites = new EntitySprites(config);
 
