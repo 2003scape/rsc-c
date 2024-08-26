@@ -320,6 +320,7 @@ typedef struct mudclient mudclient;
 #include "ui/ui-tabs.h"
 #include "ui/welcome.h"
 #include "ui/wilderness-warning.h"
+#include "ui/worldlist.h"
 
 #include "custom/clarify-herblaw-items.h"
 #include "custom/diverse-npcs.h"
@@ -680,6 +681,7 @@ struct mudclient {
     int control_welcome_new_user;
     int control_welcome_existing_user;
     int control_welcome_options;
+    int control_welcome_worlds;
     int refer_id;
     int control_login_new_ok;
     int control_register_status;
@@ -895,6 +897,11 @@ struct mudclient {
     int stat_fatigue;
     int player_stat_equipment[PLAYER_STAT_EQUIPMENT_COUNT];
 
+    /* ./ui/worldlist.c */
+    Panel *panel_login_worldlist;
+    int control_list_worlds;
+    int control_worldlist_button;
+
     /* ./ui/magic-tab.c */
     Panel *panel_magic;
     int control_list_magic;
@@ -1078,6 +1085,12 @@ struct mudclient {
 
     /* wiki */
     int selected_wiki;
+
+    char server[64];
+    int port;
+
+    char rsa_exponent[512];
+    char rsa_modulus[512];
 };
 
 void mudclient_new(mudclient *mud);

@@ -115,6 +115,8 @@ char *mud_strdup(const char *s);
 void strtrim(char *s);
 void strtolower(char *s);
 
+void get_config_path(const char *file, char *path);
+
 int get_signed_byte(void *, size_t, size_t);
 int get_unsigned_byte(void *, size_t, size_t);
 int get_unsigned_short(void *, size_t, size_t);

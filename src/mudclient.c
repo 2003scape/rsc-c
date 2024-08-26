@@ -739,8 +739,13 @@ void mudclient_resize(mudclient *mud) {
         panel_destroy(mud->panel_login_new_user);
         free(mud->panel_login_new_user);
 
+        panel_destroy(mud->panel_login_worldlist);
+        free(mud->panel_login_worldlist);
+
         panel_destroy(mud->panel_login_existing_user);
         free(mud->panel_login_existing_user);
+
+        worldlist_new(mud);
 
         mudclient_create_login_panels(mud);
 
@@ -782,6 +787,11 @@ void mudclient_resize(mudclient *mud) {
         if (mud->panel_login_existing_user != NULL) {
             mud->panel_login_existing_user->offset_x = dynamic_offset_x;
             mud->panel_login_existing_user->offset_y = dynamic_offset_y;
+        }
+
+        if (mud->panel_login_worldlist != NULL) {
+            mud->panel_login_worldlist->offset_x = dynamic_offset_x;
+            mud->panel_login_worldlist->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_appearance != NULL) {
@@ -3420,6 +3430,8 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_appearance_panel(mud);
     mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
+
+    worldlist_new(mud);
 
     if (!mud->options->lowmem) {
         mudclient_render_login_scene_sprites(mud);
@@ -7296,21 +7308,21 @@ int main(int argc, char **argv) {
     }
 
     if (argc > 2) {
-        strcpy(mud->options->server, argv[2]);
+        strcpy(mud->server, argv[2]);
     }
 
     if (argc > 3) {
-        mud->options->port = atoi(argv[3]);
+        mud->port = atoi(argv[3]);
     }
 
 #ifdef REVISION_177
     /* BEGIN INAUTHENTIC COMMAND LINE ARGUMENTS */
     if (argc > 4) {
-        strcpy(mud->options->rsa_exponent, argv[4]);
+        strcpy(mud->rsa_exponent, argv[4]);
     }
 
     if (argc > 5) {
-        strcpy(mud->options->rsa_modulus, argv[5]);
+        strcpy(mud->rsa_modulus, argv[5]);
     }
     /* END INAUTHENTIC COMMAND LINE ARGUMENTS */
 #endif

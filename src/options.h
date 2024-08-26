@@ -14,10 +14,7 @@ typedef struct Options Options;
 #include "mudclient.h"
 
 #define OPTIONS_INI_TEMPLATE                                                   \
-    ("; IPv4 address with revision 177 compatible protocol support\n"          \
-     "server = %s\n"                                                           \
-     "port = %d\n"                                                             \
-     "; Disable registration and load sounds, P2P landscape and items ("       \
+    ("; Disable registration and load sounds, P2P landscape and items ("       \
      "requires\n; restart)\n"                                                  \
      "members = %d\n"                                                          \
      "; Disables display of Fatigue, for servers that don't support it\n"      \
@@ -28,10 +25,6 @@ typedef struct Options Options;
      "max_skills = %d\n"                                                       \
      "; If enabled, override members option and always show New User button\n" \
      "registration = %d\n"                                                     \
-     "; Used together to encrypt passwords, Must be represented as "           \
-     "hexadecimal string\n; 0-padded to a multiple of eight characters\n"      \
-     "rsa_exponent = %s\n"                                                     \
-     "rsa_modulus = %s\n"                                                      \
      "; Log out when mouse is idle\n"                                          \
      "idle_logout = %d\n"                                                      \
      "; Remember username on login screen\n"                                   \
@@ -178,10 +171,6 @@ extern int wii_fat_enabled;
 #endif
 
 struct Options {
-    /* configurable options: */
-    char server[256];
-    int port;
-
     /* disable registration and load sounds, P2P landscape and items (requires
      * restart) */
     int members;
@@ -197,11 +186,6 @@ struct Options {
 
     /* if enabled, override members option and always show New User button */
     int registration;
-
-    /* used together to encrypt passwords, must be represented as hexadecimal
-     * string 0-padded to a multiple of eight characters */
-    char rsa_exponent[512];
-    char rsa_modulus[512];
 
     /* log out when mouse is idle */
     int idle_logout;
@@ -407,7 +391,6 @@ struct Options {
 };
 
 void options_new(Options *options);
-void options_set_server(Options *options);
 void options_set_defaults(Options *options);
 void options_set_vanilla(Options *options);
 void options_load(Options *options);

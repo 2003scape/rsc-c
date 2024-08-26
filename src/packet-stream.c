@@ -72,7 +72,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
 #ifndef NO_RSA
     if (rsa_init(&packet_stream->rsa,
-        mud->options->rsa_exponent, mud->options->rsa_modulus) < 0) {
+        mud->rsa_exponent, mud->rsa_modulus) < 0) {
             mud_error("rsa_init failed\n");
             exit(1);
     }
@@ -95,20 +95,20 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     struct sockaddr_in server_addr = {0};
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(mud->options->port);
+    server_addr.sin_port = htons(mud->port);
 
     char server_ip[16] = {0};
 
-    if (is_ip_address(mud->options->server)) {
-        strcpy(server_ip, mud->options->server);
+    if (is_ip_address(mud->server)) {
+        strcpy(server_ip, mud->server);
     } else {
 #ifdef WII
-        struct hostent *host_addr = net_gethostbyname(mud->options->server);
+        struct hostent *host_addr = net_gethostbyname(mud->server);
         struct in_addr addr = {0};
         memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
         strcpy(server_ip, inet_ntoa(addr));
 #elif WIN9X
-        struct hostent *host_addr = gethostbyname(mud->options->server);
+        struct hostent *host_addr = gethostbyname(mud->server);
 
         struct in_addr addr = {0};
 
@@ -124,7 +124,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
 
-        int status = getaddrinfo(mud->options->server, NULL, &hints, &result);
+        int status = getaddrinfo(mud->server, NULL, &hints, &result);
 
         if (status != 0) {
             mud_error("getaddrinfo(): %s\n", gai_strerror(status));
@@ -154,7 +154,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 #endif
 
     if (ret == 0) {
-        mud_error("inet_aton(%s) error: %d\n", mud->options->server, ret);
+        mud_error("inet_aton(%s) error: %d\n", mud->server, ret);
         exit(1);
     }
 

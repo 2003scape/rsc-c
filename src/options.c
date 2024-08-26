@@ -1,4 +1,5 @@
 #include "options.h"
+
 #if defined(__unix__) || defined(__unix) ||                                    \
     (defined(__APPLE__) && defined(__MACH__))
 #include <sys/stat.h>
@@ -33,31 +34,6 @@ void options_new(Options *options) {
 #endif
 }
 
-void options_set_server(Options *options) {
-#if REVISION_177
-    /* openrsc preservation */
-    strcpy(options->server, "game.openrsc.com"); // 50.73.67.9
-    options->port = 43596;
-
-    strcpy(options->rsa_exponent, "00010001");
-
-    strcpy(options->rsa_modulus,
-           "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41f"
-           "efbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
-
-#ifdef EMSCRIPTEN
-    options->port = 43496; /* websockets */
-#else
-    options->port = 43596;
-#endif
-#else
-    strcpy(options->server, "127.0.0.1");
-    // strcpy(options->server, "192.168.100.178");
-    // strcpy(options->server, "192.168.100.113");
-    options->port = 43594;
-#endif
-}
-
 void options_set_defaults(Options *options) {
     /* server */
     options->members = 1;
@@ -70,8 +46,6 @@ void options_set_defaults(Options *options) {
     options->remember_password = 0;
     options->diversify_npcs = 0;
     options->rename_herblaw_items = 0;
-
-    options_set_server(options);
 
 #ifdef _WIN32
     strcpy(options->browser_command, "explorer \"%s\"");
@@ -156,8 +130,6 @@ void options_set_vanilla(Options *options) {
     options->diversify_npcs = 0;
     options->rename_herblaw_items = 0;
 
-    options_set_server(options);
-
     /* controls */
     options->off_handle_scroll_drag = 0;
     options->escape_clear = 0;
@@ -218,36 +190,6 @@ void options_set_vanilla(Options *options) {
     options->field_of_view = 360;
 }
 
-void options_get_path(char *path) {
-#ifdef ANDROID
-    char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
-    snprintf(path, PATH_MAX, "%soptions.ini", pref_path);
-    SDL_free(pref_path);
-#elif defined(EMSCRIPTEN)
-    snprintf(path, PATH_MAX, "/options/options.ini");
-#elif defined(OPTIONS_UNIX)
-    const char *xdg = getenv("XDG_CONFIG_HOME");
-
-    if (xdg != NULL) {
-        snprintf(path, PATH_MAX, "%s/rsc-c", xdg);
-        /* don't want 'other' to read because it can contain passwords */
-        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
-        snprintf(path, PATH_MAX, "%s/rsc-c/options.ini", xdg);
-    } else {
-        const char *home = getenv("HOME");
-
-        if (home == NULL) {
-            home = "";
-        }
-
-        snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
-        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
-        snprintf(path, PATH_MAX, "%s/.config/rsc-c/options.ini", home);
-    }
-#else
-    snprintf(path, PATH_MAX, "%s", "./options.ini");
-#endif
-}
 
 void options_save(Options *options) {
 #ifdef WII
@@ -257,7 +199,8 @@ void options_save(Options *options) {
 #endif
 
     char path[PATH_MAX];
-    options_get_path(path);
+
+    get_config_path("options.ini", path);
 
 #ifdef ANDROID
     SDL_RWops *ini_file = SDL_RWFromFile(path, "w");
@@ -273,15 +216,11 @@ void options_save(Options *options) {
     char file_buffer[65536] = {0};
 
     sprintf(file_buffer, OPTIONS_INI_TEMPLATE,
-            options->server,                //
-            options->port,                  //
             options->members,               //
             options->fatigue,               //
             options->max_quests,            //
             options->max_skills,            //
             options->registration,          //
-            options->rsa_exponent,          //
-            options->rsa_modulus,           //
             options->idle_logout,           //
             options->remember_username,     //
             options->remember_password,     //
@@ -364,7 +303,8 @@ void options_save(Options *options) {
 
 void options_load(Options *options) {
     char path[PATH_MAX];
-    options_get_path(path);
+
+    get_config_path("options.ini", path);
 
     ini_t *options_ini = ini_load(path);
 
@@ -373,15 +313,11 @@ void options_load(Options *options) {
     }
 
     /* connection */
-    OPTION_INI_STR("server", options->server, 255);
-    OPTION_INI_INT("port", options->port, 0, 65535);
     OPTION_INI_INT("members", options->members, 0, 1);
     OPTION_INI_INT("fatigue", options->fatigue, 0, 1);
     OPTION_INI_INT("max_quests", options->max_quests, 0, 50);
     OPTION_INI_INT("max_skills", options->max_skills, 0, 18);
     OPTION_INI_INT("registration", options->registration, 0, 1);
-    OPTION_INI_STR("rsa_exponent", options->rsa_exponent, 512);
-    OPTION_INI_STR("rsa_modulus", options->rsa_modulus, 512);
     OPTION_INI_INT("idle_logout", options->idle_logout, 0, 1);
     OPTION_INI_INT("remember_username", options->remember_username, 0, 1);
     OPTION_INI_INT("remember_password", options->remember_password, 0, 1);
