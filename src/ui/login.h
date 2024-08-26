@@ -5,7 +5,8 @@ typedef enum {
     LOGIN_STAGE_WELCOME = 0,
     LOGIN_STAGE_NEW = 1,
     LOGIN_STAGE_EXISTING = 2,
-    LOGIN_STAGE_RECOVER = 3
+    LOGIN_STAGE_RECOVER = 3,
+    LOGIN_STAGE_WORLD = 4
 } LOGIN_STAGE;
 
 #include "../mudclient.h"

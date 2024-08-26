@@ -203,8 +203,13 @@ void mudclient_resize(mudclient *mud) {
         panel_destroy(mud->panel_login_new_user);
         free(mud->panel_login_new_user);
 
+        panel_destroy(mud->panel_login_worldlist);
+        free(mud->panel_login_worldlist);
+
         panel_destroy(mud->panel_login_existing_user);
         free(mud->panel_login_existing_user);
+
+        worldlist_new(mud);
 
         mudclient_create_login_panels(mud);
 
@@ -246,6 +251,11 @@ void mudclient_resize(mudclient *mud) {
         if (mud->panel_login_existing_user != NULL) {
             mud->panel_login_existing_user->offset_x = dynamic_offset_x;
             mud->panel_login_existing_user->offset_y = dynamic_offset_y;
+        }
+
+        if (mud->panel_login_worldlist != NULL) {
+            mud->panel_login_worldlist->offset_x = dynamic_offset_x;
+            mud->panel_login_worldlist->offset_y = dynamic_offset_y;
         }
 
         if (mud->panel_appearance != NULL) {
@@ -472,7 +482,6 @@ void mudclient_start_application(mudclient *mud, char *title) {
 
         if (SDL_OpenAudio(&wanted_audio, NULL) < 0) {
             mud_error("SDL_OpenAudio(): %s\n", SDL_GetError());
-            exit(1);
         }
     }
 #endif
@@ -1164,8 +1173,6 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 
     if (strcmp(file, "jagex.jag") == 0) {
         file_data = (int8_t *)jagex_jag;
-    } else if (strcmp(file, "fonts" VERSION_STR(VERSION_FONTS) ".jag") == 0) {
-        file_data = (int8_t *)fonts1_jag;
     } else if (strcmp(file, "config" VERSION_STR(VERSION_CONFIG) ".jag") == 0) {
         file_data = (int8_t *)config85_jag;
     } else if (strcmp(file, "media" VERSION_STR(VERSION_MEDIA) ".jag") == 0) {
@@ -1326,6 +1333,13 @@ void mudclient_load_jagex(mudclient *mud) {
 
             free(logo_tga);
         }
+        for (size_t i = 0; i < FONT_FILES_LENGTH; i++) {
+            int8_t *font = load_data(font_files[i], 0, jagex_jag, NULL);
+            if (font == NULL) {
+                break;
+            }
+            create_font(font, i);
+        }
 
 #ifndef WII
         free(jagex_jag);
@@ -1337,17 +1351,6 @@ void mudclient_load_jagex(mudclient *mud) {
     mud->surface->sprite_width[logo_sprite_id] = 281;
     mud->surface->sprite_height[logo_sprite_id] = 85;
 #endif
-
-    int8_t *fonts_jag = mudclient_read_data_file(
-        mud, "fonts" VERSION_STR(VERSION_FONTS) ".jag", "Game fonts", 5);
-
-    if (fonts_jag != NULL) {
-        for (size_t i = 0; i < FONT_FILES_LENGTH; i++) {
-            create_font(load_data(font_files[i], 0, fonts_jag, NULL), i);
-        }
-
-        free(fonts_jag);
-    }
 }
 
 void mudclient_load_game_config(mudclient *mud) {
@@ -1582,8 +1585,9 @@ static void mudclient_load_media_tga(mudclient *mud, void *media_jag) {
             current_sprite_count = 30;
         }
 
+
         surface_parse_sprite_tga(mud->surface, mud->sprite_item + (i - 1) * 30,
-                             data, len, 10, 3);
+                             data, len, 10, i < 7 ? 3 : 1);
     }
 }
 
@@ -2890,6 +2894,8 @@ void mudclient_start_game(mudclient *mud) {
     mudclient_create_appearance_panel(mud);
     mudclient_create_options_panel(mud);
     mudclient_reset_login_screen(mud);
+
+    worldlist_new(mud);
 
     if (!mud->options->lowmem) {
         mudclient_render_login_scene_sprites(mud);
@@ -5847,21 +5853,21 @@ int main(int argc, char **argv) {
     }
 
     if (argc > 2) {
-        strcpy(mud->options->server, argv[2]);
+        strcpy(mud->server, argv[2]);
     }
 
     if (argc > 3) {
-        mud->options->port = atoi(argv[3]);
+        mud->port = atoi(argv[3]);
     }
 
 #ifdef REVISION_177
     /* BEGIN INAUTHENTIC COMMAND LINE ARGUMENTS */
     if (argc > 4) {
-        strcpy(mud->options->rsa_exponent, argv[4]);
+        strcpy(mud->rsa_exponent, argv[4]);
     }
 
     if (argc > 5) {
-        strcpy(mud->options->rsa_modulus, argv[5]);
+        strcpy(mud->rsa_modulus, argv[5]);
     }
     /* END INAUTHENTIC COMMAND LINE ARGUMENTS */
 #endif

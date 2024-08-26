@@ -44,6 +44,8 @@ static int mudclient_add_option_panel_checkbox(Panel *panel, char *label,
 }
 
 void mudclient_create_options_panel(mudclient *mud) {
+    char formatted_digits[16] = {0};
+
     for (int i = 0; i < 50; i++) {
         mud->game_option_types[i] = -1;
         mud->control_option_types[i] = -1;
@@ -62,28 +64,9 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->panel_game_options = malloc(sizeof(Panel));
     panel_new(mud->panel_game_options, mud->surface, 50);
 
-    int control = mudclient_add_option_panel_string(
-        mud->panel_game_options, "@whi@Server: ", mud->options->server, 255, x,
-        y);
-
-    mud->game_options[control] = &mud->options->server;
-    mud->game_option_types[control] = ADDITIONAL_OPTIONS_STRING;
-
-    y += OPTION_HORIZ_GAP;
-
-    char formatted_digits[12] = {0};
-    sprintf(formatted_digits, "%d", mud->options->port);
-
-    control = mudclient_add_option_panel_string(
-        mud->panel_game_options, "@whi@Port: ", formatted_digits, 15, x, y);
-
-    mud->game_options[control] = &mud->options->port;
-    mud->game_option_types[control] = ADDITIONAL_OPTIONS_INT;
-
-    y += OPTION_HORIZ_GAP;
-
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options, "@whi@Members: ", mud->options->members, x, y);
+    int control = mudclient_add_option_panel_checkbox(
+        mud->panel_game_options, "@whi@Members (restart): ",
+        mud->options->members, x, y);
 
     mud->game_options[control] = &mud->options->members;
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
@@ -151,7 +134,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
-    y = ui_y + (OPTION_HORIZ_GAP * 3) + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
+    y = ui_y + OPTION_HORIZ_GAP + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
 #if VERSION_ENTITY > 8
     control = mudclient_add_option_panel_checkbox(

@@ -4,6 +4,21 @@
 #include <signal.h>
 #endif
 
+#ifdef _WIN32
+#define close closesocket
+#define ioctl ioctlsocket
+#endif
+
+#ifdef WII
+#define socket(x, y, z) net_socket(x, y, z)
+#define gethostbyname net_gethostbyname
+#define setsockopt net_setsockopt
+#define connect net_connect
+#define close net_close
+#define write net_write
+#define recv net_recv
+#endif
+
 #if 0
 char *SPOOKY_THREAT =
     "All RuneScape code and data, including this message, are copyright 2003 "
@@ -72,7 +87,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
 #ifndef NO_RSA
     if (rsa_init(&packet_stream->rsa,
-        mud->options->rsa_exponent, mud->options->rsa_modulus) < 0) {
+        mud->rsa_exponent, mud->rsa_modulus) < 0) {
             mud_error("rsa_init failed\n");
             exit(1);
     }
@@ -95,77 +110,49 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     struct sockaddr_in server_addr = {0};
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(mud->options->port);
+    server_addr.sin_port = htons(mud->port);
 
-    char server_ip[16] = {0};
+#if defined(WIN9X) || defined(WII)
+    struct hostent *host_addr = gethostbyname(mud->server);
 
-    if (is_ip_address(mud->options->server)) {
-        strcpy(server_ip, mud->options->server);
-    } else {
-#ifdef WII
-        struct hostent *host_addr = net_gethostbyname(mud->options->server);
-        struct in_addr addr = {0};
-        memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
-        strcpy(server_ip, inet_ntoa(addr));
-#elif WIN9X
-        struct hostent *host_addr = gethostbyname(mud->options->server);
-
-        struct in_addr addr = {0};
-
-        if (host_addr) {
-            memcpy(&addr, host_addr->h_addr_list[0], sizeof(struct in_addr));
-        }
-
-        strcpy(server_ip, inet_ntoa(addr));
+    if (host_addr) {
+        memcpy(&server_addr.sin_addr, host_addr->h_addr_list[0],
+               sizeof(struct in_addr));
+    }
 #else
-        struct addrinfo hints = {0};
-        struct addrinfo *result = {0};
+    struct addrinfo hints = {0};
+    struct addrinfo *result = {0};
 
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
 
-        int status = getaddrinfo(mud->options->server, NULL, &hints, &result);
+    int status = getaddrinfo(mud->server, NULL, &hints, &result);
 
-        if (status != 0) {
-            mud_error("getaddrinfo(): %s\n", gai_strerror(status));
-            packet_stream->closed = 1;
-            return;
-        }
-
-        for (struct addrinfo *rp = result; rp != NULL; rp = rp->ai_next) {
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr;
-
-            inet_ntop(rp->ai_family, &(ipv4->sin_addr), server_ip,
-                      sizeof(server_ip));
-
-            if (strlen(server_ip)) {
-                break;
-            }
-        }
-
-        freeaddrinfo(result);
-#endif
+    if (status != 0) {
+        mud_error("getaddrinfo(): %s\n", gai_strerror(status));
+        packet_stream->closed = 1;
+        return;
     }
 
-#if defined(WIN32) && !defined(WIN9X)
-    ret = InetPton(AF_INET, server_ip, &server_addr.sin_addr);
-#else
-    ret = inet_aton(server_ip, &server_addr.sin_addr);
-#endif
+    for (struct addrinfo *rp = result; rp != NULL; rp = rp->ai_next) {
+        struct sockaddr_in *addr = (struct sockaddr_in *)rp->ai_addr;
 
-    if (ret == 0) {
-        mud_error("inet_aton(%s) error: %d\n", mud->options->server, ret);
-        exit(1);
+        if (addr != NULL) {
+            memcpy(&server_addr.sin_addr, &addr->sin_addr,
+                   sizeof(struct in_addr));
+            break;
+        }
     }
 
-#ifdef WII
-    packet_stream->socket = net_socket(AF_INET, SOCK_STREAM, 0);
-#else
+    freeaddrinfo(result);
+#endif
+
 #ifdef __SWITCH__
     socketInitializeDefault();
 #endif
+
     packet_stream->socket = socket(AF_INET, SOCK_STREAM, 0);
-#endif
 
     if (packet_stream->socket < 0) {
         mud_error("socket error: %s (%d)\n", strerror(errno), errno);
@@ -175,17 +162,7 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
 
     int set = 1;
 
-#ifdef WII
-    net_setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, &set,
-                   sizeof(set));
-
-    ret = net_connect(packet_stream->socket, (struct sockaddr *)&server_addr,
-                      sizeof(server_addr));
-#else
-#ifdef WIN32
-    setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, (char *)&set,
-               sizeof(set));
-#else
+#ifdef TCP_NODELAY
     setsockopt(packet_stream->socket, IPPROTO_TCP, TCP_NODELAY, &set,
                sizeof(set));
 #endif
@@ -214,10 +191,8 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
         attempts_ms += 100;
     } while (ret == -1);
 #else
-#ifdef WIN32
-    u_long mode = 1;
-    ioctlsocket(packet_stream->socket, FIONBIO, &mode);
-#elif defined(NET_IS_UNIXLIKE)
+
+#ifdef FIONBIO
     ret = ioctl(packet_stream->socket, FIONBIO, &set);
 
     if (ret < 0) {
@@ -275,23 +250,13 @@ void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
             }
         }
     }
-#endif
-#endif
+#endif /* not EMSCRIPTEN */
 
     if (ret < 0 && errno != 0) {
         mud_error("connect() error: %s (%d)\n", strerror(errno), errno);
         packet_stream_close(packet_stream);
         return;
     }
-
-#ifdef WII
-    ret = net_ioctl(packet_stream->socket, FIONBIO, &set);
-
-    if (ret < 0) {
-        mud_error("ioctl() error: %d\n", ret);
-        exit(1);
-    }
-#endif
 
     packet_stream->closed = 0;
     packet_stream->packet_end = 3;
@@ -303,19 +268,11 @@ int packet_stream_available_bytes(PacketStream *packet_stream, int length) {
         return 1;
     }
 
-#ifdef WII
-    int bytes = net_recv(packet_stream->socket,
-                         packet_stream->available_buffer +
-                             packet_stream->available_offset +
-                             packet_stream->available_length,
-                         length - packet_stream->available_length, 0);
-#else
     int bytes =
         recv(packet_stream->socket,
              packet_stream->available_buffer + packet_stream->available_offset +
                  packet_stream->available_length,
              length - packet_stream->available_length, 0);
-#endif
 
     if (bytes < 0) {
         bytes = 0;
@@ -367,12 +324,7 @@ int packet_stream_read_bytes(PacketStream *packet_stream, int length,
     int offset = 0;
 
     while (length > 0) {
-#ifdef WII
-        int bytes = net_recv(packet_stream->socket, buffer + offset, length, 0);
-#else
         int bytes = recv(packet_stream->socket, buffer + offset, length, 0);
-#endif
-
         if (bytes > 0) {
             length -= bytes;
             offset += bytes;
@@ -397,9 +349,7 @@ int packet_stream_read_bytes(PacketStream *packet_stream, int length,
 int packet_stream_write_bytes(PacketStream *packet_stream, int8_t *buffer,
                               int offset, int length) {
     if (!packet_stream->closed) {
-#ifdef WII
-        return net_write(packet_stream->socket, buffer + offset, length);
-#elif defined(WIN32) || defined(__SWITCH__)
+#if defined(WIN32) || defined(__SWITCH__)
         return send(packet_stream->socket, buffer + offset, length, 0);
 #else
         return write(packet_stream->socket, buffer + offset, length);
@@ -781,14 +731,7 @@ int64_t packet_stream_get_long(PacketStream *packet_stream) {
 
 void packet_stream_close(PacketStream *packet_stream) {
     if (packet_stream->socket > -1) {
-#ifdef WII
-        net_close(packet_stream->socket);
-#elif defined(WIN32)
-        closesocket(packet_stream->socket);
-#else
         close(packet_stream->socket);
-#endif
-
         packet_stream->socket = -1;
     }
 
