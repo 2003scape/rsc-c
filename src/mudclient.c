@@ -1319,11 +1319,11 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 }
 
 void mudclient_load_jagex(mudclient *mud) {
-#if defined(RENDER_SW)
     int8_t *jagex_jag =
         mudclient_read_data_file(mud, "jagex.jag", "Jagex library", 0);
 
     if (jagex_jag != NULL) {
+#ifdef RENDER_SW
         if (!mud->options->lowmem) {
             size_t len = 0;
             int8_t *logo_tga = load_data("logo.tga", 0, jagex_jag, &len);
@@ -1333,6 +1333,7 @@ void mudclient_load_jagex(mudclient *mud) {
 
             free(logo_tga);
         }
+#endif
         for (size_t i = 0; i < FONT_FILES_LENGTH; i++) {
             int8_t *font = load_data(font_files[i], 0, jagex_jag, NULL);
             if (font == NULL) {
@@ -1345,7 +1346,7 @@ void mudclient_load_jagex(mudclient *mud) {
         free(jagex_jag);
 #endif
     }
-#elif defined(RENDER_GL) || defined(RENDER_3DS_GL)
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     int logo_sprite_id = SPRITE_LIMIT - 1;
 
     mud->surface->sprite_width[logo_sprite_id] = 281;
