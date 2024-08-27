@@ -33,13 +33,15 @@ CFLAGS += -Wall -Wextra -pedantic -g
 LDFLAGS += -s SOCKET_DEBUG=1
 else
 CFLAGS += -s -O3 -ffast-math -flto
+ifeq ($(RENDER_GL), 0)
 LDFLAGS += -flto
+endif
 endif
 
 LDFLAGS += -sEXPORTED_FUNCTIONS=_browser_mouse_moved,_browser_key_pressed,_main
 LDFLAGS += -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
 
-CFLAGS += -s DEFAULT_TO_CXX=false
+CFLAGS += -s DEFAULT_TO_CXX=0
 CFLAGS += -s DISABLE_EXCEPTION_THROWING=1
 
 LDFLAGS += -s INITIAL_MEMORY=50MB -s ALLOW_MEMORY_GROWTH=1 -s USE_SDL=2
