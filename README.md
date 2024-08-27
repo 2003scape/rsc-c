@@ -2,7 +2,8 @@
 
 portable, enhanced runescape classic client ported to C99. supports 204 and 177
 protocols. original mudclient204 java source refactored by v0rtex/xetr0v and
-Isaac Eggsampler.  compatible with [openrsc](https://rsc.vet/) and 2003scape.
+Isaac Eggsampler. compatible with [rscsundae](https://git.sr.ht/~stormy/rscsundae),
+[openrsc](https://rsc.vet/) and 2003scape.
 
 prominent new features include:
 * native ports for 3ds, switch, wii, web browser and desktop
@@ -14,10 +15,6 @@ prominent new features include:
 * [runescape classic wiki](https://classic.runescape.wiki/) button
 * bank interface with scrollbar and search
 * [...and more! ](https://github.com/2003scape/rsc-c#options)
-
-QR code for 3DS install:
-
-![](./3ds-cia.png?raw=true)
 
 ### controls (3ds):
 
@@ -242,7 +239,7 @@ rename_herblaw_items = 1
 ; Scroll panel lists, chatbox, and camera (if zoom enabled) with wheel
 mouse_wheel = 1
 ; Hold down middle click and move mouse to rotate camera (manual mode)
-middle_click_camera = 1
+middle_click_camera = 25
 ; Use arrow, page, home keys and mouse wheel (if enabled) to zoom
 zoom_camera = 1
 ; Respond to the last private message with tab key
@@ -263,9 +260,23 @@ wiki_lookup = 1
 combat_style_always = 0
 ; Hold to buy/sell items from shops in bulk (matches trade screen)
 hold_to_buy = 1
+; Drag vertically to zoom camera
+touch_vertical_drag = 33
+; Drag horizontally to pan camera
+touch_pinch = 50
+; Milliseconds until right click
+touch_menu_delay = 350
 
+; Low memory mode
+lowmem = 0
 ; F1 mode - only render every second scanline
 interlace = 0
+; Underground lighting flicker
+flicker = 1
+; Fog of War (FoW)
+fog_of_war = 1
+; Target framerate of @ran@ text effect
+ran_target_fps = 10
 ; Display the FPS at the bottom right of the screen
 display_fps = 0
 ; Double the UI size but keep the scene size if window is over double original
@@ -306,6 +317,8 @@ distant_animation = 1
 tga_sprites = 0
 ; Show hover tooltip menu
 show_hover_tooltip = 0
+; Move the keyboard button to the right
+touch_keyboard_right = 0
 
 ; Add filtering to the bank
 bank_search = 1
