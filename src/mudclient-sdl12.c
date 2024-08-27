@@ -79,6 +79,30 @@ void get_sdl_keycodes(SDL_keysym *keysym, char *char_code, int *code) {
         *code = K_5;
         *char_code = K_5;
         break;
+    default:
+        break;
     }
+}
+
+void mudclient_start_application(mudclient *mud, char *title) {
+    int init = SDL_INIT_VIDEO | SDL_INIT_TIMER;
+
+    if (SDL_Init(init) < 0) {
+        mud_error("SDL_Init(): %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    (void)SDL_EnableUNICODE(1);
+
+    SDL_WM_SetCaption(title, NULL);
+
+#ifdef RENDER_SW
+    mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
+                                   SDL_HWSURFACE | SDL_RESIZABLE);
+
+#elif defined(RENDER_GL)
+    mud->screen = SDL_SetVideoMode(mud->game_width, mud->game_height, 32,
+                                   SDL_OPENGL | SDL_RESIZABLE);
+#endif
 }
 #endif

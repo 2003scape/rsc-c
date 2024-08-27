@@ -379,4 +379,89 @@ void mudclient_3ds_gl_frame_start(mudclient *mud, int clear) {
 
 void mudclient_3ds_gl_frame_end() { C3D_FrameEnd(0); }
 #endif
+
+void mudclient_start_application(mudclient *mud, char *title) {
+    atexit(soc_shutdown);
+
+    // gfxInit(GSP_BGR8_OES, GSP_BGR8_OES, 0);
+    gfxInitDefault();
+
+    /* uncomment and disable draw_top_background to see stdout */
+    // consoleInit(GFX_TOP, NULL);
+
+    Result romfs_res = romfsInit();
+
+    if (romfs_res) {
+        mud_error("romfsInit: %08lX\n", romfs_res);
+        exit(1);
+    }
+
+    gfxSetDoubleBuffering(GFX_BOTTOM, 0);
+    gfxSetDoubleBuffering(GFX_TOP, 0);
+
+    mud->_3ds_framebuffer_top =
+        gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+
+#ifndef RENDER_3DS_GL
+    mud->_3ds_framebuffer_bottom =
+        gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+#endif
+
+    /* allocate buffer for SOC service (networking) */
+    SOC_buffer = (u32 *)memalign(SOC_ALIGN, SOC_BUFFER_SIZE);
+
+    if (SOC_buffer == NULL) {
+        mud_error("memalign() fail\n");
+        exit(1);
+    }
+
+    int ret = -1;
+
+    if ((ret = socInit(SOC_buffer, SOC_BUFFER_SIZE)) != 0) {
+        mud_error("socInit: 0x%08X\n", (unsigned int)ret);
+        exit(1);
+    }
+
+    audio_buffer =
+        (u32 *)linearAlloc(SAMPLE_BUFFER_SIZE * BYTES_PER_SAMPLE * 2);
+
+    ndspInit();
+
+    ndspSetOutputMode(NDSP_OUTPUT_MONO);
+
+    ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
+    ndspChnSetRate(0, SAMPLE_RATE);
+    ndspChnSetFormat(0, NDSP_FORMAT_MONO_PCM16);
+
+    float mix[12] = {0};
+    mix[0] = 1.0;
+    mix[1] = 1.0;
+
+    ndspChnSetMix(0, mix);
+
+    wave_buf[0].data_vaddr = &audio_buffer[0];
+    wave_buf[0].nsamples = SAMPLE_BUFFER_SIZE;
+
+    // wave_buf[1].data_vaddr = &audio_buffer[SAMPLE_BUFFER_SIZE];
+    // wave_buf[1].nsamples = SAMPLE_BUFFER_SIZE;
+
+    ndspChnWaveBufAdd(0, &wave_buf[0]);
+    // ndspChnWaveBufAdd(0, &wave_buf[1]);
+
+    HIDUSER_EnableGyroscope();
+
+#ifdef RENDER_3DS_GL
+    C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+
+    mud->_3ds_gl_render_target =
+        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH16);
+    // C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24);
+
+    mud->_3ds_gl_offscreen_render_target =
+        C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA5551, GPU_RB_DEPTH16);
+
+    C3D_RenderTargetSetOutput(mud->_3ds_gl_render_target, GFX_BOTTOM, GFX_LEFT,
+                              DISPLAY_TRANSFER_FLAGS);
+#endif
+}
 #endif
