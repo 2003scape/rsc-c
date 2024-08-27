@@ -388,22 +388,10 @@ void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code);
 #endif
 #endif
 
-extern int mudclient_touch_start;
-
-extern int mudclient_horizontal_drag;
-extern int mudclient_vertical_drag;
-
-extern int mudclient_touch_start_x;
-extern int mudclient_touch_start_y;
-
-extern double mudclient_pinch_distance;
-
-extern int64_t mudclient_finger_1_id;
 extern int mudclient_finger_1_x;
 extern int mudclient_finger_1_y;
 extern int mudclient_finger_1_down;
 
-extern int64_t mudclient_finger_2_id;
 extern int mudclient_finger_2_x;
 extern int mudclient_finger_2_y;
 extern int mudclient_finger_2_down;

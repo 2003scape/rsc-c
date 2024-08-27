@@ -5,6 +5,7 @@ OBJ = $(SRC:.c=.o) ./win/icon.res ./win/meta.res
 CFLAGS = -std=gnu99 -fwrapv -I ./cglm/include -I ./glew-2.1.0/include
 CFLAGS += -DRENDER_SW
 CFLAGS += -I ./SDL2-2.0.20/i686-w64-mingw32/include/SDL2 #-fPIE
+CFLAGS += -D SDL2
 # Target Windows XP
 CFLAGS += -D_WIN32_WINNT=0x0501
 LDFLAGS = -lm -L ./SDL2-2.0.20/i686-w64-mingw32/lib -lmingw32

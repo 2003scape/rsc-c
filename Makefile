@@ -27,7 +27,7 @@ CFLAGS += -DREVISION_177
 CFLAGS += -DMUD_DATADIR=\"$(PREFIX)/$(DATADIR)\"
 
 ifeq ($(SDL2), 1)
-CFLAGS += $(shell sdl2-config --cflags)
+CFLAGS += $(shell sdl2-config --cflags) -DSDL2
 LDFLAGS += -lm
 LDFLAGS += $(shell sdl2-config --libs)
 else
