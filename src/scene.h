@@ -297,4 +297,9 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model);
 void scene_3ds_gl_render(Scene *scene);
 void scene_3ds_gl_render_transparent_models(Scene *scene);
 #endif
+
+/* internal, used by GL implementations */
+void scene_initialise_polygons_2d(Scene *scene);
+void scene_render_polygon_2d_face(Scene *scene, int face);
+void scene_mouse_pick(Scene *scene, GameModel *model, int face);
 #endif
