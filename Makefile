@@ -34,6 +34,9 @@ else
 CFLAGS += $(shell sdl-config --cflags) -DSDL12
 LDFLAGS += -lm
 LDFLAGS += $(shell sdl-config --libs)
+ifeq ($(RENDER_GL), 1)
+LEGACY_GL = 1
+endif
 endif
 
 ifeq ($(VANILLA_IS_DEFAULT), 1)

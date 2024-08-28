@@ -379,4 +379,40 @@ int update_wii_mouse(WPADData *wiimote_data) {
 
     return updated;
 }
+
+void mudclient_start_application(mudclient *mud, char *title) {
+    VIDEO_Init();
+    WPAD_Init();
+    AUDIO_Init(NULL);
+    ASND_Init();
+    ASND_Pause(0); // TODO move
+
+    GXRModeObj *rmode = VIDEO_GetPreferredMode(NULL);
+    mud->framebuffers = malloc(2 * sizeof(uint8_t *));
+    mud->framebuffers[0] = SYS_AllocateFramebuffer(rmode);
+    mud->framebuffers[1] = SYS_AllocateFramebuffer(rmode);
+
+    mud->framebuffer = mud->framebuffers[0];
+    // MEM_K0_TO_K1
+
+    VIDEO_Configure(rmode);
+    VIDEO_SetNextFramebuffer(mud->framebuffer);
+    VIDEO_SetBlack(0);
+    VIDEO_Flush();
+    VIDEO_WaitVSync();
+
+    if (rmode->viTVMode & VI_NON_INTERLACE) {
+        VIDEO_WaitVSync();
+    }
+
+    WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
+    WPAD_SetVRes(0, rmode->fbWidth, rmode->xfbHeight);
+
+    KEYBOARD_Init(NULL);
+    MOUSE_Init();
+
+    mud->last_keyboard_button = -1;
+
+    // console_init(mud->framebuffer,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+}
 #endif

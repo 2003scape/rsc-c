@@ -7,6 +7,8 @@
 #ifdef _WIN32
 #define close closesocket
 #define ioctl ioctlsocket
+
+static int winsock_init = 0;
 #endif
 
 #ifdef WII
@@ -76,6 +78,19 @@ void on_signal_do_nothing(int dummy) { (void)dummy; }
 #endif
 
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {
+#ifdef WIN32
+    if (!winsock_init) {
+        WSADATA wsa_data = {0};
+        int ret = WSAStartup(MAKEWORD(2, 2), &wsa_data);
+
+        if (ret < 0) {
+            mud_error("WSAStartup() error: %d\n", WSAGetLastError());
+            exit(1);
+        }
+        winsock_init = 1;
+    }
+#endif
+
     memset(packet_stream, 0, sizeof(PacketStream));
 
     packet_stream->max_read_tries = 1000;
