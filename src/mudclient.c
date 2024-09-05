@@ -35,6 +35,8 @@ EM_JS(void, browser_trigger_keyboard,
 
           if (is_scaled) {
               keyboard.style.transform = 'scale(2)';
+          } else {
+              keyboard.style.transform = 'none';
           }
 
           const fonts = {
