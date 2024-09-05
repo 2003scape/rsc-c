@@ -14,7 +14,7 @@ EM_JS(int, get_window_height, (), { return window.innerHeight; });
 
 EM_JS(void, browser_trigger_keyboard,
       (char *text, int is_password, int x, int y, int width, int height,
-       int font, int is_centred), {
+       int font, int is_centred, int is_scaled), {
           const keyboard = is_password ? window._mudclientPassword :
                                          window._mudclientKeyboard;
 
@@ -32,6 +32,10 @@ EM_JS(void, browser_trigger_keyboard,
           keyboard.style.top = `${y}px`;
 
           keyboard.style.width = `${width}px`;
+
+          if (is_scaled) {
+              keyboard.style.transform = 'scale(2)';
+          }
 
           const fonts = {
               1: 'mudclient-font-bold-12',
@@ -5068,12 +5072,15 @@ void mudclient_trigger_keyboard(mudclient *mud, char *text, int is_password,
 #ifdef ANDROID
     SDL_StartTextInput();
 #elif defined(EMSCRIPTEN)
-    if (mudclient_is_ui_scaled(mud)) {
-        // TODO
+    int is_scaled = mudclient_is_ui_scaled(mud);
+
+    if (is_scaled) {
+        x *= 2;
+        y *= 2;
     }
 
     browser_trigger_keyboard(text, is_password, x, y, width, height, font,
-                             is_centred);
+                             is_centred, is_scaled);
 #endif
 }
 
