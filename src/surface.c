@@ -1562,7 +1562,7 @@ void surface_set_pixel(Surface *surface, int x, int y, int colour) {
 
 void surface_fade_to_black_software(Surface *surface, int32_t *dest,
                                     int add_alpha) {
-    int area = surface->mud->game_width * surface->mud->game_height;
+    int area = surface->width * surface->height;
 
     for (int i = 0; i < area; i++) {
         int32_t pixel = dest[i] & 0xffffff;

@@ -38,7 +38,8 @@ void mudclient_draw_status_bars(mudclient *mud) {
 
     int show_opponent_health = opponent != NULL && opponent->max_hits != 0;
 
-    if (status_bar_width >= (mud->game_width / 6) && !show_opponent_health) {
+    if (status_bar_width >= (mud->surface->width / 6) &&
+        !show_opponent_health) {
         y += status_bar_height + 5;
     } else {
         x += status_bar_width + (is_touch ? 4 : 3);
@@ -95,7 +96,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
 
         int width;
 
-        if (status_bar_width >= (mud->game_width / 6) &&
+        if (status_bar_width >= (mud->surface->width / 6) &&
             !show_opponent_health) {
             width = status_bar_width;
         } else {
@@ -116,7 +117,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
                                 1);
     }
 
-    x = is_touch ? 86 : mud->game_width - 2;
+    x = is_touch ? 86 : mud->surface->width - 2;
     y = is_touch ? 108 + (combat_button_height * 5) + 15 : 48;
 
     /* Display drained / boosted skills */
