@@ -181,14 +181,24 @@ void mudclient_resize(mudclient *mud) {
     SDL_FreeSurface(mud->screen);
     SDL_FreeSurface(mud->pixel_surface);
 
+    int surface_width = mud->game_width;
+    int surface_height = mud->game_height;
+
 #ifdef SDL12
     mud->screen = SDL_GetVideoSurface();
 #else
     mud->screen = SDL_GetWindowSurface(mud->window);
+
+#ifdef RENDER_SW
+    if (mudclient_is_ui_scaled(mud)) {
+        surface_width /= 2;
+        surface_height /= 2;
+    }
+#endif
 #endif
 
     mud->pixel_surface =
-        SDL_CreateRGBSurface(0, mud->game_width, mud->game_height, 32, 0xff0000,
+        SDL_CreateRGBSurface(0, surface_width, surface_height, 32, 0xff0000,
                              0x00ff00, 0x0000ff, 0);
 
     if (mud->surface != NULL) {
@@ -4321,10 +4331,12 @@ void mudclient_draw_overhead(mudclient *mud) {
 
         mud->received_message_y[i] = y;
 
+#ifdef RENDER_GL
         if (mudclient_is_ui_scaled(mud)) {
             x /= 2;
             y /= 2;
         }
+#endif
 
         surface_draw_paragraph(mud->surface, mud->received_messages[i], x, y, 1,
                                YELLOW, 300);
@@ -4335,11 +4347,13 @@ void mudclient_draw_overhead(mudclient *mud) {
         int y = mud->action_bubbles[i].y;
         int scale = mud->action_bubbles[i].scale;
 
+#ifdef RENDER_GL
         if (mudclient_is_ui_scaled(mud)) {
             x /= 2;
             y /= 2;
             scale /= 2;
         }
+#endif
 
         int id = mud->action_bubbles[i].item;
         int scale_x = (39 * scale) / 100;
@@ -4399,10 +4413,12 @@ void mudclient_draw_overhead(mudclient *mud) {
         int y = mud->health_bars[i].y;
         int missing = mud->health_bars[i].missing;
 
+#ifdef RENDER_GL
         if (mudclient_is_ui_scaled(mud)) {
             x /= 2;
             y /= 2;
         }
+#endif
 
         surface_draw_box_alpha(mud->surface, x - 15, y - 3, missing, 5, GREEN,
                                192);
@@ -4979,12 +4995,10 @@ void mudclient_on_resize(mudclient *mud) {
     int new_width = MUD_WIDTH;
     int new_height = MUD_HEIGHT;
 
-#ifndef SDL12
 #ifdef RENDER_GL
     SDL_Window *window = mud->gl_window;
 #else
     SDL_Window *window = mud->window;
-#endif
 #endif
 
 #ifdef EMSCRIPTEN
@@ -4993,9 +5007,7 @@ void mudclient_on_resize(mudclient *mud) {
     SDL_SetWindowSize(window, new_width, new_height);
 #endif
 
-#ifndef SDL12
     SDL_GetWindowSize(window, &new_width, &new_height);
-#endif
 
 #ifdef ANDROID
     mudclient_full_width = new_width;
@@ -5032,6 +5044,11 @@ void mudclient_on_resize(mudclient *mud) {
     if (mud->scene != NULL) {
 #ifdef RENDER_SW
         free(mud->scene->scanlines);
+
+        if (mudclient_is_ui_scaled(mud)) {
+            new_width /= 2;
+            new_height /= 2;
+        }
 #endif
 
         // TODO change 12 to bar height - 1
@@ -5502,7 +5519,7 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
 }
 
 int mudclient_is_ui_scaled(mudclient *mud) {
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(SDL2)
     return mud->options->ui_scale && mud->game_width >= (MUD_WIDTH * 2) &&
            mud->game_height >= (MUD_HEIGHT * 2);
 #else
