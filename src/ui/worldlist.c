@@ -19,6 +19,7 @@ static struct server_type list[256] = {0};
 
 static void worldlist_set_defaults(void);
 static void worldlist_read_presets(struct mudclient *mud);
+static void worldlist_select(mudclient *, int);
 
 static void worldlist_set_defaults(void) {
     strcpy(list[0].name, "OpenRSC_Preservation");
@@ -108,7 +109,11 @@ void worldlist_new(mudclient *mud) {
         mud->panel_login_worldlist, x - 150, y, 250, 170, FONT_REGULAR_11, 256, 1);
     worldlist_read_presets(mud);
 
+
+    int world_count = 0;
+
     for (int i = 0; list[i].name[0] != '\0'; ++i) {
+        world_count++;
         for (int j = 0; list[i].name[j] != '\0'; ++j) {
             if (list[i].name[j] == '_') {
                 list[i].name[j] = ' ';
@@ -120,11 +125,25 @@ void worldlist_new(mudclient *mud) {
     }
 
     if (mud->server[0] == '\0') {
-        strcpy(mud->server, list[0].host);
-        strcpy(mud->rsa_exponent, list[0].rsa_exponent);
-        strcpy(mud->rsa_modulus, list[0].rsa_modulus);
-        mud->port = list[0].port;
+        int world_id = mud->options->last_world;
+
+        if (world_id >= 0 && world_id < world_count) {
+            worldlist_select(mud, world_id);
+        } else {
+            printf("would have been %d\n", mud->options->last_world);
+            worldlist_select(mud, 0);
+        }
     }
+}
+
+static void worldlist_select(mudclient *mud, int index) {
+    strcpy(mud->server, list[index].host);
+    strcpy(mud->rsa_exponent, list[index].rsa_exponent);
+    strcpy(mud->rsa_modulus, list[index].rsa_modulus);
+    printf("INFO: Changed world to %s\n", list[index].name);
+    mud->port = list[index].port;
+    mud->options->last_world = index;
+    mud->panel_login_worldlist->control_activated[mud->control_list_worlds] = index;
 }
 
 void worldlist_handle_mouse(mudclient *mud) {
@@ -137,11 +156,7 @@ void worldlist_handle_mouse(mudclient *mud) {
             mud->panel_login_worldlist
                 ->control_list_entry_mouse_over[mud->control_list_worlds];
         if (world_index >= 0) {
-            strcpy(mud->server, list[world_index].host);
-            strcpy(mud->rsa_exponent, list[world_index].rsa_exponent);
-            strcpy(mud->rsa_modulus, list[world_index].rsa_modulus);
-            printf("INFO: Changed world to %s\n", list[world_index].name);
-            mud->port = list[world_index].port;
+            worldlist_select(mud, world_index);
         }
     } else if (panel_is_clicked(mud->panel_login_worldlist,
                                mud->control_worldlist_button)) {
