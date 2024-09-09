@@ -698,7 +698,7 @@ void mudclient_mouse_released(mudclient *mud, int x, int y, int button) {
             return;
         }
 
-        int x_delta = x - mud->last_mouse_sample_x;
+        int x_delta = mud->mouse_x - mud->last_mouse_sample_x;
 
         mud->camera_momentum = 2 * ((float)x_delta / (float)tick_delta);
     }
@@ -781,10 +781,10 @@ void mudclient_mouse_pressed(mudclient *mud, int x, int y, int button) {
     if (mud->options->middle_click_camera != 0 && button == 2) {
         mud->middle_button_down = 1;
         mud->origin_rotation = mud->camera_rotation;
-        mud->origin_mouse_x = x;
+        mud->origin_mouse_x = mud->mouse_x;
 
         mud->last_mouse_sample_ticks = get_ticks();
-        mud->last_mouse_sample_x = x;
+        mud->last_mouse_sample_x = mud->mouse_x;
         mud->camera_momentum = 0;
         return;
     }
@@ -3249,14 +3249,7 @@ void mudclient_handle_game_input(mudclient *mud) {
 
         if (ticks - mud->last_mouse_sample_ticks >= 250) {
             mud->last_mouse_sample_ticks = ticks;
-
-            int mouse_x = mud->mouse_x;
-
-#ifdef RENDER_GL
-            mouse_x = mud->gl_mouse_x;
-#endif
-
-            mud->last_mouse_sample_x = mouse_x;
+            mud->last_mouse_sample_x = mud->mouse_x;
         }
     }
 
@@ -3492,19 +3485,13 @@ void mudclient_handle_game_input(mudclient *mud) {
         mud->camera_rotation = (mud->camera_rotation - 2) & 0xff;
     }
 
-    int mouse_x = mud->mouse_x;
-
-#ifdef RENDER_GL
-    mouse_x = mud->gl_mouse_x;
-#endif
-
     if (!mud->settings_camera_auto && mud->options->middle_click_camera != 0 &&
         mud->middle_button_down) {
         float scale = mud->options->middle_click_camera / 100.0f;
 
         mud->camera_rotation =
             (mud->origin_rotation +
-             (int)((mouse_x - mud->origin_mouse_x) * scale)) &
+             (int)((mud->mouse_x - mud->origin_mouse_x) * scale)) &
             0xff;
     }
 

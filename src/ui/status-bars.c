@@ -38,7 +38,7 @@ void mudclient_draw_status_bars(mudclient *mud) {
 
     int show_opponent_health = opponent != NULL && opponent->max_hits != 0;
 
-    if (status_bar_width >= (mud->surface->width / 6) &&
+    if (!is_touch && status_bar_width >= (mud->surface->width / 6) &&
         !show_opponent_health) {
         y += status_bar_height + 5;
     } else {
