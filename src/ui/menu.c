@@ -862,11 +862,12 @@ void mudclient_create_right_click_menu(mudclient *mud) {
         GameModel *game_model = picked_models[i];
         int face = picked_faces[i];
 
-        // TODO clean up
-        if (face != -1 && !((game_model->face_tag[face] <= 65535 ||
-                             game_model->face_tag[face] >= 200000) &&
-                            game_model->face_tag[face] <= 300000)) {
-            continue;
+        if (face != -1 && face < game_model->face_count) {
+                if (!((game_model->face_tag[face] <= 65535 ||
+                        game_model->face_tag[face] >= 200000) &&
+                        game_model->face_tag[face] <= 300000)) {
+                    continue;
+                }
         }
 
         /* 2D face picking */
@@ -1509,11 +1510,8 @@ void mudclient_create_right_click_menu(mudclient *mud) {
                 mud->objects[index].already_in_menu = 1;
             }
         } else {
-            if (face >= 0) {
+            if (face >= 0 && face < game_model->face_count) {
                 face = game_model->face_tag[face] - TILE_FACE_TAG;
-            }
-
-            if (face >= 0) {
                 selected_face = face;
             }
         }
