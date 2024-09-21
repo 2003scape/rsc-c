@@ -19,6 +19,8 @@ typedef struct Options Options;
      "members = %d\n"                                                          \
      "; Disables display of Fatigue, for servers that don't support it\n"      \
      "fatigue = %d\n"                                                          \
+     "; Last selected entry on world list\n"                                   \
+     "last_world = %d\n"                                                        \
      "; Maximum number of quests to display (50 for final version of RSC)\n"   \
      "max_quests = %d\n"                                                       \
      "; Maximum number of skills to display (18 for final version of RSC)\n"   \
@@ -177,6 +179,9 @@ struct Options {
 
     /* disable display of fatigue */
     int fatigue;
+
+    /* last selected world on list */
+    int last_world;
 
     /* maximum number of quests to display */
     int max_quests;

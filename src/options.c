@@ -14,6 +14,7 @@ void options_new(Options *options) {
     memset(options, 0, sizeof(Options));
 
     /* presets */
+    options->last_world = 0;
     options->account_management = 1;
     options->anti_macro = 0;
     options->retry_login_on_disconnect = 0;
@@ -218,6 +219,7 @@ void options_save(Options *options) {
     sprintf(file_buffer, OPTIONS_INI_TEMPLATE,
             options->members,               //
             options->fatigue,               //
+            options->last_world,            //
             options->max_quests,            //
             options->max_skills,            //
             options->registration,          //
@@ -315,6 +317,7 @@ void options_load(Options *options) {
     /* connection */
     OPTION_INI_INT("members", options->members, 0, 1);
     OPTION_INI_INT("fatigue", options->fatigue, 0, 1);
+    OPTION_INI_INT("last_world", options->last_world, 0, 256);
     OPTION_INI_INT("max_quests", options->max_quests, 0, 50);
     OPTION_INI_INT("max_skills", options->max_skills, 0, 18);
     OPTION_INI_INT("registration", options->registration, 0, 1);
