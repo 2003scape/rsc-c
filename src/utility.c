@@ -43,7 +43,7 @@ void init_utility_global(void) {
 void get_config_path(const char *file, char *path) {
 #ifdef ANDROID
     char *pref_path = SDL_GetPrefPath("scape2003", "mudclient");
-    snprintf(path, PATH_MAX, "%sworlds.cfg", pref_path);
+    snprintf(path, PATH_MAX, "%s%s", pref_path, file);
     SDL_free(pref_path);
 #elif defined(EMSCRIPTEN)
     snprintf(path, PATH_MAX, "/options/%s", file);
@@ -66,7 +66,7 @@ void get_config_path(const char *file, char *path) {
         snprintf(path, PATH_MAX, "%s/.config/rsc-c/%s", home, file);
     }
 #else
-    snprintf(path, PATH_MAX, "%s", "./worlds.cfg");
+    snprintf(path, PATH_MAX, "%s", file);
 #endif
 }
 
