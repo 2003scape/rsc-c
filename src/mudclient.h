@@ -472,7 +472,7 @@ struct MenuEntry {
     int x, y;
     int16_t index;
     int16_t source_index;
-    int16_t target_index;
+    int32_t target_index;
 };
 
 struct mudclient {
