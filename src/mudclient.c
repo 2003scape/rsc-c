@@ -4982,6 +4982,7 @@ void mudclient_on_resize(mudclient *mud) {
     int new_width = MUD_WIDTH;
     int new_height = MUD_HEIGHT;
 
+#if !defined(_3DS) && !defined(WII) && !defined(SDL12)
 #ifdef RENDER_GL
     SDL_Window *window = mud->gl_window;
 #else
@@ -4995,6 +4996,7 @@ void mudclient_on_resize(mudclient *mud) {
 #endif
 
     SDL_GetWindowSize(window, &new_width, &new_height);
+#endif
 
 #ifdef ANDROID
     mudclient_full_width = new_width;
