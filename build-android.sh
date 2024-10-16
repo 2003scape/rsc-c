@@ -4,7 +4,7 @@
 #You may have to manually download Android commandline-tools and Android NDK and extract them.
 if [ -e /usr/lib/android-sdk ]; then
 	export ANDROID_HOME=/usr/lib/android-sdk
-	if ! [ -e /usr/lib/android-sdk/licenses/google-sdk-license ]; ten
+	if ! [ -e /usr/lib/android-sdk/licenses/android-sdk-license ]; then
 		git clone https://github.com/Shadowstyler/android-sdk-licenses.git
 		sudo cp -p android-sdk-licenses/*-license /usr/lib/android-sdk/licenses
 	fi
