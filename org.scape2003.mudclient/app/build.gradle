@@ -21,7 +21,7 @@ android {
             ndkBuild {
                 arguments "APP_PLATFORM=android-19"
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                cFlags "-Ofast -DRENDER_SW -DREVISION_177"
+                cFlags "-Ofast -DRENDER_SW -DSDL2"
             }
         }
     }
