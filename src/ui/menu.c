@@ -1,4 +1,6 @@
 #include "menu.h"
+#define MENU_TEXT_TOP 1
+#define MENU_TEXT_BOTTOM 2
 
 static int get_entry_height(mudclient *mud);
 
@@ -633,6 +635,8 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
 
     int is_touch = mudclient_is_touch(mud);
 
+    int menu_text_position = MENU_TEXT_TOP;
+
     if (strlen(menu_text) > 0) {
         int y_position = 14;
         int y_offset = 35;
@@ -643,9 +647,13 @@ void mudclient_create_top_mouse_menu(mudclient *mud) {
                 y_offset = 18;
             }
 
-            y_position = mud->surface->height - y_offset;
+            if (menu_text_position == MENU_TEXT_TOP) {
+                y_position = 11;
+            } else {
+                y_position = mud->surface->height - y_offset;
+            }
 
-            if (mud->is_in_wilderness) {
+            if (menu_text_position == MENU_TEXT_BOTTOM && mud->is_in_wilderness) {
                 x_position = 76;
             }
         }
