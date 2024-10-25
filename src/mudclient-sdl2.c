@@ -233,6 +233,10 @@ void mudclient_start_application(mudclient *mud, char *title) {
         exit(1);
     }
 
+#ifdef SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH
+    SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
+#endif
+
 #ifdef __SWITCH__
     SDL_JoystickEventState(SDL_ENABLE);
     joystick = SDL_JoystickOpen(0);
