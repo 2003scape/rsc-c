@@ -614,7 +614,7 @@ add_diverse_npcs(void) {
     npc.skin_colour = SKIN_COLOUR_TAN2;
     game_data.npcs[game_data.npc_count++] = npc;
 
-    npc = game_data.npcs[NPC_DARKWIZARD];
+    npc = game_data.npcs[NPC_DARKWIZARD2];
     npc.skin_colour = SKIN_COLOUR_DARK2;
     game_data.npcs[game_data.npc_count++] = npc;
 
@@ -827,11 +827,11 @@ diversify_npc(int id, int server_index, int x, int y) {
             r = roll_isaac(server_index, 4);
             return r == 0 ? NPC_CHAOS_DRUID : chaos_druid_start + (r - 1);
         case NPC_DARKWIZARD:
-            r = roll_isaac(server_index, 4);
+            r = roll_isaac(server_index, 3);
             return r == 0 ? NPC_DARKWIZARD : darkwizard_start + (r - 1);
         case NPC_DARKWIZARD2:
-            r = roll_isaac(server_index, 4);
-            return r == 0 ? NPC_DARKWIZARD : darkwizard_start + (r - 1);
+            r = roll_isaac(server_index, 3);
+            return r == 0 ? NPC_DARKWIZARD2 : darkwizard2_start + (r - 1);
         case NPC_BANKER_AL_KHARID:
             r = roll_isaac(server_index, 2);
             return r == 0 ? NPC_BANKER_AL_KHARID : al_kharid_banker_start + (r - 1);
