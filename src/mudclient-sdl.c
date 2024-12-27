@@ -37,6 +37,11 @@ void mudclient_poll_events(mudclient *mud) {
             char char_code;
             int code;
             get_sdl_keycodes(&event.key.keysym, &char_code, &code);
+#ifdef SDL_TEXTINPUT
+            if (isdigit((unsigned char)char_code)) {
+		return;
+            }
+#endif
             mudclient_key_pressed(mud, code, char_code);
             break;
         }
@@ -397,6 +402,15 @@ void mudclient_poll_events(mudclient *mud) {
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 mudclient_on_resize(mud);
+            }
+            break;
+        case SDL_TEXTINPUT:
+            if (strlen(event.text.text) == 1) {
+                char ch = event.text.text[0];
+
+                if (isprint((unsigned char)ch)) {
+                    mudclient_key_pressed(mud, ch, ch);
+                }
             }
             break;
 #endif
