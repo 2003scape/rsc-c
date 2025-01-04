@@ -2635,7 +2635,7 @@ void mudclient_start_game(mudclient *mud) {
 #endif
 
     mud->world = malloc(sizeof(World));
-    world_new(mud->world, mud->scene, mud->surface);
+    world_new(mud->world, mud->scene, mud->surface, mud->options->version_maps);
 
     /* used for storing minimap sprite */
     mud->world->base_media_sprite = mud->sprite_media;
