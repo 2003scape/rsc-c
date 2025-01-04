@@ -19,8 +19,16 @@ typedef struct Options Options;
      "members = %d\n"                                                          \
      "; Disables display of Fatigue, for servers that don't support it\n"      \
      "fatigue = %d\n"                                                          \
+     "; Versions of .jag and .mem files to load\n"                             \
+     "version_config = %d\n"                                                   \
+     "version_maps = %d\n"                                                     \
+     "version_entity = %d\n"                                                   \
+     "version_media = %d\n"                                                    \
+     "version_models = %d\n"                                                   \
+     "version_textures = %d\n"                                                 \
+     "version_sounds = %d\n"                                                   \
      "; Last selected entry on world list\n"                                   \
-     "last_world = %d\n"                                                        \
+     "last_world = %d\n"                                                       \
      "; Maximum number of quests to display (50 for final version of RSC)\n"   \
      "max_quests = %d\n"                                                       \
      "; Maximum number of skills to display (18 for final version of RSC)\n"   \
@@ -179,6 +187,14 @@ struct Options {
 
     /* disable display of fatigue */
     int fatigue;
+
+    int version_config;
+    int version_maps;
+    int version_entity;
+    int version_media;
+    int version_models;
+    int version_textures;
+    int version_sounds;
 
     /* last selected world on list */
     int last_world;
