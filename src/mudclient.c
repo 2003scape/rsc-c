@@ -926,30 +926,29 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
 #ifdef WII
     const int8_t *file_data = NULL;
 
-    if (strcmp(file, "jagex.jag") == 0) {
+    if (strstr(file, "jagex.jag") != NULL) {
         file_data = (int8_t *)jagex_jag;
-    } else if (strcmp(file, "config" VERSION_STR(VERSION_CONFIG) ".jag") == 0) {
+    } else if (strstr(file, "config") != NULL) {
         file_data = (int8_t *)config85_jag;
-    } else if (strcmp(file, "media" VERSION_STR(VERSION_MEDIA) ".jag") == 0) {
+    } else if (strstr(file, "media") != NULL) {
         file_data = (int8_t *)media58_jag;
-    } else if (strcmp(file, "entity" VERSION_STR(VERSION_ENTITY) ".jag") == 0) {
+    } else if (strstr(file, "entity") != NULL && strstr(file, ".mem") == NULL) {
         file_data = (int8_t *)entity24_jag;
-    } else if (strcmp(file, "entity" VERSION_STR(VERSION_ENTITY) ".mem") == 0) {
+    } else if (strstr(file, "entity") != NULL && strstr(file, ".mem") != NULL) {
         file_data = (int8_t *)entity24_mem;
-    } else if (strcmp(file, "textures" VERSION_STR(VERSION_TEXTURES) ".jag") ==
-               0) {
+    } else if (strstr(file, "textures") != NULL) {
         file_data = (int8_t *)textures17_jag;
-    } else if (strcmp(file, "maps" VERSION_STR(VERSION_MAPS) ".jag") == 0) {
+    } else if (strstr(file, "maps") != NULL && strstr(file, ".mem") == NULL) {
         file_data = (int8_t *)maps63_jag;
-    } else if (strcmp(file, "maps" VERSION_STR(VERSION_MAPS) ".mem") == 0) {
+    } else if (strstr(file, "maps") != NULL && strstr(file, ".mem") != NULL) {
         file_data = (int8_t *)maps63_mem;
-    } else if (strcmp(file, "land" VERSION_STR(VERSION_MAPS) ".jag") == 0) {
+    } else if (strstr(file, "land") != NULL && strstr(file, ".mem") == NULL) {
         file_data = (int8_t *)land63_jag;
-    } else if (strcmp(file, "land" VERSION_STR(VERSION_MAPS) ".mem") == 0) {
+    } else if (strstr(file, "land") != NULL && strstr(file, ".mem") != NULL) {
         file_data = (int8_t *)land63_mem;
-    } else if (strcmp(file, "models" VERSION_STR(VERSION_MODELS) ".jag") == 0) {
+    } else if (strstr(file, "models") != NULL) {
         file_data = (int8_t *)models36_jag;
-    } else if (strcmp(file, "sounds" VERSION_STR(VERSION_SOUNDS) ".mem") == 0) {
+    } else if (strstr(file, "sounds") != NULL) {
         file_data = (int8_t *)sounds1_mem;
     }
 
@@ -1110,8 +1109,12 @@ void mudclient_load_jagex(mudclient *mud) {
 }
 
 void mudclient_load_game_config(mudclient *mud) {
+    char jag[16];
+
+    snprintf(jag, sizeof(jag), "config%d.jag", mud->options->version_config);
+
     int8_t *config_jag = mudclient_read_data_file(
-        mud, "config" VERSION_STR(VERSION_CONFIG) ".jag", "Configuration", 10);
+        mud, jag, "Configuration", 10);
 
     if (config_jag == NULL) {
         mud->error_loading_data = 1;
@@ -1143,11 +1146,11 @@ void mudclient_load_game_config(mudclient *mud) {
 static void mudclient_load_media_dat(mudclient *mud, void *media_jag) {
     int8_t *index_dat = load_data("index.dat", 0, media_jag, NULL);
 
-#if (VERSION_MEDIA < 59)
-    surface_parse_sprite(mud->surface, mud->sprite_media,
-                         load_data("inv1.dat", 0, media_jag, NULL), index_dat,
-                         1);
-#endif
+    if (mud->options->version_media < 59) {
+        surface_parse_sprite(mud->surface, mud->sprite_media,
+                             load_data("inv1.dat", 0, media_jag, NULL),
+                             index_dat, 1);
+    }
 
     surface_parse_sprite(mud->surface, mud->sprite_media + 1,
                          load_data("inv2.dat", 0, media_jag, NULL), index_dat,
@@ -1189,23 +1192,23 @@ static void mudclient_load_media_dat(mudclient *mud, void *media_jag) {
                          load_data("buttons.dat", 0, media_jag, NULL),
                          index_dat, 2);
 
-#if (VERSION_MEDIA >= 59)
-    surface_parse_sprite(mud->surface, mud->sprite_media + 27,
-                         load_data("labels.dat", 0, media_jag, NULL), index_dat,
-                         6);
+    if (mud->options->version_media >= 59) {
+        surface_parse_sprite(mud->surface, mud->sprite_media + 27,
+                             load_data("labels.dat", 0, media_jag, NULL),
+                             index_dat, 6);
 
-    surface_parse_sprite(mud->surface, mud->sprite_media + 33,
-                         load_data("inv3.dat", 0, media_jag, NULL), index_dat,
-                         6);
+        surface_parse_sprite(mud->surface, mud->sprite_media + 33,
+                             load_data("inv3.dat", 0, media_jag, NULL),
+                             index_dat, 6);
 
-    surface_parse_sprite(mud->surface, mud->sprite_media + 39,
-                         load_data("message.dat", 0, media_jag, NULL),
-                         index_dat, 1);
+        surface_parse_sprite(mud->surface, mud->sprite_media + 39,
+                             load_data("message.dat", 0, media_jag, NULL),
+                             index_dat, 1);
 
-    surface_parse_sprite(mud->surface, mud->sprite_media + 40,
-                         load_data("keyboard.dat", 0, media_jag, NULL),
-                         index_dat, 1);
-#endif
+        surface_parse_sprite(mud->surface, mud->sprite_media + 40,
+                             load_data("keyboard.dat", 0, media_jag, NULL),
+                             index_dat, 1);
+    }
 
     surface_parse_sprite(mud->surface, mud->sprite_util,
                          load_data("scrollbar.dat", 0, media_jag, NULL),
@@ -1349,32 +1352,36 @@ static void mudclient_load_media_tga(mudclient *mud, void *media_jag) {
 
 void mudclient_load_media(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
+    char jag[16];
+
+    snprintf(jag, sizeof(jag), "media%d.jag", mud->options->version_media);
+
     int8_t *media_jag = mudclient_read_data_file(
-        mud, "media" VERSION_STR(VERSION_MEDIA) ".jag", "2d graphics", 20);
+        mud, jag, "2d graphics", 20);
 
     if (media_jag == NULL) {
         mud->error_loading_data = 1;
         return;
     }
 
-#if !MEDIA_IS_TGA
-    mudclient_load_media_dat(mud, media_jag);
-#else
-    mudclient_load_media_tga(mud, media_jag);
-#endif
+    if (!MEDIA_IS_TGA(mud->options->version_media)) {
+        mudclient_load_media_dat(mud, media_jag);
+    } else {
+        mudclient_load_media_tga(mud, media_jag);
+    }
 
 #ifdef RENDER_SW
     /* this is probably for an optimization, but it is necessary for the action
      * bubble scaling */
-#if (VERSION_MEDIA >= 59)
-    for (int i = 0; i < 6; i++) {
-        surface_load_sprite(mud->surface, mud->sprite_media + 33 + i);
-    }
+    if (mud->options->version_media >= 59) {
+        for (int i = 0; i < 6; i++) {
+            surface_load_sprite(mud->surface, mud->sprite_media + 33 + i);
+        }
 
-    surface_load_sprite(mud->surface, mud->sprite_media + 39);
-#else
-    surface_load_sprite(mud->surface, mud->sprite_media);
-#endif
+        surface_load_sprite(mud->surface, mud->sprite_media + 39);
+    } else {
+        surface_load_sprite(mud->surface, mud->sprite_media);
+    }
 
     surface_load_sprite(mud->surface, mud->sprite_media + 9);
 
@@ -1399,9 +1406,11 @@ void mudclient_load_media(mudclient *mud) {
 
 void mudclient_load_entities(mudclient *mud) {
 #if defined(RENDER_GL) || defined(RENDER_SW) || defined(RENDER_3DS_GL)
+    char jag[16];
+    snprintf(jag, sizeof(jag), "entity%d.jag", mud->options->version_entity);
+
     int8_t *entity_jag = mudclient_read_data_file(
-        mud, "entity" VERSION_STR(VERSION_ENTITY) ".jag", "people and monsters",
-        30);
+        mud, jag, "people and monsters", 30);
 
     int8_t *entity_jag_legacy = NULL;
 
@@ -1410,7 +1419,7 @@ void mudclient_load_entities(mudclient *mud) {
         entity_jag_legacy = mudclient_read_data_file(mud, "entity8.jag",
                                                      "people and monsters", 37);
     }
-    if (ENTITY_IS_TGA) {
+    if (ENTITY_IS_TGA(mud->options->version_entity)) {
         entity_jag_legacy = entity_jag;
     }
 #endif
@@ -1424,10 +1433,12 @@ void mudclient_load_entities(mudclient *mud) {
     int8_t *entity_jag_mem = NULL;
     int8_t *index_dat_mem = NULL;
 
-    if (mud->options->members && !ENTITY_IS_TGA) {
+    if (mud->options->members && !ENTITY_IS_TGA(mud->options->version_entity)) {
+        snprintf(jag, sizeof(jag), "entity%d.mem",
+            mud->options->version_entity);
+
         entity_jag_mem = mudclient_read_data_file(
-            mud, "entity" VERSION_STR(VERSION_ENTITY) ".mem", "member graphics",
-            45);
+            mud, jag, "member graphics", 45);
 
         if (entity_jag_mem == NULL) {
             mud->error_loading_data = 1;
@@ -1461,7 +1472,7 @@ void mudclient_load_entities(mudclient *mud) {
         int8_t *archive_file = entity_jag;
 
 #if !defined(RENDER_GL) && !defined(RENDER_3DS_GL)
-        if (ENTITY_IS_TGA) {
+        if (ENTITY_IS_TGA(mud->options->version_entity)) {
             older_is_better = true;
             extension = "tga";
         } else if (mud->options->tga_sprites) {
@@ -1590,8 +1601,12 @@ fallthrough:
 
 void mudclient_load_textures(mudclient *mud) {
 #ifdef RENDER_SW
-    int8_t *textures_jag = mudclient_read_data_file(
-        mud, "textures" VERSION_STR(VERSION_TEXTURES) ".jag", "Textures", 50);
+    char jag[16];
+
+    snprintf(jag, sizeof(jag), "textures%d.jag",
+        mud->options->version_textures);
+
+    int8_t *textures_jag = mudclient_read_data_file(mud, jag, "Textures", 50);
 
     if (textures_jag == NULL) {
         mud->error_loading_data = 1;
@@ -1698,7 +1713,10 @@ void mudclient_load_models(mudclient *mud) {
         }
     }
 
-    char *models_filename = "models" VERSION_STR(VERSION_MODELS) ".jag";
+    char models_filename[16];
+
+    snprintf(models_filename, sizeof(models_filename),
+        "models%d.jag", mud->options->version_models);
 
     int8_t *models_jag =
         mudclient_read_data_file(mud, models_filename, "3d models", 60);
@@ -1828,29 +1846,38 @@ void mudclient_load_models(mudclient *mud) {
 }
 
 void mudclient_load_maps(mudclient *mud) {
+    char jag[16];
+
+    snprintf(jag, sizeof(jag), "maps%d.jag", mud->options->version_maps);
     mud->world->map_pack = mudclient_read_data_file(
-        mud, "maps" VERSION_STR(VERSION_MAPS) ".jag", "map", 70);
+        mud, jag, "map", 70);
 
     if (mud->options->members) {
+        snprintf(jag, sizeof(jag), "maps%d.mem", mud->options->version_maps);
         mud->world->member_map_pack = mudclient_read_data_file(
-            mud, "maps" VERSION_STR(VERSION_MAPS) ".mem", "members map", 75);
+            mud, jag, "members map", 75);
     }
 
-#if HAS_SEPARATE_LAND
-    mud->world->landscape_pack = mudclient_read_data_file(
-        mud, "land" VERSION_STR(VERSION_MAPS) ".jag", "landscape", 80);
+    if (HAS_SEPARATE_LAND(mud->options->version_maps)) {
+        snprintf(jag, sizeof(jag), "land%d.jag", mud->options->version_maps);
+        mud->world->landscape_pack = mudclient_read_data_file(
+            mud, jag, "landscape", 80);
 
-    if (mud->options->members) {
-        mud->world->member_landscape_pack = mudclient_read_data_file(
-            mud, "land" VERSION_STR(VERSION_MAPS) ".mem", "members landscape",
-            85);
+        if (mud->options->members) {
+            snprintf(jag, sizeof(jag), "land%d.mem",
+                mud->options->version_maps);
+            mud->world->member_landscape_pack = mudclient_read_data_file(
+                mud, jag, "members landscape", 85);
+        }
     }
-#endif
 }
 
 void mudclient_load_sounds(mudclient *mud) {
-    mud->sound_data = mudclient_read_data_file(
-        mud, "sounds" VERSION_STR(VERSION_SOUNDS) ".mem", "Sound effects", 90);
+    char jag[16];
+
+    snprintf(jag, sizeof(jag), "sounds%d.mem", mud->options->version_sounds);
+
+    mud->sound_data = mudclient_read_data_file(mud, jag, "Sound effects", 90);
 }
 
 void mudclient_reset_game(mudclient *mud) {

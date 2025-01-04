@@ -11,10 +11,10 @@
 #define VERSION_SOUNDS 1
 #define VERSION_TEXTURES 17
 
-#define ENTITY_IS_TGA     (VERSION_ENTITY < 9)
-#define MEDIA_IS_TGA      (VERSION_MEDIA < 28)
+#define ENTITY_IS_TGA(x)     ((x) < 9)
+#define MEDIA_IS_TGA(x)      ((x) < 28)
 
-#define HAS_SEPARATE_LAND (VERSION_MAPS > 27)
+#define HAS_SEPARATE_LAND(x) ((x) > 27)
 
 #define VERSION_STR_HELPER(x) #x
 #define VERSION_STR(x) VERSION_STR_HELPER(x)

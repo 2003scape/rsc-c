@@ -136,15 +136,17 @@ void mudclient_create_options_panel(mudclient *mud) {
     x += (ADDITIONAL_OPTIONS_WIDTH - 4) / 2;
     y = ui_y + OPTION_HORIZ_GAP + ADDITIONAL_OPTIONS_TAB_HEIGHT + 4;
 
-#if VERSION_ENTITY > 8
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options,
-        "@whi@HQ sprites (restart): ", mud->options->tga_sprites, x, y);
+#ifndef RENDER_GL
+    if (mud->options->version_entity > 8) {
+        control = mudclient_add_option_panel_checkbox(
+            mud->panel_game_options,
+            "@whi@HQ sprites (restart): ", mud->options->tga_sprites, x, y);
 
-    mud->game_options[control] = &mud->options->tga_sprites;
-    mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+        mud->game_options[control] = &mud->options->tga_sprites;
+        mud->game_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += OPTION_HORIZ_GAP;
+        y += OPTION_HORIZ_GAP;
+    }
 #endif
 
     control = mudclient_add_option_panel_checkbox(
@@ -469,16 +471,16 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += OPTION_HORIZ_GAP;
 
-#if VERSION_MEDIA > 42
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_ui_options, "@whi@Wiki lookup: ", mud->options->wiki_lookup,
-        x, y);
+    if (mud->options->version_media > 42) {
+        control = mudclient_add_option_panel_checkbox(
+            mud->panel_ui_options, "@whi@Wiki lookup: ",
+            mud->options->wiki_lookup, x, y);
 
-    mud->ui_options[control] = &mud->options->wiki_lookup;
-    mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+        mud->ui_options[control] = &mud->options->wiki_lookup;
+        mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += OPTION_HORIZ_GAP;
-#endif
+        y += OPTION_HORIZ_GAP;
+    }
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_ui_options,
