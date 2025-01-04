@@ -16,7 +16,4 @@
 
 #define HAS_SEPARATE_LAND(x) ((x) > 27)
 
-#define VERSION_STR_HELPER(x) #x
-#define VERSION_STR(x) VERSION_STR_HELPER(x)
-
 #endif
