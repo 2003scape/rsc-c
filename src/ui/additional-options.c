@@ -435,14 +435,16 @@ void mudclient_create_options_panel(mudclient *mud) {
 
     y += OPTION_HORIZ_GAP;
 
-    control = mudclient_add_option_panel_checkbox(
-        mud->panel_ui_options,
-        "@whi@Certificate items: ", mud->options->certificate_items, x, y);
+    if (mud->options->version_media >= 59) {
+        control = mudclient_add_option_panel_checkbox(
+            mud->panel_ui_options,
+            "@whi@Certificate items: ", mud->options->certificate_items, x, y);
 
-    mud->ui_options[control] = &mud->options->certificate_items;
-    mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
+        mud->ui_options[control] = &mud->options->certificate_items;
+        mud->ui_option_types[control] = ADDITIONAL_OPTIONS_CHECKBOX;
 
-    y += OPTION_HORIZ_GAP;
+        y += OPTION_HORIZ_GAP;
+    }
 
     control = mudclient_add_option_panel_checkbox(
         mud->panel_ui_options, "@whi@Status bars: ", mud->options->status_bars,
