@@ -46,12 +46,13 @@ void init_world_global(void) {
     }
 }
 
-void world_new(World *world, Scene *scene, Surface *surface) {
+void world_new(World *world, Scene *scene, Surface *surface, int version) {
     memset(world, 0, sizeof(World));
 
     world->scene = scene;
     world->surface = surface;
     world->player_alive = 0;
+    world->version = version;
 }
 
 static void world_set_blocked(World *world, int x, int y, int value) {
@@ -504,25 +505,25 @@ static void world_load_section_files(World *world, int x, int y, int plane,
         for (int tile = 0; tile < TILE_COUNT;) {
             int val = get_unsigned_byte(map_data, offset++, len);
 
-#if VERSION_MAPS > 53
-            world->walls_north_south[chunk][tile++] = val;
-#elif VERSION_MAPS > 45
-            if (val < 192) {
+            if (world->version > 53) {
                 world->walls_north_south[chunk][tile++] = val;
+            } else if (world->version > 45) {
+                if (val < 192) {
+                    world->walls_north_south[chunk][tile++] = val;
+                } else {
+                    for (int i = 0; i < val - 192; i++) {
+                        world->walls_north_south[chunk][tile++] = 0;
+                    }
+                }
             } else {
-                for (int i = 0; i < val - 192; i++) {
-                    world->walls_north_south[chunk][tile++] = 0;
+                if (val < 128) {
+                    world->walls_north_south[chunk][tile++] = val;
+                } else {
+                    for (int i = 0; i < val - 128; i++) {
+                        world->walls_north_south[chunk][tile++] = 0;
+                    }
                 }
             }
-#else
-            if (val < 128) {
-                world->walls_north_south[chunk][tile++] = val;
-            } else {
-                for (int i = 0; i < val - 128; i++) {
-                    world->walls_north_south[chunk][tile++] = 0;
-                }
-            }
-#endif
         }
 
         for (int tile = 0; tile < TILE_COUNT;) {
