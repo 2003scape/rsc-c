@@ -142,10 +142,12 @@ void mudclient_draw_ui_tab_social(mudclient *mud, int no_menus) {
         ui_y = (UI_TABS_TOUCH_Y + UI_TABS_TOUCH_HEIGHT) - height - 2;
     }
 
-#if (VERSION_MEDIA >= 59)
-    mudclient_draw_ui_tab_label(mud, SOCIAL_TAB, SOCIAL_WIDTH + !is_touch,
-                                ui_x - !is_touch, ui_y - UI_TABS_LABEL_HEIGHT);
-#endif
+    if (mud->options->version_media >= 59) {
+            mudclient_draw_ui_tab_label(mud, SOCIAL_TAB,
+                                        SOCIAL_WIDTH + !is_touch,
+                                        ui_x - !is_touch,
+                                        ui_y - UI_TABS_LABEL_HEIGHT);
+    }
 
     mud->ui_tab_min_x = ui_x;
     mud->ui_tab_max_x = mud->surface->width;
