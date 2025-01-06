@@ -34,7 +34,7 @@ void mudclient_draw_option_menu(mudclient *mud) {
             mud->key_2 = 0;
             mud->key_3 = 0;
             mud->key_4 = 0;
-            mud->key_4 = 0;
+            mud->key_5 = 0;
 
             return;
         }
