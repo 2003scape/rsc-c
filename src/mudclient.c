@@ -487,16 +487,18 @@ void mudclient_key_pressed(mudclient *mud, int code, int char_code) {
     } else {
         if (code == K_TAB) {
             mud->key_tab = 1;
-        } else if (code == K_1) {
-            mud->key_1 = 1;
-        } else if (code == K_2) {
-            mud->key_2 = 1;
-        } else if (code == K_3) {
-            mud->key_3 = 1;
-        } else if (code == K_4) {
-            mud->key_4 = 1;
-        } else if (code == K_5) {
-            mud->key_5 = 1;
+        } else if (mud->show_option_menu && mud->options->option_numbers) {
+            if (code == K_1) {
+                mud->key_1 = 1;
+            } else if (code == K_2) {
+                mud->key_2 = 1;
+            } else if (code == K_3) {
+                mud->key_3 = 1;
+            } else if (code == K_4) {
+                mud->key_4 = 1;
+            } else if (code == K_5) {
+                mud->key_5 = 1;
+            }
         }
 
         mudclient_handle_key_press(mud, char_code);
