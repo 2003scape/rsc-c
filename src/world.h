@@ -68,6 +68,7 @@ struct World {
     Scene *scene;
     Surface *surface;
     int8_t player_alive;
+    int version;
     int base_media_sprite;
     int8_t *landscape_pack;
     int8_t *map_pack;
@@ -108,7 +109,7 @@ void world_gl_buffer_world_models(World *world);
 void world_gl_update_terrain_buffers(World *world);
 #endif
 
-void world_new(World *world, Scene *scene, Surface *surface);
+void world_new(World *world, Scene *scene, Surface *surface, int version);
 void world_load_section(World *world, int x, int y, int plane);
 int world_route(World *world, int start_x, int start_y, int end_x1, int end_y1,
                 int end_x2, int end_y2, int *route_x, int *route_y,
