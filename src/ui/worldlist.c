@@ -95,7 +95,7 @@ void worldlist_new(mudclient *mud) {
     int button_x = (is_compact ? MUD_MIN_WIDTH : MUD_VANILLA_WIDTH) - 36;
 
     int button_y =
-        is_compact ? MUD_MIN_HEIGHT - 36 : MUD_VANILLA_HEIGHT - 32;
+        is_compact ? MUD_MIN_HEIGHT - 24 : MUD_VANILLA_HEIGHT - 32;
 
     panel_add_button_background(mud->panel_login_worldlist,
         button_x, button_y, 60, 20);
