@@ -700,7 +700,7 @@ void mudclient_draw_additional_options(mudclient *mud) {
                                  ui_y + ADDITIONAL_OPTIONS_HEIGHT - 20,
                                  ADDITIONAL_OPTIONS_WIDTH - 16, BLACK);
 
-    char formatted_reset[43] = {0};
+    char formatted_reset[64] = {0};
     char default_colour[4] = "whi";
     char vanilla_colour[4] = "whi";
 
