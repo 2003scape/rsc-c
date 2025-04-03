@@ -972,9 +972,12 @@ int8_t *mudclient_read_data_file(mudclient *mud, char *file, char *description,
     snprintf(prefixed_file, sizeof(prefixed_file), "./cache/%s", file);
 #endif
 
-    /* attempt to read cache from the current working directory first */
+#ifndef ANDROID
     printf("INFO: Loading %s\n", prefixed_file);
     FILE *archive_stream = fopen(prefixed_file, "rb");
+#endif
+
+    /* attempt to read cache from the current working directory first */
     if (archive_stream == NULL) {
         /* cwd failed, now try the xdg home directory... */
         const char *xdg_home = getenv("XDG_DATA_HOME");
