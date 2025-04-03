@@ -45,6 +45,7 @@
 #include <switch.h>
 #elif defined(_3DS)
 #include <3ds.h>
+#include <malloc.h>
 
 #include "game_top_bgr.h"
 #endif

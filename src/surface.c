@@ -17,7 +17,7 @@ gl_atlas_position gl_transparent_atlas_position = {
     .top_v = (GL_TEXTURE_SIZE - 1.0f) / GL_TEXTURE_SIZE,
     .bottom_v = (GL_TEXTURE_SIZE) / GL_TEXTURE_SIZE};
 
-static GLuint last_base_texture = 0;
+static unsigned int last_base_texture = 0;
 #endif
 
 int an_int_346 = 0;
