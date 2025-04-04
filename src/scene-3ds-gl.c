@@ -38,9 +38,11 @@ void scene_3ds_gl_draw_game_model(Scene *scene, GameModel *game_model) {
         return;
     }
 
+    vertex_buffer_gl_bind(game_model->gl_buffer);
+
     // TODO should bind outside of here
-    C3D_SetAttrInfo(&game_model->gl_buffer->attr_info);
-    C3D_SetBufInfo(&game_model->gl_buffer->buf_info);
+    //C3D_SetAttrInfo(&game_model->gl_buffer->attr_info);
+    //C3D_SetBufInfo(&game_model->gl_buffer->buf_info);
 
     mat4 pica_model = {0};
     glm_mat4_copy(game_model->transform, pica_model);
