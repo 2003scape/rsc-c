@@ -64,7 +64,7 @@ struct Panel {
     int *control_width;
     int *control_height;
     int *control_input_max_length;
-    int *control_font_style; /* also used for sprite IDs */
+    FontStyle *control_font_style; /* also used for sprite IDs */
     char **control_text;
     char ***control_list_entries;
     int mouse_x;
