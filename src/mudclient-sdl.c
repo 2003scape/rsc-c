@@ -2,6 +2,13 @@
 
 #if defined(SDL12) || defined(SDL2)
 
+#ifdef __SWITCH__
+#define MAX_KBD_STR_SIZE 200
+static SwkbdConfig switch_keyboard;
+static char switch_keyboard_buffer[MAX_KBD_STR_SIZE] = {0};
+static uint8_t switch_mouse_button = 1;
+#endif
+
 static int mudclient_horizontal_drag = 0;
 static int mudclient_vertical_drag = 0;
 

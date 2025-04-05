@@ -64,7 +64,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= `$(PREFIX)pkg-config --libs libglad sdl2 SDL2_image` -lbz2 -lnx -lm -lstdc++
+LIBS	:= `$(PREFIX)pkg-config --libs libglad sdl2 SDL2_image` -lnx -lm -lstdc++
 
 LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 
