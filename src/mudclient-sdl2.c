@@ -1,6 +1,11 @@
 #include "mudclient.h"
 
 #ifdef SDL2
+
+#ifdef __SWITCH__
+static SDL_Joystick *joystick;
+#endif
+
 void get_sdl_keycodes(SDL_Keysym *keysym, char *char_code, int *code) {
     *code = -1;
     *char_code = -1;

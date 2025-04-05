@@ -106,14 +106,6 @@ static const char *anims_older_is_better[] = {
 
 char login_screen_status[255] = {0};
 
-#ifdef __SWITCH__
-SDL_Joystick *joystick;
-#define MAX_KBD_STR_SIZE 200
-SwkbdConfig switch_keyboard;
-char switch_keyboard_buffer[MAX_KBD_STR_SIZE] = {0};
-uint8_t switch_mouse_button = 1;
-#endif
-
 void mudclient_new(mudclient *mud) {
     memset(mud, 0, sizeof(mudclient));
 

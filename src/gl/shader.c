@@ -1,3 +1,4 @@
+#include "../mudclient.h"
 #include "shader.h"
 
 #ifdef RENDER_GL
