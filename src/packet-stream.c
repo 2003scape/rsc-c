@@ -15,10 +15,12 @@ static int winsock_init = 0;
 #define socket(x, y, z) net_socket(x, y, z)
 #define gethostbyname net_gethostbyname
 #define setsockopt net_setsockopt
+#define select net_select
 #define connect net_connect
 #define close net_close
 #define write net_write
 #define recv net_recv
+#define ioctl net_ioctl
 #endif
 
 #if 0
@@ -75,6 +77,15 @@ void init_packet_stream_global(void) { THREAT_LENGTH = strlen(SPOOKY_THREAT); }
 void on_signal_do_nothing(int dummy);
 
 void on_signal_do_nothing(int dummy) { (void)dummy; }
+#endif
+
+#ifdef WII
+int getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
+{
+    int *val = optval;
+    *val = 0;
+    return 0;
+}
 #endif
 
 void packet_stream_new(PacketStream *packet_stream, mudclient *mud) {

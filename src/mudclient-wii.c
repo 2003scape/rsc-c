@@ -6,20 +6,22 @@ char keyboard_buttons[5][10] = {
     {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'},
     {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';'},
     {'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'},
-    {' ', ' ', ' ', ' ', ' ', ' ', '-', '=', '\'', NULL}};
+    {' ', ' ', ' ', ' ', ' ', ' ', '-', '=', '\''}};
 
 char keyboard_shift_buttons[5][10] = {
     {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')'},
     {'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'},
     {'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':'},
     {'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?'},
-    {' ', ' ', ' ', ' ', ' ', ' ', '_', '+', '"', NULL}};
+    {' ', ' ', ' ', ' ', ' ', ' ', '_', '+', '"'}};
 
 int keyboard_offsets[] = {0, 11, 16, 21, 46};
 
 int wii_mouse_x = 0;
 int wii_mouse_y = 0;
 int wii_mouse_button = 0;
+
+int update_wii_mouse(WPADData *wiimote_data);
 
 void mudclient_poll_events(mudclient *mud) {
     /* handle USB keyboard */
