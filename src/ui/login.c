@@ -114,40 +114,47 @@ void mudclient_create_login_panels(mudclient *mud) {
     panel_new(mud->panel_login_new_user, mud->surface, 50);
 
     if (!mud->options->account_management) {
-        y = 230;
+        FontStyle font;
 
-        if (mud->refer_id == 0) {
+        if (!is_compact) {
+            font = FONT_BOLD_14;
+            y = 230;
+        } else {
+            font = FONT_REGULAR_12;
+            y = 140;
+        }
+
+        if (mud->refer_id == 0 && !is_compact) {
             panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
                                   "To create an account please go back to the",
-                                  FONT_BOLD_14, 1);
+                                  font, 1);
 
             y += 20;
 
             panel_add_text_centre(
                 mud->panel_login_new_user, x, y + 8,
                 "www.runescape.com front page, and choose 'create account'",
-                FONT_BOLD_14, 1);
+                font, 1);
         } else if (mud->refer_id == 1) {
             panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
                                   "To create an account please click on the",
-                                  FONT_BOLD_14, 1);
+                                  font, 1);
 
             y += 20;
 
             panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
                                   "'create account' link below the game window",
-                                  FONT_BOLD_14, 1);
+                                  font, 1);
         } else {
             panel_add_text_centre(mud->panel_login_new_user, x, y + 8,
                                   "To create an account please go back to the",
-                                  FONT_BOLD_14, 1);
+                                  font, 1);
 
             y += 20;
 
             panel_add_text_centre(
                 mud->panel_login_new_user, x, y + 8,
-                "runescape front webpage and choose 'create account'",
-                FONT_BOLD_14, 1);
+                "runescape front webpage and choose 'create account'", font, 1);
         }
 
         y += 30;
