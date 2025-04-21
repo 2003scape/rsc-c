@@ -61,6 +61,8 @@ void get_config_path(const char *file, char *path) {
             home = "";
         }
 
+        snprintf(path, PATH_MAX, "%s/.config", home);
+        (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
         snprintf(path, PATH_MAX, "%s/.config/rsc-c", home);
         (void)mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR);
         snprintf(path, PATH_MAX, "%s/.config/rsc-c/%s", home, file);
