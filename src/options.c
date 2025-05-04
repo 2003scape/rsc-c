@@ -38,6 +38,13 @@ void options_new(Options *options) {
 void options_set_defaults(Options *options) {
     /* server */
     options->members = 1;
+    options->version_config = VERSION_CONFIG;
+    options->version_entity = VERSION_ENTITY;
+    options->version_maps = VERSION_MAPS;
+    options->version_media = VERSION_MEDIA;
+    options->version_models = VERSION_MODELS;
+    options->version_sounds = VERSION_SOUNDS;
+    options->version_textures = VERSION_TEXTURES;
     options->fatigue = 1;
     options->max_quests = 50;
     options->max_skills = 18;
@@ -121,6 +128,13 @@ void options_set_defaults(Options *options) {
 void options_set_vanilla(Options *options) {
     /* connection */
     options->members = 1;
+    options->version_config = VERSION_CONFIG;
+    options->version_entity = VERSION_ENTITY;
+    options->version_maps = VERSION_MAPS;
+    options->version_media = VERSION_MEDIA;
+    options->version_models = VERSION_MODELS;
+    options->version_sounds = VERSION_SOUNDS;
+    options->version_textures = VERSION_TEXTURES;
     options->fatigue = 1;
     options->max_quests = 50;
     options->max_skills = 18;
@@ -219,6 +233,13 @@ void options_save(Options *options) {
     sprintf(file_buffer, OPTIONS_INI_TEMPLATE,
             options->members,               //
             options->fatigue,               //
+            options->version_config,        //
+            options->version_maps,          //
+            options->version_entity,        //
+            options->version_media,         //
+            options->version_models,        //
+            options->version_textures,      //
+            options->version_sounds,        //
             options->last_world,            //
             options->max_quests,            //
             options->max_skills,            //
@@ -316,6 +337,13 @@ void options_load(Options *options) {
 
     /* connection */
     OPTION_INI_INT("members", options->members, 0, 1);
+    OPTION_INI_INT("version_config", options->version_config, 0, 256);
+    OPTION_INI_INT("version_maps", options->version_maps, 0, 256);
+    OPTION_INI_INT("version_entity", options->version_entity, 0, 256);
+    OPTION_INI_INT("version_media", options->version_media, 0, 256);
+    OPTION_INI_INT("version_models", options->version_models, 0, 256);
+    OPTION_INI_INT("version_textures", options->version_textures, 0, 256);
+    OPTION_INI_INT("version_sounds", options->version_sounds, 0, 256);
     OPTION_INI_INT("fatigue", options->fatigue, 0, 1);
     OPTION_INI_INT("last_world", options->last_world, 0, 256);
     OPTION_INI_INT("max_quests", options->max_quests, 0, 50);

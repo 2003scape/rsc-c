@@ -37,10 +37,10 @@ void mudclient_draw_ui_tab_minimap(mudclient *mud, int no_menus) {
         mud->ui_tab_max_y = ui_y + MINIMAP_HEIGHT;
     }
 
-#if (VERSION_MEDIA >= 59)
-    mudclient_draw_ui_tab_label(mud, MAP_TAB, MINIMAP_WIDTH, ui_x,
-                                ui_y - UI_TABS_LABEL_HEIGHT);
-#endif
+    if (mud->options->version_media >= 59) {
+        mudclient_draw_ui_tab_label(mud, MAP_TAB, MINIMAP_WIDTH, ui_x,
+                                    ui_y - UI_TABS_LABEL_HEIGHT);
+    }
 
     surface_draw_box(mud->surface, ui_x, ui_y, MINIMAP_WIDTH, MINIMAP_HEIGHT,
                      BLACK);
