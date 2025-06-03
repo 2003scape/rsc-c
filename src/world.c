@@ -529,72 +529,72 @@ static void world_load_section_files(World *world, int x, int y, int plane,
         for (int tile = 0; tile < TILE_COUNT;) {
             int val = get_unsigned_byte(map_data, offset++, len);
 
-#if VERSION_MAPS > 53
-            world->walls_east_west[chunk][tile++] = val;
-#elif VERSION_MAPS > 45
-            if (val < 192) {
+            if (world->version > 53) {
                 world->walls_east_west[chunk][tile++] = val;
+            } else if (world->version > 45) {
+                if (val < 192) {
+                    world->walls_east_west[chunk][tile++] = val;
+                } else {
+                    for (int i = 0; i < val - 192; i++) {
+                        world->walls_east_west[chunk][tile++] = 0;
+                    }
+                }
             } else {
-                for (int i = 0; i < val - 192; i++) {
-                    world->walls_east_west[chunk][tile++] = 0;
+                if (val < 128) {
+                    world->walls_east_west[chunk][tile++] = val;
+                } else {
+                    for (int i = 0; i < val - 128; i++) {
+                        world->walls_east_west[chunk][tile++] = 0;
+                    }
                 }
             }
-#else
-            if (val < 128) {
-                world->walls_east_west[chunk][tile++] = val;
-            } else {
-                for (int i = 0; i < val - 128; i++) {
-                    world->walls_east_west[chunk][tile++] = 0;
-                }
-            }
-#endif
         }
 
         for (int tile = 0; tile < TILE_COUNT;) {
             int val = get_unsigned_byte(map_data, offset++, len);
 
-#if VERSION_MAPS > 53
-            world->walls_diagonal[chunk][tile++] = val;
-#elif VERSION_MAPS > 45
-            if (val < 192) {
+            if (world->version > 53) {
                 world->walls_diagonal[chunk][tile++] = val;
+            } else if (world->version > 45) {
+                if (val < 192) {
+                    world->walls_diagonal[chunk][tile++] = val;
+                } else {
+                    for (int i = 0; i < val - 192; i++) {
+                        world->walls_diagonal[chunk][tile++] = 0;
+                    }
+                }
             } else {
-                for (int i = 0; i < val - 192; i++) {
-                    world->walls_diagonal[chunk][tile++] = 0;
+                if (val < 128) {
+                    world->walls_diagonal[chunk][tile++] = val;
+                } else {
+                    for (int i = 0; i < val - 128; i++) {
+                        world->walls_diagonal[chunk][tile++] = 0;
+                    }
                 }
             }
-#else
-            if (val < 128) {
-                world->walls_diagonal[chunk][tile++] = val;
-            } else {
-                for (int i = 0; i < val - 128; i++) {
-                    world->walls_diagonal[chunk][tile++] = 0;
-                }
-            }
-#endif
         }
 
         for (int tile = 0; tile < TILE_COUNT;) {
             int val = get_unsigned_byte(map_data, offset++, len);
 
-#if VERSION_MAPS > 53
-            if (val > 0) {
-                world->walls_diagonal[chunk][tile] = val + 12000;
-            }
-            tile++;
-#elif VERSION_MAPS > 45
-            if (val < 192) {
-                world->walls_diagonal[chunk][tile++] = val + 12000;
+            if (world->version > 53) {
+                if (val > 0) {
+                    world->walls_diagonal[chunk][tile] = val + 12000;
+                }
+                tile++;
+            } else if (world->version > 45) {
+                if (val < 192) {
+                    world->walls_diagonal[chunk][tile++] = val + 12000;
+                } else {
+                    tile += (val - 192);
+                }
             } else {
-                tile += (val - 192);
+                if (val < 128) {
+                    world->walls_diagonal[chunk][tile++] = val + 12000;
+                } else {
+                    tile += (val - 128);
+                }
             }
-#else
-            if (val < 128) {
-                world->walls_diagonal[chunk][tile++] = val + 12000;
-            } else {
-                tile += (val - 128);
-            }
-#endif
         }
 
         for (int tile = 0; tile < TILE_COUNT;) {
