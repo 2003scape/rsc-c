@@ -161,6 +161,6 @@ struct MudConfig {
 
 extern struct MudConfig game_data;
 extern int game_data_get_model_index(char *name);
-extern void game_data_load_data(int8_t *buffer, int is_members);
+extern void game_data_load_data(int8_t *buffer, int is_members, int version);
 
 #endif

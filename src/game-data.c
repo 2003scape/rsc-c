@@ -70,7 +70,7 @@ static char *game_data_get_string(void) {
     return string;
 }
 
-void game_data_load_data(int8_t *buffer, int is_members) {
+void game_data_load_data(int8_t *buffer, int is_members, int version) {
     memset(game_data.model_name, 0, 5000 * sizeof(char *));
 
     game_data.data_string =
@@ -232,7 +232,7 @@ void game_data_load_data(int8_t *buffer, int is_members) {
     }
 
     for (i = 0; i < game_data.npc_count; i++) {
-        game_data.npcs[i].command = game_data_get_string();
+        game_data.npcs[i].command = version < 57 ? "" : game_data_get_string();
     }
 
     game_data.texture_count = game_data_get_unsigned_short();

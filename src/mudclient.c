@@ -1118,7 +1118,8 @@ void mudclient_load_game_config(mudclient *mud) {
         return;
     }
 
-    game_data_load_data(config_jag, mud->options->members);
+    game_data_load_data(config_jag, mud->options->members,
+                        mud->options->version_config);
     free(config_jag);
 
     /*int8_t *filter_jag = mudclient_read_data_file(
@@ -1450,10 +1451,12 @@ void mudclient_load_entities(mudclient *mud) {
 
     int i = 0;
 
-    while (i < game_data.animation_count) {
+    for (;;) {
     label0:;
+        if (i >= game_data.animation_count) {
+            break;
+        }
         char *animation_name = game_data.animations[i].name;
-
         for (int j = 0; j < i; j++) {
             if (strcmp(game_data.animations[j].name, animation_name) != 0) {
                 continue;
