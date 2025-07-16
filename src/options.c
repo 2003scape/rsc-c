@@ -15,7 +15,7 @@ void options_new(Options *options) {
 
     /* presets */
     options->last_world = 0;
-    options->account_management = 1;
+    options->account_management = 0;
     options->anti_macro = 0;
     options->retry_login_on_disconnect = 0;
     options->show_additional_options = 1;
@@ -48,7 +48,7 @@ void options_set_defaults(Options *options) {
     options->fatigue = 1;
     options->max_quests = 50;
     options->max_skills = 18;
-    options->registration = 1;
+    options->registration = 0;
     options->idle_logout = 0;
     options->remember_username = 0;
     options->remember_password = 0;

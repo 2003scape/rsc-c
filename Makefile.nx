@@ -57,7 +57,7 @@ CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-fomit-frame-pointer -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DGLAD -DRENDER_GL -DREVISION_177 -DSDL2
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DGLAD -DRENDER_GL -DSDL2
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 

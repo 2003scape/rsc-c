@@ -23,7 +23,6 @@ OBJ = $(SRC:.c=.o)
 CFLAGS += -fwrapv
 # some platforms require gnu99 instead of c99 to use functions like alloca.
 CFLAGS += -std=gnu99
-CFLAGS += -DREVISION_177
 CFLAGS += -DMUD_DATADIR=\"$(PREFIX)/$(DATADIR)\"
 
 ifeq ($(SDL2), 1)

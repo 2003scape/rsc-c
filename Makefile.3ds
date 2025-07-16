@@ -46,7 +46,7 @@ CFLAGS	:=	-g -Wall -Ofast -fno-signed-zeros -fno-trapping-math \
 			-mword-relocations -fomit-frame-pointer -ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -D__3DS__ -D_3DS -DRENDER_3DS_GL -DNO_ISAAC -DNO_RSA #-DREVISION_177
+CFLAGS	+=	$(INCLUDE) -D__3DS__ -D_3DS -DRENDER_3DS_GL
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
