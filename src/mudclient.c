@@ -1630,6 +1630,9 @@ void mudclient_load_textures(mudclient *mud) {
         sprintf(file_name, "%s.dat", game_data.textures[i].name);
 
         int8_t *texture_dat = load_data(file_name, 0, textures_jag, NULL);
+        if (texture_dat == NULL) {
+            continue;
+        }
 
         surface_parse_sprite(surface, mud->sprite_texture, texture_dat,
                              index_dat, 1);
