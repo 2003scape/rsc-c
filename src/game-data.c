@@ -107,7 +107,8 @@ void game_data_load_data(int8_t *buffer, int is_members, int version) {
     }
 
     for (i = 0; i < game_data.item_count; i++) {
-        game_data.items[i].base_price = game_data_get_unsigned_int();
+        game_data.items[i].base_price = version < 49 ?
+            game_data_get_unsigned_short() : game_data_get_unsigned_int();
     }
 
     for (i = 0; i < game_data.item_count; i++) {
@@ -127,11 +128,11 @@ void game_data_load_data(int8_t *buffer, int is_members, int version) {
     }
 
     for (i = 0; i < game_data.item_count; i++) {
-        game_data.items[i].special = game_data_get_unsigned_byte();
+        game_data.items[i].special = version < 49 ? 0 : game_data_get_unsigned_byte();
     }
 
     for (i = 0; i < game_data.item_count; i++) {
-        game_data.items[i].members = game_data_get_unsigned_byte();
+        game_data.items[i].members = version < 49 ? 0 : game_data_get_unsigned_byte();
     }
 
     for (i = 0; i < game_data.item_count; i++) {
