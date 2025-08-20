@@ -729,137 +729,6 @@ void surface_gl_buffer_gradient(Surface *surface, int x, int y, int width,
 #endif
 }
 
-void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
-#ifdef RENDER_GL
-    glEnable(GL_SCISSOR_TEST);
-    glDisable(GL_CULL_FACE);
-
-    shader_use(&surface->gl_flat_shader);
-
-    vertex_buffer_gl_bind(&surface->gl_flat_buffer);
-
-    int drawn_quads = 0;
-
-    GLuint last_texture = 0;
-
-    for (int i = 0; i < surface->gl_context_count; i++) {
-        SurfaceGlContext *context = &surface->gl_contexts[i];
-
-        if (context->quad_count <= 0) {
-            continue;
-        }
-
-        /* don't apply UI scaling to entities that are drawn within the world */
-        int is_ui_scaled =
-            context->use_depth ? 0 : mudclient_is_ui_scaled(surface->mud);
-
-        int min_y = context->min_y * (is_ui_scaled + 1);
-        int max_y = context->max_y * (is_ui_scaled + 1);
-        int min_x = context->min_x * (is_ui_scaled + 1);
-        int max_x = context->max_x * (is_ui_scaled + 1);
-
-        int bounds_width = max_x - min_x;
-        int bounds_height = max_y - min_y;
-
-        glScissor(min_x, surface->mud->game_height - min_y - bounds_height,
-                  bounds_width, bounds_height);
-
-        GLuint texture = context->texture;
-
-        if (texture != last_texture) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture);
-
-            last_texture = texture;
-        }
-
-        GLuint base_texture = context->base_texture;
-
-        if (base_texture != last_base_texture) {
-            glActiveTexture(GL_TEXTURE0 + 1);
-            glBindTexture(GL_TEXTURE_2D, base_texture);
-
-            last_base_texture = base_texture;
-        }
-
-        int quad_count = context->quad_count;
-
-        glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
-                       (void *)(drawn_quads * 6 * sizeof(GLuint)));
-
-        drawn_quads += quad_count;
-    }
-
-    glDisable(GL_SCISSOR_TEST);
-#elif defined(RENDER_3DS_GL)
-    C3D_BindProgram(&surface->_3ds_gl_flat_shader);
-
-    C3D_CullFace(GPU_CULL_FRONT_CCW);
-
-    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, surface->_3ds_gl_projection_uniform,
-                     &surface->_3ds_gl_projection);
-
-    vertex_buffer_gl_bind(&surface->gl_flat_buffer);
-
-    C3D_TexEnv *tex_env = C3D_GetTexEnv(0);
-    C3D_TexEnvInit(tex_env);
-
-    /* multiply the primary colour by the first texture colour */
-    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PRIMARY_COLOR, GPU_TEXTURE0, 0);
-    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_MODULATE);
-
-    tex_env = C3D_GetTexEnv(1);
-    C3D_TexEnvInit(tex_env);
-
-    /* add the second texture to the empty pixels */
-    C3D_TexEnvSrc(tex_env, C3D_Both, GPU_PREVIOUS, GPU_TEXTURE1, 0);
-    C3D_TexEnvFunc(tex_env, C3D_Both, GPU_ADD);
-
-    int drawn_quads = 0;
-
-    for (int i = 0; i < surface->gl_context_count; i++) {
-        SurfaceGlContext *context = &surface->gl_contexts[i];
-
-        if (context->quad_count <= 0) {
-            continue;
-        }
-
-        if (depth_mode == GL_DEPTH_DISABLED && !context->use_depth) {
-            drawn_quads += context->quad_count;
-            continue;
-        }
-
-        if (depth_mode == GL_DEPTH_ENABLED && context->use_depth) {
-            drawn_quads += context->quad_count;
-            continue;
-        }
-
-        if (context->use_depth) {
-            C3D_DepthTest(true, GPU_GEQUAL, GPU_WRITE_ALL);
-        } else {
-            C3D_DepthTest(true, GPU_ALWAYS, GPU_WRITE_ALL);
-        }
-
-        C3D_SetScissor(GPU_SCISSOR_NORMAL, 240 - context->max_y,
-                       320 - context->max_x, 240 - context->min_y,
-                       320 - context->min_x);
-
-        C3D_TexBind(0, context->texture);
-        C3D_TexBind(1, context->base_texture);
-
-        C3D_DrawElements(
-            GPU_TRIANGLES, context->quad_count * 6, C3D_UNSIGNED_SHORT,
-            surface->gl_flat_buffer.ebo + (drawn_quads * 6) * sizeof(uint16_t));
-
-        drawn_quads += context->quad_count;
-    }
-#endif
-
-    if (depth_mode == GL_DEPTH_BOTH) {
-        surface_gl_reset_context(surface);
-    }
-}
-
 void surface_gl_blur_texture(Surface *surface, int sprite_id, int blur_height,
                              int x, int y, int height) {
 #ifdef RENDER_GL
@@ -958,6 +827,73 @@ void surface_gl_apply_login_filter(Surface *surface, int sprite_id) {
 #endif
 
 #ifndef RENDER_3DS_GL
+void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
+    glEnable(GL_SCISSOR_TEST);
+    glDisable(GL_CULL_FACE);
+
+    shader_use(&surface->gl_flat_shader);
+
+    vertex_buffer_gl_bind(&surface->gl_flat_buffer);
+
+    int drawn_quads = 0;
+
+    GLuint last_texture = 0;
+
+    for (int i = 0; i < surface->gl_context_count; i++) {
+        SurfaceGlContext *context = &surface->gl_contexts[i];
+
+        if (context->quad_count <= 0) {
+            continue;
+        }
+
+        /* don't apply UI scaling to entities that are drawn within the world */
+        int is_ui_scaled =
+            context->use_depth ? 0 : mudclient_is_ui_scaled(surface->mud);
+
+        int min_y = context->min_y * (is_ui_scaled + 1);
+        int max_y = context->max_y * (is_ui_scaled + 1);
+        int min_x = context->min_x * (is_ui_scaled + 1);
+        int max_x = context->max_x * (is_ui_scaled + 1);
+
+        int bounds_width = max_x - min_x;
+        int bounds_height = max_y - min_y;
+
+        glScissor(min_x, surface->mud->game_height - min_y - bounds_height,
+                  bounds_width, bounds_height);
+
+        GLuint texture = context->texture;
+
+        if (texture != last_texture) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture);
+
+            last_texture = texture;
+        }
+
+        GLuint base_texture = context->base_texture;
+
+        if (base_texture != last_base_texture) {
+            glActiveTexture(GL_TEXTURE0 + 1);
+            glBindTexture(GL_TEXTURE_2D, base_texture);
+
+            last_base_texture = base_texture;
+        }
+
+        int quad_count = context->quad_count;
+
+        glDrawElements(GL_TRIANGLES, quad_count * 6, GL_UNSIGNED_INT,
+                       (void *)(drawn_quads * 6 * sizeof(GLuint)));
+
+        drawn_quads += quad_count;
+    }
+
+    glDisable(GL_SCISSOR_TEST);
+
+    if (depth_mode == GL_DEPTH_BOTH) {
+        surface_gl_reset_context(surface);
+    }
+}
+
 void surface_gl_raster_to_sprite(Surface *surface, int sprite_id, int x,
                                  int y, int width, int height) {
     (void)x;
