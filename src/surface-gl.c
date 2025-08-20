@@ -826,7 +826,7 @@ void surface_gl_apply_login_filter(Surface *surface, int sprite_id) {
 
 #endif
 
-#ifndef RENDER_3DS_GL
+#if defined(RENDER_GL) && !defined(RENDER_3DS_GL)
 void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode) {
     glEnable(GL_SCISSOR_TEST);
     glDisable(GL_CULL_FACE);
