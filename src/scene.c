@@ -148,8 +148,8 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
     scene->visible_polygons = calloc(polygon_count, sizeof(GamePolygon *));
 
     for (int i = 0; i < polygon_count; i++) {
-        scene->visible_polygons[i] = malloc(sizeof(GamePolygon));
-        polygon_new(scene->visible_polygons[i]);
+        scene->visible_polygons[i] = calloc(1, sizeof(GamePolygon));
+        scene->visible_polygons[i]->index2 = -1;
     }
 
     GameModel *view = malloc(sizeof(GameModel));
