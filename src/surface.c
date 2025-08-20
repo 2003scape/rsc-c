@@ -1207,72 +1207,8 @@ void surface_screen_raster_to_sprite(Surface *surface, int sprite_id, int x,
 
     free(surface->sprite_palette[sprite_id]);
     surface->sprite_palette[sprite_id] = NULL;
-#elif defined(RENDER_GL)
-    (void)x;
-    (void)y;
-
-    glReadPixels(0, 0, surface->mud->game_width, surface->mud->game_height,
-                 GL_RGBA, GL_UNSIGNED_BYTE, surface->gl_screen_pixels);
-
-    int offset_y = (sprite_id - surface->mud->sprite_logo) * height;
-    int offset_x = MINIMAP_SPRITE_WIDTH;
-
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            uint32_t colour =
-                surface
-                    ->gl_screen_pixels[x + (surface->mud->game_height - y - 1) *
-                                               surface->mud->game_width];
-
-            int texture_offset = ((offset_y + y) * 1024 + (offset_x + x)) * 3;
-
-            surface->gl_dynamic_texture_buffer[texture_offset + 2] =
-                (colour >> 16) & 255;
-
-            surface->gl_dynamic_texture_buffer[texture_offset + 1] =
-                (colour >> 8) & 255;
-
-            surface->gl_dynamic_texture_buffer[texture_offset] = colour & 255;
-        }
-    }
-
-    surface_gl_update_dynamic_texture(surface);
-#elif defined(RENDER_3DS_GL)
-    (void)x;
-    (void)y;
-
-    int offset_x = 0;
-    int offset_y = 0;
-
-    if (!surface_3ds_gl_get_sprite_texture_offsets(surface, sprite_id,
-                                                   &offset_x, &offset_y)) {
-        return;
-    }
-
-    uint16_t *colour_buf =
-        (uint16_t *)(surface->mud->_3ds_gl_offscreen_render_target->frameBuf
-                         .colorBuf);
-
-    uint16_t *texture_data = (uint16_t *)surface->gl_sprite_texture.data;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            int framebuffer_offset =
-                _3ds_gl_translate_framebuffer_index((y * 320) + x);
-
-            int texture_offset = _3ds_gl_translate_texture_index(
-                                     x + offset_x, y + offset_y, 1024) /
-                                 sizeof(uint16_t);
-
-            uint16_t colour = colour_buf[framebuffer_offset];
-
-            if (y < 6 || y >= height - 6) {
-                colour = 1;
-            }
-
-            texture_data[texture_offset] = colour;
-        }
-    }
+#else
+    surface_gl_raster_to_sprite(surface, sprite_id, x, y, width, height);
 #endif
 }
 

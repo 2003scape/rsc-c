@@ -268,6 +268,8 @@ void surface_gl_draw(Surface *surface, GL_DEPTH_MODE depth_mode);
 void surface_gl_blur_texture(Surface *surface, int sprite_id, int blur_height,
                              int x, int y, int height);
 void surface_gl_apply_login_filter(Surface *surface, int sprite_id);
+void surface_gl_raster_to_sprite(Surface *surface, int sprite_id, int x,
+                                 int y, int width, int height);
 #endif
 
 void surface_set_bounds(Surface *surface, int min_x, int min_y, int max_x,
