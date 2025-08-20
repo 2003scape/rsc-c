@@ -25,13 +25,13 @@ CFLAGS += -fwrapv
 CFLAGS += -std=gnu99
 CFLAGS += -DMUD_DATADIR=\"$(PREFIX)/$(DATADIR)\"
 
+LDFLAGS += -lm
+
 ifeq ($(SDL2), 1)
 CFLAGS += $(shell sdl2-config --cflags) -DSDL2
-LDFLAGS += -lm
 LDFLAGS += $(shell sdl2-config --libs)
 else
 CFLAGS += $(shell sdl-config --cflags) -DSDL12
-LDFLAGS += -lm
 LDFLAGS += $(shell sdl-config --libs)
 ifeq ($(RENDER_GL), 1)
 LEGACY_GL = 1
