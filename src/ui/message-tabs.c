@@ -90,7 +90,8 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         }
     }
 
-    if (!is_touch && !is_compact && mud->options->wiki_lookup) {
+    if (!is_touch && !is_compact && mud->options->wiki_lookup &&
+        mud->options->version_media > 42) {
         surface_draw_box(mud->surface, x + 416, y + 3, 84, 9, MESSAGE_TAB_WIKI);
         surface_draw_box(mud->surface, x + 414, y + 7, 88, 5, MESSAGE_TAB_WIKI);
         surface_draw_box(mud->surface, x + 413, y + 8, 90, 3, MESSAGE_TAB_WIKI);
@@ -179,9 +180,9 @@ void mudclient_draw_chat_message_tabs(mudclient *mud) {
         mud->surface, is_compact ? "Private" : "Private history",
         x + (button_width * 3) + 1, y, FONT_REGULAR_11, text_colour);
 
-    if (!is_compact && mud->options->version_media > 42) {
-        surface_draw_string_centre(
-            mud->surface,
+    if (!is_compact &&
+        (mud->options->version_media > 42 || mud->options->wiki_lookup)) {
+        surface_draw_string_centre(mud->surface,
             mud->options->wiki_lookup ? "Wiki lookup" : "Report abuse",
             x + (button_width * 4) + 3, y, FONT_REGULAR_11,
             mud->selected_wiki ? MESSAGE_TAB_ORANGE : WHITE);
