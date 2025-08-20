@@ -5225,16 +5225,14 @@ void mudclient_run(mudclient *mud) {
         if (!mud->keyboard_open) {
             mudclient_draw(mud);
         }
-#else
-        mudclient_draw(mud);
-#endif
 
-#ifdef _3DS
         mudclient_3ds_flush_audio(mud);
 
         if (!aptMainLoop()) {
             return;
         }
+#else
+        mudclient_draw(mud);
 #endif
 
         mud->fps = (j * 1000) / (mud->target_fps * 256);
