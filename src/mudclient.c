@@ -2825,7 +2825,7 @@ int mudclient_load_next_region(mudclient *mud, int lx, int ly) {
         int object_width = 0;
         int object_height = 0;
 
-        if (object_direction == 0 || object_direction == 4) {
+        if (object_direction == DIR_NORTH || object_direction == DIR_SOUTH) {
             object_width = game_data.objects[object_id].width;
             object_height = game_data.objects[object_id].height;
         } else {
@@ -5506,7 +5506,7 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
     int width = 0;
     int height = 0;
 
-    if (direction == 0 || direction == 4) {
+    if (direction == DIR_NORTH || direction == DIR_SOUTH) {
         width = game_data.objects[id].width;
         height = game_data.objects[id].height;
     } else {
@@ -5515,14 +5515,14 @@ void mudclient_walk_to_object(mudclient *mud, int x, int y, int direction,
     }
 
     if (game_data.objects[id].type == 2 || game_data.objects[id].type == 3) {
-        if (direction == 0) {
+        if (direction == DIR_NORTH) {
             x--;
             width++;
-        } else if (direction == 2) {
+        } else if (direction == DIR_WEST) {
             height++;
-        } else if (direction == 4) {
+        } else if (direction == DIR_SOUTH) {
             width++;
-        } else if (direction == 6) {
+        } else if (direction == DIR_EAST) {
             y--;
             height++;
         }

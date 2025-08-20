@@ -610,7 +610,8 @@ void mudclient_packet_tick(mudclient *mud) {
                     int width = 0;
                     int height = 0;
 
-                    if (tile_direction == 0 || tile_direction == 4) {
+                    if (tile_direction == DIR_NORTH ||
+                        tile_direction == DIR_SOUTH) {
                         width = game_data.objects[object_id].width;
                         height = game_data.objects[object_id].height;
                     } else {

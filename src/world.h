@@ -56,6 +56,24 @@ typedef enum TILE_TIPE {
     HOLE_TILE_TYPE = 5
 } TILE_TYPE;
 
+/* used for everything except wallobjs/bounds */
+typedef enum DIRECTION {
+    DIR_NORTH = 0,
+    DIR_NORTHWEST = 1,
+    DIR_WEST = 2,
+    DIR_SOUTHWEST = 3,
+    DIR_SOUTH = 4,
+    DIR_SOUTHEAST = 5,
+    DIR_EAST = 6,
+    DIR_NORTHEAST = 7,
+    /*
+     * attacker is shown on right, defender on left
+     * except NPCs are always on the left
+     */
+    DIR_COMBAT_LEFT = 8,
+    DIR_COMBAT_RIGHT = 9
+} DIRECTION;
+
 /* https://github.com/2003scape/rsc-config/blob/master/config-json/tiles.json */
 #define BRIDGE_TILE_DECORATION 12
 

@@ -170,8 +170,7 @@ void world_register_object(World *world, int x, int y, int id) {
         int model_width = 0;
         int model_height = 0;
 
-        // TODO make cardinal TILE_DIRs
-        if (tile_direction == 0 || tile_direction == 4) {
+        if (tile_direction == DIR_NORTH || tile_direction == DIR_SOUTH) {
             model_width = game_data.objects[id].width;
             model_height = game_data.objects[id].height;
         } else {
@@ -189,25 +188,25 @@ void world_register_object(World *world, int x, int y, int id) {
             for (int my = y; my < y + model_height; my++) {
                 if (game_data.objects[id].type == 1) {
                     world->object_adjacency[mx][my] |= 0x40;
-                } else if (tile_direction == 0) {
+                } else if (tile_direction == DIR_NORTH) {
                     world->object_adjacency[mx][my] |= 2;
 
                     if (mx > 0) {
                         world_set_blocked(world, mx - 1, my, 8);
                     }
-                } else if (tile_direction == 2) {
+                } else if (tile_direction == DIR_WEST) {
                     world->object_adjacency[mx][my] |= 4;
 
                     if (my < 95) {
                         world_set_blocked(world, mx, my + 1, 1);
                     }
-                } else if (tile_direction == 4) {
+                } else if (tile_direction == DIR_SOUTH) {
                     world->object_adjacency[mx][my] |= 8;
 
                     if (mx < 95) {
                         world_set_blocked(world, mx + 1, my, 2);
                     }
-                } else if (tile_direction == 6) {
+                } else if (tile_direction == DIR_EAST) {
                     world->object_adjacency[mx][my] |= 1;
 
                     if (my > 0) {
@@ -2207,7 +2206,7 @@ void world_add_models(World *world, GameModel **models) {
                 int width = 0;
                 int height = 0;
 
-                if (tile_direction == 0 || tile_direction == 4) {
+                if (tile_direction == DIR_NORTH || tile_direction == DIR_SOUTH) {
                     width = game_data.objects[object_id].width;
                     height = game_data.objects[object_id].height;
                 } else {
@@ -2448,7 +2447,7 @@ void world_remove_object(World *world, int x, int y, int id) {
         int width;
         int height;
 
-        if (tile_direction == 0 || tile_direction == 4) {
+        if (tile_direction == DIR_NORTH || tile_direction == DIR_SOUTH) {
             width = game_data.objects[id].width;
             height = game_data.objects[id].height;
         } else {
@@ -2460,25 +2459,25 @@ void world_remove_object(World *world, int x, int y, int id) {
             for (int yy = y; yy < y + height; yy++) {
                 if (game_data.objects[id].type == 1) {
                     world->object_adjacency[xx][yy] &= 0xffbf;
-                } else if (tile_direction == 0) {
+                } else if (tile_direction == DIR_NORTH) {
                     world->object_adjacency[xx][yy] &= 0xfffd;
 
                     if (xx > 0) {
                         world_set_unblocked(world, xx - 1, yy, 8);
                     }
-                } else if (tile_direction == 2) {
+                } else if (tile_direction == DIR_WEST) {
                     world->object_adjacency[xx][yy] &= 0xfffb;
 
                     if (yy < (REGION_HEIGHT - 1)) {
                         world_set_unblocked(world, xx, yy + 1, 1);
                     }
-                } else if (tile_direction == 4) {
+                } else if (tile_direction == DIR_SOUTH) {
                     world->object_adjacency[xx][yy] &= 0xfff7;
 
                     if (xx < (REGION_WIDTH - 1)) {
                         world_set_unblocked(world, xx + 1, yy, 2);
                     }
-                } else if (tile_direction == 6) {
+                } else if (tile_direction == DIR_EAST) {
                     world->object_adjacency[xx][yy] &= 0xfffe;
 
                     if (yy > 0) {
