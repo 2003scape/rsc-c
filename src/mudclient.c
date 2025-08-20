@@ -5411,8 +5411,8 @@ void mudclient_play_sound(mudclient *mud, char *name) {
     mud->_3ds_sound_length = length * 2;
 #elif defined(SDL_VERSION_ATLEAST)
 #if SDL_VERSION_ATLEAST(2, 0, 4)
-    // TODO could re-pause after sound plays?
     SDL_PauseAudio(0);
+    SDL_ClearQueuedAudio(1);
     SDL_QueueAudio(1, mud->pcm_out, length * 2);
 #endif
 #endif
