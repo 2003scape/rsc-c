@@ -101,11 +101,7 @@ int scene_polygon_depth_compare(const void *a, const void *b) {
         return -1;
     }
 
-    if (polygon_a->depth == polygon_b->depth) {
-        return 0;
-    }
-
-    return polygon_a->depth < polygon_b->depth ? 1 : -1;
+    return polygon_b->depth - polygon_a->depth;
 }
 
 void scene_new(Scene *scene, Surface *surface, int model_count,
