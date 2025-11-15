@@ -214,7 +214,7 @@ void scene_new(Scene *scene, Surface *surface, int model_count,
 
         /* thanks jorsa */
         scene->texture_light_gradient[gradient_index] =
-            ((19 * pow(2, x)) + (4 * pow(2, x) * y)) / 255.0f;
+            ((19 * powf(2, x)) + (4 * powf(2, x) * y)) / 255.0f;
 
         /*scene->texture_light_gradient[gradient_index] =
             0.074708f * powf(15.844317f, ((float)i / 255.0f));*/
@@ -292,7 +292,8 @@ static void scene_texture128_scanline(int32_t *restrict raster,
                                       int length, int k2, int l2) {
     // 2 ** 7 = 128
     static const int texture_shift = 7;
-    const int texture_size = (int)pow(2, texture_shift);
+
+    const int texture_size = (int)powf(2, texture_shift);
     const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
@@ -392,7 +393,7 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                                                int i3) {
     // 2 ** 7 = 128
     static const int texture_shift = 7;
-    const int texture_size = (int)pow(2, texture_shift);
+    const int texture_size = (int)powf(2, texture_shift);
     const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
@@ -495,7 +496,7 @@ static void scene_texture64_scanline(int32_t *restrict raster,
                                      int k2, int l2) {
     // 2 ** 6 = 64
     static const int texture_shift = 6;
-    int texture_size = (int)pow(2, texture_shift);
+    int texture_size = (int)powf(2, texture_shift);
     const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
@@ -590,7 +591,7 @@ static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                                               int i3) {
     // 2 ** 6 = 64
     static const int texture_shift = 6;
-    const int texture_size = (int)pow(2, texture_shift);
+    const int texture_size = (int)powf(2, texture_shift);
     const int texture_area = (texture_size * texture_size) - texture_size;
 
     if (length <= 0) {
@@ -779,9 +780,8 @@ void scene_remove_model(Scene *scene, GameModel *model) {
             scene->models[i] = NULL;
             scene->model_count--;
 
-            for (int j = i; j < scene->model_count; j++) {
-                scene->models[j] = scene->models[j + 1];
-            }
+            memmove(scene->models + i, scene->models + i + 1,
+                sizeof(*scene->models) * scene->model_count);
         }
     }
 }
