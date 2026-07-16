@@ -392,6 +392,8 @@ void surface_draw_status_bar(Surface *surface, int max, int current,
                              int background_colour, int foreground_colour,
                              int is_percentage);
 #ifdef RENDER_GL
+void surface_gl_new(Surface *surface, int width, int height, int limit,
+                    mudclient *mud);
 void surface_gl_create_framebuffer(Surface *surface);
 void surface_gl_update_dynamic_texture(Surface *surface);
 #endif
