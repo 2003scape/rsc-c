@@ -229,6 +229,8 @@ void surface_new(Surface *surface, int width, int height, int limit,
                  mudclient *mud);
 
 #if defined(RENDER_GL) || defined(RENDER_3DS_GL)
+void surface_gl_new(Surface *surface, int width, int height, int limit,
+                    mudclient *mud);
 float surface_gl_translate_x(Surface *surface, int x);
 float surface_gl_translate_y(Surface *surface, int y);
 void surface_gl_reset_context(Surface *surface);

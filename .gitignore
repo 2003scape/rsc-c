@@ -15,6 +15,7 @@ mudclient.data
 mudclient.html
 mudclient.js
 mudclient.wasm
+mudclient.wasm.js
 .idea
 options.ini
 rsc-c.3dsx
