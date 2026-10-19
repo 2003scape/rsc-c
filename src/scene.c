@@ -294,15 +294,14 @@ static void scene_texture128_scanline(int32_t *restrict raster,
                                       int32_t *restrict texture, int k, int l,
                                       int i1, int j1, int k1, int l1,
                                       int length, int k2, int l2) {
-    // 2 ** 7 = 128
-    static const int texture_shift = 7;
-
-    const int texture_size = (int)powf(2, texture_shift);
-    const int texture_area = (texture_size * texture_size) - texture_size;
-
     if (length <= 0) {
         return;
     }
+
+    // 2 ** 7 = 128
+    static const int texture_shift = 7;
+    const int texture_size = 1 << texture_shift;
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     int i = 0;
     int j = 0;
@@ -395,14 +394,14 @@ static void scene_texture128_alphakey_scanline(int32_t *restrict raster,
                                                int i1, int j1, int k1, int l1,
                                                int i2, int length, int l2,
                                                int i3) {
-    // 2 ** 7 = 128
-    static const int texture_shift = 7;
-    const int texture_size = (int)powf(2, texture_shift);
-    const int texture_area = (texture_size * texture_size) - texture_size;
-
     if (length <= 0) {
         return;
     }
+
+    // 2 ** 7 = 128
+    static const int texture_shift = 7;
+    const int texture_size = 1 << texture_shift;
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     int colour = 0;
     int j = 0;
@@ -498,14 +497,14 @@ static void scene_texture64_scanline(int32_t *restrict raster,
                                      int32_t *restrict texture, int k, int l,
                                      int i1, int j1, int k1, int l1, int length,
                                      int k2, int l2) {
-    // 2 ** 6 = 64
-    static const int texture_shift = 6;
-    int texture_size = (int)powf(2, texture_shift);
-    const int texture_area = (texture_size * texture_size) - texture_size;
-
     if (length <= 0) {
         return;
     }
+
+    // 2 ** 6 = 64
+    static const int texture_shift = 6;
+    const int texture_size = 1 << texture_shift;
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     int i = 0;
     int j = 0;
@@ -593,14 +592,14 @@ static void scene_texture64_alphakey_scanline(int32_t *restrict raster,
                                               int i1, int j1, int k1, int l1,
                                               int i2, int length, int l2,
                                               int i3) {
-    // 2 ** 6 = 64
-    static const int texture_shift = 6;
-    const int texture_size = (int)powf(2, texture_shift);
-    const int texture_area = (texture_size * texture_size) - texture_size;
-
     if (length <= 0) {
         return;
     }
+
+    // 2 ** 6 = 64
+    static const int texture_shift = 6;
+    const int texture_size = 1 << texture_shift;
+    const int texture_area = (texture_size * texture_size) - texture_size;
 
     int colour = 0;
     int j = 0;

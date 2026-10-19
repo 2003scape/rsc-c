@@ -65,6 +65,14 @@
 #define MAX_CONFIRM_LENGTH 40
 
 /*
+ * allow easily changing this so that users can have
+ * co-existing different versions
+ */
+#ifndef CLIENT_CONFIG_NAME
+#define CLIENT_CONFIG_NAME "rsc-c"
+#endif
+
+/*
 #define CHAR_SET                                                               \
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567\
 89!\"£$%^&*()-_=+[{]};:'@#~,<.>/?\\| "*/

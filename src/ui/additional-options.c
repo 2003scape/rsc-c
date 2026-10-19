@@ -186,7 +186,7 @@ void mudclient_create_options_panel(mudclient *mud) {
     y += OPTION_HORIZ_GAP;
 
     control = mudclient_add_option_panel_checkbox(
-        mud->panel_game_options, "@whi@Fog of war: ", mud->options->flicker, x,
+        mud->panel_game_options, "@whi@Fog of war: ", mud->options->fog_of_war, x,
         y);
 
     mud->game_options[control] = &mud->options->fog_of_war;
