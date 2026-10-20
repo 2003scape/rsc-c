@@ -35,7 +35,7 @@ static void worldlist_set_defaults(void) {
     strcpy(list[1].rsa_modulus, "87cef754966ecb19806238d9fecf0f421e816976f74f365c86a584e51049794d41fefbdc5fed3a3ed3b7495ba24262bb7d1dd5d2ff9e306b5bbf5522a2e85b25");
 
     strcpy(list[2].name, "Neat_F2P");
-    strcpy(list[2].host, "192.3.118.9");
+    strcpy(list[2].host, "game.neatf2p.com");
     list[2].port = USE_WEBSOCKS ? 43494 : 43594;
     strcpy(list[2].rsa_exponent, "00010001");
     strcpy(list[2].rsa_modulus, "86b03ac30518bdb3e508ca9660efc7738a73ee7dbedbcebf8c56d030a2bdae70503c60829b7fb5eceb529442234c21bce6d529c8da4fce870e83ceffc379e281");

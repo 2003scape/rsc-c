@@ -1,4 +1,5 @@
 #include "options.h"
+#include <errno.h>
 
 #if defined(__unix__) || defined(__unix) ||                                    \
     (defined(__APPLE__) && defined(__MACH__))
@@ -224,7 +225,9 @@ void options_save(Options *options) {
 #endif
 
     if (!ini_file) {
-        mud_error("unable to open options.ini file for writing\n");
+        mud_error("unable to open options.ini file for writing: "
+            "path='%s' errno=%d (%s)\n",
+            path, errno, strerror(errno));
         return;
     }
 

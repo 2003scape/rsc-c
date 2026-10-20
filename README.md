@@ -123,14 +123,22 @@ on windows 95 might need to install ws2setup.exe, 401comupd.exe, and find a copy
 ## build (web)
 
 Install & activate the
-[emscripten emsdk](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions-using-the-emsdk-recommended).
+[Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions-using-the-emsdk-recommended). This generally involves pulling down the `emsdk` repository and running `./emsdk install latest` and `./emsdk activate latest` from within it.
+
+Next, run the following to build and run the web client:
 
     $ make -f Makefile.emscripten // May need to use `emmake` instead of `make` on Windows
     $ python3 -m http.server 1337
 
 You can now test the web client by visiting http://localhost:1337/mudclient.html. Incognito mode is recommended as you change the source and build new versions.
 
-To host it, place the following files and folders in a publicly-accessible location on your website:
+### Rebuilding after changes
+
+To build a new version of the client, first run `make -f Makefile.emscripten clean` to clean the build files, then run the above `make` and `python3` commands again.
+
+### Hosting
+
+To host the client, place the following files and folders in a publicly-accessible location on your website:
 
 - `/cache` folder
 - `mudclient.html`

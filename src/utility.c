@@ -46,7 +46,7 @@ void get_config_path(const char *file, char *path) {
     snprintf(path, PATH_MAX, "%s%s", pref_path, file);
     SDL_free(pref_path);
 #elif defined(EMSCRIPTEN)
-    snprintf(path, PATH_MAX, "/" CLIENT_CONFIG_NAME  "options/%s", file);
+    snprintf(path, PATH_MAX, "/options/%s", file);
 #elif defined(OPTIONS_UNIX)
     const char *xdg = getenv("XDG_CONFIG_HOME");
 
