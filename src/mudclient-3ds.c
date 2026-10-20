@@ -326,10 +326,24 @@ void soc_shutdown() {
 }
 
 void _3ds_keyboard_thread_callback(void *arg) {
+    /* the _3DS_KEYBOARD_* values are not libctru SwkbdType values:
+     * passing PASSWORD (1) straight through selected SWKBD_TYPE_QWERTY,
+     * which has no symbol page. */
+    int keyboard_type = (int)arg;
+    SwkbdType swkbd_type = SWKBD_TYPE_NORMAL;
+
+    if (keyboard_type == _3DS_KEYBOARD_NUMPAD) {
+        swkbd_type = SWKBD_TYPE_NUMPAD;
+    }
+
     static SwkbdState swkbd;
-    swkbdInit(&swkbd, (int)arg, 2, -1);
+    swkbdInit(&swkbd, swkbd_type, 2, -1);
     swkbdSetInitialText(&swkbd, _3ds_keyboard_buffer);
-    swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
+
+    /* don't let the predictive dictionary learn passwords */
+    if (keyboard_type != _3DS_KEYBOARD_PASSWORD) {
+        swkbdSetFeatures(&swkbd, SWKBD_PREDICTIVE_INPUT);
+    }
 
     int reload = 1;
     static SwkbdStatusData swkbdStatus;
