@@ -165,7 +165,7 @@
 
                     if (node.contents) {
                         if (node.contents.length) {
-                            result.contents = Array.apply([], node.contents);
+                            result.contents = Array.from(node.contents);
                         } else {
                             result.contents = {};
                             for (var name in node.contents) {
@@ -236,7 +236,9 @@
 
                     if (data.contents) {
                         if (data.contents.length) {
-                            node.contents = data.contents;
+                            // Needs to be a typed array for newer versions of Emscripten (`subarray` supported),
+                            // otherwise options do not load correctly in the client.
+                            node.contents = new Uint8Array(data.contents);
                         } else {
                             node.contents = {};
 
@@ -255,7 +257,13 @@
                 }
             }
 
+            const hashArgs = window.location.hash
+                .slice(1)
+                .split(',')
+                .filter(Boolean);
+
             var Module = {
+                arguments: hashArgs,
                 preInit: [
                     function () {
                         FS.mkdir('/options');
@@ -265,9 +273,6 @@
                 preRun: [
                     function () {
                         ENV.SDL_EMSCRIPTEN_KEYBOARD_ELEMENT = '#canvas';
-
-                        const args = window.location.hash.slice(1).split(',');
-                        arguments_.push(...args);
                     }
                 ],
                 postRun: [],
