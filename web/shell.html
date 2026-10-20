@@ -236,6 +236,8 @@
 
                     if (data.contents) {
                         if (data.contents.length) {
+                            // Needs to be a typed array for newer versions of Emscripten (`subarray` supported),
+                            // otherwise options do not load correctly in the client.
                             node.contents = new Uint8Array(data.contents);
                         } else {
                             node.contents = {};
