@@ -141,7 +141,7 @@ void surface_new(Surface *surface, int width, int height, int limit,
 
     surface->mud = mud;
 
-#ifdef RENDER_GL
+#if defined(RENDER_GL) || defined(RENDER_3DS_GL)
     surface_gl_new(surface, width, height, limit, mud);
 #endif
 }
